@@ -579,7 +579,7 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
             'enterprise_customer', 'enterprise_customer_id', 'active', 'delivery_method', 'email', 'frequency',
             'day_of_month', 'day_of_week', 'hour_of_day', 'include_date', 'encrypted_password', 'sftp_hostname',
             'sftp_port', 'sftp_username', 'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type',
-            'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid'
+            'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid', 'enterprise_customer_catalog_uuids',
         )
 
     encrypted_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
@@ -591,10 +591,54 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         write_only=True
     )
     enterprise_customer_catalogs = EnterpriseCustomerCatalogSerializer(many=True, read_only=True)
+    enterprise_customer_catalog_uuids = serializers.ListField(  # pylint: disable=invalid-name
+        write_only=True,
+        child=serializers.UUIDField(),
+        default=[]
+    )
     email = serializers.ListField(
         default=[],
         child=serializers.EmailField()
     )
+
+    def create(self, validated_data):
+        """
+        Perform the creation of model instance and link the enterprise customer catalogs.
+
+        Arguments:
+            validated_data (dict): A dictionary containing serializer's validated data.
+
+        Returns:
+            (EnterpriseCustomerReportingConfiguration): Instance of the newly created enterprise customer
+                reporting configuration.
+        """
+        ec_catalog_uuids = validated_data.pop('enterprise_customer_catalog_uuids', [])
+        instance = super().create(validated_data)
+
+        # update enterprise customer catalogs on the reporting configuration instance
+        instance.enterprise_customer_catalogs.set(ec_catalog_uuids)
+        return instance
+
+    def update(self, instance, validated_data):
+        """
+        Update the instance of enterprise customer reporting configuration and link the enterprise customer catalogs.
+
+        Arguments:
+            instance (EnterpriseCustomerReportingConfiguration): Instance of the enterprise customer reporting
+                configuration being updated.
+            validated_data (dict): A dictionary containing serializer's validated data.
+
+        Returns:
+            (EnterpriseCustomerReportingConfiguration): Instance of the newly created enterprise customer
+                reporting configuration.
+
+        """
+        ec_catalog_uuids = validated_data.pop('enterprise_customer_catalog_uuids', [])
+        instance = super().update(instance, validated_data)
+
+        # update enterprise customer catalogs on the reporting configuration instance
+        instance.enterprise_customer_catalogs.set(ec_catalog_uuids)
+        return instance
 
     def validate(self, data):  # pylint: disable=arguments-differ
         delivery_method = data.get('delivery_method')
@@ -605,6 +649,21 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         if delivery_method == models.EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL:
             if 'email' in data and not bool(data['email']):
                 raise serializers.ValidationError({'email': ['This field is required']})
+
+        # validate that enterprise customer catalogs exist in the system.
+        ec_catalog_uuids = data.get('enterprise_customer_catalog_uuids')
+        enterprise_customer = data['enterprise_customer']
+        if ec_catalog_uuids:
+            catalog_count = enterprise_customer.enterprise_customer_catalogs.filter(
+                uuid__in=ec_catalog_uuids
+            ).count()
+
+            if catalog_count != len(ec_catalog_uuids):
+                raise serializers.ValidationError({
+                    'enterprise_customer_catalog_uuids': [
+                        'Only those catalogs can be linked that belong to the enterprise customer.',
+                    ]
+                })
 
         return data
 

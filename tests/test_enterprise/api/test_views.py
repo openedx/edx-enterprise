@@ -4034,3 +4034,194 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_enterprise_catalogs_error(self, request_mock):
+        """
+        Tests that the POST endpoint raises error if enterprise catalogs are not associated with the given enterprise.
+        """
+        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        # Create a new enterprise customer catalog that is not associated with above enterprise customer.
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
+
+        post_data = {
+            'active': 'true',
+            'delivery_method': 'email',
+            'encrypted_password': 'testPassword',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'pgp_encryption_key': '',
+            'email': ['test.email@example.com'],
+            'enterprise_customer_catalog_uuids': [enterprise_catalog.uuid]
+        }
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+
+        response = client.post(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            ),
+            data=post_data,
+            format='json',
+        )
+        error = {
+            'enterprise_customer_catalog_uuids': [
+                'Only those catalogs can be linked that belong to the enterprise customer.',
+            ]
+        }
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == error
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_enterprise_catalogs_create(self, request_mock):
+        """
+        Tests that the POST endpoint links enterprise customer catalogs with the newly created reporting config.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        # Create a new enterprise customer catalog that is associated with above enterprise customer.
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+
+        post_data = {
+            'active': 'true',
+            'delivery_method': 'email',
+            'encrypted_password': 'testPassword',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'pgp_encryption_key': '',
+            'email': ['test.email@example.com'],
+            'enterprise_customer_catalog_uuids': [enterprise_catalog.uuid]
+        }
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+
+        response = client.post(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            ),
+            data=post_data,
+            format='json',
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        ec_catalog_uuids = [item['uuid'] for item in response.json()['enterprise_customer_catalogs']]
+
+        # Make sure the enterprise customer catalog was linked with the reporting configuration.
+        assert [str(enterprise_catalog.uuid)] == ec_catalog_uuids
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_enterprise_catalogs_update(self, request_or_stub_mock):
+        """
+        Tests that the POST endpoint updates enterprise customer catalogs along with the reporting config.
+        """
+        has_feature_role = True
+        expected_status = status.HTTP_200_OK
+
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'active': True,
+            'delivery_method': 'email',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'frequency': 'monthly',
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+
+        reporting_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
+
+        # Create a new enterprise customer catalog that is associated with above enterprise customer
+        # and also linked with the above reporting configuration.
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        reporting_config.enterprise_customer_catalogs.add(enterprise_catalog)
+        reporting_config.save()
+
+        # Create a  new enterprise customer catalog that is associated with above enterprise customer but not with
+        # the above reporting configuration.
+        enterprise_catalog_2 = factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+
+        patch_data = {
+            'enterprise_customer_id': str(enterprise_customer.uuid),
+            'day_of_month': 4,
+            'day_of_week': 1,
+            'hour_of_day': 12,
+            'enterprise_customer_catalog_uuids': [enterprise_catalog_2.uuid]
+        }
+        expected_data = patch_data.copy()
+        expected_data.pop('enterprise_customer_id')
+        patch_data['encrypted_password'] = 'newPassword'
+        patch_data['encrypted_sftp_password'] = 'newSFTPPassword'
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.get(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(reporting_config.uuid)}
+                ),
+            ),
+            format='json',
+        )
+        # validate the existing associated catalogs.
+        print(response.content)
+        assert response.status_code == status.HTTP_200_OK
+        ec_catalog_uuids = [item['uuid'] for item in response.json()['enterprise_customer_catalogs']]
+        assert [str(enterprise_catalog.uuid)] == ec_catalog_uuids
+
+        response = client.patch(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(reporting_config.uuid)}
+                ),
+            ),
+            data=patch_data,
+            format='json',
+        )
+
+        assert response.status_code == expected_status
+        ec_catalog_uuids = [item['uuid'] for item in response.json()['enterprise_customer_catalogs']]
+
+        # Make sure the enterprise customer catalog was linked with the reporting configuration.
+        assert [str(enterprise_catalog_2.uuid)] == ec_catalog_uuids
