@@ -255,16 +255,13 @@ class LearnerExporter(Exporter):
             enterprise_customer_identifier=self.enterprise_customer.name
         )
 
-        enrollment_queryset = self.create_enrollment_queryset(
+        enrollments_to_process = self.get_enrollments_to_process(
             learner_to_transmit,
             course_run_id,
             channel_name,
         )
 
-        # Fetch course details from the Course API, and cache between calls.
-        course_details = None
-
-        enrollment_ids_to_export = [enrollment.id for enrollment in enrollment_queryset]
+        enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_to_process]
         generate_formatted_log(
             'Beginning export of enrollments: {enrollments}.'.format(
                 enrollments=enrollment_ids_to_export,
@@ -275,13 +272,16 @@ class LearnerExporter(Exporter):
 
         if TransmissionAudit and skip_transmitted:
             enrollments_to_transmit = self._filter_out_pre_transmitted_enrollments(
-                enrollment_queryset,
+                enrollments_to_process,
                 channel_name,
                 grade,
                 TransmissionAudit
             )
         else:
-            enrollments_to_transmit = enrollment_queryset
+            enrollments_to_transmit = enrollments_to_process
+
+        # Fetch course details from the Course API, and cache between calls.
+        course_details = None
 
         for enterprise_enrollment in enrollments_to_transmit:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
@@ -336,8 +336,11 @@ class LearnerExporter(Exporter):
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment)
                 generate_formatted_log(
-                    'Received data from certificate api. CompletedDate: {completed_date}, Course: {course_id}, '
-                    'Enterprise: {enterprise}, Grade: {grade}, IsPassing: {is_passing}, User: {user_id}'.format(
+                    'Received data from certificate api. CompletedDate: {completed_date},'
+                    ' Course Id: {course_id},'
+                    ' Enterprise: {enterprise}, '
+                    ' Grade: {grade}, IsPassing: {is_passing},'
+                    ' Learner LMS User Id: {user_id}'.format(
                         completed_date=completed_date_from_api,
                         grade=grade_from_api,
                         is_passing=is_passing_from_api,
@@ -353,8 +356,10 @@ class LearnerExporter(Exporter):
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_grades_data(enterprise_enrollment, course_details, is_audit_enrollment)
                 generate_formatted_log(
-                    'Received data from grades api. CompletedDate: {completed_date}, Course: {course_id}, '
-                    'Enterprise: {enterprise}, Grade: {grade}, IsPassing: {is_passing}, User: {user_id}'.format(
+                    'Received data from grades api.'
+                    ' CompletedDate: {completed_date}, Course: {course_id}, '
+                    ' Enterprise: {enterprise}, Grade: {grade}, IsPassing: {is_passing},'
+                    ' Learner LMS User Id: {user_id}'.format(
                         completed_date=completed_date_from_api,
                         grade=grade_from_api,
                         is_passing=is_passing_from_api,
@@ -375,7 +380,7 @@ class LearnerExporter(Exporter):
                     ' Course: {course_id}, Enterprise: {enterprise},'
                     ' EnrollmentId: {enrollment_id},'
                     ' Grade: {grade}, GradeAPI: {grade_api}, IsPassing: {is_passing},'
-                    ' IsPassingAPI: {is_passing_api}, User: {user_id}'.format(
+                    ' IsPassingAPI: {is_passing_api}, Learner LMS User Id: {user_id}'.format(
                         grade=grade,
                         is_passing=is_passing,
                         grade_api=grade_from_api,
@@ -428,16 +433,16 @@ class LearnerExporter(Exporter):
 
     def _filter_out_pre_transmitted_enrollments(
             self,
-            enrollment_queryset,
+            enrollments_to_process,
             channel_name,
             grade,
             transmission_audit
     ):
         """
-        Given an enrollment_queryset, returns only enrollments that are not already transmitted
+        Given an enrollments_to_process, returns only enrollments that are not already transmitted
         """
         included_enrollments = set()
-        for enterprise_enrollment in enrollment_queryset:
+        for enterprise_enrollment in enrollments_to_process:
             if transmission_audit and \
                     is_already_transmitted(transmission_audit, enterprise_enrollment.id, grade):
                 # We've already sent a completion status for this enrollment
@@ -453,10 +458,10 @@ class LearnerExporter(Exporter):
             included_enrollments.add(enterprise_enrollment)
         return included_enrollments
 
-    def create_enrollment_queryset(self, learner_to_transmit, course_run_id, channel_name):
+    def get_enrollments_to_process(self, learner_to_transmit, course_run_id, channel_name):
         """
-        Creates queryset of EnterpriseCourseEnrollments ordered by course_id
-        Queryset is filtered by learner and course_run_id if both are provided
+        Fetches list of EnterpriseCourseEnrollments ordered by course_id.
+        List is filtered by learner and course_run_id if both are provided
         """
         enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
             'enterprise_customer_user'
@@ -470,7 +475,8 @@ class LearnerExporter(Exporter):
                 enterprise_customer_user__user_id=learner_to_transmit.id,
             )
             generate_formatted_log(
-                'Exporting single learner. Course: {course_run}, User: {user_id}'.format(
+                'Exporting single learner. Course: {course_run},'
+                ' Learner LMS User Id: {user_id}'.format(
                     course_run=course_run_id,
                     user_id=learner_to_transmit.id
                 ),
@@ -478,7 +484,8 @@ class LearnerExporter(Exporter):
                 enterprise_customer_identifier=self.enterprise_customer.name
             )
         enrollment_queryset = enrollment_queryset.order_by('course_id')
-        return enrollment_queryset
+        # return resolved list instead of queryset
+        return list(enrollment_queryset)
 
     def get_learner_assessment_data_records(
             self,
@@ -589,30 +596,30 @@ class LearnerExporter(Exporter):
 
         return completed_date, grade, is_passing, percent_grade
 
-    def _log_cert_not_found(self, course_id, enterprise_enrollment, user_id):
+    def _log_cert_not_found(self, course_id, enterprise_enrollment, lms_user_id):
         """
         Standardized logging for no certificate found (refactor candidate)
         """
         LOGGER.error('[Integrated Channel] Certificate not found for user'
                      ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
-                     ' Learner id {user_id}'
+                     ' Learner LMS User Id: {user_id}'
                      .format(
                          course_id=course_id,
                          enterprise_enrollment=enterprise_enrollment,
-                         user_id=user_id,
+                         user_id=lms_user_id,
                      ))
 
-    def _log_courseid_not_found(self, course_id, enterprise_enrollment, user_id):
+    def _log_courseid_not_found(self, course_id, enterprise_enrollment, lms_user_id):
         """
         Standardized logging for no certificate found  (refactor candidate)
         """
         LOGGER.error('[Integrated Channel] Certificate fetch failed due to invalid course_id'
                      ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
-                     ' Learner id {user_id}'
+                     ' Learner LMS User Id: {user_id}'
                      .format(
                          course_id=course_id,
                          enterprise_enrollment=enterprise_enrollment,
-                         user_id=user_id,
+                         user_id=lms_user_id,
                      ))
 
     def _collect_assessment_grades_data(self, enterprise_enrollment):
@@ -682,16 +689,16 @@ class LearnerExporter(Exporter):
 
         course_id = enterprise_enrollment.course_id
         username = enterprise_enrollment.enterprise_customer_user.user.username
-        user_id = enterprise_enrollment.enterprise_customer_user.user_id
+        lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
 
         grades_data = get_single_user_grade(course_id, username)
 
         if grades_data is None:
             LOGGER.error('[Integrated Channel] Grades data not found.'
                          ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment},'
-                         ' Userid: {user_id}'.format(
+                         ' Learner LMS User Id: {user_id}'.format(
                              course_id=course_id,
-                             user_id=user_id,
+                             user_id=lms_user_id,
                              enterprise_enrollment=enterprise_enrollment.pk))
             return None, None, None, None
 
