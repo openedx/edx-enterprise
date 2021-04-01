@@ -134,7 +134,12 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
-    def test_api_client_called_with_appropriate_payload(self, mock_get_course_details, mock_get_course_certificate, mock_post_request):
+    def test_api_client_called_with_appropriate_payload(
+        self,
+        mock_get_course_details,
+        mock_get_course_certificate,
+        mock_post_request
+    ):
         """
         Test sending of course completion data to cornerstone progress API
         """
