@@ -51,5 +51,5 @@ def get_single_user_grade(course_id, user):
     if not CourseGradeFactory:
         return None
     course_key = CourseKey.from_string(course_id)
-    course_grade = CourseGradeFactory().read(user.username, course_key=course_key)
+    course_grade = CourseGradeFactory().read(user, course_key=course_key)
     return course_grade

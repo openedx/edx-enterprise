@@ -8,6 +8,7 @@ import unittest
 import mock
 import pytest
 from opaque_keys import InvalidKeyError
+from opaque_keys.edx.keys import CourseKey
 
 from integrated_channels.lms_utils import get_course_certificate, get_single_user_grade
 from test_utils import factories
@@ -51,6 +52,10 @@ class TestLMSUtils(unittest.TestCase):
         mock_course_grade_factory.return_value.read.return_value = expected_grade
         single_user_grade = get_single_user_grade(A_GOOD_COURSE_ID, self.user)
         assert single_user_grade == expected_grade
+        mock_course_grade_factory.return_value.read.assert_called_with(
+            self.user,
+            course_key=CourseKey.from_string(A_GOOD_COURSE_ID)
+        )
 
     @mock.patch('integrated_channels.lms_utils.CourseGradeFactory')
     def test_get_single_user_grade_bad_course_id_throws(self, mock_course_grade_factory):
