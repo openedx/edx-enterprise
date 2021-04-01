@@ -133,23 +133,16 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
-    def test_api_client_called_with_appropriate_payload(self, mock_get_course_certificate, mock_post_request):
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    def test_api_client_called_with_appropriate_payload(self, mock_get_course_details, mock_get_course_certificate, mock_post_request):
         """
         Test sending of course completion data to cornerstone progress API
         """
-        # Course API course_details response
-        responses.add(
-            responses.GET,
-            urljoin(
-                lms_api.CourseApiClient.API_BASE_URL,
-                "courses/{course}/".format(course=self.course_id)
-            ),
-            json={
-                "course_id": self.course_key,
-                "pacing": "instructor",
-                "end": "2022-06-21T12:58:17.428373Z",
-            }
-        )
+        mock_get_course_details.return_value = {
+            "course_id": self.course_key,
+            "pacing": "instructor",
+            "end": "2022-06-21T12:58:17.428373Z",
+        }
 
         # Enrollment API
         responses.add(
@@ -201,7 +194,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
-    def test_transmit_single_learner_data_performs_only_one_transmission(self, mock_get_course_certificate):
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    def test_transmit_single_learner_data_performs_only_one_transmission(self, mock_get_course_details, mock_get_course_certificate):
         """
         Test sending single user's data should only update one `CornerstoneLearnerDataTransmissionAudit` entry
         """
@@ -210,18 +204,13 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self._setup_enterprise_enrollment(self.user, course_id, course_key)
 
         # Course API course_details response
-        responses.add(
-            responses.GET,
-            urljoin(
-                lms_api.CourseApiClient.API_BASE_URL,
-                "courses/{course}/".format(course=course_id)
-            ),
-            json={
-                "course_id": course_key,
-                "pacing": "instructor",
-                "end": "2038-06-21T12:58:17.428373Z",
-            }
-        )
+        course_details = {
+            "course_id": course_key,
+            "pacing": "instructor",
+            "end": "2038-06-21T12:58:17.428373Z",
+        }
+
+        mock_get_course_details.return_value = course_details
 
         # Enrollment API
         responses.add(

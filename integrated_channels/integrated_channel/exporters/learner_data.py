@@ -18,10 +18,10 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from consent.models import DataSharingConsent
-from enterprise.api_client.lms import CourseApiClient, GradesApiClient
+from enterprise.api_client.lms import GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.lms_utils import get_course_certificate, get_single_user_grade
+from integrated_channels.lms_utils import get_course_certificate, get_course_details, get_single_user_grade
 from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
@@ -86,22 +86,6 @@ class LearnerExporter(Exporter):
         Returns the string used for an audit course grade.
         """
         return self.GRADE_AUDIT
-
-    def fetch_course_details(self, course_details, enrollment_course_id):
-        """
-        Using a cached value of course details to prevent duplicate work, retrieve an enrollments course details
-        from the Course api. Returns None if no details could be retrieved.
-        """
-        # Check if first run or if the cached course ID doesn't match the enrollment course ID
-        if course_details is None or course_details['course_id'] != enrollment_course_id:
-            if self.course_api is None:
-                self.course_api = CourseApiClient()
-            course_details = self.course_api.get_course_details(enrollment_course_id)
-
-        if course_details is None:
-            return None
-
-        return course_details
 
     def bulk_assessment_level_export(self):
         """
@@ -187,8 +171,7 @@ class LearnerExporter(Exporter):
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
                 enterprise_enrollment):
 
-            # No caching because we're only fetching one course detail
-            course_details = self.fetch_course_details(None, course_run_id)
+            course_details = get_course_details(course_run_id)
 
             if course_details:
                 assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
@@ -303,17 +286,7 @@ class LearnerExporter(Exporter):
                     enterprise_customer_identifier=self.enterprise_customer.name
                 )
 
-            if course_details is None or course_details['course_id'] != course_id:
-                if self.course_api is None:
-                    self.course_api = CourseApiClient()
-                course_details = self.course_api.get_course_details(course_id)
-                generate_formatted_log(
-                    'Successfully retrieved course details for course: {}'.format(
-                        course_id
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name
-                )
+            course_details = get_course_details(course_run_id)
 
             if course_details is None:
                 # Course not found, so we have nothing to report.
