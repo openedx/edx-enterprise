@@ -200,7 +200,11 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
-    def test_transmit_single_learner_data_performs_only_one_transmission(self, mock_get_course_details, mock_get_course_certificate):
+    def test_transmit_single_learner_data_performs_only_one_transmission(
+        self,
+        mock_get_course_details,
+        mock_get_course_certificate
+    ):
         """
         Test sending single user's data should only update one `CornerstoneLearnerDataTransmissionAudit` entry
         """
