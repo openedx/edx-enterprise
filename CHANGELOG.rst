@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.0]
+--------
+* Added a management command to send emails to learners with missing DSC
+
 [3.21.4]
 --------
 * allow searching of enterprise customer records with hyphenated uuid
