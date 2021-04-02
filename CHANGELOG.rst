@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.21.0]
+--------
+* Added the ability to link/unlink enterprise customer catalogs with enterprise reporting configuration via its API endpoint.
+
 [3.20.5]
 --------
 * Integrated channels learner_data module refactored to avoid making some LMS REST API calls
