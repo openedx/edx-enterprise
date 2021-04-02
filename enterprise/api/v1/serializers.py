@@ -18,6 +18,7 @@ from enterprise import models, utils
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
+from enterprise.models import EnterpriseCustomerIdentityProvider
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -142,6 +143,16 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
         return obj.tertiary_color if obj.tertiary_color else DefaultColors.TERTIARY
 
 
+class EnterpriseCustomerIdentityProviderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCustomerIdentityProvider model.
+    """
+
+    class Meta:
+        model = EnterpriseCustomerIdentityProvider
+        fields = ('provider_id', 'default_provider')
+
+
 class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomer model.
@@ -158,9 +169,10 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_saml_configuration_screen', 'contact_email',
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
             'enable_integrated_customer_learner_portal_search',
-            'enable_portal_lms_configurations_screen', 'sender_alias',
+            'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
         )
 
+    identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
     site = SiteSerializer()
     branding_configuration = serializers.SerializerMethodField()
 

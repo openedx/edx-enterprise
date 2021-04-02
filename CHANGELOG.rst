@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.21.1]
+--------
+* Added multiple identity_providers in EnterpriseCustomerApi
+
 [3.21.0]
 --------
 * Added the ability to link/unlink enterprise customer catalogs with enterprise reporting configuration via its API endpoint.
