@@ -7,19 +7,14 @@ from opaque_keys.edx.keys import CourseKey
 
 try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
-except ImportError:
-    get_certificate_for_user = None
-
-try:
     from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
-except ImportError:
-    CourseGradeFactory = None
-
-try:
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 except ImportError:
+    get_certificate_for_user = None
+    CourseGradeFactory = None
     CourseOverview = None
 
+from enterprise.utils import NotConnectedToOpenEdX
 
 # Constants
 COURSE_OVERVIEW_NOT_FOUND = 'CourseOverview could not be found for course_key: {course_key}'
@@ -30,8 +25,9 @@ def get_course_certificate(course_id, user):
     """
     A course certificate for a user (must be a django.contrib.auth.User instance).
     If there is a problem finding the course, throws a opaque_keys.InvalidKeyError
+    If there is a problem loading the get_certificate_for_user function, throws NotConnectedToOpenEdX
 
-    Returns dict, for example:
+    Returns a certificate as a dict, for example:
         {
             "username": "bob",
             "course_id": "edX/DemoX/Demo_Course",
@@ -44,7 +40,10 @@ def get_course_certificate(course_id, user):
         }
     """
     if not get_certificate_for_user:
-        return None
+        raise NotConnectedToOpenEdX(
+            'To use this function, this package must be '
+            'installed in an Open edX environment.'
+        )
     course_key = CourseKey.from_string(course_id)
     user_cert = get_certificate_for_user(username=user.username, course_key=course_key)
     return user_cert
@@ -53,6 +52,8 @@ def get_course_certificate(course_id, user):
 def get_single_user_grade(course_id, user):
     """
     Returns a grade for the user (must be a django.contrib.auth.User instance).
+    If there is a problem loading the CourseGradeFactory class, throws NotConnectedToOpenEdX
+
     Args:
         course_key (CourseLocator): The course to retrieve user grades for.
 
@@ -60,7 +61,10 @@ def get_single_user_grade(course_id, user):
         A serializable list of grade responses
     """
     if not CourseGradeFactory:
-        return None
+        raise NotConnectedToOpenEdX(
+            'To use this function, this package must be '
+            'installed in an Open edX environment.'
+        )
     course_key = CourseKey.from_string(course_id)
     course_grade = CourseGradeFactory().read(user, course_key=course_key)
     return course_grade
@@ -72,9 +76,14 @@ def get_course_details(course_id):
         Tuple with values:
             course_overview or None
             error_code or None (if there is an error fetching course details)
+
+    If there is a problem loading the CourseOverview class, throws NotConnectedToOpenEdX
     """
     if not CourseOverview:
-        return None, None
+        raise NotConnectedToOpenEdX(
+            'To use this function, this package must be '
+            'installed in an Open edX environment.'
+        )
     try:
         course_key = CourseKey.from_string(course_id)
         course_overview = CourseOverview.get_from_id(course_key)
