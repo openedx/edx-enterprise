@@ -8,15 +8,15 @@ from opaque_keys.edx.keys import CourseKey
 try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
+    from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
     from openedx.core.djangoapps.content.course_overviews.models.CourseOverview import (
         get_from_id,
-        DoesNotExist,
     )
 except ImportError:
     get_certificate_for_user = None
     CourseGradeFactory = None
     get_from_id = None
-    DoesNotExist = None
+    CourseOverview = None
 
 from enterprise.utils import NotConnectedToOpenEdX
 
@@ -91,7 +91,7 @@ def get_course_details(course_id):
     try:
         course_key = CourseKey.from_string(course_id)
         course_overview = get_from_id(course_key)
-    except DoesNotExist:
+    except CourseOverview.DoesNotExist:
         return None, COURSE_OVERVIEW_NOT_FOUND.format(course_key=course_key)
     except InvalidKeyError:
         return None, COURSE_KEY_INVALID.format(course_key=course_key)
