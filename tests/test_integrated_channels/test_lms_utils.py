@@ -63,10 +63,11 @@ class TestLMSUtils(unittest.TestCase):
             get_single_user_grade(A_BAD_COURSE_ID, self.user)
             assert mock_course_grade_factory.call_count == 0
 
-    @mock.patch('integrated_channels.lms_utils.get_from_id')
-    def test_get_course_details_success(self, mock_get_from_id):
+    @mock.patch('integrated_channels.lms_utils.CourseOverview')
+    def test_get_course_details_success(self, mock_course_overview):
         course_overview = {'field': 'value'}
+        mock_get_from_id = mock_course_overview.return_value.get_from_id
         mock_get_from_id.return_value = course_overview
-        result_course_overview, error = get_course_details(A_GOOD_COURSE_ID)
-        assert result_course_overview == course_overview
-        assert error is None
+        result_course_overview = get_course_details(A_GOOD_COURSE_ID)
+        assert result_course_overview.return_value == course_overview
+        assert mock_course_overview.return_value.get_from_id.call_count == 1
