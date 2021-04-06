@@ -66,8 +66,7 @@ class TestLMSUtils(unittest.TestCase):
     @mock.patch('integrated_channels.lms_utils.CourseOverview')
     def test_get_course_details_success(self, mock_course_overview):
         course_overview = {'field': 'value'}
-        mock_get_from_id = mock_course_overview.return_value.get_from_id
+        mock_get_from_id = mock_course_overview.get_from_id
         mock_get_from_id.return_value = course_overview
         result_course_overview = get_course_details(A_GOOD_COURSE_ID)
-        # todo could not find a way to mock the classmethod this test needs to improve
-        assert result_course_overview is not None
+        assert result_course_overview == course_overview
