@@ -10,11 +10,7 @@ import pytest
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
-from integrated_channels.lms_utils import (
-    get_course_certificate,
-    get_single_user_grade,
-    get_course_details,
-)
+from integrated_channels.lms_utils import get_course_certificate, get_course_details, get_single_user_grade
 from test_utils import factories
 
 A_GOOD_COURSE_ID = "edX/DemoX/Demo_Course"

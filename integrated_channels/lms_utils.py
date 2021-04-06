@@ -9,9 +9,7 @@ try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-    from openedx.core.djangoapps.content.course_overviews.models.CourseOverview import (
-        get_from_id,
-    )
+    from openedx.core.djangoapps.content.course_overviews.models.CourseOverview import get_from_id
 except ImportError:
     get_certificate_for_user = None
     CourseGradeFactory = None
