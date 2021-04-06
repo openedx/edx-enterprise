@@ -62,6 +62,7 @@ from enterprise.utils import (
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
     get_platform_logo_url,
+    get_user_valid_idp,
     track_enrollment,
 )
 from enterprise.validators import (
@@ -963,11 +964,17 @@ class EnterpriseCustomerUser(TimeStampedModel):
         * the remote identity is not found.
         """
         user = self.user
-        identity_provider = self.enterprise_customer.identity_provider
-        if user and identity_provider:
+        if user and self.enterprise_customer.has_identity_providers:
+            identity_provider = None
+            if self.enterprise_customer.has_multiple_idps:
+                identity_provider = get_user_valid_idp(self.user, self.enterprise_customer)
+
+            if not identity_provider:
+                identity_provider = self.enterprise_customer.identity_provider
+
             enterprise_worker = get_enterprise_worker_user()
             client = ThirdPartyAuthApiClient(enterprise_worker)
-            return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
+            return client.get_remote_id(identity_provider, user.username)
         return None
 
     def enroll(self, course_run_id, mode, cohort=None, source_slug=None, discount_percentage=0.0, sales_force_id=None):

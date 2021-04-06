@@ -549,6 +549,29 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         else:
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.utils.get_social_auth_from_idp')
+    def test_get_remote_id_with_multiple_idp(self, mock_social_auth_from_idp, mock_third_party_api):
+        user = factories.UserFactory(username="hello")
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
+        non_default_idp_id = "non-default-identity"
+        default_idp_id = "by-default-identity"
+
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            provider_id=non_default_idp_id,
+            enterprise_customer=enterprise_customer_user.enterprise_customer
+        )
+
+        default_idp = factories.EnterpriseCustomerIdentityProviderFactory(
+            provider_id=default_idp_id,
+            enterprise_customer=enterprise_customer_user.enterprise_customer,
+            default_provider=True
+        )
+        mock_third_party_api.return_value.get_remote_id.return_value = 'saml-user-id'
+        mock_social_auth_from_idp.return_value = True
+        _ = enterprise_customer_user.get_remote_id()
+        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(default_idp, "hello")
+
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
