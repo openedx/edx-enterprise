@@ -198,6 +198,20 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     class Meta:
         model = EnterpriseCustomer
 
+    def get_search_results(self, request, queryset, search_term):
+        original_queryset = queryset
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+
+        # default admin search uses `__icontains` and it will return nothing if uuid
+        # contains hyphens even if that uuid has an associated record present in model
+        # for more details see https://code.djangoproject.com/ticket/29915
+        if not queryset:
+            queryset, use_distinct = super().get_search_results(
+                request, original_queryset, search_term.replace('-', '')
+            )
+
+        return queryset, use_distinct
+
     def change_view(self, request, object_id, form_url='', extra_context=None):
         catalog_uuid = EnterpriseCustomerCatalogAdminForm.get_catalog_preview_uuid(request.POST)
         if catalog_uuid:
@@ -797,6 +811,7 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
 
     list_filter = ("active",)
     search_fields = ("enterprise_customer__name", "email")
+    autocomplete_fields = ['enterprise_customer']
     ordering = ('enterprise_customer__name',)
 
     form = EnterpriseCustomerReportingConfigAdminForm

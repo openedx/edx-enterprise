@@ -17,6 +17,12 @@ Unreleased
 ----------
 * Nothing.
 
+[3.21.4]
+--------
+* allow searching of enterprise customer records with hyphenated uuid
+* add typeahead search dropdown to imporve enterprise customer search on
+  enterprise reporting configuration
+
 [3.21.3]
 --------
 * When a learner is linked from manage learners page, in-activate learner's other enterprises
