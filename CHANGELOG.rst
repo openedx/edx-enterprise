@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.2]
+--------
+* Feature: new UUID field on EnterpriseCatalogQuery model (and update to all existing query objects)
+
 [3.22.1]
 --------
 * Refactor: integrated channels learner exporter replace course api client

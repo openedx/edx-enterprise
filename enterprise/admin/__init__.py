@@ -716,7 +716,7 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
         """
         return discovery_query_url(obj.content_filter)
 
-    readonly_fields = ('discovery_query_url',)
+    readonly_fields = ('discovery_query_url', 'uuid')
     discovery_query_url.allow_tags = True
     discovery_query_url.short_description = 'Preview Catalog Courses'
 
