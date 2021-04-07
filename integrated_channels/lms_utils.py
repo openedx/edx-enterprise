@@ -15,10 +15,6 @@ except ImportError:
 
 from enterprise.utils import NotConnectedToOpenEdX
 
-# Constants
-COURSE_OVERVIEW_NOT_FOUND = 'CourseOverview could not be found for course_key: {course_key}'
-COURSE_KEY_INVALID = 'Invalid course_key: {course_key}'
-
 
 def get_course_certificate(course_key, user):
     """
