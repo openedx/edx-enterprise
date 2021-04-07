@@ -1864,6 +1864,12 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         ),
         validators=[validate_content_filter_fields]
     )
+    uuid = models.UUIDField(
+        unique=True,
+        blank=False,
+        null=False,
+        default=uuid4,
+    )
 
     class Meta:
         verbose_name = _("Enterprise Catalog Query")
