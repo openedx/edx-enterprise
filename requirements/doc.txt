@@ -6,7 +6,7 @@
 #
 alabaster==0.7.12
     # via sphinx
-amqp==5.0.5
+amqp==5.0.6
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -16,7 +16,7 @@ aniso8601==9.0.1
     #   edx-tincan-py35
 babel==2.9.0
     # via sphinx
-billiard==3.6.3.0
+billiard==3.6.4.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -61,7 +61,7 @@ click==7.1.2
     #   click-plugins
     #   click-repl
     #   code-annotations
-code-annotations==1.1.0
+code-annotations==1.1.1
     # via -r requirements/test-master.txt
 cryptography==3.2.1
     # via
@@ -104,7 +104,7 @@ django-waffle==2.1.0
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.19
+django==2.2.20
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -125,7 +125,7 @@ django==2.2.19
     #   rest-condition
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
-djangorestframework==3.12.2
+djangorestframework==3.12.4
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -134,18 +134,18 @@ djangorestframework==3.12.2
     #   rest-condition
 doc8==0.8.1
     # via -r requirements/doc.in
-docutils==0.16
+docutils==0.17
     # via
     #   -r requirements/doc.in
     #   doc8
     #   readme-renderer
     #   restructuredtext-lint
     #   sphinx
-drf-jwt==1.18.0
+drf-jwt==1.19.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==3.15.0
+edx-django-utils==3.16.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -163,7 +163,7 @@ edx-rbac==1.4.2
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.3.0
     # via -r requirements/test-master.txt
-edx-sphinx-theme==2.0.0
+edx-sphinx-theme==2.1.0
     # via -r requirements/doc.in
 edx-tincan-py35==1.0.0
     # via -r requirements/test-master.txt
@@ -215,7 +215,7 @@ pbr==5.5.1
     # via
     #   -r requirements/test-master.txt
     #   stevedore
-pillow==8.1.2
+pillow==8.2.0
     # via -r requirements/test-master.txt
 pockets==0.9.1
     # via sphinxcontrib-napoleon
