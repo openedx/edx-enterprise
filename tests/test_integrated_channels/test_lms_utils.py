@@ -8,8 +8,9 @@ import unittest
 import mock
 import pytest
 from opaque_keys import InvalidKeyError
+from opaque_keys.edx.keys import CourseKey
 
-from integrated_channels.lms_utils import get_course_certificate, get_single_user_grade
+from integrated_channels.lms_utils import get_course_certificate, get_course_details, get_single_user_grade
 from test_utils import factories
 
 A_GOOD_COURSE_ID = "edX/DemoX/Demo_Course"
@@ -51,9 +52,21 @@ class TestLMSUtils(unittest.TestCase):
         mock_course_grade_factory.return_value.read.return_value = expected_grade
         single_user_grade = get_single_user_grade(A_GOOD_COURSE_ID, self.user)
         assert single_user_grade == expected_grade
+        mock_course_grade_factory.return_value.read.assert_called_with(
+            self.user,
+            course_key=CourseKey.from_string(A_GOOD_COURSE_ID)
+        )
 
     @mock.patch('integrated_channels.lms_utils.CourseGradeFactory')
     def test_get_single_user_grade_bad_course_id_throws(self, mock_course_grade_factory):
         with pytest.raises(InvalidKeyError):
             get_single_user_grade(A_BAD_COURSE_ID, self.user)
             assert mock_course_grade_factory.call_count == 0
+
+    @mock.patch('integrated_channels.lms_utils.CourseOverview')
+    def test_get_course_details_success(self, mock_course_overview):
+        course_overview = {'field': 'value'}
+        mock_get_from_id = mock_course_overview.get_from_id
+        mock_get_from_id.return_value = course_overview
+        result_course_overview = get_course_details(A_GOOD_COURSE_ID)
+        assert result_course_overview == course_overview

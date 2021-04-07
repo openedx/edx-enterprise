@@ -17,11 +17,15 @@ from django.contrib import auth
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+try:
+    from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+except ImportError:
+    CourseOverview = None
 from consent.models import DataSharingConsent
-from enterprise.api_client.lms import CourseApiClient, GradesApiClient
+from enterprise.api_client.lms import GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.lms_utils import get_course_certificate, get_single_user_grade
+from integrated_channels.lms_utils import get_course_certificate, get_course_details, get_single_user_grade
 from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
@@ -86,22 +90,6 @@ class LearnerExporter(Exporter):
         Returns the string used for an audit course grade.
         """
         return self.GRADE_AUDIT
-
-    def fetch_course_details(self, course_details, enrollment_course_id):
-        """
-        Using a cached value of course details to prevent duplicate work, retrieve an enrollments course details
-        from the Course api. Returns None if no details could be retrieved.
-        """
-        # Check if first run or if the cached course ID doesn't match the enrollment course ID
-        if course_details is None or course_details['course_id'] != enrollment_course_id:
-            if self.course_api is None:
-                self.course_api = CourseApiClient()
-            course_details = self.course_api.get_course_details(enrollment_course_id)
-
-        if course_details is None:
-            return None
-
-        return course_details
 
     def bulk_assessment_level_export(self):
         """
@@ -187,8 +175,14 @@ class LearnerExporter(Exporter):
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
                 enterprise_enrollment):
 
-            # No caching because we're only fetching one course detail
-            course_details = self.fetch_course_details(None, course_run_id)
+            try:
+                course_details = get_course_details(course_run_id)
+            except InvalidKeyError:
+                LearnerExporter._log_courseid_not_found(course_run_id, enterprise_enrollment)
+            except CourseOverview.DoesNotExist:
+                LearnerExporter._log_course_details_not_found(
+                    course_run_id,
+                )
 
             if course_details:
                 assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
@@ -291,28 +285,22 @@ class LearnerExporter(Exporter):
             course_id = enterprise_enrollment.course_id
 
             # Fetch course details from Courses API
-            # pylint: disable=unsubscriptable-object
-            if course_details:
+            try:
+                course_details = get_course_details(course_id)
                 generate_formatted_log(
                     'Currently exporting for course: {curr_course}, '
-                    'but course details already found: {course_details}'.format(
+                    'Course_details: {course_details} '.format(
                         curr_course=course_id,
                         course_details=course_details
                     ),
                     channel_name=channel_name,
                     enterprise_customer_identifier=self.enterprise_customer.name
                 )
-
-            if course_details is None or course_details['course_id'] != course_id:
-                if self.course_api is None:
-                    self.course_api = CourseApiClient()
-                course_details = self.course_api.get_course_details(course_id)
-                generate_formatted_log(
-                    'Successfully retrieved course details for course: {}'.format(
-                        course_id
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name
+            except InvalidKeyError:
+                LearnerExporter._log_courseid_not_found(course_id, enterprise_enrollment)
+            except CourseOverview.DoesNotExist:
+                LearnerExporter._log_course_details_not_found(
+                    course_run_id,
                 )
 
             if course_details is None:
@@ -578,11 +566,11 @@ class LearnerExporter(Exporter):
         try:
             certificate = get_course_certificate(course_id, user)
         except InvalidKeyError:
-            self._log_courseid_not_found(course_id, enterprise_enrollment, lms_user_id)
+            LearnerExporter._log_courseid_not_found(course_id, enterprise_enrollment, lms_user_id)
             return completed_date, grade, is_passing, percent_grade
 
         if not certificate:
-            self._log_cert_not_found(course_id, enterprise_enrollment, lms_user_id)
+            LearnerExporter._log_cert_not_found(course_id, enterprise_enrollment, lms_user_id)
             return completed_date, grade, is_passing, percent_grade
 
         completed_date = certificate.get('created_date')
@@ -598,7 +586,8 @@ class LearnerExporter(Exporter):
 
         return completed_date, grade, is_passing, percent_grade
 
-    def _log_cert_not_found(self, course_id, enterprise_enrollment, lms_user_id):
+    @staticmethod
+    def _log_cert_not_found(course_id, enterprise_enrollment, lms_user_id):
         """
         Standardized logging for no certificate found (refactor candidate)
         """
@@ -611,7 +600,8 @@ class LearnerExporter(Exporter):
                          user_id=lms_user_id,
                      ))
 
-    def _log_courseid_not_found(self, course_id, enterprise_enrollment, lms_user_id):
+    @staticmethod
+    def _log_courseid_not_found(course_id, enterprise_enrollment, lms_user_id=None):
         """
         Standardized logging for no certificate found  (refactor candidate)
         """
@@ -623,6 +613,14 @@ class LearnerExporter(Exporter):
                          enterprise_enrollment=enterprise_enrollment,
                          user_id=lms_user_id,
                      ))
+
+    @staticmethod
+    def _log_course_details_not_found(course_id):
+        """
+        course_id valid but not course details are found
+        """
+        LOGGER.error('[Integrated Channel] course details not found for '
+                     'Course: {course_id}'.format(course_id=course_id))
 
     def _collect_assessment_grades_data(self, enterprise_enrollment):
         """
