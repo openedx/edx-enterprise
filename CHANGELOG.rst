@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.1]
+--------
+* Refactor: integrated channels learner exporter replace course api client
+
 [3.22.0]
 --------
 * Added a management command to send emails to learners with missing DSC
