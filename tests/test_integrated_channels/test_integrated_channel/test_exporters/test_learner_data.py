@@ -510,7 +510,7 @@ class TestLearnerExporter(unittest.TestCase):
             granted=True
         )
 
-        def get_course_details(course_key=None):
+        def get_course_details(course_key=None):  # pylint: disable=unused-argument
             """
             Mock course details - set course_id to match input
             """

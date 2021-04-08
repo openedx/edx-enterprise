@@ -215,7 +215,7 @@ class LearnerExporter(Exporter):
 
         return False
 
-    def _determine_enrollments_permitted(
+    def _determine_enrollments_permitted(  # pylint: disable=invalid-name
             self,
             learner_to_transmit,
             course_run_id,
