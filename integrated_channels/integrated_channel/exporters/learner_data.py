@@ -215,6 +215,47 @@ class LearnerExporter(Exporter):
 
         return False
 
+    def _determine_enrollments_permitted(
+            self,
+            learner_to_transmit,
+            course_run_id,
+            channel_name,
+            skip_transmitted,
+            TransmissionAudit,
+            grade,
+    ):
+        """
+        Determines which enrollments can be safely transmitted after checking
+        * enrollments that are already transmitted
+        * enrollments that are permitted to be transmitted by selecting enrollments for which:
+        *    - data sharing consent is granted
+        *    - audit_reporting is enabled (via enterprise level switch)
+        """
+        enrollments_to_process = self.get_enrollments_to_process(
+            learner_to_transmit,
+            course_run_id,
+            channel_name,
+        )
+
+        if TransmissionAudit and skip_transmitted:
+            untransmitted_enrollments = self._filter_out_pre_transmitted_enrollments(
+                enrollments_to_process,
+                channel_name,
+                grade,
+                TransmissionAudit
+            )
+        else:
+            untransmitted_enrollments = enrollments_to_process
+
+        # filter out enrollments which don't allow integrated_channels grade transmit
+        enrollments_permitted = set()
+        for enrollment in untransmitted_enrollments:
+            if (not LearnerExporter.has_data_sharing_consent(enrollment) or
+                    enrollment.audit_reporting_disabled):
+                continue
+            enrollments_permitted.add(enrollment)
+        return enrollments_permitted
+
     def export(self, **kwargs):  # pylint: disable=R0915
         """
         Collect learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
@@ -250,32 +291,22 @@ class LearnerExporter(Exporter):
             enterprise_customer_identifier=self.enterprise_customer.name
         )
 
-        enrollments_to_process = self.get_enrollments_to_process(
+        enrollments_permitted = self._determine_enrollments_permitted(
             learner_to_transmit,
             course_run_id,
             channel_name,
+            skip_transmitted,
+            TransmissionAudit,
+            grade,
+        )
+        enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_permitted]
+        LearnerExporter._log_beginning_export(
+            enrollment_ids_to_export,
+            channel_name,
+            self.enterprise_customer.name
         )
 
-        enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_to_process]
-        generate_formatted_log(
-            'Beginning export of enrollments: {enrollments}.'.format(
-                enrollments=enrollment_ids_to_export,
-            ),
-            channel_name=channel_name,
-            enterprise_customer_identifier=self.enterprise_customer.name
-        )
-
-        if TransmissionAudit and skip_transmitted:
-            enrollments_to_transmit = self._filter_out_pre_transmitted_enrollments(
-                enrollments_to_process,
-                channel_name,
-                grade,
-                TransmissionAudit
-            )
-        else:
-            enrollments_to_transmit = enrollments_to_process
-
-        for enterprise_enrollment in enrollments_to_transmit:
+        for enterprise_enrollment in enrollments_permitted:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             enterprise_user_id = enterprise_enrollment.enterprise_customer_user.user_id
             course_id = enterprise_enrollment.course_id
@@ -311,10 +342,6 @@ class LearnerExporter(Exporter):
                     enterprise_customer_identifier=self.enterprise_customer.name,
                     is_error=True,
                 )
-                continue
-
-            if (not LearnerExporter.has_data_sharing_consent(enterprise_enrollment) or
-                    enterprise_enrollment.audit_reporting_disabled):
                 continue
 
             # For instructor-paced and non-audit courses, let the certificate determine course completion
@@ -581,6 +608,17 @@ class LearnerExporter(Exporter):
         grade = self.grade_passing if is_passing else self.grade_failing
 
         return completed_date, grade, is_passing, percent_grade
+
+    @staticmethod
+    def _log_beginning_export(enrollment_ids_to_export, channel_name, enterprise_customer_name):
+        """beginning export of permitted enrollments"""
+        generate_formatted_log(
+            'Beginning export of enrollments: {enrollments}.'.format(
+                enrollments=enrollment_ids_to_export,
+            ),
+            channel_name=channel_name,
+            enterprise_customer_identifier=enterprise_customer_name,
+        )
 
     @staticmethod
     def _log_cert_not_found(course_id, enterprise_enrollment, lms_user_id):
