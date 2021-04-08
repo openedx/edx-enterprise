@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.4]
+--------
+* Fix: learner_data exporter bug fix and refactor for cleaner enrollment filtering
+
 [3.22.3]
 --------
 * Feature: including EnterpriseCatalogQuery UUID field in request payload to enterprise-catalog on EnterpriseCatalog updates
