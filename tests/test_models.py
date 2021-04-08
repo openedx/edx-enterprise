@@ -1386,7 +1386,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         the discovery service API
         """
         mock_catalog_api = mock_catalog_api_class.return_value
-        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(enterprise_catalog_query=None)
         enterprise_catalog.get_paginated_content(QueryDict())
         default_catalog_content_filter = get_default_catalog_content_filter()
         query_param = {"exclude_expired_course_run": True}
@@ -1415,7 +1415,10 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         catalog_query_content_filter = {"content_type": "course", "partner": "edx"}
         catalog_content_filter = {"content_type": "course_run", "partner": "dummy"}
         catalog_query = factories.EnterpriseCatalogQueryFactory(content_filter=catalog_query_content_filter)
-        catalog = factories.EnterpriseCustomerCatalogFactory(content_filter=catalog_content_filter)
+        catalog = factories.EnterpriseCustomerCatalogFactory(
+            content_filter=catalog_content_filter,
+            enterprise_catalog_query=None
+        )
         self.assertEqual(catalog.get_content_filter(), catalog_content_filter)
 
         catalog.enterprise_catalog_query = catalog_query

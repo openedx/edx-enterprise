@@ -1773,7 +1773,8 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
                     fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid'],
                     fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
-            }
+            },
+            enterprise_catalog_query=None,
         )
 
         mock_catalog_api_client.return_value = mock.Mock(

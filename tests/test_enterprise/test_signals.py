@@ -313,7 +313,7 @@ class TestDefaultContentFilter(unittest.TestCase):
         Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
         """
         with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER=default_content_filter):
-            enterprise_catalog = EnterpriseCustomerCatalogFactory()
+            enterprise_catalog = EnterpriseCustomerCatalogFactory(enterprise_catalog_query=None)
             assert enterprise_catalog.content_filter == expected_content_filter
 
 
@@ -772,7 +772,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.title,
             enterprise_catalog.content_filter,
             enterprise_catalog.enabled_course_modes,
-            enterprise_catalog.publish_audit_enrollment_urls
+            enterprise_catalog.publish_audit_enrollment_urls,
+            str(enterprise_catalog.enterprise_catalog_query.uuid)
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -792,7 +793,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.title,
             enterprise_catalog.content_filter,
             enterprise_catalog.enabled_course_modes,
-            enterprise_catalog.publish_audit_enrollment_urls
+            enterprise_catalog.publish_audit_enrollment_urls,
+            str(enterprise_catalog.enterprise_catalog_query.uuid),
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -812,7 +814,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             title=enterprise_catalog.title,
             content_filter=enterprise_catalog.content_filter,
             enabled_course_modes=enterprise_catalog.enabled_course_modes,
-            publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
+            publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls,
+            catalog_query_uuid=str(enterprise_catalog.enterprise_catalog_query.uuid)
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -864,7 +867,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             title=enterprise_catalog_2.title,
             content_filter=enterprise_catalog_2.content_filter,
             enabled_course_modes=enterprise_catalog_2.enabled_course_modes,
-            publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls
+            publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls,
+            catalog_query_uuid=str(test_query.uuid)
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
 

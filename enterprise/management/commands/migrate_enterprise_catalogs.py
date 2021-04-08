@@ -76,6 +76,7 @@ class Command(BaseCommand):
                         enterprise_catalog.content_filter,
                         enterprise_catalog.enabled_course_modes,
                         enterprise_catalog.publish_audit_enrollment_urls,
+                        str(enterprise_catalog.enterprise_catalog_query.uuid),
                     )
                 else:
                     # catalog with matching uuid does exist in enterprise-catalog
@@ -87,6 +88,7 @@ class Command(BaseCommand):
                         'content_filter': enterprise_catalog.content_filter,
                         'enabled_course_modes': enterprise_catalog.enabled_course_modes,
                         'publish_audit_enrollment_urls': enterprise_catalog.publish_audit_enrollment_urls,
+                        'catalog_query_uuid': str(enterprise_catalog.enterprise_catalog_query.uuid),
                     }
                     client.update_enterprise_catalog(
                         str(enterprise_catalog.uuid),
