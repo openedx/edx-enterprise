@@ -2,7 +2,7 @@
 """
 Miscellaneous utils for tests.
 """
-
+from collections import namedtuple
 import copy
 
 
@@ -20,3 +20,12 @@ def merge_dicts(dict1, dict2):
             else:
                 merged_dict.update(dict2)
     return merged_dict
+
+
+def mock_course_overview(pacing='instructor', end=None):
+    """Generate an object approximating the CourseOverview model from edx-platform"""
+    dictionary = {
+        'end': end,
+        'pacing': pacing,
+    }
+    return namedtuple("CourseOverview", dictionary.keys())(*dictionary.values())

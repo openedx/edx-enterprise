@@ -4,7 +4,6 @@ Tests for the `edx-enterprise` learner_data export classes.
 """
 import datetime
 import unittest
-from collections import namedtuple
 
 import ddt
 import mock
@@ -15,16 +14,8 @@ from django.utils import timezone
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
+from test_utils.integrated_channels_utils import mock_course_overview
 from test_utils import factories
-
-
-def mock_course_overview(pacing='instructor', end=None):
-    """Generate an object approximating the CourseOverview model from edx-platform"""
-    dictionary = {
-        'end': end,
-        'pacing': pacing,
-    }
-    return namedtuple("CourseOverview", dictionary.keys())(*dictionary.values())
 
 
 @mark.django_db
@@ -510,7 +501,7 @@ class TestLearnerExporter(unittest.TestCase):
             granted=True
         )
 
-        def get_course_details(course_key=None):  # pylint: disable=unused-argument
+        def get_course_details(course_key):  # pylint: disable=unused-argument
             """
             Mock course details - set course_id to match input
             """
@@ -563,21 +554,19 @@ class TestLearnerExporter(unittest.TestCase):
             assert report1.grade == LearnerExporter.GRADE_INCOMPLETE
 
         assert learner_data[2].course_id == self.course_key
-        assert learner_data[3].course_id == self.course_id
+        assert learner_data[3].course_id == course_id2
         for report2 in learner_data[2:3]:
-            assert report2.enterprise_course_enrollment_id == enrollment3.id
-            assert not report2.course_completed
-            assert report2.completed_timestamp is None
-            assert report2.grade == LearnerExporter.GRADE_INCOMPLETE
-
+            assert report2.enterprise_course_enrollment_id == enrollment2.id
+            assert report2.course_completed
+            assert report2.completed_timestamp == self.NOW_TIMESTAMP
+            assert report2.grade == grade
         assert learner_data[4].course_id == self.course_key
-        assert learner_data[5].course_id == course_id2
+        assert learner_data[5].course_id == self.course_id
         for report3 in learner_data[4:5]:
-            assert report3.enterprise_course_enrollment_id == enrollment2.id
-            # assert report3.course_id == course_id2
-            assert report3.course_completed
-            assert report3.completed_timestamp == self.NOW_TIMESTAMP
-            assert report3.grade == grade
+            assert report3.enterprise_course_enrollment_id == enrollment3.id
+            assert not report3.course_completed
+            assert report3.completed_timestamp == None
+            assert report3.grade == LearnerExporter.GRADE_INCOMPLETE
 
     @ddt.data(
         (True, True, 'audit', 2),
