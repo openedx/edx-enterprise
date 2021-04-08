@@ -14,8 +14,8 @@ from django.utils import timezone
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
-from test_utils.integrated_channels_utils import mock_course_overview
 from test_utils import factories
+from test_utils.integrated_channels_utils import mock_course_overview
 
 
 @mark.django_db
