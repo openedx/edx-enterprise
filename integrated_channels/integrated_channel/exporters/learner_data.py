@@ -173,32 +173,21 @@ class LearnerExporter(Exporter):
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
                 enterprise_enrollment):
 
-            course_details = None
-            try:
-                course_details = get_course_details(course_run_id)
-            except InvalidKeyError:
-                LearnerExporter._log_courseid_not_found(course_run_id, enterprise_enrollment)
-            except CourseOverview.DoesNotExist:
-                LearnerExporter._log_course_details_not_found(
-                    course_run_id,
-                )
+            assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
 
-            if course_details:
-                assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
-
-                records = self.get_learner_assessment_data_records(
-                    enterprise_enrollment=enterprise_enrollment,
-                    assessment_grade_data=assessment_grade_data,
-                )
-                if records:
-                    # There are some cases where we won't receive a record from the above
-                    # method; right now, that should only happen if we have an Enterprise-linked
-                    # user for the integrated channel, and transmission of that user's
-                    # data requires an upstream user identifier that we don't have (due to a
-                    # failure of SSO or similar). In such a case, `get_learner_data_record`
-                    # would return None, and we'd simply skip yielding it here.
-                    for record in records:
-                        yield record
+            records = self.get_learner_assessment_data_records(
+                enterprise_enrollment=enterprise_enrollment,
+                assessment_grade_data=assessment_grade_data,
+            )
+            if records:
+                # There are some cases where we won't receive a record from the above
+                # method; right now, that should only happen if we have an Enterprise-linked
+                # user for the integrated channel, and transmission of that user's
+                # data requires an upstream user identifier that we don't have (due to a
+                # failure of SSO or similar). In such a case, `get_learner_data_record`
+                # would return None, and we'd simply skip yielding it here.
+                for record in records:
+                    yield record
 
     @staticmethod
     def has_data_sharing_consent(enterprise_enrollment):
