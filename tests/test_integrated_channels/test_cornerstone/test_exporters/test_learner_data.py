@@ -21,9 +21,9 @@ from enterprise.api_client import lms as lms_api
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
 from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
-from test_utils.integrated_channels_utils import mock_course_overview
 from test_utils import factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
+from test_utils.integrated_channels_utils import mock_course_overview
 
 
 @mark.django_db
