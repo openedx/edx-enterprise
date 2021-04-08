@@ -565,7 +565,7 @@ class TestLearnerExporter(unittest.TestCase):
         for report3 in learner_data[4:5]:
             assert report3.enterprise_course_enrollment_id == enrollment3.id
             assert not report3.course_completed
-            assert report3.completed_timestamp == None
+            assert report3.completed_timestamp is None
             assert report3.grade == LearnerExporter.GRADE_INCOMPLETE
 
     @ddt.data(

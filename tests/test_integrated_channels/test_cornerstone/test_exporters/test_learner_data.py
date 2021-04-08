@@ -21,6 +21,7 @@ from enterprise.api_client import lms as lms_api
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
 from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
+from test_utils.integrated_channels_utils import mock_course_overview
 from test_utils import factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
 
@@ -143,11 +144,10 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         """
         Test sending of course completion data to cornerstone progress API
         """
-        mock_get_course_details.return_value = {
-            "course_id": self.course_key,
-            "pacing": "instructor",
-            "end": "2022-06-21T12:58:17.428373Z",
-        }
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing="instructor",
+            end="2022-06-21T12:58:17.428373Z",
+        )
 
         # Enrollment API
         responses.add(
@@ -213,11 +213,10 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self._setup_enterprise_enrollment(self.user, course_id, course_key)
 
         # Course API course_details response
-        course_details = {
-            "course_id": course_key,
-            "pacing": "instructor",
-            "end": "2038-06-21T12:58:17.428373Z",
-        }
+        course_details = mock_course_overview(
+            pacing="instructor",
+            end="2038-06-21T12:58:17.428373Z",
+        )
 
         mock_get_course_details.return_value = course_details
 
