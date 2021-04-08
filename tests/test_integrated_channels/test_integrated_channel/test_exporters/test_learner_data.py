@@ -510,7 +510,7 @@ class TestLearnerExporter(unittest.TestCase):
             granted=True
         )
 
-        def get_course_details(course_key):
+        def get_course_details(course_key=None):
             """
             Mock course details - set course_id to match input
             """
