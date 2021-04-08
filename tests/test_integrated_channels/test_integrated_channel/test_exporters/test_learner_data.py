@@ -2,9 +2,9 @@
 """
 Tests for the `edx-enterprise` learner_data export classes.
 """
-
 import datetime
 import unittest
+from collections import namedtuple
 
 import ddt
 import mock
@@ -16,6 +16,15 @@ from django.utils import timezone
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 from test_utils import factories
+
+
+def mock_course_overview(pacing='instructor', end=None):
+    """Generate an object approximating the CourseOverview model from edx-platform"""
+    dictionary = {
+        'end': end,
+        'pacing': pacing,
+    }
+    return namedtuple("CourseOverview", dictionary.keys())(*dictionary.values())
 
 
 @mark.django_db
@@ -150,7 +159,7 @@ class TestLearnerExporter(unittest.TestCase):
         self.data_sharing_consent.save()
 
         # Return random course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='self'
         )
 
@@ -200,7 +209,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Return instructor-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
         )
 
@@ -237,7 +246,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_course_certificate.return_value = None
 
         # Return instructor-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
         )
 
@@ -276,7 +285,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_course_certificate.return_value = certificate
 
         # Return instructor-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
         )
 
@@ -315,9 +324,9 @@ class TestLearnerExporter(unittest.TestCase):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
         # Return self-paced course details
-        mock_get_course_details.return_value = {
-            'pacing': 'self',
-        }
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='self',
+        )
 
         # Mock grades data not found
         mock_get_single_user_grade.return_value = None
@@ -381,7 +390,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
         # Mock self-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='self',
             end=end_date.isoformat() if end_date else None,
         )
@@ -501,13 +510,12 @@ class TestLearnerExporter(unittest.TestCase):
             granted=True
         )
 
-        def get_course_details(course_id):
+        def get_course_details(course_key):
             """
             Mock course details - set course_id to match input
             """
-            return dict(
+            return mock_course_overview(
                 pacing=pacing,
-                course_id=course_id
             )
         mock_get_course_details.side_effect = get_course_details
 
@@ -610,9 +618,8 @@ class TestLearnerExporter(unittest.TestCase):
         self.enterprise_customer.save()
 
         # Use self-paced course to get grades data
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='self',
-            course_id=self.course_id,
         )
 
         # Mock grades data

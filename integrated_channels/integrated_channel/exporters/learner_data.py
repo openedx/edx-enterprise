@@ -59,8 +59,6 @@ class LearnerExporter(Exporter):
         self.course_api = None
         self.course_enrollment_api = None
 
-        # Cached course details data from the Course API.
-        self.course_details = dict()
         super().__init__(user, enterprise_configuration)
 
     @property
@@ -175,6 +173,7 @@ class LearnerExporter(Exporter):
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
                 enterprise_enrollment):
 
+            course_details = None
             try:
                 course_details = get_course_details(course_run_id)
             except InvalidKeyError:
@@ -276,15 +275,12 @@ class LearnerExporter(Exporter):
         else:
             enrollments_to_transmit = enrollments_to_process
 
-        # Fetch course details from the Course API, and cache between calls.
-        course_details = None
-
         for enterprise_enrollment in enrollments_to_transmit:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             enterprise_user_id = enterprise_enrollment.enterprise_customer_user.user_id
             course_id = enterprise_enrollment.course_id
 
-            # Fetch course details from Courses API
+            course_details = None
             try:
                 course_details = get_course_details(course_id)
                 generate_formatted_log(
@@ -322,7 +318,7 @@ class LearnerExporter(Exporter):
                 continue
 
             # For instructor-paced and non-audit courses, let the certificate determine course completion
-            if course_details.get('pacing') == 'instructor' and not is_audit_enrollment:
+            if course_details.pacing == 'instructor' and not is_audit_enrollment:
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment)
                 generate_formatted_log(
@@ -678,7 +674,7 @@ class LearnerExporter(Exporter):
         Args:
             enterprise_enrollment (EnterpriseCourseEnrollment): the enterprise enrollment record for which we need to
             collect completion/grade data
-            course_details (dict): the course details for the course in the enterprise enrollment record.
+            course_details (CourseOverview): the course details for the course in the enterprise enrollment record.
 
         Returns:
             completed_date: Date the course was completed, None if course has not been completed.
@@ -703,7 +699,7 @@ class LearnerExporter(Exporter):
             return None, None, None, None
 
         # Prepare to process the course end date and pass/fail grade
-        course_end_date = course_details.get('end')
+        course_end_date = course_details.end
         if course_end_date is not None:
             course_end_date = parse_datetime(course_end_date)
         now = timezone.now()
