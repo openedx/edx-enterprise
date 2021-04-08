@@ -2,8 +2,8 @@
 """
 Miscellaneous utils for tests.
 """
-from collections import namedtuple
 import copy
+from collections import namedtuple
 
 
 def merge_dicts(dict1, dict2):
