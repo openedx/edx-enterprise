@@ -182,6 +182,14 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         """
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
 
+    def get_identity_provider(self, obj):
+        """
+        Return the default identity provider if has multiple otherwise return the first one.
+        """
+        if obj.has_multiple_idps:
+            return obj.default_provider_idp
+        return obj.identity_provider
+
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
     """
