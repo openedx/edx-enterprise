@@ -2,9 +2,10 @@
 """
 Miscellaneous utils for tests.
 """
-from django.utils import timezone
 import copy
 from collections import namedtuple
+
+from django.utils import timezone
 
 
 def merge_dicts(dict1, dict2):
