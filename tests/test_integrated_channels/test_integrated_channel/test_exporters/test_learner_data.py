@@ -15,7 +15,7 @@ from django.utils import timezone
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 from test_utils import factories
-from test_utils.integrated_channels_utils import mock_course_overview
+from test_utils.integrated_channels_utils import mock_course_overview, mock_single_learner_grade
 
 
 @mark.django_db
@@ -383,12 +383,12 @@ class TestLearnerExporter(unittest.TestCase):
         # Mock self-paced course details
         mock_get_course_details.return_value = mock_course_overview(
             pacing='self',
-            end=end_date.isoformat() if end_date else None,
+            end=end_date if end_date else None,
         )
 
         # Mock grades data
-        mock_get_single_user_grade.return_value = dict(
-            passed=passing,
+        mock_get_single_user_grade.return_value = mock_single_learner_grade(
+            passing=passing,
         )
 
         # Mock enrollment data
@@ -523,14 +523,13 @@ class TestLearnerExporter(unittest.TestCase):
             return None
         mock_get_course_certificate.side_effect = get_course_certificate
 
-        def get_course_grade(course_id, username):
+        def get_course_grade(course_id, username):  # pylint: disable=unused-argument
             """
             Mock grades data - set passed depending on course_id
             """
-            return dict(
-                passed='2' in course_id,
-                course_key=course_id,
-                username=username,
+            return mock_single_learner_grade(
+                passing='2' in course_id,
+                percent=100.0,
             )
         mock_get_single_user_grade.side_effect = get_course_grade
 
@@ -612,8 +611,8 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock grades data
-        mock_get_single_user_grade.return_value = dict(
-            passed=True,
+        mock_get_single_user_grade.return_value = mock_single_learner_grade(
+            passing=True,
         )
 
         # Mock enrollment data, in particular the enrollment mode

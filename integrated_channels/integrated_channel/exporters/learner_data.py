@@ -727,10 +727,8 @@ class LearnerExporter(Exporter):
 
         # Prepare to process the course end date and pass/fail grade
         course_end_date = course_details.end
-        if course_end_date is not None:
-            course_end_date = parse_datetime(course_end_date)
         now = timezone.now()
-        is_passing = grades_data.get('passed')
+        is_passing = grades_data.passed
 
         # We can consider a course complete if:
         # * the course's end date has passed
@@ -749,6 +747,6 @@ class LearnerExporter(Exporter):
             completed_date = None
             grade = self.grade_incomplete
 
-        percent_grade = grades_data.get('percent', None)
+        percent_grade = grades_data.percent
 
         return completed_date, grade, is_passing, percent_grade

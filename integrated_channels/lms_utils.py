@@ -56,7 +56,9 @@ def get_single_user_grade(course_key, user):
         user (django.contrib.auth.User): user instance
 
     Returns:
-        A serializable list of grade responses
+        A CourseGrade object with at least these fields:
+            - percent (Number)
+            - passed (Boolean)
     """
     if not CourseGradeFactory:
         raise NotConnectedToOpenEdX(
