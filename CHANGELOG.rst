@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.3]
+--------
+* Feature: including EnterpriseCatalogQuery UUID field in request payload to enterprise-catalog on EnterpriseCatalog updates
+
 [3.22.2]
 --------
 * Feature: new UUID field on EnterpriseCatalogQuery model (and update to all existing query objects)

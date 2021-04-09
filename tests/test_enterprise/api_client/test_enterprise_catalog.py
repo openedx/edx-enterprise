@@ -51,6 +51,7 @@ def test_create_enterprise_catalog():
         'content_filter': {"content_type": "course"},
         'enabled_course_modes': ["verified"],
         'publish_audit_enrollment_urls': 'false',
+        'catalog_query_uuid': None
     }
     responses.add(
         responses.POST,
@@ -65,7 +66,8 @@ def test_create_enterprise_catalog():
         expected_response['title'],
         expected_response['content_filter'],
         expected_response['enabled_course_modes'],
-        expected_response['publish_audit_enrollment_urls']
+        expected_response['publish_audit_enrollment_urls'],
+        expected_request['catalog_query_uuid']
     )
     assert actual_response == expected_response
     request = responses.calls[0][0]

@@ -257,6 +257,8 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
     Algolia.
     """
     catalog_uuid = instance.uuid
+    catalog_query_uuid = instance.enterprise_catalog_query.uuid if instance.enterprise_catalog_query else None
+
     try:
         catalog_client = EnterpriseCatalogApiClient()
         if kwargs['created']:
@@ -284,6 +286,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 instance.content_filter,
                 instance.enabled_course_modes,
                 instance.publish_audit_enrollment_urls,
+                str(catalog_query_uuid)
             )
         else:
             # catalog with matching uuid does exist in enterprise-catalog
@@ -295,6 +298,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 'content_filter': instance.content_filter,
                 'enabled_course_modes': instance.enabled_course_modes,
                 'publish_audit_enrollment_urls': instance.publish_audit_enrollment_urls,
+                'catalog_query_uuid': str(catalog_query_uuid),
             }
             catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
         # Refresh catalog on all creates and updates
