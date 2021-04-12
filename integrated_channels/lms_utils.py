@@ -56,7 +56,9 @@ def get_single_user_grade(course_key, user):
         user (django.contrib.auth.User): user instance
 
     Returns:
-        A serializable list of grade responses
+        A CourseGrade object with at least these fields:
+            - percent (Number)
+            - passed (Boolean)
     """
     if not CourseGradeFactory:
         raise NotConnectedToOpenEdX(
@@ -73,9 +75,7 @@ def get_course_details(course_key):
     Args:
         course_key (string): string course key
     Returns:
-        Tuple with values:
-            course_overview or None
-            error_code or None (if there is an error fetching course details)
+        course_overview: (openedx.core.djangoapps.content.course_overviews.models.CourseOverview)
 
     If there is a problem loading the CourseOverview class, throws NotConnectedToOpenEdX
     If issues with course_key string, throws a InvalidKeyError

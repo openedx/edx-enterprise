@@ -2,7 +2,6 @@
 """
 Tests for the `edx-enterprise` learner_data export classes.
 """
-
 import datetime
 import unittest
 
@@ -16,6 +15,7 @@ from django.utils import timezone
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 from test_utils import factories
+from test_utils.integrated_channels_utils import mock_course_overview, mock_single_learner_grade
 
 
 @mark.django_db
@@ -150,7 +150,7 @@ class TestLearnerExporter(unittest.TestCase):
         self.data_sharing_consent.save()
 
         # Return random course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='self'
         )
 
@@ -200,7 +200,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Return instructor-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
         )
 
@@ -237,7 +237,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_course_certificate.return_value = None
 
         # Return instructor-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
         )
 
@@ -276,7 +276,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_course_certificate.return_value = certificate
 
         # Return instructor-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
         )
 
@@ -315,9 +315,9 @@ class TestLearnerExporter(unittest.TestCase):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
         # Return self-paced course details
-        mock_get_course_details.return_value = {
-            'pacing': 'self',
-        }
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='self',
+        )
 
         # Mock grades data not found
         mock_get_single_user_grade.return_value = None
@@ -381,14 +381,14 @@ class TestLearnerExporter(unittest.TestCase):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
         # Mock self-paced course details
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='self',
-            end=end_date.isoformat() if end_date else None,
+            end=end_date if end_date else None,
         )
 
         # Mock grades data
-        mock_get_single_user_grade.return_value = dict(
-            passed=passing,
+        mock_get_single_user_grade.return_value = mock_single_learner_grade(
+            passing=passing,
         )
 
         # Mock enrollment data
@@ -501,13 +501,12 @@ class TestLearnerExporter(unittest.TestCase):
             granted=True
         )
 
-        def get_course_details(course_id):
+        def get_course_details(course_key):  # pylint: disable=unused-argument
             """
             Mock course details - set course_id to match input
             """
-            return dict(
+            return mock_course_overview(
                 pacing=pacing,
-                course_id=course_id
             )
         mock_get_course_details.side_effect = get_course_details
 
@@ -524,14 +523,13 @@ class TestLearnerExporter(unittest.TestCase):
             return None
         mock_get_course_certificate.side_effect = get_course_certificate
 
-        def get_course_grade(course_id, username):
+        def get_course_grade(course_id, username):  # pylint: disable=unused-argument
             """
             Mock grades data - set passed depending on course_id
             """
-            return dict(
-                passed='2' in course_id,
-                course_key=course_id,
-                username=username,
+            return mock_single_learner_grade(
+                passing='2' in course_id,
+                percent=100.0,
             )
         mock_get_single_user_grade.side_effect = get_course_grade
 
@@ -555,21 +553,19 @@ class TestLearnerExporter(unittest.TestCase):
             assert report1.grade == LearnerExporter.GRADE_INCOMPLETE
 
         assert learner_data[2].course_id == self.course_key
-        assert learner_data[3].course_id == self.course_id
+        assert learner_data[3].course_id == course_id2
         for report2 in learner_data[2:3]:
-            assert report2.enterprise_course_enrollment_id == enrollment3.id
-            assert not report2.course_completed
-            assert report2.completed_timestamp is None
-            assert report2.grade == LearnerExporter.GRADE_INCOMPLETE
-
+            assert report2.enterprise_course_enrollment_id == enrollment2.id
+            assert report2.course_completed
+            assert report2.completed_timestamp == self.NOW_TIMESTAMP
+            assert report2.grade == grade
         assert learner_data[4].course_id == self.course_key
-        assert learner_data[5].course_id == course_id2
+        assert learner_data[5].course_id == self.course_id
         for report3 in learner_data[4:5]:
-            assert report3.enterprise_course_enrollment_id == enrollment2.id
-            # assert report3.course_id == course_id2
-            assert report3.course_completed
-            assert report3.completed_timestamp == self.NOW_TIMESTAMP
-            assert report3.grade == grade
+            assert report3.enterprise_course_enrollment_id == enrollment3.id
+            assert not report3.course_completed
+            assert report3.completed_timestamp is None
+            assert report3.grade == LearnerExporter.GRADE_INCOMPLETE
 
     @ddt.data(
         (True, True, 'audit', 2),
@@ -610,14 +606,13 @@ class TestLearnerExporter(unittest.TestCase):
         self.enterprise_customer.save()
 
         # Use self-paced course to get grades data
-        mock_get_course_details.return_value = dict(
+        mock_get_course_details.return_value = mock_course_overview(
             pacing='self',
-            course_id=self.course_id,
         )
 
         # Mock grades data
-        mock_get_single_user_grade.return_value = dict(
-            passed=True,
+        mock_get_single_user_grade.return_value = mock_single_learner_grade(
+            passing=True,
         )
 
         # Mock enrollment data, in particular the enrollment mode

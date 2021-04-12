@@ -59,8 +59,6 @@ class LearnerExporter(Exporter):
         self.course_api = None
         self.course_enrollment_api = None
 
-        # Cached course details data from the Course API.
-        self.course_details = dict()
         super().__init__(user, enterprise_configuration)
 
     @property
@@ -175,31 +173,21 @@ class LearnerExporter(Exporter):
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
                 enterprise_enrollment):
 
-            try:
-                course_details = get_course_details(course_run_id)
-            except InvalidKeyError:
-                LearnerExporter._log_courseid_not_found(course_run_id, enterprise_enrollment)
-            except CourseOverview.DoesNotExist:
-                LearnerExporter._log_course_details_not_found(
-                    course_run_id,
-                )
+            assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
 
-            if course_details:
-                assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
-
-                records = self.get_learner_assessment_data_records(
-                    enterprise_enrollment=enterprise_enrollment,
-                    assessment_grade_data=assessment_grade_data,
-                )
-                if records:
-                    # There are some cases where we won't receive a record from the above
-                    # method; right now, that should only happen if we have an Enterprise-linked
-                    # user for the integrated channel, and transmission of that user's
-                    # data requires an upstream user identifier that we don't have (due to a
-                    # failure of SSO or similar). In such a case, `get_learner_data_record`
-                    # would return None, and we'd simply skip yielding it here.
-                    for record in records:
-                        yield record
+            records = self.get_learner_assessment_data_records(
+                enterprise_enrollment=enterprise_enrollment,
+                assessment_grade_data=assessment_grade_data,
+            )
+            if records:
+                # There are some cases where we won't receive a record from the above
+                # method; right now, that should only happen if we have an Enterprise-linked
+                # user for the integrated channel, and transmission of that user's
+                # data requires an upstream user identifier that we don't have (due to a
+                # failure of SSO or similar). In such a case, `get_learner_data_record`
+                # would return None, and we'd simply skip yielding it here.
+                for record in records:
+                    yield record
 
     @staticmethod
     def has_data_sharing_consent(enterprise_enrollment):
@@ -215,6 +203,47 @@ class LearnerExporter(Exporter):
             return True
 
         return False
+
+    def _determine_enrollments_permitted(  # pylint: disable=invalid-name
+            self,
+            learner_to_transmit,
+            course_run_id,
+            channel_name,
+            skip_transmitted,
+            TransmissionAudit,
+            grade,
+    ):
+        """
+        Determines which enrollments can be safely transmitted after checking
+        * enrollments that are already transmitted
+        * enrollments that are permitted to be transmitted by selecting enrollments for which:
+        *    - data sharing consent is granted
+        *    - audit_reporting is enabled (via enterprise level switch)
+        """
+        enrollments_to_process = self.get_enrollments_to_process(
+            learner_to_transmit,
+            course_run_id,
+            channel_name,
+        )
+
+        if TransmissionAudit and skip_transmitted:
+            untransmitted_enrollments = self._filter_out_pre_transmitted_enrollments(
+                enrollments_to_process,
+                channel_name,
+                grade,
+                TransmissionAudit
+            )
+        else:
+            untransmitted_enrollments = enrollments_to_process
+
+        # filter out enrollments which don't allow integrated_channels grade transmit
+        enrollments_permitted = set()
+        for enrollment in untransmitted_enrollments:
+            if (not LearnerExporter.has_data_sharing_consent(enrollment) or
+                    enrollment.audit_reporting_disabled):
+                continue
+            enrollments_permitted.add(enrollment)
+        return enrollments_permitted
 
     def export(self, **kwargs):  # pylint: disable=R0915
         """
@@ -251,40 +280,27 @@ class LearnerExporter(Exporter):
             enterprise_customer_identifier=self.enterprise_customer.name
         )
 
-        enrollments_to_process = self.get_enrollments_to_process(
+        enrollments_permitted = self._determine_enrollments_permitted(
             learner_to_transmit,
             course_run_id,
             channel_name,
+            skip_transmitted,
+            TransmissionAudit,
+            grade,
+        )
+        enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_permitted]
+        LearnerExporter._log_beginning_export(
+            enrollment_ids_to_export,
+            channel_name,
+            self.enterprise_customer.name
         )
 
-        enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_to_process]
-        generate_formatted_log(
-            'Beginning export of enrollments: {enrollments}.'.format(
-                enrollments=enrollment_ids_to_export,
-            ),
-            channel_name=channel_name,
-            enterprise_customer_identifier=self.enterprise_customer.name
-        )
-
-        if TransmissionAudit and skip_transmitted:
-            enrollments_to_transmit = self._filter_out_pre_transmitted_enrollments(
-                enrollments_to_process,
-                channel_name,
-                grade,
-                TransmissionAudit
-            )
-        else:
-            enrollments_to_transmit = enrollments_to_process
-
-        # Fetch course details from the Course API, and cache between calls.
-        course_details = None
-
-        for enterprise_enrollment in enrollments_to_transmit:
+        for enterprise_enrollment in enrollments_permitted:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             enterprise_user_id = enterprise_enrollment.enterprise_customer_user.user_id
             course_id = enterprise_enrollment.course_id
 
-            # Fetch course details from Courses API
+            course_details = None
             try:
                 course_details = get_course_details(course_id)
                 generate_formatted_log(
@@ -317,12 +333,8 @@ class LearnerExporter(Exporter):
                 )
                 continue
 
-            if (not LearnerExporter.has_data_sharing_consent(enterprise_enrollment) or
-                    enterprise_enrollment.audit_reporting_disabled):
-                continue
-
             # For instructor-paced and non-audit courses, let the certificate determine course completion
-            if course_details.get('pacing') == 'instructor' and not is_audit_enrollment:
+            if course_details.pacing == 'instructor' and not is_audit_enrollment:
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment)
                 generate_formatted_log(
@@ -587,6 +599,17 @@ class LearnerExporter(Exporter):
         return completed_date, grade, is_passing, percent_grade
 
     @staticmethod
+    def _log_beginning_export(enrollment_ids_to_export, channel_name, enterprise_customer_name):
+        """beginning export of permitted enrollments"""
+        generate_formatted_log(
+            'Beginning export of enrollments: {enrollments}.'.format(
+                enrollments=enrollment_ids_to_export,
+            ),
+            channel_name=channel_name,
+            enterprise_customer_identifier=enterprise_customer_name,
+        )
+
+    @staticmethod
     def _log_cert_not_found(course_id, enterprise_enrollment, lms_user_id):
         """
         Standardized logging for no certificate found (refactor candidate)
@@ -678,7 +701,7 @@ class LearnerExporter(Exporter):
         Args:
             enterprise_enrollment (EnterpriseCourseEnrollment): the enterprise enrollment record for which we need to
             collect completion/grade data
-            course_details (dict): the course details for the course in the enterprise enrollment record.
+            course_details (CourseOverview): the course details for the course in the enterprise enrollment record.
 
         Returns:
             completed_date: Date the course was completed, None if course has not been completed.
@@ -703,11 +726,9 @@ class LearnerExporter(Exporter):
             return None, None, None, None
 
         # Prepare to process the course end date and pass/fail grade
-        course_end_date = course_details.get('end')
-        if course_end_date is not None:
-            course_end_date = parse_datetime(course_end_date)
+        course_end_date = course_details.end
         now = timezone.now()
-        is_passing = grades_data.get('passed')
+        is_passing = grades_data.passed
 
         # We can consider a course complete if:
         # * the course's end date has passed
@@ -726,6 +747,6 @@ class LearnerExporter(Exporter):
             completed_date = None
             grade = self.grade_incomplete
 
-        percent_grade = grades_data.get('percent', None)
+        percent_grade = grades_data.percent
 
         return completed_date, grade, is_passing, percent_grade
