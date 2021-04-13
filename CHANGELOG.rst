@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.5]
+--------
+* Fix: no longer stringifying `None` values passed to enterprise catalog creations calls
+
 [3.22.4]
 --------
 * Fix: learner_data exporter bug fix and refactor for cleaner enrollment filtering
