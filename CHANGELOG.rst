@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.6]
+--------
+* Fix: tpa_hint now correctly passed along to the `/login` endpoint in Enterprise proxy login view
+
 [3.22.5]
 --------
 * Fix: no longer stringifying `None` values passed to enterprise catalog creations calls
