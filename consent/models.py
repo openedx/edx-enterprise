@@ -244,6 +244,10 @@ class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-n
         verbose_name_plural = _("Data Sharing Consent Records")
         unique_together = (("enterprise_customer", "username", "course_id"),)
 
+        indexes = [
+            models.Index(fields=['username']),
+        ]
+
     objects = DataSharingConsentManager()
 
     course_id = models.CharField(
