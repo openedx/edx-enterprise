@@ -1065,11 +1065,11 @@ class EnterpriseProxyLoginView(View):
         tpa_hint = enterprise_customer.get_tpa_hint(tpa_hint_param)
 
         if tpa_hint:
-            # Add the tpa_hint to the redirect's 'next' query parameter
+            # Add the tpa_hint to the redirect's query parameters listing
             # Redirect will be to the Enterprise Customer's TPA provider
             query_dict['tpa_hint'] = tpa_hint
 
-            # also add tpa_hint to the next url being sent
+            # Also add tpa_hint to the next url being sent
             tpa_next_param = {
                 'tpa_hint': tpa_hint,
             }
