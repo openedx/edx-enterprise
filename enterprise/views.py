@@ -1067,15 +1067,14 @@ class EnterpriseProxyLoginView(View):
             # Add the tpa_hint to the redirect's 'next' query parameter
             # Redirect will be to the Enterprise Customer's TPA provider
             query_dict['tpa_hint'] = tpa_hint
-            new_query = urlencode(query_dict, doseq=True)
         else:
             # If there's no linked IDP or multiple IDPs are linked and no tpa_hint provided in query_param
             # Add Enterprise Customer UUID and proxy_login to the redirect's query parameters
             # Redirect will be to the edX Logistration with Enterprise Proxy Login sidebar
             query_dict['enterprise_customer'] = [str(enterprise_customer.uuid)]
             query_dict['proxy_login'] = [True]
-            new_query = urlencode(query_dict, doseq=True)
 
+        new_query = urlencode(query_dict, doseq=True)
         new_redirect_to = urlunsplit((scheme, netloc, path, new_query, fragment))
         return redirect(new_redirect_to)
 
