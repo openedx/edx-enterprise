@@ -4,13 +4,13 @@
 #
 #    make upgrade
 #
-amqp==5.0.5
+amqp==5.0.6
     # via kombu
 aniso8601==9.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-tincan-py35
-billiard==3.6.3.0
+billiard==3.6.4.0
     # via celery
 bleach==3.3.0
     # via
@@ -45,7 +45,7 @@ click==7.1.2
     #   click-plugins
     #   click-repl
     #   code-annotations
-code-annotations==1.1.0
+code-annotations==1.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -94,7 +94,7 @@ django-model-utils==4.1.1
     #   edx-rbac
 django-multi-email-field==0.6.2
     # via -r requirements/base.in
-django-object-actions==3.0.1
+django-object-actions==3.0.2
     # via -r requirements/base.in
 django-simple-history==2.12.0
     # via
@@ -106,7 +106,7 @@ django-waffle==2.1.0
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.19
+django==2.2.20
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -128,7 +128,7 @@ django==2.2.19
     #   rest-condition
 djangorestframework-xml==2.0.0
     # via -r requirements/base.in
-djangorestframework==3.12.2
+djangorestframework==3.12.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -136,11 +136,11 @@ djangorestframework==3.12.2
     #   drf-jwt
     #   edx-drf-extensions
     #   rest-condition
-drf-jwt==1.18.0
+drf-jwt==1.19.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==3.15.0
+edx-django-utils==3.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -211,7 +211,7 @@ pbr==5.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
-pillow==8.1.2
+pillow==8.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

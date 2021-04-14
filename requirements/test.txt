@@ -4,6 +4,9 @@
 #
 #    make upgrade
 #
+    # via
+    #   -r requirements/test-master.txt
+    #   kombu
 aniso8601==9.0.1
     # via
     #   -r requirements/test-master.txt
@@ -48,7 +51,7 @@ click-plugins==1.1.1
     #   click-plugins
     #   click-repl
     #   code-annotations
-code-annotations==1.1.0
+code-annotations==1.1.1
     # via -r requirements/test-master.txt
 coverage==5.5
     # via pytest-cov
@@ -89,7 +92,7 @@ django-model-utils==4.1.1
     #   edx-rbac
 django-multi-email-field==0.6.2
     # via -r requirements/test-master.txt
-django-object-actions==3.0.1
+django-object-actions==3.0.2
     # via -r requirements/test-master.txt
 django-simple-history==2.12.0
     # via -r requirements/test-master.txt
@@ -118,18 +121,18 @@ django-waffle==2.1.0
     #   rest-condition
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
-djangorestframework==3.12.2
+djangorestframework==3.12.4
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
     #   drf-jwt
     #   edx-drf-extensions
     #   rest-condition
-drf-jwt==1.18.0
+drf-jwt==1.19.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==3.15.0
+edx-django-utils==3.16.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -153,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==6.6.2
+faker==8.1.0
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -167,7 +170,7 @@ idna==2.10
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==3.7.3
+importlib-metadata==3.10.1
     # via inflect
 inflect==3.0.2
     # via
@@ -221,7 +224,7 @@ pbr==5.5.1
     # via
     #   -r requirements/test-master.txt
     #   stevedore
-pillow==8.1.2
+pillow==8.2.0
     # via -r requirements/test-master.txt
 pluggy==0.13.1
     # via
@@ -269,9 +272,9 @@ pytest-catchlog==1.2.2
     # via -r requirements/test.in
 pytest-cov==2.11.1
     # via -r requirements/test.in
-pytest-django==4.1.0
+pytest-django==4.2.0
     # via -r requirements/test.in
-pytest==6.2.2
+pytest==6.2.3
     # via
     #   -c requirements/constraints.txt
     #   pytest-catchlog
