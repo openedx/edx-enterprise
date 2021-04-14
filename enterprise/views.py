@@ -75,6 +75,7 @@ from enterprise.utils import (
     is_course_run_enrollable,
     track_enrollment,
     ungettext_min_max,
+    update_query_parameters,
 )
 from integrated_channels.cornerstone.utils import create_cornerstone_learner_data
 
@@ -1067,6 +1068,12 @@ class EnterpriseProxyLoginView(View):
             # Add the tpa_hint to the redirect's 'next' query parameter
             # Redirect will be to the Enterprise Customer's TPA provider
             query_dict['tpa_hint'] = tpa_hint
+
+            # also add tpa_hint to the next url being sent
+            tpa_next_param = {
+                'tpa_hint': tpa_hint,
+            }
+            query_dict['next'] = update_query_parameters(str(query_dict['next']), tpa_next_param)
         else:
             # If there's no linked IDP or multiple IDPs are linked and no tpa_hint provided in query_param
             # Add Enterprise Customer UUID and proxy_login to the redirect's query parameters
