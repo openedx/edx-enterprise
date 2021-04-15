@@ -4,6 +4,7 @@ Django admin integration for enterprise app.
 """
 
 import json
+import logging
 
 from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
@@ -15,6 +16,8 @@ from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin, auth
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.paginator import Paginator
+from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -70,6 +73,9 @@ try:
 except ImportError:
     EnrollmentAttributeOverrideView = None
 User = auth.get_user_model()
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -831,11 +837,48 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
         return fields
 
 
+class BigTableMysqlPaginator(Paginator):
+    """
+    A paginator that uses INFORMATION_SCHEMA.TABLES to estimate
+    the total number of rows in a table.
+    """
+    ARBITRARILY_LARGE_NUMBER = 10000000
+
+    # pylint: disable=attribute-defined-outside-init
+    @property
+    def count(self):  # pylint: disable=invalid-overridden-method
+        """
+        Returns the number of items in the object list (possibly an estimate).
+        """
+        query = self.object_list.query
+
+        if query.where:
+            return super().count
+        if not getattr(self, '_whole_table_count', None):
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        'SELECT TABLE_ROWS FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = %s',
+                        [query.model._meta.db_table]
+                    )
+                    self._whole_table_count = int(cursor.fetchone()[0])
+            except Exception:  # pylint: disable=broad-except
+                logger.exception(
+                    'Cannot get count estimate for %s from INFORMATION_SCHEMA.TABLES',
+                    query.model,
+                )
+                self._whole_table_count = self.ARBITRARILY_LARGE_NUMBER
+        return self._whole_table_count
+
+
 @admin.register(SystemWideEnterpriseUserRoleAssignment)
 class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     """
     Django admin model for SystemWideEnterpriseUserRoleAssignment.
     """
+
+    paginator = BigTableMysqlPaginator
+    show_full_result_count = False
 
     fields = ('user', 'role', 'enterprise_customer', 'applies_to_all_contexts', 'effective_enterprise_customer')
     readonly_fields = ('effective_enterprise_customer',)
@@ -843,10 +886,14 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     list_display = ('user', 'role', 'enterprise_customer', 'applies_to_all_contexts')
     # This tells Django to use select_related() in retrieving the list of objects on the change list page.
     # It should save some queries
-    list_select_related = True
+    list_select_related = (
+        'user',
+        'role',
+        'enterprise_customer',
+    )
     list_per_page = 25
 
-    search_fields = ('user__email', 'role__name')
+    search_fields = ('user__email', 'role__name', 'enterprise_customer__name')
 
     form = SystemWideEnterpriseUserRoleAssignmentForm
 
@@ -874,29 +921,6 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
         if enterprise_customers.exists():
             return ', '.join(list(enterprise_customers))
         return None
-
-    def get_search_results(self, request, queryset, search_term):
-        """
-        Filters the data displayed that match the given search_term. If no search_term
-        is provided than return all results.
-        """
-        queryset, use_distinct = super().get_search_results(
-            request,
-            queryset,
-            search_term
-        )
-
-        users = EnterpriseCustomerUser.objects.filter(
-            enterprise_customer__name__icontains=search_term
-        ).values_list('user_id', flat=True)
-
-        if not queryset:
-            queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(user__id__in=users)
-        else:
-            queryset |= queryset.filter(user__id__in=users)
-            use_distinct = True
-
-        return queryset, use_distinct
 
     def get_form(self, request, obj=None, **kwargs):  # pylint: disable=arguments-differ
         """

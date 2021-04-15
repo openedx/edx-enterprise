@@ -17,6 +17,13 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.6]
+--------
+* Improves performance of enterprise role assignment admin page
+* Deletes custom get_search_results() method, since ``enterprise_customer__name`` is now a viable search field
+* Improves pagination by asking for an estimated row count from Mysql ``INFORMATION_SCHEMA.TABLES``
+* Turns 1 + N query into 1 query via proper use of ``list_select_related``
+
 [3.22.5]
 --------
 * Fix: no longer stringifying `None` values passed to enterprise catalog creations calls
