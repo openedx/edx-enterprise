@@ -1162,12 +1162,26 @@ class TableauAuthView(generics.GenericAPIView):
     """
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request):
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request, enterprise_uuid=None: enterprise_uuid
+    )
+    def get(self, request, enterprise_uuid=None):
         """
         Get the auth token against logged in user from tableau
         """
+        enterprise_customer_uuid = enterprise_uuid
+        if not enterprise_customer_uuid:
+            enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
+
+        LOGGER.info(
+            "[TABLEAU_TOKEN_REQUEST] User: [%s], Enterprise: [%s]",
+            request.user.username,
+            enterprise_customer_uuid
+        )
+
         url = settings.TABLEAU_URL + '/trusted'
-        enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
+
         # Enterprise customer uuid is being store without hyphens in tableau
         tableau_username = enterprise_customer_uuid.replace('-', '')
         payload = {'username': tableau_username}

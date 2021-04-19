@@ -17,6 +17,12 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.8]
+--------
+* Add dashboard admin rbac role permission on tableau auth view so that only
+  enterprise dashboard admins can access this view.
+* Add support to generate tableau auth token based on incoming enterprise customer's uuid
+
 [3.22.7]
 --------
 * chore: upgrade edx-enterprise requirements
