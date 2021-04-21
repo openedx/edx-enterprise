@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.7]
+--------
+* chore: upgrade edx-enterprise requirements
+
 [3.22.6]
 --------
 * Improves performance of enterprise role assignment admin page
