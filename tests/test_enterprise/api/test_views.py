@@ -1123,6 +1123,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
+                'enterprise_customer_catalogs': [],
             }],
         ),
         (
@@ -1167,6 +1168,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'hide_course_original_price': False,
                     'sender_alias': 'Test Sender Alias',
                     'identity_providers': [],
+                    'enterprise_customer_catalogs': [],
                 }
             }],
         ),
@@ -1227,6 +1229,52 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                         "default_provider": False,
                     },
                 ],
+                'enterprise_customer_catalogs': [],
+            }],
+        ),
+        (
+            factories.EnterpriseCustomerCatalogFactory,
+            ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
+            itemgetter('uuid'),
+            [{
+                'uuid': FAKE_UUIDS[0],
+                'enterprise_customer__uuid': FAKE_UUIDS[1],
+                'enterprise_customer__name': 'Test Enterprise Customer',
+                'enterprise_customer__slug': TEST_SLUG,
+                'enterprise_customer__active': True,
+                'enterprise_customer__enable_data_sharing_consent': True,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'enterprise_customer__site__domain': 'example.com',
+                'enterprise_customer__site__name': 'example.com',
+                'enterprise_customer__contact_email': 'fake@example.com',
+                'enterprise_customer__sender_alias': 'Test Sender Alias',
+            }],
+            [{
+                'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                'active': True, 'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment',
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
+                'enable_audit_enrollment': False,
+                'identity_provider': None,
+                'replace_sensitive_sso_username': False,
+                'enable_portal_code_management_screen': False,
+                'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
+                'enable_portal_lms_configurations_screen': False,
+                'enable_audit_data_reporting': False,
+                'site': {
+                    'domain': 'example.com', 'name': 'example.com'
+                },
+                'sync_learner_profile_data': False,
+                'enable_learner_portal': False,
+                'enable_integrated_customer_learner_portal_search': True,
+                'enable_portal_subscription_management_screen': False,
+                'enable_analytics_screen': False,
+                'contact_email': 'fake@example.com',
+                'hide_course_original_price': False,
+                'sender_alias': 'Test Sender Alias',
+                'identity_providers': [],
+                'enterprise_customer_catalogs': [FAKE_UUIDS[0]],
             }],
         ),
         (
@@ -1416,6 +1464,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
+                'enterprise_customer_catalogs': [],
             }
         else:
             assert response == expected_error

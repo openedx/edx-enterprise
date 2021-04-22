@@ -158,7 +158,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=invalid-name,unused-argument
     def basic_list(self, request, *arg, **kwargs):
         """
-            Enterprise Customer's Basic data list without pagination
+        Enterprise Customer's Basic data list without pagination
         """
         startswith = request.GET.get('startswith')
         queryset = self.get_queryset().order_by('name')
