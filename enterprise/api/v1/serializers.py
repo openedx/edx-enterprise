@@ -170,17 +170,25 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
             'enable_integrated_customer_learner_portal_search',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
+            'enterprise_customer_catalogs',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
     site = SiteSerializer()
     branding_configuration = serializers.SerializerMethodField()
+    enterprise_customer_catalogs = serializers.SerializerMethodField()
 
     def get_branding_configuration(self, obj):
         """
         Return the serialized branding configuration object OR default object if null
         """
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
+
+    def get_enterprise_customer_catalogs(self, obj):
+        """
+        Return list of catalog uuids associated with the enterprise customer.
+        """
+        return [str(catalog.uuid) for catalog in obj.enterprise_customer_catalogs.all()]
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):

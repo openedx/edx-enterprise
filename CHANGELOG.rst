@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.9]
+--------
+* Expose enterprise catalog uuids associated with an Enterprise Customer in the ``enterprise-customer`` API endpoint.
+
 [3.22.8]
 --------
 * Add dashboard admin rbac role permission on tableau auth view so that only
