@@ -48,11 +48,6 @@ urlpatterns = [
         name='request-codes'
     ),
     url(
-        r'^tableau_token$',
-        views.TableauAuthView.as_view(),
-        name='tableau-token'
-    ),
-    url(
         r'^tableau_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         views.TableauAuthView.as_view(),
         name='tableau-token'
