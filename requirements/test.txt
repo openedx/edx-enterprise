@@ -94,7 +94,7 @@ django-multi-email-field==0.6.2
     # via -r requirements/test-master.txt
 django-object-actions==3.0.2
     # via -r requirements/test-master.txt
-django-simple-history==2.12.0
+django-simple-history==3.0.0
     # via -r requirements/test-master.txt
 django-waffle==2.1.0
     # via
@@ -156,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==8.1.0
+faker==8.1.1
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -220,7 +220,7 @@ path==13.1.0
     # via
     #   -r requirements/test-master.txt
     #   path.py
-pbr==5.5.1
+pbr==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   stevedore
@@ -330,7 +330,6 @@ six==1.15.0
     #   click-repl
     #   cryptography
     #   django-countries
-    #   django-simple-history
     #   edx-drf-extensions
     #   edx-rbac
     #   freezegun
