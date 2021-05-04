@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.10]
+---------
+* Use Braze for sending data sharing consent drop emails, add the DSC link inside the drip email.
+
 [3.22.9]
 --------
 * Expose enterprise catalog uuids associated with an Enterprise Customer in the ``enterprise-customer`` API endpoint.
