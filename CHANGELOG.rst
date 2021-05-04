@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.11]
+---------
+* No longer call into the removed email_marketing platform djangoapp
+
 [3.22.10]
 ---------
 * Use Braze for sending data sharing consent drop emails, add the DSC link inside the drip email.
