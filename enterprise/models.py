@@ -293,10 +293,11 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     enable_integrated_customer_learner_portal_search = models.BooleanField(  # pylint: disable=invalid-name
+        "Enable learner portal search for LMS customers",
         default=True,
         help_text=_(
-            "Specifies whether a learner for an integrated channel customer can navigate the enterprise learner "
-            "portal site using the main menu."
+            "Checked by default. When unchecked, learners in organizations with an integrated channel (LMS) will "
+            "not see the \"Find a Course\" option in the enterprise learner portal."
         )
     )
 

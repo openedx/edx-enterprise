@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.12]
+---------
+* Change the verbose name and help text for the ``enable_integrated_customer_learner_portal_search`` field on the ``EnterpriseCustomer`` model.
+
 [3.22.11]
 ---------
 * No longer call into the removed email_marketing platform djangoapp
