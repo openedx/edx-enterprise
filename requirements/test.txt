@@ -68,7 +68,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
 diff-cover==5.0.1
     # via -r requirements/test.in
-django-cache-memoize==0.1.8
+django-cache-memoize==0.1.9
     # via -r requirements/test-master.txt
 django-config-models==2.1.1
     # via -r requirements/test-master.txt
@@ -94,7 +94,7 @@ django-multi-email-field==0.6.2
     # via -r requirements/test-master.txt
 django-object-actions==3.0.2
     # via -r requirements/test-master.txt
-django-simple-history==2.12.0
+django-simple-history==3.0.0
     # via -r requirements/test-master.txt
 django-waffle==2.1.0
     # via
@@ -132,7 +132,7 @@ drf-jwt==1.19.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==3.16.0
+edx-django-utils==4.0.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -156,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==8.1.0
+faker==8.1.2
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -220,7 +220,7 @@ path==13.1.0
     # via
     #   -r requirements/test-master.txt
     #   path.py
-pbr==5.5.1
+pbr==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   stevedore
@@ -249,7 +249,7 @@ pycryptodomex==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.8.1
+pygments==2.9.0
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -274,7 +274,7 @@ pytest-cov==2.11.1
     # via -r requirements/test.in
 pytest-django==4.2.0
     # via -r requirements/test.in
-pytest==6.2.3
+pytest==6.2.4
     # via
     #   -c requirements/constraints.txt
     #   pytest-catchlog
@@ -330,7 +330,6 @@ six==1.15.0
     #   click-repl
     #   cryptography
     #   django-countries
-    #   django-simple-history
     #   edx-drf-extensions
     #   edx-rbac
     #   freezegun
