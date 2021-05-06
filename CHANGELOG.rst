@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.14]
+---------
+* Fixed timezone issue in comparison of course start datetime
+
 [3.22.13]
 ---------
 * Make enterprise customer uuid mandatory for `TableauAuthView`
