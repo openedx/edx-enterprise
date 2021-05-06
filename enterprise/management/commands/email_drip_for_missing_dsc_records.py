@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 enterprise_customer.uuid,
             )
 
-        if course_start and course_start < datetime.datetime.now():
+        if course_start and course_start < datetime.datetime.now(course_start.tzinfo):
             lms_course_url = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/course')
             next_url = lms_course_url.format(course_id=course_id)
         failure_url = urljoin(settings.LMS_ROOT_URL, '/dashboard')
