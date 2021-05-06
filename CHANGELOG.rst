@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.13]
+---------
+* Make enterprise customer uuid mandatory for `TableauAuthView`
+
 [3.22.12]
 ---------
 * Change the verbose name and help text for the ``enable_integrated_customer_learner_portal_search`` field on the ``EnterpriseCustomer`` model.

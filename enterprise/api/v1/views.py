@@ -1164,9 +1164,9 @@ class TableauAuthView(generics.GenericAPIView):
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
-        fn=lambda request, enterprise_uuid=None: enterprise_uuid
+        fn=lambda request, enterprise_uuid: enterprise_uuid
     )
-    def get(self, request, enterprise_uuid=None):
+    def get(self, request, enterprise_uuid):
         """
         Get the auth token against logged in user from tableau
         """
