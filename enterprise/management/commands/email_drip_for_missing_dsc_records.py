@@ -28,17 +28,18 @@ class Command(BaseCommand):
     Django management command for sending an email to learners with missing DataSharingConsent records
     """
 
-    def _get_dsc_url(self, user, course_id, enterprise_customer):
+    def _get_course_properties(self, user, course_id, enterprise_customer):
         """
-        Build the data sharing consent page url
+        Provide the data sharing consent page url and course title
 
         Arguments
-            user (Object): The user object
+            user (Object): The User object
             course_id (String): The course identifier
-            enterprise_customer(Object): Enterprise customer object
+            enterprise_customer(Object): EnterpriseCustomer object
 
         Returns:
             dsc_url (String): The DSC url
+            course_title (String): Title of the course
         """
         learner_portal_base_url = get_configuration_value(
             'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
@@ -46,6 +47,7 @@ class Command(BaseCommand):
         )
         next_url = urljoin(learner_portal_base_url, str(enterprise_customer.slug))
         course_start = None
+        course_title = ''
         course_details = CourseCatalogApiClient(
             user,
             enterprise_customer.site
@@ -53,8 +55,9 @@ class Command(BaseCommand):
         if course_details:
             try:
                 course_start = parse_lms_api_datetime(course_details.get('start'))
+                course_title = course_details.get('title')
             except (TypeError, ValueError):
-                course_start = None
+                pass
         else:
             LOGGER.info(
                 '[Absent DSC Course Details] Could not get course details from course catalog API. '
@@ -68,7 +71,7 @@ class Command(BaseCommand):
             lms_course_url = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/course')
             next_url = lms_course_url.format(course_id=course_id)
         failure_url = urljoin(settings.LMS_ROOT_URL, '/dashboard')
-        return '{grant_data_sharing_url}?{params}'.format(
+        dsc_url = '{grant_data_sharing_url}?{params}'.format(
             grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
             params=urlencode(
                 {
@@ -79,6 +82,7 @@ class Command(BaseCommand):
                 }
             )
         )
+        return dsc_url, course_title
 
     def handle(self, *args, **options):
         """
@@ -96,9 +100,13 @@ class Command(BaseCommand):
             user = enterprise_enrollment.enterprise_customer_user.user
             username = enterprise_enrollment.enterprise_customer_user.username
             user_id = enterprise_enrollment.enterprise_customer_user.user_id
+            user_email = enterprise_enrollment.enterprise_customer_user.user_email
+            greeting_name = user_email
+            if hasattr(user, 'first_name') and user.first_name:
+                greeting_name = user.first_name
             course_id = enterprise_enrollment.course_id
             enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
-            dsc_url = self._get_dsc_url(user, course_id, enterprise_customer)
+            dsc_url, course_title = self._get_course_properties(user, course_id, enterprise_customer)
             consent = DataSharingConsent.objects.proxied_get(
                 username=username,
                 course_id=course_id,
@@ -111,7 +119,10 @@ class Command(BaseCommand):
                     'username': username,
                     'enterprise_name': enterprise_customer.name,
                     'enterprise_uuid': enterprise_customer.uuid,
-                    'dsc_url': dsc_url
+                    'dsc_url': dsc_url,
+                    'course_title': course_title,
+                    'user_email': user_email,
+                    'greeting_name': greeting_name
                 })
                 LOGGER.info(
                     '[Absent DSC Email] Segment event fired for missing data sharing consent. '
