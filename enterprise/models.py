@@ -1683,7 +1683,9 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         Returns True iff this enrollment is currently active.
         """
-        return self.course_enrollment.is_active
+        if self.course_enrollment:
+            return self.course_enrollment.is_active
+        return None
 
     @property
     def mode(self):
