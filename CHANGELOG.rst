@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.15]
+---------
+* Added additional Segment event properties for missing DSC drip email
+
 [3.22.14]
 ---------
 * Fixed timezone issue in comparison of course start datetime

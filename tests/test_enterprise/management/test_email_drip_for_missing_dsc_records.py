@@ -82,12 +82,17 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
         'enterprise.management.commands.email_drip_for_missing_dsc_records.DataSharingConsent.objects.proxied_get'
     )
     @mock.patch('enterprise.management.commands.email_drip_for_missing_dsc_records.utils.track_event')
-    @mock.patch('enterprise.management.commands.email_drip_for_missing_dsc_records.Command._get_dsc_url')
-    def test_email_drip_for_missing_dsc_records(self, mock_get_dsc_url, mock_event_track, mock_dsc_proxied_get):
+    @mock.patch('enterprise.management.commands.email_drip_for_missing_dsc_records.Command._get_course_properties')
+    def test_email_drip_for_missing_dsc_records(
+            self,
+            mock_get_course_properties,
+            mock_event_track,
+            mock_dsc_proxied_get
+    ):
         """
         Test that email drip event is fired for missing DSC records.
         """
-        mock_get_dsc_url.return_value = 'test_url'
+        mock_get_course_properties.return_value = 'test_url', 'test_course'
         mock_dsc_proxied_get.return_value = DataSharingConsent()
         call_command(self.command)
         self.assertEqual(mock_event_track.call_count, 0)
