@@ -1,9 +1,9 @@
-amqp==5.0.6
-billiard==3.6.4.0
-celery==5.0.4
-click-didyoumean==0.0.3
-click-repl==0.1.6
-click==7.1.2
-kombu==5.0.2
-prompt-toolkit==3.0.18
-vine==5.0.0
+amqp==5.0.6               # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, kombu
+billiard==3.6.4.0         # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, celery
+celery==5.0.4             # via -c requirements/constraints.txt, -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt
+click-didyoumean==0.0.3   # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, celery
+click-repl==0.1.6         # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, celery
+click==7.1.2              # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, celery, click-didyoumean, click-log, click-plugins, click-repl, code-annotations, edx-lint, pip-tools
+kombu==5.0.2              # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, celery
+prompt-toolkit==3.0.18    # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, click-repl
+vine==5.0.0               # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, amqp, celery
