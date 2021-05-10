@@ -179,8 +179,7 @@ class Command(BaseCommand):
                 )
 
         LOGGER.info(
-            '[Absent DSC Email] Email sent for [%s] enrollments out of [%s] enrollments. DSC records sent to: [%s]'
-            'User: [%s], Course: [%s], Enterprise: [%s], DSC URL: [%s]',
+            '[Absent DSC Email] Emails sent for [%s] enrollments out of [%s] enrollments. DSC records sent to: [%s]',
             len(email_sent_records),
             enterprise_course_enrollments.count(),
             email_sent_records
