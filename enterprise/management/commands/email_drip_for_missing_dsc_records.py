@@ -118,7 +118,7 @@ class Command(BaseCommand):
                     'course': course_id,
                     'username': username,
                     'enterprise_name': enterprise_customer.name,
-                    'enterprise_uuid': enterprise_customer.uuid,
+                    'enterprise_uuid': str(enterprise_customer.uuid),
                     'dsc_url': dsc_url,
                     'course_title': course_title,
                     'user_email': user_email,
@@ -129,6 +129,6 @@ class Command(BaseCommand):
                     'User: [%s], Course: [%s], Enterprise: [%s], DSC URL: [%s]',
                     username,
                     course_id,
-                    enterprise_customer.uuid,
+                    str(enterprise_customer.uuid),
                     dsc_url
                 )

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.22.16]
+---------
+* Fixed Segment json string issue for DSC email drip
+
 [3.22.15]
 ---------
 * Added additional Segment event properties for missing DSC drip email
