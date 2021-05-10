@@ -129,6 +129,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "default_language",
                 "sender_alias",
                 "system_wide_role_assignments",
+                "reply_to",
             ]
         ),
         (
