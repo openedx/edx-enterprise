@@ -112,7 +112,7 @@ class Command(BaseCommand):
         """ Ensures the `ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP` is created """
         Group.objects.get_or_create(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
 
-    def _create_enterprise_user(self, username, role):
+    def _create_enterprise_user(self, username, role, enterprise_customer=None):
         """
         Creates a new user with the specified `username` and `role` (e.g.,
         'enterprise_learner'). The newly created user is added to the
@@ -140,7 +140,10 @@ class Command(BaseCommand):
             if user:
                 self._add_name_to_user_profile(user)
                 self._add_user_to_groups(user=user, role=role)
-                self._create_system_wide_role_assignment(user=user, role=role)
+                self._create_system_wide_role_assignment(
+                    user=user,
+                    role=role, 
+                    enterprise_customer=enterprise_customer)
                 self._create_feature_role_assignments(user=user, role=role)
                 return {
                     "user": user,
@@ -169,7 +172,7 @@ class Command(BaseCommand):
         enrollment_api_group = Group.objects.get(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
         enrollment_api_group.user_set.add(user)
 
-    def _create_system_wide_role_assignment(self, user, role):
+    def _create_system_wide_role_assignment(self, user, role, enterprise_customer):
         """
         Gets or creates a system-wide role assignment for the specified user and role
         """
@@ -178,6 +181,8 @@ class Command(BaseCommand):
             'user': user,
             'role': system_role,
         }
+        if enterprise_customer != None:
+            kwargs['enterprise_customer'] = enterprise_customer
         # We use filter() here, because the model does not currently enforce uniqueness on (user, role).
         if not SystemWideEnterpriseUserRoleAssignment.objects.filter(**kwargs).exists():
             SystemWideEnterpriseUserRoleAssignment.objects.create(**kwargs)
@@ -212,14 +217,12 @@ class Command(BaseCommand):
         )
         return enterprise_customer_user
 
-    def _create_enterprise(self, enterprise_name, enterprise_users):
+    def _create_enterprise_linked_data(self, enterprise_users, enterprise_customer):
         """
-        Creates an enterprise and its associated data, including the
-        EnterpriseCustomer, an enterprise catalog, and initial users of
+        Creates enterprise data for a given EnterpriseCustomer and its 
+        associated data, including an enterprise catalog, and initial users of
         varying roles.
         """
-        site, __ = self._get_default_site()
-        enterprise_customer = self._create_enterprise_customer(site=site, name=enterprise_name)
         enterprise_catalog = self._create_catalog_for_enterprise(
             enterprise_customer=enterprise_customer
         )
@@ -254,22 +257,31 @@ class Command(BaseCommand):
         self._create_enterprise_data_api_group()
         self._create_enterprise_enrollment_api_group()
 
+        LOGGER.info('\nCreating a new enterprise customer...')
+        site, __ = self._get_default_site()
+        enterprise_customer = self._create_enterprise_customer(site=site, name=enterprise_name)
+
         LOGGER.info('\nCreating enterprise users and assigning roles...')
         # Create one of each enterprise user type (i.e., learner, admin, operator)
         enterprise_users = [
             self._create_enterprise_user(
-                username=ENTERPRISE_LEARNER_ROLE,
+                username="{}_{}".format(ENTERPRISE_LEARNER_ROLE,slug),
                 role=ENTERPRISE_LEARNER_ROLE,
+                enterprise_customer=enterprise_customer
             ),
             self._create_enterprise_user(
-                username=ENTERPRISE_ADMIN_ROLE,
+                username="{}_{}".format(ENTERPRISE_ADMIN_ROLE,slug),
                 role=ENTERPRISE_ADMIN_ROLE,
+                enterprise_customer=enterprise_customer
+
             ),
             self._create_enterprise_user(
-                username=ENTERPRISE_OPERATOR_ROLE,
-                role=ENTERPRISE_OPERATOR_ROLE
+                username="{}_{}".format(ENTERPRISE_OPERATOR_ROLE,slug),
+                role=ENTERPRISE_OPERATOR_ROLE,
+                enterprise_customer=enterprise_customer
+
             ),
-            # Make all of the service workers enterprise_openedx_operators
+            # Make all of the service workers enterprise_openedx_operators for all enterprises
             self._create_enterprise_user(
                 username='license_manager_worker',
                 role=ENTERPRISE_OPERATOR_ROLE,
@@ -294,7 +306,8 @@ class Command(BaseCommand):
             ))
 
         LOGGER.info('\nCreating a new enterprise...')
-        enterprise = self._create_enterprise(enterprise_name=enterprise_name, enterprise_users=enterprise_users)
+        enterprise = self._create_enterprise_linked_data(
+            enterprise_users=enterprise_users, enterprise_customer=enterprise_customer)
 
         # generate a json serializable list of linked enterprise users
         enterprise_linked_users = []
