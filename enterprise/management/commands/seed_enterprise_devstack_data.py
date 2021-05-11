@@ -265,12 +265,12 @@ class Command(BaseCommand):
         # Create one of each enterprise user type (i.e., learner, admin, operator)
         enterprise_users = [
             self._create_enterprise_user(
-                username="{}_{}".format(ENTERPRISE_LEARNER_ROLE,slug),
+                username="{}_{}".format(ENTERPRISE_LEARNER_ROLE, slug),
                 role=ENTERPRISE_LEARNER_ROLE,
                 enterprise_customer=enterprise_customer
             ),
             self._create_enterprise_user(
-                username="{}_{}".format(ENTERPRISE_ADMIN_ROLE,slug),
+                username="{}_{}".format(ENTERPRISE_ADMIN_ROLE, slug),
                 role=ENTERPRISE_ADMIN_ROLE,
                 enterprise_customer=enterprise_customer
 
