@@ -83,10 +83,12 @@ class EnterpriseCourseEnrollmentView(APIView):
             enterprise_customer_user=enterprise_customer_user
         )
 
-        course_overviews = get_course_overviews(enterprise_enrollments.values_list('course_id', flat=True))
+        filtered_enterprise_enrollments = [record for record in enterprise_enrollments if record.course_enrollment]
+
+        course_overviews = get_course_overviews([record['course_id'] for record in filtered_enterprise_enrollments])
 
         data = EnterpriseCourseEnrollmentSerializer(
-            enterprise_enrollments,
+            filtered_enterprise_enrollments,
             many=True,
             context={'request': request, 'course_overviews': course_overviews},
         ).data
