@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.23.0]
+---------
+* Added support for ``--enrollment-before`` and ``--no-commit`` params in ``email_drip_for_missing_dsc_records`` command.
+
 [3.22.16]
 ---------
 * Fixed Segment json string issue for DSC email drip
