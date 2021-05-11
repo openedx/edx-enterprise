@@ -7,6 +7,7 @@ from datetime import timedelta
 
 import mock
 from pytest import mark
+from testfixtures import LogCapture
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -21,6 +22,8 @@ from test_utils.factories import (
     UserFactory,
 )
 
+LOGGER_NAME = 'enterprise.management.commands.email_drip_for_missing_dsc_records'
+
 
 @mark.django_db
 class EmailDripForMissingDscRecordsCommandTests(TestCase):
@@ -29,7 +32,7 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
     """
     command = 'email_drip_for_missing_dsc_records'
 
-    def create_enrollments(self, num_learners, update_date=False):
+    def create_enrollments(self, num_learners, enrollment_date):
         """
         Create test users and enrollments in database
 
@@ -69,14 +72,14 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
                 enterprise_customer_user=enterprise_customer_user,
                 course_id=course_id,
             )
-            if update_date:
-                enterprise_course_enrollment.created = timezone.now().date() - timedelta(days=PAST_NUM_DAYS)
-                enterprise_course_enrollment.save()
+            enterprise_course_enrollment.created = enrollment_date
+            enterprise_course_enrollment.save()
 
     def setUp(self):
         super().setUp()
-        self.create_enrollments(num_learners=3, update_date=False)
-        self.create_enrollments(num_learners=3, update_date=True)
+        today = timezone.now().date()
+        self.create_enrollments(num_learners=3, enrollment_date=today - timedelta(days=PAST_NUM_DAYS))
+        self.create_enrollments(num_learners=5, enrollment_date=today - timedelta(days=10))
 
     @mock.patch(
         'enterprise.management.commands.email_drip_for_missing_dsc_records.DataSharingConsent.objects.proxied_get'
@@ -93,9 +96,44 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
         Test that email drip event is fired for missing DSC records.
         """
         mock_get_course_properties.return_value = 'test_url', 'test_course'
-        mock_dsc_proxied_get.return_value = DataSharingConsent()
-        call_command(self.command)
-        self.assertEqual(mock_event_track.call_count, 0)
-        mock_dsc_proxied_get.return_value = ProxyDataSharingConsent()
-        call_command(self.command)
-        self.assertEqual(mock_event_track.call_count, 3)
+
+        # test when consent is present
+        with LogCapture(LOGGER_NAME) as log:
+            mock_dsc_proxied_get.return_value = DataSharingConsent()
+            call_command(self.command)
+            self.assertEqual(mock_event_track.call_count, 0)
+            self.assertIn(
+                '[Absent DSC Email] Emails sent for [0] enrollments out of [3] enrollments.',
+                log.records[-1].message
+            )
+
+        # test when consent is missing, with --no-commit param
+        with LogCapture(LOGGER_NAME) as log:
+            mock_dsc_proxied_get.return_value = ProxyDataSharingConsent()
+            call_command(self.command, '--no-commit')
+            self.assertEqual(mock_event_track.call_count, 0)
+            self.assertIn(
+                '[Absent DSC Email] Emails sent for [3] enrollments out of [3] enrollments.',
+                log.records[-1].message
+            )
+
+        # test when consent is missing, without passing --no-commit param
+        with LogCapture(LOGGER_NAME) as log:
+            call_command(self.command)
+            self.assertEqual(mock_event_track.call_count, 3)
+            self.assertIn(
+                '[Absent DSC Email] Emails sent for [3] enrollments out of [3] enrollments.',
+                log.records[-1].message
+            )
+
+        mock_event_track.reset_mock()
+
+        # test with --enrollment-before param
+        enrollment_before_date = (timezone.now().date() - timedelta(days=5)).isoformat()
+        with LogCapture(LOGGER_NAME) as log:
+            call_command(self.command, '--enrollment-before', enrollment_before_date)
+            self.assertEqual(mock_event_track.call_count, 5)
+            self.assertIn(
+                '[Absent DSC Email] Emails sent for [5] enrollments out of [5] enrollments.',
+                log.records[-1].message
+            )

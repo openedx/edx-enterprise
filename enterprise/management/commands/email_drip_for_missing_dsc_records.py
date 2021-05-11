@@ -184,4 +184,3 @@ class Command(BaseCommand):
             enterprise_course_enrollments.count(),
             email_sent_records
         )
-
