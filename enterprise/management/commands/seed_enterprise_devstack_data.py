@@ -142,7 +142,7 @@ class Command(BaseCommand):
                 self._add_user_to_groups(user=user, role=role)
                 self._create_system_wide_role_assignment(
                     user=user,
-                    role=role, 
+                    role=role,
                     enterprise_customer=enterprise_customer)
                 self._create_feature_role_assignments(user=user, role=role)
                 return {
@@ -181,7 +181,7 @@ class Command(BaseCommand):
             'user': user,
             'role': system_role,
         }
-        if enterprise_customer != None:
+        if enterprise_customer is not None:
             kwargs['enterprise_customer'] = enterprise_customer
         # We use filter() here, because the model does not currently enforce uniqueness on (user, role).
         if not SystemWideEnterpriseUserRoleAssignment.objects.filter(**kwargs).exists():
@@ -219,8 +219,8 @@ class Command(BaseCommand):
 
     def _create_enterprise_linked_data(self, enterprise_users, enterprise_customer):
         """
-        Creates enterprise data for a given EnterpriseCustomer and its 
-        associated data, including an enterprise catalog, and initial users of
+        Creates enterprise data for a given EnterpriseCustomer
+        including an enterprise catalog and initial users of
         varying roles.
         """
         enterprise_catalog = self._create_catalog_for_enterprise(
@@ -275,10 +275,14 @@ class Command(BaseCommand):
                 enterprise_customer=enterprise_customer
 
             ),
+            # Creates a super admin who has the admin role on all enterprises.
             self._create_enterprise_user(
-                username="{}_{}".format(ENTERPRISE_OPERATOR_ROLE,slug),
-                role=ENTERPRISE_OPERATOR_ROLE,
-                enterprise_customer=enterprise_customer
+                username=ENTERPRISE_ADMIN_ROLE,
+                role=ENTERPRISE_ADMIN_ROLE
+            ),
+            self._create_enterprise_user(
+                username=ENTERPRISE_OPERATOR_ROLE,
+                role=ENTERPRISE_OPERATOR_ROLE
 
             ),
             # Make all of the service workers enterprise_openedx_operators for all enterprises
@@ -302,10 +306,11 @@ class Command(BaseCommand):
                     slug=slug,
                     index=i + 1,
                 ),
-                role=ENTERPRISE_LEARNER_ROLE
+                role=ENTERPRISE_LEARNER_ROLE,
+                enterprise_customer=enterprise_customer
             ))
 
-        LOGGER.info('\nCreating a new enterprise...')
+        LOGGER.info('\nCreating enterprise data...')
         enterprise = self._create_enterprise_linked_data(
             enterprise_users=enterprise_users, enterprise_customer=enterprise_customer)
 
