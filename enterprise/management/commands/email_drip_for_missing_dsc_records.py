@@ -100,7 +100,7 @@ class Command(BaseCommand):
 
         return enterprise_course_enrollments
 
-    def emit_event(self, ec_user,  course_id, enterprise_customer, greeting_name):
+    def emit_event(self, ec_user, course_id, enterprise_customer, greeting_name):
         """
          Emit the Segment event which will be used by Braze to send the email
         """
@@ -173,7 +173,7 @@ class Command(BaseCommand):
             # Emit the Segment event which will be used by Braze to send the email
             if isinstance(consent, ProxyDataSharingConsent):
                 if should_commit:
-                    self.emit_event(ec_user,  course_id, enterprise_customer, greeting_name)
+                    self.emit_event(ec_user, course_id, enterprise_customer, greeting_name)
                 email_sent_records.append(
                     f'User: {username}, Course: {course_id}, Enterprise: {enterprise_customer.uuid}'
                 )
