@@ -175,7 +175,6 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
                 host=settings.TEST_SERVER,
                 path=reverse('enterprise-learner-portal-course-enrollment-list'),
                 enterprise_id=str(self.enterprise_customer.uuid),
-                active_filter_value='true'
             )
         )
         assert resp.status_code == 200
