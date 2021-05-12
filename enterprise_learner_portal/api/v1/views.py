@@ -85,7 +85,7 @@ class EnterpriseCourseEnrollmentView(APIView):
 
         filtered_enterprise_enrollments = [record for record in enterprise_enrollments if record.course_enrollment]
 
-        course_overviews = get_course_overviews([record['course_id'] for record in filtered_enterprise_enrollments])
+        course_overviews = get_course_overviews([record.course_id for record in filtered_enterprise_enrollments])
 
         data = EnterpriseCourseEnrollmentSerializer(
             filtered_enterprise_enrollments,
