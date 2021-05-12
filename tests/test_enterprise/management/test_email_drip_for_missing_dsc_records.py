@@ -93,7 +93,7 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
             mock_dsc_proxied_get
     ):
         """
-        Test that email drip event is fired for missing DSC records.
+        Test that email drip event is fired for missing DSC records
         """
         mock_get_course_properties.return_value = 'test_url', 'test_course'
 
