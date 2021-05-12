@@ -161,6 +161,27 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         assert resp.status_code == 404
         assert resp.json() == {'detail': 'Not found.'}
 
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user', mock.MagicMock())
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
+    def test_view_filters_out_invalid_enterprise_enrollments(self, mock_get_overviews):
+        """
+        View does not fail, and view filters out all enrollments whose course_enrollment
+        field is None
+        """
+        mock_get_overviews.return_value = {}
+
+        resp = self.client.get(
+            '{host}{path}?enterprise_id={enterprise_id}&is_active=true'.format(
+                host=settings.TEST_SERVER,
+                path=reverse('enterprise-learner-portal-course-enrollment-list'),
+                enterprise_id=str(self.enterprise_customer.uuid),
+            )
+        )
+        assert resp.status_code == 200
+        # since all enterprise_enrollments in this are with empty course_enrollment
+        # this check should fail if filtering is not working
+        assert resp.json() == []
+
     def test_view_requires_openedx_installation(self):
         """
         View should raise error if imports to helper methods fail.

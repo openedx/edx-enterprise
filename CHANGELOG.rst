@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.23.1]
+---------
+* Fix: filter out EnterpriseCourseEnrollments without corresponding CourseEnrollment records in learner portal view.
+
 [3.23.0]
 ---------
 * Added support for ``--enrollment-before`` and ``--no-commit`` params in ``email_drip_for_missing_dsc_records`` command.
