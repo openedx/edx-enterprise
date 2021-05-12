@@ -10,7 +10,7 @@ import model_utils.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0050_progress_v2'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
     ]
 
     operations = [

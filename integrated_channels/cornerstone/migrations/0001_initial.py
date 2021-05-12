@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('enterprise', '0067_add_role_based_access_control_switch'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
     ]
 
     operations = [

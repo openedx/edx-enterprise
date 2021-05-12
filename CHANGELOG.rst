@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-* Nothing.
+* Removed migrations that have been merged into a squashed migration for the ``entperprise`` app.
 
 [3.23.1]
 ---------

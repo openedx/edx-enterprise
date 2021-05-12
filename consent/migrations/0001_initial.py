@@ -14,7 +14,7 @@ import consent.mixins
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0024_enterprisecustomercatalog_historicalenterprisecustomercatalog'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

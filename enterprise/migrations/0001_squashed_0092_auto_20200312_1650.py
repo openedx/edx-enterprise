@@ -99,8 +99,6 @@ def delete_enterprise_roles(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    replaces = [('enterprise', '0001_initial'), ('enterprise', '0002_enterprisecustomerbrandingconfiguration'), ('enterprise', '0003_auto_20161104_0937'), ('enterprise', '0004_auto_20161114_0434'), ('enterprise', '0005_pendingenterprisecustomeruser'), ('enterprise', '0006_auto_20161121_0241'), ('enterprise', '0007_auto_20161109_1511'), ('enterprise', '0008_auto_20161124_2355'), ('enterprise', '0009_auto_20161130_1651'), ('enterprise', '0010_auto_20161222_1212'), ('enterprise', '0011_enterprisecustomerentitlement_historicalenterprisecustomerentitlement'), ('enterprise', '0012_auto_20170125_1033'), ('enterprise', '0013_auto_20170125_1157'), ('enterprise', '0014_enrollmentnotificationemailtemplate_historicalenrollmentnotificationemailtemplate'), ('enterprise', '0015_auto_20170130_0003'), ('enterprise', '0016_auto_20170405_0647'), ('enterprise', '0017_auto_20170508_1341'), ('enterprise', '0018_auto_20170511_1357'), ('enterprise', '0019_auto_20170606_1853'), ('enterprise', '0020_auto_20170624_2316'), ('enterprise', '0021_auto_20170711_0712'), ('enterprise', '0022_auto_20170720_1543'), ('enterprise', '0023_audit_data_reporting_flag'), ('enterprise', '0024_enterprisecustomercatalog_historicalenterprisecustomercatalog'), ('enterprise', '0025_auto_20170828_1412'), ('enterprise', '0026_make_require_account_level_consent_nullable'), ('enterprise', '0027_remove_account_level_consent'), ('enterprise', '0028_link_enterprise_to_enrollment_template'), ('enterprise', '0029_auto_20170925_1909'), ('enterprise', '0030_auto_20171005_1600'), ('enterprise', '0031_auto_20171012_1249'), ('enterprise', '0032_reporting_model'), ('enterprise', '0033_add_history_change_reason_field'), ('enterprise', '0034_auto_20171023_0727'), ('enterprise', '0035_auto_20171212_1129'), ('enterprise', '0036_sftp_reporting_support'), ('enterprise', '0037_auto_20180110_0450'), ('enterprise', '0038_auto_20180122_1427'), ('enterprise', '0039_auto_20180129_1034'), ('enterprise', '0040_auto_20180129_1428'), ('enterprise', '0041_auto_20180212_1507'), ('enterprise', '0042_replace_sensitive_sso_username'), ('enterprise', '0043_auto_20180507_0138'), ('enterprise', '0044_reporting_config_multiple_types'), ('enterprise', '0045_report_type_json'), ('enterprise', '0046_remove_unique_constraints'), ('enterprise', '0047_auto_20180517_0457'), ('enterprise', '0048_enterprisecustomeruser_active'), ('enterprise', '0049_auto_20180531_0321'), ('enterprise', '0050_progress_v2'), ('enterprise', '0051_add_enterprise_slug'), ('enterprise', '0052_create_unique_slugs'), ('enterprise', '0053_pendingenrollment_cohort_name'), ('enterprise', '0053_auto_20180911_0811'), ('enterprise', '0054_merge_20180914_1511'), ('enterprise', '0055_auto_20181015_1112'), ('enterprise', '0056_enterprisecustomerreportingconfiguration_pgp_encryption_key'), ('enterprise', '0057_enterprisecustomerreportingconfiguration_enterprise_customer_catalogs'), ('enterprise', '0058_auto_20181212_0145'), ('enterprise', '0059_add_code_management_portal_config'), ('enterprise', '0060_upgrade_django_simple_history'), ('enterprise', '0061_systemwideenterpriserole_systemwideenterpriseuserroleassignment'), ('enterprise', '0062_add_system_wide_enterprise_roles'), ('enterprise', '0063_systemwideenterpriserole_description'), ('enterprise', '0064_enterprisefeaturerole_enterprisefeatureuserroleassignment'), ('enterprise', '0065_add_enterprise_feature_roles'), ('enterprise', '0066_add_system_wide_enterprise_operator_role'), ('enterprise', '0067_add_role_based_access_control_switch'), ('enterprise', '0068_remove_role_based_access_control_switch'), ('enterprise', '0069_auto_20190613_0607'), ('enterprise', '0070_enterprise_catalog_query'), ('enterprise', '0071_historicalpendingenrollment_historicalpendingenterprisecustomeruser'), ('enterprise', '0072_add_enterprise_report_config_feature_role'), ('enterprise', '0073_enterprisecustomerreportingconfiguration_uuid'), ('enterprise', '0074_auto_20190904_1143'), ('enterprise', '0075_auto_20190916_1030'), ('enterprise', '0076_auto_20190918_2037'), ('enterprise', '0077_auto_20191002_1529'), ('enterprise', '0078_auto_20191107_1536'), ('enterprise', '0079_AddEnterpriseEnrollmentSource'), ('enterprise', '0080_auto_20191113_1708'), ('enterprise', '0081_UpdateEnterpriseEnrollmentSource'), ('enterprise', '0082_AddManagementEnterpriseEnrollmentSource'), ('enterprise', '0083_enterprisecustomerreportingconfiguration_include_date'), ('enterprise', '0084_auto_20200120_1137'), ('enterprise', '0085_enterprisecustomeruser_linked'), ('enterprise', '0086_auto_20200128_1726'), ('enterprise', '0087_auto_20200206_1151'), ('enterprise', '0088_auto_20200224_1341'), ('enterprise', '0089_auto_20200305_0652'), ('enterprise', '0090_update_content_filter'), ('enterprise', '0091_add_sales_force_id_in_pendingenrollment'), ('enterprise', '0092_auto_20200312_1650')]
-
     initial = True
 
     dependencies = [
@@ -135,19 +133,6 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Enterprise Catalog Query',
                 'verbose_name_plural': 'Enterprise Catalog Queries',
-                'ordering': ['created'],
-            },
-        ),
-        migrations.CreateModel(
-            name='EnterpriseCourseEnrollment',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('course_id', models.CharField(help_text='The ID of the course in which the learner was enrolled.', max_length=255)),
-                ('marked_done', models.BooleanField(default=False, help_text='Specifies whether a user marked this course as completed in the learner portal.')),
-            ],
-            options={
                 'ordering': ['created'],
             },
         ),
@@ -289,6 +274,20 @@ class Migration(migrations.Migration):
                 'verbose_name': 'Enterprise Customer Learner',
                 'verbose_name_plural': 'Enterprise Customer Learners',
                 'ordering': ['-active', '-modified'],
+            },
+        ),
+        migrations.CreateModel(
+            name='EnterpriseCourseEnrollment',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('course_id', models.CharField(help_text='The ID of the course in which the learner was enrolled.', max_length=255)),
+                ('marked_done', models.BooleanField(default=False, help_text='Specifies whether a user marked this course as completed in the learner portal.')),
+                ('enterprise_customer_user', models.ForeignKey(help_text='The enterprise learner to which this enrollment is attached.', on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollments', to='enterprise.EnterpriseCustomerUser')),
+            ],
+            options={
+                'ordering': ['created'],
             },
         ),
         migrations.CreateModel(
@@ -561,11 +560,6 @@ class Migration(migrations.Migration):
             model_name='enterprisecustomer',
             name='site',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customers', to='sites.Site'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecourseenrollment',
-            name='enterprise_customer_user',
-            field=models.ForeignKey(help_text='The enterprise learner to which this enrollment is attached.', on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollments', to='enterprise.EnterpriseCustomerUser'),
         ),
         migrations.AddField(
             model_name='enterprisecourseenrollment',

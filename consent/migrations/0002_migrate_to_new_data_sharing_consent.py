@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         # Make sure enterprise models (source) are available.
-        ('enterprise', '0024_enterprisecustomercatalog_historicalenterprisecustomercatalog'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
         # Make sure consent models (target) are available.
         ('consent', '0001_initial'),
     ]

@@ -12,7 +12,7 @@ import model_utils.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0041_auto_20180212_1507'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
         ('consent', '0003_historicaldatasharingconsent_history_change_reason'),
     ]
 
