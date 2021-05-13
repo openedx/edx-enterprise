@@ -1,5 +1,5 @@
-Multiple Enterprise Support
----------------------------
+Bulk Enrollment endpoint for Subscription learners
+--------------------------------------------------
 
 Status
 ======
