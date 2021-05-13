@@ -26,17 +26,19 @@ There is also a method to create pending user enrollments for non-edX users at:
 This method also handles multiple courses.
 
 Due to the scale and volume considerations, an api endpoint is needed that caters to the bulk
-use case without causing request overload.
+use case without hitting rate limiting issues or server overload.
 
 Decisions
 =========
 
 * We will add a new endpoint to edx-enterprise to handle bulk enrollment in a single request.
-* For existing edX users, we will reuse the `utils::enroll_user()` method for this use case.
-  This method handles multiple courses already. That method still ends up calling the `EnrollmentApiClient` for now.
-  But there is a cleanup effort anticipated to replace it with python api calls which is not in scope for this effort.
-* For emails not matching existing users in edX, we will use the `models::EnterpriseCustomer::enroll_user_pending_registration()` method
-* We will create an ecom order for each successful enrollment of an existing edX user.
+* For existing edX users, we will reuse the `utils::enroll_user()` method.
+  This method handles multiple courses already, but still calls the `EnrollmentApiClient` for now.
+  There is a cleanup effort anticipated to replace the HttpClient calls embedded in the `utils::enroll_user()` method with direct database call utilties in the edx-platform Django application.
+  Such a cleanup is not in scope for this feature work.
+* For emails not matching existing users in edX LMS Django application, we will use the `models::EnterpriseCustomer::enroll_user_pending_registration()` method
+* We will create an ecommerce order for each successful enrollment of an existing edX user.
+  For this we will use the `EcommerceApiClient::create_manual_enrollment_orders()` method which creates an order for each enrollment passed.
 * Any failures in individual enrollments will not cause failures of the entire batch.
   In other words, the endpoint will be non transactional. This avoid wasteful and confusing workflow for the client of the api, by performing a 'best effort' enrollment and reporting the failures.
 * We will not have MFEs call this endpoint directly. Rather they will call a license-manager endpoint which will call this endpoint.
