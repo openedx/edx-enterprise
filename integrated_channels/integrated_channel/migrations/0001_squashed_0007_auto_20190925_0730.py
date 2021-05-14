@@ -10,8 +10,6 @@ import model_utils.fields
 
 class Migration(migrations.Migration):
 
-    replaces = [('integrated_channel', '0001_initial'), ('integrated_channel', '0002_delete_enterpriseintegratedchannel'), ('integrated_channel', '0003_catalogtransmissionaudit_learnerdatatransmissionaudit'), ('integrated_channel', '0004_catalogtransmissionaudit_channel'), ('integrated_channel', '0005_auto_20180306_1251'), ('integrated_channel', '0006_delete_catalogtransmissionaudit'), ('integrated_channel', '0007_auto_20190925_0730')]
-
     initial = True
 
     dependencies = [

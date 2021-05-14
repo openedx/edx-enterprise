@@ -12,7 +12,7 @@ import model_utils.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0034_auto_20171023_0727'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

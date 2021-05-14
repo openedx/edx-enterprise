@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-* Nothing.
+* Removed migrations that have been merged into squashed migrations.
 
 [3.23.1]
 ---------

@@ -25,7 +25,8 @@ def delete_flag(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0092_auto_20200312_1650'),
+        ('enterprise', '0001_squashed_0092_auto_20200312_1650'),
+        ('waffle', '0001_initial'),
     ]
 
     operations = [
