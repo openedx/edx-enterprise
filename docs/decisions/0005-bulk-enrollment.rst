@@ -49,7 +49,7 @@ Decisions
 * The edx-enterprise endpoint will return a response with these pieces of information:
   `{'successes': [], 'pending': [], 'failures': []}`. Note, pending enrollments are supported.
   This will allow the license-manager to inform the user if any enrollments failed, while successfully (meaning: success or pending) enrolling the rest, in a single request cycle.
-* The endpoint will be safe to be invoked with pre-existing enrollment pairs (meaning learner email + course_id)
+* The endpoint will be safe to invoke with pre-existing enrollment pairs (meaning learner email + course_id). These enrollments will also be added to 'successes' in the response.
 * The endpoint will also support a boolean input to notify learners of enrollments (or not) by email
 
 Consequences
