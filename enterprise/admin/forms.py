@@ -402,6 +402,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "default_contract_discount",
             "default_language",
             "sender_alias",
+            "reply_to",
         )
 
 

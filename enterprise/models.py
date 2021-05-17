@@ -353,6 +353,12 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    reply_to = models.EmailField(
+        null=True,
+        blank=True,
+        help_text=_("The email address where learner's reply to enterprise emails will be delivered.")
+    )
+
     @property
     def enterprise_customer_identity_provider(self):  # pylint: disable=invalid-name
         """
