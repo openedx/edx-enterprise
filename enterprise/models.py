@@ -356,7 +356,7 @@ class EnterpriseCustomer(TimeStampedModel):
     reply_to = models.EmailField(
         null=True,
         blank=True,
-        help_text=_("Specifies the email address to be used as from email for enterprise emails.")
+        help_text=_("The email address where learner's reply to enterprise emails will be delivered.")
     )
 
     @property
