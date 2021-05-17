@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+
+[3.23.2]
+---------
+* Added new field reply_to in enterprise customer where learner's reply to enterprise emails will be delivered.
+
 * Removed migrations that have been merged into squashed migrations.
 
 [3.23.1]
