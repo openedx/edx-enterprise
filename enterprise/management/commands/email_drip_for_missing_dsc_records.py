@@ -18,6 +18,11 @@ from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCourseEnrollment
 from enterprise.utils import get_configuration_value
 
+try:
+    from openedx.features.enterprise_support.utils import is_course_accessed
+except ImportError:
+    is_course_accessed = None
+
 LOGGER = logging.getLogger(__name__)
 
 PAST_NUM_DAYS = 1
@@ -170,8 +175,12 @@ class Command(BaseCommand):
                 course_id=course_id,
                 enterprise_customer=enterprise_customer
             )
+            course_accessed = False
+            if is_course_accessed and is_course_accessed(ec_user.user, course_id):
+                course_accessed = True
+
             # Emit the Segment event which will be used by Braze to send the email
-            if isinstance(consent, ProxyDataSharingConsent):
+            if isinstance(consent, ProxyDataSharingConsent) and course_accessed:
                 if should_commit:
                     self.emit_event(ec_user, course_id, enterprise_customer, greeting_name)
                 email_sent_records.append(
