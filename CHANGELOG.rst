@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.3]
+---------
+* Added a check for course access before sending Segment event for missing DSC.
+
 [3.23.2]
 ---------
 * Added new field reply_to in enterprise customer where learner's reply to enterprise emails will be delivered.
