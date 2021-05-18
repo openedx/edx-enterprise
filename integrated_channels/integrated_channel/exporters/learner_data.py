@@ -140,8 +140,10 @@ class LearnerExporter(Exporter):
         * ``course_id``: The string ID of the course under the enterprise enrollment.
         * ``subsection_id``: The string ID of the subsection within the course.
         * ``grade``: string grade recorded for the learner in the course.
+        * ``learner_to_transmit``: REQUIRED User object, representing the learner whose data is being exported.
+
         """
-        learner_to_transmit = kwargs.get('learner_to_transmit', None)
+        lms_user_for_filter = kwargs.get('learner_to_transmit')
         TransmissionAudit = kwargs.get('TransmissionAudit', None)  # pylint: disable=invalid-name
         course_run_id = kwargs.get('course_run_id', None)
         grade = kwargs.get('grade', None)
@@ -150,7 +152,7 @@ class LearnerExporter(Exporter):
             'enterprise_customer_user'
         ).filter(
             enterprise_customer_user__active=True,
-            enterprise_customer_user__user_id=learner_to_transmit.id,
+            enterprise_customer_user__user_id=lms_user_for_filter.id,
             course_id=course_run_id,
         ).order_by('course_id')
 
@@ -206,7 +208,7 @@ class LearnerExporter(Exporter):
 
     def _determine_enrollments_permitted(  # pylint: disable=invalid-name
             self,
-            learner_to_transmit,
+            lms_user_for_filter,
             course_run_id,
             channel_name,
             skip_transmitted,
@@ -221,7 +223,7 @@ class LearnerExporter(Exporter):
         *    - audit_reporting is enabled (via enterprise level switch)
         """
         enrollments_to_process = self.get_enrollments_to_process(
-            learner_to_transmit,
+            lms_user_for_filter,
             course_run_id,
             channel_name,
         )
@@ -256,32 +258,23 @@ class LearnerExporter(Exporter):
           "Course completion" occurs for instructor-paced courses when course certificates are issued, and
           for self-paced courses, when the course end date is passed, or when the learner achieves a passing grade.
         * ``grade``: string grade recorded for the learner in the course.
+        * ``learner_to_transmit``: OPTIONAL User object, filters exported data to data for this learner. If absent or None, all learner data will be exported.
+        * ``course_run_id``: OPTIONAL Course key string, filters exported data to data for this course. If absent or None, all course data will be exported.
+
         """
         channel_name = kwargs.get('app_label')
-        learner_to_transmit = kwargs.get('learner_to_transmit', None)
+        lms_user_for_filter = kwargs.get('learner_to_transmit', None)
         course_run_id = kwargs.get('course_run_id', None)
         completed_date = kwargs.get('completed_date', None)
         is_passing = kwargs.get('is_passing', False)
         grade = kwargs.get('grade', None)
         skip_transmitted = kwargs.get('skip_transmitted', True)
         TransmissionAudit = kwargs.get('TransmissionAudit', None)  # pylint: disable=invalid-name
+
         # Fetch the consenting enrollment data, including the enterprise_customer_user.
         # Order by the course_id, to avoid fetching course API data more than we have to.
-        generate_formatted_log(
-            'Starting Export. CompletedDate: {completed_date}, Course: {course_run}, '
-            'Grade: {grade}, IsPassing: {is_passing}, User: {user_id}'.format(
-                completed_date=completed_date,
-                course_run=course_run_id,
-                grade=grade,
-                is_passing=is_passing,
-                user_id=learner_to_transmit.id if learner_to_transmit else None
-            ),
-            channel_name=channel_name,
-            enterprise_customer_identifier=self.enterprise_customer.name
-        )
-
         enrollments_permitted = self._determine_enrollments_permitted(
-            learner_to_transmit,
+            lms_user_for_filter,
             course_run_id,
             channel_name,
             skip_transmitted,
@@ -289,11 +282,6 @@ class LearnerExporter(Exporter):
             grade,
         )
         enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_permitted]
-        LearnerExporter._log_beginning_export(
-            enrollment_ids_to_export,
-            channel_name,
-            self.enterprise_customer.name
-        )
 
         for enterprise_enrollment in enrollments_permitted:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
@@ -303,15 +291,6 @@ class LearnerExporter(Exporter):
             course_details = None
             try:
                 course_details = get_course_details(course_id)
-                generate_formatted_log(
-                    'Currently exporting for course: {curr_course}, '
-                    'Course_details: {course_details} '.format(
-                        curr_course=course_id,
-                        course_details=course_details
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name
-                )
             except InvalidKeyError:
                 LearnerExporter._log_courseid_not_found(course_id, enterprise_enrollment)
             except CourseOverview.DoesNotExist:
@@ -373,29 +352,6 @@ class LearnerExporter(Exporter):
                     enterprise_customer_identifier=self.enterprise_customer.name
                 )
 
-            # todo: we need to refactor so single learner is not so mixed in with bulk case
-            exporting_single_learner = learner_to_transmit and course_run_id
-            if exporting_single_learner and (grade != grade_from_api or is_passing != is_passing_from_api):
-                enterprise_user = enterprise_enrollment.enterprise_customer_user
-                generate_formatted_log(
-                    'Attempt to transmit conflicting data. '
-                    ' Course: {course_id}, Enterprise: {enterprise},'
-                    ' EnrollmentId: {enrollment_id},'
-                    ' Grade: {grade}, GradeAPI: {grade_api}, IsPassing: {is_passing},'
-                    ' IsPassingAPI: {is_passing_api}, Learner LMS User Id: {user_id}'.format(
-                        grade=grade,
-                        is_passing=is_passing,
-                        grade_api=grade_from_api,
-                        is_passing_api=is_passing_from_api,
-                        course_id=course_id,
-                        enrollment_id=enterprise_enrollment.id,
-                        user_id=enterprise_user.user_id,
-                        enterprise=enterprise_user.enterprise_customer.slug
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name,
-                    is_error=True
-                )
             # Apply the Single Source of Truth for Grades
             grade = grade_from_api
             completed_date = completed_date_from_api
@@ -426,7 +382,7 @@ class LearnerExporter(Exporter):
                     yield record
 
         generate_formatted_log(
-            'Finished exporting enrollments. Skipped enrollments: {enrollments}.'.format(
+            'Finished exporting enrollments. Did not export records for EnterpriseCourseEnrollment objects: {enrollments}.'.format(
                 enrollments=enrollment_ids_to_export,
             ),
             channel_name=channel_name,
@@ -460,10 +416,14 @@ class LearnerExporter(Exporter):
             included_enrollments.add(enterprise_enrollment)
         return included_enrollments
 
-    def get_enrollments_to_process(self, learner_to_transmit, course_run_id, channel_name):
+    def get_enrollments_to_process(self, lms_user_for_filter, course_run_id, channel_name):
         """
         Fetches list of EnterpriseCourseEnrollments ordered by course_id.
         List is filtered by learner and course_run_id if both are provided
+
+        lms_user_for_filter: If None, data for ALL courses and learners will be returned
+        course_run_id: If None, data for ALL courses and learners will be returned
+
         """
         enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
             'enterprise_customer_user'
@@ -471,16 +431,16 @@ class LearnerExporter(Exporter):
             enterprise_customer_user__enterprise_customer=self.enterprise_customer,
             enterprise_customer_user__active=True,
         )
-        if learner_to_transmit and course_run_id:
+        if lms_user_for_filter and course_run_id:
             enrollment_queryset = enrollment_queryset.filter(
                 course_id=course_run_id,
-                enterprise_customer_user__user_id=learner_to_transmit.id,
+                enterprise_customer_user__user_id=lms_user_for_filter.id,
             )
             generate_formatted_log(
                 'Exporting single learner. Course: {course_run},'
                 ' Learner LMS User Id: {user_id}'.format(
                     course_run=course_run_id,
-                    user_id=learner_to_transmit.id
+                    user_id=lms_user_for_filter.id
                 ),
                 channel_name=channel_name,
                 enterprise_customer_identifier=self.enterprise_customer.name
@@ -597,17 +557,6 @@ class LearnerExporter(Exporter):
         grade = self.grade_passing if is_passing else self.grade_failing
 
         return completed_date, grade, is_passing, percent_grade
-
-    @staticmethod
-    def _log_beginning_export(enrollment_ids_to_export, channel_name, enterprise_customer_name):
-        """beginning export of permitted enrollments"""
-        generate_formatted_log(
-            'Beginning export of enrollments: {enrollments}.'.format(
-                enrollments=enrollment_ids_to_export,
-            ),
-            channel_name=channel_name,
-            enterprise_customer_identifier=enterprise_customer_name,
-        )
 
     @staticmethod
     def _log_cert_not_found(course_id, enterprise_enrollment, lms_user_id):
