@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.5]
+---------
+* Added exception handling in consent missing email.
+
 [3.23.4]
 ---------
 * Added a check for enterprise DSC configuration in missing DSC drip.
