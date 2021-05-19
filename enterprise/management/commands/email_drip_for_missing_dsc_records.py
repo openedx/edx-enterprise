@@ -176,9 +176,15 @@ class Command(BaseCommand):
                 enterprise_customer=enterprise_customer
             )
             course_accessed = False
-            if is_course_accessed and is_course_accessed(ec_user.user, course_id):
-                course_accessed = True
-
+            try:
+                if is_course_accessed and is_course_accessed(ec_user.user, course_id):
+                    course_accessed = True
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.exception('[Absent DSC Email] Error in {course} for user {user}. Error detail: {exc}'.format(
+                    course=course_id,
+                    user=username,
+                    exc=str(exc)
+                ))
             # Emit the Segment event which will be used by Braze to send the email
             if (isinstance(consent, ProxyDataSharingConsent) and
                     course_accessed and
