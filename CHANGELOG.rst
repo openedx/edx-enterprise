@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.4]
+---------
+* Added a check for enterprise DSC configuration in missing DSC drip.
+
 [3.23.3]
 ---------
 * Added a check for course access before sending Segment event for missing DSC.

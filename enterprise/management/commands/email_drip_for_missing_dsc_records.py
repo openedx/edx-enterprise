@@ -180,7 +180,9 @@ class Command(BaseCommand):
                 course_accessed = True
 
             # Emit the Segment event which will be used by Braze to send the email
-            if isinstance(consent, ProxyDataSharingConsent) and course_accessed:
+            if (isinstance(consent, ProxyDataSharingConsent) and
+                    course_accessed and
+                    enterprise_customer.enable_data_sharing_consent):
                 if should_commit:
                     self.emit_event(ec_user, course_id, enterprise_customer, greeting_name)
                 email_sent_records.append(
