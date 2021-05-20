@@ -25,8 +25,6 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
-PAST_NUM_DAYS = 1
-
 
 class Command(BaseCommand):
     """
@@ -91,19 +89,25 @@ class Command(BaseCommand):
 
     def get_enterprise_course_enrollments(self, options):
         """
-        Get EnterpriseCourseEnrollment records according to the options
+        Get EnterpriseCourseEnrollment records according to the options and with dsc enabled
         """
         enrollment_before = options['enrollment_before']
-        enterprise_course_enrollments = EnterpriseCourseEnrollment.objects.select_related(
-            'enterprise_customer_user'
-        )
+        past_num_days = options['past_num_days']
         if enrollment_before:
-            enterprise_course_enrollments = enterprise_course_enrollments.filter(created__date__lt=enrollment_before)
+            enrollments_with_dsc_enabled = EnterpriseCourseEnrollment.objects.select_related(
+                'enterprise_customer_user').filter(
+                created__date__lt=enrollment_before,
+                enterprise_customer_user__enterprise_customer__enable_data_sharing_consent=True
+            )
         else:
-            past_date = date.today() - timedelta(days=PAST_NUM_DAYS)
-            enterprise_course_enrollments = enterprise_course_enrollments.filter(created__date=past_date)
+            past_date = date.today() - timedelta(days=past_num_days)
+            enrollments_with_dsc_enabled = EnterpriseCourseEnrollment.objects.select_related(
+                'enterprise_customer_user').filter(
+                created__date=past_date,
+                enterprise_customer_user__enterprise_customer__enable_data_sharing_consent=True
+            )
 
-        return enterprise_course_enrollments
+        return enrollments_with_dsc_enabled
 
     def emit_event(self, ec_user, course_id, enterprise_customer, greeting_name):
         """
@@ -145,6 +149,14 @@ class Command(BaseCommand):
             type=datetime.date.fromisoformat,
             help='Specifies the date (format YYYY-MM-DD). Enrollments created before this date will receive DSC emails.'
         )
+        parser.add_argument(
+            '--past_num_days',
+            action='store',
+            dest='past_num_days',
+            default=1,
+            type=int,
+            help='Days past the current day. Enrollments created on that day with a missing DSC will be processed.'
+        )
 
     def handle(self, *args, **options):
         """
@@ -157,9 +169,7 @@ class Command(BaseCommand):
            $ ./manage.py email_drip_for_missing_dsc_records  --enrollment-before 2021-05-06
         """
         should_commit = not options['no_commit']
-
         email_sent_records = []
-
         enterprise_course_enrollments = self.get_enterprise_course_enrollments(options)
         for enterprise_enrollment in enterprise_course_enrollments:
             ec_user = enterprise_enrollment.enterprise_customer_user
@@ -175,26 +185,24 @@ class Command(BaseCommand):
                 course_id=course_id,
                 enterprise_customer=enterprise_customer
             )
-            course_accessed = False
-            try:
-                if is_course_accessed and is_course_accessed(ec_user.user, course_id):
-                    course_accessed = True
-            except Exception as exc:  # pylint: disable=broad-except
-                LOGGER.exception('[Absent DSC Email] Error in {course} for user {user}. Error detail: {exc}'.format(
-                    course=course_id,
-                    user=username,
-                    exc=str(exc)
-                ))
-            # Emit the Segment event which will be used by Braze to send the email
-            if (isinstance(consent, ProxyDataSharingConsent) and
-                    course_accessed and
-                    enterprise_customer.enable_data_sharing_consent):
-                if should_commit:
-                    self.emit_event(ec_user, course_id, enterprise_customer, greeting_name)
-                email_sent_records.append(
-                    f'User: {username}, Course: {course_id}, Enterprise: {enterprise_customer.uuid}'
-                )
-
+            if isinstance(consent, ProxyDataSharingConsent):
+                course_accessed = False
+                try:
+                    if is_course_accessed and is_course_accessed(ec_user.user, course_id):
+                        course_accessed = True
+                except Exception as exc:  # pylint: disable=broad-except
+                    LOGGER.exception('[Absent DSC Email] Error in {course} for user {user}. Error detail: {exc}'.format(
+                        course=course_id,
+                        user=username,
+                        exc=str(exc)
+                    ))
+                # Emit the Segment event which will be used by Braze to send the email
+                if course_accessed:
+                    if should_commit:
+                        self.emit_event(ec_user, course_id, enterprise_customer, greeting_name)
+                    email_sent_records.append(
+                        f'User: {username}, Course: {course_id}, Enterprise: {enterprise_customer.uuid}'
+                    )
         LOGGER.info(
             '[Absent DSC Email] Emails sent for [%s] enrollments out of [%s] enrollments. DSC records sent to: [%s]',
             len(email_sent_records),

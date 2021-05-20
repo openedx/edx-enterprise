@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.6]
+---------
+* Optimised handling of conditions defining the absence of a DSC.
+
 [3.23.5]
 ---------
 * Added exception handling in consent missing email.

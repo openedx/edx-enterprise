@@ -14,7 +14,6 @@ from django.test import TestCase
 from django.utils import timezone
 
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
-from enterprise.management.commands.email_drip_for_missing_dsc_records import PAST_NUM_DAYS
 from test_utils.factories import (
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
@@ -78,7 +77,7 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
     def setUp(self):
         super().setUp()
         today = timezone.now().date()
-        self.create_enrollments(num_learners=3, enrollment_date=today - timedelta(days=PAST_NUM_DAYS))
+        self.create_enrollments(num_learners=3, enrollment_date=today - timedelta(days=1))
         self.create_enrollments(num_learners=5, enrollment_date=today - timedelta(days=10))
 
     @mock.patch(
