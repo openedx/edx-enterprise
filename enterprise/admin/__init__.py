@@ -46,6 +46,7 @@ from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    BulkEnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -541,6 +542,16 @@ class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
         return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
 
     get_admin_registration_url.short_description = 'Admin Registration Link'
+
+
+@admin.register(BulkEnrollmentNotificationEmailTemplate)
+class BulkEnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelAdmin):
+    """
+    Django admin for BulkEnrollmentNotificationEmailTemplate model
+    """
+
+    class Meta:
+        model = BulkEnrollmentNotificationEmailTemplate
 
 
 @admin.register(EnrollmentNotificationEmailTemplate)

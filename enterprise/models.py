@@ -2201,16 +2201,16 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
 
 @python_2_unicode_compatible
-class EnrollmentNotificationEmailTemplate(TimeStampedModel):
+class BaseEnrollmentNotificationEmailTemplate(TimeStampedModel):
     """
-    Store optional templates to use when emailing users about course enrollment events.
+    Base class for email templates for enrollment notifications
 
     .. no_pii:
     """
-
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
+        abstract = True
 
     BODY_HELP_TEXT = mark_safe_lazy(_(
         'Fill in a standard Django template that, when rendered, produces the email you want '
@@ -2238,12 +2238,6 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
-    enterprise_customer = models.OneToOneField(
-        EnterpriseCustomer,
-        related_name="enterprise_enrollment_template",
-        on_delete=models.deletion.CASCADE
-    )
-    history = HistoricalRecords()
 
     def render_html_template(self, kwargs):
         """
@@ -2271,6 +2265,51 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         context = Context(kwargs)
         return template.render(context)
 
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class BulkEnrollmentNotificationEmailTemplate(BaseEnrollmentNotificationEmailTemplate):
+    """
+        Why a new template instead of using 'EnrollmentNotificationEmailTemplate'?
+        1: we do not need customer linking, since template will not be per customer
+        2: we still want to do a model to avoid having template in text/html files on git
+    """
+    class Meta:
+        app_label = 'enterprise'
+        ordering = ['created']
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<BulkEnrollmentNotificationEmailTemplate>'
+
+
+@python_2_unicode_compatible
+class EnrollmentNotificationEmailTemplate(BaseEnrollmentNotificationEmailTemplate):
+    """
+    Store optional templates to use when emailing users about course enrollment events.
+
+    .. no_pii:
+    """
+    class Meta:
+        app_label = 'enterprise'
+        ordering = ['created']
+
+    enterprise_customer = models.OneToOneField(
+        EnterpriseCustomer,
+        related_name="enterprise_enrollment_template",
+        on_delete=models.deletion.CASCADE
+    )
+    history = HistoricalRecords()
+
     def __str__(self):
         """
         Return human-readable string representation.
@@ -2278,12 +2317,6 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         return '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
             self.enterprise_customer.uuid
         )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
 
 
 @python_2_unicode_compatible

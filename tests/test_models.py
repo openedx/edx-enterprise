@@ -33,6 +33,7 @@ from enterprise import roles_api
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    BulkEnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -57,6 +58,7 @@ class TestPendingEnrollment(unittest.TestCase):
     """
     Test for pending enrollment
     """
+
     def setUp(self):
         email = 'bob@jones.com'
         course_id = 'course-v1:edX+DemoX+DemoCourse'
@@ -80,6 +82,7 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
     """
     Test for EnterpriseCourseEnrollment
     """
+
     def setUp(self):
         self.username = 'DarthVader'
         self.user = factories.UserFactory(username=self.username)
@@ -1450,6 +1453,43 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             fail_catalog.full_clean()
         except ValidationError as validation_error:
             assert sorted(validation_error.messages) == sorted(error)
+
+
+@mark.django_db
+@ddt.ddt
+class TestBulkEnrollmentNotificationEmailTemplate(unittest.TestCase):
+    """
+    Tests of the BulkEnrollmentNotificationEmailTemplate model.
+    """
+
+    def setUp(self):
+        self.template = BulkEnrollmentNotificationEmailTemplate.objects.create(
+            plaintext_template=(
+                'This is a template - testing {{ course_name }}, {{ other_value }}'
+            ),
+            html_template=(
+                '<b>This is an HTML template! {{ course_name }}!!!</b>'
+            ),
+        )
+        super().setUp()
+
+    def test_render_all_templates(self):
+        plain, html = self.template.render_all_templates(
+            {
+                "course_name": "real course",
+                "other_value": "filled in",
+            }
+        )
+        assert plain == 'This is a template - testing real course, filled in'
+        assert html == '<b>This is an HTML template! real course!!!</b>'
+
+    @ddt.data(str, repr)
+    def test_string_conversion(self, method):
+        """
+        Test conversion to string.
+        """
+        expected_str = '<BulkEnrollmentNotificationEmailTemplate>'
+        assert expected_str == method(self.template)
 
 
 @mark.django_db
