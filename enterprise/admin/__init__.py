@@ -45,8 +45,8 @@ from enterprise.admin.views import (
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
 from enterprise.models import (
-    EnrollmentNotificationEmailTemplate,
     BulkEnrollmentNotificationEmailTemplate,
+    EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
