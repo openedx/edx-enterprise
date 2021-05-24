@@ -59,7 +59,8 @@ class DegreedLearnerExporter(LearnerExporter):
                 )
             ]
         LOGGER.debug(
-            'No learner data was sent for user [%s] because a Degreed user ID could not be found.',
-            enterprise_enrollment.enterprise_customer_user.username
+            'No learner data was sent for LMS User [%s] because a Degreed user ID could not be found for customer [%s]',
+            enterprise_enrollment.enterprise_customer_user.user_id,
+            enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
         )
         return None

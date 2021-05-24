@@ -56,9 +56,9 @@ class CornerstoneLearnerExporter(LearnerExporter):
             ]
         except CornerstoneLearnerDataTransmissionAudit.DoesNotExist:
             LOGGER.info(
-                'No learner data was sent for user [%s] because Cornerstone user ID could not be found '
+                'No learner data was sent for LMS User [%s] because Cornerstone user ID could not be found '
                 'for customer [%s]',
-                enterprise_enrollment.enterprise_customer_user.username,
+                enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
             )
             return None

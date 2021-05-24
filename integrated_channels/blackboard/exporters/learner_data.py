@@ -34,8 +34,9 @@ class BlackboardLearnerExporter(LearnerExporter):
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
             LOGGER.debug(
-                'No learner data was sent for user [%s] because a Blackboard user ID could not be found.',
-                enterprise_customer_user.username
+                'No learner data was sent for LMS User [%s] because a Blackboard user ID could not be found for customer [%s]',
+                enterprise_customer_user.user_id,
+                enterprise_customer_user.enterprise_customer.name
             )
             return None
         percent_grade = kwargs.get('grade_percent', None)
@@ -79,8 +80,9 @@ class BlackboardLearnerExporter(LearnerExporter):
         if enterprise_enrollment.enterprise_customer_user.user_email is None:
             # We need an email to find the user on blackboard.
             LOGGER.debug(
-                'No learner data was sent for user [%s] because a blackboard user ID could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
+                'No learner data was sent for LMS User [%s] because a Blackboard user ID could not be found for customer [%s]',
+                enterprise_enrollment.enterprise_customer_user.user_id,
+                enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
             )
             return None
 
