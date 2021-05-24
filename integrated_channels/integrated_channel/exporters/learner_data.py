@@ -93,9 +93,9 @@ class LearnerExporter(Exporter):
         """
         Collect assessment level learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
 
-        Yields a learner assessment data object for each subsection within a course under an enrollment, containing:
+        Yields a ``LearnerDataTransmissionAudit`` object for each subsection within a course under an enrollment, containing:
 
-        * ``enterprise_enrollment``: ``EnterpriseCourseEnrollment`` object.
+        * ``enterprise_course_enrollment_id``: The id reference to the ``EnterpriseCourseEnrollment `` object.
         * ``course_id``: The string ID of the course under the enterprise enrollment.
         * ``subsection_id``: The string ID of the subsection within the course.
         * ``grade``: string grade recorded for the learner in the course.
@@ -133,10 +133,10 @@ class LearnerExporter(Exporter):
         Collect a single assessment level learner data for the ``EnterpriseCustomer`` where data sharing consent is
         granted.
 
-        Yields a learner assessment data object for each subsection of the course that the learner is enrolled in,
+        Yields a ``LearnerDataTransmissionAudit`` object for each subsection of the course that the learner is enrolled in,
         containing:
 
-        * ``enterprise_enrollment``: ``EnterpriseCourseEnrollment`` object.
+        * ``enterprise_course_enrollment_id``: The id reference to the ``EnterpriseCourseEnrollment `` object.
         * ``course_id``: The string ID of the course under the enterprise enrollment.
         * ``subsection_id``: The string ID of the subsection within the course.
         * ``grade``: string grade recorded for the learner in the course.
@@ -158,12 +158,6 @@ class LearnerExporter(Exporter):
 
         # We are transmitting for a single enrollment, so grab just the one.
         enterprise_enrollment = enrollment_queryset.first()
-
-        generate_formatted_log(
-            'Beginning single exportation of learner data for enrollment: {enrollment}'.format(
-                enrollment=enterprise_enrollment.id
-            )
-        )
 
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
@@ -456,6 +450,7 @@ class LearnerExporter(Exporter):
     ):
         """
         Generate a learner assessment data transmission audit with fields properly filled in.
+        Returns a list of LearnerDataTransmissionAudit objects.
         """
         # pylint: disable=invalid-name
         LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
