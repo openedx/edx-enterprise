@@ -54,9 +54,9 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                 ecu.active = False
                 ecu.save()
                 LOGGER.warning(
-                    'User %s with ID %s and email %s is a former employee of %s '
+                    'User with LMS ID %s, ECU ID %s is a former employee of %s '
                     'and has been marked inactive in SAPSF. Now marking inactive internally.',
-                    ecu.username, ecu.user_id, ecu.user_email, ecu.enterprise_customer
+                    ecu.user_id, ecu.id, ecu.enterprise_customer
                 )
                 return
         super().handle_transmission_error(learner_data, client_exception)
