@@ -34,7 +34,7 @@ class BlackboardLearnerExporter(LearnerExporter):
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
             LOGGER.debug(
-                'No learner data was sent for LMS User [%s] because a Blackboard user ID could not be found for customer [%s]',
+                'No learner data was sent for LMS User [%s] because Blackboard User ID not found for customer [%s]',
                 enterprise_customer_user.user_id,
                 enterprise_customer_user.enterprise_customer.name
             )
@@ -80,7 +80,7 @@ class BlackboardLearnerExporter(LearnerExporter):
         if enterprise_enrollment.enterprise_customer_user.user_email is None:
             # We need an email to find the user on blackboard.
             LOGGER.debug(
-                'No learner data was sent for LMS User [%s] because a Blackboard user ID could not be found for customer [%s]',
+                'No learner data was sent for LMS User [%s] because Blackboard User ID not found for customer [%s]',
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
             )

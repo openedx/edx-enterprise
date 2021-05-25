@@ -41,16 +41,18 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
         kwargs['remote_user_id'] = 'sapsf_user_id'
         super().transmit(payload, **kwargs)
 
-    def handle_transmission_error(self, learner_data, client_exception):
+    def handle_transmission_error(self, learner_data, client_exception, integrated_channel_name,
+                                  enterprise_customer_uuid, learner_id, course_id):
         """Handle the case where the employee on SAPSF's side is marked as inactive."""
         try:
             sys_msg = six.text_type(client_exception.message)
+            ecu = EnterpriseCustomerUser.objects.get(
+                enterprise_enrollments__id=learner_data.enterprise_course_enrollment_id)
+
         except AttributeError:
             pass
         else:
             if sys_msg and 'user account is inactive' in sys_msg:
-                ecu = EnterpriseCustomerUser.objects.get(
-                    enterprise_enrollments__id=learner_data.enterprise_course_enrollment_id)
                 ecu.active = False
                 ecu.save()
                 LOGGER.warning(
@@ -59,4 +61,5 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                     ecu.user_id, ecu.id, ecu.enterprise_customer
                 )
                 return
-        super().handle_transmission_error(learner_data, client_exception)
+        super().handle_transmission_error(learner_data, client_exception,
+                                          integrated_channel_name, enterprise_customer_uuid, learner_id, course_id)

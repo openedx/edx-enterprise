@@ -38,7 +38,7 @@ class MoodleLearnerExporter(LearnerExporter):
 
         if enterprise_customer.user_email is None:
             LOGGER.debug(
-                'No learner data was sent for LMS User [%s] because a Moodle user ID could not be found for customer [%s]',
+                'No learner data sent for LMS User [%s] because a Canvas user ID was not found for customer [%s]',
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_customer.name
             )

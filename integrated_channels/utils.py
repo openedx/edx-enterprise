@@ -232,24 +232,37 @@ def get_subjects_from_content_metadata(content_metadata_item):
     return list(subjects)
 
 
-def generate_formatted_log(message, channel_name=None, enterprise_customer_identifier=None, is_error=False):
+def generate_formatted_log(
+    channel_name,
+    enterprise_customer_uuid,
+    lms_user_id,
+    course_or_course_run_key,
+    message
+):
     """
-    Formats and logs a message for the integrated channels.
+    Formats and returns a standardized message for the integrated channels.
+    'None' may be passed as a value to any format field, but all fields are mandatory to
+    encourage log standardization.
 
     Arguments:
-        - message (str): The string to be formatted and logged
-        - (OPTIONAL) channel_name (str): The name of the integrated channel which is being logged for
-        - (OPTIONAL) enterprise_customer_identifier (str): Either the ID or name of the Enterprise Customer
-        for whom the chanel is transmitting data.
-        - (OPTIONAL) is_error (bool): If specified, determines whether to log an error or info message.
+    - channel_name (str): The name of the integrated channel
+    - enterprise_customer_uuid (str): UUID of the relevant EnterpriseCustomer
+    - enterprise_customer_identifer (str): Identifying name of the EnterpriseCustomer
+    - lms_user_id (str): The LMS User id (if applicable) related to the message
+    - course_or_course_run_key (str): The course key (if applicable) for the message
+    - message (str): The string to be formatted and logged
+
     """
-    log_message = '[Integrated Channel] [ENT CUSTOMER: {enterprise_customer_identifier}] ' \
-                  '[CHANNEL: {channel_name}]: {message}'.format(
-                      enterprise_customer_identifier=enterprise_customer_identifier,
-                      channel_name=channel_name,
-                      message=message,
-                  )
-    LOGGER.error(log_message) if is_error else LOGGER.info(log_message)  # pylint: disable=expression-not-assigned
+    return '[Integrated Channel: {channel_name}]'\
+        '[ENT CUSTOMER: {enterprise_customer_uuid}]' \
+        '[User: {lms_user_id}]'\
+        '[Course: {course_or_course_run_key}]{message}'.format(
+            enterprise_customer_uuid=enterprise_customer_uuid,
+            channel_name=channel_name,
+            message=message,
+            lms_user_id=lms_user_id,
+            course_or_course_run_key=course_or_course_run_key
+        )
 
 
 def refresh_session_if_expired(oauth_access_token_function, session=None, expires_at=None):
