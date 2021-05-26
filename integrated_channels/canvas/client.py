@@ -93,7 +93,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = self._get_course_id_from_integration_id(integration_id)
+        course_title = self._extract_course_title(serialized_data)
+        course_id = self._get_course_id_from_integration_id(course_title, integration_id)
 
         url = CanvasAPIClient.course_update_endpoint(
             self.enterprise_configuration.canvas_base_url,
@@ -106,7 +107,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = self._get_course_id_from_integration_id(integration_id)
+        course_title = self._extract_course_title(serialized_data)
+        course_id = self._get_course_id_from_integration_id(course_title, integration_id)
 
         url = '{}/api/v1/courses/{}'.format(
             self.enterprise_configuration.canvas_base_url,
@@ -270,10 +272,41 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return integration_id
 
-    def _get_course_id_from_integration_id(self, integration_id):
+    def _extract_course_title(self, data):
+        """
+        Retrieve the course title (name) string from the encoded transmission data and apply appropriate
+        error handling.
+
+        Args:
+            data (bytearray): The json encoded payload intended for a Canvas endpoint.
+        """
+        if not data:
+            raise ClientError("No serialized data available to parse.", HTTPStatus.NOT_FOUND.value)
+        try:
+            course_title = json.loads(
+                data.decode("utf-8")
+            )['course']['name']
+        except KeyError as error:
+            raise ClientError(
+                "Could not locate name field in serialized course data.", HTTPStatus.NOT_FOUND.value
+            ) from error
+        except AttributeError as error:
+            raise ClientError(
+                "Unable to decode serialized course data.", HTTPStatus.BAD_REQUEST.value
+            ) from error
+
+        return course_title
+
+    def _get_course_id_from_integration_id(self, course_title, integration_id):
         """
         To obtain course ID we have to request all courses associated with the integrated
         account and match the one with our integration ID.
+
+        According to the Canvas API documentation the only fields we can use for searching
+        are Record ID (exact), Course Code (three sequential characters), and Course Name
+        (three sequential characters).  See the API documentation for more details:
+
+        https://canvas.instructure.com/doc/api/accounts.html#method.accounts.courses_api
 
         Args:
             integration_id (string): The ID retrieved from the transmission payload.
@@ -281,7 +314,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
             self.enterprise_configuration.canvas_base_url,
             self.enterprise_configuration.canvas_account_id,
-            quote(integration_id),
+            quote(course_title),
         )
         resp = self.session.get(url)
         all_courses_response = resp.json()
