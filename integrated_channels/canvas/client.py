@@ -236,6 +236,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     def _delete(self, url):
         """
         Make a DELETE request using the session object to the Canvas course delete endpoint.
+        this actually only 'conclude's a course. See this link for difference between
+        conclude and delete. Conclude allows bringing course back to 'offer' state
+        https://canvas.instructure.com/doc/api/courses.html#method.courses.destroy
 
         Args:
             url (str): The canvas url to send delete requests to.
