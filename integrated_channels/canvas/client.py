@@ -240,7 +240,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Args:
             url (str): The canvas url to send delete requests to.
         """
-        delete_response = self.session.delete(url, data='{"event":"delete"}')
+        delete_response = self.session.delete(url, data='{"event":"conclude"}')
         if delete_response.status_code >= 400:
             raise ClientError(delete_response.text, delete_response.status_code)
         return delete_response.status_code, delete_response.text
