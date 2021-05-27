@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.7]
+---------
+* Canvas integrated channel now 'concludes' course when sending deletion event, instead of 'delete'.
+
 [3.23.6]
 ---------
 * Optimised handling of conditions defining the absence of a DSC.
