@@ -652,7 +652,7 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, bulk_enroll_mode=False):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -702,17 +702,30 @@ class EnterpriseCustomer(TimeStampedModel):
             for user in users:
                 login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
                 destination_url = destination_url.format(login_or_register=login_or_register)
-                utils.send_email_notification_message(
-                    user=user,
-                    enrolled_in={
-                        'name': course_name,
-                        'url': destination_url,
-                        'type': 'course',
-                        'start': course_start,
-                    },
-                    enterprise_customer=self,
-                    email_connection=email_conn
-                )
+                if bulk_enroll_mode:
+                    utils.send_bulk_enroll_email_notification(
+                        user=user,
+                        enrolled_in={
+                            'name': course_name,
+                            'url': destination_url,
+                            'type': 'course',
+                            'start': course_start,
+                        },
+                        enterprise_customer=self,
+                        email_connection=email_conn
+                    )
+                else:
+                    utils.send_email_notification_message(
+                        user=user,
+                        enrolled_in={
+                            'name': course_name,
+                            'url': destination_url,
+                            'type': 'course',
+                            'start': course_start,
+                        },
+                        enterprise_customer=self,
+                        email_connection=email_conn
+                    )
 
 
 class EnterpriseCustomerUserManager(models.Manager):

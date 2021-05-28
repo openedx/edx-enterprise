@@ -438,6 +438,83 @@ def get_notification_subject_line(course_name, template_configuration=None):
         return stock_subject_template.format(course_name=course_name)
 
 
+def send_bulk_enroll_email_notification(
+    user,
+    enrolled_in,
+    enterprise_customer,
+    email_connection=None
+):
+    """
+    Email to a bulk enrollment learner informing admin has enrolled them.
+
+    Arguments:
+        user: Either a User object or a PendingEnterpriseCustomerUser that we can use
+            to get details for the email
+        enrolled_in (dict): The dictionary contains details of the enrollable object
+            (either course or program) that the user enrolled in. This MUST contain
+            a `name` key, and MAY contain the other following keys:
+                - url: A human-friendly link to the enrollable's home page
+                - type: Either `course` or `program` at present
+                - branding: A special name for what the enrollable "is"; for example,
+                    "MicroMasters" would be the branding for a "MicroMasters Program"
+                - start: A datetime object indicating when the enrollable will be available.
+        enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
+        email_connection: An existing Django email connection that can be used without
+            creating a new connection for each individual message
+
+    """
+    if hasattr(user, 'first_name') and hasattr(user, 'username'):
+        # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
+        # template slightly differently to make sure weird stuff doesn't happen.
+        user_name = user.first_name
+        if not user_name:
+            user_name = user.username
+    else:
+        user_name = None
+
+    # Users have an `email` attribute; PendingEnterpriseCustomerUsers have `user_email`.
+    if hasattr(user, 'email'):
+        user_email = user.email
+    elif hasattr(user, 'user_email'):
+        user_email = user.user_email
+    else:
+        raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
+
+    msg_context = {
+        'user_name': user_name,
+        'course_name': enrolled_in['name'],
+        'course_url': enrolled_in['url'],
+        'course_start': enrolled_in['start'],
+        'course_type': enrolled_in['type'],
+        'organization_name': enterprise_customer.name,
+    }
+
+    bulk_enrollment_template = get_enterprise_bulk_enroll_email_template()
+
+    if bulk_enrollment_template is None:
+        LOGGER.warning('No email template found for Bulk Enrollment. Not sending email.')
+        return
+
+    plain_msg, html_msg = build_notification_message(msg_context, bulk_enrollment_template)
+
+    subject_line = get_notification_subject_line(enrolled_in['name'], bulk_enrollment_template)
+
+    from_email_address = get_configuration_value_for_site(
+        enterprise_customer.site,
+        'DEFAULT_FROM_EMAIL',
+        default=settings.DEFAULT_FROM_EMAIL
+    )
+
+    mail.send_mail(
+        subject_line,
+        plain_msg,
+        from_email_address,
+        [user_email],
+        html_message=html_msg,
+        connection=email_connection
+    )
+
+
 def send_email_notification_message(user, enrolled_in, enterprise_customer, email_connection=None):
     """
     Send an email notifying a user about their enrollment in a course.
@@ -533,11 +610,32 @@ def enterprise_course_enrollment_model():
     return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
 
 
+def enterprise_bulk_enroll_template_model():
+    """
+    Returns the ``BulkEnrollmentNotificationEmailTemplate`` class.
+    """
+    return apps.get_model('enterprise', 'BulkEnrollmentNotificationEmailTemplate')  # pylint: disable=invalid-name
+
+
 def licensed_enterprise_course_enrollment_model():  # pylint: disable=invalid-name
     """
     returns the ``LicensedEnterpriseCourseEnrollment`` class.
     """
     return apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+
+
+def get_enterprise_bulk_enroll_email_template():
+    """
+    Get the first instance found of `BulkEnrollmentNotificationEmailTemplate`
+    Currently we only expect to use one of these, since it's not per customer.
+
+    :return: The first ``BulkEnrollmentNotificationEmailTemplate`` instance, or ``None`` if it doesn't exist.
+    """
+    BulkEnrollTemplate = enterprise_bulk_enroll_template_model()  # pylint: disable=invalid-name
+    try:
+        return BulkEnrollTemplate.objects.first()  # pylint: disable=no-member
+    except BulkEnrollTemplate.DoesNotExist:
+        return None
 
 
 def get_enterprise_customer(uuid):
