@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.8]
+---------
+* Remove hardcoded admin permission constraints for ContentMetadataItemTransmission integrated channel model.
+
 [3.23.7]
 ---------
 * Canvas integrated channel now 'concludes' course when sending deletion event, instead of 'delete'.
