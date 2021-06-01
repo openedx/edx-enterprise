@@ -438,11 +438,39 @@ def get_notification_subject_line(course_name, template_configuration=None):
         return stock_subject_template.format(course_name=course_name)
 
 
+def _extract_user_name_and_email(user):
+    """
+    Returns (user_name, user_email) from a given user object
+    If user does not contain one of 'email' or 'user_email' attributes, throws TypeError.
+
+    Arguments:
+        user: Either a User object or a PendingEnterpriseCustomerUser that we can use
+                to get details for the email
+    """
+    if hasattr(user, 'first_name') and hasattr(user, 'username'):
+        # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
+        # template slightly differently to make sure weird stuff doesn't happen.
+        user_name = user.first_name
+        if not user_name:
+            user_name = user.username
+    else:
+        user_name = None
+
+    # Users have an `email` attribute; PendingEnterpriseCustomerUsers have `user_email`.
+    if hasattr(user, 'email'):
+        user_email = user.email
+    elif hasattr(user, 'user_email'):
+        user_email = user.user_email
+    else:
+        raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
+    return user_name, user_email
+
+
 def send_bulk_enroll_email_notification(
-    user,
-    enrolled_in,
-    enterprise_customer,
-    email_connection=None
+        user,
+        enrolled_in,
+        enterprise_customer,
+        email_connection=None
 ):
     """
     Email to a bulk enrollment learner informing admin has enrolled them.
@@ -463,29 +491,12 @@ def send_bulk_enroll_email_notification(
             creating a new connection for each individual message
 
     """
-    if hasattr(user, 'first_name') and hasattr(user, 'username'):
-        # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
-        # template slightly differently to make sure weird stuff doesn't happen.
-        user_name = user.first_name
-        if not user_name:
-            user_name = user.username
-    else:
-        user_name = None
-
-    # Users have an `email` attribute; PendingEnterpriseCustomerUsers have `user_email`.
-    if hasattr(user, 'email'):
-        user_email = user.email
-    elif hasattr(user, 'user_email'):
-        user_email = user.user_email
-    else:
-        raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
+    user_name, user_email = _extract_user_name_and_email(user)
 
     msg_context = {
         'user_name': user_name,
         'course_name': enrolled_in['name'],
         'course_url': enrolled_in['url'],
-        'course_start': enrolled_in['start'],
-        'course_type': enrolled_in['type'],
         'organization_name': enterprise_customer.name,
     }
 
@@ -535,22 +546,7 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
             creating a new connection for each individual message
 
     """
-    if hasattr(user, 'first_name') and hasattr(user, 'username'):
-        # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
-        # template slightly differently to make sure weird stuff doesn't happen.
-        user_name = user.first_name
-        if not user_name:
-            user_name = user.username
-    else:
-        user_name = None
-
-    # Users have an `email` attribute; PendingEnterpriseCustomerUsers have `user_email`.
-    if hasattr(user, 'email'):
-        user_email = user.email
-    elif hasattr(user, 'user_email'):
-        user_email = user.user_email
-    else:
-        raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
+    user_name, user_email = _extract_user_name_and_email(user)
 
     msg_context = {
         'user_name': user_name,
