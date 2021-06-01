@@ -4,12 +4,13 @@ Django management command for sending an email to learners with missing DataShar
 """
 import datetime
 import logging
-from datetime import date, timedelta
+from datetime import timedelta
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.urls import reverse
+from django.utils import timezone
 
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import utils
@@ -88,7 +89,7 @@ class Command(BaseCommand):
                 enterprise_customer_user__enterprise_customer__enable_data_sharing_consent=True
             )
         else:
-            past_date = date.today() - timedelta(days=past_num_days)
+            past_date = timezone.now().date() - timedelta(days=past_num_days)
             enrollments_with_dsc_enabled = EnterpriseCourseEnrollment.objects.select_related(
                 'enterprise_customer_user').filter(
                 created__date=past_date,
