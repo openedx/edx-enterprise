@@ -73,15 +73,14 @@ class Command(BaseCommand):
         if course_start and course_start < datetime.datetime.now(course_start.tzinfo):
             lms_course_url = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/course')
             next_url = lms_course_url.format(course_id=course_id)
-        failure_url = urljoin(settings.LMS_ROOT_URL, '/dashboard')
         dsc_url = '{grant_data_sharing_url}?{params}'.format(
             grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
             params=urlencode(
                 {
-                    'next': next_url,
-                    'failure_url': failure_url,
                     'enterprise_customer_uuid': enterprise_customer.uuid,
                     'course_id': course_id,
+                    'next': next_url,
+                    'failure_url': '/dashboard',
                 }
             )
         )

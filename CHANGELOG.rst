@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.9]
+---------
+* Reduced the DSC url size to account for character limit in Segment event properties.
+
 [3.23.8]
 ---------
 * Remove hardcoded admin permission constraints for ContentMetadataItemTransmission integrated channel model.
