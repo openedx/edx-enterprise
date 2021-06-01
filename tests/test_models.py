@@ -32,8 +32,8 @@ from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import roles_api
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
 from enterprise.models import (
-    EnrollmentNotificationEmailTemplate,
     BulkEnrollmentNotificationEmailTemplate,
+    EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
