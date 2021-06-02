@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.11]
+---------
+* Bulk enrollment email template.
+
 [3.23.10]
 ---------
 * Send long dsc url in missing DSC email as individual params.
