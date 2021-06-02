@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.23.10]
+---------
+* Send long dsc url in missing DSC email as individual params.
+
 [3.23.9]
 ---------
 * Reduced the DSC url size to account for character limit in Segment event properties.
