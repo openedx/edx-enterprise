@@ -5,7 +5,7 @@ Django management command for sending an email to learners with missing DataShar
 import datetime
 import logging
 from datetime import date, timedelta
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.management import BaseCommand
@@ -33,7 +33,7 @@ class Command(BaseCommand):
 
     def _get_course_properties(self, user, course_id, enterprise_customer):
         """
-        Provide the data sharing consent page url and course title
+        Provide the data sharing consent page next url and course title
 
         Arguments
             user (Object): The User object
@@ -41,7 +41,7 @@ class Command(BaseCommand):
             enterprise_customer(Object): EnterpriseCustomer object
 
         Returns:
-            dsc_url (String): The DSC url
+            next_url (String): The DSC url 'next' param
             course_title (String): Title of the course
         """
         learner_portal_base_url = get_configuration_value(
@@ -73,18 +73,8 @@ class Command(BaseCommand):
         if course_start and course_start < datetime.datetime.now(course_start.tzinfo):
             lms_course_url = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/course')
             next_url = lms_course_url.format(course_id=course_id)
-        dsc_url = '{grant_data_sharing_url}?{params}'.format(
-            grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
-            params=urlencode(
-                {
-                    'enterprise_customer_uuid': enterprise_customer.uuid,
-                    'course_id': course_id,
-                    'next': next_url,
-                    'failure_url': '/dashboard',
-                }
-            )
-        )
-        return dsc_url, course_title
+
+        return next_url, course_title
 
     def get_enterprise_course_enrollments(self, options):
         """
@@ -112,24 +102,29 @@ class Command(BaseCommand):
         """
          Emit the Segment event which will be used by Braze to send the email
         """
-        dsc_url, course_title = self._get_course_properties(ec_user.user, course_id, enterprise_customer)
+        next_url, course_title = self._get_course_properties(ec_user.user, course_id, enterprise_customer)
+        failure_url = urljoin(settings.LMS_ROOT_URL, '/dashboard')
+        grant_data_sharing_url = reverse('grant_data_sharing_permissions')
         utils.track_event(ec_user.user_id, 'edx.bi.user.consent.absent', {
-            'course': course_id,
+            'course_id': course_id,
             'username': ec_user.username,
             'enterprise_name': enterprise_customer.name,
             'enterprise_uuid': str(enterprise_customer.uuid),
-            'dsc_url': dsc_url,
+            'next_url': next_url,
             'course_title': course_title,
             'user_email': ec_user.user_email,
-            'greeting_name': greeting_name
+            'greeting_name': greeting_name,
+            'failure_url': failure_url,
+            'lms_root_url': settings.LMS_ROOT_URL,
+            'grant_data_sharing_url': grant_data_sharing_url
         })
         LOGGER.info(
             '[Absent DSC Email] Segment event fired for missing data sharing consent. '
-            'User: [%s], Course: [%s], Enterprise: [%s], DSC URL: [%s]',
+            'User: [%s], Course: [%s], Enterprise: [%s], DSC Next Url: [%s]',
             ec_user.username,
             course_id,
             str(enterprise_customer.uuid),
-            dsc_url
+            next_url
         )
 
     def add_arguments(self, parser):
