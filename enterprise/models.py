@@ -652,7 +652,7 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, bulk_enrollment=False):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -660,6 +660,7 @@ class EnterpriseCustomer(TimeStampedModel):
             catalog_api_user: The user for calling the Catalog API
             course_id: The specific course the learners were enrolled in
             users: An iterable of the users or pending users who were enrolled
+            bulk_enrollment: Default False, if true, we use the bulk enrollment template instead.
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
@@ -711,7 +712,8 @@ class EnterpriseCustomer(TimeStampedModel):
                         'start': course_start,
                     },
                     enterprise_customer=self,
-                    email_connection=email_conn
+                    email_connection=email_conn,
+                    bulk_enrollment=bulk_enrollment,
                 )
 
 
@@ -2235,13 +2237,26 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         'placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.'
     )
 
+    DEFAULT_TEMPLATE_TYPE = 'DE'
+    BULK_ENROLL_TEMPLATE_TYPE = 'BE'
+    template_type_choices = [
+        (DEFAULT_TEMPLATE_TYPE, 'Default Enrollment Template'),
+        (BULK_ENROLL_TEMPLATE_TYPE, 'Bulk Enrollment Template'),
+    ]
+
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
-    enterprise_customer = models.OneToOneField(
+    enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
-        related_name="enterprise_enrollment_template",
+        related_name="enterprise_enrollment_templates",
         on_delete=models.deletion.CASCADE
+    )
+    template_type = models.CharField(
+        max_length=2,
+        choices=template_type_choices,
+        default=DEFAULT_TEMPLATE_TYPE,
+        help_text="Use either DE (default) or BE (bulk enrollment)"
     )
     history = HistoricalRecords()
 
