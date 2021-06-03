@@ -318,7 +318,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     catalog_api_user=request.user,
                     course_id=course_run,
                     users=pending_users | existing_users,
-                    bulk_enrollment=True,
+                    admin_enrollment=True,
                 )
 
             self._create_ecom_orders_for_enrollments(

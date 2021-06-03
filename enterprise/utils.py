@@ -39,6 +39,10 @@ from django.utils.translation import ungettext
 
 from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
 
+# For use with email templates
+DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE = 'DEFAULT_ENROLL'
+ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
+
 try:
     from common.djangoapps.course_modes.models import CourseMode
 except ImportError:
@@ -445,11 +449,11 @@ def get_notification_subject_line(course_name, template_configuration=None):
         return stock_subject_template.format(course_name=course_name)
 
 
-def resolve_fallback_email_templates(bulk_enrollment=False):
+def resolve_fallback_email_templates(admin_enrollment=False):
     """
     Returns text and html template locations to use when rendering email templates from file.
     """
-    if bulk_enrollment:
+    if admin_enrollment:
         return 'enterprise/emails/bulk_enroll_notification.txt', 'enterprise/emails/bulk_enroll_notification.html'
     return 'enterprise/emails/user_notification.txt', 'enterprise/emails/user_notification.html'
 
@@ -459,7 +463,7 @@ def send_email_notification_message(
         enrolled_in,
         enterprise_customer,
         email_connection=None,
-        bulk_enrollment=False,
+        admin_enrollment=False,
 ):
     """
     Send an email notifying a user about their enrollment in a course.
@@ -478,7 +482,7 @@ def send_email_notification_message(
         enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
         email_connection: An existing Django email connection that can be used without
             creating a new connection for each individual message
-        bulk_enrollment: If true, uses bulk enrollment template instead of 'DE' (default) ones.
+        admin_enrollment: If true, uses admin enrollment template instead of default ones.
     """
     if hasattr(user, 'first_name') and hasattr(user, 'username'):
         # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
@@ -503,10 +507,10 @@ def send_email_notification_message(
         'organization_name': enterprise_customer.name,
     }
     try:
-        if bulk_enrollment:
-            template_type = 'BE'
+        if admin_enrollment:
+            template_type = ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
         else:
-            template_type = 'DE'
+            template_type = DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE
         # we only support one template per type
         enterprise_template_config = enterprise_customer.enterprise_enrollment_templates.filter(
             template_type=template_type
@@ -514,7 +518,7 @@ def send_email_notification_message(
     except (ObjectDoesNotExist, AttributeError):
         enterprise_template_config = None
 
-    text_template, html_template = resolve_fallback_email_templates(bulk_enrollment=bulk_enrollment)
+    text_template, html_template = resolve_fallback_email_templates(admin_enrollment=admin_enrollment)
     plain_msg, html_msg = build_notification_message(
         msg_context,
         enterprise_template_config,

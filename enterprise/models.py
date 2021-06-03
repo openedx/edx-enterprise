@@ -55,8 +55,10 @@ from enterprise.constants import (
     json_serialized_course_modes,
 )
 from enterprise.utils import (
+    ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
+    DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE,
     NotConnectedToOpenEdX,
     get_configuration_value,
     get_ecommerce_worker_user,
@@ -652,7 +654,7 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users, bulk_enrollment=False):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -660,7 +662,8 @@ class EnterpriseCustomer(TimeStampedModel):
             catalog_api_user: The user for calling the Catalog API
             course_id: The specific course the learners were enrolled in
             users: An iterable of the users or pending users who were enrolled
-            bulk_enrollment: Default False, if true, we use the bulk enrollment template instead.
+            admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
+                When true, we use the admin enrollment template instead.
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
@@ -713,7 +716,7 @@ class EnterpriseCustomer(TimeStampedModel):
                     },
                     enterprise_customer=self,
                     email_connection=email_conn,
-                    bulk_enrollment=bulk_enrollment,
+                    admin_enrollment=admin_enrollment,
                 )
 
 
@@ -2237,11 +2240,9 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         'placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.'
     )
 
-    DEFAULT_TEMPLATE_TYPE = 'DE'
-    BULK_ENROLL_TEMPLATE_TYPE = 'BE'
     template_type_choices = [
-        (DEFAULT_TEMPLATE_TYPE, 'Default Enrollment Template'),
-        (BULK_ENROLL_TEMPLATE_TYPE, 'Bulk Enrollment Template'),
+        (DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE, 'Default Enrollment Template'),
+        (ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE, 'Admin Enrollment Template'),
     ]
 
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
@@ -2253,10 +2254,10 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     template_type = models.CharField(
-        max_length=2,
+        max_length=255,
         choices=template_type_choices,
-        default=DEFAULT_TEMPLATE_TYPE,
-        help_text="Use either DE (default) or BE (bulk enrollment)"
+        default=DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE,
+        help_text=f'Use either {DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE} or {ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE}'
     )
     history = HistoricalRecords()
 
