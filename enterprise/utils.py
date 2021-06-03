@@ -386,7 +386,6 @@ def build_notification_message(
         default_html_template: template to use for html emails, if template_configuration is not found.
 
     """
-    breakpoint()
     if (
             template_configuration is not None and
             template_configuration.html_template and
