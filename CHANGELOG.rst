@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[3.23.11]
+---------
+* Log more specific information about HTTP client errors that are caught when using the LMS
+  enrollment API.  Also send an exception event to the monitoring service when this happens, even
+  though we handle the exception "gracefully".
+
 [3.23.10]
 ---------
 * Send long dsc url in missing DSC email as individual params.

@@ -12,6 +12,7 @@ from uuid import UUID
 import pytz
 import waffle  # pylint: disable=invalid-django-waffle-import
 from dateutil.parser import parse
+from edx_django_utils import monitoring
 from edx_rest_api_client.exceptions import HttpClientError
 from ipware.ip import get_client_ip
 from opaque_keys import InvalidKeyError
@@ -606,11 +607,21 @@ class GrantDataSharingPermissions(View):
                                 course_mode=course_mode
                             )
                         )
-                    except Exception as exc:  # pylint: disable=broad-except
-                        LOGGER.error(
-                            'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
-                                exc=exc
-                            )
+                    except HttpClientError as exc:
+                        monitoring.record_exception()
+
+                        default_message = 'No error message provided'
+                        try:
+                            error_message = json.loads(exc.content.decode()).get('message', default_message)
+                        except ValueError:
+                            error_message = default_message
+                        LOGGER.exception(
+                            'Client Error while enrolling user %(user)s in %(course)s via enrollment API: %(message)s',
+                            {
+                                'user': request.user.username,
+                                'course': course_id,
+                                'message': error_message,
+                            }
                         )
                         raise
             try:
