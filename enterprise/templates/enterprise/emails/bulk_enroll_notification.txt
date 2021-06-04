@@ -1,8 +1,0 @@
-Great News! You've been enrolled in {{enrolled_in.name}} by {{organization_name}}
-
-Visit {{enrolled_in.url}} to access your course.
-
-This course is a free benefit offered especially for you, and we're excited for you to meet your learning community on edX.
-
-© 2021 edX Inc. All rights reserved.
-141 Portland St. 9th Floor, Cambridge, MA 02139
