@@ -420,11 +420,10 @@ def find_enroll_email_template(enterprise_customer, template_type):
     """
     enrollment_template = enroll_notification_email_template()
     # first try customer specific template for this type
-    template_queryset = enrollment_template.objects.filter(
-        enterprise_customer=enterprise_customer,
-        template_type=template_type,
-    )
-    enterprise_template_config = template_queryset.first()
+    try:
+        enterprise_template_config = enterprise_customer.enterprise_enrollment_template
+    except (ObjectDoesNotExist, AttributeError):
+        enterprise_template_config = None
 
     if not enterprise_template_config:
         # use the fallback template instead
