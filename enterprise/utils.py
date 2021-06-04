@@ -409,6 +409,34 @@ def get_notification_subject_line(course_name, template_configuration=None):
         return stock_subject_template.format(course_name=course_name)
 
 
+def find_enroll_email_template(enterprise_customer, template_type):
+    """
+    Find email template from the template database represented by EnrollmentNotificationEmailTemplate model.
+
+    Returns:
+      Customer specific template if found.
+      Default template for the given type if found.
+      None if neither default template, nor per customer template found.
+    """
+    enrollment_template = enroll_notification_email_template()
+    # first try customer specific template for this type
+    template_queryset = enrollment_template.objects.filter(
+        enterprise_customer=enterprise_customer,
+        template_type=template_type,
+    )
+    enterprise_template_config = template_queryset.first()
+
+    if not enterprise_template_config:
+        # use the fallback template instead
+        template_queryset = enrollment_template.objects.filter(
+            enterprise_customer=None,
+            template_type=template_type,
+        )
+        enterprise_template_config = template_queryset.first()
+
+    return enterprise_template_config
+
+
 def send_email_notification_message(
         user,
         enrolled_in,
@@ -457,39 +485,21 @@ def send_email_notification_message(
         'enrolled_in': enrolled_in,
         'organization_name': enterprise_customer.name,
     }
+
     if admin_enrollment:
         template_type = ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
     else:
         template_type = DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE
 
-    enrollment_template = enroll_notification_email_template()
-    try:
-        # first try customer specific template for this type
-        template_queryset = enrollment_template.objects.filter(
-            enterprise_customer=enterprise_customer,
-            template_type=template_type,
+    enterprise_template_config = find_enroll_email_template(enterprise_customer, template_type)
+
+    if not enterprise_template_config:
+        LOGGER.warning(
+            'Cannot find email templates for %s, template_type: %s. '
+            'Not sending notification email.',
+            enterprise_customer.name, template_type
         )
-        enterprise_template_config = template_queryset.first()
-    except (ObjectDoesNotExist, AttributeError):
-        enterprise_template_config = None
-
-    if not enterprise_template_config:
-        try:
-            # use the fallback template instead
-            template_queryset = enrollment_template.objects.filter(
-                enterprise_customer=None,
-                template_type=template_type,
-            )
-            enterprise_template_config = template_queryset.first()
-        except (ObjectDoesNotExist, AttributeError):
-            LOGGER.warning(f'cannot find template for type = {template_type} + customer, trying default template....')
-            enterprise_template_config = None
-
-    if not enterprise_template_config:
-        LOGGER.warning(f'Cannot find email templates for {enterprise_customer.name}. Cannot send notification email.')
         return
-
-    enterprise_template_config = template_queryset.first()
 
     plain_msg, html_msg = enterprise_template_config.render_all_templates(msg_context)
 
