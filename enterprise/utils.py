@@ -369,46 +369,6 @@ def get_catalog_admin_url_template(mode='change'):
     return None
 
 
-def build_notification_message(
-        template_context,
-        template_configuration=None,
-        default_text_template='enterprise/emails/user_notification.txt',
-        default_html_template='enterprise/emails/user_notification.html',
-):
-    """
-    Create HTML and plaintext message bodies for a notification.
-
-    We receive a context with data we can use to render, as well as an optional site
-    template configration - if we don't get a template configuration, we'll use the
-    standard, built-in template.
-
-    Arguments:
-        template_context (dict): A set of data to render
-        template_configuration: A database-backed object with templates
-            stored that can be used to render a notification.
-        default_text_template: template to use for text emails, if template_configuration is not found.
-        default_html_template: template to use for html emails, if template_configuration is not found.
-
-    """
-    if (
-            template_configuration is not None and
-            template_configuration.html_template and
-            template_configuration.plaintext_template
-    ):
-        plain_msg, html_msg = template_configuration.render_all_templates(template_context)
-    else:
-        plain_msg = render_to_string(
-            default_text_template,
-            template_context
-        )
-        html_msg = render_to_string(
-            default_html_template,
-            template_context
-        )
-
-    return plain_msg, html_msg
-
-
 def get_notification_subject_line(course_name, template_configuration=None):
     """
     Get a subject line for a notification email.
@@ -447,15 +407,6 @@ def get_notification_subject_line(course_name, template_configuration=None):
         return default_subject_template.format(course_name=course_name)
     except KeyError:
         return stock_subject_template.format(course_name=course_name)
-
-
-def resolve_fallback_email_templates(admin_enrollment=False):
-    """
-    Returns text and html template locations to use when rendering email templates from file.
-    """
-    if admin_enrollment:
-        return 'enterprise/emails/bulk_enroll_notification.txt', 'enterprise/emails/bulk_enroll_notification.html'
-    return 'enterprise/emails/user_notification.txt', 'enterprise/emails/user_notification.html'
 
 
 def send_email_notification_message(
@@ -506,25 +457,41 @@ def send_email_notification_message(
         'enrolled_in': enrolled_in,
         'organization_name': enterprise_customer.name,
     }
+    if admin_enrollment:
+        template_type = ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+    else:
+        template_type = DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE
+
+    enrollment_template = enroll_notification_email_template()
     try:
-        if admin_enrollment:
-            template_type = ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
-        else:
-            template_type = DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE
-        # we only support one template per type
-        enterprise_template_config = enterprise_customer.enterprise_enrollment_templates.filter(
-            template_type=template_type
-        ).first()
+        # first try customer specific template for this type
+        template_queryset = enrollment_template.objects.filter(
+            enterprise_customer=enterprise_customer,
+            template_type=template_type,
+        )
+        enterprise_template_config = template_queryset.first()
     except (ObjectDoesNotExist, AttributeError):
         enterprise_template_config = None
 
-    text_template, html_template = resolve_fallback_email_templates(admin_enrollment=admin_enrollment)
-    plain_msg, html_msg = build_notification_message(
-        msg_context,
-        enterprise_template_config,
-        default_text_template=text_template,
-        default_html_template=html_template,
-    )
+    if not enterprise_template_config:
+        try:
+            # use the fallback template instead
+            template_queryset = enrollment_template.objects.filter(
+                enterprise_customer=None,
+                template_type=template_type,
+            )
+            enterprise_template_config = template_queryset.first()
+        except (ObjectDoesNotExist, AttributeError):
+            LOGGER.warning(f'cannot find template for type = {template_type} + customer, trying default template....')
+            enterprise_template_config = None
+
+    if not enterprise_template_config:
+        LOGGER.warning(f'Cannot find email templates for {enterprise_customer.name}. Cannot send notification email.')
+        return
+
+    enterprise_template_config = template_queryset.first()
+
+    plain_msg, html_msg = enterprise_template_config.render_all_templates(msg_context)
 
     subject_line = get_notification_subject_line(enrolled_in['name'], enterprise_template_config)
 
@@ -556,6 +523,13 @@ def enterprise_enrollment_source_model():
     Returns the ``EnterpriseEnrollmentSource`` class.
     """
     return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name
+
+
+def enroll_notification_email_template():
+    """
+    Returns the ``EnrollmentNotificationEmailTemplate`` class.
+    """
+    return apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')  # pylint: disable=invalid-name
 
 
 def enterprise_customer_user_model():

@@ -2248,10 +2248,14 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
-    enterprise_customer = models.ForeignKey(
+
+    # an empty / null enterprise_customer indicates a default/fallback template
+    enterprise_customer = models.OneToOneField(
         EnterpriseCustomer,
-        related_name="enterprise_enrollment_templates",
-        on_delete=models.deletion.CASCADE
+        related_name="enterprise_enrollment_template",
+        on_delete=models.deletion.CASCADE,
+        null=True,
+        blank=True,
     )
     template_type = models.CharField(
         max_length=255,
@@ -2291,9 +2295,12 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         """
         Return human-readable string representation.
         """
-        return '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
-            self.enterprise_customer.uuid
-        )
+        if self.enterprise_customer:
+            uuid = self.enterprise_customer.uuid
+            return '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
+                uuid
+            )
+        return f'<EnrollmentNotificationEmailTemplate Default for type {self.template_type}>'
 
     def __repr__(self):
         """
