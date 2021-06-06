@@ -418,7 +418,7 @@ def find_enroll_email_template(enterprise_customer, template_type):
       Default template for the given type if found.
       None if neither default template, nor per customer template found.
     """
-    enrollment_template = enroll_notification_email_template()
+    enrollment_template = apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')
     # first try customer specific template for this type
     try:
         enterprise_template_config = enterprise_customer.enterprise_enrollment_template
@@ -531,13 +531,6 @@ def enterprise_enrollment_source_model():
     Returns the ``EnterpriseEnrollmentSource`` class.
     """
     return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name
-
-
-def enroll_notification_email_template():
-    """
-    Returns the ``EnrollmentNotificationEmailTemplate`` class.
-    """
-    return apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')  # pylint: disable=invalid-name
 
 
 def enterprise_customer_user_model():
