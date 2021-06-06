@@ -427,11 +427,10 @@ def find_enroll_email_template(enterprise_customer, template_type):
 
     if not enterprise_template_config:
         # use the fallback template instead
-        template_queryset = enrollment_template.objects.filter(
+        enterprise_template_config = enrollment_template.objects.filter(
             enterprise_customer=None,
             template_type=template_type,
-        )
-        enterprise_template_config = template_queryset.first()
+        ).first()
 
     return enterprise_template_config
 
