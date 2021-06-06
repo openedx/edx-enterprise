@@ -40,7 +40,7 @@ from django.utils.translation import ungettext
 from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
 
 # For use with email templates
-DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE = 'DEFAULT_ENROLL'
+SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
 ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
 
 try:
@@ -487,7 +487,7 @@ def send_email_notification_message(
     if admin_enrollment:
         template_type = ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
     else:
-        template_type = DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE
+        template_type = SELF_ENROLL_EMAIL_TEMPLATE_TYPE
 
     enterprise_template_config = find_enroll_email_template(enterprise_customer, template_type)
 

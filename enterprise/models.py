@@ -58,7 +58,7 @@ from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
-    DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE,
+    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
     NotConnectedToOpenEdX,
     get_configuration_value,
     get_ecommerce_worker_user,
@@ -2241,7 +2241,7 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     )
 
     template_type_choices = [
-        (DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE, 'Default Enrollment Template'),
+        (SELF_ENROLL_EMAIL_TEMPLATE_TYPE, 'Self Enrollment Template'),
         (ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE, 'Admin Enrollment Template'),
     ]
 
@@ -2260,8 +2260,8 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     template_type = models.CharField(
         max_length=255,
         choices=template_type_choices,
-        default=DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE,
-        help_text=f'Use either {DEFAULT_ENROLL_EMAIL_TEMPLATE_TYPE} or {ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE}'
+        default=SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
+        help_text=f'Use either {SELF_ENROLL_EMAIL_TEMPLATE_TYPE} or {ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE}'
     )
     history = HistoricalRecords()
 
