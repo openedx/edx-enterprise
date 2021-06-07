@@ -29,7 +29,6 @@ from django.core.validators import validate_email
 from django.db import utils
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
@@ -419,6 +418,7 @@ def find_enroll_email_template(enterprise_customer, template_type):
       None if neither default template, nor per customer template found.
     """
     enrollment_template = apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')
+
     # first try customer specific template for this type
     try:
         enterprise_template_config = enterprise_customer.enterprise_enrollment_template
@@ -497,7 +497,7 @@ def send_email_notification_message(
             'Not sending notification email.',
             enterprise_customer.name, template_type
         )
-        return
+        return None
 
     plain_msg, html_msg = enterprise_template_config.render_all_templates(msg_context)
 
@@ -1465,9 +1465,9 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
 
 
 def get_create_ent_enrollment(
-    course_id,
-    enterprise_customer_user,
-    license_uuid=None,
+        course_id,
+        enterprise_customer_user,
+        license_uuid=None,
 ):
     """
     Get or Create the Enterprise Course Enrollment.

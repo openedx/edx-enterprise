@@ -56,9 +56,9 @@ from enterprise.constants import (
 )
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
-    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
     NotConnectedToOpenEdX,
     get_configuration_value,
     get_ecommerce_worker_user,
