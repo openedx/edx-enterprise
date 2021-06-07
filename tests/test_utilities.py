@@ -24,6 +24,11 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
 )
+from enterprise.utils import (
+    ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
+    find_enroll_email_template,
+)
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import TEST_UUID, create_items, fake_catalog_api
 from test_utils.factories import (
@@ -274,17 +279,44 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     def test_find_enroll_email_template_none_found(self):
         """
-        Test the find_enroll_email_template util picks up correct templates
+        Test the find_enroll_email_template util picks up no template
         """
-        assert utils.find_enroll_email_template(
+        assert find_enroll_email_template(
             self.customer,
-            utils.SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+            SELF_ENROLL_EMAIL_TEMPLATE_TYPE
         ) is None
 
-        assert utils.find_enroll_email_template(
+        assert find_enroll_email_template(
             self.customer,
-            utils.ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+            ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
         ) is None
+
+    def test_find_enroll_email_template_only_fallback_found(self):
+        """
+        Test the find_enroll_email_template util picks up correct fallback templates
+        """
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=None,
+            template_type=SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=None,
+            template_type=ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+
+        self_fallback = find_enroll_email_template(
+            self.customer,
+            SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+        assert self_fallback is not None
+        assert self_fallback.template_type == SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+
+        admin_fallback = find_enroll_email_template(
+            self.customer,
+            ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+        assert admin_fallback is not None
+        assert admin_fallback.template_type == ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
 
     @ddt.data(
         (
