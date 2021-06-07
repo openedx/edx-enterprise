@@ -80,11 +80,6 @@ for log_name, log_level in LOG_OVERRIDES:
     logging.getLogger(log_name).setLevel(log_level)
 
 
-class InstrumentedConnectionError(ConnectionError):
-    """ Patched connection error to use when checking if a request.ConnectionError was caught
-    and handled properly. """
-
-
 @ddt.ddt
 class TestIntegratedChannelCommandMixin(unittest.TestCase):
     """
