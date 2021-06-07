@@ -3,7 +3,6 @@
 Factoryboy factories.
 """
 
-from enterprise.utils import SELF_ENROLL_EMAIL_TEMPLATE_TYPE
 from uuid import UUID
 
 import factory
@@ -31,6 +30,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
+from enterprise.utils import SELF_ENROLL_EMAIL_TEMPLATE_TYPE
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
