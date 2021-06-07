@@ -123,7 +123,6 @@ class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFacto
 
         model = EnrollmentNotificationEmailTemplate
 
-    id = factory.LazyAttribute(lambda x: FAKER.pyint())
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     plaintext_template = ("{% load i18n %}{% if user_name %}{% blocktrans %}Dear {{ user_name }} "
                           + "{% endblocktrans %}{% endif %}{{ enrolled_in.url }}, "

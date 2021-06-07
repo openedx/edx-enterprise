@@ -421,7 +421,10 @@ def find_enroll_email_template(enterprise_customer, template_type):
 
     # first try customer specific template for this type
     try:
-        enterprise_template_config = enterprise_customer.enterprise_enrollment_template
+        enterprise_template_config = enrollment_template.objects.filter(
+            enterprise_customer=enterprise_customer,
+            template_type=template_type,
+        ).first()
     except (ObjectDoesNotExist, AttributeError):
         enterprise_template_config = None
 

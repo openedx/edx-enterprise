@@ -76,7 +76,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
-        self.email_template = EnrollmentNotificationEmailTemplateFactory(enterprise_customer=None)
 
     @ddt.unpack
     @ddt.data(
@@ -273,6 +272,20 @@ class TestEnterpriseUtils(unittest.TestCase):
         )
         assert utils.get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
 
+    def test_find_enroll_email_template_none_found(self):
+        """
+        Test the find_enroll_email_template util picks up correct templates
+        """
+        assert utils.find_enroll_email_template(
+            self.customer,
+            utils.SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+        ) is None
+
+        assert utils.find_enroll_email_template(
+            self.customer,
+            utils.ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+        ) is None
+
     @ddt.data(
         (
             {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
@@ -389,8 +402,8 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(spec=[], site=None)
-        enterprise_customer.name = enterprise_customer_name
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        EnrollmentNotificationEmailTemplateFactory(enterprise_customer=None)
 
         if user is None:
             with raises(TypeError):
@@ -530,16 +543,13 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(
-            enterprise_enrollment_template=mock.MagicMock(
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line='New course! {course_name}!'
-            ),
-            site=None
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=None,
+            plaintext_template='plaintext_value',
+            html_template='<b>HTML value</b>',
+            subject_line="New course! {course_name}!",
         )
-        enterprise_customer.name = enterprise_customer_name
         if user is None:
             with raises(TypeError):
                 utils.send_email_notification_message(
@@ -598,16 +608,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 )
             )
 
-        enterprise_customer = mock.MagicMock(
-            name='Example Corporation',
-            enterprise_enrollment_template=mock.MagicMock(
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line='New course! {course_name}!'
-            ),
-            site=site
-        )
+        enterprise_customer = EnterpriseCustomerFactory(site=site)
+        EnrollmentNotificationEmailTemplateFactory(enterprise_customer=None)
 
         conn = mail.get_connection()
         utils.send_email_notification_message(
