@@ -324,7 +324,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'alternatives': [
                     (
                         (
-                            '<html><body>Dear John http://lms.example.com/courses, Enterprise Learning, Widgets, Inc</body></html>'
+                            ('<html><body>Dear John http://lms.example.com/courses, '
+                             + 'Enterprise Learning, Widgets, Inc</body></html>')
                         ),
                         'text/html'
                     )
