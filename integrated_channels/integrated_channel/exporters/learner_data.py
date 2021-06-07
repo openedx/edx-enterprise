@@ -658,6 +658,7 @@ class LearnerExporterUtility:
         """ Returns the ID of the LMS User for the EnterpriseCourseEnrollment id passed in
         or None if EnterpriseCourseEnrollment not found """
         try:
-            return EnterpriseCourseEnrollment.objects.get(id=enterprise_course_enrollment_id).enterprise_customer_user.user_id
+            return EnterpriseCourseEnrollment.objects.get(
+                id=enterprise_course_enrollment_id).enterprise_customer_user.user_id
         except EnterpriseCourseEnrollment.DoesNotExist:
             return None

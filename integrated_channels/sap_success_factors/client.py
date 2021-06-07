@@ -319,8 +319,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             sap_inactive_learners = response.json()
         except ValueError as error:
             raise ClientError(response, response.status_code) from error
-        except (ConnectionError, Timeout):
-            LOGGER.warning(
+        except (ConnectionError, Timeout) as exc:
+            LOGGER.error(exc)
+            LOGGER.error(
                 'Unable to fetch inactive learners from SAP searchStudent API with url '
                 '"{%s}".', search_student_paginated_url,
             )
@@ -328,7 +329,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
         if 'error' in sap_inactive_learners:
             try:
-                LOGGER.warning(
+                LOGGER.error(
                     'SAP searchStudent API for customer %s and base url %s returned response with '
                     'error message "%s" and with error code "%s".',
                     self.enterprise_configuration.enterprise_customer.name,
@@ -337,7 +338,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                     sap_inactive_learners['error'].get('code'),
                 )
             except AttributeError:
-                LOGGER.warning(
+                LOGGER.error(
                     'SAP searchStudent API for customer %s and base url %s returned response with '
                     'error message "%s" and with error code "%s".',
                     self.enterprise_configuration.enterprise_customer.name,
