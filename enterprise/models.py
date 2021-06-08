@@ -2297,10 +2297,8 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         """
         if self.enterprise_customer:
             uuid = self.enterprise_customer.uuid
-            return '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
-                uuid
-            )
-        return f'<EnrollmentNotificationEmailTemplate Default for type {self.template_type}>'
+            return f'<EnrollmentNotificationEmailTemplate (id: {self.id}) for EnterpriseCustomer with UUID {uuid}>'
+        return f'<EnrollmentNotificationEmailTemplate (id: {self.id}) Default template for type {self.template_type}>'
 
     def __repr__(self):
         """
