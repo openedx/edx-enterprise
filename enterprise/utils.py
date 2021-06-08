@@ -414,7 +414,7 @@ def find_enroll_email_template(enterprise_customer, template_type):
 
     Arguments:
         - enterprise_customer (EnterpriseCustomer): the customer model
-        - template_type (str): string value, must be one of:
+        - template_type (str): type of template to fetch, must be one of:
               enterprise.utils.SELF_ENROLL_EMAIL_TEMPLATE_TYPE, or
               enterprise.utils.ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
 
