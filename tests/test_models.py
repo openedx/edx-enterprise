@@ -1486,7 +1486,8 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         """
         Test conversion to string.
         """
-        expected_str = '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
+        expected_str = '<EnrollmentNotificationEmailTemplate (id: {}) for EnterpriseCustomer with UUID {}>'.format(
+            self.template.id,
             self.template.enterprise_customer.uuid
         )
         assert expected_str == method(self.template)

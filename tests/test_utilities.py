@@ -277,20 +277,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         )
         assert utils.get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
 
-    def test_find_enroll_email_template_none_found(self):
-        """
-        Test the find_enroll_email_template util picks up no template
-        """
-        assert find_enroll_email_template(
-            self.customer,
-            SELF_ENROLL_EMAIL_TEMPLATE_TYPE
-        ) is None
-
-        assert find_enroll_email_template(
-            self.customer,
-            ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
-        ) is None
-
     def test_find_enroll_email_template_only_fallback_found(self):
         """
         Test the find_enroll_email_template util picks up correct fallback templates
@@ -435,7 +421,8 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
         enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
-        EnrollmentNotificationEmailTemplateFactory(enterprise_customer=None)
+        # create a template for this customer + self enroll type (default)
+        EnrollmentNotificationEmailTemplateFactory(enterprise_customer=enterprise_customer)
 
         if user is None:
             with raises(TypeError):
@@ -576,8 +563,9 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
         enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        # since migration alread sets up fallback templates, use per customer template
         EnrollmentNotificationEmailTemplateFactory(
-            enterprise_customer=None,
+            enterprise_customer=enterprise_customer,
             plaintext_template='plaintext_value',
             html_template='<b>HTML value</b>',
             subject_line="New course! {course_name}!",
@@ -641,7 +629,6 @@ class TestEnterpriseUtils(unittest.TestCase):
             )
 
         enterprise_customer = EnterpriseCustomerFactory(site=site)
-        EnrollmentNotificationEmailTemplateFactory(enterprise_customer=None)
 
         conn = mail.get_connection()
         utils.send_email_notification_message(
