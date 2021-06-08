@@ -211,8 +211,9 @@ def update_search_with_enterprise_context(search_result, add_utm_info):
 def fake_render(request, template, context):  # pylint: disable=unused-argument
     """
     Switch the request to use a template that does not depend on edx-platform.
+    The choice of the template here is arbitrary, as long as it renders successfully for tests.
     """
-    return render(request, 'enterprise/emails/user_notification.html', context=context)
+    return render(request, 'enterprise/_data_sharing_decline_modal.html', context=context)
 
 
 def assert_url(first, second):
@@ -404,6 +405,7 @@ class EmptyCacheMixin:
     """
     Mixin the clears the default cache before each test function.
     """
+
     def setUp(self):
         super().setUp()
         caches['default'].clear()
