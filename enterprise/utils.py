@@ -412,12 +412,24 @@ def find_enroll_email_template(enterprise_customer, template_type):
     """
     Find email template from the template database represented by EnrollmentNotificationEmailTemplate model.
 
+    Arguments:
+        - enterprise_customer (EnterpriseCustomer): the customer model
+        - template_type (str): string value, must be one of:
+              enterprise.utils.SELF_ENROLL_EMAIL_TEMPLATE_TYPE, or
+              enterprise.utils.ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+
     Returns:
       Customer specific template if found.
       Default template for the given type if found.
       None if neither default template, nor per customer template found.
     """
     enrollment_template = apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')
+
+    if not enterprise_customer:
+        raise ValueError('Must provide a enterprise_customer argument')
+
+    if not template_type:
+        raise ValueError('Must provide a template_type argument')
 
     # first try customer specific template for this type
     try:
