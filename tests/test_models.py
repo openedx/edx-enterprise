@@ -2026,6 +2026,45 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         assert config.day_of_month == expected_day_of_month
         assert config.day_of_week == expected_day_of_week
 
+    @ddt.data(
+        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS, True, False),
+        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS, False, True),
+        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG, True, False),
+        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG, False, False),
+    )
+    @ddt.unpack
+    def test_enable_compression_flag(
+            self,
+            data_type,
+            enable_compression,
+            expected_error,
+    ):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating enable_compression.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            decrypted_password='test_password',
+            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_DAILY,
+            hour_of_day=1,
+            enable_compression=enable_compression,
+            data_type=data_type
+        )
+
+        if expected_error:
+            try:
+                config.save()
+            except ValidationError as validation_error:
+                assert validation_error.messages[0] == \
+                       f'Compression can only be disabled for the following data types: ' \
+                       f'{", ".join(EnterpriseCustomerReportingConfiguration.ALLOWED_NON_COMPRESSION_DATA_TYPES)}'
+        else:
+            config.save()
+
     def test_clean_missing_sftp_fields(self):
         """
         Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating sftp related fields.

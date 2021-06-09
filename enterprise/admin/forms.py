@@ -559,6 +559,7 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             "data_type",
             "report_type",
             "delivery_method",
+            "enable_compression",
             "pgp_encryption_key",
             "frequency",
             "day_of_month",

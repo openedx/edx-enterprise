@@ -600,6 +600,7 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
             'day_of_month', 'day_of_week', 'hour_of_day', 'include_date', 'encrypted_password', 'sftp_hostname',
             'sftp_port', 'sftp_username', 'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type',
             'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid', 'enterprise_customer_catalog_uuids',
+            'enable_compression',
         )
 
     encrypted_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
