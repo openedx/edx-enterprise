@@ -80,7 +80,10 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.provider_id = faker.slug()  # pylint: disable=no-member
         self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
+        self.email_template = EnterpriseCustomerIdentityProviderFactory(
+            provider_id=self.provider_id,
+            enterprise_customer=self.customer
+        )
 
     @ddt.unpack
     @ddt.data(
@@ -448,6 +451,47 @@ class TestEnterpriseUtils(unittest.TestCase):
                 ) == val, f'Did not match attrib: {field} for {enterprise_customer_name}'
             assert mail.outbox[0].connection is conn
 
+    def test_send_email_notification_with_admin_template(self):
+        """
+        Test that we can successfully render and send an email message using admin template
+        specifically saved for a given customer.
+        """
+        enterprise_customer = EnterpriseCustomerFactory()
+        # create a template for this customer + self enroll type (default)
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=enterprise_customer,
+            template_type=ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+        )
+
+        conn = mail.get_connection()
+
+        user = {'class': UserFactory, 'first_name': 'John', 'email': 'john@smith.com'}
+        user_cls = user.pop('class')
+        user = user_cls(**user)
+
+        enrolled_in = {
+            'name': 'course name',
+            'url': 'lms.example.com/courses',
+            'type': 'course',
+            'branding': 'MicroMaster',
+            'start': '2017-01-01',
+        }
+
+        utils.send_email_notification_message(
+            user,
+            enrolled_in,
+            enterprise_customer,
+            email_connection=conn,
+            admin_enrollment=True,
+        )
+        assert len(mail.outbox) == 1
+        # no need to test the entire template render content as long as it does not fail to render
+        assert len(mail.outbox[0].alternatives) == 1
+        assert mail.outbox[0].alternatives[0] == (
+            f'<html><body>Dear John lms.example.com/courses, course name, {enterprise_customer.name}</body></html>',
+            'text/html'
+        )
+
     @ddt.data(
         (
             {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
@@ -563,7 +607,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
         enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
-        # since migration alread sets up fallback templates, use per customer template
+        # since migration already sets up fallback templates, use per customer template
         EnrollmentNotificationEmailTemplateFactory(
             enterprise_customer=enterprise_customer,
             plaintext_template='plaintext_value',
