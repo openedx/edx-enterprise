@@ -29,7 +29,6 @@ from django.core.validators import validate_email
 from django.db import utils
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
@@ -38,6 +37,10 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
+
+# For use with email templates
+SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
+ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
 
 try:
     from common.djangoapps.course_modes.models import CourseMode
@@ -365,39 +368,6 @@ def get_catalog_admin_url_template(mode='change'):
     return None
 
 
-def build_notification_message(template_context, template_configuration=None):
-    """
-    Create HTML and plaintext message bodies for a notification.
-
-    We receive a context with data we can use to render, as well as an optional site
-    template configration - if we don't get a template configuration, we'll use the
-    standard, built-in template.
-
-    Arguments:
-        template_context (dict): A set of data to render
-        template_configuration: A database-backed object with templates
-            stored that can be used to render a notification.
-
-    """
-    if (
-            template_configuration is not None and
-            template_configuration.html_template and
-            template_configuration.plaintext_template
-    ):
-        plain_msg, html_msg = template_configuration.render_all_templates(template_context)
-    else:
-        plain_msg = render_to_string(
-            'enterprise/emails/user_notification.txt',
-            template_context
-        )
-        html_msg = render_to_string(
-            'enterprise/emails/user_notification.html',
-            template_context
-        )
-
-    return plain_msg, html_msg
-
-
 def get_notification_subject_line(course_name, template_configuration=None):
     """
     Get a subject line for a notification email.
@@ -438,7 +408,55 @@ def get_notification_subject_line(course_name, template_configuration=None):
         return stock_subject_template.format(course_name=course_name)
 
 
-def send_email_notification_message(user, enrolled_in, enterprise_customer, email_connection=None):
+def find_enroll_email_template(enterprise_customer, template_type):
+    """
+    Find email template from the template database represented by EnrollmentNotificationEmailTemplate model.
+
+    Arguments:
+        - enterprise_customer (EnterpriseCustomer): the customer model
+        - template_type (str): type of template to fetch, must be one of:
+              enterprise.utils.SELF_ENROLL_EMAIL_TEMPLATE_TYPE, or
+              enterprise.utils.ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+
+    Returns:
+      Customer specific template if found.
+      Default template for the given type if found.
+      None if neither default template, nor per customer template found.
+    """
+    enrollment_template = apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')
+
+    if not enterprise_customer:
+        raise ValueError('Must provide a enterprise_customer argument')
+
+    if not template_type:
+        raise ValueError('Must provide a template_type argument')
+
+    # first try customer specific template for this type
+    try:
+        enterprise_template_config = enrollment_template.objects.filter(
+            enterprise_customer=enterprise_customer,
+            template_type=template_type,
+        ).first()
+    except (ObjectDoesNotExist, AttributeError):
+        enterprise_template_config = None
+
+    if not enterprise_template_config:
+        # use the fallback template instead
+        enterprise_template_config = enrollment_template.objects.filter(
+            enterprise_customer=None,
+            template_type=template_type,
+        ).first()
+
+    return enterprise_template_config
+
+
+def send_email_notification_message(
+        user,
+        enrolled_in,
+        enterprise_customer,
+        email_connection=None,
+        admin_enrollment=False,
+):
     """
     Send an email notifying a user about their enrollment in a course.
 
@@ -456,7 +474,7 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
         enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
         email_connection: An existing Django email connection that can be used without
             creating a new connection for each individual message
-
+        admin_enrollment: If true, uses admin enrollment template instead of default ones.
     """
     if hasattr(user, 'first_name') and hasattr(user, 'username'):
         # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
@@ -480,12 +498,23 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
         'enrolled_in': enrolled_in,
         'organization_name': enterprise_customer.name,
     }
-    try:
-        enterprise_template_config = enterprise_customer.enterprise_enrollment_template
-    except (ObjectDoesNotExist, AttributeError):
-        enterprise_template_config = None
 
-    plain_msg, html_msg = build_notification_message(msg_context, enterprise_template_config)
+    if admin_enrollment:
+        template_type = ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+    else:
+        template_type = SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+
+    enterprise_template_config = find_enroll_email_template(enterprise_customer, template_type)
+
+    if not enterprise_template_config:
+        LOGGER.warning(
+            'Cannot find email templates for %s, template_type: %s. '
+            'Not sending notification email.',
+            enterprise_customer.name, template_type
+        )
+        return None
+
+    plain_msg, html_msg = enterprise_template_config.render_all_templates(msg_context)
 
     subject_line = get_notification_subject_line(enrolled_in['name'], enterprise_template_config)
 
@@ -1451,9 +1480,9 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
 
 
 def get_create_ent_enrollment(
-    course_id,
-    enterprise_customer_user,
-    license_uuid=None,
+        course_id,
+        enterprise_customer_user,
+        license_uuid=None,
 ):
     """
     Get or Create the Enterprise Course Enrollment.

@@ -24,10 +24,16 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
 )
+from enterprise.utils import (
+    ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
+    find_enroll_email_template,
+)
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import TEST_UUID, create_items, fake_catalog_api
 from test_utils.factories import (
     FAKER,
+    EnrollmentNotificationEmailTemplateFactory,
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -74,7 +80,10 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.provider_id = faker.slug()  # pylint: disable=no-member
         self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
+        self.email_template = EnterpriseCustomerIdentityProviderFactory(
+            provider_id=self.provider_id,
+            enterprise_customer=self.customer
+        )
 
     @ddt.unpack
     @ddt.data(
@@ -271,6 +280,33 @@ class TestEnterpriseUtils(unittest.TestCase):
         )
         assert utils.get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
 
+    def test_find_enroll_email_template_only_fallback_found(self):
+        """
+        Test the find_enroll_email_template util picks up correct fallback templates
+        """
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=None,
+            template_type=SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=None,
+            template_type=ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+
+        self_fallback = find_enroll_email_template(
+            self.customer,
+            SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+        assert self_fallback is not None
+        assert self_fallback.template_type == SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+
+        admin_fallback = find_enroll_email_template(
+            self.customer,
+            ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+        )
+        assert admin_fallback is not None
+        assert admin_fallback.template_type == ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE
+
     @ddt.data(
         (
             {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
@@ -288,17 +324,12 @@ class TestEnterpriseUtils(unittest.TestCase):
                     'john@smith.com'
                 ],
                 'body': (
-                    'Hi!\n\nYou have been enrolled in Demo Course, a course offered by EdX. '
-                    'This course begins Jan. 1, 2017. For more information, see the following'
-                    ' link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Demo Course team\n'
+                    'http://lms.example.com/courses, Demo Course, EdX'
                 ),
                 'alternatives': [
                     (
                         (
-                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://lms.example.'
-                            'com/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
-                            '2017. For more information, see <a href="http://lms.example.com/courses">Demo Course'
-                            '</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Demo Course team\n</p>\n</body>\n</html>\n'
+                            '<html><body>http://lms.example.com/courses, Demo Course, EdX</body></html>'
                         ),
                         'text/html'
                     )
@@ -322,18 +353,13 @@ class TestEnterpriseUtils(unittest.TestCase):
                     'john@smith.com'
                 ],
                 'body': (
-                    u'Dear John,\n\nYou have been enrolled in Enterprise Learning, a course offered by Widgets, Inc. '
-                    'This course begins June 23, 2017. For more information, see the following link:'
-                    '\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
+                    'Dear John http://lms.example.com/courses, Enterprise Learning, Widgets, Inc'
                 ),
                 'alternatives': [
                     (
                         (
-                            '<html>\n<body>\n<p>Dear John,</p>\n<p>\nYou have been enrolled in <a href="http://'
-                            'lms.example.com/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
-                            'This course begins June 23, 2017. For more information, see <a href="http://lms.example.'
-                            'com/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\n'
-                            'The Enterprise Learning team\n</p>\n</body>\n</html>\n'
+                            ('<html><body>Dear John http://lms.example.com/courses, '
+                             + 'Enterprise Learning, Widgets, Inc</body></html>')
                         ),
                         'text/html'
                     )
@@ -358,18 +384,13 @@ class TestEnterpriseUtils(unittest.TestCase):
                     'john@smith.com'
                 ],
                 'body': (
-                    'Dear johnny_boy,\n\nYou have been enrolled in Master of Awesomeness, a MicroMaster program '
-                    'offered by MIT. This program begins April 15, 2017. For more information, see the '
-                    'following link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
+                    'Dear johnny_boy http://lms.example.com/courses, Master of Awesomeness, MIT'
                 ),
                 'alternatives': [
                     (
                         (
-                            '<html>\n<body>\n<p>Dear johnny_boy,</p>\n<p>\nYou have been enrolled in '
-                            '<a href="http://lms.example.com/courses">Master of Awesomeness</a>, a MicroMaster '
-                            'program offered by MIT. This program begins April 15, 2017. For more information, '
-                            'see <a href="http://lms.example.com/courses">Master of Awesomeness</a>.\n</p>\n<p>\n'
-                            'Thanks,\n</p>\n<p>\nThe Master of Awesomeness team\n</p>\n</body>\n</html>\n'
+                            ('<html><body>Dear johnny_boy http://lms.example.com/courses, '
+                             + 'Master of Awesomeness, MIT</body></html>')
                         ),
                         'text/html'
                     )
@@ -402,8 +423,10 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(spec=[], site=None)
-        enterprise_customer.name = enterprise_customer_name
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        # create a template for this customer + self enroll type (default)
+        EnrollmentNotificationEmailTemplateFactory(enterprise_customer=enterprise_customer)
+
         if user is None:
             with raises(TypeError):
                 utils.send_email_notification_message(
@@ -423,8 +446,51 @@ class TestEnterpriseUtils(unittest.TestCase):
             )
             assert len(mail.outbox) == 1
             for field, val in expected_fields.items():
-                assert getattr(mail.outbox[0], field) == val
+                assert getattr(
+                    mail.outbox[0], field
+                ) == val, f'Did not match attrib: {field} for {enterprise_customer_name}'
             assert mail.outbox[0].connection is conn
+
+    def test_send_email_notification_with_admin_template(self):
+        """
+        Test that we can successfully render and send an email message using admin template
+        specifically saved for a given customer.
+        """
+        enterprise_customer = EnterpriseCustomerFactory()
+        # create a template for this customer + self enroll type (default)
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=enterprise_customer,
+            template_type=ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+        )
+
+        conn = mail.get_connection()
+
+        user = {'class': UserFactory, 'first_name': 'John', 'email': 'john@smith.com'}
+        user_cls = user.pop('class')
+        user = user_cls(**user)
+
+        enrolled_in = {
+            'name': 'course name',
+            'url': 'lms.example.com/courses',
+            'type': 'course',
+            'branding': 'MicroMaster',
+            'start': '2017-01-01',
+        }
+
+        utils.send_email_notification_message(
+            user,
+            enrolled_in,
+            enterprise_customer,
+            email_connection=conn,
+            admin_enrollment=True,
+        )
+        assert len(mail.outbox) == 1
+        # no need to test the entire template render content as long as it does not fail to render
+        assert len(mail.outbox[0].alternatives) == 1
+        assert mail.outbox[0].alternatives[0] == (
+            f'<html><body>Dear John lms.example.com/courses, course name, {enterprise_customer.name}</body></html>',
+            'text/html'
+        )
 
     @ddt.data(
         (
@@ -540,190 +606,14 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(
-            enterprise_enrollment_template=mock.MagicMock(
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line='New course! {course_name}!'
-            ),
-            site=None
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        # since migration already sets up fallback templates, use per customer template
+        EnrollmentNotificationEmailTemplateFactory(
+            enterprise_customer=enterprise_customer,
+            plaintext_template='plaintext_value',
+            html_template='<b>HTML value</b>',
+            subject_line="New course! {course_name}!",
         )
-        enterprise_customer.name = enterprise_customer_name
-        if user is None:
-            with raises(TypeError):
-                utils.send_email_notification_message(
-                    user,
-                    enrolled_in,
-                    enterprise_customer
-                )
-        else:
-            conn = mail.get_connection()
-            user_cls = user.pop('class')
-            user = user_cls(**user)
-            utils.send_email_notification_message(
-                user,
-                enrolled_in,
-                enterprise_customer,
-                email_connection=conn,
-            )
-            assert len(mail.outbox) == 1
-            for field, val in expected_fields.items():
-                assert getattr(mail.outbox[0], field) == val
-            assert mail.outbox[0].connection is conn
-
-    @ddt.data(
-        (
-            {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
-            {
-                'name': 'Demo Course',
-                'url': 'http://lms.example.com/courses',
-                'type': 'course',
-                'start': '2017-01-01'
-            },
-            'EdX',
-            'Course! {course_name}',
-            {
-                'subject': 'Course! Demo Course',
-                'from_email': 'course_staff@example.com',
-                'to': [
-                    'john@smith.com'
-                ],
-                'body': (
-                    'Hi!\n\nYou have been enrolled in Demo Course, a course offered by EdX. '
-                    'This course begins Jan. 1, 2017. For more information, see the following'
-                    ' link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Demo Course team\n'
-                ),
-                'alternatives': [
-                    (
-                        (
-                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://lms.example.'
-                            'com/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
-                            '2017. For more information, see <a href="http://lms.example.com/courses">Demo Course'
-                            '</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Demo Course team\n</p>\n</body>\n</html>\n'
-                        ),
-                        'text/html'
-                    )
-                ],
-                'attachments': [],
-            }
-        ),
-        (
-            {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
-            {
-                'name': 'Enterprise Learning',
-                'url': 'http://lms.example.com/courses',
-                'type': 'course',
-                'start': '2017-06-23'
-            },
-            'Widgets, Inc',
-            '{bad_format_val} is a course!',  # Test that a string we can't format results in fallback to defaults
-            {
-                'subject': 'You\'ve been enrolled in Enterprise Learning!',
-                'from_email': 'course_staff@example.com',
-                'to': [
-                    'john@smith.com'
-                ],
-                'body': (
-                    u'Dear John,\n\nYou have been enrolled in Enterprise Learning, a course offered by Widgets, Inc. '
-                    'This course begins June 23, 2017. For more information, see the following link:'
-                    '\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
-                ),
-                'alternatives': [
-                    (
-                        (
-                            '<html>\n<body>\n<p>Dear John,</p>\n<p>\nYou have been enrolled in <a href="http://'
-                            'lms.example.com/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
-                            'This course begins June 23, 2017. For more information, see <a href="http://lms.example.'
-                            'com/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Enterprise'
-                            ' Learning team\n</p>\n</body>\n</html>\n'
-                        ),
-                        'text/html'
-                    )
-                ],
-                'attachments': [],
-            }
-        ),
-        (
-            {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
-            {
-                "name": "Master of Awesomeness",
-                "url": "http://lms.example.com/courses",
-                "type": "program",
-                "start": "2017-04-15",
-            },
-            'MIT',
-            '',  # Test that an empty format string results in fallback to defaults
-            {
-                'subject': 'You\'ve been enrolled in Master of Awesomeness!',
-                'from_email': 'course_staff@example.com',
-                'to': [
-                    'john@smith.com'
-                ],
-                'body': (
-                    'Dear johnny_boy,\n\nYou have been enrolled in Master of Awesomeness, a  program '
-                    'offered by MIT. This program begins April 15, 2017. For more information, see the '
-                    'following link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
-                ),
-                'alternatives': [
-                    (
-                        (
-                            '<html>\n<body>\n<p>Dear johnny_boy,</p>\n<p>\nYou have been '
-                            'enrolled in <a href="http://lms.example.com/'
-                            'courses">Master of Awesomeness</a>, a  program offered by MIT. This program '
-                            'begins April 15, 2017. For more information, see <a href="http://lms.example.com/courses">'
-                            'Master of Awesomeness</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Master of Awesomeness'
-                            ' team\n</p>\n</body>\n</html>\n'
-                        ),
-                        'text/html'
-                    )
-                ],
-                'attachments': [],
-            }
-        ),
-        (
-            None,
-            {
-                'name': 'coursename',
-                'url': 'lms.example.com/courses',
-                'type': 'program',
-                'branding': 'MicroMaster',
-                'start': '2017-01-01',
-            },
-            'EdX',
-            '',
-            {},
-        ),
-    )
-    @ddt.unpack
-    @override_settings(ENTERPRISE_ENROLLMENT_EMAIL_DEFAULT_SUBJECT_LINE='{bad_format} string')
-    def test_send_email_notification_message_with_site_partially_defined_values(
-            self,
-            user,
-            enrolled_in,
-            enterprise_customer_name,
-            subject_line,
-            expected_fields,
-    ):
-        """
-        Test ensures that, if only one of the templates has a defined value, we use
-        the stock templates to avoid any confusion. Additionally, has some modifications
-        to the stock values used elsewhere to make sure we hit other branches related
-        to template string selection.
-        """
-        enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(
-            enterprise_enrollment_template=mock.MagicMock(
-                plaintext_template='',
-                html_template='<b>hi there</b>',
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line=subject_line
-            ),
-            site=None
-        )
-        enterprise_customer.name = enterprise_customer_name
         if user is None:
             with raises(TypeError):
                 utils.send_email_notification_message(
@@ -782,16 +672,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 )
             )
 
-        enterprise_customer = mock.MagicMock(
-            name='Example Corporation',
-            enterprise_enrollment_template=mock.MagicMock(
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line='New course! {course_name}!'
-            ),
-            site=site
-        )
+        enterprise_customer = EnterpriseCustomerFactory(site=site)
 
         conn = mail.get_connection()
         utils.send_email_notification_message(

@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.23.12]
+---------
+* Database based template system for enrollment emails, including support for Admin and Self enroll modes.
+  Admin mode for Bulk enrollment, existing enrollment emails still use the current template.
+
 [3.23.11]
 ---------
 * Log more specific information about HTTP client errors that are caught when using the LMS

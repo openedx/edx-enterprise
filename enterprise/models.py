@@ -55,6 +55,8 @@ from enterprise.constants import (
     json_serialized_course_modes,
 )
 from enterprise.utils import (
+    ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
@@ -652,7 +654,7 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -660,6 +662,8 @@ class EnterpriseCustomer(TimeStampedModel):
             catalog_api_user: The user for calling the Catalog API
             course_id: The specific course the learners were enrolled in
             users: An iterable of the users or pending users who were enrolled
+            admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
+                When true, we use the admin enrollment template instead.
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
@@ -711,7 +715,8 @@ class EnterpriseCustomer(TimeStampedModel):
                         'start': course_start,
                     },
                     enterprise_customer=self,
-                    email_connection=email_conn
+                    email_connection=email_conn,
+                    admin_enrollment=admin_enrollment,
                 )
 
 
@@ -2235,13 +2240,28 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         'placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.'
     )
 
+    template_type_choices = [
+        (SELF_ENROLL_EMAIL_TEMPLATE_TYPE, 'Self Enrollment Template'),
+        (ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE, 'Admin Enrollment Template'),
+    ]
+
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
+
+    # an empty / null enterprise_customer indicates a default/fallback template
     enterprise_customer = models.OneToOneField(
         EnterpriseCustomer,
         related_name="enterprise_enrollment_template",
-        on_delete=models.deletion.CASCADE
+        on_delete=models.deletion.CASCADE,
+        null=True,
+        blank=True,
+    )
+    template_type = models.CharField(
+        max_length=255,
+        choices=template_type_choices,
+        default=SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
+        help_text=f'Use either {SELF_ENROLL_EMAIL_TEMPLATE_TYPE} or {ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE}'
     )
     history = HistoricalRecords()
 
@@ -2275,9 +2295,10 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         """
         Return human-readable string representation.
         """
-        return '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
-            self.enterprise_customer.uuid
-        )
+        if self.enterprise_customer:
+            uuid = self.enterprise_customer.uuid
+            return f'<EnrollmentNotificationEmailTemplate (id: {self.id}) for EnterpriseCustomer with UUID {uuid}>'
+        return f'<EnrollmentNotificationEmailTemplate (id: {self.id}) Default template for type {self.template_type}>'
 
     def __repr__(self):
         """

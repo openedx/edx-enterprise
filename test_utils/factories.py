@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
+    EnrollmentNotificationEmailTemplate,
     EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
@@ -29,6 +30,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
+from enterprise.utils import SELF_ENROLL_EMAIL_TEMPLATE_TYPE
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
@@ -103,6 +105,36 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     default_language = 'en'
     sender_alias = factory.LazyAttribute(lambda x: FAKER.word())
     reply_to = factory.LazyAttribute(lambda x: FAKER.email())
+
+
+class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFactory):
+    """
+    EnrollmentNotificationEmailTemplate factory.
+
+    Creates an instance of EnrollmentNotificationEmailTemplate with minimal boilerplate.
+    Defaults to using template_type=enterprise.utils.SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+    and enterprise_customer None
+    """
+
+    class Meta:
+        """
+        Meta for EnrollmentNotificationEmailTemplateFactory.
+        """
+
+        model = EnrollmentNotificationEmailTemplate
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    plaintext_template = ("{% load i18n %}{% if user_name %}{% blocktrans %}Dear {{ user_name }} "
+                          + "{% endblocktrans %}{% endif %}{{ enrolled_in.url }}, "
+                          + "{{ enrolled_in.name }}, {{ organization_name }}")
+    html_template = ("{% load i18n %}<html>"
+                     + "<body>{% if user_name %}{% blocktrans %}Dear {{ user_name }} "
+                     + "{% endblocktrans %}{% endif %}"
+                     + "{{ enrolled_in.url }}, {{ enrolled_in.name }}, {{ organization_name }}"
+                     + "</body></html>")
+
+    subject_line = 'You\'ve been enrolled in {course_name}!'
+    template_type = SELF_ENROLL_EMAIL_TEMPLATE_TYPE
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
