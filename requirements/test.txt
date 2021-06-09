@@ -11,7 +11,7 @@ aniso8601==9.0.1
     # via
     #   -r requirements/test-master.txt
     #   edx-tincan-py35
-attrs==20.3.0
+attrs==21.2.0
     # via pytest
     # via
     #   -r requirements/test-master.txt
@@ -21,7 +21,7 @@ bleach==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -51,11 +51,11 @@ click-plugins==1.1.1
     #   click-plugins
     #   click-repl
     #   code-annotations
-code-annotations==1.1.1
+code-annotations==1.1.2
     # via -r requirements/test-master.txt
 coverage==5.5
     # via pytest-cov
-cryptography==3.2.1
+cryptography==3.4.7
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields
@@ -66,9 +66,9 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==5.0.1
+diff-cover==5.1.2
     # via -r requirements/test.in
-django-cache-memoize==0.1.8
+django-cache-memoize==0.1.9
     # via -r requirements/test-master.txt
 django-config-models==2.1.1
     # via -r requirements/test-master.txt
@@ -94,9 +94,9 @@ django-multi-email-field==0.6.2
     # via -r requirements/test-master.txt
 django-object-actions==3.0.2
     # via -r requirements/test-master.txt
-django-simple-history==2.12.0
+django-simple-history==3.0.0
     # via -r requirements/test-master.txt
-django-waffle==2.1.0
+django-waffle==2.2.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -104,7 +104,6 @@ django-waffle==2.1.0
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
-    #   code-annotations
     #   django-config-models
     #   django-crum
     #   django-fernet-fields
@@ -130,9 +129,10 @@ djangorestframework==3.12.4
     #   rest-condition
 drf-jwt==1.19.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==3.16.0
+edx-django-utils==4.1.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -142,7 +142,7 @@ edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.2.0
+edx-opaque-keys[django]==2.2.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -156,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==8.1.0
+faker==8.6.0
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -170,7 +170,7 @@ idna==2.10
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==4.0.1
+importlib-metadata==4.5.0
     # via inflect
 inflect==3.0.2
     # via
@@ -180,7 +180,7 @@ iniconfig==1.1.1
     # via pytest
 jinja2-pluralize==0.3.0
     # via diff-cover
-jinja2==2.11.3
+jinja2==3.0.1
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -195,7 +195,7 @@ jsonfield2==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   celery
-markupsafe==1.1.1
+markupsafe==2.0.1
     # via
     #   -r requirements/test-master.txt
     #   jinja2
@@ -203,9 +203,9 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-more-itertools==8.7.0
+more-itertools==8.8.0
     # via zipp
-newrelic==6.2.0.156
+newrelic==6.4.1.158
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -220,7 +220,7 @@ path==13.1.0
     # via
     #   -r requirements/test-master.txt
     #   path.py
-pbr==5.5.1
+pbr==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   stevedore
@@ -249,7 +249,7 @@ pycryptodomex==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.8.1
+pygments==2.9.0
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -257,6 +257,7 @@ pyjwkest==1.4.2
     #   edx-drf-extensions
 pyjwt[crypto]==1.7.1
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
     #   drf-jwt
     #   edx-rest-api-client
@@ -270,11 +271,11 @@ pyparsing==2.4.7
     #   packaging
 pytest-catchlog==1.2.2
     # via -r requirements/test.in
-pytest-cov==2.11.1
+pytest-cov==2.12.1
     # via -r requirements/test.in
-pytest-django==4.2.0
+pytest-django==4.4.0
     # via -r requirements/test.in
-pytest==6.2.3
+pytest==6.2.4
     # via
     #   -c requirements/constraints.txt
     #   pytest-catchlog
@@ -317,20 +318,18 @@ rest-condition==1.0.3
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-rules==2.2
+rules==3.0
     # via -r requirements/test-master.txt
 semantic-version==2.8.5
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-six==1.15.0
+six==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
     #   click-repl
-    #   cryptography
     #   django-countries
-    #   django-simple-history
     #   edx-drf-extensions
     #   edx-rbac
     #   freezegun
@@ -338,7 +337,6 @@ six==1.15.0
     #   pyjwkest
     #   python-dateutil
     #   responses
-    #   stevedore
 slumber==0.7.1
     # via
     #   -r requirements/test-master.txt
@@ -347,7 +345,7 @@ sqlparse==0.4.1
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==1.32.0
+stevedore==3.3.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -365,10 +363,12 @@ text-unidecode==1.3
     #   faker
     #   python-slugify
 toml==0.10.2
-    # via pytest
+    # via
+    #   pytest
+    #   pytest-cov
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -376,6 +376,7 @@ urllib3==1.26.4
     #   -r requirements/test-master.txt
     #   amqp
     #   celery
+    #   kombu
 wcwidth==0.2.5
     # via
     #   -r requirements/test-master.txt
