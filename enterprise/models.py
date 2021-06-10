@@ -2346,8 +2346,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (DATA_TYPE_GRADE, DATA_TYPE_GRADE),
         (DATA_TYPE_COMPLETION, DATA_TYPE_COMPLETION),
         (DATA_TYPE_COURSE_STRUCTURE, DATA_TYPE_COURSE_STRUCTURE),
-
     )
+
+    # Data types that are allowed to be sent without compression, all other data types must be compressed.
+    ALLOWED_NON_COMPRESSION_DATA_TYPES = (DATA_TYPE_CATALOG, )  # pylint: disable=invalid-name
 
     # These types are only valid for the enterprise customer named `Pearson`. We are adding these Reports temporarily
     # and will be reverted after Aurora based reports will be available.
@@ -2388,6 +2390,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         default=DELIVERY_METHOD_EMAIL,
         verbose_name=_("Delivery Method"),
         help_text=_("The method in which the data should be sent.")
+    )
+    enable_compression = models.BooleanField(
+        default=True,
+        help_text=_(
+            "Specifies whether report should be compressed. Without compression files will not be password protected "
+            "or encrypted."
+        )
     )
     pgp_encryption_key = models.TextField(
         null=True,
@@ -2559,7 +2568,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     def clean(self):
         """
-        Override of clean method to perform additional validation on frequency and day_of_month/day_of week.
+        Override of clean method to perform additional validation on frequency, day_of_month/day_of week
+        and compression.
         """
         validation_errors = {}
 
@@ -2599,6 +2609,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 validation_errors['decrypted_sftp_password'] = _(
                     'Decrypted SFTP password must be set if the delivery method is SFTP.'
                 )
+
+        # Check compression is enabled for compression only Data Types.
+        if (not self.enable_compression) and (self.data_type not in self.ALLOWED_NON_COMPRESSION_DATA_TYPES):
+            allowed_data_types = ", ".join(self.ALLOWED_NON_COMPRESSION_DATA_TYPES)
+            validation_errors['enable_compression'] = (
+                f'Compression can only be disabled for the following data types: {allowed_data_types}'
+            )
 
         if validation_errors:
             raise ValidationError(validation_errors)

@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.24.0]
+--------
+* added ``enable_compression`` flag in EnterpriseCustomerReportConfiguration table.
+
 [3.23.12]
 ---------
 * Database based template system for enrollment emails, including support for Admin and Self enroll modes.

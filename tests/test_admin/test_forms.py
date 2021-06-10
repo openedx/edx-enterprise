@@ -708,6 +708,7 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
             'hour_of_day': 1,
             'email': 'fake@edx.org',
             'decrypted_password': 'password',
+            'enable_compression': True,
         }
 
     def test_form_no_catalogs(self):
