@@ -1126,6 +1126,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
+                'enterprise_notification_banner': {'text': ''},
             }],
         ),
         (
@@ -1173,6 +1174,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'identity_providers': [],
                     'enterprise_customer_catalogs': [],
                     'reply_to': 'fake_reply@example.com',
+                    'enterprise_notification_banner': {'text': ''},
                 }
             }],
         ),
@@ -1236,6 +1238,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     },
                 ],
                 'enterprise_customer_catalogs': [],
+                'enterprise_notification_banner': {'text': ''},
             }],
         ),
         (
@@ -1283,6 +1286,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'reply_to': 'fake_reply@example.com',
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [FAKE_UUIDS[0]],
+                'enterprise_notification_banner': {'text': ''},
             }],
         ),
         (
@@ -1475,6 +1479,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
                 'reply_to': 'fake_reply@example.com',
+                'enterprise_notification_banner': {'text': ''},
             }
         else:
             assert response == expected_error
@@ -4334,3 +4339,123 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         assert response.status_code == expected_status
         if has_feature_role:
             assert response.json() == '12345'
+
+
+class TestReadNotificationView(BaseTestEnterpriseAPIViews):
+    """
+    Test NotificationReadView
+    """
+
+    READ_NOTIFICATION_ENDPOINT = reverse('read-notification')
+
+    def setUp(self):
+        super().setUp()
+        self.user, self.enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        self.admin_notification = factories.AdminNotificationFactory()
+        self.client = APIClient()
+        self.client.login(username='test_user', password='test_password')
+
+        self._add_feature_role(self.user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        user.set_password(password)  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        return user, enterprise_customer
+
+    def _add_feature_role(self, user, feature_role):
+        """
+        Helper method to create a feature_role and connect it to the User
+        """
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(
+            name=feature_role
+        )
+        EnterpriseFeatureUserRoleAssignment.objects.create(user=user, role=feature_role_object)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_success(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request success status code.
+        """
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': self.admin_notification.id,
+                'enterprise_slug': self.enterprise_customer.slug
+            }
+        )
+        assert response.status_code == 200
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_error(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request fail status code for invalid param values.
+        """
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': 111111,
+                'enterprise_slug': 'random_slug'
+            }
+        )
+        assert response.status_code == 500
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_fail_missing_params(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request fail status code for missing params.
+        """
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': self.admin_notification.id,
+            }
+        )
+        assert response.status_code == 400
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_fail_non_admin_role(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request fail status code for non admin user.
+        """
+        system_wide_role = ''
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': self.admin_notification.id,
+            }
+        )
+        assert response.status_code == 403

@@ -28,6 +28,7 @@ from django.utils.translation import ugettext as _
 from enterprise import constants
 from enterprise.admin.actions import export_as_csv_action, refresh_catalog
 from enterprise.admin.forms import (
+    AdminNotificationForm,
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerCatalogAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
@@ -45,6 +46,9 @@ from enterprise.admin.views import (
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
 from enterprise.models import (
+    AdminNotification,
+    AdminNotificationFilter,
+    AdminNotificationRead,
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
@@ -951,3 +955,35 @@ class EnterpriseFeatureUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
 
 admin.site.register(UpdateRoleAssignmentsWithCustomersConfig, ConfigurationModelAdmin)
+
+
+@admin.register(AdminNotificationRead)
+class AdminNotificationReadAdmin(admin.ModelAdmin):
+    """
+    Django admin for AdminNotificationRead model.
+    """
+
+    model = AdminNotificationRead
+    list_display = ('id', 'enterprise_customer_user', 'admin_notification', 'is_read', 'created', 'modified')
+
+
+@admin.register(AdminNotification)
+class AdminNotificationAdmin(admin.ModelAdmin):
+    """
+    Django admin for AdminNotification model.
+    """
+
+    model = AdminNotification
+    form = AdminNotificationForm
+    list_display = ('id', 'text', 'is_active', 'start_date', 'expiration_date', 'created', 'modified')
+    filter_horizontal = ('admin_notification_filter',)
+
+
+@admin.register(AdminNotificationFilter)
+class AdminNotificationFilterAdmin(admin.ModelAdmin):
+    """
+    Django admin for AdminNotificationFilter model.
+    """
+
+    model = AdminNotificationFilter
+    list_display = ('id', 'filter', 'created', 'modified')

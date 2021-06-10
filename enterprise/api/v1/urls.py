@@ -33,6 +33,11 @@ router.register(
 
 urlpatterns = [
     url(
+        r'^read_notification$',
+        views.NotificationReadView.as_view(),
+        name='read-notification'
+    ),
+    url(
         r'link_pending_enterprise_users/(?P<enterprise_uuid>[A-Za-z0-9-]+)/?$',
         views.PendingEnterpriseCustomerUserEnterpriseAdminViewSet.as_view({'post': 'link_learners'}),
         name='link-pending-enterprise-learner'
