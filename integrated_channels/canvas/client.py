@@ -378,37 +378,66 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             course_id (str) : the Canvas course ID relating to the course which the client is currently
             transmitting learner data to.
         """
-        # First, check if the course assignment already exists
+        # Check if the course assignment already exists
         canvas_assignments_url = '{canvas_base_url}/api/v1/courses/{course_id}/assignments'.format(
             canvas_base_url=self.enterprise_configuration.canvas_base_url,
             course_id=course_id
         )
         resp = self.session.get(canvas_assignments_url)
 
-        if resp.status_code >= 400:
-            raise ClientError(
-                "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
-                    resp.text,
-                ),
-                resp.status_code
-            )
+        more_pages_present = True
+        current_page_count = 0
+        assignment_id = ''
 
-        assignments_resp = resp.json()
-        assignment_id = None
-        for assignment in assignments_resp:
-            try:
-                if assignment['integration_id'] == integration_id:
-                    assignment_id = assignment['id']
-                    break
-            # The validation check above should ensure that we have a 200 response from Canvas, but sanity catch if we
-            # have a unexpected response format
-            except (KeyError, ValueError, TypeError) as error:
+        # current_page_count serves as a timeout, limiting to a max of 150 pages of requests
+        while more_pages_present and current_page_count < 150:
+            if resp.status_code >= 400:
                 raise ClientError(
                     "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
                         resp.text,
                     ),
                     resp.status_code
-                ) from error
+                )
+
+            assignments_resp = resp.json()
+            for assignment in assignments_resp:
+                try:
+                    if assignment['integration_id'] == integration_id:
+                        assignment_id = assignment['id']
+                        break
+
+                # The integration ID check above should ensure that we have a 200 response from Canvas,
+                # but sanity catch if we have a unexpected response format
+                except (KeyError, ValueError, TypeError) as error:
+                    raise ClientError(
+                        "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
+                            resp.text,
+                        ),
+                        resp.status_code
+                    ) from error
+
+            if not assignment_id:
+                # Canvas pagination headers come back as a string ie:
+                # 'headers': {
+                #     'Link': '<{assignment_url}?page=2&per_page=10>; rel="current",' \
+                #             '<{assignment_url}?page=1&per_page=10>; rel="prev",' \
+                #             '<{assignment_url}?page=1&per_page=10>; rel="first",' \
+                #             '<{assignment_url}?page=2&per_page=10>; rel="last"' \
+                # }
+                # so we have to parse out the linked list of assignment pages
+                assignment_page_results = resp.headers['Link'].split(',')
+                pages = {}
+                for page in assignment_page_results:
+                    page_type = page.split('; rel=')[1].strip('"')
+                    pages[page_type] = page.split(';')[0].strip('<>')
+
+                if pages.get('current') == pages.get('last', None):
+                    more_pages_present = False
+                else:
+                    resp = self.session.get(pages.get('next'))
+                    current_page_count += 1
+            else:
+                more_pages_present = False
 
         # Canvas requires a course assignment for a learner to be assigned a grade.
         # If no assignment has been made yet, create it.
