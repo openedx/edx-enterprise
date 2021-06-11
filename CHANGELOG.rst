@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.25.0]
+--------
+* added management command to unlink learners from their enterprise and
+  deleting DSC and EnterpriseCourseEnrolment records.
+
 [3.24.0]
 --------
 * added ``enable_compression`` flag in EnterpriseCustomerReportConfiguration table.
