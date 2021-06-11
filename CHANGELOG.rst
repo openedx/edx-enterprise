@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.25.1]
+--------
+* bug fix, properly handle API response pagination from Canvas.
+
 [3.25.0]
 --------
 * added management command to unlink learners from their enterprise and
