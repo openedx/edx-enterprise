@@ -87,6 +87,10 @@ class TestCanvasApiClient(unittest.TestCase):
             refresh_token=self.refresh_token,
         )
         self.integration_id = 'course-v1:{course_id}+2T2020'.format(course_id=self.course_id)
+        self.integration_id_2 = 'course-v2:{course_id}+2T2020'.format(course_id=self.course_id)
+        self.integration_id_3 = 'course-v3:{course_id}+2T2020'.format(course_id=self.course_id)
+        self.integration_id_4 = 'course-v4:{course_id}+2T2020'.format(course_id=self.course_id)
+
         self.course_completion_date = datetime.date(
             2020,
             random.randint(1, 10),
@@ -241,10 +245,21 @@ class TestCanvasApiClient(unittest.TestCase):
         assignment.
         """
         with responses.RequestsMock() as rsps:
+            assignment_not_found_headers = {
+                'Link': (
+                    '<{assignment_url}?page=1&per_page=10>; rel="current",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="prev",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="first",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="last"'.format(
+                        assignment_url=self.canvas_course_assignments_url
+                    )
+                )
+            }
             rsps.add(
                 responses.GET,
                 self.canvas_assignment_url,
-                json=[]
+                json=[],
+                headers=assignment_not_found_headers
             )
             rsps.add(
                 responses.POST,
@@ -443,6 +458,72 @@ class TestCanvasApiClient(unittest.TestCase):
             status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
             assert status_code == 201
             assert response_text == expected_resp
+
+    def test_assignment_retrieval_pagination(self):
+        """
+        Test that the Canvas client properly re-requests the next available page (if there exists one) If the
+        assignment ID is not found within the response.
+        """
+        # Test json blobs have been shortened-
+        # Course assignment responses and headers normally contain more data than just the integration ID and Link
+        paginated_assignment_response_1 = [
+            {'integration_id': self.integration_id, 'id': 1},
+            {'integration_id': self.integration_id_2, 'id': 2}
+        ]
+        paginated_assignment_headers_1 = {
+            'Link': (
+                '<{assignment_url}?page=2&per_page=10>; rel="current",'
+                '<{assignment_url}?page=1&per_page=10>; rel="prev",'
+                '<{assignment_url}?page=1&per_page=10>; rel="first",'
+                '<{assignment_url}?page=2&per_page=10>; rel="last"'.format(
+                    assignment_url=self.canvas_course_assignments_url
+                )
+            )
+        }
+        paginated_assignment_response_2 = [
+            {'integration_id': self.integration_id_3, 'id': 3},
+            {'integration_id': self.integration_id_4, 'id': 4}
+        ]
+        paginated_assignment_headers_2 = {
+            'Link': (
+                '<{assignment_url}?page=1&per_page=10>; rel="current",'
+                '<{assignment_url}?page=2&per_page=10>; rel="next",'
+                '<{assignment_url}?page=1&per_page=10>; rel="first",'
+                '<{assignment_url}?page=2&per_page=10>; rel="last"'.format(
+                    assignment_url=self.canvas_course_assignments_url
+                )
+            )
+        }
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            rsps.add(
+                responses.GET,
+                self.canvas_assignment_url,
+                json=paginated_assignment_response_2,
+                status=200,
+                headers=paginated_assignment_headers_2
+            )
+            rsps.add(
+                responses.GET,
+                '{}?page=2&per_page=10'.format(self.canvas_course_assignments_url),
+                json=paginated_assignment_response_1,
+                status=200,
+                headers=paginated_assignment_headers_1
+            )
+            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+            canvas_assignment = canvas_api_client._handle_canvas_assignment_retrieval(  # pylint: disable=protected-access
+                self.integration_id,
+                self.canvas_course_id,
+                'Test Assignment'
+            )
+
+            assert canvas_assignment == 1
 
     def test_create_course_success_with_image_url(self):
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
