@@ -5,16 +5,12 @@ Django management command to unlink the learners, Delete the enrollments and rem
 import csv
 import logging
 
+from edx_django_utils.cache import TieredCache, get_cache_key
+
 from django.contrib import auth
 from django.core.management import BaseCommand
 
-from enterprise.models import (
-    EnterpriseCourseEnrollment,
-    EnterpriseCustomer,
-    EnterpriseCustomerUser,
-    PendingEnterpriseCustomerUser,
-)
-from enterprise.utils import delete_data_sharing_consent
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 
 LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +22,9 @@ class Command(BaseCommand):
     Django management command to unlink the learners, Delete the enrollments and remove the DSC
 
     Example usage:
-    ./manage.py lms unlink_enterprise_customer_learners -e 22b783f5-e1d9-4228-87e4-5cf1cf110320 --data-csv path/file.csv
+    ./manage.py lms unlink_enterprise_customer_learners -e <enterprise-uuid> --data-csv /path/file.csv
+    ./manage.py lms unlink_enterprise_customer_learners -e <enterprise-uuid> --data-csv /path/file.csv --skip-unlink
+
     """
 
     def add_arguments(self, parser):
@@ -46,8 +44,17 @@ class Command(BaseCommand):
             help='Run this command for only the given EnterpriseCustomer UUID.'
         )
 
+        parser.add_argument(
+            '--skip-unlink',
+            action='store_true',
+            dest='skip_unlink',
+            default=False,
+            help='Specify to remove the DSC without unlinking learner for given data_csv.'
+        )
+
     def handle(self, *args, **options):
         csv_path = options['data_csv']
+        skip_unlink = options['skip_unlink']
         enterprise_customer_uuid = options['enterprise_customer_uuid']
         enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
 
@@ -55,12 +62,15 @@ class Command(BaseCommand):
 
         results = {}
 
-        with open(csv_path) as csv_file:
-            reader = csv.DictReader(csv_file)
-            for row in reader:
-                email = row['email']
-                results[email] = {'Unlinked': None, 'Removed_DSC': None, 'Removed_EnterpriseCourseEnrolments': None}
+        csv_file = open(csv_path)
+        rows = list(csv.DictReader(csv_file))
+        csv_file.close()
 
+        for row in rows:
+            email = row['email']
+            results[email] = {'Unlinked': None, 'Removed_DSC': None}
+
+            if not skip_unlink:
                 # Unlink the user.
                 try:
                     EnterpriseCustomerUser.objects.unlink_user(
@@ -72,33 +82,28 @@ class Command(BaseCommand):
                         email=email, ec_name=enterprise_customer.name
                     )
                     results[email]['Unlinked'] = message
-                    continue
 
-                try:
-                    user = User.objects.get(email=email)
-                except User.DoesNotExist:
-                    continue
-
-                # Fetch EnterpriseCourseEnrollments
-                enterprise_course_enrollments = EnterpriseCourseEnrollment.objects.filter(
-                    enterprise_customer_user__user_id=user.id,
-                    enterprise_customer_user__enterprise_customer=enterprise_customer,
+            # Deleting the DSC record.
+            try:
+                user = User.objects.get(email=email)
+                enterprise_customer_user = EnterpriseCustomerUser.all_objects.get(
+                    enterprise_customer__uuid=enterprise_customer_uuid,
+                    user_id=user.id
                 )
-
-                # Remove DSC
-                course_ids = list(enterprise_course_enrollments.values_list('course_id', flat=True))
+                data_sharing_consent_records = enterprise_customer_user.data_sharing_consent_records
+                course_ids = list(data_sharing_consent_records.values_list('course_id', flat=True))
+                data_sharing_consent_records.delete()
+                # Deleting the DCS cache
                 for course_id in course_ids:
-                    delete_data_sharing_consent(
-                        course_id=course_id,
-                        customer_uuid=enterprise_customer_uuid,
-                        user_email=email,
+                    consent_cache_key = get_cache_key(
+                        type='data_sharing_consent_needed',
+                        user_id=user.id,
+                        course_id=course_id
                     )
-
+                    TieredCache.delete_all_tiers(consent_cache_key)
                 results[email]['Removed_DSC'] = course_ids
-
-                # Delete the EnterpriseCourseEnrollments
-                enterprise_course_enrollments.delete()
-                results[email]['Removed_EnterpriseCourseEnrolments'] = course_ids
+            except (User.DoesNotExist, EnterpriseCustomerUser.DoesNotExist) as excep:
+                results[email]['Removed_DSC'] = str(excep)
 
         LOGGER.info('[Unlink and Remove DSC] Execution completed for enterprise: %s, \nResults: %s',
                     enterprise_customer_uuid, results)
