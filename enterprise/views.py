@@ -761,7 +761,7 @@ class GrantDataSharingPermissions(View):
                             license_uuid=license_uuid
                         )
                     )
-                    LOGGER.error(log_message)
+                    LOGGER.exception(log_message)
                     return redirect(failure_url)
 
             try:

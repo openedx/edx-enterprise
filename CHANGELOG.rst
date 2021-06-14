@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.25.2]
+--------
+* Log exception stack trace during DSC licensed-enrollment flow, so that
+  we can look at log messages and understand what exactly is failing.
+
 [3.25.1]
 --------
 * bug fix, properly handle API response pagination from Canvas.
