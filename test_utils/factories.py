@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
+    AdminNotification,
     EnrollmentNotificationEmailTemplate,
     EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
@@ -801,3 +802,23 @@ class MoodleEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFac
     moodle_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     service_short_name = factory.LazyAttribute(lambda x: FAKER.slug())
     token = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class AdminNotificationFactory(factory.django.DjangoModelFactory):
+    """
+    ``AdminNotification`` factory.
+
+    Creates an instance of ``AdminNotification`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``AdminNotification``.
+        """
+
+        model = AdminNotification
+
+    is_active = True
+    text = factory.LazyAttribute(lambda x: FAKER.word())
+    start_date = factory.Faker('date_object')
+    expiration_date = factory.Faker('date_object')

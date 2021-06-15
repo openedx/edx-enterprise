@@ -13,3 +13,10 @@ class EnrollmentModificationException(Exception):
     An exception that represents an error when modifying the state
     of an enrollment via the EnrollmentApiClient.
     """
+
+
+class AdminNotificationAPIRequestError(Exception):
+    """
+    An exception that represents an error when creating admin notification
+    read status via the NotificationReadApiClient.
+    """

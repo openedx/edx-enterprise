@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` admin forms module.
 
 import json
 import unittest
+from datetime import date, timedelta
 
 import ddt
 import mock
@@ -15,6 +16,7 @@ from django.core.files import File
 from django.test import TestCase
 
 from enterprise.admin.forms import (
+    AdminNotificationForm,
     EnterpriseCustomerCatalogAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
@@ -27,6 +29,7 @@ from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.models import EnterpriseCustomer, SystemWideEnterpriseRole
 from test_utils import fake_enrollment_api
 from test_utils.factories import (
+    AdminNotificationFactory,
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
@@ -878,3 +881,51 @@ class SystemWideEnterpriseUserRoleAssignmentFormTest(TestCase):
         actual_customers = list(form.fields['enterprise_customer'].queryset)
         expected_customers = []
         assert expected_customers == actual_customers
+
+
+@mark.django_db
+class TestAdminNotificationForm(unittest.TestCase):
+    """
+    Tests for AdminNotificationForm.
+    """
+
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super().setUp()
+        self.form_data = {
+            'text': 'Notification Banner text for admin',
+            'start_date': date.today(),
+            'expiration_date': date.today(),
+        }
+
+    def test_form_valid(self):
+        """
+        Test clean method on form that has no errors
+        """
+        form = AdminNotificationForm(
+            data=self.form_data,
+        )
+        assert form.is_valid()
+
+    def test_overlap_date_form_error(self):
+        """
+        Test clean method on form that has errors due to overlap of start and expiration date
+        """
+        AdminNotificationFactory(start_date=date.today(), expiration_date=date.today())
+        form = AdminNotificationForm(
+            data=self.form_data,
+        )
+        assert not form.is_valid()
+
+    def test_expiration_date_error(self):
+        """
+        Test clean method on form that has errors for expiration date coming before start date
+        """
+        form_data = self.form_data
+        form_data['expiration_date'] = date.today() - timedelta(days=2)
+        form = AdminNotificationForm(
+            data=form_data,
+        )
+        assert not form.is_valid()

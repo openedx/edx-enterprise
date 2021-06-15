@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.26.0]
+---------
+* Added support for admin scheduled banners that run from date x to date y.
+
 [3.25.2]
 --------
 * Log exception stack trace during DSC licensed-enrollment flow, so that

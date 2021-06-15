@@ -144,6 +144,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         (
             EnterpriseCustomerUser,
             [
+                "adminnotificationread",
                 "enterprise_enrollments",
                 "enterpriseanalyticsuser",
                 "id",

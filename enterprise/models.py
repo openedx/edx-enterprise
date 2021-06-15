@@ -33,6 +33,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
 from django.template import Context, Template
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlencode, urlquote
@@ -2870,6 +2871,126 @@ class EnterpriseAnalyticsUser(TimeStampedModel):
             enterprise_customer_user=self.enterprise_customer_user.id,
             analytics_user_id=self.analytics_user_id,
         )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class AdminNotificationFilter(TimeStampedModel):
+    """
+    Model for Admin Notification Filters.
+
+    .. no_pii:
+    """
+    filter = models.CharField(
+        max_length=50,
+        blank=False,
+        null=False,
+        unique=True,
+        help_text=_('Filters to show banner notifications conditionally.')
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Admin Notification Filter')
+        verbose_name_plural = _('Admin Notification Filters')
+        ordering = ('filter',)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<AdminNotificationFilter id:{id} filter:{filter}>'.format(id=self.id, filter=self.filter)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class AdminNotification(TimeStampedModel):
+    """
+    Model for Admin Notification.
+
+    .. no_pii:
+    """
+    text = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_('Notification banner which will appear '
+                    'to enterprise admin on admin portal.')
+    )
+
+    admin_notification_filter = models.ManyToManyField(
+        AdminNotificationFilter,
+        blank=True,
+        related_name='notification_filter'
+    )
+
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateField(default=timezone.now)
+    expiration_date = models.DateField(default=timezone.now)
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Enterprise Customer Admin Notification')
+        verbose_name_plural = _('Enterprise Customer Admin Notifications')
+        ordering = ('start_date',)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<AdminNotification id:{id} text:{text}>'.format(id=self.id, text=self.text)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class AdminNotificationRead(TimeStampedModel):
+    """
+    Model for Admin Notification Read Status.
+
+    .. no_pii:
+    """
+    enterprise_customer_user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE
+    )
+    is_read = models.BooleanField(default=False)
+    admin_notification = models.ForeignKey(
+        AdminNotification,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Admin Notification Read')
+        verbose_name_plural = _('Admin Notifications Read')
+        ordering = ('is_read',)
+        unique_together = (('enterprise_customer_user', 'admin_notification'),)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<AdminNotificationRead id={id} enterprise_customer_user={enterprise_customer_user}>'.format(
+            id=self.id, enterprise_customer_user=self.enterprise_customer_user)
 
     def __repr__(self):
         """
