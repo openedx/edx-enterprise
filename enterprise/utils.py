@@ -1694,6 +1694,10 @@ def create_tableau_user(user_id, enterprise_customer_user):
             with server.auth.sign_in(tableau_auth):
                 user_item = TSC.UserItem(user_id, TSC.UserItem.Roles.Viewer)
                 user = server.users.add(user_item)
+                LOGGER.info(
+                    '[TABLEAU USER SYNC] Created user id: %s name: %s with '
+                    'role: %s.', user.id, user.name, user.site_role,
+                )
                 EnterpriseAnalyticsUser.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
                     analytics_user_id=user.id
