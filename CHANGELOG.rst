@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[3.26.4]
+--------
+* removed unnecessary call to ecom in bulk enrollment (process of assigning a license already accounts for this)
 
 [3.26.3]
 --------

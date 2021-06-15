@@ -321,13 +321,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     admin_enrollment=True,
                 )
 
-            self._create_ecom_orders_for_enrollments(
-                course_run,
-                course_runs_modes[course_run],
-                discount,
-                serializer.validated_data.get('salesforce_id'),
-                existing_users,
-            )
         if email_errors:
             results['invalid_email_addresses'] = email_errors
 
