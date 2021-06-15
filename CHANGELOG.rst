@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.26.2]
+---------
+* Added logs for enterprise users created in tableau.
+
 [3.26.1]
 ---------
 * Added support for admin scheduled banners that run from date x to date y.
