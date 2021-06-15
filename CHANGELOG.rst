@@ -15,6 +15,13 @@ Change Log
 
 Unreleased
 ----------
+* Nothing
+
+[3.26.5]
+--------
+* fix: Bypass slumber's getattr definition when requesting enrollments for usernames starting with '_'
+  (because slumber will raise an AttributeError from getattr when requesting a resource that starts with '_').
+
 [3.26.4]
 --------
 * removed unnecessary call to ecom in bulk enrollment (process of assigning a license already accounts for this)

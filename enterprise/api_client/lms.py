@@ -12,6 +12,7 @@ from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
+from slumber.utils import copy_kwargs, url_join
 
 from django.conf import settings
 from django.utils import timezone
@@ -137,6 +138,28 @@ class EnrollmentApiClient(JwtLmsApiClient):
     def __init__(self, user=None):
         user = user if user else get_enterprise_worker_user()
         super().__init__(user)
+
+    def _get_underscore_safe_endpoint(self, username_course_string):
+        """
+        Slumber raises an AttributeError when trying to access a client class
+        attribute that starts with an underscore:
+        https://github.com/samgiles/slumber/blob/af0f9ef7bd8df8bde6b47088630786c737869bce/slumber/__init__.py#L29-L39
+
+        This is problematic for requesting enrollments for usernames that start with an underscore.
+        For example, to request enrollment data for the user '_jane' in the course 'course-v1:A+B+C',
+        we'd be requesting the '_jane,course-v1:A+B+C' resource from the /api/enrollment/v1 endpoint, i.e.
+        GET `/api/enrollment/v1/_jane,course-v1:A+B+C`.
+
+        This helper function should be used to get a Slumber endpoint (Resource object)
+        when the username begins with '_'.
+        """
+        slumber_resource = self.client.enrollment
+
+        # pylint: disable=protected-access
+        kwargs = copy_kwargs(slumber_resource._store)
+        kwargs.update({"base_url": url_join(slumber_resource._store["base_url"], username_course_string)})
+
+        return slumber_resource._get_resource(**kwargs)
 
     @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
@@ -290,10 +313,12 @@ class EnrollmentApiClient(JwtLmsApiClient):
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
 
         """
-        endpoint = getattr(
-            self.client.enrollment,
-            '{username},{course_id}'.format(username=username, course_id=course_id)
-        )
+        username_course_string = '{username},{course_id}'.format(username=username, course_id=course_id)
+        if username.startswith('_'):
+            endpoint = self._get_underscore_safe_endpoint(username_course_string)
+        else:
+            endpoint = getattr(self.client.enrollment, username_course_string)
+
         try:
             result = endpoint.get()
         except HttpNotFoundError:
