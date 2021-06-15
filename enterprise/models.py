@@ -2611,11 +2611,15 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                     'Decrypted SFTP password must be set if the delivery method is SFTP.'
                 )
 
-        # Check compression is enabled for compression only Data Types.
-        if (not self.enable_compression) and (self.data_type not in self.ALLOWED_NON_COMPRESSION_DATA_TYPES):
+        # Check enable_compression flag is set as expected.
+        if not self.enable_compression and (
+                self.data_type not in self.ALLOWED_NON_COMPRESSION_DATA_TYPES
+                or self.delivery_method != self.DELIVERY_METHOD_SFTP
+        ):
             allowed_data_types = ", ".join(self.ALLOWED_NON_COMPRESSION_DATA_TYPES)
             validation_errors['enable_compression'] = (
-                f'Compression can only be disabled for the following data types: {allowed_data_types}'
+                f'Compression can only be disabled for the following data types: {allowed_data_types} and '
+                f'delivery method: {self.DELIVERY_METHOD_SFTP}'
             )
 
         if validation_errors:

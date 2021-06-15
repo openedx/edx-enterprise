@@ -2027,17 +2027,71 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         assert config.day_of_week == expected_day_of_week
 
     @ddt.data(
-        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS, True, False),
-        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS, False, True),
-        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG, True, False),
-        (EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG, False, False),
+        #############################
+        #  COMPRESSION is Disabled  #
+        #############################
+        (
+            False,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG,
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
+            True  # all good
+        ),
+        (
+            False,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG,
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,  # wrong delivery_method
+            False
+        ),
+        (
+            False,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,  # wrong data_type
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
+            False
+        ),
+        (
+            False,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,  # wrong data_type
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,  # wrong delivery_method
+            False
+        ),
+
+        #############################
+        #  COMPRESSION is Enabled  #
+        ############################
+        # (if compression is enabled, data_type and delivery_method can be anything)
+
+        (
+            True,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG,
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
+            True
+        ),
+        (
+            True,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_CATALOG,
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            True
+        ),
+        (
+            True,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
+            True
+        ),
+        (
+            True,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,
+            EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            True
+        ),
     )
     @ddt.unpack
-    def test_enable_compression_flag(
+    def test_enable_compression_clean(
             self,
-            data_type,
             enable_compression,
-            expected_error,
+            data_type,
+            delivery_method,
+            is_valid,
     ):
         """
         Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating enable_compression.
@@ -2046,24 +2100,27 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         config = EnterpriseCustomerReportingConfiguration(
             enterprise_customer=enterprise_customer,
             active=True,
-            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            delivery_method=delivery_method,
             email='test@edx.org',
             decrypted_password='test_password',
             frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_DAILY,
             hour_of_day=1,
+            sftp_hostname='sftp_hostname',
+            sftp_username='sftp_username',
+            sftp_file_path='sftp_file_path',
+            decrypted_sftp_password='decrypted_sftp_password',
             enable_compression=enable_compression,
             data_type=data_type
         )
-
-        if expected_error:
-            try:
-                config.save()
-            except ValidationError as validation_error:
-                assert validation_error.messages[0] == \
-                       f'Compression can only be disabled for the following data types: ' \
-                       f'{", ".join(EnterpriseCustomerReportingConfiguration.ALLOWED_NON_COMPRESSION_DATA_TYPES)}'
+        if not is_valid:
+            with self.assertRaises(ValidationError) as context:
+                config.clean()
+            data_types = ", ".join(EnterpriseCustomerReportingConfiguration.ALLOWED_NON_COMPRESSION_DATA_TYPES)
+            assert context.exception.messages[0] == \
+                   f'Compression can only be disabled for the following data types: {data_types} and ' \
+                   f'delivery method: {EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP}'
         else:
-            config.save()
+            config.clean()
 
     def test_clean_missing_sftp_fields(self):
         """
