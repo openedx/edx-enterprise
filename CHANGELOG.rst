@@ -16,11 +16,19 @@ Change Log
 Unreleased
 ----------
 
+[3.26.3]
+--------
+* added --skip-unlink param in unlink_enterprise_customer_learners command to just remove DSC records.
+
 [3.26.2]
 ---------
 * Added logs for enterprise users created in tableau.
 
 [3.26.1]
+--------
+* Added check to configure reports only for Catalog over SFTP.
+
+[3.26.0]
 ---------
 * Added support for admin scheduled banners that run from date x to date y.
 
