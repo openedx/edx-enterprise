@@ -16,7 +16,7 @@ Change Log
 Unreleased
 ----------
 
-[3.26.0]
+[3.26.1]
 ---------
 * Added support for admin scheduled banners that run from date x to date y.
 
