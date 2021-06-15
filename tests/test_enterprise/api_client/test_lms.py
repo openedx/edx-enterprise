@@ -108,22 +108,24 @@ def test_enroll_user_in_course():
 @responses.activate
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment():
-    user = "some_user"
-    course_id = "course-v1:edX+DemoX+Demo_Course"
-    course_details = {"course_id": course_id}
-    mode = "audit"
-    expected_response = dict(user=user, course_details=course_details, mode=mode)
-    responses.add(
-        responses.GET,
-        _url(
-            "enrollment",
-            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
-        ),
-        json=expected_response
-    )
-    client = lms_api.EnrollmentApiClient('some-user')
-    actual_response = client.get_course_enrollment(user, course_id)
-    assert actual_response == expected_response
+    for user in ["_some_user", "some_user"]:
+        # It's important that we test for usernames that begin with '_'
+        # to test the functionality of `_get_underscore_safe_endpoint()`.
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        course_details = {"course_id": course_id}
+        mode = "audit"
+        expected_response = dict(user=user, course_details=course_details, mode=mode)
+        responses.add(
+            responses.GET,
+            _url(
+                "enrollment",
+                "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+            ),
+            json=expected_response
+        )
+        client = lms_api.EnrollmentApiClient('some-user')
+        actual_response = client.get_course_enrollment(user, course_id)
+        assert actual_response == expected_response
 
 
 @responses.activate
