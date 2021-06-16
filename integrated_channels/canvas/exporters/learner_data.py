@@ -42,9 +42,9 @@ class CanvasLearnerExporter(LearnerExporter):
                 enterprise_customer_user.user_id,
                 None,
                 ('get_learner_data_records finished. No learner data was sent because '
-                'Canvas User ID not found for [{name}]'.format(
-                    name=enterprise_customer_user.enterprise_customer.name
-                ))))
+                 'Canvas User ID not found for [{name}]'.format(
+                     name=enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None
         percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
@@ -95,9 +95,9 @@ class CanvasLearnerExporter(LearnerExporter):
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 None,
                 ('get_learner_assessment_data_records finished. No learner data was sent because '
-                'Canvas User ID not found for [{name}]'.format(
-                    name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-                ))))
+                 'Canvas User ID not found for [{name}]'.format(
+                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None
 
         CanvasLearnerAssessmentDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name

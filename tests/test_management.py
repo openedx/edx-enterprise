@@ -1411,7 +1411,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
 
 @ddt.ddt
-@ mark.django_db
+@mark.django_db
 class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
     """
     Test the assign_enterprise_user_roles management command.
@@ -1569,7 +1569,7 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
 
 
 @ddt.ddt
-@ mark.django_db
+@mark.django_db
 class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
     """
     Test the `update_role_assignments_with_customers`  management command.

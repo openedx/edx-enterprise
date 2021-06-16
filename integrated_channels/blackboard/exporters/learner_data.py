@@ -39,9 +39,9 @@ class BlackboardLearnerExporter(LearnerExporter):
                 enterprise_customer_user.user_id,
                 None,
                 ('get_learner_data_records finished. No learner data was sent because '
-                'Blackboard User ID not found for [{name}]'.format(
-                    name=enterprise_customer_user.enterprise_customer.name
-                ))))
+                 'Blackboard User ID not found for [{name}]'.format(
+                     name=enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None
         percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = None
@@ -89,9 +89,9 @@ class BlackboardLearnerExporter(LearnerExporter):
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 None,
                 ('get_learner_assessment_data_records finished. No learner data was sent because '
-                'Blackboard User ID not found for [{name}]'.format(
-                    name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-                ))))
+                 'Blackboard User ID not found for [{name}]'.format(
+                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None
 
         blackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
