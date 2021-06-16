@@ -118,7 +118,7 @@ def transmit_learner_data(username, channel_code, channel_pk):
 @set_code_owner_attribute
 def transmit_single_learner_data(learner_username, course_run_id):
     """
-    Task to send learner data to each linked integrated channel.
+    Task to send single learner data to each linked integrated channel.
 
     Arguments:
         learner_username (str): The username of the learner whose data it should send.
@@ -142,8 +142,7 @@ def transmit_single_learner_data(learner_username, course_run_id):
                 enterprise_customer_uuid,
                 user.id,
                 course_run_id,
-                'transmit_single_learner_data for channels {} started.'
-                .format([c.channel_code() for c in enterprise_integrated_channels])
+                'transmit_single_learner_data started.'
             ))
 
             integrated_channel.transmit_single_learner_data(
@@ -166,7 +165,7 @@ def transmit_single_learner_data(learner_username, course_run_id):
 @set_code_owner_attribute
 def transmit_single_subsection_learner_data(username, course_run_id, subsection_id, grade):
     """
-    Task to send a assessment level learner data record to each linked
+    Task to send an assessment level learner data record to each linked
     integrated channel. This task is fired off
     when an enterprise learner completes a subsection of their course, and
     only sends the data for that sub-section.

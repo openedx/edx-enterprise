@@ -42,7 +42,7 @@ class LearnerTransmitter(Transmitter):
 
     def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
         """
-        Send a assessment level grade information to the integrated channel using the client.
+        Send an assessment level grade information to the integrated channel using the client.
 
         Args:
             exporter: The ``LearnerExporter`` instance used to send to the integrated channel.

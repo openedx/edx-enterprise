@@ -1410,13 +1410,13 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         assert len(calls_to_search_url) > 0
 
 
-@ ddt.ddt
+@ddt.ddt
 @ mark.django_db
 class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
     """
     Test the assign_enterprise_user_roles management command.
     """
-    @ factory.django.mute_signals(signals.post_save)
+    @factory.django.mute_signals(signals.post_save)
     def setUp(self):
         super().setUp()
 
@@ -1461,13 +1461,13 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
         )
         self.assertEqual(user_role_assignments.count(), user_role_assignment_count)
 
-    @ ddt.data(
+    @ddt.data(
         ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE, False),
         ('enterprise_operator@example.com', ENTERPRISE_OPERATOR_ROLE, False),
         ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE, False),
         ('enterprise_enrollment_api_admin@example.com', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE, True)
     )
-    @ ddt.unpack
+    @ddt.unpack
     def test_assign_enterprise_user_roles_success(self, user_email, role_name, is_feature_role):
         """
         Tests `assign_enterprise_user_roles` command runs with expected results.
@@ -1482,13 +1482,13 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
         # Verify new respective role assignment records are created for the role.
         self._assert_role_assignments(user, role_name, 1, is_feature_role)
 
-    @ ddt.data(
+    @ddt.data(
         ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE, False),
         ('enterprise_operator@example.com', ENTERPRISE_OPERATOR_ROLE, False),
         ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE, False),
         ('enterprise_enrollment_api_admin@example.com', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE, True)
     )
-    @ ddt.unpack
+    @ddt.unpack
     def test_assign_enterprise_user_roles_rerun(self, user_email, role_name, is_feature_role):
         """
         Tests running `assign_enterprise_user_roles` command again gives expected results.
@@ -1509,7 +1509,7 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
         # Verify no new respective role assignment records are created.
         self._assert_role_assignments(user, role_name, 1, is_feature_role)
 
-    @ ddt.data(
+    @ddt.data(
         (
             '_get_enterprise_customer_users_batch',
             User.objects.filter(pk__in=EnterpriseCustomerUser.objects.values('user_id'))
@@ -1527,7 +1527,7 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
             User.objects.filter(groups__name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP, is_staff=False)
         )
     )
-    @ ddt.unpack
+    @ddt.unpack
     def test_get_users_batch(self, get_batch_method, batch_query):
         """
         Test that batch methods should return the correct query_set based on start and end inidices provided.
@@ -1568,13 +1568,13 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
         assert str(excinfo.value) == error
 
 
-@ ddt.ddt
+@ddt.ddt
 @ mark.django_db
 class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
     """
     Test the `update_role_assignments_with_customers`  management command.
     """
-    @ factory.django.mute_signals(signals.post_save)
+    @factory.django.mute_signals(signals.post_save)
     def setUp(self):
         super().setUp()
         self.cleanup_test_objects()
@@ -1727,7 +1727,7 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
         self._learner_assertions()
         self._operator_assertions()
 
-    @ ddt.data(
+    @ddt.data(
         ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE, ENTERPRISE_OPERATOR_ROLE
     )
     def test_command_with_role_argument(self, role_name):

@@ -95,7 +95,7 @@ class LearnerExporter(Exporter):
 
         Yields a ``LearnerDataTransmissionAudit`` for each subsection in a course under an enrollment, containing:
 
-        * ``enterprise_course_enrollment_id``: The id reference to the ``EnterpriseCourseEnrollment `` object.
+        * ``enterprise_course_enrollment_id``: The id reference to the ``EnterpriseCourseEnrollment`` object.
         * ``course_id``: The string ID of the course under the enterprise enrollment.
         * ``subsection_id``: The string ID of the subsection within the course.
         * ``grade``: string grade recorded for the learner in the course.
@@ -130,13 +130,13 @@ class LearnerExporter(Exporter):
 
     def single_assessment_level_export(self, **kwargs):
         """
-        Collect a assessment level learner data for the ``EnterpriseCustomer`` where data sharing consent is
+        Collect an assessment level learner data for the ``EnterpriseCustomer`` where data sharing consent is
         granted.
 
         Yields a ``LearnerDataTransmissionAudit`` for each subsection of the course that the learner is enrolled in,
         containing:
 
-        * ``enterprise_course_enrollment_id``: The id reference to the ``EnterpriseCourseEnrollment `` object.
+        * ``enterprise_course_enrollment_id``: The id reference to the ``EnterpriseCourseEnrollment`` object.
         * ``course_id``: The string ID of the course under the enterprise enrollment.
         * ``subsection_id``: The string ID of the subsection within the course.
         * ``grade``: string grade recorded for the learner in the course.
@@ -156,7 +156,7 @@ class LearnerExporter(Exporter):
             course_id=course_run_id,
         ).order_by('course_id')
 
-        # We are transmitting for a enrollment, so grab just the one.
+        # We are transmitting for an enrollment, so grab just the one.
         enterprise_enrollment = enrollment_queryset.first()
 
         already_transmitted = is_already_transmitted(
@@ -431,6 +431,10 @@ class LearnerExporter(Exporter):
         """
         Generate a learner assessment data transmission audit with fields properly filled in.
         Returns a list of LearnerDataTransmissionAudit objects.
+
+        enterprise_enrollment: the ``EnterpriseCourseEnrollment`` object we are getting a learner's data for.
+        assessment_grade_data: A dict with keys corresponding to different edX course subsections.
+        See _collect_assessment_grades_data for the formatted data returned as the value for a given key.
         """
         # pylint: disable=invalid-name
         LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
