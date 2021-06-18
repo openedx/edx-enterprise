@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.6]
+--------
+* added an update api call to assign tableau user roles
+
 [3.26.5]
 --------
 * fix: Bypass slumber's getattr definition when requesting enrollments for usernames starting with '_'
