@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.7]
+--------
+* developer-only facing updates to standardize LMS Integrated Channels logging.
+
+
 [3.26.6]
 --------
 * added an update api call to assign tableau user roles
