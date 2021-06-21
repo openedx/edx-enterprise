@@ -253,10 +253,10 @@ def generate_formatted_log(
     - message (str): The string to be formatted and logged
 
     """
-    return '[Integrated Channel: {channel_name}]'\
-        '[ENT CUSTOMER: {enterprise_customer_uuid}]' \
-        '[User: {lms_user_id}]'\
-        '[Course: {course_or_course_run_key}]{message}'.format(
+    return '[integrated_channel:{channel_name}]'\
+        '[integrated_channel_enterprise_customer_uuid:{enterprise_customer_uuid}]' \
+        '[integrated_channel_lms_user:{lms_user_id}]'\
+        '[integrated_channel_course_key:{course_or_course_run_key}]{message}'.format(
             enterprise_customer_uuid=enterprise_customer_uuid,
             channel_name=channel_name,
             message=message,
