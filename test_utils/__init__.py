@@ -384,21 +384,21 @@ class EnterpriseFormViewTestCase(TestCase):
         super().setUp()
         # create a temporary template file
         # rendering View's template fails becuase of dependency on edx-platform
-        tpl = tempfile.NamedTemporaryFile(
+        with tempfile.NamedTemporaryFile(
             prefix='test_template.',
             suffix=".html",
             dir=os.path.join(settings.REPO_ROOT, 'templates/enterprise/'),
             delete=False,
-        )
-        tpl.close()
-        self.addCleanup(os.remove, tpl.name)
+        ) as tpl:
+            tpl.close()
+            self.addCleanup(os.remove, tpl.name)
 
-        patcher = mock.patch(
-            self.template_path,
-            mock.PropertyMock(return_value=tpl.name)
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
+            patcher = mock.patch(
+                self.template_path,
+                mock.PropertyMock(return_value=tpl.name)
+            )
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
 
 class EmptyCacheMixin:
