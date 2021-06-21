@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.9]
+--------
+* Added support to use default idp in Enterprise slug login if there are multiple.
+
 [3.26.8]
 --------
 * added support for redirecting user to default IDP, in case multiple IDPs's attached
