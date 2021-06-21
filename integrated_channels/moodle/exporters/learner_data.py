@@ -42,7 +42,7 @@ class MoodleLearnerExporter(LearnerExporter):
                 enterprise_learner.enterprise_customer.uuid,
                 enterprise_learner.user_id,
                 None,
-                ('get_learner_data_records finished. No learner data was sent because '
+                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
                  'Moodle User ID not found for [{name}]'.format(
                      name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
                  ))))

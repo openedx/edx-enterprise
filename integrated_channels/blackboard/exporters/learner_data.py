@@ -38,7 +38,7 @@ class BlackboardLearnerExporter(LearnerExporter):
                 enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_customer_user.user_id,
                 None,
-                ('get_learner_data_records finished. No learner data was sent because '
+                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
                  'Blackboard User ID not found for [{name}]'.format(
                      name=enterprise_customer_user.enterprise_customer.name
                  ))))
@@ -88,8 +88,8 @@ class BlackboardLearnerExporter(LearnerExporter):
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 None,
-                ('get_learner_assessment_data_records finished. No learner data was sent because '
-                 'Blackboard User ID not found for [{name}]'.format(
+                ('get_learner_assessment_data_records finished. No learner data was sent for this LMS User Id because'
+                 ' Blackboard User ID not found for [{name}]'.format(
                      name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
                  ))))
             return None
