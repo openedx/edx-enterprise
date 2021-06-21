@@ -62,10 +62,9 @@ class Command(BaseCommand):
 
         results = {}
 
-        csv_file = open(csv_path)
-        rows = list(csv.DictReader(csv_file))
-        csv_file.close()
-
+        with open(csv_path) as csv_file:
+            rows = list(csv.DictReader(csv_file))
+    
         for row in rows:
             email = row['email']
             results[email] = {'Unlinked': None, 'Removed_DSC': None}
