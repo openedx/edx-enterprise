@@ -17,6 +17,7 @@ from faker import Factory as FakerFactory
 from freezegun import freeze_time
 from pytest import mark, raises
 from requests.compat import urljoin
+from requests.utils import quote
 from testfixtures import LogCapture
 
 from django.contrib import auth
@@ -53,8 +54,10 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
+from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
-from test_utils import factories
+from test_utils import ReturnValueSpy, factories
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin, setup_course_catalog_api_client_mock
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
@@ -1145,11 +1148,12 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             username=self.user.username,
             course_id=self.course_run_id
         )
-        self.sap_search_student_url = '{sapsf_base_url}/{search_students_path}?$filter={search_filter}'.format(
-            sapsf_base_url=self.sapsf.sapsf_base_url.rstrip('/'),
-            search_students_path=self.sapsf_global_configuration.search_student_api_path.rstrip('/'),
-            search_filter='criteria/isActive eq False&$select=studentID',
-        )
+        self.sap_search_student_url = \
+            '{sapsf_base_url}/{search_students_path}?$filter={search_filter}&$select=studentID'.format(
+                sapsf_base_url=self.sapsf.sapsf_base_url.rstrip('/'),
+                search_students_path=self.sapsf_global_configuration.search_student_api_path.rstrip('/'),
+                search_filter=quote('criteria/isActive eq False'),
+            )
         self.search_student_paginated_url = '{sap_search_student_url}&{pagination_criterion}'.format(
             sap_search_student_url=self.sap_search_student_url,
             pagination_criterion='$count=true&$top={page_size}&$skip={start_at}'.format(
@@ -1173,15 +1177,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             # Because there are no SAP IntegratedChannels, the process will
             # end without any processing.
             assert not log_capture.records
-
-    def assert_info_logs_sap_learners_unlink(self, expected_messages):
-        """
-        DRY method to verify log messages for management command "unlink_inactive_sap_learners".
-        """
-        with LogCapture(level=logging.INFO) as log_capture:
-            call_command('unlink_inactive_sap_learners')
-            for index, message in enumerate(expected_messages):
-                assert message in log_capture.records[index].getMessage()
 
     @responses.activate
     @ddt.data(
@@ -1252,31 +1247,22 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
                 content_type='application/json',
             )
 
-        expected_messages = [
-            'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
-            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [0] for '
-            'enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [500] for '
-            'enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [1000] for '
-            'enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'Found [{}] SAP inactive learners for enterprise customer [{}]'.format(
-                len(inactive_sap_learners), self.enterprise_customer.name
-            ),
-            'Enterprise learner {{{email}}} successfully unlinked from Enterprise '
-            'Customer {{Veridian Dynamics}}'.format(email=User.objects.get(username='C-3PO').email),
-            'Learner with email [{}] and SAP student id [Only-Edx-Learner] is not linked with enterprise [{}]'.format(
-                User.objects.get(username='Only-Edx-Learner').email, self.enterprise_customer.name
-            ),
-            'No social auth data found for inactive user with SAP student id [Only-Inactive-Sap-Learner] '
-            'of enterprise customer [{}] with identity providers [{}]'.format(
-                self.enterprise_customer.name,
-                ', '.join(provider.provider_id for provider in self.enterprise_customer.identity_providers)
-            ),
-            'Unlink inactive learners task for integrated channel configuration '
-            '[{}] took [0.0] seconds'.format(self.sapsf)
-        ]
-        self.assert_info_logs_sap_learners_unlink(expected_messages)
+        # Glass box test: inspect that internals of this process are doing what we expect:
+        with mock.patch.object(SAPSuccessFactorsEnterpriseCustomerConfiguration,
+                               'unlink_inactive_learners',
+                               wraps=self.sapsf.unlink_inactive_learners) as mock_unlink_inactive_learners:
+            get_inactive_learners_fx = SapSuccessFactorsLearnerManger(self.sapsf).client.get_inactive_sap_learners
+            spy = ReturnValueSpy(get_inactive_learners_fx)  # create a spy to store the return value when called
+            # Send in our spy to use instead:
+            with mock.patch.object(SAPSuccessFactorsAPIClient,
+                                   'get_inactive_sap_learners',
+                                   wraps=spy) as mock_get_inactive_learners:
+                call_command('unlink_inactive_sap_learners')
+                # Verify that management command uses the correct SAP config object
+                mock_unlink_inactive_learners.assert_any_call()
+                # Verify that when we DID try to unlink the inactive learners, inactive learners were found to unlink:
+                mock_get_inactive_learners.assert_any_call()
+                assert len(spy.return_values[0]) == len(inactive_sap_learners)
 
         # Now verify that only inactive SAP learners have been unlinked
         for unlinked_sap_learner_username in unlinked_sap_learners:
@@ -1305,13 +1291,11 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
-        expected_messages = [
-            'Processing learners to unlink inactive users using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Unable to fetch inactive learners from SAP searchStudent API with '
-            'url "{%s}".' % self.search_student_paginated_url
-        ]
-        self.assert_info_logs_sap_learners_unlink(expected_messages)
+        # Note: because we didn't use 'responses.add' in unit test, ANY request library call
+        # made will throw a ConnectionError. See https://github.com/getsentry/responses/blob/master/README.rst
+        # What we're verifying here is that our call will still complete because the ConnectionError gets caught:
+        call_command('unlink_inactive_sap_learners')
+        assert True
 
     @responses.activate
     @freeze_time(NOW)
@@ -1352,16 +1336,35 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             content_type='application/json',
         )
 
-        expected_messages = [
-            'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
-            'SAP SF searchStudent API returned [1] inactive learners of total [1] starting from [0] '
-            'for enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'Found [1] SAP inactive learners for enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'Enterprise customer [{}] has no associated identity provider'.format(self.enterprise_customer.name),
-            'Unlink inactive learners task for integrated channel configuration '
-            '[{}] took [0.0] seconds'.format(self.sapsf)
-        ]
-        self.assert_info_logs_sap_learners_unlink(expected_messages)
+        # Glass box test: inspect that internals of this process are doing what we expect:
+        with mock.patch.object(SAPSuccessFactorsEnterpriseCustomerConfiguration,
+                               'unlink_inactive_learners',
+                               wraps=self.sapsf.unlink_inactive_learners) as mock_unlink_inactive_learners:
+            get_providers_fx = SapSuccessFactorsLearnerManger(self.sapsf)._get_identity_providers  # pylint: disable=protected-access
+            provider_spy = ReturnValueSpy(get_providers_fx)  # create a spy to store the return value when called
+
+            get_inactive_learners_fx = SapSuccessFactorsLearnerManger(self.sapsf).client.get_inactive_sap_learners
+            spy = ReturnValueSpy(get_inactive_learners_fx)  # create a spy to store the return value when called
+            # Send in our spies to use instead:
+            with mock.patch.object(SAPSuccessFactorsAPIClient,
+                                   'get_inactive_sap_learners',
+                                   wraps=spy) as mock_get_inactive_learners:
+                with mock.patch.object(SapSuccessFactorsLearnerManger,
+                                       '_get_identity_providers',
+                                       wraps=provider_spy) as mock_get_providers:
+
+                    call_command('unlink_inactive_sap_learners')
+                    # Verify that management command uses the correct SAP config object
+                    mock_unlink_inactive_learners.assert_any_call()
+                    # Verify that when we DID try to unlink the inactive learners,
+                    #  1 inactive learner (with config name self.user.username)
+                    # was found to unlink
+                    mock_get_inactive_learners.assert_any_call()
+                    assert spy.return_values[0][0]['studentID'] == self.user.username
+
+                    # Verify that we checked and then detected that an Enterprise has no associated identity provider:
+                    mock_get_providers.assert_any_call()
+                    assert provider_spy.return_values[0] is None
 
     @responses.activate
     @freeze_time(NOW)
@@ -1374,7 +1377,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             sapsf_get_oauth_access_token_mock,
     ):  # pylint: disable=invalid-name
         """
-        Test the unlink inactive sap learners task with error response from SAPSF.
+        Test the unlink inactive sap learners task with error response from SAPSF catches the error
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
@@ -1397,15 +1400,14 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             status=400,
             content_type='application/json',
         )
-        expected_messages = [
-            'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
-            '''SAP searchStudent API for customer Veridian Dynamics '''
-            '''and base url http://enterprise.successfactors.com/ returned response with error message '''
-            '''"The property 'InvalidProperty', used in '''
-            '''a query expression, is not defined in type 'com.sap.lms.odata.Student'." and with error code "None".''',
-            'Found [{}] SAP inactive learners for enterprise customer [{}]'.format(0, self.enterprise_customer.name),
-        ]
-        self.assert_info_logs_sap_learners_unlink(expected_messages)
+
+        call_command('unlink_inactive_sap_learners')
+        calls_to_search_url = [c for c in responses.calls if
+                               c.request.url.startswith(self.search_student_paginated_url)]
+
+        # Test that we called the erroring out URL, but that we caught the error
+        # (because the previous call_command did not error out with an exception)
+        assert len(calls_to_search_url) > 0
 
 
 @ddt.ddt

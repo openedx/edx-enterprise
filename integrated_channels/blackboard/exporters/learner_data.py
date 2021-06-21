@@ -9,7 +9,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import parse_datetime_to_epoch_millis
+from integrated_channels.utils import generate_formatted_log, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
@@ -33,10 +33,15 @@ class BlackboardLearnerExporter(LearnerExporter):
         """
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
-            LOGGER.debug(
-                'No learner data was sent for user [%s] because a Blackboard user ID could not be found.',
-                enterprise_customer_user.username
-            )
+            LOGGER.debug(generate_formatted_log(
+                'blackboard',
+                enterprise_customer_user.enterprise_customer.uuid,
+                enterprise_customer_user.user_id,
+                None,
+                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
+                 'Blackboard User ID not found for [{name}]'.format(
+                     name=enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None
         percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = None
@@ -78,10 +83,15 @@ class BlackboardLearnerExporter(LearnerExporter):
         """
         if enterprise_enrollment.enterprise_customer_user.user_email is None:
             # We need an email to find the user on blackboard.
-            LOGGER.debug(
-                'No learner data was sent for user [%s] because a blackboard user ID could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
-            )
+            LOGGER.debug(generate_formatted_log(
+                'blackboard',
+                enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+                enterprise_enrollment.enterprise_customer_user.user_id,
+                None,
+                ('get_learner_assessment_data_records finished. No learner data was sent for this LMS User Id because'
+                 ' Blackboard User ID not found for [{name}]'.format(
+                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None
 
         blackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name

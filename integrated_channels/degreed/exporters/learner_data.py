@@ -10,6 +10,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = getLogger(__name__)
 
@@ -58,8 +59,13 @@ class DegreedLearnerExporter(LearnerExporter):
                     completed_timestamp=completed_timestamp,
                 )
             ]
-        LOGGER.debug(
-            'No learner data was sent for user [%s] because a Degreed user ID could not be found.',
-            enterprise_enrollment.enterprise_customer_user.username
-        )
+        LOGGER.info(generate_formatted_log(
+            'degreed',
+            enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+            enterprise_enrollment.enterprise_customer_user.user_id,
+            None,
+            ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
+             'Degreed User ID not found for [{name}]'.format(
+                 name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+             ))))
         return None

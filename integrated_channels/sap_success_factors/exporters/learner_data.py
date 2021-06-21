@@ -105,14 +105,8 @@ class SapSuccessFactorsLearnerManger:
         self.enterprise_configuration = enterprise_configuration
         self.client = client(enterprise_configuration) if client else None
 
-    def unlink_learners(self):
-        """
-        Iterate over each learner and unlink inactive SAP channel learners.
-
-        This method iterates over each enterprise learner and unlink learner
-        from the enterprise if the learner is marked inactive in the related
-        integrated channel.
-        """
+    def _get_inactive_learners(self):
+        """ Gets inactive learners list from the client or raises ClientError on failure. """
         try:
             sap_inactive_learners = self.client.get_inactive_sap_learners()
         except RequestException as exc:
@@ -122,6 +116,30 @@ class SapSuccessFactorsLearnerManger:
                     message=str(exc)
                 )
             ) from exc
+        return sap_inactive_learners
+
+    def _get_identity_providers(self):
+        """ Logic check for getting an identity provider preflight validation, split out for unit testing."""
+        enterprise_customer = self.enterprise_configuration.enterprise_customer
+        providers = enterprise_customer.identity_providers
+        if not enterprise_customer.has_identity_providers:
+            LOGGER.info(
+                'Enterprise customer [%s] has no associated identity provider',
+                enterprise_customer.name
+            )
+            return None
+        return providers
+
+    def unlink_learners(self):
+        """
+        Iterate over each learner and unlink inactive SAP channel learners.
+
+        This method iterates over each enterprise learner and unlink learner
+        from the enterprise if the learner is marked inactive in the related
+        integrated channel.
+        """
+        sap_inactive_learners = self._get_inactive_learners()
+
         total_sap_inactive_learners = len(sap_inactive_learners) if sap_inactive_learners else 0
         enterprise_customer = self.enterprise_configuration.enterprise_customer
         LOGGER.info(
@@ -131,12 +149,8 @@ class SapSuccessFactorsLearnerManger:
         if not sap_inactive_learners:
             return None
 
-        providers = enterprise_customer.identity_providers
-        if not enterprise_customer.has_identity_providers:
-            LOGGER.info(
-                'Enterprise customer [%s] has no associated identity provider',
-                enterprise_customer.name
-            )
+        providers = self._get_identity_providers()
+        if not providers:
             return None
 
         for sap_inactive_learner in sap_inactive_learners:

@@ -409,3 +409,26 @@ class EmptyCacheMixin:
     def setUp(self):
         super().setUp()
         caches['default'].clear()
+
+
+class ReturnValueSpy:
+    """
+    Helper class to be used with mock and patch so that inner commands may be inspected.
+    Useful for integration tests. Example Usage with a management command:
+    def test():
+        with patch('low_level_class.my_m', ReturnValueSpy(goo)) as goo_mock:
+            x = foo()
+            x = foo()
+            print(goo_mock.return_values)
+            assert goo_mock.return_values == [3, 3]
+
+    """
+
+    def __init__(self, func):
+        self.func = func
+        self.return_values = []
+
+    def __call__(self, *args, **kwargs):
+        answer = self.func(*args, **kwargs)
+        self.return_values.append(answer)
+        return answer
