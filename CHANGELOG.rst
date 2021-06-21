@@ -17,10 +17,13 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.8]
+--------
+* added support for redirecting user to default IDP, in case multiple IDPs's attached
+
 [3.26.7]
 --------
 * developer-only facing updates to standardize LMS Integrated Channels logging.
-
 
 [3.26.6]
 --------

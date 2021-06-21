@@ -304,6 +304,7 @@ class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactor
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     provider_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    default_provider = False
 
 
 class PendingEnrollmentFactory(factory.django.DjangoModelFactory):

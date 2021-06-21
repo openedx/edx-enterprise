@@ -234,6 +234,51 @@ class TestEnterpriseCustomer(unittest.TestCase):
         assert customer.identity_providers[0] == ent_idp_one
         assert customer.identity_providers[1] == ent_idp_two
 
+    def test_tpa_hint_with_no_identity_provider_attached(self):
+        """
+        Test tpa_hint is None when no identity_provider is attached with enterprise_customer.
+        """
+        customer = factories.EnterpriseCustomerFactory()
+        assert customer.get_tpa_hint() is None
+
+    def test_tpa_hint_with_single_identity_provider_attached(self):
+        """
+        Test tpa_hint is same to provider_id of identity_provider attached with enterprise_customer.
+        """
+        customer = factories.EnterpriseCustomerFactory()
+        ent_idp_one = factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=customer,
+        )
+        assert customer.get_tpa_hint() == ent_idp_one.provider_id
+
+    def test_tpa_hint_with_multiple_identity_providers_attached(self):
+        """
+        Test tpa_hint is same to provider_id of default identity_provider attached with enterprise_customer.
+        """
+        customer = factories.EnterpriseCustomerFactory()
+        ent_idp_one = factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=customer,
+            default_provider=True
+        )
+        ent_idp_two = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
+        assert customer.get_tpa_hint() == ent_idp_one.provider_id
+        ent_idp_one.default_provider = False
+        ent_idp_one.save()
+        ent_idp_two.default_provider = True
+        ent_idp_two.save()
+        assert customer.get_tpa_hint() == ent_idp_two.provider_id
+
+    def test_tpa_hint_failed_with_multiple_identity_providers_attached(self):
+        """
+        Test tpa_hint is None in case multiple IDPs attached and none of them is default.
+        """
+        customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=customer,
+        )
+        factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
+        assert customer.get_tpa_hint() is None
+
     def test_no_identity_provider(self):
         """
         Test identity_provider property returns correct value without errors.
