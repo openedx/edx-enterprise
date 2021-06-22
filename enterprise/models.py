@@ -407,7 +407,7 @@ class EnterpriseCustomer(TimeStampedModel):
     @property
     def has_multiple_idps(self):
         """
-        Return True if there are any identity providers associated with this enterprise customer.
+        Return True if there are multiple identity providers associated with this enterprise customer.
         """
         # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.count() > 1
@@ -453,6 +453,8 @@ class EnterpriseCustomer(TimeStampedModel):
         # if there is only one identity provider linked with the customer and tpa_hint_param was not provider.
         if self.has_single_idp and not tpa_hint_param:
             return self.identity_providers.first().provider_id
+        if self.has_multiple_idps and not tpa_hint_param:
+            return self.default_provider_idp.provider_id if self.default_provider_idp else None
         # Now if there is not any linked identity provider OR there are multiple identity providers.
         return None
 
@@ -677,8 +679,11 @@ class EnterpriseCustomer(TimeStampedModel):
         course_path = '/courses/{course_id}/course'.format(course_id=course_id)
         params = {}
         # add tap_hint if there is only one IdP attached with enterprise_customer
-        if self.identity_providers.count() == 1:
+        if self.has_single_idp:
             params = {'tpa_hint': self.identity_providers.first().provider_id}
+
+        elif self.has_multiple_idps and self.default_provider_idp:
+            params = {'tpa_hint': self.default_provider_idp.provider_id}
         course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
 
         lms_root_url = utils.get_configuration_value_for_site(
