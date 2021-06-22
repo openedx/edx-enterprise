@@ -10,6 +10,7 @@ import mock
 from pytest import mark
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 from test_utils import factories
 
@@ -37,6 +38,23 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         )
 
         self.learner_transmitter = LearnerTransmitter(self.enterprise_config)
+
+    def test_transmit_single_learner_data_signal_kwargs(self):
+        """ transmit_single_learner_data is called with kwargs as a shared task from OpenEdx,
+        so test that interface hasn't changed. """
+
+        edx_platform_api_signal_kwargs = {
+            'username': "fake_username",
+            'course_run_id': "TEST_COURSE_RUN_KEY"
+        }
+        # If you change the arg names to transmit_single_learner_data
+        # this test will now fail with a TypeError:
+        try:
+            transmit_single_learner_data(**edx_platform_api_signal_kwargs)
+        except TypeError:
+            assert False  # if we see a Type error, the test should fail because we failed with bad keyword parameters
+        except Exception:   # pylint: disable=broad-except
+            pass  # otherwise it's because we set the test up with no data.
 
     @mock.patch("integrated_channels.integrated_channel.models.LearnerDataTransmissionAudit")
     @mock.patch("integrated_channels.utils.is_already_transmitted")

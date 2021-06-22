@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.10]
+---------
+* Fix forward for parameter rename changing the signals API in 3.26.7
+
 [3.26.9]
 --------
 * Added support to use default idp in Enterprise slug login if there are multiple.
