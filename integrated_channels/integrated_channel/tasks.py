@@ -116,15 +116,15 @@ def transmit_learner_data(username, channel_code, channel_pk):
 
 @shared_task
 @set_code_owner_attribute
-def transmit_single_learner_data(learner_username, course_run_id):
+def transmit_single_learner_data(username, course_run_id):
     """
     Task to send single learner data to each linked integrated channel.
 
     Arguments:
-        learner_username (str): The username of the learner whose data it should send.
+        username (str): The username of the learner whose data it should send.
         course_run_id (str): The course run id of the course it should send data for.
     """
-    user = User.objects.get(username=learner_username)
+    user = User.objects.get(username=username)
     enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, active=True)
 
     # Transmit the learner data to each integrated channel for each related customer.
