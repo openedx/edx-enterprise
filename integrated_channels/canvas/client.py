@@ -73,7 +73,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     @staticmethod
     def course_fetch_endpoint(canvas_base_url, canvas_account_id):
         """
-        Returns endpoint to GET to for course fetch
+        Returns endpoint to fetch all courses for the specified Canvas account
         """
         return '{}/api/v1/accounts/{}/courses'.format(
             canvas_base_url,
@@ -338,6 +338,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
           under the current subaccount
           Will even return courses that are in the 'deleted' state in Canvas, so we can correctly
           skip these courses in logic for create_or_update when needed.
+
+          Note: we do not need to follow pagination here since it would be extremely unlikely
+          that searching by a specific edx_course_id results in many records, we generally only
+          expect 1 record to come back anyway.
         """
         url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
             self.enterprise_configuration.canvas_base_url,
