@@ -42,6 +42,6 @@ stevedore
 tableauserverclient
 testfixtures
 unicodecsv
--e git+https://github.com/edx/django-config-models.git@f96f819d9a7f68e0e8086ce2da1a3aa01c2f14da#egg=config_models
+-e git+https://github.com/edx/django-config-models.git@f96f819d9a7f68e0e8086ce2da1a3aa01c2f14da#egg=django-config-models
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.
