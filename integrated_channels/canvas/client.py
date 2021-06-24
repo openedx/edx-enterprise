@@ -404,8 +404,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
     def _get_course_id_from_edx_course_id(self, edx_course_id):
         """
-        To obtain course ID we have to request all courses associated with the integrated
-        account and match the one with our edx_course_id (integration_id).
+        Uses the Canvas search api to find a course by edx_course_id
 
         Args:
             edx_course_id (string): Course ID to search by
