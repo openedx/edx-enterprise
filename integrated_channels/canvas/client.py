@@ -124,6 +124,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     'not attempting to create/update',
                     edx_course_id,
                 )
+                status_code = 200
+                response_text = 'Course was deleted previously, skipping create/update'
             else:
                 # 'unpublished', 'completed' or 'available' cases
                 LOGGER.warning(
@@ -342,8 +344,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
           Note: we do not need to follow pagination here since it would be extremely unlikely
           that searching by a specific edx_course_id results in many records, we generally only
           expect 1 record to come back anyway.
+
+          The `&state[]=all` is added so we can also fetch priorly 'delete'd courses
         """
-        url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
+        url = "{}/api/v1/accounts/{}/courses/?search_term={}&state[]=all".format(
             self.enterprise_configuration.canvas_base_url,
             self.enterprise_configuration.canvas_account_id,
             quote(edx_course_id),
