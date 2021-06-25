@@ -59,6 +59,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             self.enterprise_configuration.canvas_base_url,
             self.enterprise_configuration.canvas_account_id
         )
+        self.root_canvas_account = self._find_root_canvas_account()
 
     @staticmethod
     def course_create_endpoint(canvas_base_url, canvas_account_id):
@@ -125,8 +126,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         edx_course_id,
-                        f'Course with integration_id = {edx_course_id} found in deleted state, '
-                        'not attempting to create/update',
+                        'Course with integration_id = {edx_course_id} found in deleted state, '
+                        'not attempting to create/update'.format(
+                            edx_course_id=edx_course_id,
+                        ),
                     )
                 )
                 status_code = 200
@@ -139,9 +142,13 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         edx_course_id,
-                        f'Course with canvas_id = {located_course["id"]},'
+                        'Course with canvas_id = {course_id},'
                         'integration_id = {edx_course_id} found in workflow_state={workflow_state},'
-                        'attempting to update instead of creating it',
+                        ' attempting to update instead of creating it'.format(
+                            course_id=located_course["id"],
+                            edx_course_id=edx_course_id,
+                            workflow_state=workflow_state,
+                        ),
                     )
                 )
                 status_code, response_text = self._update_course_details(
@@ -358,33 +365,34 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return integration_id
 
-    def _find_course_by_course_id(self, edx_course_id):
+    def _find_course_in_account(self, edx_course_id, canvas_account_id):
         """
-        Search course by edx_course_id (used as integration_id in canvas) under given account.
-          Issue with this is that if this course exists in canvas with this edx_course_id
-          under a different subaccount, we will not detect it.
-          Hence we will try to find a course under other subaccounts in case we don't find it
-          under the current subaccount
-          Will even return courses that are in the 'deleted' state in Canvas, so we can correctly
-          skip these courses in logic for create_or_update when needed.
+        Search course by edx_course_id (used as integration_id in canvas) under provided account.
+        It will even return courses that are in the 'deleted' state in Canvas, so we can correctly
+        skip these courses in logic as needed.
 
-          Note: we do not need to follow pagination here since it would be extremely unlikely
-          that searching by a specific edx_course_id results in many records, we generally only
-          expect 1 record to come back anyway.
+        Note: we do not need to follow pagination here since it would be extremely unlikely
+        that searching by a specific edx_course_id results in many records, we generally only
+        expect 1 record to come back anyway.
 
-          The `&state[]=all` is added so we can also fetch priorly 'delete'd courses
+        The `&state[]=all` is added so we can also fetch priorly 'delete'd courses as well
         """
         url = "{}/api/v1/accounts/{}/courses/?search_term={}&state[]=all".format(
             self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id,
+            canvas_account_id,
             quote(edx_course_id),
         )
         resp = self.session.get(url)
         all_courses_response = resp.json()
 
         if resp.status_code >= 400:
+            message = ''
+            if 'reason' in all_courses_response:
+                message = all_courses_response['reason']
+            elif 'errors' in all_courses_response:
+                message = str(all_courses_response['errors'])
             raise ClientError(
-                all_courses_response.reason,
+                message,
                 all_courses_response.status_code
             )
 
@@ -395,12 +403,45 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 break
         return course_found
 
-        # now let's try under all subaccounts
-        """url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
-            self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id,
-            quote(edx_course_id),
-        )"""
+    def _find_root_canvas_account(self):
+        """
+        Attempts to find root account id from Canvas.
+        If it cannot be found, returns None
+        """
+        self._create_session()
+        url = "{}/api/v1/accounts".format(self.enterprise_configuration.canvas_base_url)
+        resp = self.session.get(url)
+        all_accounts = resp.json()
+        root_account = None
+        for account in all_accounts:
+            if account['parent_account_id'] is None:
+                root_account = account
+                break
+        return root_account
+
+    def _find_course_by_course_id(self, edx_course_id):
+        """
+        First attempts to find courase under current account id
+        As fallback, to account for cases where course was priorly transmitted to a different
+        account, it also searches under the root account for the course.
+
+        Returns:
+        - Course dict if the course found in Canvas,
+        - None otherwise
+        """
+        course = self._find_course_in_account(edx_course_id, self.enterprise_configuration.canvas_account_id)
+        if not course:
+            # now let's try the root account instead (searches under all subaccounts)
+            course = self._find_course_in_account(edx_course_id, self.root_canvas_account['id'])
+            if course:
+                LOGGER.info(generate_formatted_log(
+                    'canvas',
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    edx_course_id,
+                    'Found course under root Canvas account'
+                ))
+        return course
 
     def _get_course_id_from_edx_course_id(self, edx_course_id):
         """
