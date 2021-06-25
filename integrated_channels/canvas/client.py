@@ -11,10 +11,10 @@ from six.moves.urllib.parse import quote_plus, urljoin  # pylint: disable=import
 
 from django.apps import apps
 
+from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
-from integrated_channels.canvas.utils import CanvasUtil
 
 LOGGER = logging.getLogger(__name__)
 

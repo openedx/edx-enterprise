@@ -1,11 +1,11 @@
 '''Collection of static util methods for various Canvas operations'''
 import logging
 from http import HTTPStatus
+
 from requests.utils import quote
+
 from integrated_channels.exceptions import ClientError
-
 from integrated_channels.utils import generate_formatted_log
-
 
 LOGGER = logging.getLogger(__name__)
 
