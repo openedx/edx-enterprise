@@ -1,0 +1,135 @@
+# -*- coding: utf-8 -*-
+"""
+Tests for utils in integrated_channels.canvas.
+"""
+import copy
+import datetime
+
+from requests.sessions import Session
+from integrated_channels.utils import refresh_session_if_expired
+from integrated_channels.canvas.utils import CanvasUtil
+import json
+import random
+import unittest
+
+import pytest
+import responses
+from freezegun import freeze_time
+from requests.models import Response
+from unittest.mock import patch
+
+from django.utils import timezone
+
+from integrated_channels.canvas.client import CanvasAPIClient
+from integrated_channels.exceptions import ClientError
+from test_utils import factories
+
+NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
+
+
+@pytest.mark.django_db
+class TestCanvasUtils(unittest.TestCase):
+    '''Tests CanvasUtils'''
+
+    def setUp(self):
+        super().setUp()
+        self.account_id = random.randint(9223372036854775800, 9223372036854775807)
+        self.course_id = "edx+111"
+        self.url_base = "http://betatest.instructure.com"
+        self.client_id = "client_id"
+        self.client_secret = "client_secret"
+        self.access_token = "access_token"
+        self.refresh_token = "refresh_token"
+        self.enterprise_config = factories.CanvasEnterpriseCustomerConfigurationFactory(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            canvas_account_id=self.account_id,
+            canvas_base_url=self.url_base,
+            refresh_token=self.refresh_token,
+        )
+        self.get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='_get_oauth_access_token',
+            return_value=('atoken', 10000)
+        )
+
+    def test_find_root_canvas_account_found(self):
+        """
+        Tests interacting with {{canvas_url}}/api/v1/accounts to get root account
+        """
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        success_response.json.return_value = [{'id': 1, 'parent_account_id': None},
+                                              {'id': 2, 'parent_account_id': 1}, ]
+
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+        root_account = CanvasUtil.find_root_canvas_account(self.enterprise_config, mock_session)
+        assert root_account['id'] == 1
+
+    def test_find_root_canvas_account_not_found(self):
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        success_response.json.return_value = [{'id': 1, 'parent_account_id': 2},
+                                              {'id': 2, 'parent_account_id': 1}, ]
+
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+        root_account = CanvasUtil.find_root_canvas_account(self.enterprise_config, mock_session)
+        assert root_account is None
+
+    def test_find_course_in_account_found(self):
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        a_course_1 = {
+            "id": 125,
+            "name": "Vernacular Architecture of Asia: Tradition, Modernity and Cultural Sustainability",
+            "account_id": 1,
+            "course_code": "Vernacular",
+            "root_account_id": 1,
+            "integration_id": "HKUx+HKU02.2x",
+            "workflow_state": "unpublished",
+        }
+        a_course_2 = copy.deepcopy(a_course_1)
+        a_course_2['integration_id'] = 'edx:test1'
+
+        success_response.json.return_value = [a_course_1, a_course_2]
+
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+
+        canvas_account_id = 109
+        edx_course_id = 'edx:test1'
+
+        course = CanvasUtil.find_course_in_account(
+            self.enterprise_config, mock_session, canvas_account_id, edx_course_id)
+        assert course == a_course_2
+
+    def test_find_course_in_account_fail(self):
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 400
+        success_response.json.return_value = {
+            'errors': [{'message': 'failure 1'}]
+        }
+
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+
+        canvas_account_id = 109
+        edx_course_id = 'edx:test1'
+
+        with self.assertRaises(ClientError):
+            CanvasUtil.find_course_in_account(
+                self.enterprise_config, mock_session, canvas_account_id, edx_course_id)
