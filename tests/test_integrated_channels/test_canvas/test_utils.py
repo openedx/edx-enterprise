@@ -4,24 +4,23 @@ Tests for utils in integrated_channels.canvas.
 """
 import copy
 import datetime
-
-from requests.sessions import Session
-from integrated_channels.utils import refresh_session_if_expired
-from integrated_channels.canvas.utils import CanvasUtil
 import json
 import random
 import unittest
+from unittest.mock import patch
 
 import pytest
 import responses
 from freezegun import freeze_time
 from requests.models import Response
-from unittest.mock import patch
+from requests.sessions import Session
 
 from django.utils import timezone
 
 from integrated_channels.canvas.client import CanvasAPIClient
+from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
+from integrated_channels.utils import refresh_session_if_expired
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
