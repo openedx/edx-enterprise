@@ -132,3 +132,44 @@ class TestCanvasUtils(unittest.TestCase):
         with self.assertRaises(ClientError):
             CanvasUtil.find_course_in_account(
                 self.enterprise_config, mock_session, canvas_account_id, edx_course_id)
+
+    def test_get_course_id_from_edx_course_id(self):
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        a_course_1 = {
+            "id": 125,
+            "integration_id": "HKUx+HKU02.2x",
+            "workflow_state": "completed",
+            "parent_account_id": None,
+        }
+        a_course_2 = copy.deepcopy(a_course_1)
+        a_course_2['id'] = 129
+        a_course_2['integration_id'] = 'edx:test1'
+        a_course_2['parent_account_id'] = 125
+
+        success_response.json.return_value = [a_course_1, a_course_2]
+
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+
+        assert CanvasUtil.get_course_id_from_edx_course_id(
+            self.enterprise_config,
+            mock_session,
+            'edx:test1',
+        ) == 129
+
+        assert CanvasUtil.get_course_id_from_edx_course_id(
+            self.enterprise_config,
+            mock_session,
+            'HKUx+HKU02.2x',
+        ) == 125
+
+        with self.assertRaises(ClientError):
+            CanvasUtil.get_course_id_from_edx_course_id(
+                self.enterprise_config,
+                mock_session,
+                'nonMatchingedXCourseId',
+            )
