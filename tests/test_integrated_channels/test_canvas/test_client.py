@@ -76,11 +76,6 @@ class TestCanvasApiClient(unittest.TestCase):
                 user_id=self.canvas_user_id
             )
         self.get_all_courses_url = urljoin(self.url_base, "/api/v1/accounts/{}/courses/".format(self.account_id))
-        self.find_course_in_account_url = urljoin(self.url_base, "/api/v1/accounts/{}/courses/?search_term={}&state[]=all").format(
-            self.url_base,
-            self.account_id,
-            quote(str(self.canvas_course_id)),
-        )
 
         self.course_api_path = "/api/v1/provider/content/course"
         self.course_url = urljoin(self.url_base, self.course_api_path)
@@ -440,7 +435,11 @@ class TestCanvasApiClient(unittest.TestCase):
             canvas_api_client._create_session()  # pylint: disable=protected-access
         assert client_error.value.message == "Failed to generate oauth access token: Refresh token required."
 
-    def test_create_course_success(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_create_course_success(self, mock_find_course_by_course_id):
+        # because we don't want an existing course to be found in this case
+        mock_find_course_by_course_id.return_value = None
+
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
         course_to_create = json.dumps({
             "course": {
@@ -534,7 +533,8 @@ class TestCanvasApiClient(unittest.TestCase):
 
             assert canvas_assignment == 1
 
-    def test_create_course_success_with_image_url(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_create_course_success_with_image_url(self, mock_find_course_by_course_id):
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
         course_to_create = json.dumps({
             "course": {
@@ -543,6 +543,9 @@ class TestCanvasApiClient(unittest.TestCase):
                 "image_url": "http://image.one/url.png"
             }
         }).encode('utf-8')
+
+        # because we don't want an existing course to be found in this case
+        mock_find_course_by_course_id.return_value = None
 
         with responses.RequestsMock() as request_mock:
             request_mock.add(
@@ -571,7 +574,7 @@ class TestCanvasApiClient(unittest.TestCase):
     def test_course_delete_fails_with_empty_data(self):
         self.transmission_with_empty_data("delete_content_metadata")
 
-    def test_course_update_fails_with_empty_data(self, mock_find_course_in_account):
+    def test_course_update_fails_with_empty_data(self):
         self.transmission_with_empty_data("update_content_metadata")
 
     def test_course_delete_fails_with_poorly_formatted_data(self):
@@ -586,7 +589,9 @@ class TestCanvasApiClient(unittest.TestCase):
     def test_course_update_fails_with_poorly_constructed_data(self):
         self.update_fails_with_poorly_constructed_data("update_content_metadata")
 
-    def test_course_delete_fails_when_course_id_not_found(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_course_delete_fails_when_course_id_not_found(self, mock_find_course_by_course_id):
+        mock_find_course_by_course_id.return_value = None
         self.update_fails_when_course_id_not_found("delete_content_metadata")
 
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
