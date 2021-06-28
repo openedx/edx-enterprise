@@ -18,7 +18,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
 
-from integrated_channels.canvas.client import CanvasAPIClient
+from integrated_channels.canvas.client import MESSAGE_WHEN_COURSE_WAS_DELETED, CanvasAPIClient
 from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from test_utils import factories
@@ -502,6 +502,35 @@ class TestCanvasApiClient(unittest.TestCase):
             status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
             assert status_code == 201
             assert response_text == expected_resp
+
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_existing_course_is_ignored_if_deleted(self, mock_find_course_by_course_id):
+        # to simulate finding an existing course with workflow_state != 'deleted'
+        mock_find_course_by_course_id.return_value = {
+            'workflow_state': 'deleted',
+            'id': 111,
+            'name': 'course already deleted in Canvas!',
+        }
+
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        course_to_create = json.dumps({
+            "course": {
+                "integration_id": self.integration_id,
+                "name": "test_course_create"
+            }
+        }).encode()
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+
+            status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert status_code == 200
+            assert response_text == MESSAGE_WHEN_COURSE_WAS_DELETED
 
     def test_assignment_retrieval_pagination(self):
         """

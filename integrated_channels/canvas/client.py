@@ -19,6 +19,9 @@ from integrated_channels.utils import generate_formatted_log, refresh_session_if
 LOGGER = logging.getLogger(__name__)
 
 
+MESSAGE_WHEN_COURSE_WAS_DELETED = 'Course was deleted previously, skipping create/update'
+
+
 class CanvasAPIClient(IntegratedChannelApiClient):
     """
     Client for connecting to Canvas.
@@ -136,7 +139,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     )
                 )
                 status_code = 200
-                response_text = 'Course was deleted previously, skipping create/update'
+                response_text = MESSAGE_WHEN_COURSE_WAS_DELETED
             else:
                 # 'unpublished', 'completed' or 'available' cases
                 LOGGER.warning(
