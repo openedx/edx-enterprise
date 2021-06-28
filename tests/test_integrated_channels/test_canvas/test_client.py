@@ -7,16 +7,19 @@ import datetime
 import json
 import random
 import unittest
+from unittest import mock
 
 import pytest
 import responses
 from freezegun import freeze_time
 from requests.models import Response
+from requests.utils import quote
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
 
 from integrated_channels.canvas.client import CanvasAPIClient
+from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from test_utils import factories
 
@@ -73,6 +76,12 @@ class TestCanvasApiClient(unittest.TestCase):
                 user_id=self.canvas_user_id
             )
         self.get_all_courses_url = urljoin(self.url_base, "/api/v1/accounts/{}/courses/".format(self.account_id))
+        self.find_course_in_account_url = urljoin(self.url_base, "/api/v1/accounts/{}/courses/?search_term={}&state[]=all").format(
+            self.url_base,
+            self.account_id,
+            quote(str(self.canvas_course_id)),
+        )
+
         self.course_api_path = "/api/v1/provider/content/course"
         self.course_url = urljoin(self.url_base, self.course_api_path)
         self.client_id = "client_id"
@@ -562,7 +571,7 @@ class TestCanvasApiClient(unittest.TestCase):
     def test_course_delete_fails_with_empty_data(self):
         self.transmission_with_empty_data("delete_content_metadata")
 
-    def test_course_update_fails_with_empty_data(self):
+    def test_course_update_fails_with_empty_data(self, mock_find_course_in_account):
         self.transmission_with_empty_data("update_content_metadata")
 
     def test_course_delete_fails_with_poorly_formatted_data(self):
@@ -580,7 +589,11 @@ class TestCanvasApiClient(unittest.TestCase):
     def test_course_delete_fails_when_course_id_not_found(self):
         self.update_fails_when_course_id_not_found("delete_content_metadata")
 
-    def test_course_update_fails_when_course_id_not_found(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_course_update_fails_when_course_id_not_found(self, mock_find_course_by_course_id):
+        # None here indicates no matching course is found
+        # we are already testing logic for CanvasUtil separately
+        mock_find_course_by_course_id.return_value = None
         self.update_fails_when_course_id_not_found("update_content_metadata")
 
     def test_successful_client_update(self):
@@ -664,19 +677,10 @@ class TestCanvasApiClient(unittest.TestCase):
         course_to_update = '{{"course": {{"integration_id": "{}", "name": "test_course"}}}}'.format(
             self.integration_id
         ).encode()
-        mock_all_courses_resp = [
-            {'name': 'wrong course', 'integration_id': 'wrong integration id', 'id': 2}
-        ]
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
         with pytest.raises(ClientError) as client_error:
             with responses.RequestsMock() as request_mock:
-                request_mock.add(
-                    responses.GET,
-                    self.get_all_courses_url,
-                    json=mock_all_courses_resp,
-                    status=200
-                )
                 request_mock.add(
                     responses.POST,
                     self.oauth_url,
@@ -686,7 +690,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(course_to_update)
 
-        assert client_error.value.message == 'No Canvas courses found with associated integration ID: {}.'.format(
+        assert client_error.value.message == 'No Canvas courses found with associated edx course ID: {}.'.format(
             self.integration_id
         )
 
