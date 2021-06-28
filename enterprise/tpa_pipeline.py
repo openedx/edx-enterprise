@@ -25,11 +25,6 @@ try:
 except ImportError:
     Registry = None
 
-try:
-    from openedx.core.djangoapps.user_api.accounts.utils import is_multiple_user_enterprises_feature_enabled
-except ImportError:
-    is_multiple_user_enterprises_feature_enabled = None
-
 LOGGER = getLogger(__name__)
 
 
@@ -79,7 +74,7 @@ def handle_enterprise_logistration(backend, user, **kwargs):
 
         # Social user account is new or already binded with edx account
         new_association = kwargs.get('new_association', True)
-        if is_multiple_user_enterprises_feature_enabled() and not new_association:
+        if not new_association:
             handle_redirect_after_social_auth_login(backend, user)
         return
 
