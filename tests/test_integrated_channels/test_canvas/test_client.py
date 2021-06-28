@@ -504,7 +504,7 @@ class TestCanvasApiClient(unittest.TestCase):
 
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
     def test_existing_course_is_ignored_if_deleted(self, mock_find_course_by_course_id):
-        # to simulate finding an existing course with workflow_state != 'deleted'
+        # to simulate finding an existing course with workflow_state == 'deleted'
         mock_find_course_by_course_id.return_value = {
             'workflow_state': 'deleted',
             'id': 111,
