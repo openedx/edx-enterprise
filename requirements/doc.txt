@@ -4,8 +4,6 @@
 #
 #    make upgrade
 #
--e git+https://github.com/edx/django-config-models.git@f96f819d9a7f68e0e8086ce2da1a3aa01c2f14da#egg=config_models
-    # via -r requirements/test-master.txt
 alabaster==0.7.12
     # via sphinx
 amqp==5.0.6
@@ -94,6 +92,8 @@ django==2.2.24
     #   rest-condition
 django-cache-memoize==0.1.9
     # via -r requirements/test-master.txt
+django-config-models==2.1.2
+    # via -r requirements/test-master.txt
 django-countries==5.5
     # via -r requirements/test-master.txt
 django-crum==0.7.9
@@ -156,7 +156,7 @@ edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -362,7 +362,7 @@ text-unidecode==1.3
     #   python-slugify
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
-urllib3==1.26.5
+urllib3==1.26.6
     # via
     #   -r requirements/test-master.txt
     #   requests

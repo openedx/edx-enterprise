@@ -8,7 +8,6 @@ import base64
 
 from django.contrib import auth
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -18,7 +17,7 @@ from enterprise.models import EnterpriseCustomer
 User = auth.get_user_model()
 
 
-@python_2_unicode_compatible
+
 class XAPILRSConfiguration(TimeStampedModel):
     """
     xAPI LRS configurations.
@@ -70,7 +69,7 @@ class XAPILRSConfiguration(TimeStampedModel):
         )
 
 
-@python_2_unicode_compatible
+
 class XAPILearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we sent to XAPI at a given point in time for an enterprise course enrollment.

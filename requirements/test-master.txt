@@ -4,10 +4,6 @@
 #
 #    make upgrade
 #
--e git+https://github.com/edx/django-config-models.git@f96f819d9a7f68e0e8086ce2da1a3aa01c2f14da#egg=config_models
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
 amqp==5.0.6
     # via kombu
 aniso8601==9.0.1
@@ -86,6 +82,10 @@ django-cache-memoize==0.1.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
+django-config-models==2.1.2
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   -r requirements/base.in
 django-countries==5.5
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -160,7 +160,7 @@ edx-drf-extensions==6.5.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -345,7 +345,7 @@ unicodecsv==0.14.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-urllib3==1.26.5
+urllib3==1.26.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests

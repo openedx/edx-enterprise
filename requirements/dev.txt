@@ -4,11 +4,6 @@
 #
 #    make upgrade
 #
--e git+https://github.com/edx/django-config-models.git@f96f819d9a7f68e0e8086ce2da1a3aa01c2f14da#egg=config_models
-    # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
 alabaster==0.7.12
     # via
     #   -r requirements/doc.txt
@@ -135,7 +130,7 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==5.3.0
+diff-cover==5.4.0
     # via -r requirements/test.txt
 distlib==0.3.2
     # via virtualenv
@@ -162,6 +157,11 @@ django==2.2.24
     #   jsonfield2
     #   rest-condition
 django-cache-memoize==0.1.9
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+django-config-models==2.1.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -270,7 +270,7 @@ edx-i18n-tools==0.5.3
     # via -r requirements/dev.in
 edx-lint==5.0.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -325,7 +325,7 @@ imagesize==1.2.0
     # via
     #   -r requirements/doc.txt
     #   sphinx
-importlib-metadata==4.5.0
+importlib-metadata==4.6.0
     # via
     #   -r requirements/test.txt
     #   inflect
@@ -736,7 +736,7 @@ unicodecsv==0.14.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-urllib3==1.26.5
+urllib3==1.26.6
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt

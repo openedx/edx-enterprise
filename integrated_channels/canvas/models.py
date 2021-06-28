@@ -9,7 +9,6 @@ from logging import getLogger
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from integrated_channels.canvas.exporters.learner_data import CanvasLearnerExporter
@@ -20,7 +19,6 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 LOGGER = getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Canvas.
@@ -111,7 +109,6 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         return CanvasContentMetadataTransmitter(self)
 
 
-@python_2_unicode_compatible
 class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
     """
     The payload correlated to a courses subsection learner data we send to canvas at a given point in time for an
@@ -219,7 +216,6 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         )
 
 
-@python_2_unicode_compatible
 class CanvasLearnerDataTransmissionAudit(models.Model):
     """
     The payload we send to canvas at a given point in time for an enterprise course enrollment.

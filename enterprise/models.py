@@ -34,7 +34,7 @@ from django.db import IntegrityError, models, transaction
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
+from django.utils.encoding import force_bytes, force_text
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlencode, urlquote
 from django.utils.safestring import mark_safe
@@ -104,7 +104,6 @@ class EnterpriseCustomerManager(models.Manager):
         return super().get_queryset().filter(active=True)
 
 
-@python_2_unicode_compatible
 class EnterpriseCustomerType(TimeStampedModel):
     """
     Enterprise Customer Types are used to differentiate Enterprise learners.
@@ -149,7 +148,6 @@ def get_default_customer_type():
     return enterprise_customer_type.id
 
 
-@python_2_unicode_compatible
 class EnterpriseCustomer(TimeStampedModel):
     """
     Enterprise Customer is an organization or a group of people that "consumes" courses.
@@ -841,7 +839,6 @@ class EnterpriseCustomerUserManager(models.Manager):
         )
 
 
-@python_2_unicode_compatible
 class EnterpriseCustomerUser(TimeStampedModel):
     """
     Model that keeps track of user - enterprise customer affinity.
@@ -1167,7 +1164,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
         ).exclude(enterprise_customer=enterprise_customer).update(active=False)
 
 
-@python_2_unicode_compatible
 class PendingEnterpriseCustomerUser(TimeStampedModel):
     # pylint: disable=line-too-long
     """
@@ -1303,7 +1299,6 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class EnterpriseEnrollmentSource(TimeStampedModel):
     """
     Define a Name and Source for all Enterprise Enrollment Sources.
@@ -1338,7 +1333,6 @@ class EnterpriseEnrollmentSource(TimeStampedModel):
         return "Enrollment Source: {name}, Slug: {slug}".format(name=self.name, slug=self.slug)
 
 
-@python_2_unicode_compatible
 class PendingEnrollment(TimeStampedModel):
     """
     Track future enrollments for PendingEnterpriseCustomerUser.
@@ -1398,7 +1392,6 @@ def logo_path(instance, filename):
     return fullname
 
 
-@python_2_unicode_compatible
 class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
     """
     Model that keeps track of enterprise branding configurations e.g. enterprise customer logo.
@@ -1486,7 +1479,6 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         )
 
 
-@python_2_unicode_compatible
 class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     """
     EnterpriseCustomerIdentityProvider is a One to Many relationship between Enterprise Customer and Identity Provider.
@@ -1579,7 +1571,6 @@ class EnterpriseCourseEnrollmentManager(models.Manager):
         )
 
 
-@python_2_unicode_compatible
 class EnterpriseCourseEnrollment(TimeStampedModel):
     """
     Store information about the enrollment of a user in a course.
@@ -1840,7 +1831,6 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
         self.save()
 
 
-@python_2_unicode_compatible
 class EnterpriseCatalogQuery(TimeStampedModel):
     """
     Stores a re-usable catalog query.
@@ -1890,7 +1880,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         return "<EnterpriseCatalogQuery '{title}' >".format(title=self.title)
 
 
-@python_2_unicode_compatible
+
 class EnterpriseCustomerCatalog(TimeStampedModel):
     """
     Store catalog information from course discovery specifically for Enterprises.
@@ -2211,7 +2201,6 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         super().save(*args, **kwargs)
 
 
-@python_2_unicode_compatible
 class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     """
     Store optional templates to use when emailing users about course enrollment events.
@@ -2313,7 +2302,6 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     """
     The Enterprise's configuration for sending automated data reports securely via email to the Enterprise Admin.
@@ -2659,7 +2647,6 @@ class EnterpriseRoleAssignmentContextMixin:
         return self.enterprise_customer_uuids
 
 
-@python_2_unicode_compatible
 class SystemWideEnterpriseRole(UserRole):
     """
     System wide user role definitions specific to Enterprise.
@@ -2680,7 +2667,6 @@ class SystemWideEnterpriseRole(UserRole):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
     """
     Model to map users to a SystemWideEnterpriseRole.
@@ -2738,7 +2724,6 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class EnterpriseFeatureRole(UserRole):
     """
     Enterprise-specific feature role definitions.
@@ -2759,7 +2744,6 @@ class EnterpriseFeatureRole(UserRole):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
     """
     Model to map users to an EnterpriseFeatureRole.
@@ -2888,7 +2872,6 @@ class EnterpriseAnalyticsUser(TimeStampedModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class AdminNotificationFilter(TimeStampedModel):
     """
     Model for Admin Notification Filters.
@@ -2922,7 +2905,6 @@ class AdminNotificationFilter(TimeStampedModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class AdminNotification(TimeStampedModel):
     """
     Model for Admin Notification.
@@ -2966,7 +2948,6 @@ class AdminNotification(TimeStampedModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class AdminNotificationRead(TimeStampedModel):
     """
     Model for Admin Notification Read Status.

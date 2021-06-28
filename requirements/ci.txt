@@ -44,7 +44,7 @@ tox==3.23.1
     #   tox-battery
 tox-battery==0.6.1
     # via -r requirements/ci.in
-urllib3==1.26.5
+urllib3==1.26.6
     # via requests
 virtualenv==20.4.7
     # via tox

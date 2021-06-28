@@ -9,7 +9,6 @@ from logging import getLogger
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
 from integrated_channels.blackboard.exporters.learner_data import BlackboardLearnerExporter
@@ -20,7 +19,7 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 LOGGER = getLogger(__name__)
 
 
-@python_2_unicode_compatible
+
 class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Blackboard.
@@ -111,7 +110,7 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
         return BlackboardLearnerTransmitter(self)
 
 
-@python_2_unicode_compatible
+
 class BlackboardLearnerAssessmentDataTransmissionAudit(models.Model):
     """
     The payload correlated to a courses subsection learner data we send to blackboard at a given point in time for an
@@ -217,7 +216,7 @@ class BlackboardLearnerAssessmentDataTransmissionAudit(models.Model):
         )
 
 
-@python_2_unicode_compatible
+
 class BlackboardLearnerDataTransmissionAudit(models.Model):
     """
     The payload we send to Blackboard at a given point in time for an enterprise course enrollment.

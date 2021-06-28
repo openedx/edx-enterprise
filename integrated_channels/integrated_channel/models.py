@@ -11,7 +11,6 @@ from jsonfield.fields import JSONField
 from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -181,7 +180,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter.assessment_level_transmit(exporter)
 
 
-@python_2_unicode_compatible
+
 class LearnerDataTransmissionAudit(models.Model):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
@@ -253,7 +252,7 @@ class LearnerDataTransmissionAudit(models.Model):
         )
 
 
-@python_2_unicode_compatible
+
 class ContentMetadataItemTransmission(TimeStampedModel):
     """
     A content metadata item that has been transmitted to an integrated channel.

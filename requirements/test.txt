@@ -4,8 +4,6 @@
 #
 #    make upgrade
 #
--e git+https://github.com/edx/django-config-models.git@f96f819d9a7f68e0e8086ce2da1a3aa01c2f14da#egg=config_models
-    # via -r requirements/test-master.txt
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -68,7 +66,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==5.3.0
+diff-cover==5.4.0
     # via -r requirements/test.in
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
@@ -88,6 +86,8 @@ diff-cover==5.3.0
     #   jsonfield2
     #   rest-condition
 django-cache-memoize==0.1.9
+    # via -r requirements/test-master.txt
+django-config-models==2.1.2
     # via -r requirements/test-master.txt
 django-countries==5.5
     # via -r requirements/test-master.txt
@@ -142,7 +142,7 @@ edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -170,7 +170,7 @@ idna==2.10
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==4.5.0
+importlib-metadata==4.6.0
     # via inflect
 inflect==3.0.2
     # via
@@ -368,7 +368,7 @@ toml==0.10.2
     #   pytest-cov
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
-urllib3==1.26.5
+urllib3==1.26.6
     # via
     #   -r requirements/test-master.txt
     #   requests
