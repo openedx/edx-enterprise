@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.11]
+---------
+* Removed ``ENABLE_MULTIPLE_USER_ENTERPRISES_FEATURE`` waffle switch
+
 [3.26.10]
 ---------
 * Fix forward for parameter rename changing the signals API in 3.26.7
