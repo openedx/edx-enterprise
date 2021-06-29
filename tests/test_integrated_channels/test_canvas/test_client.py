@@ -7,6 +7,7 @@ import datetime
 import json
 import random
 import unittest
+from unittest import mock
 
 import pytest
 import responses
@@ -16,7 +17,8 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
 
-from integrated_channels.canvas.client import CanvasAPIClient
+from integrated_channels.canvas.client import MESSAGE_WHEN_COURSE_WAS_DELETED, CanvasAPIClient
+from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from test_utils import factories
 
@@ -73,6 +75,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 user_id=self.canvas_user_id
             )
         self.get_all_courses_url = urljoin(self.url_base, "/api/v1/accounts/{}/courses/".format(self.account_id))
+
         self.course_api_path = "/api/v1/provider/content/course"
         self.course_url = urljoin(self.url_base, self.course_api_path)
         self.client_id = "client_id"
@@ -431,7 +434,11 @@ class TestCanvasApiClient(unittest.TestCase):
             canvas_api_client._create_session()  # pylint: disable=protected-access
         assert client_error.value.message == "Failed to generate oauth access token: Refresh token required."
 
-    def test_create_course_success(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_create_course_success(self, mock_find_course_by_course_id):
+        # because we don't want an existing course to be found in this case
+        mock_find_course_by_course_id.return_value = None
+
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
         course_to_create = json.dumps({
             "course": {
@@ -458,6 +465,71 @@ class TestCanvasApiClient(unittest.TestCase):
             status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
             assert status_code == 201
             assert response_text == expected_resp
+
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_existing_course_is_updated_instead(self, mock_find_course_by_course_id):
+        # to simulate finding an existing course with workflow_state != 'deleted'
+        mock_find_course_by_course_id.return_value = {
+            'workflow_state': 'unpublished',
+            'id': 111,
+            'name': 'course already exists!',
+        }
+
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        course_to_create = json.dumps({
+            "course": {
+                "integration_id": self.integration_id,
+                "name": "test_course_create"
+            }
+        }).encode()
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+
+            expected_resp = '{"id": 1}'
+            request_mock.add(
+                responses.PUT,
+                CanvasAPIClient.course_update_endpoint(self.url_base, 111),
+                status=201,
+                body=expected_resp
+            )
+            status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert status_code == 201
+            assert response_text == expected_resp
+
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_existing_course_is_ignored_if_deleted(self, mock_find_course_by_course_id):
+        # to simulate finding an existing course with workflow_state == 'deleted'
+        mock_find_course_by_course_id.return_value = {
+            'workflow_state': 'deleted',
+            'id': 111,
+            'name': 'course already deleted in Canvas!',
+        }
+
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        course_to_create = json.dumps({
+            "course": {
+                "integration_id": self.integration_id,
+                "name": "test_course_create"
+            }
+        }).encode()
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+
+            status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert status_code == 200
+            assert response_text == MESSAGE_WHEN_COURSE_WAS_DELETED
 
     def test_assignment_retrieval_pagination(self):
         """
@@ -525,7 +597,8 @@ class TestCanvasApiClient(unittest.TestCase):
 
             assert canvas_assignment == 1
 
-    def test_create_course_success_with_image_url(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_create_course_success_with_image_url(self, mock_find_course_by_course_id):
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
         course_to_create = json.dumps({
             "course": {
@@ -534,6 +607,9 @@ class TestCanvasApiClient(unittest.TestCase):
                 "image_url": "http://image.one/url.png"
             }
         }).encode('utf-8')
+
+        # because we don't want an existing course to be found in this case
+        mock_find_course_by_course_id.return_value = None
 
         with responses.RequestsMock() as request_mock:
             request_mock.add(
@@ -577,10 +653,16 @@ class TestCanvasApiClient(unittest.TestCase):
     def test_course_update_fails_with_poorly_constructed_data(self):
         self.update_fails_with_poorly_constructed_data("update_content_metadata")
 
-    def test_course_delete_fails_when_course_id_not_found(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_course_delete_fails_when_course_id_not_found(self, mock_find_course_by_course_id):
+        mock_find_course_by_course_id.return_value = None
         self.update_fails_when_course_id_not_found("delete_content_metadata")
 
-    def test_course_update_fails_when_course_id_not_found(self):
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_course_update_fails_when_course_id_not_found(self, mock_find_course_by_course_id):
+        # None here indicates no matching course is found
+        # we are already testing logic for CanvasUtil separately
+        mock_find_course_by_course_id.return_value = None
         self.update_fails_when_course_id_not_found("update_content_metadata")
 
     def test_successful_client_update(self):
@@ -664,19 +746,10 @@ class TestCanvasApiClient(unittest.TestCase):
         course_to_update = '{{"course": {{"integration_id": "{}", "name": "test_course"}}}}'.format(
             self.integration_id
         ).encode()
-        mock_all_courses_resp = [
-            {'name': 'wrong course', 'integration_id': 'wrong integration id', 'id': 2}
-        ]
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
         with pytest.raises(ClientError) as client_error:
             with responses.RequestsMock() as request_mock:
-                request_mock.add(
-                    responses.GET,
-                    self.get_all_courses_url,
-                    json=mock_all_courses_resp,
-                    status=200
-                )
                 request_mock.add(
                     responses.POST,
                     self.oauth_url,
@@ -686,7 +759,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(course_to_update)
 
-        assert client_error.value.message == 'No Canvas courses found with associated integration ID: {}.'.format(
+        assert client_error.value.message == 'No Canvas courses found with associated edx course ID: {}.'.format(
             self.integration_id
         )
 

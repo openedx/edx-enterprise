@@ -247,7 +247,6 @@ def generate_formatted_log(
     Arguments:
     - channel_name (str): The name of the integrated channel
     - enterprise_customer_uuid (str): UUID of the relevant EnterpriseCustomer
-    - enterprise_customer_identifer (str): Identifying name of the EnterpriseCustomer
     - lms_user_id (str): The LMS User id (if applicable) related to the message
     - course_or_course_run_key (str): The course key (if applicable) for the message
     - message (str): The string to be formatted and logged

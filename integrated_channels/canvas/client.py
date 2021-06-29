@@ -3,17 +3,23 @@
 Client for connecting to Canvas.
 """
 import json
+import logging
 from http import HTTPStatus
 
 import requests
-from requests.utils import quote
 from six.moves.urllib.parse import quote_plus, urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
+from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+
+LOGGER = logging.getLogger(__name__)
+
+
+MESSAGE_WHEN_COURSE_WAS_DELETED = 'Course was deleted previously, skipping create/update'
 
 
 class CanvasAPIClient(IntegratedChannelApiClient):
@@ -68,6 +74,16 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
 
     @staticmethod
+    def course_fetch_endpoint(canvas_base_url, canvas_account_id):
+        """
+        Returns endpoint to fetch all courses for the specified Canvas account
+        """
+        return '{}/api/v1/accounts/{}/courses'.format(
+            canvas_base_url,
+            canvas_account_id,
+        )
+
+    @staticmethod
     def course_update_endpoint(canvas_base_url, course_id):
         """
         Returns endpoint to PUT to for course update
@@ -78,14 +94,73 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
 
     def create_content_metadata(self, serialized_data):
+        """
+        Creates a course in Canvas.
+        If course is not found, easy!  create it as usual
+        If course is found, it will have one of the following `workflow_state` values:
+                available: issue an update with latest field values
+                completed: this happens if a course has been concluded. Update it to change status
+                  to offer by using course[event]=offer (which makes course published in Canvas)
+                unpublished: still just update
+                deleted: take no action for now.
+        For information of Canvas workflow_states see `course[event]` at:
+        https://canvas.instructure.com/doc/api/courses.html#method.courses.update
+        """
         self._create_session()
 
-        # step 1: create the course
-        status_code, response_text = self._post(self.course_create_url, serialized_data)
-        created_course_id = json.loads(response_text)['id']
+        course_details = json.loads(serialized_data.decode('utf-8'))['course']
+        edx_course_id = course_details['integration_id']
+        located_course = CanvasUtil.find_course_by_course_id(
+            self.enterprise_configuration,
+            self.session,
+            edx_course_id
+        )
 
-        # step 2: upload image_url and any other details
-        self._update_course_details(created_course_id, serialized_data)
+        if not located_course:
+            # Course does not exist: Create the course
+            status_code, response_text = self._post(self.course_create_url, serialized_data)
+            created_course_id = json.loads(response_text)['id']
+
+            # step 2: upload image_url and any other details
+            self._update_course_details(created_course_id, course_details)
+        else:
+            workflow_state = located_course['workflow_state']
+            if workflow_state.lower() == 'deleted':
+                LOGGER.error(
+                    generate_formatted_log(
+                        'canvas',
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        edx_course_id,
+                        'Course with integration_id = {edx_course_id} found in deleted state, '
+                        'not attempting to create/update'.format(
+                            edx_course_id=edx_course_id,
+                        ),
+                    )
+                )
+                status_code = 200
+                response_text = MESSAGE_WHEN_COURSE_WAS_DELETED
+            else:
+                # 'unpublished', 'completed' or 'available' cases
+                LOGGER.warning(
+                    generate_formatted_log(
+                        'canvas',
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        edx_course_id,
+                        'Course with canvas_id = {course_id},'
+                        'integration_id = {edx_course_id} found in workflow_state={workflow_state},'
+                        ' attempting to update instead of creating it'.format(
+                            course_id=located_course["id"],
+                            edx_course_id=edx_course_id,
+                            workflow_state=workflow_state,
+                        ),
+                    )
+                )
+                status_code, response_text = self._update_course_details(
+                    located_course['id'],
+                    course_details,
+                )
 
         return status_code, response_text
 
@@ -93,7 +168,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = self._get_course_id_from_integration_id(integration_id)
+        course_id = CanvasUtil.get_course_id_from_edx_course_id(
+            self.enterprise_configuration,
+            self.session,
+            integration_id,
+        )
 
         url = CanvasAPIClient.course_update_endpoint(
             self.enterprise_configuration.canvas_base_url,
@@ -106,7 +185,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = self._get_course_id_from_integration_id(integration_id)
+        course_id = CanvasUtil.get_course_id_from_edx_course_id(
+            self.enterprise_configuration,
+            self.session,
+            integration_id,
+        )
 
         url = '{}/api/v1/courses/{}'.format(
             self.enterprise_configuration.canvas_base_url,
@@ -183,28 +266,51 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         pass
 
     # Private Methods
+    def _update_course_details(self, course_id, course_details):
+        """
+        Update a course for image_url (and possibly other settings in future).
+        Also sets course to 'offer' state by sending 'course[event]=offer',
+        which makes the course published in Canvas.
 
-    def _update_course_details(self, course_id, serialized_data):
+        Arguments:
+          - course_id (Number): Canvas Course id
+          - course_details (dict): { 'image_url' } : optional, used if present for course[image_url]
         """
-        Update a course for image_url (and possibly other settings in future)
-        This is used only for settings that are not settable in the initial course creation
-        """
+        response_code = None
+        response_text = None
+        url = CanvasAPIClient.course_update_endpoint(
+            self.enterprise_configuration.canvas_base_url,
+            course_id,
+        )
+        # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
+        update_payload = {'course': {'event': 'offer'}}
         try:
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
-            content_metadata_item = json.loads(serialized_data.decode('utf-8'))['course']
-            if "image_url" in content_metadata_item:
-                url = CanvasAPIClient.course_update_endpoint(
-                    self.enterprise_configuration.canvas_base_url,
-                    course_id,
-                )
-                # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
-                self._put(url, json.dumps({
-                    'course': {'image_url': content_metadata_item['image_url'], 'event': 'offer'}
-                }).encode('utf-8'))
-        except Exception:  # pylint: disable=broad-except
+            if "image_url" in course_details:
+                update_payload['course']['image_url'] = course_details['image_url']
+
+            response_code, response_text = self._put(url, json.dumps(update_payload).encode('utf-8'))
+        except Exception as course_exc:  # pylint: disable=broad-except
             # we do not want course image update to cause failures
-            pass
+            edx_course_id = course_details["integration_id"]
+            exc_string = str(course_exc)
+            LOGGER.error(
+                generate_formatted_log(
+                    'canvas',
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    edx_course_id,
+                    'Failed to update details for course, '
+                    'canvas_course_id={canvas_course_id}. '
+                    'Details: {details}'.format(
+                        canvas_course_id=course_id,
+                        details=exc_string,
+                    )
+                )
+            )
+
+        return response_code, response_text
 
     def _post(self, url, data):
         """
@@ -272,43 +378,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             ) from error
 
         return integration_id
-
-    def _get_course_id_from_integration_id(self, integration_id):
-        """
-        To obtain course ID we have to request all courses associated with the integrated
-        account and match the one with our integration ID.
-
-        Args:
-            integration_id (string): The ID retrieved from the transmission payload.
-        """
-        url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
-            self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id,
-            quote(integration_id),
-        )
-        resp = self.session.get(url)
-        all_courses_response = resp.json()
-
-        if resp.status_code >= 400:
-            raise ClientError(
-                all_courses_response.reason,
-                all_courses_response.status_code
-            )
-
-        course_id = None
-        for course in all_courses_response:
-            if course['integration_id'] == integration_id:
-                course_id = course['id']
-                break
-
-        if not course_id:
-            raise ClientError(
-                "No Canvas courses found with associated integration ID: {}.".format(
-                    integration_id
-                ),
-                HTTPStatus.NOT_FOUND.value
-            )
-        return course_id
 
     def _search_for_canvas_user_by_email(self, user_email):
         """
@@ -470,12 +539,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Helper method to take necessary learner data and post to Canvas as a submission to the correlated assignment.
         """
         submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
-                         '{assignment_id}/submissions/{user_id}'.format(
-                             base_url=self.enterprise_configuration.canvas_base_url,
-                             course_id=course_id,
-                             assignment_id=assignment_id,
-                             user_id=canvas_user_id
-                         )
+            '{assignment_id}/submissions/{user_id}'.format(
+                base_url=self.enterprise_configuration.canvas_base_url,
+                course_id=course_id,
+                assignment_id=assignment_id,
+                user_id=canvas_user_id
+            )
 
         # The percent grade from the grades api is represented as a decimal
         submission_data = {
