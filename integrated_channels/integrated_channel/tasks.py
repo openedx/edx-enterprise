@@ -26,7 +26,6 @@ def _log_batch_task_start(task_name, channel_code, job_user_id, integrated_chann
     """
     Logs a consistent message on the start of a batch integrated channel task.
     """
-
     LOGGER.info(
         '[Integrated Channel: {channel_name}] Batch {task_name} started '
         '(api user: {job_user_id}). Configuration: {configuration}. {details}'.format(
@@ -99,7 +98,6 @@ def transmit_learner_data(username, channel_code, channel_pk):
         username (str): The username of the User to be used for making API requests for learner data.
         channel_code (str): Capitalized identifier for the integrated channel
         channel_pk (str): Primary key for identifying integrated channel
-
     """
     start = time.time()
     api_user = User.objects.get(username=username)
@@ -112,6 +110,33 @@ def transmit_learner_data(username, channel_code, channel_pk):
 
     duration = time.time() - start
     _log_batch_task_finish('transmit_learner_data', channel_code, api_user.id, integrated_channel, duration)
+
+
+@shared_task
+@set_code_owner_attribute
+def cleanup_duplicate_assignment_records(username, channel_code, channel_pk):
+    """
+    Task to remove transmitted duplicate assignment records of provided integrated channel.
+
+    Arguments:
+        username (str): The username of the User to be used for making API requests for learner data.
+        channel_code (str): Capitalized identifier for the integrated channel
+        channel_pk (str): Primary key for identifying integrated channel
+    """
+    start = time.time()
+    api_user = User.objects.get(username=username)
+    integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
+    _log_batch_task_start('cleanup_duplicate_assignment_records', channel_code, api_user.id, integrated_channel)
+
+    integrated_channel.cleanup_duplicate_assignment_records(api_user)
+    duration = time.time() - start
+    _log_batch_task_finish(
+        'cleanup_duplicate_assignment_records',
+        channel_code,
+        api_user.id,
+        integrated_channel,
+        duration
+    )
 
 
 @shared_task
@@ -252,7 +277,6 @@ def unlink_inactive_learners(channel_code, channel_pk):
     Arguments:
         channel_code (str): Capitalized identifier for the integrated channel
         channel_pk (str): Primary key for identifying integrated channel
-
     """
     start = time.time()
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)

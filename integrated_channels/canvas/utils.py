@@ -171,3 +171,59 @@ class CanvasUtil:
                     'Found course under root Canvas account'
                 ))
         return course
+
+    @staticmethod
+    def determine_next_results_page(canvas_api_response):
+        """
+        Canvas pagination headers come back as a string-
+        'headers': {
+            'Link': '<{assignment_url}?page=2&per_page=10>; rel="current",' \
+                    '<{assignment_url}?page=1&per_page=10>; rel="prev",' \
+                    '<{assignment_url}?page=1&per_page=10>; rel="first",' \
+                    '<{assignment_url}?page=2&per_page=10>; rel="last"' \
+        }
+        so we have to parse out the linked list of assignment pages and determine if we're at the end or if a next exits
+
+        Args:
+            - canvas_api_response: a requests library Response object that contains the pagination headers
+        """
+        page_results = canvas_api_response.headers['Link'].split(',')
+        pages = {}
+        for page in page_results:
+            page_type = page.split('; rel=')[1].strip('"')
+            pages[page_type] = page.split(';')[0].strip('<>')
+
+        if pages.get('current') == pages.get('last', None):
+            return False
+
+        return pages.get('next')
+
+    @staticmethod
+    def course_create_endpoint(enterprise_configuration):
+        """
+        Returns endpoint to POST to for course creation
+        """
+        return '{}/api/v1/accounts/{}/courses'.format(
+            enterprise_configuration.canvas_base_url,
+            enterprise_configuration.canvas_account_id,
+        )
+
+    @staticmethod
+    def course_update_endpoint(enterprise_configuration, course_id):
+        """
+        Returns endpoint to PUT to for course update
+        """
+        return '{}/api/v1/courses/{}'.format(
+            enterprise_configuration.canvas_base_url,
+            course_id,
+        )
+
+    @staticmethod
+    def course_assignments_endpoint(enterprise_configuration, course_id):
+        """
+        Returns endpoint to GET to for course assignments
+        """
+        return '{}/api/v1/courses/{}/assignments'.format(
+            enterprise_configuration.canvas_base_url,
+            course_id,
+        )

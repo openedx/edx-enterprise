@@ -7,6 +7,7 @@ import logging
 from http import HTTPStatus
 
 import requests
+from dateutil.parser import parse
 from six.moves.urllib.parse import quote_plus, urljoin  # pylint: disable=import-error
 
 from django.apps import apps
@@ -58,40 +59,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('canvas')
         self.session = None
         self.expires_at = None
-        self.course_create_url = CanvasAPIClient.course_create_endpoint(
-            self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id
-        )
-
-    @staticmethod
-    def course_create_endpoint(canvas_base_url, canvas_account_id):
-        """
-        Returns endpoint to POST to for course creation
-        """
-        return '{}/api/v1/accounts/{}/courses'.format(
-            canvas_base_url,
-            canvas_account_id,
-        )
-
-    @staticmethod
-    def course_fetch_endpoint(canvas_base_url, canvas_account_id):
-        """
-        Returns endpoint to fetch all courses for the specified Canvas account
-        """
-        return '{}/api/v1/accounts/{}/courses'.format(
-            canvas_base_url,
-            canvas_account_id,
-        )
-
-    @staticmethod
-    def course_update_endpoint(canvas_base_url, course_id):
-        """
-        Returns endpoint to PUT to for course update
-        """
-        return '{}/api/v1/courses/{}'.format(
-            canvas_base_url,
-            course_id,
-        )
+        self.course_create_url = CanvasUtil.course_create_endpoint(self.enterprise_configuration)
 
     def create_content_metadata(self, serialized_data):
         """
@@ -174,8 +142,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             integration_id,
         )
 
-        url = CanvasAPIClient.course_update_endpoint(
-            self.enterprise_configuration.canvas_base_url,
+        url = CanvasUtil.course_update_endpoint(
+            self.enterprise_configuration,
             course_id,
         )
 
@@ -265,7 +233,161 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # Todo: There isn't a great way for users to delete course completion data
         pass
 
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        For each course provided, iterate over assessments contained within the associated Canvas course and remove all
+        but the most recent, unique assessments sorted by `updated_at`.
+
+        Args:
+            - courses: iterable set of unique course IDs
+        """
+        self._create_session()
+        failures = []
+        num_assignments_removed = 0
+        num_failed_assignments = 0
+        for edx_course in courses:
+            canvas_course = CanvasUtil.find_course_by_course_id(
+                self.enterprise_configuration,
+                self.session,
+                edx_course
+            )
+
+            # Add any missing courses to a list of failed courses
+            if not canvas_course:
+                failures.append(edx_course)
+                continue
+
+            canvas_assignments_url = CanvasUtil.course_assignments_endpoint(
+                self.enterprise_configuration,
+                canvas_course['id']
+            )
+
+            # Dict of most current, unique assignments in the course
+            current_assignments = {}
+
+            # Running list of duplicate assignments (ID's) that need to be deleted
+            assignments_to_delete = []
+
+            current_page_count = 0
+            more_pages_present = True
+
+            # Continue iterating over assignment responses while more paginated results exist or until the page count
+            # limit is hit
+            while more_pages_present and current_page_count < 150:
+                resp = self.session.get(canvas_assignments_url)
+
+                # Result of paginated response from the Canvas course assignments API
+                assignments_resp = resp.json()
+
+                # Ingest Canvas assignments API response and replace older duplicated assignments in current assignments
+                # all older duplicated assignment IDs are added to `assignments_to_delete`
+                current_assignments, assignments_to_delete = self._parse_unique_newest_assignments(
+                    current_assignments,
+                    assignments_to_delete,
+                    assignments_resp
+                )
+
+                # Determine if another page of results exists
+                next_page = CanvasUtil.determine_next_results_page(resp)
+                if next_page:
+                    canvas_assignments_url = next_page
+                    current_page_count += 1
+                else:
+                    more_pages_present = False
+
+            # Remove all assignments from the current course and record the number of assignments removed
+            assignments_removed, individual_assignment_failures = \
+                self._bulk_remove_course_assignments(
+                    canvas_course.get('id'),
+                    assignments_to_delete
+                )
+            num_assignments_removed += len(assignments_removed)
+            num_failed_assignments += len(individual_assignment_failures)
+
+        if failures or num_failed_assignments:
+            message = 'Failed to dedup all assignments for the following courses: {}. ' \
+                      'Number of individual assignments that failed to be deleted: {}. ' \
+                      'Total assignments removed: {}.'.format(
+                          failures,
+                          num_failed_assignments,
+                          num_assignments_removed
+                      )
+            status_code = 400
+        else:
+            message = 'Removed {} duplicate assignments from Canvas.'.format(num_assignments_removed)
+            status_code = 200
+
+        return status_code, message
+
     # Private Methods
+    def _bulk_remove_course_assignments(self, course_id, assignments_to_remove):
+        """
+        Take a Canvas course ID and remove all assessments associated a list of Canvas course assignment IDs.
+
+        Args:
+            - course_id: Canvas course ID
+            - assignments_to_remove: List of assignment ID's to be removed contained with the provided course.
+        """
+        removed_items = []
+        failures = []
+        for assignment_id in assignments_to_remove:
+            try:
+                assignment_url = CanvasUtil.course_assignments_endpoint(
+                    self.enterprise_configuration,
+                    course_id
+                ) + '/{}'.format(assignment_id)
+                self._delete(assignment_url)
+                removed_items.append(assignment_id)
+            except ClientError:  # pylint: disable=broad-except
+                # we do not want assignment deletes to cause failures
+                failures.append(assignment_id)
+        return removed_items, failures
+
+    def _parse_unique_newest_assignments(self, current_assignments, assignments_to_delete, assignment_response_json):
+        """
+        Ingest an assignments response from Canvas into a dictionary of most current, unique assignments found and a
+        running list of assignments to delete
+
+        Args:
+            - current_assignments: dictionary containing information on most current unique assignments contained within
+            a Canvas course.
+                Example:
+                    {
+                        'edX+816': {
+                            'id': 10,
+                            'updated_at': '2021-06-10T13:57:19Z',
+                        },
+                        'edX+100': {
+                            'id': 11,
+                            'updated_at': '2021-06-10T13:58:19Z',
+                        }
+                    }
+
+            - assignments_to_delete: list of Canvas assignment IDs associated with duplicate assignments to be deleted
+
+            - assignment_response_json: json repr of the requests' Response object returned by Canvas' course
+            assignments API
+        """
+        for assignment in assignment_response_json:
+            integration_id = assignment['integration_id']
+            current_assignment = current_assignments.get(integration_id)
+            if current_assignment:
+                if parse(current_assignment['updated_at']) < parse(assignment['updated_at']):
+                    assignments_to_delete.append(current_assignment['id'])
+                    current_assignments[integration_id] = {
+                        'id': assignment['id'],
+                        'updated_at': assignment['updated_at']
+                    }
+                else:
+                    assignments_to_delete.append(assignment['id'])
+            else:
+                current_assignments[integration_id] = {
+                    'id': assignment['id'],
+                    'updated_at': assignment['updated_at']
+                }
+
+        return current_assignments, assignments_to_delete
+
     def _update_course_details(self, course_id, course_details):
         """
         Update a course for image_url (and possibly other settings in future).
@@ -278,8 +400,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """
         response_code = None
         response_text = None
-        url = CanvasAPIClient.course_update_endpoint(
-            self.enterprise_configuration.canvas_base_url,
+        url = CanvasUtil.course_update_endpoint(
+            self.enterprise_configuration,
             course_id,
         )
         # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
@@ -486,25 +608,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     ) from error
 
             if not assignment_id:
-                # Canvas pagination headers come back as a string ie:
-                # 'headers': {
-                #     'Link': '<{assignment_url}?page=2&per_page=10>; rel="current",' \
-                #             '<{assignment_url}?page=1&per_page=10>; rel="prev",' \
-                #             '<{assignment_url}?page=1&per_page=10>; rel="first",' \
-                #             '<{assignment_url}?page=2&per_page=10>; rel="last"' \
-                # }
-                # so we have to parse out the linked list of assignment pages
-                assignment_page_results = resp.headers['Link'].split(',')
-                pages = {}
-                for page in assignment_page_results:
-                    page_type = page.split('; rel=')[1].strip('"')
-                    pages[page_type] = page.split(';')[0].strip('<>')
-
-                if pages.get('current') == pages.get('last', None):
-                    more_pages_present = False
-                else:
-                    resp = self.session.get(pages.get('next'))
+                next_page = CanvasUtil.determine_next_results_page(resp)
+                if next_page:
+                    resp = self.session.get(next_page)
                     current_page_count += 1
+                else:
+                    more_pages_present = False
             else:
                 more_pages_present = False
 

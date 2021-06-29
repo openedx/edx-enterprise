@@ -4,6 +4,7 @@ Client for connecting to Moodle.
 """
 
 import json
+import logging
 from http import HTTPStatus
 from urllib.parse import urlencode, urljoin
 
@@ -13,6 +14,8 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+LOGGER = logging.getLogger(__name__)
 
 MOODLE_FINAL_GRADE_ASSIGNMENT_NAME = '(edX integration) Final Grade'
 
@@ -349,6 +352,12 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet
         """
+
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        Not implemented yet.
+        """
+        LOGGER.error("Moodle integrated channel does not yet support assignment deduplication.")
 
     def create_course_completion(self, user_id, payload):
         """Send course completion data to Moodle"""

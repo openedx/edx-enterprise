@@ -239,6 +239,38 @@ class LearnerTransmitter(Transmitter):
 
             learner_data.save()
 
+    def deduplicate_assignment_records_transmit(self, exporter, **kwargs):
+        """
+        Remove duplicated assessments sent to the integrated channel using the client.
+
+        Args:
+            exporter: The learner completion data payload to send to the integrated channel.
+            kwargs: Contains integrated channel-specific information for customized transmission variables.
+                - app_label: The app label of the integrated channel for whom to store learner data records for.
+                - model_name: The name of the specific learner data record model to use.
+                - remote_user_id: The remote ID field name of the learner on the audit model.
+        """
+        app_label, enterprise_customer_uuid, _ = self._generate_common_params(**kwargs)
+        courses = exporter.export_unique_courses()
+        code, body = self.client.cleanup_duplicate_assignment_records(courses)
+
+        if code >= 400:
+            LOGGER.exception(generate_formatted_log(
+                app_label,
+                enterprise_customer_uuid,
+                None,
+                None,
+                'Deduping assignments transmission experienced a failure, received the error message: {}'.format(body)
+            ))
+        else:
+            LOGGER.info(generate_formatted_log(
+                app_label,
+                enterprise_customer_uuid,
+                None,
+                None,
+                'Deduping assignments transmission finished successfully, received message: {}'.format(body)
+            ))
+
     def _log_exception_supplemental_data(self, learner_data, operation_name,
                                          integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
         """ Logs extra payload and parameter data to help debug which learner data caused an exception. """

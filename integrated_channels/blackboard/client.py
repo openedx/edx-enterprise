@@ -732,3 +732,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             )
 
         return course_fully_created_response
+
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        Not implemented yet.
+        """
+        LOGGER.error("Blackboard integrated channel does not yet support assignment deduplication.")

@@ -24,6 +24,7 @@ except ImportError:
 from consent.models import DataSharingConsent
 from enterprise.api_client.lms import GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters import Exporter
 from integrated_channels.lms_utils import get_course_certificate, get_course_details, get_single_user_grade
 from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
@@ -240,6 +241,18 @@ class LearnerExporter(Exporter):
                 continue
             enrollments_permitted.add(enrollment)
         return enrollments_permitted
+
+    def export_unique_courses(self):
+        """
+        Retrieve and export all unique course ID's from an enterprise customer's learner enrollments.
+        """
+        enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
+            'enterprise_customer_user'
+        ).filter(
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            enterprise_customer_user__active=True,
+        ).order_by('course_id')
+        return set(get_course_id_for_enrollment(enrollment) for enrollment in enrollment_queryset)
 
     def export(self, **kwargs):  # pylint: disable=R0915
         """
