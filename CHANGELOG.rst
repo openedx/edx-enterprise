@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.12]
+---------
+* Canvas integrated channel now supports create_or_update pattern for courses. Detects/logs deleted courses.
+
 [3.26.11]
 ---------
 * Removed ``ENABLE_MULTIPLE_USER_ENTERPRISES_FEATURE`` waffle switch
