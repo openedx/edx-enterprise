@@ -5,7 +5,6 @@ Django signal handlers.
 
 from logging import getLogger
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 
@@ -329,9 +328,8 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
     """
     if kwargs.get('created') and instance.user:
         user_id = instance.user.id
-        try:
-            ecu = EnterpriseCustomerUser.objects.get(user_id=user_id)
-        except ObjectDoesNotExist:
+        ecu = EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True).first()
+        if not ecu:
             return
         logger.info((
             "User %s is an EnterpriseCustomerUser. "
