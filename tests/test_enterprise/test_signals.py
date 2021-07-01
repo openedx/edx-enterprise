@@ -171,7 +171,8 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         assert PendingEnrollment.objects.count() == 0
         assert EnterpriseCourseEnrollment.objects.count() == 1
         mock_course_enrollment.return_value.enroll_user_in_course.assert_called_once_with(
-            user.username, course_id, 'audit', cohort=u'test_cohort'
+            user.username, course_id, 'audit', cohort=u'test_cohort',
+            enterprise_uuid=str(pending_link.enterprise_customer.uuid)
         )
         mock_track_enrollment.assert_called_once_with('pending-admin-enrollment', user.id, course_id)
 

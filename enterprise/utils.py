@@ -1419,7 +1419,9 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     succeeded = True
     for course_id in course_ids:
         try:
-            enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
+            enrollment_client.enroll_user_in_course(user.username, course_id, course_mode, cohort=None,
+                                                    enterprise_uuid=str(enterprise_customer_user.uuid)
+                                                    if hasattr(enterprise_customer_user, 'uuid') else None)
         except HttpClientError as exc:
             # Check if user is already enrolled then we should ignore exception
             if is_user_enrolled(user, course_id, course_mode):
