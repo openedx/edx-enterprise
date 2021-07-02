@@ -866,6 +866,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
+    history = HistoricalRecords()
 
     class Meta:
         app_label = 'enterprise'
@@ -2688,7 +2689,11 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
     .. no_pii:
     """
 
-    role_class = SystemWideEnterpriseRole
+    role = models.ForeignKey(
+        SystemWideEnterpriseRole,
+        related_name="system_wide_role_assignments",
+        on_delete=models.CASCADE,
+    )
 
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
@@ -2702,6 +2707,8 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
             'BEFORE selecting from this dropdown.'
         ),
     )
+
+    history = HistoricalRecords()
 
     def has_access_to_all_contexts(self):
         """
