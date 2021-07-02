@@ -64,6 +64,7 @@ from enterprise.utils import (
     get_best_mode_from_course_key,
     get_ecommerce_worker_user,
     get_request_value,
+    track_enrollment,
     validate_email_to_link,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
@@ -312,14 +313,16 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             existing_users = {
                 result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
             }
-            LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
-            if serializer.validated_data.get('notify'):
-                enterprise_customer.notify_enrolled_learners(
-                    catalog_api_user=request.user,
-                    course_id=course_run,
-                    users=pending_users | existing_users,
-                    admin_enrollment=True,
-                )
+            if len(pending_users | existing_users) > 0:
+                LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
+                track_enrollment('customer-admin-enrollment', request.user.id, course_run)
+                if serializer.validated_data.get('notify'):
+                    enterprise_customer.notify_enrolled_learners(
+                        catalog_api_user=request.user,
+                        course_id=course_run,
+                        users=pending_users | existing_users,
+                        admin_enrollment=True,
+                    )
 
         if email_errors:
             results['invalid_email_addresses'] = email_errors

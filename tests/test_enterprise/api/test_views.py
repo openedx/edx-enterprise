@@ -3283,6 +3283,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_code': 400,
             'expected_response': {'non_field_errors': ['Must include the "licenses_info" parameter in request.']},
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         {
             'body': {
@@ -3293,6 +3294,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'licenses_info': {'non_field_errors': ['Expected a list of items but got type "dict".']}
             },
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         {
             'body': {
@@ -3304,6 +3306,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'licenses_info': [{'non_field_errors': ["Found missing licenses_info field(s): ['license_uuid']."]}]
             },
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         {
             'body': {
@@ -3318,6 +3321,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'successes': [], 'pending': [], 'failures': [], 'invalid_email_addresses': ['BADLYFORMATTEDEMAIL']
             },
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         # Single learner, single course success
         {
@@ -3335,6 +3339,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 1,
+            'expected_events': [mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course')],
         },
         # Multi-learner, single course success
         {
@@ -3362,6 +3367,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 2,
+            'expected_events': [
+                mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course'),
+            ],
         },
         # Multi-learner, multi-course success
         {
@@ -3401,20 +3409,25 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 4,
+            'expected_events': [
+                mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call('customer-admin-enrollment', 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+            ],
         },
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.track_enrollment')
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses(
         self,
+        mock_track_enroll,
         mock_get_course_mode,
-        mock_ecom_order,
         body,
         expected_code,
         expected_response,
         expected_num_pending_licenses,
+        expected_events,
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
@@ -3439,6 +3452,11 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             response_json = response.json()
             self.assertEqual(expected_response, response_json)
         self.assertEqual(len(PendingEnrollment.objects.all()), expected_num_pending_licenses)
+
+        if expected_events:
+            mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
+        else:
+            mock_track_enroll.assert_not_called()
 
     @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')

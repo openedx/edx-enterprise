@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.17]
+---------
+* Adds Segment tracking for bulk enrollment method.
+
 [3.26.16]
 ---------
 * Added history tables for EnterpriseCustomerUser and SystemWideEnterpriseUserRoleAssignment.
