@@ -1694,9 +1694,6 @@ def create_tableau_user(user_id, enterprise_customer_user):
             with server.auth.sign_in(tableau_auth):
                 user_item = TSC.UserItem(user_id, TSC.UserItem.Roles.Viewer)
                 user = server.users.add(user_item)
-                # The initial call above to add a user assigns the unlicensed role
-                user.site_role = TSC.UserItem.Roles.Viewer
-                user = server.users.update(user)
                 LOGGER.info(
                     '[TABLEAU USER SYNC] Created user id: %s name: %s with '
                     'role: %s.', user.id, user.name, user.site_role,
@@ -1731,6 +1728,7 @@ def get_tableau_server():
     try:
         tableau_auth = TSC.TableauAuth(settings.TABLEAU_ADMIN_USER, settings.TABLEAU_ADMIN_USER_PASSWORD)
         server = TSC.Server(settings.TABLEAU_URL)
+        server.use_server_version()
         return tableau_auth, server
     except AttributeError as err:
         LOGGER.error(

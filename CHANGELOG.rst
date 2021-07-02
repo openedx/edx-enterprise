@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.14]
+---------
+* Fixed issue with API version in Tableau client.
+
 [3.26.13]
 ---------
 * Fixed issue with CourseEnrollment receiver when learner has multiple enterprises.
