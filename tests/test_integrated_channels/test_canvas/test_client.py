@@ -38,9 +38,14 @@ class TestCanvasApiClient(unittest.TestCase):
         self.canvas_email = "test@test.com"
         self.canvas_user_id = random.randint(1, 1000)
         self.canvas_course_id = random.randint(1, 1000)
+        self.canvas_course_id_2 = random.randint(1001, 2000)
         self.canvas_assignment_id = random.randint(1, 1000)
+        self.canvas_assignment_id_2 = random.randint(1001, 2000)
+        self.canvas_assignment_id_3 = random.randint(2001, 3000)
         self.course_id = "edx+111"
+        self.course_id_2 = "edx+222"
         self.subsection_id = "subsection:123"
+        self.subsection_id_2 = "subsection:456"
         self.subsection_name = 'subsection 1'
         self.points_possible = random.randint(1, 100)
         self.points_earned = self.points_possible - 1
@@ -66,6 +71,11 @@ class TestCanvasApiClient(unittest.TestCase):
             "{base}/api/v1/courses/{course_id}/assignments".format(
                 base=self.url_base,
                 course_id=self.canvas_course_id,
+            )
+        self.canvas_assignment_2_url = \
+            "{base}/api/v1/courses/{course_id}/assignments".format(
+                base=self.url_base,
+                course_id=self.canvas_course_id_2,
             )
         self.canvas_submission_url = \
             "{base}/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions/{user_id}".format(
@@ -458,7 +468,7 @@ class TestCanvasApiClient(unittest.TestCase):
             expected_resp = '{"id": 1}'
             request_mock.add(
                 responses.POST,
-                CanvasAPIClient.course_create_endpoint(self.url_base, self.account_id),
+                CanvasUtil.course_create_endpoint(self.enterprise_config),
                 status=201,
                 body=expected_resp
             )
@@ -494,7 +504,7 @@ class TestCanvasApiClient(unittest.TestCase):
             expected_resp = '{"id": 1}'
             request_mock.add(
                 responses.PUT,
-                CanvasAPIClient.course_update_endpoint(self.url_base, 111),
+                CanvasUtil.course_update_endpoint(self.enterprise_config, 111),
                 status=201,
                 body=expected_resp
             )
@@ -598,6 +608,287 @@ class TestCanvasApiClient(unittest.TestCase):
             assert canvas_assignment == 1
 
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_successful_assignment_dedup(self, mock_find_course_by_course_id):
+        """
+        Test successful assignment dedup task removing duplicate assignments from multiple courses
+        """
+        mock_find_course_by_course_id.side_effect = [{'id': self.canvas_course_id}, {'id': self.canvas_course_id_2}]
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        canvas_api_client._bulk_remove_course_assignments = mock.MagicMock(  # pylint: disable=protected-access
+            side_effect=[
+                ([self.canvas_assignment_id], []),
+                ([self.canvas_assignment_id_2, self.canvas_assignment_id_3], [])
+            ]
+        )
+        last_updated_1 = str(datetime.datetime(2020, 5, 17, 10))
+        last_updated_2 = str(datetime.datetime(2020, 5, 17, 12))
+        last_updated_3 = str(datetime.datetime(2020, 5, 17, 14))
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+
+            paginated_assignment_headers_1 = {
+                'Link': (
+                    '<{assignment_url}?page=1&per_page=10>; rel="current",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="first",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="last"'.format(
+                        assignment_url=self.canvas_course_assignments_url
+                    )
+                )
+            }
+            request_mock.add(
+                responses.GET,
+                self.canvas_assignment_url,
+                json=[{
+                    'id': self.canvas_assignment_id,
+                    'integration_id': self.subsection_id,
+                    'updated_at': last_updated_1
+                }, {
+                    'id': self.canvas_assignment_id_2,
+                    'integration_id': self.subsection_id,
+                    'updated_at': last_updated_2
+                }],
+                status=200,
+                headers=paginated_assignment_headers_1
+            )
+
+            paginated_assignment_headers_2 = {
+                'Link': (
+                    '<{assignment_url}?page=1&per_page=10>; rel="current",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="first",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="last"'.format(
+                        assignment_url=self.canvas_course_assignments_url
+                    )
+                )
+            }
+            request_mock.add(
+                responses.GET,
+                self.canvas_assignment_2_url,
+                json=[{
+                    'id': self.canvas_assignment_id,
+                    'integration_id': self.subsection_id_2,
+                    'updated_at': last_updated_1
+                }, {
+                    'id': self.canvas_assignment_id_2,
+                    'integration_id': self.subsection_id_2,
+                    'updated_at': last_updated_2
+                }, {
+                    'id': self.canvas_assignment_id_3,
+                    'integration_id': self.subsection_id_2,
+                    'updated_at': last_updated_3
+                }],
+                status=200,
+                headers=paginated_assignment_headers_2
+            )
+
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+            code, body = canvas_api_client.cleanup_duplicate_assignment_records([self.course_id, self.course_id_2])
+
+            assert code == 200
+            assert body == "Removed 3 duplicate assignments from Canvas."
+
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_assignment_dedup_partial_failure(self, mock_find_course_by_course_id):
+        """
+        Test assignment dedup task partially fails due to not finding one course
+        """
+        mock_find_course_by_course_id.side_effect = [{'id': self.canvas_course_id}, None]
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        canvas_api_client._bulk_remove_course_assignments = mock.MagicMock(  # pylint: disable=protected-access
+            return_value=([self.canvas_assignment_id], [])
+        )
+        last_updated_1 = str(datetime.datetime(2020, 5, 17, 10))
+        last_updated_2 = str(datetime.datetime(2020, 5, 17, 12))
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            paginated_assignment_headers = {
+                'Link': (
+                    '<{assignment_url}?page=1&per_page=10>; rel="current",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="first",'
+                    '<{assignment_url}?page=1&per_page=10>; rel="last"'.format(
+                        assignment_url=self.canvas_course_assignments_url
+                    )
+                )
+            }
+
+            request_mock.add(
+                responses.GET,
+                self.canvas_assignment_url,
+                json=[{
+                    'id': self.canvas_assignment_id,
+                    'integration_id': self.subsection_id,
+                    'updated_at': last_updated_1
+                }, {
+                    'id': self.canvas_assignment_id_2,
+                    'integration_id': self.subsection_id,
+                    'updated_at': last_updated_2
+                }],
+                status=200,
+                headers=paginated_assignment_headers
+            )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+            code, body = canvas_api_client.cleanup_duplicate_assignment_records([self.course_id, self.course_id_2])
+            assert code == 400
+            assert body == (
+                "Failed to dedup all assignments for the following courses: ['{}']. Number of individual assignments "
+                "that failed to be deleted: 0. Total assignments removed: 1.".format(
+                    self.course_id_2
+                )
+            )
+
+    def test_parsing_next_paginated_endpoint(self):
+        """
+        Test that the _determine_next_results_page method properly determines the next url of paginated result when
+        present.
+        """
+        canvas_api_response = Response()
+        canvas_api_response.headers = {
+            'Link': '<canvas.com?page=1&per_page=10>; rel="current",'
+                    '<canvas.com?page=2&per_page=10>; rel="next",'
+                    '<canvas.com?page=1&per_page=10>; rel="first",'
+                    '<canvas.com?page=2&per_page=10>; rel="last"'
+        }
+        next_page = CanvasUtil.determine_next_results_page(canvas_api_response)  # pylint: disable=protected-access
+        assert next_page == 'canvas.com?page=2&per_page=10'
+
+    def test_parsing_end_of_paginated_results(self):
+        """
+        Test that the _determine_next_results_page returns False if there are no more pages of results.
+        """
+        canvas_api_response = Response()
+        canvas_api_response.headers = {
+            'Link': '<canvas.com?page=2&per_page=10>; rel="current",'
+                    '<canvas.com?page=1&per_page=10>; rel="prev",'
+                    '<canvas.com?page=1&per_page=10>; rel="first",'
+                    '<canvas.com?page=2&per_page=10>; rel="last"'
+        }
+        next_page = CanvasUtil.determine_next_results_page(canvas_api_response)  # pylint: disable=protected-access
+        assert not next_page
+
+    def test_parse_unique_newest_assignments_removes_older_assignments(self):
+        """
+        Test that _parse_unique_newest_assignments will ingest Canvas assignment responses and will replace older
+        duplicate assignments in `current_assignments` with more recent ones.
+        """
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+
+        integration_id_1 = 'edX+816'
+        integration_id_2 = 'edX+100'
+
+        newer_canvas_assignment_id_1 = 10
+        newer_canvas_assignment_id_2 = 11
+        older_canvas_assignment_id_1 = 12
+        older_canvas_assignment_id_2 = 13
+
+        current_assignments = {
+            integration_id_1: {
+                'id': older_canvas_assignment_id_1,
+                'updated_at': '2021-06-10T13:57:19Z',
+            },
+            integration_id_2: {
+                'id': older_canvas_assignment_id_2,
+                'updated_at': '2021-06-10T13:58:19Z',
+            }
+        }
+        assignments_to_delete = []
+        assignment_response_json = [{
+            'integration_id': integration_id_1,
+            'id': newer_canvas_assignment_id_1,
+            'updated_at': '2021-06-11T13:57:19Z'
+        }, {
+            'integration_id': integration_id_2,
+            'id': newer_canvas_assignment_id_2,
+            'updated_at': '2021-06-11T13:58:19Z'
+        }]
+
+        current_assignments, assignments_to_delete = canvas_api_client._parse_unique_newest_assignments(  # pylint: disable=protected-access
+            current_assignments,
+            assignments_to_delete,
+            assignment_response_json
+        )
+        assert current_assignments[integration_id_1]['id'] == newer_canvas_assignment_id_1
+        assert current_assignments[integration_id_2]['id'] == newer_canvas_assignment_id_2
+
+    def test_successful_bulk_remove_course_assignments(self):
+        """
+        Test a successful run of deduplication assignments
+        """
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.DELETE,
+                self.canvas_assignment_url + '/{}'.format(self.canvas_assignment_id),
+                json={},
+                status=200
+            )
+            request_mock.add(
+                responses.DELETE,
+                self.canvas_assignment_url + '/{}'.format(self.canvas_assignment_id_2),
+                json={},
+                status=200
+            )
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+            assignments_removed, [] = canvas_api_client._bulk_remove_course_assignments(  # pylint: disable=protected-access
+                self.canvas_course_id,
+                [self.canvas_assignment_id, self.canvas_assignment_id_2]
+            )
+
+            assert len(assignments_removed) == 2
+            assert self.canvas_assignment_id_2 in assignments_removed
+            assert self.canvas_assignment_id in assignments_removed
+
+    def test_bulk_remove_course_assignments_partial_failure(self):
+        """
+        Test client behaviors when a course is not found a deduplication of assessments task
+        """
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.DELETE,
+                self.canvas_assignment_url + '/{}'.format(self.canvas_assignment_id),
+                json={'errors': [{'message': 'Something went wrong.'}]},
+                status=500
+            )
+            request_mock.add(
+                responses.DELETE,
+                self.canvas_assignment_url + '/{}'.format(self.canvas_assignment_id_2),
+                json={},
+                status=200
+            )
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+            assignments_removed, failed_assignments = canvas_api_client._bulk_remove_course_assignments(  # pylint: disable=protected-access
+                self.canvas_course_id,
+                [self.canvas_assignment_id, self.canvas_assignment_id_2]
+            )
+            assert self.canvas_assignment_id in failed_assignments
+            assert len(failed_assignments) == 1
+            assert len(assignments_removed) == 1
+            assert self.canvas_assignment_id_2 in assignments_removed
+
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
     def test_create_course_success_with_image_url(self, mock_find_course_by_course_id):
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
         course_to_create = json.dumps({
@@ -622,13 +913,13 @@ class TestCanvasApiClient(unittest.TestCase):
             expected_resp = '{"id": 1111}'
             request_mock.add(
                 responses.POST,
-                CanvasAPIClient.course_create_endpoint(self.url_base, self.account_id),
+                CanvasUtil.course_create_endpoint(self.enterprise_config),
                 status=201,
                 body=expected_resp
             )
             request_mock.add(
                 responses.PUT,
-                CanvasAPIClient.course_update_endpoint(self.url_base, 1111),
+                CanvasUtil.course_update_endpoint(self.enterprise_config, 1111),
                 status=200
             )
             status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)

@@ -180,6 +180,14 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter = self.get_learner_data_transmitter()
         transmitter.assessment_level_transmit(exporter)
 
+    def cleanup_duplicate_assignment_records(self, user):
+        """
+        Remove duplicated assessments transmitted through the integrated channel.
+        """
+        exporter = self.get_learner_data_exporter(user)
+        transmitter = self.get_learner_data_transmitter()
+        transmitter.deduplicate_assignment_records_transmit(exporter)
+
 
 @python_2_unicode_compatible
 class LearnerDataTransmissionAudit(models.Model):

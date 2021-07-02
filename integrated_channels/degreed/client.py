@@ -4,6 +4,7 @@ Client for connecting to Degreed.
 """
 
 import datetime
+import logging
 import time
 
 import requests
@@ -13,6 +14,8 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DegreedAPIClient(IntegratedChannelApiClient):
@@ -44,6 +47,12 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
+
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        Not implemented yet.
+        """
+        LOGGER.error("Degreed integrated channel does not yet support assignment deduplication.")
 
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """
