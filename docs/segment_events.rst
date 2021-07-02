@@ -26,6 +26,7 @@ The possible values of the **pathway** property are:
   page.
 - **course-landing-page-enrollment**: Enrollment was created when learner enrolled via the course landing page.
 - **direct-audit-enrollment**: Enrollment was created via the direct audit enrollment mechanism.
+- **customer-admin-enrollment**: Enrollment was created by a customer admin via the frontend app admin portal.
 
 edx.bi.user.enterprise.enrollment.course
 ----------------------------------------
