@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.16]
+---------
+* Added history tables for EnterpriseCustomerUser and SystemWideEnterpriseUserRoleAssignment.
+
 [3.26.15]
 ---------
 * Added management command to clean up duplicate transmitted assignments for the integrated channels.
