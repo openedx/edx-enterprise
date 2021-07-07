@@ -54,8 +54,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     canvas_account_id = models.BigIntegerField(
         null=True,
         verbose_name="Canvas Account Number",
-        help_text=_("Account number to use during api calls. Called account_id in canvas. "
-                  " Required to create courses etc.")
+        help_text=_("Account number to use during api calls. Called account_id in canvas.  Required to create courses etc.")
     )
 
     canvas_base_url = models.CharField(
@@ -70,14 +69,14 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         verbose_name="Oauth2 Refresh Token",
         help_text=_("The refresh token provided by Canvas along with the access token request, used to "
-                  "re-request the access tokens over multiple client sessions.")
+                    "re-request the access tokens over multiple client sessions.")
     )
 
     # overriding base model field, to use chunk size 1 default
     transmission_chunk_size = models.IntegerField(
         default=1,
         help_text=_("The maximum number of data items to transmit to the integrated channel "
-                "with each request.")
+                    "with each request.")
     )
 
     history = HistoricalRecords()
