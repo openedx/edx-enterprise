@@ -10,6 +10,7 @@ from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from integrated_channels.canvas.exporters.learner_data import CanvasLearnerExporter
@@ -34,7 +35,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         max_length=255,
         null=True,
         verbose_name="API Client ID",
-        help_text=(
+        help_text=_(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
             "calls to Canvas on behalf of the customer."
         )
@@ -44,7 +45,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         max_length=255,
         null=True,
         verbose_name="API Client Secret",
-        help_text=(
+        help_text=_(
             "The API Client Secret provided to edX by the enterprise customer to be used to make "
             " API calls to Canvas on behalf of the customer."
         )
@@ -53,23 +54,30 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     canvas_account_id = models.BigIntegerField(
         null=True,
         verbose_name="Canvas Account Number",
-        help_text="Account number to use during api calls. Called account_id in canvas. "
-                  " Required to create courses etc."
+        help_text=_("Account number to use during api calls. Called account_id in canvas. "
+                  " Required to create courses etc.")
     )
 
     canvas_base_url = models.CharField(
         max_length=255,
         null=True,
         verbose_name="Canvas Base URL",
-        help_text="The base URL used for API requests to Canvas, i.e. https://instructure.com."
+        help_text=_("The base URL used for API requests to Canvas, i.e. https://instructure.com.")
     )
 
     refresh_token = models.CharField(
         max_length=255,
         blank=True,
         verbose_name="Oauth2 Refresh Token",
-        help_text="The refresh token provided by Canvas along with the access token request, used to "
-                  "re-request the access tokens over multiple client sessions."
+        help_text=_("The refresh token provided by Canvas along with the access token request, used to "
+                  "re-request the access tokens over multiple client sessions.")
+    )
+
+    # overriding base model field, to use chunk size 1 default
+    transmission_chunk_size = models.IntegerField(
+        default=1,
+        help_text=_("The maximum number of data items to transmit to the integrated channel "
+                "with each request.")
     )
 
     history = HistoricalRecords()
@@ -135,7 +143,7 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         max_length=255,
         blank=False,
         null=False,
-        help_text="The course run's key which is used to uniquely identify the course for Canvas."
+        help_text=_("The course run's key which is used to uniquely identify the course for Canvas.")
     )
 
     subsection_id = models.CharField(
@@ -143,31 +151,31 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         blank=False,
         null=False,
         db_index=True,
-        help_text="The course's subsections's key."
+        help_text=_("The course's subsections's key.")
     )
 
     grade_point_score = models.FloatField(
         blank=False,
         null=False,
-        help_text="The amount of points that the learner scored on the subsection."
+        help_text=_("The amount of points that the learner scored on the subsection.")
     )
 
     grade_points_possible = models.FloatField(
         blank=False,
         null=False,
-        help_text="The total amount of points that the learner could score on the subsection."
+        help_text=_("The total amount of points that the learner could score on the subsection.")
     )
 
     # Request-related information.
     grade = models.FloatField(
         blank=False,
         null=False,
-        help_text="The grade an enterprise learner received on the reported subsection."
+        help_text=_("The grade an enterprise learner received on the reported subsection.")
     )
     subsection_name = models.CharField(
         max_length=255,
         blank=False,
-        help_text="The name given to the subsection being reported. Used for displaying on external LMS'."
+        help_text=_("The name given to the subsection being reported. Used for displaying on external LMS'.")
     )
     status = models.CharField(max_length=100, blank=False, null=False)
     error_message = models.TextField(blank=True)
@@ -242,17 +250,17 @@ class CanvasLearnerDataTransmissionAudit(models.Model):
         max_length=255,
         blank=False,
         null=False,
-        help_text="The course run's key which is used to uniquely identify the course for Canvas."
+        help_text=_("The course run's key which is used to uniquely identify the course for Canvas.")
     )
 
     course_completed = models.BooleanField(
         default=False,
-        help_text="The learner's course completion status transmitted to Canvas."
+        help_text=_("The learner's course completion status transmitted to Canvas.")
     )
 
     completed_timestamp = models.CharField(
         max_length=10,
-        help_text=(
+        help_text=_(
             'Represents the canvas representation of a timestamp: yyyy-mm-dd, '
             'which is always 10 characters.'
         )
