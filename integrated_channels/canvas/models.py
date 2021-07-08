@@ -54,7 +54,8 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     canvas_account_id = models.BigIntegerField(
         null=True,
         verbose_name="Canvas Account Number",
-        help_text=_("Account number to use during api calls. Called account_id in canvas.  Required to create courses etc.")
+        help_text=_("Account number to use during api calls. Called account_id in canvas. "
+                    " Required to create courses etc.")
     )
 
     canvas_base_url = models.CharField(

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.18]
+---------
+* Overriding default chunk size for SAP and Canvas integrations.
+
 [3.26.17]
 ---------
 * Adds Segment tracking for bulk enrollment method.
