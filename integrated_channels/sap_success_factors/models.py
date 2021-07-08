@@ -118,6 +118,15 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         help_text=_("Include totalHours in the transmitted completion data")
     )
 
+    # overriding base model field, to use chunk size 1 default
+    transmission_chunk_size = models.IntegerField(
+        default=1,
+        help_text=(
+            _("The maximum number of data items to transmit to the integrated channel "
+                "with each request.")
+        )
+    )
+
     def get_locales(self, default_locale=None):
         """
         Get the list of all(default + additional) locales
