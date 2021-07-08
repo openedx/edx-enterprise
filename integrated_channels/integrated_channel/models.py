@@ -66,7 +66,11 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     catalogs_to_transmit = models.TextField(
         blank=True,
         null=True,
-        help_text=_("A comma-separated list of catalog UUIDs to transmit."),
+        help_text=_(
+            "A comma-separated list of catalog UUIDs to transmit. If blank, all customer catalogs will be transmitted. "
+            "If there are overlapping courses in the customer catalogs, the overlapping course metadata will be "
+            "selected from the newest catalog."
+        ),
     )
 
     class Meta:
