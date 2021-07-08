@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.19]
+---------
+* Updates to integrated channels catalogs to transmit help text.
+
 [3.26.18]
 ---------
 * Overriding default chunk size for SAP and Canvas integrations.
