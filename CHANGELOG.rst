@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.20]
+---------
+* Updates requirements and style changes to match the latest Pylint.
+
 [3.26.19]
 ---------
 * Updates to integrated channels catalogs to transmit help text.

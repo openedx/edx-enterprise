@@ -961,9 +961,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         if create_user:
             user = UserFactory(email=user_email)
 
-        for course_id in courses:
-            catalog_instance.get_course_run.return_value = courses[course_id]
-            mode = courses[course_id]['mode']
+        for course_id, course_metadata in courses.items():
+            catalog_instance.get_course_run.return_value = course_metadata
+            mode = course_metadata['mode']
             enrollment_count += 1
 
             if user:

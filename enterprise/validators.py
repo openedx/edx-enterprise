@@ -55,16 +55,16 @@ def validate_content_filter_fields(content_filter):
     """
     Validate particular fields (if present) passed in through content_filter are certain types.
     """
-    for key in cftypes:
+    for key, cftype in cftypes.items():
         if key in content_filter.keys():
-            if not isinstance(content_filter[key], cftypes[key]['type']):
+            if not isinstance(content_filter[key], cftype['type']):
                 raise ValidationError(
-                    "Content filter '%s' must be of type %s" % (key, cftypes[key]['type'])
+                    "Content filter '%s' must be of type %s" % (key, cftype['type'])
                 )
-            if cftypes[key]['type'] == list:
-                if not all(cftypes[key]['subtype'] == type(x) for x in content_filter[key]):
+            if cftype['type'] == list:
+                if not all(cftype['subtype'] == type(x) for x in content_filter[key]):
                     raise ValidationError(
                         "Content filter '%s' must contain values of type %s" % (
-                            key, cftypes[key]['subtype']
+                            key, cftype['subtype']
                         )
                     )

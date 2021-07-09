@@ -118,11 +118,11 @@ def verify_edx_resources():
         'ProgramDataExtender': ProgramDataExtender,
     }
 
-    for method in required_methods:
-        if required_methods[method] is None:
+    for key, method in required_methods.items():
+        if method is None:
             raise NotConnectedToOpenEdX(
                 _("The following method from the Open edX platform is necessary for this view but isn't available.")
-                + "\nUnavailable: {method}".format(method=method)
+                + "\nUnavailable: {method}".format(method=key)
             )
 
 

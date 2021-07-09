@@ -875,7 +875,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
         """
         Override to handle creation of EnterpriseCustomerUser records.
 
@@ -2199,7 +2199,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
         """
         Saves this ``EnterpriseCatalogQuery``.
 
