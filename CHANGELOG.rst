@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.21]
+---------
+* Adds error handling and logging to the assignment deduplication management command.
+
 [3.26.20]
 ---------
 * Updates requirements and style changes to match the latest Pylint.
