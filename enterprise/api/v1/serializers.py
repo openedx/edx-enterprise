@@ -527,7 +527,7 @@ class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
         '''
         return super().to_representation(instance[0])
 
-    def create(self, attrs):  # pylint: disable=arguments-differ
+    def create(self, attrs):  # pylint: disable=arguments-renamed
         """
         Create the PendingEnterpriseCustomerUser, or EnterpriseCustomerUser
         if a user with the validated_email already exists.
@@ -728,7 +728,7 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         instance.enterprise_customer_catalogs.set(ec_catalog_uuids)
         return instance
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         delivery_method = data.get('delivery_method')
         if not delivery_method and self.instance:
             delivery_method = self.instance.delivery_method
@@ -1053,7 +1053,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
 
         return value
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         """
         Validate that at least one of the user identifier fields has been passed in.
         """
@@ -1102,7 +1102,7 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
     def create(self, validated_data):
         return validated_data
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         if not data.get('email') and not data.get('email_csv'):
             raise serializers.ValidationError('Must include either email or email_csv in request.')
         return data
@@ -1119,7 +1119,7 @@ class LicensesInfoSerializer(serializers.Serializer):
     def create(self, validated_data):
         return validated_data
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         missing_fields = []
         for key in self.fields.keys():
             if not data.get(key):
@@ -1145,7 +1145,7 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
     def create(self, validated_data):
         return validated_data
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         if data.get('licenses_info') is None:
             raise serializers.ValidationError(
                 'Must include the "licenses_info" parameter in request.'

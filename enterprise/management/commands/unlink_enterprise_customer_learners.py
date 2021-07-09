@@ -62,8 +62,8 @@ class Command(BaseCommand):
 
         results = {}
 
-        csv_file = open(csv_path)
-        rows = list(csv.DictReader(csv_file))
+        with open(csv_path) as csv_file:
+            rows = list(csv.DictReader(csv_file))
         csv_file.close()
 
         for row in rows:

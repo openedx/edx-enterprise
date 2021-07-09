@@ -110,10 +110,10 @@ class ProxyDataSharingConsent(ConsentModelMixin):
         Initialize a proxy version of ``DataSharingConsent`` which behaves similarly but does not exist in the DB.
         """
         ec_keys = {}
-        for key in kwargs:
+        for key, value in kwargs.items():
             if str(key).startswith('enterprise_customer__'):
                 enterprise_customer_detail = key[len('enterprise_customer__'):]
-                ec_keys[enterprise_customer_detail] = kwargs[key]
+                ec_keys[enterprise_customer_detail] = value
 
         if ec_keys:
             enterprise_customer = EnterpriseCustomer.objects.get(**ec_keys)  # pylint: disable=no-member
