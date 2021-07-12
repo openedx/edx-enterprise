@@ -26,7 +26,9 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
 
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
-    GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
+    # enterprise-catalog has a default page_size of 10, bump to 50 here since we may
+    # be requesting 1000s of records
+    GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata/?page_size=50'
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     APPEND_SLASH = True

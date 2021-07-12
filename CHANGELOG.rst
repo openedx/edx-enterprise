@@ -17,6 +17,12 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.22]
+---------
+* Set the EnterpriseCatalogApiClient get_content_metadata request page_size parameter to 50; the enterprise-catalog
+  service has a default page_size of 10.  This change means that we'll make a smaller overall number of SELECTs
+  against the enterprise-catalog database.
+
 [3.26.21]
 ---------
 * Adds error handling and logging to the assignment deduplication management command.
