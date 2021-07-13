@@ -685,15 +685,14 @@ class EnterpriseCustomer(TimeStampedModel):
         elif self.has_multiple_idps and self.default_provider_idp:
             params = {'tpa_hint': self.default_provider_idp.provider_id}
         course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
-
-        lms_root_url = utils.get_configuration_value_for_site(
-            self.site,
-            'LMS_ROOT_URL',
-            settings.LMS_ROOT_URL
+        base_url = get_configuration_value(
+            'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+            settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
         )
-        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-            site=lms_root_url,
+        enterprise_url = '{site}/{login_or_register}?next={slug}/{course_path}'.format(
+            site=base_url,
             login_or_register='{login_or_register}',  # We don't know the value at this time
+            slug=self.slug,
             course_path=course_path
         )
         course_name = course_details.get('title')
@@ -716,10 +715,11 @@ class EnterpriseCustomer(TimeStampedModel):
                     user=user,
                     enrolled_in={
                         'name': course_name,
-                        'url': destination_url,
+                        'url': enterprise_url,
                         'type': 'course',
                         'start': course_start,
                     },
+                    dashboard=base_url,
                     enterprise_customer=self,
                     email_connection=email_conn,
                     admin_enrollment=admin_enrollment,
