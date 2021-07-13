@@ -2545,7 +2545,12 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
                     course_id=payload.get('course_run_id'),
                     source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.API)
                 ).exists()
-
+                enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.filter(
+                    enterprise_customer_user__user_id=user.id,
+                    course_id=payload.get('course_run_id'),
+                    source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.API)
+                ).first()
+                enterprise_customer = enterprise_course_enrollment.enterprise_customer_user.enterprise_customer
                 mock_enrollment_client.return_value.get_course_enrollment.assert_called_once_with(
                     user.username, payload.get('course_run_id')
                 )
@@ -2554,6 +2559,7 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
                     payload.get('course_run_id'),
                     payload.get('course_mode'),
                     cohort=payload.get('cohort'),
+                    enterprise_uuid=str(enterprise_customer.uuid)
                 )
         elif 'user_email' in payload and payload.get('is_active', True):
             # If a new user given via for user_email, check that the appropriate objects were created.

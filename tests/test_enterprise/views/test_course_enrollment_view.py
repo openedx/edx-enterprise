@@ -1332,7 +1332,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 self.user.username,
                 course_id,
                 'audit',
-                cohort=cohort_name
+                cohort=cohort_name,
+                enterprise_uuid=str(enterprise_customer.uuid)
             )
             # Check EnterpriseCourseEnrollment Source
             enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(

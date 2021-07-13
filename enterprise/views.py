@@ -583,7 +583,9 @@ class GrantDataSharingPermissions(View):
         if course_id and self.is_course_run_id(course_id):
             if license_uuid:
                 enrollment_api_client = EnrollmentApiClient()
-                existing_enrollment = enrollment_api_client.get_course_enrollment(request.user.username, course_id)
+                existing_enrollment = enrollment_api_client.get_course_enrollment(
+                    request.user.username, course_id
+                )
                 if not existing_enrollment or existing_enrollment.get('mode') == constants.CourseModes.AUDIT:
                     course_mode = get_best_mode_from_course_key(course_id)
                     LOGGER.info(
@@ -1260,7 +1262,10 @@ class HandleConsentEnrollment(View):
             # In case of Audit course modes enroll the learner directly through
             # enrollment API client and redirect the learner to dashboard.
             enrollment_api_client.enroll_user_in_course(
-                request.user.username, course_id, selected_course_mode['slug']
+                request.user.username,
+                course_id,
+                selected_course_mode['slug'],
+                enterprise_uuid=str(enterprise_customer_user.enterprise_customer.uuid)
             )
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
@@ -1664,7 +1669,6 @@ class CourseEnrollmentView(NonAtomicView):
             course_id=course_id,
             enterprise_customer=enterprise_customer
         )
-
         try:
             enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
                 enterprise_customer_user__enterprise_customer=enterprise_customer,
@@ -1712,7 +1716,8 @@ class CourseEnrollmentView(NonAtomicView):
                     request.user.username,
                     course_id,
                     selected_course_mode_name,
-                    cohort=cohort_name
+                    cohort=cohort_name,
+                    enterprise_uuid=str(enterprise_customer.uuid)
                 )
             except HttpClientError as exc:
                 succeeded = False

@@ -1033,7 +1033,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 )
             )
             try:
-                enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
+                enrollment_api_client.enroll_user_in_course(
+                    self.username,
+                    course_run_id,
+                    mode,
+                    cohort=cohort,
+                    enterprise_uuid=str(self.enterprise_customer.uuid)
+                )
             except HttpClientError as exc:
                 succeeded = False
                 default_message = 'No error message provided'
