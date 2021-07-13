@@ -228,3 +228,66 @@ def test_partial_successful_refresh_catalog():
     assert failed_to_refresh_catalogs[0] == catalog2.uuid
     assert len(refreshed_catalogs.items()) == 1
     assert refreshed_catalogs.get(catalog1.uuid) == task_id
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_get_content_metadata():
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
+    catalog = EnterpriseCustomerCatalogFactory()
+    first_url = _url('enterprise-catalogs/{catalog_uuid}/get_content_metadata/?page_size={page_size}'.format(
+        catalog_uuid=catalog.uuid,
+        page_size=page_size,
+    ))
+    second_url = _url('enterprise-catalogs/{catalog_uuid}/get_content_metadata/?page_size={page_size}&page=2'.format(
+        catalog_uuid=catalog.uuid,
+        page_size=page_size,
+    ))
+
+    responses.reset()
+
+    first_expected_response = {
+        'count': 100,
+        'next': second_url,
+        'previous': None,
+        'results': [
+            {
+                'content_type': 'course',
+                'key': 'key-{}'.format(index),
+                'data': 'foo',
+            } for index in range(page_size)
+        ]
+    }
+    responses.add(responses.GET, first_url, json=first_expected_response)
+
+    second_expected_response = {
+        'count': 100,
+        'next': None,
+        'previous': first_url,
+        'results': [
+            {
+                'content_type': 'course',
+                'key': 'key-{}'.format(index),
+                'data': 'foo',
+            } for index in range(page_size, page_size * 2)
+        ]
+    }
+    responses.add(responses.GET, second_url, json=second_expected_response)
+
+    results = client.get_content_metadata(catalog.enterprise_customer, [catalog])
+
+    expected_results = [
+        {
+            'content_type': 'course',
+            'key': 'key-{}'.format(index),
+            'data': 'foo',
+        } for index in range(page_size * 2)
+    ]
+    assert results == expected_results
+
+    first_request_url = responses.calls[0][0].url
+    assert first_url == first_request_url
+    second_request_url = responses.calls[1][0].url
+    assert second_url == second_request_url

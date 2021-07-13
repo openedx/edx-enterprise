@@ -17,6 +17,12 @@ Unreleased
 ----------
 * Nothing
 
+[3.26.23]
+---------
+* Fix the way that ``page_size`` is passed as a param to the ``get_content_metadata`` endpoint.
+  Add a unit test for the ``EnterpriseCatalogApiClient.get_content_metadata()`` method, which
+  was previously untested.
+
 [3.26.22]
 ---------
 * Set the EnterpriseCatalogApiClient get_content_metadata request page_size parameter to 50; the enterprise-catalog
