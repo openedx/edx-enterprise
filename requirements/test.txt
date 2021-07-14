@@ -25,7 +25,7 @@ certifi==2021.5.30
     # via
     #   -r requirements/test-master.txt
     #   requests
-cffi==1.14.5
+cffi==1.14.6
     # via
     #   -r requirements/test-master.txt
     #   cryptography
@@ -66,7 +66,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==6.0.0
+diff-cover==6.2.0
     # via -r requirements/test.in
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
@@ -81,7 +81,6 @@ diff-cover==6.0.0
     #   drf-jwt
     #   edx-django-utils
     #   edx-drf-extensions
-    #   edx-opaque-keys
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
@@ -142,11 +141,11 @@ edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-rbac==1.4.2
+edx-rbac==1.5.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.3.0
     # via -r requirements/test-master.txt
@@ -156,7 +155,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==8.9.1
+faker==8.10.1
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -205,16 +204,16 @@ mock==3.0.5
     #   -r requirements/test.in
 more-itertools==8.8.0
     # via zipp
-newrelic==6.4.3.160
+newrelic==6.4.4.161
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-packaging==20.9
+packaging==21.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
     #   pytest
-path==13.1.0
+path==16.0.0
     # via
     #   -r requirements/test-master.txt
     #   path.py
@@ -224,7 +223,7 @@ pbr==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   stevedore
-pillow==8.2.0
+pillow==8.3.1
     # via -r requirements/test-master.txt
 pluggy==0.13.1
     # via

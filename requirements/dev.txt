@@ -20,8 +20,6 @@ aniso8601==9.0.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-tincan-py35
-appdirs==1.4.4
-    # via virtualenv
 astroid==2.6.2
     # via
     #   pylint
@@ -34,6 +32,8 @@ babel==2.9.1
     # via
     #   -r requirements/doc.txt
     #   sphinx
+backports.entry-points-selectable==1.1.0
+    # via virtualenv
 billiard==3.6.4.0
     # via
     #   -r requirements/doc.txt
@@ -58,7 +58,7 @@ certifi==2021.5.30
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   requests
-cffi==1.14.5
+cffi==1.14.6
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -130,7 +130,7 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==6.0.0
+diff-cover==6.2.0
     # via -r requirements/test.txt
 distlib==0.3.2
     # via virtualenv
@@ -152,7 +152,6 @@ django==2.2.24
     #   edx-drf-extensions
     #   edx-i18n-tools
     #   edx-lint
-    #   edx-opaque-keys
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
@@ -269,13 +268,13 @@ edx-i18n-tools==0.5.3
     # via -r requirements/dev.in
 edx-lint==5.0.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-rbac==1.4.2
+edx-rbac==1.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -296,7 +295,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
-faker==8.9.1
+faker==8.10.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -337,7 +336,7 @@ iniconfig==1.1.1
     # via
     #   -r requirements/test.txt
     #   pytest
-isort==5.9.1
+isort==5.9.2
     # via
     #   -r requirements/dev.in
     #   pylint
@@ -389,13 +388,13 @@ more-itertools==8.8.0
     # via
     #   -r requirements/test.txt
     #   zipp
-newrelic==6.4.3.160
+newrelic==6.4.4.161
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-packaging==20.9
+packaging==21.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -404,7 +403,7 @@ packaging==20.9
     #   pytest
     #   sphinx
     #   tox
-path==13.1.0
+path==16.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -424,15 +423,17 @@ pbr==5.6.0
     #   stevedore
 pep517==0.10.0
     # via pip-tools
-pillow==8.2.0
+pillow==8.3.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
 pip-tools==6.2.0
     # via -r requirements/dev.in
-pkginfo==1.7.0
+pkginfo==1.7.1
     # via twine
+platformdirs==2.0.2
+    # via virtualenv
 pluggy==0.13.1
     # via
     #   -r requirements/test.txt
@@ -749,7 +750,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.4.7
+virtualenv==20.5.0
     # via tox
 wcwidth==0.2.5
     # via
