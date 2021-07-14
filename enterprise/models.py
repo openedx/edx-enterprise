@@ -685,14 +685,16 @@ class EnterpriseCustomer(TimeStampedModel):
         elif self.has_multiple_idps and self.default_provider_idp:
             params = {'tpa_hint': self.default_provider_idp.provider_id}
         course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
-        base_url = get_configuration_value(
-            'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-            settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+        lms_root_url = utils.get_configuration_value_for_site(
+            self.site,
+            'LMS_ROOT_URL',
+            settings.LMS_ROOT_URL
         )
-        enterprise_url = '{site}/{login_or_register}?next={slug}/{course_path}'.format(
-            site=base_url,
-            login_or_register='{login_or_register}',  # We don't know the value at this time
-            slug=self.slug,
+        enterprise_url = '{site}{course_path}'.format(
+            site=get_configuration_value(
+                'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+            ),
             course_path=course_path
         )
         course_name = course_details.get('title')
@@ -710,7 +712,7 @@ class EnterpriseCustomer(TimeStampedModel):
         with mail.get_connection() as email_conn:
             for user in users:
                 login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
-                destination_url = destination_url.format(login_or_register=login_or_register)
+                enterprise_url = enterprise_url.format(login_or_register=login_or_register)
                 utils.send_email_notification_message(
                     user=user,
                     enrolled_in={
@@ -719,7 +721,7 @@ class EnterpriseCustomer(TimeStampedModel):
                         'type': 'course',
                         'start': course_start,
                     },
-                    dashboard=base_url,
+                    dashboard=lms_root_url,
                     enterprise_customer=self,
                     email_connection=email_conn,
                     admin_enrollment=admin_enrollment,

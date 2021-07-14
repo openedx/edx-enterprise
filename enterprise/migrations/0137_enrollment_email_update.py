@@ -1,15 +1,11 @@
+from logging import getLogger
 from django.db import migrations
-from enterprise import models
 
+LOGGER = getLogger(__name__)
 
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ('enterprise', '0136_auto_20210629_2129'),
-    ]
-
-    operations = [
-        models.EnrollmentNotificationEmailTemplate.objects.update_or_create(
+def update_email(apps, schema_editor):
+    email_template = apps.get_model('enterprise', 'EnrollmentNotificationEmailTemplate')
+    email_template.objects.update_or_create(
             template_type='ADMIN_ENROLL',
             defaults={'html_template': """
 <html>
@@ -22,7 +18,7 @@ class Migration(migrations.Migration):
     </style>
 </head>
 <body>
-    <table style="max-width: 800;" align="center">
+    <table style="max-width: 650;" align="center">
         <tbody>
             <tr>
             <td>
@@ -32,8 +28,8 @@ class Migration(migrations.Migration):
                         <td align="left" valign="top" style="padding:8px;Margin:0;width:560px">
                             <img src="https://ci3.googleusercontent.com/proxy/ZAml-YgIIJEht-OBl6GqLNIUeVKLyPvs_ldFo9FShp-andj1YQxvliJXv_s_Tmh6cg1-5avJJmvXmzxbQp06sB_WUeYYkN9kzV6jtVUvYKPPjUX_8_iFJAZqsNqYakl4nQyHnl0dClFzxiaLuULSPoqGPLBfJmNOEXIBYkvKYa95640xvHwDiQ22bZ16=s0-d-e1-ft#https://appboy-images.com/appboy/communication/assets/image_assets/images/5fc568622213594dcbda2623/original.png?1606772834" width="110" height="57" border="0" style="display:block" alt="edX" id="m_-37988256656304111logo" class="CToWUd">
                         </td>
-                        <td align="right" valign="top" style="text-decoration:none;color:#00262b;font-family:'inter',Arial,sans-serif;font-size:18px;line-height:21px">
-                            <a href="https://courses.edx.org/dashboard">My Dashboard</a> 
+                        <td align="right" valign="top" style="white-space:nowrap;text-decoration:none;color:#00262b;font-family:'inter',Arial,sans-serif;font-size:18px;line-height:21px">
+                            <a href="{{dashboard}}">My Dashboard</a> 
                         </td>
                         </tr>
                     </tbody>
@@ -219,8 +215,16 @@ class Migration(migrations.Migration):
     </table>
 </body>
 </html>
-        """},
+         """},
+    )
 
-        ),
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('enterprise', '0136_auto_20210629_2129'),
+    ]
+
+    operations = [
+        migrations.RunPython(code=update_email, reverse_code=update_email)
 
     ]

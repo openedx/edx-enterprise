@@ -453,6 +453,7 @@ def find_enroll_email_template(enterprise_customer, template_type):
 def send_email_notification_message(
         user,
         enrolled_in,
+        dashboard,
         enterprise_customer,
         email_connection=None,
         admin_enrollment=False,
@@ -471,6 +472,7 @@ def send_email_notification_message(
                 - branding: A special name for what the enrollable "is"; for example,
                     "MicroMasters" would be the branding for a "MicroMasters Program"
                 - start: A datetime object indicating when the enrollable will be available.
+        dashboard: link to enterprise customer's unique homepage for user
         enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
         email_connection: An existing Django email connection that can be used without
             creating a new connection for each individual message
@@ -496,6 +498,7 @@ def send_email_notification_message(
     msg_context = {
         'user_name': user_name,
         'enrolled_in': enrolled_in,
+        'dashboard': dashboard,
         'organization_name': enterprise_customer.name,
     }
 
