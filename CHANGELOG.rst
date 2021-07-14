@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.0]
+--------
+* Added enterprise uuid support in course enrollment.  ERTE-5
+
 [3.26.23]
 ---------
 * Fix the way that ``page_size`` is passed as a param to the ``get_content_metadata`` endpoint.
