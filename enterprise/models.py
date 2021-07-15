@@ -676,25 +676,25 @@ class EnterpriseCustomer(TimeStampedModel):
             )
             return
 
-        course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+        course_path = 'course/{course_id}'.format(course_id=course_id)
         params = {}
         # add tap_hint if there is only one IdP attached with enterprise_customer
         if self.has_single_idp:
             params = {'tpa_hint': self.identity_providers.first().provider_id}
-
         elif self.has_multiple_idps and self.default_provider_idp:
             params = {'tpa_hint': self.default_provider_idp.provider_id}
-        course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
-        lms_root_url = utils.get_configuration_value_for_site(
+
+        if len(params) == 0:
+            course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+        enterprise_root_url = utils.get_configuration_value_for_site(
             self.site,
-            'LMS_ROOT_URL',
-            settings.LMS_ROOT_URL
+            'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+            settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
         )
-        enterprise_url = '{site}{course_path}'.format(
-            site=get_configuration_value(
-                'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
-            ),
+        enterprise_url = '{site}/{login_or_register}?next=/{slug}/{course_path}'.format(
+            site=enterprise_root_url,
+            login_or_register='{login_or_register}',  # We don't know the value at this time
+            slug=self.slug,
             course_path=course_path
         )
         course_name = course_details.get('title')
@@ -721,7 +721,7 @@ class EnterpriseCustomer(TimeStampedModel):
                         'type': 'course',
                         'start': course_start,
                     },
-                    dashboard=lms_root_url,
+                    dashboard=enterprise_root_url,
                     enterprise_customer=self,
                     email_connection=email_conn,
                     admin_enrollment=admin_enrollment,
