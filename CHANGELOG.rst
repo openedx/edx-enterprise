@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.1]
+---------
+* Updates bulk enrollment email template. 
+
 [3.26.19]
 ---------
 * Updates to integrated channels catalogs to transmit help text.

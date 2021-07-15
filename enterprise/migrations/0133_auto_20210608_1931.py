@@ -16,11 +16,14 @@ def create_templates(apps, schema_editor):
         {% load i18n %}{% if user_name %}{% blocktrans %}Dear {{ user_name }},{% endblocktrans %}{% else %}{% blocktrans %}Hi!{% endblocktrans %}{% endif %}
         {% if enrolled_in.type == "program" %}
         {% blocktrans with program_url=enrolled_in.url program_name=enrolled_in.name program_branding=enrolled_in.branding start_date=enrolled_in.start|date:"DATE_FORMAT" %}You have been enrolled in {{ program_name }}, a {{ program_branding }} program offered by {{ organization_name }}. This program begins {{ start_date }}. For more information, see the following link:
+
         {{ program_url }}{% endblocktrans %}{% else %}
         {% blocktrans with course_url=enrolled_in.url course_name=enrolled_in.name start_date=enrolled_in.start|date:"DATE_FORMAT" %}You have been enrolled in {{ course_name }}, a course offered by {{ organization_name }}. This course begins {{ start_date }}. For more information, see the following link:
+
         {{ course_url }}{% endblocktrans %}{% endif %}
         {% blocktrans with enrolled_in_name=enrolled_in.name %}
         Thanks,
+
         The {{enrolled_in_name}} team{% endblocktrans %}
         """,
         html_template="""
@@ -47,8 +50,11 @@ def create_templates(apps, schema_editor):
     EmailTemplate.objects.get_or_create(
         plaintext_template="""
         Great News! You've been enrolled in {{enrolled_in.name}} by {{organization_name}}
+
         This course is a free benefit offered especially for you, and we are excited for you to meet your learning community on edX.
+
         Visit this link to see and enroll in your course, {{enrolled_in.url}}
+
         The {{enrolled_in.name}} team
         """,
         html_template="""

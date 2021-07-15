@@ -29,7 +29,7 @@ def update_email(apps, schema_editor):
                             <img src="https://ci3.googleusercontent.com/proxy/ZAml-YgIIJEht-OBl6GqLNIUeVKLyPvs_ldFo9FShp-andj1YQxvliJXv_s_Tmh6cg1-5avJJmvXmzxbQp06sB_WUeYYkN9kzV6jtVUvYKPPjUX_8_iFJAZqsNqYakl4nQyHnl0dClFzxiaLuULSPoqGPLBfJmNOEXIBYkvKYa95640xvHwDiQ22bZ16=s0-d-e1-ft#https://appboy-images.com/appboy/communication/assets/image_assets/images/5fc568622213594dcbda2623/original.png?1606772834" width="110" height="57" border="0" style="display:block" alt="edX" id="m_-37988256656304111logo" class="CToWUd">
                         </td>
                         <td align="right" valign="top" style="white-space:nowrap;text-decoration:none;color:#00262b;font-family:'inter',Arial,sans-serif;font-size:18px;line-height:21px">
-                            <a href="{{dashboard}}">My Dashboard</a> 
+                            <a href="{{dashboard_url}}">My Dashboard</a> 
                         </td>
                         </tr>
                     </tbody>
