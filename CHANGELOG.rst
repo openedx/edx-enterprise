@@ -17,9 +17,16 @@ Unreleased
 ----------
 * Nothing
 
-[3.27.2]
+
+[3.27.3]
 ---------
 * Adds flag to SAP Success Factors customer configuration to switch SAP endpoints for learner completion calls.
+
+[3.27.2]
+---------
+
+* Ensure deletion and unlinking of a ``EnterpriseCustomerUser`` record only deletes the ``enterprise_learner`` system-wide role for that
+  particular ``EnterpriseCustomerUser``, as opposed to all ``enterprise_learner`` roles associated with the user.
 
 [3.27.1]
 ---------
