@@ -801,8 +801,8 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                         discount=discount
                     )
             else:
-                for course_id in course_id_with_emails:
-                    emails_to_enroll = course_id_with_emails[course_id]
+                for course_id, emails in course_id_with_emails.items():
+                    emails_to_enroll = emails
                     if emails_to_enroll:
                         self._enroll_users(
                             request=request,

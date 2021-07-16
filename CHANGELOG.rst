@@ -21,6 +21,30 @@ Unreleased
 ---------
 * Updates bulk enrollment email template. 
 
+[3.27.0]
+--------
+* Added enterprise uuid support in course enrollment.  ERTE-5
+
+[3.26.23]
+---------
+* Fix the way that ``page_size`` is passed as a param to the ``get_content_metadata`` endpoint.
+  Add a unit test for the ``EnterpriseCatalogApiClient.get_content_metadata()`` method, which
+  was previously untested.
+
+[3.26.22]
+---------
+* Set the EnterpriseCatalogApiClient get_content_metadata request page_size parameter to 50; the enterprise-catalog
+  service has a default page_size of 10.  This change means that we'll make a smaller overall number of SELECTs
+  against the enterprise-catalog database.
+
+[3.26.21]
+---------
+* Adds error handling and logging to the assignment deduplication management command.
+
+[3.26.20]
+---------
+* Updates requirements and style changes to match the latest Pylint.
+
 [3.26.19]
 ---------
 * Updates to integrated channels catalogs to transmit help text.

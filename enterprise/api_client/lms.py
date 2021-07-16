@@ -235,7 +235,7 @@ class EnrollmentApiClient(JwtLmsApiClient):
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
     @JwtLmsApiClient.refresh_token
-    def enroll_user_in_course(self, username, course_id, mode, cohort=None):
+    def enroll_user_in_course(self, username, course_id, mode, cohort=None, enterprise_uuid=None):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
 
@@ -244,6 +244,7 @@ class EnrollmentApiClient(JwtLmsApiClient):
             course_id (str): The string value of the course's unique identifier
             mode (str): The enrollment mode which should be used for the enrollment
             cohort (str): Add the user to this named cohort
+            enterprise_uuid (str): Add course enterprise uuid
 
         Returns:
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
@@ -256,6 +257,7 @@ class EnrollmentApiClient(JwtLmsApiClient):
                 'is_active': True,
                 'mode': mode,
                 'cohort': cohort,
+                'enterprise_uuid': str(enterprise_uuid)
             }
         )
 

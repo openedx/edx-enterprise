@@ -276,24 +276,40 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             while more_pages_present and current_page_count < 150:
                 resp = self.session.get(canvas_assignments_url)
 
-                # Result of paginated response from the Canvas course assignments API
-                assignments_resp = resp.json()
-
-                # Ingest Canvas assignments API response and replace older duplicated assignments in current assignments
-                # all older duplicated assignment IDs are added to `assignments_to_delete`
-                current_assignments, assignments_to_delete = self._parse_unique_newest_assignments(
-                    current_assignments,
-                    assignments_to_delete,
-                    assignments_resp
-                )
-
-                # Determine if another page of results exists
-                next_page = CanvasUtil.determine_next_results_page(resp)
-                if next_page:
-                    canvas_assignments_url = next_page
-                    current_page_count += 1
-                else:
+                if resp.status_code >= 400:
+                    LOGGER.error(
+                        generate_formatted_log(
+                            'canvas',
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            edx_course,
+                            'Failed to retrieve assignments for Canvas course: {} while running deduplication, '
+                            'associated edx course: {}'.format(
+                                canvas_course['id'],
+                                edx_course
+                            )
+                        )
+                    )
                     more_pages_present = False
+                else:
+                    # Result of paginated response from the Canvas course assignments API
+                    assignments_resp = resp.json()
+
+                    # Ingest Canvas assignments API response and replace older duplicated assignments in current
+                    # assignments. All older duplicated assignment IDs are added to `assignments_to_delete`
+                    current_assignments, assignments_to_delete = self._parse_unique_newest_assignments(
+                        current_assignments,
+                        assignments_to_delete,
+                        assignments_resp
+                    )
+
+                    # Determine if another page of results exists
+                    next_page = CanvasUtil.determine_next_results_page(resp)
+                    if next_page:
+                        canvas_assignments_url = next_page
+                        current_page_count += 1
+                    else:
+                        more_pages_present = False
 
             # Remove all assignments from the current course and record the number of assignments removed
             assignments_removed, individual_assignment_failures = \

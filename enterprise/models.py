@@ -891,7 +891,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
         """
         Override to handle creation of EnterpriseCustomerUser records.
 
@@ -1049,7 +1049,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 )
             )
             try:
-                enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
+                enrollment_api_client.enroll_user_in_course(
+                    self.username,
+                    course_run_id,
+                    mode,
+                    cohort=cohort,
+                    enterprise_uuid=str(self.enterprise_customer.uuid)
+                )
             except HttpClientError as exc:
                 succeeded = False
                 default_message = 'No error message provided'
@@ -2215,7 +2221,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
         """
         Saves this ``EnterpriseCatalogQuery``.
 

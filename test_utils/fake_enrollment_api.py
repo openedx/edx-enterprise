@@ -151,7 +151,7 @@ def get_course_details(course_id):
         return None
 
 
-def enroll_user_in_course(user, course_id, mode):
+def enroll_user_in_course(user, course_id, mode, cohort=None, enterprise_uuid=None):
     """
     Fake implementation.
     """
@@ -174,6 +174,8 @@ def enroll_user_in_course(user, course_id, mode):
         "course_details": course_details,
         "is_active": True,
         "mode": mode,
+        "cohort": cohort,
+        "enterprise_uuid": enterprise_uuid,
         "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     }
 

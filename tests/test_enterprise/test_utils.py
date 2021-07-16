@@ -51,7 +51,7 @@ class TestUtils(unittest.TestCase):
     """
     Tests for utility functions in enterprise.utils
     """
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-renamed
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=False, **kwargs):
         """
         Create a test user and set its password.

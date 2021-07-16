@@ -384,7 +384,7 @@ class EnterpriseFormViewTestCase(TestCase):
         super().setUp()
         # create a temporary template file
         # rendering View's template fails becuase of dependency on edx-platform
-        tpl = tempfile.NamedTemporaryFile(
+        tpl = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
             prefix='test_template.',
             suffix=".html",
             dir=os.path.join(settings.REPO_ROOT, 'templates/enterprise/'),
