@@ -425,6 +425,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
         enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        dashboard_url = 'http://lms.example.com'
         # create a template for this customer + self enroll type (default)
         EnrollmentNotificationEmailTemplateFactory(enterprise_customer=enterprise_customer)
 
@@ -433,6 +434,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 utils.send_email_notification_message(
                     user,
                     enrolled_in,
+                    dashboard_url,
                     enterprise_customer
                 )
         else:
@@ -442,6 +444,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             utils.send_email_notification_message(
                 user,
                 enrolled_in,
+                dashboard_url,
                 enterprise_customer,
                 email_connection=conn,
             )
@@ -478,9 +481,12 @@ class TestEnterpriseUtils(unittest.TestCase):
             'start': '2017-01-01',
         }
 
+        dashboard_url = 'http://lms.example.com'
+
         utils.send_email_notification_message(
             user,
             enrolled_in,
+            dashboard_url,
             enterprise_customer,
             email_connection=conn,
             admin_enrollment=True,
@@ -607,6 +613,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
+        dashboard_url = 'http://lms.example.com'
         enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
         # since migration already sets up fallback templates, use per customer template
         EnrollmentNotificationEmailTemplateFactory(
@@ -620,6 +627,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 utils.send_email_notification_message(
                     user,
                     enrolled_in,
+                    dashboard_url,
                     enterprise_customer
                 )
         else:
@@ -629,6 +637,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             utils.send_email_notification_message(
                 user,
                 enrolled_in,
+                dashboard_url,
                 enterprise_customer,
                 email_connection=conn,
             )
@@ -664,6 +673,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             'start': '2017-01-01'
         }
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
+        dashboard_url = 'http://lms.example.com'
 
         site = SiteFactory()
         if site_config_from_email_address:
@@ -679,6 +689,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         utils.send_email_notification_message(
             user,
             enrolled_in,
+            dashboard_url,
             enterprise_customer,
             email_connection=conn,
         )

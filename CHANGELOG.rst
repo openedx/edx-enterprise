@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.1]
+---------
+* Updates bulk enrollment email template. 
+
 [3.27.0]
 --------
 * Added enterprise uuid support in course enrollment.  ERTE-5

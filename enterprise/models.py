@@ -676,27 +676,42 @@ class EnterpriseCustomer(TimeStampedModel):
             )
             return
 
-        course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-        params = {}
-        # add tap_hint if there is only one IdP attached with enterprise_customer
-        if self.has_single_idp:
-            params = {'tpa_hint': self.identity_providers.first().provider_id}
-
-        elif self.has_multiple_idps and self.default_provider_idp:
-            params = {'tpa_hint': self.default_provider_idp.provider_id}
-        course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
-
-        lms_root_url = utils.get_configuration_value_for_site(
-            self.site,
-            'LMS_ROOT_URL',
-            settings.LMS_ROOT_URL
-        )
-        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-            site=lms_root_url,
-            login_or_register='{login_or_register}',  # We don't know the value at this time
-            course_path=course_path
-        )
+        dashboard_url = None
         course_name = course_details.get('title')
+        if admin_enrollment:
+            course_path = 'course/{course_id}'.format(course_id=course_id)
+            dashboard_url = utils.get_configuration_value_for_site(
+                self.site,
+                'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+            )
+            destination_url = '{site}/{login_or_register}?next=/{slug}/{course_path}'.format(
+                site=dashboard_url,
+                login_or_register='{login_or_register}',  # We don't know the value at this time
+                slug=self.slug,
+                course_path=course_path
+            )
+        else:
+            course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+            params = {}
+            # add tap_hint if there is only one IdP attached with enterprise_customer
+            if self.has_single_idp:
+                params = {'tpa_hint': self.identity_providers.first().provider_id}
+
+            elif self.has_multiple_idps and self.default_provider_idp:
+                params = {'tpa_hint': self.default_provider_idp.provider_id}
+            course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+
+            lms_root_url = utils.get_configuration_value_for_site(
+                self.site,
+                'LMS_ROOT_URL',
+                settings.LMS_ROOT_URL
+            )
+            destination_url = '{site}/{login_or_register}?next={course_path}'.format(
+                site=lms_root_url,
+                login_or_register='{login_or_register}',  # We don't know the value at this time
+                course_path=course_path
+            )
 
         try:
             course_start = parse_lms_api_datetime(course_details.get('start'))
@@ -720,6 +735,7 @@ class EnterpriseCustomer(TimeStampedModel):
                         'type': 'course',
                         'start': course_start,
                     },
+                    dashboard_url=dashboard_url,
                     enterprise_customer=self,
                     email_connection=email_conn,
                     admin_enrollment=admin_enrollment,
