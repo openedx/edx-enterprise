@@ -31,6 +31,8 @@ COURSES_V3_PATH = '/learn/api/public/v3/courses'
 COURSE_CONTENT_PATH = '/learn/api/public/v1/courses/{course_id}/contents'
 COURSE_CONTENT_CHILDREN_PATH = '/learn/api/public/v1/courses/{course_id}/contents/{content_id}/children'
 COURSE_CONTENT_DELETE_PATH = '/learn/api/public/v1/courses/{course_id}/contents/{content_id}'
+GRADEBOOK_COLUMN_DESC = "edX learner's grade"
+PAGE_TRAVERSAL_LIMIT = 250
 
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
@@ -354,6 +356,33 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         return str(abs(hash(external_id)))
 
+    def generate_blackboard_gradebook_column_data(self, external_id, grade_column_name, points_possible):
+        """
+        Properly formatted json data to create a new gradebook column in a blackboard course
+
+        Note: Potential customization here per-customer, if the need arises.
+        """
+        return {
+            "externalId": external_id,
+            "name": grade_column_name,
+            "displayName": grade_column_name,
+            "description": GRADEBOOK_COLUMN_DESC,
+            "externalGrade": False,
+            "score": {
+                "possible": points_possible
+            },
+            "availability": {
+                "available": "Yes"
+            },
+            "grading": {
+                "type": "Manual",
+                "scoringModel": "Last",
+                "anonymousGrading": {
+                    "type": "None",
+                }
+            },
+        }
+
     def generate_gradebook_url(self, course_id):
         """
         Blackboard API url helper method.
@@ -525,37 +554,52 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             bb_course_id (str): The Blackboard course ID in which to search for the edX final grade,
             grade column.
         """
-        grade_column_response = self._get(self.generate_gradebook_url(bb_course_id))
-        parsed_response = grade_column_response.json()
-        grade_columns = parsed_response.get('results')
-
+        gradebook_column_url = self.generate_gradebook_url(bb_course_id)
         grade_column_id = None
-        for grade_column in grade_columns:
-            if grade_column.get('externalId') == external_id:
-                grade_column_id = grade_column.get('id')
-        if not grade_column_id:
-            # Potential customization here per-customer, if the need arises.
-            grade_column_data = {
-                "externalId": external_id,
-                "name": grade_column_name,
-                "displayName": grade_column_name,
-                "description": "edX learner's grade.",
-                "externalGrade": False,
-                "score": {
-                    "possible": points_possible
-                },
-                "availability": {
-                    "available": "Yes"
-                },
-                "grading": {
-                    "type": "Manual",
-                    "scoringModel": "Last",
-                    "anonymousGrading": {
-                        "type": "None",
-                    }
-                },
-            }
+        more_pages_present = True
+        current_page_count = 0
 
+        # Page count of 250 is a preventative of infinite while loops
+        while more_pages_present and current_page_count <= PAGE_TRAVERSAL_LIMIT:
+            grade_column_response = self._get(gradebook_column_url)
+            parsed_response = grade_column_response.json()
+            grade_columns = parsed_response.get('results')
+
+            for grade_column in grade_columns:
+                if grade_column.get('externalId') == external_id:
+                    grade_column_id = grade_column.get('id')
+                    break
+
+            # Blackboard's pagination is returned within the response json if it exists
+            # Example:
+            # Response = {
+            #     'results': [{
+            #         'id': 1,
+            #         ...
+            #     }, {
+            #         'id', 2,
+            #         ...
+            #     }],
+            #     'paging': {
+            #         'nextPage': '/learn/api/public/v1/courses/<courseID>/gradebook/columns?offset=200'
+            #     }
+            # }
+            if parsed_response.get('paging') and not grade_column_id:
+                gradebook_column_url = '{}{}'.format(
+                    self.enterprise_configuration.blackboard_base_url,
+                    parsed_response.get('paging').get('nextPage'),
+                )
+                current_page_count += 1
+            else:
+                more_pages_present = False
+
+        if current_page_count == PAGE_TRAVERSAL_LIMIT:
+            LOGGER.warning('Max page limit hit while traversing blackboard API for course={}'.format(external_id))
+
+        if not grade_column_id:
+            grade_column_data = self.generate_blackboard_gradebook_column_data(
+                external_id, grade_column_name, points_possible
+            )
             response = self._post(self.generate_create_grade_column_url(bb_course_id), grade_column_data)
             parsed_response = response.json()
             grade_column_id = parsed_response.get('id')
