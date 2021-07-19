@@ -17,9 +17,13 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.2]
+---------
+* Adds flag to SAP Success Factors customer configuration to switch SAP endpoints for learner completion calls.
+
 [3.27.1]
 ---------
-* Updates bulk enrollment email template. 
+* Updates bulk enrollment email template.
 
 [3.27.0]
 --------

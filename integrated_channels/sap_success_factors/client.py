@@ -28,6 +28,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
     SESSION_TIMEOUT = 5
 
+    GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
+
     @staticmethod
     def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type):
         """ Retrieves OAuth 2.0 access token using the client credentials grant.
@@ -139,8 +141,19 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Raises:
             HTTPError: if we received a failure response code from SAP SuccessFactors
         """
-        url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.completion_status_api_path
-        return self._call_post_with_user_override(user_id, url, payload)
+        base_url = self.enterprise_configuration.sapsf_base_url
+
+        if self.enterprise_configuration.prevent_self_submit_grades:
+            return self._call_post_with_session(
+                base_url + self.GENERIC_COURSE_COMPLETION_PATH,
+                payload
+            )
+
+        return self._call_post_with_user_override(
+            user_id,
+            base_url + self.global_sap_config.completion_status_api_path,
+            payload
+        )
 
     def create_content_metadata(self, serialized_data):
         """

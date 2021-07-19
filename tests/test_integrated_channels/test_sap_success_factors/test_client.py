@@ -12,6 +12,7 @@ import pytest
 import requests
 import responses
 from freezegun import freeze_time
+from mock.mock import MagicMock
 from pytest import mark, raises
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
@@ -165,12 +166,15 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         expected_response = 200, json.dumps(expected_response_body)
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        sap_client._call_post_with_user_override = MagicMock(side_effect=sap_client._call_post_with_user_override)  # pylint: disable=protected-access
         actual_response = sap_client.create_course_completion(self.user_type, json.dumps(self.completion_payload))
+
         assert actual_response == expected_response
         assert len(responses.calls) == 2
         assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
         expected_url = self.url_base + self.completion_status_api_path
         assert responses.calls[1].request.url == expected_url
+        sap_client._call_post_with_user_override.assert_called()  # pylint: disable=protected-access
 
     @responses.activate
     def test_failed_completion_reporting_exception_handling(self):
@@ -312,3 +316,35 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert responses.calls[1].request.url == self.url_base + self.course_api_path
         assert responses.calls[2].request.url == self.url_base + self.oauth_api_path
         assert responses.calls[3].request.url == self.url_base + self.course_api_path
+
+    @responses.activate
+    def test_client_uses_prevent_learner_submit_flag(self):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        sap_client.enterprise_configuration.prevent_self_submit_grades = True
+
+        expected_response_body = {"success": "true", "completion_status": self.completion_payload}
+        expected_completion_url = self.url_base + sap_client.GENERIC_COURSE_COMPLETION_PATH
+
+        responses.add(
+            responses.POST,
+            expected_completion_url,
+            json=expected_response_body,
+            status=200
+        )
+
+        expected_response = 200, json.dumps(expected_response_body)
+
+        payload = json.dumps(self.completion_payload)
+
+        sap_client._call_post_with_session = MagicMock(side_effect=sap_client._call_post_with_session)  # pylint: disable=protected-access
+        actual_response = sap_client.create_course_completion(self.user_type, payload)
+        assert actual_response == expected_response
+
+        sap_client._call_post_with_session.assert_called_with(expected_completion_url, payload)  # pylint: disable=protected-access
