@@ -450,6 +450,9 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory(
             name='Team Titans',
         )
+        self.second_enterprise_customer = EnterpriseCustomerFactory(
+            name='Duke',
+        )
         super().setUp()
 
     def test_assign_enterprise_learner_role_success(self):
@@ -599,6 +602,117 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
             role=self.enterprise_learner_role
         )
         self.assertFalse(learner_role_assignment.exists())
+
+    def test_delete_single_enterprise_learner_role_assignment(self):
+        """
+        Test that when `EnterpriseCustomerUser` record is deleted, `delete_enterprise_learner_role_assignment`
+        also deletes the enterprise learner role assignment associated with the user's previously linked enterprise
+        customer. However. it should *not* delete the enterprise learner role assignment associated with other
+        enterprise customers.
+        """
+        # Create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # Create a EnterpriseCustomerUser record such that the user is linked to multiple enterprises.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.second_enterprise_customer,
+        )
+
+        # Verify that a new learner role assignment is created for both linked enterprise customers.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.assertTrue(learner_role_assignment.exists())
+        second_learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.second_enterprise_customer,
+        )
+        self.assertTrue(second_learner_role_assignment.exists())
+
+        # Delete EnterpriseCustomerUser record.
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        enterprise_customer_user.delete()
+
+        # Verify appropriate learner role assignment is deleted, but the other
+        # learner role assignment remains.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.assertFalse(learner_role_assignment.exists())
+        second_learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.second_enterprise_customer,
+        )
+        self.assertTrue(second_learner_role_assignment.exists())
+
+    def test_unlink_single_enterprise_learner_role_assignment(self):
+        """
+        Test that when `EnterpriseCustomerUser` record is unlinked, `assign_or_delete_enterprise_learner_role`
+        also deletes the enterprise learner role assignment associated with the user's previously linked enterprise
+        customer. However. it should *not* delete the enterprise learner role assignment associated with other
+        enterprise customers.
+        """
+        # Create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # Create a EnterpriseCustomerUser record such that the user is linked to multiple enterprises.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.second_enterprise_customer,
+        )
+
+        # Verify that a new learner role assignment is created for both linked enterprise customers.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.assertTrue(learner_role_assignment.exists())
+        second_learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.second_enterprise_customer,
+        )
+        self.assertTrue(second_learner_role_assignment.exists())
+
+        # Unlink EnterpriseCustomerUser record.
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        enterprise_customer_user.linked = False
+        enterprise_customer_user.save()
+
+        # Verify appropriate learner role assignment is deleted, but the other
+        # learner role assignment remains.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.assertFalse(learner_role_assignment.exists())
+        second_learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role,
+            enterprise_customer=self.second_enterprise_customer,
+        )
+        self.assertTrue(second_learner_role_assignment.exists())
 
     def test_delete_enterprise_learner_role_assignment_no_role_assignment(self):
         """

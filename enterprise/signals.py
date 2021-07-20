@@ -158,10 +158,9 @@ def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # 
         )
     elif not kwargs['created'] and not instance.linked:
         # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_learner role
-        # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
-        # so that we delete a specific instance of a role assignment
         roles_api.delete_learner_role_assignment(
-            instance.user,
+            user=instance.user,
+            enterprise_customer=instance.enterprise_customer,
         )
 
 
@@ -173,10 +172,9 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
     if not instance.user:
         return
 
-    # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
-    # so that we delete a specific instance of a role assignment
     roles_api.delete_learner_role_assignment(
-        instance.user,
+        user=instance.user,
+        enterprise_customer=instance.enterprise_customer,
     )
 
 
