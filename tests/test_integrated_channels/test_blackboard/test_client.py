@@ -685,3 +685,125 @@ class TestBlackboardApiClient(unittest.TestCase):
                     bb_content_id
                 )
                 assert not client.delete_course_from_blackboard.called
+
+    def test_client_finds_assignment_on_second_results_page(self):
+        """
+        Test that the _get_or_create_integrated_grade_column method properly traverses over paginated results from
+        Blackboard and correctly finds a gradebook column on a follow up page of results.
+        """
+        client = self._create_new_mock_client()
+        client._create_session()  # pylint: disable=protected-access
+
+        blackboard_page_one_response = {
+            'results': [{
+                'id': 'bad ID',
+                'name': 'Weighted Total',
+                'description': 'description',
+                'score': {'possible': 0.0},
+                'availability': {'available': 'Yes'},
+                'grading': {'type': 'Calculated'}
+            }],
+            'paging': {
+                'nextPage': '/learn/api/public/v1/courses/{}/gradebook/columns?offset=1'.format(
+                    self.blackboard_course_id
+                )
+            },
+        }
+        blackboard_page_two_response = {
+            'results': [{
+                'id': self.blackboard_grade_column_id,
+                'externalId': self.course_id,
+                'name': self.blackboard_grade_column_name,
+                'description': "edX learner's grade.",
+                'created': '2021-07-16T19:46:29.698Z',
+                'score': {'possible': 100.0},
+                'availability': {'available': 'Yes'}
+            }],
+            'paging': {
+                'nextPage': '/learn/api/public/v1/courses/{}/gradebook/columns?offset=2'.format(
+                    self.blackboard_course_id
+                )
+            },
+        }
+
+        with responses.RequestsMock() as rsps:
+            # Requests mock will iteratively return registered responses on subsequent calls
+            rsps.add(
+                responses.GET,
+                client.generate_gradebook_url(self.blackboard_course_id),
+                json=blackboard_page_one_response
+            )
+            rsps.add(
+                responses.GET,
+                client.generate_gradebook_url(self.blackboard_course_id),
+                json=blackboard_page_two_response
+            )
+
+            # find the grade column on the second page of results
+            column_id = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+                self.blackboard_course_id,
+                self.blackboard_grade_column_name,
+                self.course_id
+            )
+
+        assert column_id == self.blackboard_grade_column_id
+
+    def test_pagination_properly_handles_column_not_found(self):
+        """
+        Test that _get_or_create_integrated_grade_column will properly exhaust all pages of results before determining
+        that a gradebook column does not exist.
+        """
+        client = self._create_new_mock_client()
+        client._create_session()  # pylint: disable=protected-access
+
+        blackboard_page_one_response = {
+            'results': [{
+                'id': 'bad ID',
+                'name': 'Weighted Total',
+                'description': 'description',
+                'score': {'possible': 0.0},
+                'availability': {'available': 'Yes'},
+                'grading': {'type': 'Calculated'}
+            }],
+            'paging': {
+                'nextPage': '/learn/api/public/v1/courses/{}/gradebook/columns?offset=1'.format(
+                    self.blackboard_course_id
+                )
+            },
+        }
+        blackboard_page_two_response = {
+            'results': [{
+                'id': 'bad ID 2',
+                'name': 'Final Grade',
+                'score': {'possible': 0.0},
+                'availability': {'available': 'Yes'},
+                'grading': {'type': 'Calculated'}
+            }],
+        }
+
+        with responses.RequestsMock() as rsps:
+            # Requests mock will iteratively return registered responses on subsequent calls
+            rsps.add(
+                responses.GET,
+                client.generate_gradebook_url(self.blackboard_course_id),
+                json=blackboard_page_one_response
+            )
+            rsps.add(
+                responses.GET,
+                client.generate_gradebook_url(self.blackboard_course_id),
+                json=blackboard_page_two_response
+            )
+            rsps.add(
+                responses.POST,
+                client.generate_create_grade_column_url(self.blackboard_course_id),
+                json={'id': self.blackboard_grade_column_id}
+            )
+
+            # traverse over all pages, post a new column if column isn't found
+            column_id = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+                self.blackboard_course_id,
+                self.blackboard_grade_column_name,
+                self.course_id
+            )
+
+        assert column_id == self.blackboard_grade_column_id
