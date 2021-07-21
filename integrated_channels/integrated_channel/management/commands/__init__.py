@@ -37,6 +37,19 @@ ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES = OrderedDict([
     )
 ])
 
+# Since Cornerstone is following pull content model we don't need to include CSOD customers in a content metadata
+# transmission job
+CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES = OrderedDict([
+    (integrated_channel_class.channel_code(), integrated_channel_class)
+    for integrated_channel_class in (
+        BlackboardEnterpriseCustomerConfiguration,
+        CanvasEnterpriseCustomerConfiguration,
+        DegreedEnterpriseCustomerConfiguration,
+        MoodleEnterpriseCustomerConfiguration,
+        SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    )
+])
+
 
 class IntegratedChannelCommandMixin:
     """
@@ -74,9 +87,11 @@ class IntegratedChannelCommandMixin:
         See ``add_arguments`` for the accepted options.
         """
         assessment_level_support = options.get('assessment_level_support', False)
+        content_metadata_job_support = options.get('content_metadata_job_support', False)
         channel_classes = self.get_channel_classes(
             options.get('channel'),
             assessment_level_support=assessment_level_support,
+            content_metadata_job_support=content_metadata_job_support,
         )
         filter_kwargs = {
             'active': True,
@@ -108,7 +123,7 @@ class IntegratedChannelCommandMixin:
             ) from no_customer_exception
 
     @staticmethod
-    def get_channel_classes(channel_code, assessment_level_support=False):
+    def get_channel_classes(channel_code, assessment_level_support=False, content_metadata_job_support=False):
         """
         Assemble a list of integrated channel classes to transmit to.
 
@@ -118,6 +133,8 @@ class IntegratedChannelCommandMixin:
         """
         if assessment_level_support:
             channel_choices = ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES
+        elif content_metadata_job_support:
+            channel_choices = CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES
         else:
             channel_choices = INTEGRATED_CHANNEL_CHOICES
 
