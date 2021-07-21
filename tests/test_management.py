@@ -51,6 +51,7 @@ from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfigur
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
     ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES,
+    CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES,
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
@@ -115,6 +116,17 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
         assert IntegratedChannelCommandMixin.get_channel_classes(
             channel,
             assessment_level_support=True,
+        ) == [channel_class]
+
+    def test_get_content_metadata_transmission_job_supported_channels(self):
+        """
+        Only retrieve channels that support the scheduled content metadata job.
+        """
+        channel = set(CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES).pop()
+        channel_class = CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES[channel]
+        assert IntegratedChannelCommandMixin.get_channel_classes(
+            channel,
+            content_metadata_job_support=True,
         ) == [channel_class]
 
 

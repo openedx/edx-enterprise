@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.27.5]
+--------
+* Removing CSOD Integrated Channel from the list of supported channels for the content metadata transmission task.
+
 [3.27.4]
 --------
 * Add pagination handling to integrated channels Blackboard client
