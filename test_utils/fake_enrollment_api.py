@@ -5,6 +5,7 @@ Fake implementation of the Enrollment API.
 
 import datetime
 import json
+from locale import Error
 import re
 
 from edx_rest_api_client.exceptions import HttpClientError
@@ -127,6 +128,18 @@ COURSE_DETAILS = {
 }
 
 
+def _raise_lms_enroll_error(url, message, **kwargs):
+    """
+    Emulate a error raised by lms_enroll_user_in_course.
+    """
+    content = dict(message=message)
+    content.update(kwargs)
+    raise Error(
+        "Error in enrollment",
+        content=json.dumps(content).encode(),
+    )
+
+
 def _raise_client_error(url, message, **kwargs):
     """
     Emulate a client error raised by edx_rest_api_client.
@@ -149,6 +162,42 @@ def get_course_details(course_id):
         return COURSE_DETAILS[course_id]
     except KeyError:
         return None
+
+
+def lms_enroll_user_in_course(
+        username,
+        course_id,
+        mode,
+        enterprise_uuid,
+        cohort=None,
+        is_active=True
+):
+    """
+    Fake implementation.
+    """
+    try:
+        course_details = COURSE_DETAILS[course_id]
+    except KeyError:
+        _raise_client_error(
+            "enrollment", "No course '{}' found for enrollment".format(course_id)
+        )
+    available_modes = [m["slug"] for m in course_details["course_modes"]]
+    if mode not in available_modes:
+        _raise_lms_enroll_error(
+            "enrollment",
+            "The [{}] course mode is expired or otherwise unavailable for course run [{}].".format(
+                mode, course_id
+            )
+        )
+    return {
+        "user": {"username": username, "id": 1},
+        "course_details": course_details,
+        "is_active": is_active,
+        "mode": mode,
+        "cohort": cohort,
+        "enterprise_uuid": enterprise_uuid,
+        "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    }
 
 
 def enroll_user_in_course(user, course_id, mode, cohort=None, enterprise_uuid=None):

@@ -65,6 +65,7 @@ class TestPreviewTemplateView(TestCase):
     """
     Test the Preview Template view
     """
+
     def setUp(self):
         """
         Set up testing variables
@@ -158,6 +159,7 @@ class BaseEnterpriseCustomerView(TestCase):
     """
     Common functionality for EnterpriseCustomerViews.
     """
+
     def setUp(self):
         """
         Test set up
@@ -1049,17 +1051,23 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.utils.lms_enroll_user_in_course")
+    @mock.patch("enterprise.utils.CourseUserGroup")
+    @mock.patch("enterprise.utils.CourseEnrollmentError", mock.MagicMock(BaseException))
     def test_post_enroll_no_course_detail(
             self,
+            mock_course_group,
+            mock_lms_enroll_user_in_course,
             enterprise_catalog_client,
             enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
+        mock_course_group.return_value.DoesNotExist = mock.MagicMock(BaseException)
+        mock_lms_enroll_user_in_course.side_effect = fake_enrollment_api.lms_enroll_user_in_course
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         enrollment_instance = enrollment_client.return_value
-        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
         enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
@@ -1068,11 +1076,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        enrollment_instance.enroll_user_in_course.assert_called_once_with(
+        mock_lms_enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            self.enterprise_customer.uuid,
+            is_active=True,
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         self._assert_django_messages(response, set([
