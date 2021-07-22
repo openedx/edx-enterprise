@@ -313,7 +313,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             }
             if len(pending_users | existing_users) > 0:
                 LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
-                track_enrollment('customer-admin-enrollment', request.user.id, course_run)
                 if serializer.validated_data.get('notify'):
                     enterprise_customer.notify_enrolled_learners(
                         catalog_api_user=request.user,

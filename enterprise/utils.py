@@ -2,8 +2,8 @@
 """
 Utility functions for enterprise app.
 """
-
 import datetime
+import json
 import logging
 import re
 from urllib.parse import urljoin
@@ -1440,9 +1440,76 @@ def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
     return False
 
 
-def enroll_user(enterprise_customer, user, course_mode, course_id):
+def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     """
-    Enroll a single user in a course using a particular course mode.
+    Enroll a single user in any number of courses using a particular course mode.
+
+    Args:
+        enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
+        user: The user model object who needs to be enrolled in the course
+        course_mode: The string representation of the mode with which the enrollment should be created
+        *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
+        kwargs: Should contain enrollment_client if it's already been instantiated and should be passed in.
+
+    Returns:
+        Boolean: Whether or not enrollment succeeded for all courses specified
+    """
+    enrollment_client = kwargs.pop('enrollment_client', None)
+    if not enrollment_client:
+        from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
+        enrollment_client = EnrollmentApiClient()
+    enterprise_customer_user, __ = enterprise_customer_user_model().objects.get_or_create(
+        enterprise_customer=enterprise_customer,
+        user_id=user.id
+    )
+    succeeded = True
+    for course_id in course_ids:
+        try:
+            enrollment_client.enroll_user_in_course(
+                user.username,
+                course_id,
+                course_mode,
+                enterprise_uuid=str(enterprise_customer_user.enterprise_customer.uuid)
+            )
+        except HttpClientError as exc:
+            # Check if user is already enrolled then we should ignore exception
+            if is_user_enrolled(user, course_id, course_mode):
+                succeeded = True
+            else:
+                succeeded = False
+                default_message = 'No error message provided'
+                try:
+                    error_message = json.loads(exc.content.decode()).get('message', default_message)
+                except ValueError:
+                    error_message = default_message
+                logging.error(
+                    'Error while enrolling user %(user)s: %(message)s',
+                    dict(user=user.username, message=error_message)
+                )
+        if succeeded:
+            __, created = enterprise_course_enrollment_model().objects.get_or_create(
+                enterprise_customer_user=enterprise_customer_user,
+                course_id=course_id,
+                defaults={
+                    'source': enterprise_enrollment_source_model().get_source(
+                        enterprise_enrollment_source_model().MANUAL
+                    )
+                }
+            )
+            if created:
+                track_enrollment('admin-enrollment', user.id, course_id)
+    return succeeded
+
+
+def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id):
+    """
+    For use with bulk enrollment, or any use case of admin enrolling a user
+
+    Enroll a single user in a course using a particular course mode, indicating it's a
+    customer_admin enrolling a user (such as bulk enrollment)
+
+    TODO: The `enroll_user` function above, used by Django admin, for example, should also be
+    rewired to use this new ability, but for now it still uses enrollment client.
 
     Args:
         enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
@@ -1479,7 +1546,8 @@ def enroll_user(enterprise_customer, user, course_mode, course_id):
             }
         )
         if created:
-            track_enrollment('admin-enrollment', user.id, course_id)
+            # Note: this tracking event only caters to bulk enrollment right now.
+            track_enrollment('customer-admin-enrollment', user.id, course_id)
     return succeeded
 
 
@@ -1560,7 +1628,7 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
         user = User.objects.filter(email=licensed_user_info['email']).first()
         try:
             if user:
-                succeeded = enroll_user(enterprise_customer, user, course_mode, course_run_key)
+                succeeded = customer_admin_enroll_user(enterprise_customer, user, course_mode, course_run_key)
                 if succeeded:
                     enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
                     get_create_ent_enrollment(course_run_key, enterprise_customer_user, license_uuid=license_uuid)
