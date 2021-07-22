@@ -54,7 +54,6 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
@@ -62,7 +61,6 @@ from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
     get_best_mode_from_course_key,
-    get_ecommerce_worker_user,
     get_request_value,
     track_enrollment,
     validate_email_to_link,
