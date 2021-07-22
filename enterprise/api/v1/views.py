@@ -62,7 +62,6 @@ from enterprise.utils import (
     enroll_licensed_users_in_courses,
     get_best_mode_from_course_key,
     get_request_value,
-    track_enrollment,
     validate_email_to_link,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status

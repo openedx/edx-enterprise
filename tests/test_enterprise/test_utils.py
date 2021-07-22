@@ -52,6 +52,7 @@ class TestUtils(unittest.TestCase):
     Tests for utility functions in enterprise.utils
     """
     # pylint: disable=arguments-renamed
+
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=False, **kwargs):
         """
         Create a test user and set its password.
@@ -76,8 +77,8 @@ class TestUtils(unittest.TestCase):
         mock_get_logo_url.return_value = logo_url
         self.assertEqual(get_platform_logo_url(), expected_logo_url)
 
-    @mock.patch('enterprise.utils.enroll_user')
-    def test_enroll_licensed_users_in_courses_fails(self, mock_enroll_user):
+    @mock.patch('enterprise.utils.customer_admin_enroll_user')
+    def test_enroll_licensed_users_in_courses_fails(self, mock_customer_admin_enroll_user):
         """
         Test that `enroll_licensed_users_in_courses` properly handles failure cases where something goes wrong with the
         user enrollment.
@@ -87,7 +88,7 @@ class TestUtils(unittest.TestCase):
             uuid=FAKE_UUIDS[0],
             name="test_enterprise"
         )
-        mock_enroll_user.return_value = False
+        mock_customer_admin_enroll_user.return_value = False
         licensed_users_info = [{
             'email': self.user.email,
             'course_run_key': 'course-key-v1',
@@ -105,8 +106,8 @@ class TestUtils(unittest.TestCase):
             result
         )
 
-    @mock.patch('enterprise.utils.enroll_user')
-    def test_enroll_licensed_users_in_courses_fails_with_exception(self, mock_enroll_user):
+    @mock.patch('enterprise.utils.customer_admin_enroll_user')
+    def test_enroll_licensed_users_in_courses_fails_with_exception(self, mock_customer_admin_enroll_user):
         """
         Test that `enroll_licensed_users_in_courses` properly handles failure cases where badly formed data throws a
         database Integrity Error.
@@ -116,7 +117,7 @@ class TestUtils(unittest.TestCase):
             uuid=FAKE_UUIDS[0],
             name="test_enterprise"
         )
-        mock_enroll_user.return_value = True
+        mock_customer_admin_enroll_user.return_value = True
         licensed_users_info = [{
             'email': self.user.email,
             'course_run_key': 'course-key-v1',
@@ -135,8 +136,8 @@ class TestUtils(unittest.TestCase):
             result
         )
 
-    @mock.patch('enterprise.utils.enroll_user')
-    def test_enroll_licensed_users_in_courses_partially_fails(self, mock_enroll_user):
+    @mock.patch('enterprise.utils.customer_admin_enroll_user')
+    def test_enroll_licensed_users_in_courses_partially_fails(self, mock_customer_admin_enroll_user):
         """
         Test that `enroll_licensed_users_in_courses` properly handles partial failure states and still creates
         enrollments for the users that succeed.
@@ -168,7 +169,7 @@ class TestUtils(unittest.TestCase):
             }
         ]
 
-        mock_enroll_user.return_value = True
+        mock_customer_admin_enroll_user.return_value = True
 
         result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
@@ -181,8 +182,8 @@ class TestUtils(unittest.TestCase):
         )
         self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
 
-    @mock.patch('enterprise.utils.enroll_user')
-    def test_enroll_licensed_users_in_courses_succeeds(self, mock_enroll_user):
+    @mock.patch('enterprise.utils.customer_admin_enroll_user')
+    def test_enroll_licensed_users_in_courses_succeeds(self, mock_customer_admin_enroll_user):
         """
         Test that users that already exist are enrolled by enroll_licensed_users_in_courses and returned under the
         `succeeded` field.
@@ -204,7 +205,7 @@ class TestUtils(unittest.TestCase):
             'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
         }]
 
-        mock_enroll_user.return_value = True
+        mock_customer_admin_enroll_user.return_value = True
 
         result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(

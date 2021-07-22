@@ -3425,7 +3425,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     )
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
-    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.utils.track_enrollment')
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses(
         self,

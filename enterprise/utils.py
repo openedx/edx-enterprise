@@ -1529,7 +1529,10 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
         # enrolls a user in a course per LMS flow, but does not create enterprise records yet
         # can return None if Enrollment already exists, does not fail in this case.
         lms_enroll_user_in_course(
-            user.username, course_id, course_mode, enterprise_customer.uuid,
+            user.username,
+            course_id,
+            course_mode,
+            enterprise_customer.uuid,
             is_active=True,
         )
         succeeded = True
