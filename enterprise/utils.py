@@ -1527,12 +1527,12 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
     succeeded = False
     try:
         # enrolls a user in a course per LMS flow, but does not create enterprise records yet
-        enrollment_created = lms_enroll_user_in_course(
+        # can return None if Enrollment already exists, does not fail in this case.
+        lms_enroll_user_in_course(
             user.username, course_id, course_mode, enterprise_customer.uuid,
             is_active=True,
         )
-        if enrollment_created:
-            succeeded = True
+        succeeded = True
     except (CourseEnrollmentError, CourseUserGroup.DoesNotExist) as error:
         logging.exception("Failed to enroll user %s in course %s", user.id, course_id, exc_info=error)
     if succeeded:

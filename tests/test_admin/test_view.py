@@ -1100,8 +1100,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.utils.lms_enroll_user_in_course")
+    @mock.patch("enterprise.utils.CourseUserGroup")
+    @mock.patch("enterprise.utils.CourseEnrollmentError", mock.MagicMock(BaseException))
     def test_post_enroll_course_when_enrollment_closed(
             self,
+            mock_course_group,
+            mock_lms_enroll_user_in_course,
             enterprise_catalog_client,
             enrollment_client,
             course_catalog_client,
@@ -1111,12 +1116,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
         and course enrollment window is closed
         """
+        mock_course_group.return_value.DoesNotExist = mock.MagicMock(BaseException)
+        # value return does not matter as long as this does not raise
+        mock_lms_enroll_user_in_course.return_value = None
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         enrollment_instance = enrollment_client.return_value
-        enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
-            "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
-        )
+
         enrollment_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
@@ -1138,11 +1144,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert enrollment.course_id == course_id
         num_messages = len(mail.outbox)
         assert num_messages == 0
-        enrollment_instance.enroll_user_in_course.assert_called_once_with(
+        mock_lms_enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            self.enterprise_customer.uuid,
+            is_active=True,
         )
 
     @mock.patch("enterprise.utils.track_enrollment")

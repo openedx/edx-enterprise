@@ -128,7 +128,7 @@ COURSE_DETAILS = {
 }
 
 
-def _raise_lms_enroll_error(url, message, **kwargs):
+def _raise_lms_enroll_error(message, **kwargs):
     """
     Emulate a error raised by lms_enroll_user_in_course.
     """
@@ -178,13 +178,12 @@ def lms_enroll_user_in_course(
     try:
         course_details = COURSE_DETAILS[course_id]
     except KeyError:
-        _raise_client_error(
-            "enrollment", "No course '{}' found for enrollment".format(course_id)
+        _raise_lms_enroll_error(
+            "No course '{}' found for enrollment".format(course_id)
         )
     available_modes = [m["slug"] for m in course_details["course_modes"]]
     if mode not in available_modes:
         _raise_lms_enroll_error(
-            "enrollment",
             "The [{}] course mode is expired or otherwise unavailable for course run [{}].".format(
                 mode, course_id
             )
