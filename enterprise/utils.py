@@ -1442,7 +1442,7 @@ def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
 
 def enroll_user(enterprise_customer, user, course_mode, course_id):
     """
-    Enroll a single user in any number of courses using a particular course mode.
+    Enroll a single user in a course using a particular course mode.
 
     Args:
         enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
@@ -1487,30 +1487,20 @@ def get_create_ent_enrollment(
         course_id,
         enterprise_customer_user,
         license_uuid=None,
-        source=None,
 ):
     """
     Get or Create the Enterprise Course Enrollment.
 
-    Arguments:
-     * If source is not provided, default source of enrollment_url will be used
-
     If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
     """
-    if source:
-        default_source = source
-    else:
-        default_source = enterprise_enrollment_source_model().get_source(
-            enterprise_enrollment_source_model().ENROLLMENT_URL,
-        )
-
+    source = enterprise_enrollment_source_model().get_source(enterprise_enrollment_source_model().ENROLLMENT_URL)
     # Create the Enterprise backend database records for this course
     # enrollment
     enterprise_course_enrollment, created = enterprise_course_enrollment_model().objects.get_or_create(
         enterprise_customer_user=enterprise_customer_user,
         course_id=course_id,
         defaults={
-            'source': default_source
+            'source': source
         }
     )
     if license_uuid and not enterprise_course_enrollment.license:
