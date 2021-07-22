@@ -4,7 +4,6 @@ Utility functions for enterprise app.
 """
 
 import datetime
-import json
 import logging
 import re
 from urllib.parse import urljoin
@@ -38,9 +37,17 @@ from django.utils.translation import ungettext
 
 from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
 
-# For use with email templates
-SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
-ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
+try:
+    from openedx.features.enterprise_support.enrollments.utils import lms_enroll_user_in_course
+except ImportError:
+    lms_enroll_user_in_course = None
+
+try:
+    from openedx.core.djangoapps.course_groups.cohorts import CourseUserGroup
+    from openedx.core.djangoapps.enrollments.errors import CourseEnrollmentError
+except ImportError:
+    CourseUserGroup = None
+    CourseEnrollmentError = None
 
 try:
     from common.djangoapps.course_modes.models import CourseMode
@@ -84,8 +91,15 @@ except ImportError:
     UNENROLLED_TO_ENROLLED = None
     UNENROLLED_TO_ALLOWEDTOENROLL = None
 
+
+# For use with email templates
+SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
+ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
+
 LOGGER = logging.getLogger(__name__)
+
 User = auth.get_user_model()  # pylint: disable=invalid-name
+
 try:
     from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
 except ImportError as exception:
@@ -1426,7 +1440,7 @@ def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
     return False
 
 
-def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
+def enroll_user(enterprise_customer, user, course_mode, course_id):
     """
     Enroll a single user in any number of courses using a particular course mode.
 
@@ -1434,56 +1448,38 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
         enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
         user: The user model object who needs to be enrolled in the course
         course_mode: The string representation of the mode with which the enrollment should be created
-        *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
-        kwargs: Should contain enrollment_client if it's already been instantiated and should be passed in.
+        course_id: An opaque course_id to enroll in
 
     Returns:
-        Boolean: Whether or not enrollment succeeded for all courses specified
+        Boolean: Whether or not enrollment succeeded for the course specified
     """
-    enrollment_client = kwargs.pop('enrollment_client', None)
-    if not enrollment_client:
-        from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
-        enrollment_client = EnrollmentApiClient()
     enterprise_customer_user, __ = enterprise_customer_user_model().objects.get_or_create(
         enterprise_customer=enterprise_customer,
         user_id=user.id
     )
-    succeeded = True
-    for course_id in course_ids:
-        try:
-            enrollment_client.enroll_user_in_course(
-                user.username,
-                course_id,
-                course_mode,
-                enterprise_uuid=str(enterprise_customer_user.enterprise_customer.uuid)
-            )
-        except HttpClientError as exc:
-            # Check if user is already enrolled then we should ignore exception
-            if is_user_enrolled(user, course_id, course_mode):
-                succeeded = True
-            else:
-                succeeded = False
-                default_message = 'No error message provided'
-                try:
-                    error_message = json.loads(exc.content.decode()).get('message', default_message)
-                except ValueError:
-                    error_message = default_message
-                logging.error(
-                    'Error while enrolling user %(user)s: %(message)s',
-                    dict(user=user.username, message=error_message)
+    succeeded = False
+    try:
+        # enrolls a user in a course per LMS flow, but does not create enterprise records yet
+        enrollment_created = lms_enroll_user_in_course(
+            user.username, course_id, course_mode, enterprise_customer.uuid,
+            is_active=True,
+        )
+        if enrollment_created:
+            succeeded = True
+    except (CourseEnrollmentError, CourseUserGroup.DoesNotExist) as error:
+        logging.exception("Failed to enroll user %s in course %s", user.id, course_id, exc_info=error)
+    if succeeded:
+        __, created = enterprise_course_enrollment_model().objects.get_or_create(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+            defaults={
+                'source': enterprise_enrollment_source_model().get_source(
+                    enterprise_enrollment_source_model().MANUAL
                 )
-        if succeeded:
-            __, created = enterprise_course_enrollment_model().objects.get_or_create(
-                enterprise_customer_user=enterprise_customer_user,
-                course_id=course_id,
-                defaults={
-                    'source': enterprise_enrollment_source_model().get_source(
-                        enterprise_enrollment_source_model().MANUAL
-                    )
-                }
-            )
-            if created:
-                track_enrollment('admin-enrollment', user.id, course_id)
+            }
+        )
+        if created:
+            track_enrollment('admin-enrollment', user.id, course_id)
     return succeeded
 
 
@@ -1491,20 +1487,30 @@ def get_create_ent_enrollment(
         course_id,
         enterprise_customer_user,
         license_uuid=None,
+        source=None,
 ):
     """
     Get or Create the Enterprise Course Enrollment.
 
+    Arguments:
+     * If source is not provided, default source of enrollment_url will be used
+
     If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
     """
-    source = enterprise_enrollment_source_model().get_source(enterprise_enrollment_source_model().ENROLLMENT_URL)
+    if source:
+        default_source = source
+    else:
+        default_source = enterprise_enrollment_source_model().get_source(
+            enterprise_enrollment_source_model().ENROLLMENT_URL,
+        )
+
     # Create the Enterprise backend database records for this course
     # enrollment
     enterprise_course_enrollment, created = enterprise_course_enrollment_model().objects.get_or_create(
         enterprise_customer_user=enterprise_customer_user,
         course_id=course_id,
         defaults={
-            'source': source
+            'source': default_source
         }
     )
     if license_uuid and not enterprise_course_enrollment.license:

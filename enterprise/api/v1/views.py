@@ -333,31 +333,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             return Response(results, status=HTTP_202_ACCEPTED)
         return Response(results, status=HTTP_201_CREATED)
 
-    def _create_ecom_orders_for_enrollments(self,
-                                            course_run_key,
-                                            mode,
-                                            discount,
-                                            salesforce_id,
-                                            succeeded_enrollments):
-        """
-        Create ecommerce enrollment order for provided enrollments
-        """
-        paid_modes = ['verified', 'professional']
-        enterprise_customer = self.get_object()
-        if mode in paid_modes:
-            enrollments = [{
-                "lms_user_id": success.id,
-                "email": success.email,
-                "username": success.username,
-                "course_run_key": course_run_key,
-                "discount_percentage": float(discount),
-                "enterprise_customer_name": enterprise_customer.name,
-                "enterprise_customer_uuid": str(enterprise_customer.uuid),
-                "mode": mode,
-                "sales_force_id": salesforce_id,
-            } for success in succeeded_enrollments]
-            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
-
     @method_decorator(require_at_least_one_query_parameter('permissions'))
     @action(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup], detail=False)
     def with_access_to(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
