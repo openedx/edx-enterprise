@@ -9,7 +9,6 @@ from logging import getLogger
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
@@ -22,7 +21,6 @@ LOGGER = getLogger(__name__)
 
 
 # pylint: disable=feature-toggle-needs-doc
-@python_2_unicode_compatible
 class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Moodle.
@@ -127,7 +125,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         return MoodleContentMetadataTransmitter(self)
 
 
-@python_2_unicode_compatible
 class MoodleLearnerDataTransmissionAudit(models.Model):
     """
     The payload we send to Moodle at a given point in time for an enterprise course enrollment.

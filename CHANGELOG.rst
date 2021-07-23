@@ -53,6 +53,10 @@ Unreleased
 --------
 * Filter available IDPs for Enterprise Customers by new boolean flag on ProviderConfig model.
 
+[3.28.0]
+---------
+* Added support for Django 3.0, 3.1 and 3.2
+
 [3.27.5]
 --------
 * Removing CSOD Integrated Channel from the list of supported channels for the content metadata transmission task.
