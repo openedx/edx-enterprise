@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.0]
+---------
+* Added support for Django 3.0, 3.1 and 3.2
+
 [3.27.9]
 --------
 * Fix SAP Course Completion payload format again.
@@ -32,10 +36,6 @@ Unreleased
 [3.27.6]
 --------
 * Filter available IDPs for Enterprise Customers by new boolean flag on ProviderConfig model.
-
-[3.28.0]
----------
-* Added support for Django 3.0, 3.1 and 3.2
 
 [3.27.5]
 --------
