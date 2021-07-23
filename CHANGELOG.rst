@@ -17,6 +17,9 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.5]
+--------
+* Filter available IDPs for Enterprise Customers by new boolean flag on ProviderConfig model.
 
 [3.27.4]
 --------
