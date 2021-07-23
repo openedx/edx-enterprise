@@ -24,7 +24,7 @@ certifi==2021.5.30
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
-cffi==1.14.5
+cffi==1.14.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cryptography
@@ -74,7 +74,6 @@ django==2.2.24
     #   drf-jwt
     #   edx-django-utils
     #   edx-drf-extensions
-    #   edx-opaque-keys
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
@@ -160,12 +159,12 @@ edx-drf-extensions==6.5.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-drf-extensions
-edx-rbac==1.4.2
+edx-rbac==1.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -205,15 +204,15 @@ markupsafe==2.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-newrelic==6.4.3.160
+newrelic==6.4.4.161
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
-packaging==20.9
+packaging==21.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
-path==13.1.0
+path==16.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   path.py
@@ -225,7 +224,7 @@ pbr==5.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
-pillow==8.2.0
+pillow==8.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

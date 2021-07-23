@@ -5,7 +5,6 @@ Mixins for edX Enterprise's Consent application.
 import logging
 
 from django.contrib import auth
-from django.utils.encoding import python_2_unicode_compatible
 
 from enterprise.models import EnterpriseCourseEnrollment
 
@@ -13,7 +12,6 @@ LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
 
 
-@python_2_unicode_compatible
 class ConsentModelMixin:
     """
     A mixin for Data Sharing Consent classes that require common, reusable functionality.

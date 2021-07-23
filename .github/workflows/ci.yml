@@ -13,7 +13,8 @@ jobs:
       matrix:
         python-version: ['3.8']
         toxenv: [
-          'django22-celery50', 'quality', 'docs', 'pii-annotations',
+          'django22-celery50', 'django30-celery50', 'django31-celery50', 'django32-celery50',
+          'quality', 'docs', 'pii-annotations',
         ]
     env:
       RUNJSHINT: true

@@ -12,7 +12,6 @@ from simple_history.models import HistoricalRecords
 
 from django.contrib import auth
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -28,7 +27,6 @@ User = auth.get_user_model()
 
 
 # pylint: disable=feature-toggle-needs-doc
-@python_2_unicode_compatible
 class CornerstoneGlobalConfiguration(ConfigurationModel):
     """
     The global configuration for integrating with Cornerstone.
@@ -90,7 +88,6 @@ class CornerstoneGlobalConfiguration(ConfigurationModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Cornerstone.
@@ -155,7 +152,6 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         return CornerstoneLearnerExporter(user, self)
 
 
-@python_2_unicode_compatible
 class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we sent to Cornerstone at a given point in time for an enterprise course enrollment.
