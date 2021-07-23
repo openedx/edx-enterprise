@@ -35,7 +35,13 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
+from enterprise.constants import (
+    ALLOWED_TAGS,
+    DEFAULT_CATALOG_CONTENT_FILTER,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+    PROGRAM_TYPE_DESCRIPTION,
+    CourseModes,
+)
 
 try:
     from openedx.features.enterprise_support.enrollments.utils import lms_enroll_user_in_course
@@ -1518,7 +1524,7 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
         course_id: An opaque course_id to enroll in
 
     Returns:
-        Boolean: Whether or not enrollment succeeded for the course specified
+        succeeded (Boolean): Whether or not enrollment succeeded for the course specified
     """
     enterprise_customer_user, __ = enterprise_customer_user_model().objects.get_or_create(
         enterprise_customer=enterprise_customer,
@@ -1550,7 +1556,7 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
         )
         if created:
             # Note: this tracking event only caters to bulk enrollment right now.
-            track_enrollment('customer-admin-enrollment', user.id, course_id)
+            track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
     return succeeded
 
 

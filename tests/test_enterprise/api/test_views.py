@@ -39,6 +39,7 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
     EnterpriseCatalogQuery,
@@ -3347,7 +3348,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 1,
-            'expected_events': [mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course')],
+            'expected_events': [mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course')],
         },
         # Multi-learner, single course success
         {
@@ -3376,7 +3377,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 2,
             'expected_events': [
-                mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
             ],
         },
         # Multi-learner, multi-course success
@@ -3418,8 +3419,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 4,
             'expected_events': [
-                mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course'),
-                mock.call('customer-admin-enrollment', 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
             ],
         },
     )
@@ -3427,7 +3428,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.utils.track_enrollment')
     # pylint: disable=unused-argument
-    def test_bulk_enrollment_in_bulk_courses(
+    def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
         mock_track_enroll,
         mock_get_course_mode,
@@ -3439,6 +3440,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
+        This test currently does not create any users so is testing the pending
+        enrollments case.
         """
         factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],

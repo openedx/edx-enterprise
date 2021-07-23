@@ -55,13 +55,14 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api_client.lms import EnrollmentApiClient
-from enterprise.constants import COURSE_KEY_URL_PATTERN
+from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
     get_best_mode_from_course_key,
     get_request_value,
+    track_enrollment,
     validate_email_to_link,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
@@ -315,6 +316,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     pending_users | existing_users,
                     course_run,
                 ))
+                track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, request.user.id, course_run)
                 if serializer.validated_data.get('notify'):
                     enterprise_customer.notify_enrolled_learners(
                         catalog_api_user=request.user,
