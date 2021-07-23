@@ -257,14 +257,6 @@ def get_identity_provider(provider_id):
         Instance of ProviderConfig or None.
     """
     try:
-        # pylint: disable=redefined-outer-name,import-outside-toplevel
-        from common.djangoapps.third_party_auth.provider import Registry
-    except ImportError as exception:
-        LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
-        LOGGER.warning(exception)
-        Registry = None  # pylint: disable=redefined-outer-name
-
-    try:
         return Registry and Registry.get(provider_id)
     except ValueError:
         return None
@@ -277,17 +269,10 @@ def get_idp_choices():
     Return:
         A list of choices of all identity providers, None if it can not get any available identity provider.
     """
-    try:
-        # pylint: disable=redefined-outer-name,import-outside-toplevel
-        from common.djangoapps.third_party_auth.provider import Registry
-    except ImportError as exception:
-        LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
-        LOGGER.warning(exception)
-        Registry = None  # pylint: disable=redefined-outer-name
 
     first = [("", "-" * 7)]
     if Registry:
-        return first + [(idp.provider_id, idp.name) for idp in Registry.enabled()]
+        return first + [(idp.provider_id, idp.name) for idp in Registry.enabled() if not idp.disable_for_enterprise_sso]
     return None
 
 

@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` utility functions.
 
 import datetime
 import unittest
+from collections import namedtuple
 
 import ddt
 import mock
@@ -1709,6 +1710,15 @@ class TestEnterpriseUtils(unittest.TestCase):
         ``get_active_course_runs`` returns active course runs of given course's course runs.
         """
         assert utils.get_active_course_runs(course, users_all_enrolled_courses) == expected_course_run
+
+    @mock.patch('enterprise.utils.Registry')
+    def test_get_idp_choices(self, mock_registry):
+        Provider = namedtuple('SAMLProvider', 'provider_id, name, disable_for_enterprise_sso')
+        enabled_provider = Provider('12345', 'google', False)
+        disabled_provider = Provider('333333', 'facebook', True)
+
+        mock_registry.enabled.return_value = [enabled_provider, disabled_provider]
+        assert utils.get_idp_choices() == [("", "-" * 7)] + [(enabled_provider.provider_id, enabled_provider.name)]
 
 
 @mark.django_db
