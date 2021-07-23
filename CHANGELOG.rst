@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.0]
+---------
+* Added support for Django 3.0, 3.1 and 3.2
+
 [3.27.14]
 ---------
 * Adding the ability to specify parameters in the bulk catalog query ID updated management command.
@@ -52,10 +56,6 @@ Unreleased
 [3.27.6]
 --------
 * Filter available IDPs for Enterprise Customers by new boolean flag on ProviderConfig model.
-
-[3.28.0]
----------
-* Added support for Django 3.0, 3.1 and 3.2
 
 [3.27.5]
 --------
