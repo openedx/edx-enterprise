@@ -17,13 +17,14 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.7]
+--------
+* Replace EnrollmentApiClient calls from Bulk enrollment with a newly minted python api call (non-REST) from edx-platform
+
 [3.27.6]
 --------
 * Filter available IDPs for Enterprise Customers by new boolean flag on ProviderConfig model.
 
-[3.27.6]
---------
-* Replace EnrollmentApiClient calls from Bulk enrollment with a newly minted python api call (non-REST) from edx-platform
 
 [3.27.5]
 --------
