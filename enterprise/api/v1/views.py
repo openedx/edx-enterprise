@@ -311,7 +311,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
             }
             if len(pending_users | existing_users) > 0:
-                LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
+                LOGGER.info("Successfully bulk enrolled learners: {} into course {}".format(
+                    pending_users | existing_users,
+                    course_run,
+                ))
                 if serializer.validated_data.get('notify'):
                     enterprise_customer.notify_enrolled_learners(
                         catalog_api_user=request.user,
