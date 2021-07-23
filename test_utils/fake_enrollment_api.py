@@ -5,8 +5,8 @@ Fake implementation of the Enrollment API.
 
 import datetime
 import json
-from locale import Error
 import re
+from locale import Error
 
 from edx_rest_api_client.exceptions import HttpClientError
 
