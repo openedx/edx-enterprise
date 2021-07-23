@@ -135,6 +135,9 @@ ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'
 ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 
+# Tracking related
+PATHWAY_CUSTOMER_ADMIN_ENROLLMENT = 'customer-admin-enrollment'
+
 # context to give access to all resources
 ALL_ACCESS_CONTEXT = '*'
 

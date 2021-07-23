@@ -54,15 +54,13 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
-from enterprise.constants import COURSE_KEY_URL_PATTERN
+from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
     get_best_mode_from_course_key,
-    get_ecommerce_worker_user,
     get_request_value,
     track_enrollment,
     validate_email_to_link,
@@ -314,8 +312,11 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
             }
             if len(pending_users | existing_users) > 0:
-                LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
-                track_enrollment('customer-admin-enrollment', request.user.id, course_run)
+                LOGGER.info("Successfully bulk enrolled learners: {} into course {}".format(
+                    pending_users | existing_users,
+                    course_run,
+                ))
+                track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, request.user.id, course_run)
                 if serializer.validated_data.get('notify'):
                     enterprise_customer.notify_enrolled_learners(
                         catalog_api_user=request.user,
@@ -332,31 +333,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if results['pending']:
             return Response(results, status=HTTP_202_ACCEPTED)
         return Response(results, status=HTTP_201_CREATED)
-
-    def _create_ecom_orders_for_enrollments(self,
-                                            course_run_key,
-                                            mode,
-                                            discount,
-                                            salesforce_id,
-                                            succeeded_enrollments):
-        """
-        Create ecommerce enrollment order for provided enrollments
-        """
-        paid_modes = ['verified', 'professional']
-        enterprise_customer = self.get_object()
-        if mode in paid_modes:
-            enrollments = [{
-                "lms_user_id": success.id,
-                "email": success.email,
-                "username": success.username,
-                "course_run_key": course_run_key,
-                "discount_percentage": float(discount),
-                "enterprise_customer_name": enterprise_customer.name,
-                "enterprise_customer_uuid": str(enterprise_customer.uuid),
-                "mode": mode,
-                "sales_force_id": salesforce_id,
-            } for success in succeeded_enrollments]
-            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
     @action(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup], detail=False)

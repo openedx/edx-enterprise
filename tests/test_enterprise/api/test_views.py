@@ -39,6 +39,7 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
     EnterpriseCatalogQuery,
@@ -432,6 +433,7 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     """
     Test enteprise learner list endpoint
     """
+
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -2196,6 +2198,7 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
     """
     Test the Enteprise Customer course enrollments detail route
     """
+
     def test_enterprise_customer_course_enrollments_non_list_request(self):
         """
         Test the Enterprise Customer course enrollments detail route with an invalid expected json format.
@@ -3056,8 +3059,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
     def test_post_license_revoke_invalid_data(self):
         with mock.patch('enterprise.api.v1.views.CourseMode'), \
-             mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-             mock.patch('enterprise.api.v1.views.get_course_overviews'):
+                mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
+                mock.patch('enterprise.api.v1.views.get_course_overviews'):
             post_data = {
                 'user_id': 'bob',
             }
@@ -3069,8 +3072,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
     def test_post_license_revoke_403(self):
         with mock.patch('enterprise.api.v1.views.CourseMode'), \
-             mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-             mock.patch('enterprise.api.v1.views.get_course_overviews'):
+                mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
+                mock.patch('enterprise.api.v1.views.get_course_overviews'):
 
             enterprise_customer = factories.EnterpriseCustomerFactory()
             self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
@@ -3345,7 +3348,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 1,
-            'expected_events': [mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course')],
+            'expected_events': [mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course')],
         },
         # Multi-learner, single course success
         {
@@ -3374,7 +3377,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 2,
             'expected_events': [
-                mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
             ],
         },
         # Multi-learner, multi-course success
@@ -3416,8 +3419,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 4,
             'expected_events': [
-                mock.call('customer-admin-enrollment', 1, 'course-v1:edX+DemoX+Demo_Course'),
-                mock.call('customer-admin-enrollment', 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
             ],
         },
     )
@@ -3425,7 +3428,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.track_enrollment')
     # pylint: disable=unused-argument
-    def test_bulk_enrollment_in_bulk_courses(
+    def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
         mock_track_enroll,
         mock_get_course_mode,
@@ -3437,6 +3440,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
+        This test currently does not create any users so is testing the pending
+        enrollments case.
         """
         factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
@@ -3464,11 +3469,10 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         else:
             mock_track_enroll.assert_not_called()
 
-    @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     # pylint: disable=unused-argument
-    def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user, mock_ecom_order):
+    def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user):
         """
         Tests that bulk users bulk enrollment endpoint properly handles partial failures.
         """

@@ -2,7 +2,6 @@
 """
 Utility functions for enterprise app.
 """
-
 import datetime
 import json
 import logging
@@ -36,11 +35,25 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
+from enterprise.constants import (
+    ALLOWED_TAGS,
+    DEFAULT_CATALOG_CONTENT_FILTER,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+    PROGRAM_TYPE_DESCRIPTION,
+    CourseModes,
+)
 
-# For use with email templates
-SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
-ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
+try:
+    from openedx.features.enterprise_support.enrollments.utils import lms_enroll_user_in_course
+except ImportError:
+    lms_enroll_user_in_course = None
+
+try:
+    from openedx.core.djangoapps.course_groups.cohorts import CourseUserGroup
+    from openedx.core.djangoapps.enrollments.errors import CourseEnrollmentError
+except ImportError:
+    CourseUserGroup = None
+    CourseEnrollmentError = None
 
 try:
     from common.djangoapps.course_modes.models import CourseMode
@@ -84,8 +97,15 @@ except ImportError:
     UNENROLLED_TO_ENROLLED = None
     UNENROLLED_TO_ALLOWEDTOENROLL = None
 
+
+# For use with email templates
+SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
+ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
+
 LOGGER = logging.getLogger(__name__)
+
 User = auth.get_user_model()  # pylint: disable=invalid-name
+
 try:
     from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
 except ImportError as exception:
@@ -1472,6 +1492,59 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     return succeeded
 
 
+def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id):
+    """
+    For use with bulk enrollment, or any use case of admin enrolling a user
+
+    Enroll a single user in a course using a particular course mode, indicating it's a
+    customer_admin enrolling a user (such as bulk enrollment)
+
+    TODO: The `enroll_user` function above, used by Django admin, for example, should also be
+    rewired to use this new ability, but for now it still uses enrollment client.
+
+    Args:
+        enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
+        user: The user model object who needs to be enrolled in the course
+        course_mode: The string representation of the mode with which the enrollment should be created
+        course_id: An opaque course_id to enroll in
+
+    Returns:
+        succeeded (Boolean): Whether or not enrollment succeeded for the course specified
+    """
+    enterprise_customer_user, __ = enterprise_customer_user_model().objects.get_or_create(
+        enterprise_customer=enterprise_customer,
+        user_id=user.id
+    )
+    succeeded = False
+    try:
+        # enrolls a user in a course per LMS flow, but does not create enterprise records yet
+        # can return None if Enrollment already exists, does not fail in this case.
+        lms_enroll_user_in_course(
+            user.username,
+            course_id,
+            course_mode,
+            enterprise_customer.uuid,
+            is_active=True,
+        )
+        succeeded = True
+    except (CourseEnrollmentError, CourseUserGroup.DoesNotExist) as error:
+        logging.exception("Failed to enroll user %s in course %s", user.id, course_id, exc_info=error)
+    if succeeded:
+        __, created = enterprise_course_enrollment_model().objects.get_or_create(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+            defaults={
+                'source': enterprise_enrollment_source_model().get_source(
+                    enterprise_enrollment_source_model().MANUAL
+                )
+            }
+        )
+        if created:
+            # Note: this tracking event only caters to bulk enrollment right now.
+            track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
+    return succeeded
+
+
 def get_create_ent_enrollment(
         course_id,
         enterprise_customer_user,
@@ -1549,7 +1622,7 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
         user = User.objects.filter(email=licensed_user_info['email']).first()
         try:
             if user:
-                succeeded = enroll_user(enterprise_customer, user, course_mode, course_run_key)
+                succeeded = customer_admin_enroll_user(enterprise_customer, user, course_mode, course_run_key)
                 if succeeded:
                     enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
                     get_create_ent_enrollment(course_run_key, enterprise_customer_user, license_uuid=license_uuid)
