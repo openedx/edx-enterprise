@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.27.6]
+--------
+* Replace EnrollmentApiClient calls from Bulk enrollment with a newly minted python api call (non-REST) from edx-platform
+
 [3.27.5]
 --------
 * Removing CSOD Integrated Channel from the list of supported channels for the content metadata transmission task.
