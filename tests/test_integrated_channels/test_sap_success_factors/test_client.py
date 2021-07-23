@@ -340,6 +340,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         )
 
         expected_response = 200, json.dumps(expected_response_body)
+        transformed_payload = self.completion_payload
+        transformed_payload['courseCompleted'] = True
+        transformed_payload = json.dumps(transformed_payload)
 
         payload = json.dumps(self.completion_payload)
 
@@ -347,4 +350,4 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         actual_response = sap_client.create_course_completion(self.user_type, payload)
         assert actual_response == expected_response
 
-        sap_client._call_post_with_session.assert_called_with(expected_completion_url, payload)  # pylint: disable=protected-access
+        sap_client._call_post_with_session.assert_called_with(expected_completion_url, transformed_payload)  # pylint: disable=protected-access

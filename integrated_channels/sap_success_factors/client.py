@@ -4,6 +4,7 @@ Client for connecting to SAP SuccessFactors.
 """
 
 import datetime
+import json
 import logging
 import time
 
@@ -144,6 +145,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         base_url = self.enterprise_configuration.sapsf_base_url
 
         if self.enterprise_configuration.prevent_self_submit_grades:
+            # TODO:
+            #   if/when we decide we should use the generic course completion path
+            #   for all customers, we should update the _payload_data method on the
+            #   SapSuccessFactorsLearnerDataTransmissionAudit class instead of doing this json load/dump
+            # Explanation:
+            #  json.loads loads "true" as True and when dumped again will be `true` (without quotes)
+            #  The initial payload explicitly sets the value to "true" *before* the dump, and thus it dumps with quotes.
+            payload_to_update = json.loads(payload)
+            payload = json.dumps(payload_to_update)
             return self._call_post_with_session(
                 base_url + self.GENERIC_COURSE_COMPLETION_PATH,
                 payload
