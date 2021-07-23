@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.8]
+--------
+* Fix SAP Course Completion payload format.
+
 [3.27.7]
 --------
 * Replace EnrollmentApiClient calls from Bulk enrollment with a newly minted python api call (non-REST) from edx-platform
