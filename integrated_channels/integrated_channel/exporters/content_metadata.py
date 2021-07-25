@@ -11,6 +11,8 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
+from django.apps import apps
+
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
@@ -71,13 +73,42 @@ class ContentMetadataExporter(Exporter):
 
     def export(self, **kwargs):
         """
-        Return the exported and transformed content metadata as a dictionary.
+        Placeholder
+        """
+        enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
+            self.enterprise_customer.enterprise_customer_catalogs.all()
+
+        catalogs_to_transmit = []
+        for enterprise_customer_catalog in enterprise_customer_catalogs:
+            enterprise_catalog = self.enterprise_catalog_api.get_enterprise_catalog(enterprise_customer_catalog.uuid)
+            if not enterprise_catalog.get('content_last_modified'):
+                if enterprise_catalog.get('catalog_modified'):
+                    catalog_last_modified = enterprise_catalog.get('catalog_modified')
+                else:
+                    catalog_last_modified = None
+            elif not enterprise_catalog.get('catalog_modified'):
+                catalog_last_modified = enterprise_catalog.get('content_last_modified')
+            else:
+                catalog_last_modified = max(
+                    enterprise_catalog.get('content_last_modified'),
+                    enterprise_catalog.get('catalog_modified')
+                )
+            last_successful_transmission = self._get_most_recent_transmission_time()
+            if (not last_successful_transmission) or (
+                catalog_last_modified and str(last_successful_transmission) < catalog_last_modified
+            ):
+                catalogs_to_transmit.append(enterprise_catalog)
+
+        if catalogs_to_transmit:
+            return self._get_enterprise_catalog_metadata(catalogs_to_transmit)
+        return OrderedDict([])
+
+    def _get_enterprise_catalog_metadata(self, enterprise_catalogs):
+        """
+        Placeholder
         """
         content_metadata_export = {}
-        content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
-            self.enterprise_customer,
-            enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
-        )
+        content_metadata_items = self.enterprise_catalog_api.get_content_metadata(enterprise_catalogs)
         LOGGER.info(
             'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
             self.enterprise_customer.name,
@@ -146,6 +177,23 @@ class ContentMetadataExporter(Exporter):
             transformed_item[integrated_channel_schema_key] = transformed_value
 
         return transformed_item
+
+    def _get_most_recent_transmission_time(self):
+        """
+        Placeholder
+        """
+        # pylint: disable=invalid-name
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        past_transmissions = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            integrated_channel_code=self.enterprise_configuration.channel_code()
+        ).values('modified').order_by('-modified')
+        if past_transmissions:
+            return past_transmissions[0]['modified']
+        return None
 
 
 class ContentMetadataItemExport:

@@ -143,22 +143,19 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             return {}
 
     @JwtLmsApiClient.refresh_token
-    def get_content_metadata(self, enterprise_customer, enterprise_catalogs=None):
+    def get_content_metadata(self, enterprise_customer_catalogs):
         """
         Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
 
         Arguments:
-            enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer to return content metadata for.
-            enterprise_catalogs (EnterpriseCustomerCatalog): Optional list of EnterpriseCustomerCatalog objects.
+            enterprise_customer_catalogs (EnterpriseCustomerCatalog): list of EnterpriseCustomerCatalog objects.
 
         Returns:
             list: List of dicts containing content metadata.
         """
         content_metadata = OrderedDict()
-        enterprise_customer_catalogs = enterprise_catalogs or enterprise_customer.enterprise_customer_catalogs.all()
-
         for enterprise_customer_catalog in enterprise_customer_catalogs:
-            catalog_uuid = enterprise_customer_catalog.uuid
+            catalog_uuid = enterprise_customer_catalog.get('uuid')
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
             query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
             try:
