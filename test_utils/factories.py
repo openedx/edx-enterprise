@@ -44,7 +44,7 @@ from integrated_channels.degreed.models import (
     DegreedGlobalConfiguration,
     DegreedLearnerDataTransmissionAudit,
 )
-from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, LearnerDataTransmissionAudit
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
@@ -823,3 +823,26 @@ class AdminNotificationFactory(factory.django.DjangoModelFactory):
     text = factory.LazyAttribute(lambda x: FAKER.word())
     start_date = factory.Faker('date_object')
     expiration_date = factory.Faker('date_object')
+
+
+class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
+    """
+    Placeholder
+    """
+
+    class Meta:
+        """
+        Meta for ``ContentMetadataItemTransmission``.
+        """
+        model = ContentMetadataItemTransmission
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    integrated_channel_code = 'CORNERSTONE'
+    content_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    channel_metadata = {
+        'title': 'edX Demonstration Course',
+        'key': 'edX+DemoX',
+        'content_type': 'course',
+        'start': '2030-01-01T00:00:00Z',
+        'end': '2030-03-01T00:00:00Z'
+    }

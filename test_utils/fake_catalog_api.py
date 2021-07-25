@@ -1157,6 +1157,15 @@ FAKE_SEARCH_ALL_COURSE_RESULT_3 = {
     ],
 }
 
+FAKE_CATALOG_RESULT = {
+    'uuid': '0420e487-8f14-4c39-8772-de803781d754',
+    'title': 'for Alex local testing',
+    'enterprise_customer': 'b68fa4bf-53c9-4071-b698-b8d436eb0295',
+    'catalog_query_uuid': None,
+    'content_last_modified': '2021-05-13T14:28:54.679517Z',
+    'catalog_modified': '2021-07-16T15:11:10.521611Z'
+}
+
 
 def get_catalog_courses(catalog_id):
     """
@@ -1299,6 +1308,13 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
         "availability": availability,
         "weeks_to_complete": weeks_to_complete
     }
+
+
+def get_fake_catalog():
+    """
+    Placeholder
+    """
+    return FAKE_CATALOG_RESULT
 
 
 def get_fake_content_metadata():

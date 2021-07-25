@@ -276,7 +276,7 @@ def test_get_content_metadata():
     }
     responses.add(responses.GET, second_url, json=second_expected_response)
 
-    results = client.get_content_metadata(catalog.enterprise_customer, [catalog])
+    results = client.get_content_metadata([catalog])
 
     expected_results = [
         {

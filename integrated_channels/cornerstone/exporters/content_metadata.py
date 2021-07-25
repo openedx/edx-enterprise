@@ -47,6 +47,14 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     }
     SKIP_KEY_IF_NONE = True
 
+    def export_force_all_catalogs(self, **kwargs):
+        """
+        Return the exported and transformed content metadata as a dictionary.
+        """
+        enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
+            self.enterprise_customer.enterprise_customer_catalogs.all()
+        return self._get_enterprise_catalog_metadata(enterprise_customer_catalogs)
+
     def transform_organizations(self, content_metadata_item):
         """
         Return the transformed version of the course organizations

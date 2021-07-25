@@ -12,6 +12,58 @@ from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 
 
+class BaseViewSet(generics.ListAPIView):
+    """
+    Base class for all Cornerstone view sets.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+
+    OAuth2Authentication = get_oauth2authentication_class()
+    if OAuth2Authentication is not None:
+        authentication_classes = (JwtAuthentication, OAuth2Authentication, SessionAuthentication,)
+    else:
+        authentication_classes = (JwtAuthentication, SessionAuthentication,)
+
+    throttle_classes = (ServiceUserThrottle,)
+    renderer_classes = [renderers.JSONRenderer]
+
+
+class CornerstoneCoursesUpdates(BaseViewSet):
+    """
+    Placeholder
+    """
+
+    def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ
+        enterprise_customer_uuid = request.GET.get('ciid')
+        if not enterprise_customer_uuid:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST,
+                data={
+                    "message": (
+                        u"Cornerstone course list API expects ciid parameter."
+                    )
+                })
+
+        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+        if not enterprise_customer:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+                data={
+                    "message": (
+                        u"No enterprise data found for given ciid."
+                    )
+                })
+
+        worker_user = get_enterprise_worker_user()
+        enterprise_config = CornerstoneEnterpriseCustomerConfiguration.objects.get(
+            enterprise_customer=enterprise_customer
+        )
+        exporter = enterprise_config.get_content_metadata_exporter(worker_user)
+        transmitter = enterprise_config.get_content_metadata_transmitter()
+        data = transmitter.transmit(exporter.export())
+        return Response(data)
+
+
 class CornerstoneCoursesListView(generics.ListAPIView):
     """
         **Use Cases**
@@ -71,16 +123,6 @@ class CornerstoneCoursesListView(generics.ListAPIView):
             empty result.
 
     """
-    permission_classes = (permissions.IsAuthenticated,)
-
-    OAuth2Authentication = get_oauth2authentication_class()
-    if OAuth2Authentication is not None:
-        authentication_classes = (JwtAuthentication, OAuth2Authentication, SessionAuthentication,)
-    else:
-        authentication_classes = (JwtAuthentication, SessionAuthentication,)
-
-    throttle_classes = (ServiceUserThrottle,)
-    renderer_classes = [renderers.JSONRenderer]
 
     def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ
         enterprise_customer_uuid = request.GET.get('ciid')
@@ -109,5 +151,5 @@ class CornerstoneCoursesListView(generics.ListAPIView):
         )
         exporter = enterprise_config.get_content_metadata_exporter(worker_user)
         transmitter = enterprise_config.get_content_metadata_transmitter()
-        data = transmitter.transmit(exporter.export())
+        data = transmitter.transmit(exporter.export_force_all_catalogs())
         return Response(data)
