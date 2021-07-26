@@ -143,17 +143,29 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             return {}
 
     @JwtLmsApiClient.refresh_token
-    def get_content_metadata(self, enterprise_customer_catalogs):
+    def get_content_metadata(self, enterprise_customer_catalogs, catalogs_last_modified=None):
         """
         Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
 
         Arguments:
-            enterprise_customer_catalogs (EnterpriseCustomerCatalog): list of EnterpriseCustomerCatalog objects.
+            enterprise_customer_catalogs (List of dicts): list of enterprise catalog data.
+                Example:
+                    [
+                        {
+                            uuid: <catalog UUID>,
+                            title: <catalog title>,
+                                ...
+                        }, {
+                            uuid: <catalog UUID>,
+                            title: <catalog title>,
+                                ...
+                    ]}
 
         Returns:
             list: List of dicts containing content metadata.
         """
         content_metadata = OrderedDict()
+        content_catalog_last_modified = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.get('uuid')
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
@@ -163,6 +175,8 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 for item in utils.traverse_pagination(response, endpoint):
                     content_id = utils.get_content_metadata_item_id(item)
                     content_metadata[content_id] = item
+                    if catalogs_last_modified:
+                        content_catalog_last_modified[content_id] = catalogs_last_modified[catalog_uuid]
             except (SlumberBaseException, ConnectionError, Timeout) as exc:
                 LOGGER.exception(
                     'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
@@ -170,7 +184,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 )
                 raise
 
-        return list(content_metadata.values())
+        return list(content_metadata.values()), content_catalog_last_modified
 
     @JwtLmsApiClient.refresh_token
     def refresh_catalogs(self, enterprise_catalogs):
