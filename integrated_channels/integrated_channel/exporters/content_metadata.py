@@ -9,7 +9,9 @@ enterprise customer.
 
 import json
 from collections import OrderedDict
+from dateutil import parser
 from logging import getLogger
+
 
 from django.apps import apps
 
@@ -79,6 +81,7 @@ class ContentMetadataExporter(Exporter):
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
         catalogs_to_transmit = []
+        catalogs_last_modified = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             enterprise_catalog = self.enterprise_catalog_api.get_enterprise_catalog(enterprise_customer_catalog.uuid)
             if not enterprise_catalog.get('content_last_modified'):
@@ -93,22 +96,26 @@ class ContentMetadataExporter(Exporter):
                     enterprise_catalog.get('content_last_modified'),
                     enterprise_catalog.get('catalog_modified')
                 )
-            last_successful_transmission = self._get_most_recent_transmission_time()
+            last_successful_transmission = self._get_most_recent_catalog_update_time()
             if (not last_successful_transmission) or (
-                catalog_last_modified and str(last_successful_transmission) < catalog_last_modified
+                catalog_last_modified and last_successful_transmission < parser.parse(catalog_last_modified)
             ):
+                catalogs_last_modified[enterprise_catalog.get('uuid')] = catalog_last_modified
                 catalogs_to_transmit.append(enterprise_catalog)
 
         if catalogs_to_transmit:
-            return self._get_enterprise_catalog_metadata(catalogs_to_transmit)
+            return self._get_enterprise_catalog_metadata(catalogs_to_transmit, catalogs_last_modified)
         return OrderedDict([])
 
-    def _get_enterprise_catalog_metadata(self, enterprise_catalogs):
+    def _get_enterprise_catalog_metadata(self, enterprise_catalogs, catalogs_last_modified=None):
         """
         Placeholder
         """
         content_metadata_export = {}
-        content_metadata_items = self.enterprise_catalog_api.get_content_metadata(enterprise_catalogs)
+        content_metadata_items, content_catalog_last_modified = self.enterprise_catalog_api.get_content_metadata(
+            enterprise_catalogs,
+            catalogs_last_modified
+        )
         LOGGER.info(
             'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
             self.enterprise_customer.name,
@@ -122,7 +129,9 @@ class ContentMetadataExporter(Exporter):
                 self.enterprise_configuration,
                 json.dumps(transformed, indent=4),
             )
-            content_metadata_item_export = ContentMetadataItemExport(item, transformed)
+            content_metadata_item_export = ContentMetadataItemExport(
+                item, transformed, content_catalog_last_modified.get(get_content_metadata_item_id(item))
+            )
             content_metadata_export[content_metadata_item_export.content_id] = content_metadata_item_export
         return OrderedDict(sorted(content_metadata_export.items()))
 
@@ -178,7 +187,7 @@ class ContentMetadataExporter(Exporter):
 
         return transformed_item
 
-    def _get_most_recent_transmission_time(self):
+    def _get_most_recent_catalog_update_time(self):
         """
         Placeholder
         """
@@ -189,10 +198,11 @@ class ContentMetadataExporter(Exporter):
         )
         past_transmissions = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            integrated_channel_code=self.enterprise_configuration.channel_code()
-        ).values('modified').order_by('-modified')
+            integrated_channel_code=self.enterprise_configuration.channel_code(),
+            catalog_last_changed__isnull=False,
+        ).values('catalog_last_changed').order_by('-modified')
         if past_transmissions:
-            return past_transmissions[0]['modified']
+            return past_transmissions[0]['catalog_last_changed']
         return None
 
 
@@ -201,7 +211,8 @@ class ContentMetadataItemExport:
     Object representation of a content metadata item export.
     """
 
-    def __init__(self, content_metadata_item, channel_content_metadata_item):
+    def __init__(self, content_metadata_item, channel_content_metadata_item, catalog_last_modified):
         self.content_id = get_content_metadata_item_id(content_metadata_item)
         self.metadata = content_metadata_item
         self.channel_metadata = channel_content_metadata_item
+        self.catalog_last_changed = catalog_last_modified
