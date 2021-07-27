@@ -11,7 +11,7 @@ from pytest import mark
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
 from test_utils import factories
-from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN
+from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN, get_fake_catalog
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -37,7 +37,8 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    def test_content_exporter_export(self, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
+    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
         """
         ``BlackboardContentMetadataExporter``'s ``export`` produces the expected export.
         """
@@ -45,7 +46,9 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         fake_content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
         fake_content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
 
-        mock_get_content_metadata.return_value = list(fake_content_metadata.values())
+        mock_get_content_metadata.return_value = list(fake_content_metadata.values()), {}
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
 

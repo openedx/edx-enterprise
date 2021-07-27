@@ -39,11 +39,13 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    def test_content_exporter_export(self, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
+    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
-        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_get_content_metadata.return_value = get_fake_content_metadata(), {}
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
         exporter = ContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([
@@ -57,7 +59,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
-        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata()
+        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata(), {}
         mock_ent_catalog_api.return_value.get_enterprise_catalog.return_value = get_fake_catalog()
         exporter = ContentMetadataExporter('fake-user', self.config)
         exporter.export()
@@ -90,7 +92,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` raises an exception when DATA_TRANSFORM_MAPPING is invalid.
         """
-        mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata()
+        mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata(), {}
         mock_api_client.return_value.get_enterprise_catalog.return_value = get_fake_catalog()
         ContentMetadataExporter.DATA_TRANSFORM_MAPPING['fake-key'] = 'fake-value'
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -105,14 +107,16 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_export_fetches_content_only_when_update_needed(self, mock_ent_catalog_api):
         """
-        Placeholder
+        Test that when a ContentMetadataItemTransmission exists with a `catalog_last_changed` field that comes after the
+        last modified time of content's associated catalog, we don't fetch the catalog's metadata.
         """
         # Generate a past transmission item that will indicate no updated needed
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
-            integrated_channel_code=self.config.channel_code()
+            integrated_channel_code=self.config.channel_code(),
+            catalog_last_changed='2021-07-16T15:11:10.521611Z'
         )
-        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata()
+        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata(), {}
         mock_ent_catalog_api.return_value.get_enterprise_catalog.return_value = get_fake_catalog()
         exporter = ContentMetadataExporter('fake-user', self.config)
         payload = exporter.export()

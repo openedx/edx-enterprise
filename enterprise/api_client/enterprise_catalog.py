@@ -160,9 +160,14 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                             title: <catalog title>,
                                 ...
                     ]}
+            catalogs_last_modified (Dict): Optional mapping between catalog UUIDs and the last modified at time of the
+                catalog
 
         Returns:
-            list: List of dicts containing content metadata.
+            list(content_metadata): List of content metadata items dicts,
+
+            content_catalog_last_modified: Mapping of content keys to the last modified at time of their associated
+                catalog
         """
         content_metadata = OrderedDict()
         content_catalog_last_modified = {}

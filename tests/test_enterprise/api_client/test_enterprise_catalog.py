@@ -237,6 +237,7 @@ def test_get_content_metadata():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
     catalog = EnterpriseCustomerCatalogFactory()
+    catalog_data = {'uuid': str(catalog.uuid)}
     first_url = _url('enterprise-catalogs/{catalog_uuid}/get_content_metadata/?page_size={page_size}'.format(
         catalog_uuid=catalog.uuid,
         page_size=page_size,
@@ -276,7 +277,7 @@ def test_get_content_metadata():
     }
     responses.add(responses.GET, second_url, json=second_expected_response)
 
-    results = client.get_content_metadata([catalog])
+    results, _ = client.get_content_metadata([catalog_data])
 
     expected_results = [
         {

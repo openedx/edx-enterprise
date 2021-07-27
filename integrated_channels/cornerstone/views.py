@@ -30,7 +30,61 @@ class BaseViewSet(generics.ListAPIView):
 
 class CornerstoneCoursesUpdates(BaseViewSet):
     """
-    Placeholder
+        **Use Cases**
+
+            Get a list of courses that need updated to share on cornerstone filtered by an enterprise customer.
+
+        **Example Requests**
+
+            GET /cornerstone/course-updates?ciid={customer_uuid}
+
+        **Query Parameters for GET**
+
+            * ciid: Filters the result to courses available in catalogs corresponding to the
+              given ciid where value of ciid should be uuid of any enterprise customer.
+
+        **Response Values**
+
+            If the request for information about the course updates is successful, an HTTP 200 "OK" response
+            is returned.
+
+            The HTTP 200 response has the following values.
+
+            * JSON response with a list of the course objects. Each course object has these fields
+
+                * ID: Unique Course id.
+
+                * Title: Title of course.
+
+                * Description: Course overview.
+
+                * URL: URL where user is redirected to.
+
+                * Thumbnail: Url of the course thumbnail image.
+
+                * IsActive: Boolean value indicating if course is active and available.
+
+                * LastModifiedUTC: Time of the last modification made.
+
+                * Duration: Course duration.
+
+                * Partners: List of organizations that are course owners.
+
+                * Languages: List of available languages for a course.
+
+                * Subjects: List of subjects for course.
+
+            If the user is not logged in, a 401 error is returned.
+
+            If the user is not global staff, a 403 error is returned.
+
+            If ciid parameter is not provided, a 400 error is returned.
+
+            If the specified ciid is not valid or any of registered enterprise customers
+            a 404 error is returned.
+
+            If the specified enterprise does not have course catalog an HTTP 200 "OK" response is returned with an
+            empty result.
     """
 
     def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ

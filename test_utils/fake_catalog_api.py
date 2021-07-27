@@ -1162,8 +1162,8 @@ FAKE_CATALOG_RESULT = {
     'title': 'for Alex local testing',
     'enterprise_customer': 'b68fa4bf-53c9-4071-b698-b8d436eb0295',
     'catalog_query_uuid': None,
-    'content_last_modified': '2021-05-13T14:28:54.679517Z',
-    'catalog_modified': '2021-07-16T15:11:10.521611Z'
+    'content_last_modified': '2020-05-13T14:28:54.679517Z',
+    'catalog_modified': '2020-07-16T15:11:10.521611Z'
 }
 
 
@@ -1312,7 +1312,7 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
 
 def get_fake_catalog():
     """
-    Placeholder
+    Returns a fake response from EnterpriseCatalogApiClient.get_enterprise_catalog.
     """
     return FAKE_CATALOG_RESULT
 

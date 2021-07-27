@@ -47,9 +47,9 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     }
     SKIP_KEY_IF_NONE = True
 
-    def export_force_all_catalogs(self, **kwargs):
+    def export_force_all_catalogs(self):
         """
-        Return the exported and transformed content metadata as a dictionary.
+        Return the exported and transformed content metadata as a dictionary regardless if there is an update needed.
         """
         enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
             self.enterprise_customer.enterprise_customer_catalogs.all()
@@ -57,9 +57,8 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
 
     def transform_organizations(self, content_metadata_item):
         """
-        Return the transformed version of the course organizations
-        by converting each organization into cornerstone course partner object.
-        or default Partner if no partner found
+        Return the transformed version of the course organizations by converting each organization into cornerstone
+        course partner object. or default Partner if no partner found
         """
         partners = []
         for org in content_metadata_item.get('organizations') or []:
@@ -69,9 +68,8 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
 
     def transform_is_active(self, content_metadata_item):
         """
-        Return the transformed version of the course is_active status
-        by traversing course runs and setting IsActive to True if any of the course
-        runs have availability value set to `Current`, `Starting Soon` or `Upcoming`.
+        Return the transformed version of the course is_active status by traversing course runs and setting IsActive to
+        True if any of the course runs have availability value set to `Current`, `Starting Soon` or `Upcoming`.
         """
         is_active = False
         for course_run in content_metadata_item.get('course_runs', []):
@@ -130,8 +128,8 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the transformed version of the course description.
 
-        We choose one value out of the course's full description, short description, and title
-        depending on availability and length limits.
+        We choose one value out of the course's full description, short description, and title depending on availability
+        and length limits.
         """
         full_description = content_metadata_item.get('full_description') or ''
         if 0 < len(full_description) <= self.LONG_STRING_LIMIT:  # pylint: disable=len-as-condition
