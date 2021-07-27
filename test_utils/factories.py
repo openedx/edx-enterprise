@@ -827,7 +827,9 @@ class AdminNotificationFactory(factory.django.DjangoModelFactory):
 
 class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
     """
-    Placeholder
+    ``ContentMetadataItemTransmission`` factory.
+
+    Create an instance of ``ContentMetadataItemTransmission`` with minimal boilerplatesss
     """
 
     class Meta:

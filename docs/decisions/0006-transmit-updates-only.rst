@@ -10,9 +10,8 @@ Context
 =======
 The transmit_content_metadata jenkins job (along with the underlying integrated_channels.transmit_content_metadata()
 task and export() method) makes an uncomfortably large number of calls to the the enterprise-catalog service’s
-/api/v1/enterprise-catalog/<uuid>/get_content_metadata endpoint with a relatively low number of customers. The resulting
-response payloads are usually quite large which results in the service’s shared Aurora DB often being pinned at 100% CPU
-usage and causing a myriad of alerts and warnings.
+/api/v1/enterprise-catalog/<uuid>/get_content_metadata endpoint with a relatively low number of customers which results
+in an unacceptably high database load.
 
 At the same time the data being requested by this frequently-running job is often unchanged between runs - content
 metadata tends to change in enterprise-catalog roughly once/day.
@@ -41,7 +40,7 @@ range from "all possible content" to a specific, single course.
 Decisions
 =========
 
-In order to address these performance issues and to more effectively handle on-boarding more customers to the Integrated
+In order to address these performance issues and to more effectively handle onboarding more customers to the Integrated
 Channels, we have decided to address requests to the enterprise catalog on two fronts:
 
 1. Increase the page size of requests going to `/api/v1/enterprise-catalog/<uuid>/get_content_metadata` from a base of
@@ -50,38 +49,23 @@ Channels, we have decided to address requests to the enterprise catalog on two f
 
 2. Add an additional request/check to the Integrated Channel's exporter that will retrieve the last time either a
 catalog or the associated content metadata of a catalog has been changed (whichever is most recent). This timestamp will
-be compared to the most recent time the customer has had a successful transmission of that particular catalog. If there
+be compared to the `catalog_last_changed` field of the ContentMetadataItemTransmission object, which is the `catalog
+last modified` value retrieved from the customer's most recent successful transmission. If there
 is no updated needed, then the exporter will refrain from querying enterprise catalog for the catalog's metadata.
 
 Exceptions
 ==========
 
-All CSOD customers have been told to expect the cornerstone/course-list endpoint will always return a current state of
-the course catalog, meaning that any missing content will be treated as deletes. It is also important to note that
-before this ADR, we were not saving any audits of CSOD related transmissions. As such, there are CSOD specific
-exemptions to this ADR- specifically we are:
+1. The Cornerstone (CSOD) LMS Integration will not use the 'transmit only updates' rule."
 
-1. adding an export_force_all_catalogs method to the content metadata exporter that effectively functions exactly the
-same as the current export method, ignoring updates needed and transmiting all catalogs.
-
-2. adding a new view endpoint `course-updates` that functions exactly as the existing `course-list` except it will
-exclude metadata from catalogs that do not require updates.
-
-3. maintaining the existing export behavior in the `course-list` endpoint
-
-4. making create, update and deletes of ContentMetadataItemTransmission objects on all CSOD transmissions the same way
-all other channels currently do.
+2. CSOD related transmissions will record ContentMetadataItemTransmission objects, same as all other channels.
 
 Consequences
 ============
 
-The transmit-content-metadata jenkins job can continue to run every 10 minutes, so that it catches and transmits updated
-content metadata when the metadata actually changes. However, the cost of the average run in terms of CPU usage will go
-down significantly. That being said, f any metadata associated with a catalog has changed between job run N and N+1,
-then we’ll transmit the full catalog to the integrated channel during run N+1. Typically, the metadata in
-enterprise-catalog is updated once per day, so we’d expect to only be transmitting catalog data to these integrated
-channels once a day once the proposed change is implemented. Once CSOD customers are informed and agree on a full
-feature list of the new `course-updates` endpoint, they will have the same "update only" behavior in their
-transmissions. However, it's important to note that CSOD customers are not included in the scheduled
-transmit-content-metadata jenkins job and as such, their exclusion from the updated logic will not have a serious
-impact.
+The transmit-content-metadata jenkins job can continue to run on a frequent schedule without having to worry about
+unacceptably large database loads, as it will record when updates are needed and will only request data when necessary.
+If any metadata associated with a catalog has changed between job run N and N+1, then we’ll transmit the full catalog to
+the integrated channel during run N+1. It should be noted that there could be potential further improvements to the
+entire export process, as currently we are requesting the entire catalog and not only updated content. Reducing requests
+to only the updated metadata could further reduce database loads.

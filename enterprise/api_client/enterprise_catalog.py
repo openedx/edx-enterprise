@@ -143,31 +143,51 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             return {}
 
     @JwtLmsApiClient.refresh_token
-    def get_content_metadata(self, enterprise_customer_catalogs, catalogs_last_modified=None):
+    def get_content_metadata(self, enterprise_customer=None, enterprise_catalogs=None, catalogs_last_modified=None):
         """
-        Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
+        Return all content metadata contained in the catalogs associated with the EnterpriseCustomer. Note: this method
+        handles two cases for content metadata retrieval. Although all parameters are listed as optional, a combination
+        is always required based on use case.
+
+        Use Case (1): If enterprise_customer is specified, then enterprise_catalogs is optional but must be a list of
+        EnterpriseCustomerCatalog objects if used. catalogs_last_modified cannot be used if enterprise_customer is
+        supplied. If enterprise_catalogs is used, this method will fetch content metadata for only the provided
+        catalogs, else all catalogs under the provided enterprise_customer will be fetched.
+
+        Use Case (2): If catalogs_last_modified is specified, then enterprise_catalogs MUST be provided. However,
+        enterprise_catalogs has be a list of dictionaries containing the a key/value pairs of `uuid: <catalog UUID>`.
+        enterprise_customer cannot be used if catalogs_last_modified is supplied. if catalogs_last_modified is used,
+        this method will fetch content metadata for the provided catalogs only.
 
         Arguments:
-            enterprise_customer_catalogs (List of dicts): list of enterprise catalog data.
-                Example:
-                    [
-                        {
-                            uuid: <catalog UUID>,
-                            title: <catalog title>,
-                                ...
-                        }, {
-                            uuid: <catalog UUID>,
-                            title: <catalog title>,
-                                ...
-                    ]}
+            enterprise_customer (EnterpriseCustomer): Optional param- the enterprise customer from which to fetch
+                content.
+            enterprise_catalogs (List): list of enterprise catalog data.
+            catalogs_last_modified (Dict): Optional mapping between catalog UUIDs and the last modified at time of the
+                catalog
 
         Returns:
-            list: List of dicts containing content metadata.
+            list(content_metadata): List of content metadata items dicts,
+
+            content_catalog_last_modified: (Optional) Mapping of content keys to the last modified at time of their
+            associated catalog
         """
+        if not catalogs_last_modified:
+            if not enterprise_catalogs:
+                enterprise_customer_catalogs = enterprise_customer.enterprise_customer_catalogs.all()
+            else:
+                enterprise_customer_catalogs = enterprise_catalogs
+        else:
+            enterprise_customer_catalogs = enterprise_catalogs
+
         content_metadata = OrderedDict()
         content_catalog_last_modified = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
-            catalog_uuid = enterprise_customer_catalog.get('uuid')
+            if catalogs_last_modified and enterprise_catalogs:
+                catalog_uuid = enterprise_customer_catalog.get('uuid')
+            else:
+                catalog_uuid = enterprise_customer_catalog.uuid
+
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
             query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
             try:
@@ -183,8 +203,9 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                     catalog_uuid, str(exc)
                 )
                 raise
-
-        return list(content_metadata.values()), content_catalog_last_modified
+        if catalogs_last_modified:
+            return list(content_metadata.values()), content_catalog_last_modified
+        return list(content_metadata.values())
 
     @JwtLmsApiClient.refresh_token
     def refresh_catalogs(self, enterprise_catalogs):

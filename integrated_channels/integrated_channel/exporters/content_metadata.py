@@ -9,11 +9,10 @@ enterprise customer.
 
 import json
 from collections import OrderedDict
-from dateutil import parser
 from logging import getLogger
 
-
 from django.apps import apps
+from django.utils import dateparse
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
@@ -75,7 +74,7 @@ class ContentMetadataExporter(Exporter):
 
     def export(self, **kwargs):
         """
-        Placeholder
+        Export transformed content metadata if there has been an update to the consumer's catalogs
         """
         enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
             self.enterprise_customer.enterprise_customer_catalogs.all()
@@ -84,21 +83,17 @@ class ContentMetadataExporter(Exporter):
         catalogs_last_modified = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             enterprise_catalog = self.enterprise_catalog_api.get_enterprise_catalog(enterprise_customer_catalog.uuid)
-            if not enterprise_catalog.get('content_last_modified'):
-                if enterprise_catalog.get('catalog_modified'):
-                    catalog_last_modified = enterprise_catalog.get('catalog_modified')
-                else:
-                    catalog_last_modified = None
-            elif not enterprise_catalog.get('catalog_modified'):
-                catalog_last_modified = enterprise_catalog.get('content_last_modified')
+            if not enterprise_catalog.get('content_last_modified') and enterprise_catalog.get('catalog_modified'):
+                catalog_last_modified = None
             else:
                 catalog_last_modified = max(
-                    enterprise_catalog.get('content_last_modified'),
-                    enterprise_catalog.get('catalog_modified')
+                    enterprise_catalog.get('content_last_modified', '0'),
+                    enterprise_catalog.get('catalog_modified', '0')
                 )
+
             last_successful_transmission = self._get_most_recent_catalog_update_time()
             if (not last_successful_transmission) or (
-                catalog_last_modified and last_successful_transmission < parser.parse(catalog_last_modified)
+                catalog_last_modified and last_successful_transmission < dateparse.parse_datetime(catalog_last_modified)
             ):
                 catalogs_last_modified[enterprise_catalog.get('uuid')] = catalog_last_modified
                 catalogs_to_transmit.append(enterprise_catalog)
@@ -109,12 +104,12 @@ class ContentMetadataExporter(Exporter):
 
     def _get_enterprise_catalog_metadata(self, enterprise_catalogs, catalogs_last_modified=None):
         """
-        Placeholder
+        Retrieve and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
         content_metadata_items, content_catalog_last_modified = self.enterprise_catalog_api.get_content_metadata(
-            enterprise_catalogs,
-            catalogs_last_modified
+            enterprise_catalogs=enterprise_catalogs,
+            catalogs_last_modified=catalogs_last_modified
         )
         LOGGER.info(
             'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
@@ -189,7 +184,8 @@ class ContentMetadataExporter(Exporter):
 
     def _get_most_recent_catalog_update_time(self):
         """
-        Placeholder
+        Retrieve the last modified time of the catalog belonging to the most recent ContentMetadataItemTransmission for
+        an enterprise customer.
         """
         # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(
@@ -211,7 +207,7 @@ class ContentMetadataItemExport:
     Object representation of a content metadata item export.
     """
 
-    def __init__(self, content_metadata_item, channel_content_metadata_item, catalog_last_modified):
+    def __init__(self, content_metadata_item, channel_content_metadata_item, catalog_last_modified=None):
         self.content_id = get_content_metadata_item_id(content_metadata_item)
         self.metadata = content_metadata_item
         self.channel_metadata = channel_content_metadata_item

@@ -4,14 +4,19 @@ Tests for Blackboard content metadata exporters.
 """
 
 import unittest
-from collections import OrderedDict
 
 import mock
 from pytest import mark
 
+from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
 from test_utils import factories
-from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN
+from test_utils.fake_catalog_api import (
+    FAKE_COURSE,
+    FAKE_COURSE_RUN,
+    get_fake_catalog,
+    get_fake_content_metadata_no_program,
+)
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -37,15 +42,24 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    def test_content_exporter_export(self, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
+    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
         """
         ``BlackboardContentMetadataExporter``'s ``export`` produces the expected export.
         """
-        fake_content_metadata = OrderedDict()
-        fake_content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
-        fake_content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
+        fake_content_metadata = get_fake_content_metadata_no_program()
+        fake_catalog = get_fake_catalog()
+        fake_catalog_modified_at = max(
+            fake_catalog['content_last_modified'], fake_catalog['catalog_modified']
+        )
+        fake_catalogs_last_modified = {
+            get_content_metadata_item_id(
+                content_metadata
+            ): fake_catalog_modified_at for content_metadata in fake_content_metadata
+        }
+        mock_get_content_metadata.return_value = fake_content_metadata, fake_catalogs_last_modified
+        mock_get_enterprise_catalog.return_value = fake_catalog
 
-        mock_get_content_metadata.return_value = list(fake_content_metadata.values())
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
 
