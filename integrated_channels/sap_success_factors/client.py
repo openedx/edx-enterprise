@@ -148,15 +148,12 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             # TODO:
             #   if/when we decide we should use the generic course completion path
             #   for all customers, we should update the _payload_data method on the
-            #   SapSuccessFactorsLearnerDataTransmissionAudit class instead of doing this json load/dump
-            # Explanation:
-            #  json.loads loads "true" as True and when dumped again will be `true` (without quotes)
-            #  The initial payload explicitly sets the value to "true" *before* the dump, and thus it dumps with quotes.
+            #   SapSuccessFactorsLearnerDataTransmissionAudit class instead of doing this
             payload_to_update = json.loads(payload)
-            payload = json.dumps(payload_to_update)
+            payload_to_update['courseCompleted'] = bool(payload_to_update['courseCompleted'] == 'true')
             return self._call_post_with_session(
                 base_url + self.GENERIC_COURSE_COMPLETION_PATH,
-                payload
+                json.dumps(payload_to_update)
             )
 
         return self._call_post_with_user_override(
