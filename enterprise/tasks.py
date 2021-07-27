@@ -3,6 +3,8 @@
 Django tasks.
 """
 
+from django.core import mail
+from enterprise.utils import send_email_notification_message
 from logging import getLogger
 
 from celery import shared_task
@@ -10,9 +12,45 @@ from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.db import IntegrityError
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomerUser,
+    EnterpriseEnrollmentSource,
+)
 
 LOGGER = getLogger(__name__)
+
+
+@shared_task
+@set_code_owner_attribute
+def notify_enrolled_learners(
+    enterprise_customer_uuid,
+    admin_enrollment,
+    email_items,
+):
+    """
+    Send enrollment notifications to specified learners
+
+    Arguments:
+        * email_items: list of dictionary objects with fields:
+        *
+        *   enterprise_customer_uuid (string)
+        *   course_id (string)
+        *   user (dict) : one of the formats:
+              - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
+              - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
+        *   admin_enrollment=False : If True, this indicates admin based enrollment (e.g., bulk enrollment)
+    """
+    with mail.get_connection() as email_conn:
+        for item in email_items:
+            send_email_notification_message(
+                item['user'],
+                item['enrolled_in'],
+                item['dashboard_url'],
+                enterprise_customer_uuid,
+                email_connection=email_conn,
+                admin_enrollment=admin_enrollment,
+            )
 
 
 @shared_task

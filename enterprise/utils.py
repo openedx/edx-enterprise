@@ -455,11 +455,30 @@ def find_enroll_email_template(enterprise_customer, template_type):
     return enterprise_template_config
 
 
+def create_dict_from_user(user):
+    """
+    Returns one of the following based on the type of user object:
+        - 1: { 'first_name': name, 'username': user_name, 'email': email } (if User object)
+        - 2: { 'user_email' : user_email } (if PendingEnterpriseCustomerUser object)
+    """
+    if 'first_name' in user and 'username' in user:
+        return {
+            'first_name': user['first_name'],
+            'username': user['username'],
+            'email': user['email'],
+        }
+    elif 'user_email' in user:
+        return {
+            'user_email': user['user_email']
+        }
+    raise TypeError("Invalid object, need either User or PendingEnterpriseCustomerUser type object")
+
+
 def send_email_notification_message(
         user,
         enrolled_in,
         dashboard_url,
-        enterprise_customer,
+        enterprise_customer_uuid,
         email_connection=None,
         admin_enrollment=False,
 ):
@@ -467,8 +486,9 @@ def send_email_notification_message(
     Send an email notifying a user about their enrollment in a course.
 
     Arguments:
-        user: Either a User object or a PendingEnterpriseCustomerUser that we can use
-            to get details for the email
+        user: a dict with either of the following forms:
+              - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
+              - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
         enrolled_in (dict): The dictionary contains details of the enrollable object
             (either course or program) that the user enrolled in. This MUST contain
             a `name` key, and MAY contain the other following keys:
@@ -478,28 +498,29 @@ def send_email_notification_message(
                     "MicroMasters" would be the branding for a "MicroMasters Program"
                 - start: A datetime object indicating when the enrollable will be available.
         dashboard_url: link to enterprise customer's unique homepage for user
-        enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
+        enterprise_customer_uuid: The EnterpriseCustomer uuid that the enrollment was created using.
         email_connection: An existing Django email connection that can be used without
             creating a new connection for each individual message
         admin_enrollment: If true, uses admin enrollment template instead of default ones.
     """
-    if hasattr(user, 'first_name') and hasattr(user, 'username'):
+    if 'first_name' in user and 'username' in user:
         # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
         # template slightly differently to make sure weird stuff doesn't happen.
-        user_name = user.first_name
+        user_name = user['first_name']
         if not user_name:
-            user_name = user.username
+            user_name = user['username']
     else:
         user_name = None
 
-    # Users have an `email` attribute; PendingEnterpriseCustomerUsers have `user_email`.
-    if hasattr(user, 'email'):
-        user_email = user.email
-    elif hasattr(user, 'user_email'):
-        user_email = user.user_email
+    # User-like dicts have an `email` attribute; PendingEnterpriseCustomerUser-like have `user_email`.
+    if 'email' in user:
+        user_email = user['email']
+    elif 'user_email' in user:
+        user_email = user['user_email']
     else:
         raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
 
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
     msg_context = {
         'user_name': user_name,
         'enrolled_in': enrolled_in,

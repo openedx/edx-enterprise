@@ -61,6 +61,7 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
+    create_dict_from_user,
     get_configuration_value,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
@@ -657,16 +658,26 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
+    def prepare_notification_content(self, catalog_api_user, course_id, users, admin_enrollment=False):
         """
-        Notify learners about a course in which they've been enrolled.
+        Prepare serializable contents to send emails with (if using tasks to send emails)
 
-        Args:
-            catalog_api_user: The user for calling the Catalog API
-            course_id: The specific course the learners were enrolled in
-            users: An iterable of the users or pending users who were enrolled
-            admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
-                When true, we use the admin enrollment template instead.
+        Returns: A list of dictionary objects that are of the form:
+          {
+              "user": user
+                "enrolled_in": {
+                    'name': course_name,
+                    'url': destination_url,
+                    'type': 'course',
+                    'start': course_start,
+                },
+                "dashboard_url": dashboard_url,
+                "enterprise_customer_uuid": self.uuid,
+                "admin_enrollment": admin_enrollment,
+          }
+          where user is one of
+              - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
+              - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
@@ -723,20 +734,51 @@ class EnterpriseCustomer(TimeStampedModel):
                 )
             )
 
+        email_items = []
+        for user in users:
+            login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
+            destination_url = destination_url.format(login_or_register=login_or_register)
+            email_items.append({
+                "user": utils.create_dict_from_user(user),
+                "enrolled_in": {
+                    'name': course_name,
+                    'url': destination_url,
+                    'type': 'course',
+                    'start': course_start,
+                },
+                "dashboard_url": dashboard_url,
+                "enterprise_customer_uuid": self.uuid,
+                "admin_enrollment": admin_enrollment,
+            })
+        return email_items
+
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
+        """
+        Notify learners about a course in which they've been enrolled.
+
+        Args:
+            catalog_api_user: The user for calling the Catalog API
+            course_id: The specific course the learners were enrolled in
+            users: An iterable of the users or pending users who were enrolled
+            admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
+                When true, we use the admin enrollment template instead.
+        """
+        email_items = self.prepare_notification_content(
+            catalog_api_user,
+            course_id,
+            users,
+            admin_enrollment,
+        )
+        # the model cannot call the tasks/ notify_enrolled_learners()
+        # due to circular dep. Eventually all usages of `notify_enrolled_learners` should use
+        # the task instead of calling this method directly
         with mail.get_connection() as email_conn:
-            for user in users:
-                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
-                destination_url = destination_url.format(login_or_register=login_or_register)
+            for item in email_items:
                 utils.send_email_notification_message(
-                    user=user,
-                    enrolled_in={
-                        'name': course_name,
-                        'url': destination_url,
-                        'type': 'course',
-                        'start': course_start,
-                    },
-                    dashboard_url=dashboard_url,
-                    enterprise_customer=self,
+                    item['user'],
+                    item['enrolled_in'],
+                    item['dashboard_url'],
+                    self.uuid,
                     email_connection=email_conn,
                     admin_enrollment=admin_enrollment,
                 )

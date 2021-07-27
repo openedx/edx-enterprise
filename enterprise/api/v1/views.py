@@ -3,6 +3,7 @@
 Views for enterprise api version 1 endpoint.
 """
 
+from enterprise.tasks import notify_enrolled_learners
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -318,12 +319,13 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 ))
                 track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, request.user.id, course_run)
                 if serializer.validated_data.get('notify'):
-                    enterprise_customer.notify_enrolled_learners(
+                    email_items = enterprise_customer.prepare_notification_content(
                         catalog_api_user=request.user,
                         course_id=course_run,
                         users=pending_users | existing_users,
                         admin_enrollment=True,
                     )
+                    notify_enrolled_learners.delay(enterprise_customer.uuid, True, email_items)
 
         if email_errors:
             results['invalid_email_addresses'] = email_errors
