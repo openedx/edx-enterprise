@@ -3487,7 +3487,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             )
         else:
             mock_prepare_notification.assert_not_called()
-            mock_notify_enroll_learners_task.assert_not_called()
+            mock_notify_task.assert_not_called()
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
