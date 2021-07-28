@@ -9,8 +9,14 @@ import mock
 from pytest import mark
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
-from enterprise.tasks import create_enterprise_enrollment
-from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
+from enterprise.tasks import create_enterprise_enrollment, send_enterprise_email_notification
+from enterprise.utils import serialize_notification_content
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 
 @mark.django_db
@@ -99,3 +105,35 @@ class TestEnterpriseTasks(unittest.TestCase):
             self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 1
+
+    @mock.patch('enterprise.tasks.mail.get_connection')
+    @mock.patch('enterprise.tasks.send_email_notification_message')
+    def test_send_enterprise_email_notification(self, mock_send_notification, mock_email_conn):
+        enterprise_customer = EnterpriseCustomerFactory()
+        pending_user = PendingEnterpriseCustomerUserFactory()
+        range_list = range(1, 10)
+        users = [UserFactory(username=f'user{user_id}') for user_id in range_list]
+        course_details = {'title': 'course_title', 'start': '2021-09-21T00:01:10'}
+        admin_enrollment = True
+        mock_email_conn.return_value = mock.MagicMock()
+        email_items = serialize_notification_content(
+            enterprise_customer,
+            course_details,
+            self.FAKE_COURSE_ID,
+            users + [pending_user],
+            admin_enrollment,
+        )
+        send_enterprise_email_notification(
+            enterprise_customer.uuid,
+            admin_enrollment,
+            email_items,
+        )
+        calls = [mock.call(
+            item['user'],
+            item['enrolled_in'],
+            item['dashboard_url'],
+            enterprise_customer.uuid,
+            email_connection=mock_email_conn,
+            admin_enrollment=admin_enrollment,
+        ) for item in email_items]
+        mock_send_notification.assert_has_calls(calls)
