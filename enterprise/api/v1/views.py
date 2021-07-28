@@ -3,7 +3,6 @@
 Views for enterprise api version 1 endpoint.
 """
 
-from enterprise.tasks import notify_enrolled_learners
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -58,6 +57,7 @@ from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
+from enterprise.tasks import notify_enrolled_learners
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,

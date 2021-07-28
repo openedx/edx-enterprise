@@ -3339,7 +3339,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'email': 'abc@test.com',
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                     'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
-                }]
+                }],
+                'notify': 'true',
             },
             'expected_code': 202,
             'expected_response': {
@@ -3427,9 +3428,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.api.v1.views.notify_enrolled_learners.delay')
+    @mock.patch("enterprise.models.EnterpriseCustomer.prepare_notification_content")
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
+        mock_prepare_notification_content,
+        mock_notify_enroll_learners_task,
         mock_track_enroll,
         mock_get_course_mode,
         body,
@@ -3453,6 +3458,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
+
         response = self.client.post(
             settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
             data=json.dumps(body),
@@ -3468,6 +3474,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
         else:
             mock_track_enroll.assert_not_called()
+
+        if 'notify' in body:
+            mock_prepare_notification_content.assert_called_once()
+            mock_notify_enroll_learners_task.assert_called_once()
+        else:
+            mock_prepare_notification_content.assert_not_called()
+            mock_notify_enroll_learners_task.assert_not_called()
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
