@@ -28,14 +28,13 @@ def notify_enrolled_learners(
     Send enrollment notifications to specified learners
 
     Arguments:
-        * email_items: list of dictionary objects with fields:
+        * enterprise_customer_uuid (UUID)
+        * admin_enrollment=False : If True, this indicates admin based enrollment (e.g., bulk enrollment)
         *
-        *   enterprise_customer_uuid (string)
-        *   course_id (string)
-        *   user (dict) : one of the formats:
-              - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
-              - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
-        *   admin_enrollment=False : If True, this indicates admin based enrollment (e.g., bulk enrollment)
+        * email_items: list of dictionary objects with keys:
+        *   user (dict)
+        *   enrolled_in (dict): name and optionally other keys needed by templates
+        *   dashboard_url (str)
     """
     with mail.get_connection() as email_conn:
         for item in email_items:
