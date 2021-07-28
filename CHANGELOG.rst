@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.9]
+--------
+* Fix SAP Course Completion payload format again.
+
 [3.27.8]
 --------
 * Fix SAP Course Completion payload format.
