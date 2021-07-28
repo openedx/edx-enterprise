@@ -32,7 +32,9 @@ def notify_enrolled_learners(
         * admin_enrollment=False : If True, this indicates admin based enrollment (e.g., bulk enrollment)
         *
         * email_items: list of dictionary objects with keys:
-        *   user (dict)
+        *   user (dict): a dict with either of the following forms:
+              - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
+              - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
         *   enrolled_in (dict): name and optionally other keys needed by templates
         *   dashboard_url (str)
     """
