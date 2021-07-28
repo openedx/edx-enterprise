@@ -16,7 +16,7 @@ from six.moves import range
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from enterprise.api_client.lms import parse_lms_api_datetime
+from enterprise.utils import parse_lms_api_datetime
 
 UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'

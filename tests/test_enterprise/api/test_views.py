@@ -27,6 +27,7 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
+from django.db import IntegrityError
 from django.test import override_settings
 from django.utils import timezone
 
@@ -69,7 +70,7 @@ from test_utils import (
     update_program_with_enterprise_context,
 )
 from test_utils.decorators import mock_api_response
-from test_utils.factories import FAKER
+from test_utils.factories import FAKER, PendingEnterpriseCustomerUserFactory
 from test_utils.fake_enterprise_api import get_default_branding_object
 
 fake = Faker()
@@ -3428,12 +3429,10 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.track_enrollment')
-    @mock.patch('enterprise.api.v1.views.notify_enrolled_learners.delay')
-    @mock.patch("enterprise.models.EnterpriseCustomer.prepare_notification_content")
+    @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
-        mock_prepare_notification,
         mock_notify_task,
         mock_track_enroll,
         mock_get_course_mode,
@@ -3448,13 +3447,10 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         This test currently does not create any users so is testing the pending
         enrollments case.
         """
-        factories.EnterpriseCustomerFactory(
+        enterprise_customer = factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
             name="test_enterprise"
         )
-
-        email_items = [{}]
-        mock_prepare_notification.return_value = email_items
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
@@ -3478,15 +3474,36 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         else:
             mock_track_enroll.assert_not_called()
 
+        # verify notification sent correctly for each course to applicable learners
         if 'notify' in body:
-            mock_prepare_notification.assert_called_once()
-            mock_notify_task.assert_called_once_with(
-                uuid.UUID(FAKE_UUIDS[0]),
-                True,
-                email_items,
-            )
+            unique_course_keys = set([item['course_run_key'] for item in body['licenses_info']])
+            unique_learners = set([item['email'] for item in body['licenses_info']])
+            unique_ent_customer_users = set()
+            for learner in unique_learners:
+                try:
+                    # alternative was to have a factory that uses django_get_or_create
+                    # but did not want to change the existing factory or create a new one
+                    unique_ent_customer_users.add(
+                        PendingEnterpriseCustomerUser.objects.get(user_email=learner)
+                    )
+                except PendingEnterpriseCustomerUser.DoesNotExist:
+                    unique_ent_customer_users.add(PendingEnterpriseCustomerUserFactory(
+                        enterprise_customer=enterprise_customer,
+                        user_email=learner
+                    ))
+            request_user = self.user
+
+            def _make_call(course_run, enrolled_learners):
+                return mock.call(
+                    catalog_api_user=request_user,
+                    course_id=course_run,
+                    users=enrolled_learners,
+                    admin_enrollment=True,
+                )
+            mock_calls = [_make_call(course_run, unique_ent_customer_users) for course_run in unique_course_keys]
+
+            mock_notify_task.assert_has_calls(mock_calls)
         else:
-            mock_prepare_notification.assert_not_called()
             mock_notify_task.assert_not_called()
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')

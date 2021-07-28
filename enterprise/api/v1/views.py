@@ -57,7 +57,6 @@ from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
-from enterprise.tasks import notify_enrolled_learners
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
@@ -319,13 +318,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 ))
                 track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, request.user.id, course_run)
                 if serializer.validated_data.get('notify'):
-                    email_items = enterprise_customer.prepare_notification_content(
-                        request.user,
-                        course_run,
-                        pending_users | existing_users,
-                        True,
+                    enterprise_customer.notify_enrolled_learners(
+                        catalog_api_user=request.user,
+                        course_id=course_run,
+                        users=pending_users | existing_users,
+                        admin_enrollment=True,
                     )
-                    notify_enrolled_learners.delay(enterprise_customer.uuid, True, email_items)
 
         if email_errors:
             results['invalid_email_addresses'] = email_errors

@@ -8,6 +8,7 @@ import unittest
 from collections import namedtuple
 
 import ddt
+from django.forms.models import model_to_dict
 import mock
 import pytz
 from faker import Factory as FakerFactory
@@ -28,7 +29,6 @@ from enterprise.models import (
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
     SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
-    create_dict_from_user,
     find_enroll_email_template,
 )
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -434,7 +434,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         if user is None:
             with raises(TypeError):
                 utils.send_email_notification_message(
-                    create_dict_from_user(user),
+                    model_to_dict(user),
                     enrolled_in,
                     dashboard_url,
                     enterprise_customer.uuid
@@ -444,7 +444,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             user_cls = user.pop('class')
             user = user_cls(**user)
             utils.send_email_notification_message(
-                create_dict_from_user(user),
+                model_to_dict(user),
                 enrolled_in,
                 dashboard_url,
                 enterprise_customer.uuid,
@@ -486,7 +486,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         dashboard_url = 'http://lms.example.com'
 
         utils.send_email_notification_message(
-            create_dict_from_user(user),
+            model_to_dict(user),
             enrolled_in,
             dashboard_url,
             enterprise_customer.uuid,
@@ -627,7 +627,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         if user is None:
             with raises(TypeError):
                 utils.send_email_notification_message(
-                    create_dict_from_user(user),
+                    model_to_dict(user),
                     enrolled_in,
                     dashboard_url,
                     enterprise_customer.uuid,
@@ -637,7 +637,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             user_cls = user.pop('class')
             user = user_cls(**user)
             utils.send_email_notification_message(
-                create_dict_from_user(user),
+                model_to_dict(user),
                 enrolled_in,
                 dashboard_url,
                 enterprise_customer.uuid,
@@ -693,7 +693,7 @@ class TestEnterpriseUtils(unittest.TestCase):
 
         conn = mail.get_connection()
         utils.send_email_notification_message(
-            create_dict_from_user(user),
+            model_to_dict(user),
             enrolled_in,
             dashboard_url,
             enterprise_customer.uuid,

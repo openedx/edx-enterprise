@@ -36,6 +36,7 @@ from enterprise.constants import (
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
+    LMS_API_DATETIME_FORMAT,
 )
 from enterprise.management.commands.assign_enterprise_user_roles import Command as AssignEnterpriseUserRolesCommand
 from enterprise.models import (
@@ -338,7 +339,7 @@ COURSE_KEY = 'edX+DemoX'
 # Mock passing certificate data
 MOCK_PASSING_CERTIFICATE = dict(
     grade='A-',
-    created_date=NOW.strftime(lms_api.LMS_API_DATETIME_FORMAT),
+    created_date=NOW.strftime(LMS_API_DATETIME_FORMAT),
     status='downloadable',
     is_passing=True,
 )
@@ -346,7 +347,7 @@ MOCK_PASSING_CERTIFICATE = dict(
 # Mock failing certificate data
 MOCK_FAILING_CERTIFICATE = dict(
     grade='D',
-    created_date=NOW.strftime(lms_api.LMS_API_DATETIME_FORMAT),
+    created_date=NOW.strftime(LMS_API_DATETIME_FORMAT),
     status='downloadable',
     is_passing=False,
     percent_grade=0.6,

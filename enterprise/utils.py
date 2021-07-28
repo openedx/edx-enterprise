@@ -26,11 +26,13 @@ from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
 from django.db import utils
+from django.forms.models import model_to_dict
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
+from django.utils.http import urlencode, urlquote
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -38,6 +40,8 @@ from django.utils.translation import ungettext
 from enterprise.constants import (
     ALLOWED_TAGS,
     DEFAULT_CATALOG_CONTENT_FILTER,
+    LMS_API_DATETIME_FORMAT,
+    LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
     PROGRAM_TYPE_DESCRIPTION,
     CourseModes,
@@ -455,23 +459,104 @@ def find_enroll_email_template(enterprise_customer, template_type):
     return enterprise_template_config
 
 
-def create_dict_from_user(user):
+def serialize_notification_content(
+    enterprise_customer,
+    course_details,
+    course_id,
+    users,
+    admin_enrollment=False,
+):
     """
-    Returns one of the following based on the type of user object:
-        - 1: { 'first_name': name, 'username': user_name, 'email': email } (if User object)
-        - 2: { 'user_email' : user_email } (if PendingEnterpriseCustomerUser object)
+    Prepare serializable contents to send emails with (if using tasks to send emails)
+
+    Arguments:
+    * enterprise_customer (enterprise.models.EnterpriseCustomer)
+    * course_details (dict): With at least 'title' and 'start' keys (usually obtained via CourseCatalogApiClient)
+    * course_id (str)
+    * users (list): list of users to enroll (each user should be a User or PendingEnterpriseCustomerUser)
+
+    Returns: A list of dictionary objects that are of the form:
+      {
+        "user": user
+        "enrolled_in": {
+            'name': course_name,
+            'url': destination_url,
+            'type': 'course',
+            'start': course_start,
+        },
+        "dashboard_url": dashboard_url,
+        "enterprise_customer_uuid": self.uuid,
+        "admin_enrollment": admin_enrollment,
+      }
+      where user is one of
+          - 1: { 'first_name': name, 'username': user_name, 'email': email } (dict of User object)
+          - 2: { 'user_email' : user_email } (dict of PendingEnterpriseCustomerUser object)
     """
-    if hasattr(user, 'first_name') and hasattr(user, 'username'):
-        return {
-            'first_name': user.first_name,
-            'username': user.username,
-            'email': user.email,
-        }
-    if hasattr(user, 'user_email'):
-        return {
-            'user_email': user.user_email
-        }
-    raise TypeError("Invalid object, need either User or PendingEnterpriseCustomerUser type object")
+    dashboard_url = None
+    course_name = course_details.get('title')
+    if admin_enrollment:
+        course_path = 'course/{course_id}'.format(course_id=course_id)
+        dashboard_url = get_configuration_value_for_site(
+            enterprise_customer.site,
+            'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+            settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+        )
+        destination_url = '{site}/{login_or_register}?next=/{slug}/{course_path}'.format(
+            site=dashboard_url,
+            login_or_register='{login_or_register}',  # We don't know the value at this time
+            slug=enterprise_customer.slug,
+            course_path=course_path
+        )
+    else:
+        course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+        params = {}
+        # add tap_hint if there is only one IdP attached with enterprise_customer
+        if enterprise_customer.has_single_idp:
+            params = {'tpa_hint': enterprise_customer.identity_providers.first().provider_id}
+
+        elif enterprise_customer.has_multiple_idps and enterprise_customer.default_provider_idp:
+            params = {'tpa_hint': enterprise_customer.default_provider_idp.provider_id}
+        course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+
+        lms_root_url = get_configuration_value_for_site(
+            enterprise_customer.site,
+            'LMS_ROOT_URL',
+            settings.LMS_ROOT_URL
+        )
+        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
+            site=lms_root_url,
+            login_or_register='{login_or_register}',  # We don't know the value at this time
+            course_path=course_path
+        )
+
+    try:
+        course_start = parse_lms_api_datetime(course_details.get('start'))
+    except (TypeError, ValueError):
+        course_start = None
+        LOGGER.exception(
+            'None or empty value passed as course start date.\nCourse Details:\n{course_details}'.format(
+                course_details=course_details,
+            )
+        )
+
+    email_items = []
+    for user in users:
+        is_pending_user = hasattr(user, 'user_email') and not hasattr(user, 'first_name')
+        login_or_register = 'register' if is_pending_user else 'login'
+        destination_url = destination_url.format(login_or_register=login_or_register)
+        email_items.append({
+            "user": model_to_dict(user),
+            "enrolled_in": {
+                'name': course_name,
+                'url': destination_url,
+                'type': 'course',
+                'start': course_start,
+            },
+            "dashboard_url": dashboard_url,
+            "enterprise_customer_uuid": enterprise_customer.uuid,
+            "admin_enrollment": admin_enrollment,
+        })
+    return email_items
 
 
 def send_email_notification_message(
@@ -1983,3 +2068,28 @@ def get_best_mode_from_course_key(course_key):
         else CourseModes.AUDIT
 
     return best_course_mode
+
+
+def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):
+    """
+    Parse a received datetime into a timezone-aware, Python datetime object.
+
+    Arguments:
+        datetime_string: A string to be parsed.
+        datetime_format: A datetime format string to be used for parsing
+
+    """
+    if isinstance(datetime_string, datetime.datetime):
+        date_time = datetime_string
+    else:
+        try:
+            date_time = datetime.datetime.strptime(datetime_string, datetime_format)
+        except ValueError:
+            date_time = datetime.datetime.strptime(datetime_string, LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE)
+
+    # If the datetime format didn't include a timezone, then set to UTC.
+    # Note that if we're using the default LMS_API_DATETIME_FORMAT, it ends in 'Z',
+    # which denotes UTC for ISO-8661.
+    if date_time.tzinfo is None:
+        date_time = date_time.replace(tzinfo=timezone.utc)
+    return date_time

@@ -3,29 +3,28 @@
 Django tasks.
 """
 
+from enterprise.utils import send_email_notification_message
 from logging import getLogger
 
 from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
+from django.apps import apps
 from django.core import mail
 from django.db import IntegrityError
-
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
-from enterprise.utils import send_email_notification_message
 
 LOGGER = getLogger(__name__)
 
 
 @shared_task
 @set_code_owner_attribute
-def notify_enrolled_learners(
+def send_enterprise_email_notification(
     enterprise_customer_uuid,
     admin_enrollment,
     email_items,
 ):
     """
-    Send enrollment notifications to specified learners
+    Send enrollment email notifications to specified learners
 
     Arguments:
         * enterprise_customer_uuid (UUID)
@@ -56,12 +55,12 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
     """
     Create enterprise enrollment for user if course_id part of catalog for the ENT customer.
     """
-    enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+    enterprise_customer_user = enterprise_customer_model().objects.get(
         id=enterprise_customer_user_id
     )
     # Prevent duplicate records from being created if possible
     # before we need to make a call to discovery
-    if EnterpriseCourseEnrollment.objects.filter(
+    if enterprise_course_enrollment_model().objects.filter(
             enterprise_customer_user=enterprise_customer_user,
             course_id=course_id,
     ).exists():
@@ -87,11 +86,13 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
         # we believe a Source of ENROLLMENT_TASK is more clear.
 
         try:
-            EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_course_enrollment_model().objects.get_or_create(
                 course_id=course_id,
                 enterprise_customer_user=enterprise_customer_user,
                 defaults={
-                    'source': EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK),
+                    'source': enterprise_enrollment_source_model().get_source(
+                        enterprise_enrollment_source_model().ENROLLMENT_TASK,
+                    ),
                 }
             )
         except IntegrityError:
@@ -99,3 +100,24 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
                 "IntegrityError on attempt at EnterpriseCourseEnrollment for user with id [%s] "
                 "and course id [%s]", enterprise_customer_user.user_id, course_id,
             )
+
+
+def enterprise_customer_model():
+    """
+    Returns the ``EnterpriseCustomer`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+
+
+def enterprise_course_enrollment_model():
+    """
+    Returns the ``EnterpriseCourseEnrollment`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+
+
+def enterprise_enrollment_source_model():
+    """
+    Returns the ``EnterpriseEnrollmentSource`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name
