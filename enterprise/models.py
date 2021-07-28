@@ -61,7 +61,6 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
-    create_dict_from_user,
     get_configuration_value,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
@@ -685,7 +684,7 @@ class EnterpriseCustomer(TimeStampedModel):
                 ugettext("Course details were not found for course key {} - Course Catalog API returned nothing. "
                          "Proceeding with enrollment, but notifications won't be sent").format(course_id)
             )
-            return
+            return []
 
         dashboard_url = None
         course_name = course_details.get('title')

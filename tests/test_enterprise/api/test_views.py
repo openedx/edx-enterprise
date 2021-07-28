@@ -3433,8 +3433,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
-        mock_prepare_notification_content,
-        mock_notify_enroll_learners_task,
+        mock_prepare_notification,
+        mock_notify_task,
         mock_track_enroll,
         mock_get_course_mode,
         body,
@@ -3448,13 +3448,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         This test currently does not create any users so is testing the pending
         enrollments case.
         """
-        ent_customer = factories.EnterpriseCustomerFactory(
+        factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
             name="test_enterprise"
         )
 
         email_items = [{}]
-        mock_prepare_notification_content.return_value = email_items
+        mock_prepare_notification.return_value = email_items
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
@@ -3479,14 +3479,14 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             mock_track_enroll.assert_not_called()
 
         if 'notify' in body:
-            mock_prepare_notification_content.assert_called_once()
-            mock_notify_enroll_learners_task.assert_called_once_with(
+            mock_prepare_notification.assert_called_once()
+            mock_notify_task.assert_called_once_with(
                 uuid.UUID(FAKE_UUIDS[0]),
                 True,
                 email_items,
             )
         else:
-            mock_prepare_notification_content.assert_not_called()
+            mock_prepare_notification.assert_not_called()
             mock_notify_enroll_learners_task.assert_not_called()
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
