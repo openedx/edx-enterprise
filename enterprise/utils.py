@@ -461,15 +461,15 @@ def create_dict_from_user(user):
         - 1: { 'first_name': name, 'username': user_name, 'email': email } (if User object)
         - 2: { 'user_email' : user_email } (if PendingEnterpriseCustomerUser object)
     """
-    if 'first_name' in user and 'username' in user:
+    if hasattr(user, 'first_name') and hasattr(user, 'username'):
         return {
-            'first_name': user['first_name'],
-            'username': user['username'],
-            'email': user['email'],
+            'first_name': user.first_name,
+            'username': user.username,
+            'email': user.email,
         }
-    elif 'user_email' in user:
+    if hasattr(user, 'user_email'):
         return {
-            'user_email': user['user_email']
+            'user_email': user.user_email
         }
     raise TypeError("Invalid object, need either User or PendingEnterpriseCustomerUser type object")
 
