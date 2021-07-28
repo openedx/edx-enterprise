@@ -3,20 +3,16 @@
 Django tasks.
 """
 
-from django.core import mail
-from enterprise.utils import send_email_notification_message
 from logging import getLogger
 
 from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
+from django.core import mail
 from django.db import IntegrityError
 
-from enterprise.models import (
-    EnterpriseCourseEnrollment,
-    EnterpriseCustomerUser,
-    EnterpriseEnrollmentSource,
-)
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
+from enterprise.utils import send_email_notification_message
 
 LOGGER = getLogger(__name__)
 
