@@ -3,7 +3,6 @@
 Utilities to get details from the course catalog API.
 """
 
-import datetime
 import logging
 from functools import wraps
 from time import time
@@ -15,7 +14,6 @@ from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 from slumber.utils import copy_kwargs, url_join
 
 from django.conf import settings
-from django.utils import timezone
 
 from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
 from enterprise.utils import NotConnectedToOpenEdX, get_enterprise_worker_user

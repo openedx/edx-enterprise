@@ -33,7 +33,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
-from django.utils.http import urlencode, urlquote
+from django.utils.http import urlquote
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext

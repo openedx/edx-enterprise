@@ -27,7 +27,6 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
-from django.db import IntegrityError
 from django.test import override_settings
 from django.utils import timezone
 
@@ -3476,8 +3475,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         # verify notification sent correctly for each course to applicable learners
         if 'notify' in body:
-            unique_course_keys = set([item['course_run_key'] for item in body['licenses_info']])
-            unique_learners = set([item['email'] for item in body['licenses_info']])
+            unique_course_keys = {item['course_run_key'] for item in body['licenses_info']}
+            unique_learners = {item['email'] for item in body['licenses_info']}
             unique_ent_customer_users = set()
             for learner in unique_learners:
                 try:

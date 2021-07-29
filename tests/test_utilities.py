@@ -8,7 +8,6 @@ import unittest
 from collections import namedtuple
 
 import ddt
-from django.forms.models import model_to_dict
 import mock
 import pytz
 from faker import Factory as FakerFactory
@@ -16,6 +15,7 @@ from pytest import mark, raises
 
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 from django.test import override_settings
 
 from enterprise import utils

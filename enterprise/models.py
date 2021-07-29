@@ -64,7 +64,6 @@ from enterprise.utils import (
     get_enterprise_worker_user,
     get_platform_logo_url,
     get_user_valid_idp,
-    send_email_notification_message,
     serialize_notification_content,
     track_enrollment,
 )
