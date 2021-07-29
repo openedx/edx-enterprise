@@ -36,10 +36,10 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
-from enterprise.tasks import send_enterprise_email_notification
 
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
@@ -53,6 +53,7 @@ from enterprise.constants import (
     DefaultColors,
     json_serialized_course_modes,
 )
+from enterprise.tasks import send_enterprise_email_notification
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
     SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
