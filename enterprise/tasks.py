@@ -40,14 +40,28 @@ def send_enterprise_email_notification(
     """
     with mail.get_connection() as email_conn:
         for item in email_items:
-            send_email_notification_message(
-                item['user'],
-                item['enrolled_in'],
-                item['dashboard_url'],
-                enterprise_customer_uuid,
-                email_connection=email_conn,
-                admin_enrollment=admin_enrollment,
-            )
+            course_name = item['enrolled_in']['name']
+            if 'username' in item['user']:
+                username = item['user']['username']
+            else:
+                username = 'no_username_found'
+            try:
+                send_email_notification_message(
+                    item['user'],
+                    item['enrolled_in'],
+                    item['dashboard_url'],
+                    enterprise_customer_uuid,
+                    email_connection=email_conn,
+                    admin_enrollment=admin_enrollment,
+                )
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.exception(
+                    "Failed notifying user: {}"
+                    "enterprise_customer_uuid: {}"
+                    "of enterprise enrollment in course {}"
+                    .format(username, enterprise_customer_uuid, course_name),
+                    exc_info=exc,
+                )
 
 
 @shared_task

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.11]
+---------
+* Avoid failure when an email send in the learners loop fails, for notify_enrolled_learners
+
 [3.27.10]
 ---------
 * Use celery tasks for emails sent using EnterpriseCustomer's notify_enrolled_learners method
