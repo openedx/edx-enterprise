@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.10]
+--------
+* Use celery tasks for emails sent using EnterpriseCustomer#notify_enrolled_learners method
+
 [3.27.9]
 --------
 * Fix SAP Course Completion payload format again.
