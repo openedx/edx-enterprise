@@ -19,7 +19,7 @@ Unreleased
 
 [3.27.10]
 --------
-* Use celery tasks for emails sent using EnterpriseCustomer#notify_enrolled_learners method
+* Use celery tasks for emails sent using EnterpriseCustomer's notify_enrolled_learners method
 
 [3.27.9]
 --------
