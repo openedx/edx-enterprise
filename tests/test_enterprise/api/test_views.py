@@ -3536,8 +3536,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
-        This test currently does not create any users so is testing the pending
-        enrollments case.
+        Explicitly checks that notification is invoked precisely once per course,
+        with the associated learners included
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
