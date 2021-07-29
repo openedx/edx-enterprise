@@ -5,7 +5,6 @@ Django signal handlers.
 
 from logging import getLogger
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 
@@ -159,10 +158,9 @@ def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # 
         )
     elif not kwargs['created'] and not instance.linked:
         # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_learner role
-        # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
-        # so that we delete a specific instance of a role assignment
         roles_api.delete_learner_role_assignment(
-            instance.user,
+            user=instance.user,
+            enterprise_customer=instance.enterprise_customer,
         )
 
 
@@ -174,10 +172,9 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
     if not instance.user:
         return
 
-    # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
-    # so that we delete a specific instance of a role assignment
     roles_api.delete_learner_role_assignment(
-        instance.user,
+        user=instance.user,
+        enterprise_customer=instance.enterprise_customer,
     )
 
 
@@ -329,9 +326,8 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
     """
     if kwargs.get('created') and instance.user:
         user_id = instance.user.id
-        try:
-            ecu = EnterpriseCustomerUser.objects.get(user_id=user_id)
-        except ObjectDoesNotExist:
+        ecu = EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True).first()
+        if not ecu:
             return
         logger.info((
             "User %s is an EnterpriseCustomerUser. "

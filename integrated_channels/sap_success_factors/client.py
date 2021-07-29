@@ -4,6 +4,7 @@ Client for connecting to SAP SuccessFactors.
 """
 
 import datetime
+import json
 import logging
 import time
 
@@ -27,6 +28,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
     """
 
     SESSION_TIMEOUT = 5
+
+    GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
 
     @staticmethod
     def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type):
@@ -139,8 +142,25 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Raises:
             HTTPError: if we received a failure response code from SAP SuccessFactors
         """
-        url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.completion_status_api_path
-        return self._call_post_with_user_override(user_id, url, payload)
+        base_url = self.enterprise_configuration.sapsf_base_url
+
+        if self.enterprise_configuration.prevent_self_submit_grades:
+            # TODO:
+            #   if/when we decide we should use the generic course completion path
+            #   for all customers, we should update the _payload_data method on the
+            #   SapSuccessFactorsLearnerDataTransmissionAudit class instead of doing this
+            payload_to_update = json.loads(payload)
+            payload_to_update['courseCompleted'] = bool(payload_to_update['courseCompleted'] == 'true')
+            return self._call_post_with_session(
+                base_url + self.GENERIC_COURSE_COMPLETION_PATH,
+                json.dumps(payload_to_update)
+            )
+
+        return self._call_post_with_user_override(
+            user_id,
+            base_url + self.global_sap_config.completion_status_api_path,
+            payload
+        )
 
     def create_content_metadata(self, serialized_data):
         """
@@ -319,8 +339,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             sap_inactive_learners = response.json()
         except ValueError as error:
             raise ClientError(response, response.status_code) from error
-        except (ConnectionError, Timeout):
-            LOGGER.warning(
+        except (ConnectionError, Timeout) as exc:
+            LOGGER.error(exc)
+            LOGGER.error(
                 'Unable to fetch inactive learners from SAP searchStudent API with url '
                 '"{%s}".', search_student_paginated_url,
             )
@@ -328,7 +349,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
         if 'error' in sap_inactive_learners:
             try:
-                LOGGER.warning(
+                LOGGER.error(
                     'SAP searchStudent API for customer %s and base url %s returned response with '
                     'error message "%s" and with error code "%s".',
                     self.enterprise_configuration.enterprise_customer.name,
@@ -337,7 +358,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                     sap_inactive_learners['error'].get('code'),
                 )
             except AttributeError:
-                LOGGER.warning(
+                LOGGER.error(
                     'SAP searchStudent API for customer %s and base url %s returned response with '
                     'error message "%s" and with error code "%s".',
                     self.enterprise_configuration.enterprise_customer.name,

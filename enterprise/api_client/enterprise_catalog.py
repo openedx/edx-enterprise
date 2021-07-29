@@ -30,6 +30,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     APPEND_SLASH = True
+    GET_CONTENT_METADATA_PAGE_SIZE = getattr(settings, 'ENTERPRISE_CATALOG_GET_CONTENT_METADATA_PAGE_SIZE', 50)
 
     def __init__(self, user=None):
         user = user if user else utils.get_enterprise_worker_user()
@@ -159,8 +160,9 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
+            query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
             try:
-                response = endpoint.get()
+                response = endpoint.get(**query)
                 for item in utils.traverse_pagination(response, endpoint):
                     content_id = utils.get_content_metadata_item_id(item)
                     content_metadata[content_id] = item

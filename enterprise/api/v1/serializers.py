@@ -4,8 +4,10 @@ Serializers for enterprise api version 1.
 """
 
 import copy
+import datetime
 from logging import getLogger
 
+import pytz
 from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
 from rest_framework.settings import api_settings
@@ -18,7 +20,12 @@ from enterprise import models, utils
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
-from enterprise.models import EnterpriseCustomerIdentityProvider
+from enterprise.models import (
+    AdminNotification,
+    AdminNotificationRead,
+    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerUser,
+)
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -153,6 +160,16 @@ class EnterpriseCustomerIdentityProviderSerializer(serializers.ModelSerializer):
         fields = ('provider_id', 'default_provider')
 
 
+class AdminNotificationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for AdminNotification model.
+    """
+
+    class Meta:
+        model = AdminNotification
+        fields = ('id', 'text')
+
+
 class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomer model.
@@ -170,13 +187,14 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
             'enable_integrated_customer_learner_portal_search',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
-            'enterprise_customer_catalogs', 'reply_to',
+            'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner'
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
     site = SiteSerializer()
     branding_configuration = serializers.SerializerMethodField()
     enterprise_customer_catalogs = serializers.SerializerMethodField()
+    enterprise_notification_banner = serializers.SerializerMethodField()
 
     def get_branding_configuration(self, obj):
         """
@@ -189,6 +207,55 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         Return list of catalog uuids associated with the enterprise customer.
         """
         return [str(catalog.uuid) for catalog in obj.enterprise_customer_catalogs.all()]
+
+    def get_enterprise_notification_banner(self, obj):
+        """
+        Return the notification text if exist OR None
+        """
+
+        try:
+            # this serializer is also called from tpa_pipeline and request is not available in the first place there.
+            request = self.context['request']
+            user_id = request.user.id
+        except Exception as exc:  # pylint: disable=broad-except
+            LOGGER.error('[Admin Notification API] Get enterprise notification banner request object not found,'
+                         ' Enterprise Customer :{} Exception: {}'.format(obj.slug, exc))
+            return None
+        now = datetime.datetime.now(pytz.UTC)
+        read = True
+        notification_queryset = None
+
+        notification = AdminNotification.objects.filter(
+            start_date__lte=now,
+            expiration_date__gte=now,
+            is_active=True
+        ).first()
+        if notification:
+            try:
+                # verify that user didn't read the notification
+                enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+                    enterprise_customer=obj,
+                    user_id=user_id,
+                )
+                read = AdminNotificationRead.objects.filter(
+                    enterprise_customer_user=enterprise_customer_user,
+                    is_read=True,
+                    admin_notification=notification
+                ).exists()
+            except (TypeError, ValueError, EnterpriseCustomerUser.DoesNotExist):
+                error_message = ('[Admin Notification API] EnterpriseCustomerUser does not exist for User: {}, '
+                                 ' EnterpriseCustomer:{}').format(user_id, obj.slug)
+                LOGGER.error(error_message)
+
+        if not read:
+            notification_queryset = notification
+            filters = notification.admin_notification_filter.all()
+            for notification_filter in filters:
+                # if filter didn't match to filters in enterprise_customer OR filter is not checked in
+                # enterprise_customer then return None
+                if not getattr(obj, notification_filter.filter, None):
+                    notification_queryset = None
+        return AdminNotificationSerializer(notification_queryset).data
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
@@ -460,7 +527,7 @@ class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
         '''
         return super().to_representation(instance[0])
 
-    def create(self, attrs):  # pylint: disable=arguments-differ
+    def create(self, attrs):  # pylint: disable=arguments-renamed
         """
         Create the PendingEnterpriseCustomerUser, or EnterpriseCustomerUser
         if a user with the validated_email already exists.
@@ -600,6 +667,7 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
             'day_of_month', 'day_of_week', 'hour_of_day', 'include_date', 'encrypted_password', 'sftp_hostname',
             'sftp_port', 'sftp_username', 'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type',
             'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid', 'enterprise_customer_catalog_uuids',
+            'enable_compression',
         )
 
     encrypted_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
@@ -660,7 +728,7 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         instance.enterprise_customer_catalogs.set(ec_catalog_uuids)
         return instance
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         delivery_method = data.get('delivery_method')
         if not delivery_method and self.instance:
             delivery_method = self.instance.delivery_method
@@ -985,7 +1053,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
 
         return value
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         """
         Validate that at least one of the user identifier fields has been passed in.
         """
@@ -1034,7 +1102,7 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
     def create(self, validated_data):
         return validated_data
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         if not data.get('email') and not data.get('email_csv'):
             raise serializers.ValidationError('Must include either email or email_csv in request.')
         return data
@@ -1051,7 +1119,7 @@ class LicensesInfoSerializer(serializers.Serializer):
     def create(self, validated_data):
         return validated_data
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         missing_fields = []
         for key in self.fields.keys():
             if not data.get(key):
@@ -1077,7 +1145,7 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
     def create(self, validated_data):
         return validated_data
 
-    def validate(self, data):  # pylint: disable=arguments-differ
+    def validate(self, data):  # pylint: disable=arguments-renamed
         if data.get('licenses_info') is None:
             raise serializers.ValidationError(
                 'Must include the "licenses_info" parameter in request.'

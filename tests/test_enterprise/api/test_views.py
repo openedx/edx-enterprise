@@ -39,6 +39,7 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
     EnterpriseCatalogQuery,
@@ -432,6 +433,7 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     """
     Test enteprise learner list endpoint
     """
+
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -1126,6 +1128,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
+                'enterprise_notification_banner': {'text': ''},
             }],
         ),
         (
@@ -1173,6 +1176,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'identity_providers': [],
                     'enterprise_customer_catalogs': [],
                     'reply_to': 'fake_reply@example.com',
+                    'enterprise_notification_banner': {'text': ''},
                 }
             }],
         ),
@@ -1236,6 +1240,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     },
                 ],
                 'enterprise_customer_catalogs': [],
+                'enterprise_notification_banner': {'text': ''},
             }],
         ),
         (
@@ -1283,6 +1288,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'reply_to': 'fake_reply@example.com',
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [FAKE_UUIDS[0]],
+                'enterprise_notification_banner': {'text': ''},
             }],
         ),
         (
@@ -1475,6 +1481,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
                 'reply_to': 'fake_reply@example.com',
+                'enterprise_notification_banner': {'text': ''},
             }
         else:
             assert response == expected_error
@@ -2191,6 +2198,7 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
     """
     Test the Enteprise Customer course enrollments detail route
     """
+
     def test_enterprise_customer_course_enrollments_non_list_request(self):
         """
         Test the Enterprise Customer course enrollments detail route with an invalid expected json format.
@@ -2540,7 +2548,12 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
                     course_id=payload.get('course_run_id'),
                     source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.API)
                 ).exists()
-
+                enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.filter(
+                    enterprise_customer_user__user_id=user.id,
+                    course_id=payload.get('course_run_id'),
+                    source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.API)
+                ).first()
+                enterprise_customer = enterprise_course_enrollment.enterprise_customer_user.enterprise_customer
                 mock_enrollment_client.return_value.get_course_enrollment.assert_called_once_with(
                     user.username, payload.get('course_run_id')
                 )
@@ -2549,6 +2562,7 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
                     payload.get('course_run_id'),
                     payload.get('course_mode'),
                     cohort=payload.get('cohort'),
+                    enterprise_uuid=str(enterprise_customer.uuid)
                 )
         elif 'user_email' in payload and payload.get('is_active', True):
             # If a new user given via for user_email, check that the appropriate objects were created.
@@ -3045,8 +3059,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
     def test_post_license_revoke_invalid_data(self):
         with mock.patch('enterprise.api.v1.views.CourseMode'), \
-             mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-             mock.patch('enterprise.api.v1.views.get_course_overviews'):
+                mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
+                mock.patch('enterprise.api.v1.views.get_course_overviews'):
             post_data = {
                 'user_id': 'bob',
             }
@@ -3058,8 +3072,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
     def test_post_license_revoke_403(self):
         with mock.patch('enterprise.api.v1.views.CourseMode'), \
-             mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-             mock.patch('enterprise.api.v1.views.get_course_overviews'):
+                mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
+                mock.patch('enterprise.api.v1.views.get_course_overviews'):
 
             enterprise_customer = factories.EnterpriseCustomerFactory()
             self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
@@ -3278,6 +3292,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_code': 400,
             'expected_response': {'non_field_errors': ['Must include the "licenses_info" parameter in request.']},
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         {
             'body': {
@@ -3288,6 +3303,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'licenses_info': {'non_field_errors': ['Expected a list of items but got type "dict".']}
             },
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         {
             'body': {
@@ -3299,6 +3315,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'licenses_info': [{'non_field_errors': ["Found missing licenses_info field(s): ['license_uuid']."]}]
             },
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         {
             'body': {
@@ -3313,6 +3330,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'successes': [], 'pending': [], 'failures': [], 'invalid_email_addresses': ['BADLYFORMATTEDEMAIL']
             },
             'expected_num_pending_licenses': 0,
+            'expected_events': None,
         },
         # Single learner, single course success
         {
@@ -3330,6 +3348,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 1,
+            'expected_events': [mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course')],
         },
         # Multi-learner, single course success
         {
@@ -3357,6 +3376,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 2,
+            'expected_events': [
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
+            ],
         },
         # Multi-learner, multi-course success
         {
@@ -3396,23 +3418,30 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 'failures': []
             },
             'expected_num_pending_licenses': 4,
+            'expected_events': [
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+            ],
         },
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.track_enrollment')
     # pylint: disable=unused-argument
-    def test_bulk_enrollment_in_bulk_courses(
+    def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
+        mock_track_enroll,
         mock_get_course_mode,
-        mock_ecom_order,
         body,
         expected_code,
         expected_response,
         expected_num_pending_licenses,
+        expected_events,
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
+        This test currently does not create any users so is testing the pending
+        enrollments case.
         """
         factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
@@ -3435,11 +3464,15 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             self.assertEqual(expected_response, response_json)
         self.assertEqual(len(PendingEnrollment.objects.all()), expected_num_pending_licenses)
 
-    @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
+        if expected_events:
+            mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
+        else:
+            mock_track_enroll.assert_not_called()
+
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     # pylint: disable=unused-argument
-    def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user, mock_ecom_order):
+    def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user):
         """
         Tests that bulk users bulk enrollment endpoint properly handles partial failures.
         """
@@ -4334,3 +4367,123 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         assert response.status_code == expected_status
         if has_feature_role:
             assert response.json() == '12345'
+
+
+class TestReadNotificationView(BaseTestEnterpriseAPIViews):
+    """
+    Test NotificationReadView
+    """
+
+    READ_NOTIFICATION_ENDPOINT = reverse('read-notification')
+
+    def setUp(self):
+        super().setUp()
+        self.user, self.enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        self.admin_notification = factories.AdminNotificationFactory()
+        self.client = APIClient()
+        self.client.login(username='test_user', password='test_password')
+
+        self._add_feature_role(self.user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        user.set_password(password)  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        return user, enterprise_customer
+
+    def _add_feature_role(self, user, feature_role):
+        """
+        Helper method to create a feature_role and connect it to the User
+        """
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(
+            name=feature_role
+        )
+        EnterpriseFeatureUserRoleAssignment.objects.create(user=user, role=feature_role_object)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_success(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request success status code.
+        """
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': self.admin_notification.id,
+                'enterprise_slug': self.enterprise_customer.slug
+            }
+        )
+        assert response.status_code == 200
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_error(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request fail status code for invalid param values.
+        """
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': 111111,
+                'enterprise_slug': 'random_slug'
+            }
+        )
+        assert response.status_code == 500
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_fail_missing_params(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request fail status code for missing params.
+        """
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': self.admin_notification.id,
+            }
+        )
+        assert response.status_code == 400
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_read_notification_request_fail_non_admin_role(
+            self,
+            request_or_stub_mock,
+
+    ):
+        """
+        Ensure request fail status code for non admin user.
+        """
+        system_wide_role = ''
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+        response = self.client.post(
+            settings.TEST_SERVER + self.READ_NOTIFICATION_ENDPOINT,
+            data={
+                'notification_id': self.admin_notification.id,
+            }
+        )
+        assert response.status_code == 403

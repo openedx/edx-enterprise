@@ -12,6 +12,7 @@ from uuid import UUID
 import pytz
 import waffle  # pylint: disable=invalid-django-waffle-import
 from dateutil.parser import parse
+from edx_django_utils import monitoring
 from edx_rest_api_client.exceptions import HttpClientError
 from ipware.ip import get_client_ip
 from opaque_keys import InvalidKeyError
@@ -117,11 +118,11 @@ def verify_edx_resources():
         'ProgramDataExtender': ProgramDataExtender,
     }
 
-    for method in required_methods:
-        if required_methods[method] is None:
+    for key, method in required_methods.items():
+        if method is None:
             raise NotConnectedToOpenEdX(
                 _("The following method from the Open edX platform is necessary for this view but isn't available.")
-                + "\nUnavailable: {method}".format(method=method)
+                + "\nUnavailable: {method}".format(method=key)
             )
 
 
@@ -582,7 +583,9 @@ class GrantDataSharingPermissions(View):
         if course_id and self.is_course_run_id(course_id):
             if license_uuid:
                 enrollment_api_client = EnrollmentApiClient()
-                existing_enrollment = enrollment_api_client.get_course_enrollment(request.user.username, course_id)
+                existing_enrollment = enrollment_api_client.get_course_enrollment(
+                    request.user.username, course_id
+                )
                 if not existing_enrollment or existing_enrollment.get('mode') == constants.CourseModes.AUDIT:
                     course_mode = get_best_mode_from_course_key(course_id)
                     LOGGER.info(
@@ -606,11 +609,21 @@ class GrantDataSharingPermissions(View):
                                 course_mode=course_mode
                             )
                         )
-                    except Exception as exc:  # pylint: disable=broad-except
-                        LOGGER.error(
-                            'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
-                                exc=exc
-                            )
+                    except HttpClientError as exc:
+                        monitoring.record_exception()
+
+                        default_message = 'No error message provided'
+                        try:
+                            error_message = json.loads(exc.content.decode()).get('message', default_message)
+                        except ValueError:
+                            error_message = default_message
+                        LOGGER.exception(
+                            'Client Error while enrolling user %(user)s in %(course)s via enrollment API: %(message)s',
+                            {
+                                'user': request.user.username,
+                                'course': course_id,
+                                'message': error_message,
+                            }
                         )
                         raise
             try:
@@ -750,7 +763,7 @@ class GrantDataSharingPermissions(View):
                             license_uuid=license_uuid
                         )
                     )
-                    LOGGER.error(log_message)
+                    LOGGER.exception(log_message)
                     return redirect(failure_url)
 
             try:
@@ -1072,7 +1085,7 @@ class EnterpriseProxyLoginView(View):
             }
             query_dict['next'] = update_query_parameters(str(query_dict['next']), tpa_next_param)
         else:
-            # If there's no linked IDP or multiple IDPs are linked and no tpa_hint provided in query_param
+            # If there's no linked IDP
             # Add Enterprise Customer UUID and proxy_login to the redirect's query parameters
             # Redirect will be to the edX Logistration with Enterprise Proxy Login sidebar
             query_dict['enterprise_customer'] = [str(enterprise_customer.uuid)]
@@ -1249,7 +1262,10 @@ class HandleConsentEnrollment(View):
             # In case of Audit course modes enroll the learner directly through
             # enrollment API client and redirect the learner to dashboard.
             enrollment_api_client.enroll_user_in_course(
-                request.user.username, course_id, selected_course_mode['slug']
+                request.user.username,
+                course_id,
+                selected_course_mode['slug'],
+                enterprise_uuid=str(enterprise_customer_user.enterprise_customer.uuid)
             )
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
@@ -1653,7 +1669,6 @@ class CourseEnrollmentView(NonAtomicView):
             course_id=course_id,
             enterprise_customer=enterprise_customer
         )
-
         try:
             enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
                 enterprise_customer_user__enterprise_customer=enterprise_customer,
@@ -1701,7 +1716,8 @@ class CourseEnrollmentView(NonAtomicView):
                     request.user.username,
                     course_id,
                     selected_course_mode_name,
-                    cohort=cohort_name
+                    cohort=cohort_name,
+                    enterprise_uuid=str(enterprise_customer.uuid)
                 )
             except HttpClientError as exc:
                 succeeded = False

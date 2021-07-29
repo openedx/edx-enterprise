@@ -5,12 +5,15 @@ Client for connecting to Cornerstone.
 
 import base64
 import json
+import logging
 
 import requests
 
 from django.apps import apps
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CornerstoneAPIClient(IntegratedChannelApiClient):
@@ -57,6 +60,12 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Delete a completion status previously sent to the Cornerstone Completion Status endpoint
         Cornerstone does not support this.
         """
+
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        Not implemented yet.
+        """
+        LOGGER.error("Cornerstone integrated channel does not yet support assignment deduplication.")
 
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """

@@ -34,7 +34,9 @@ class TestLearnerExporter(unittest.TestCase):
 
     def setUp(self):
         self.user = factories.UserFactory(username='C3PO', id=1)
+        self.user_2 = factories.UserFactory(username='R2D2', id=2)
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.course_id_2 = 'course-v2:edX+Much+Wow+Very+Test'
         self.course_key = 'edX+DemoX'
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
             enable_audit_enrollment=True,
@@ -42,6 +44,10 @@ class TestLearnerExporter(unittest.TestCase):
         )
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user_2.id,
             enterprise_customer=self.enterprise_customer,
         )
         self.data_sharing_consent = factories.DataSharingConsentFactory(
@@ -489,7 +495,7 @@ class TestLearnerExporter(unittest.TestCase):
 
         enrollment3 = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=factories.EnterpriseCustomerUserFactory(
-                user_id=factories.UserFactory(username='R2D2', id=2).id,
+                user_id=self.user_2.id,
                 enterprise_customer=self.enterprise_customer,
             ),
             course_id=self.course_id,
@@ -669,3 +675,28 @@ class TestLearnerExporter(unittest.TestCase):
 
         assert mock_get_course_details.call_count == 0
         assert mock_get_single_user_grade.call_count == 0
+
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_id_for_enrollment')
+    def test_export_unique_courses_from_enrollments(self, mock_catalog_api_service_client):
+        """
+        Test export_unique_courses properly selects unique course keys from a customer's enterprise enrollment.
+        """
+        mock_catalog_api_service_client.side_effect = [self.course_id, self.course_id, self.course_id_2]
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user_2,
+            course_id=self.course_id,
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id_2
+        )
+        exporter = LearnerExporter('fake-user', self.config)
+        unique_enrollments = exporter.export_unique_courses()
+
+        assert len(unique_enrollments) == 2
+        assert self.course_id in unique_enrollments
+        assert self.course_id_2 in unique_enrollments

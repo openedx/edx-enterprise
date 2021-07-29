@@ -48,6 +48,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'sapsf_user_id',
         'user_type',
         'has_access_token',
+        'prevent_self_submit_grades',
         'transmit_total_hours',
         'transmission_chunk_size',
         'additional_locales',

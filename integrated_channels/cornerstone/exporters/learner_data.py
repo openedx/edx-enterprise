@@ -9,6 +9,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = getLogger(__name__)
 
@@ -55,10 +56,13 @@ class CornerstoneLearnerExporter(LearnerExporter):
                 csod_learner_data_transmission
             ]
         except CornerstoneLearnerDataTransmissionAudit.DoesNotExist:
-            LOGGER.info(
-                'No learner data was sent for user [%s] because Cornerstone user ID could not be found '
-                'for customer [%s]',
-                enterprise_enrollment.enterprise_customer_user.username,
-                enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-            )
+            LOGGER.info(generate_formatted_log(
+                'cornerstone',
+                enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+                enterprise_enrollment.enterprise_customer_user.user_id,
+                None,
+                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
+                 'Cornerstone User ID not found for [{name}]'.format(
+                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+                 ))))
             return None

@@ -66,7 +66,11 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     catalogs_to_transmit = models.TextField(
         blank=True,
         null=True,
-        help_text=_("A comma-separated list of catalog UUIDs to transmit."),
+        help_text=_(
+            "A comma-separated list of catalog UUIDs to transmit. If blank, all customer catalogs will be transmitted. "
+            "If there are overlapping courses in the customer catalogs, the overlapping course metadata will be "
+            "selected from the newest catalog."
+        ),
     )
 
     class Meta:
@@ -179,6 +183,14 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         exporter = self.get_learner_data_exporter(user)
         transmitter = self.get_learner_data_transmitter()
         transmitter.assessment_level_transmit(exporter)
+
+    def cleanup_duplicate_assignment_records(self, user):
+        """
+        Remove duplicated assessments transmitted through the integrated channel.
+        """
+        exporter = self.get_learner_data_exporter(user)
+        transmitter = self.get_learner_data_transmitter()
+        transmitter.deduplicate_assignment_records_transmit(exporter)
 
 
 @python_2_unicode_compatible

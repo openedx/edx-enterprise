@@ -54,16 +54,15 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
-from enterprise.constants import COURSE_KEY_URL_PATTERN
-from enterprise.errors import CodesAPIRequestError
+from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
+from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
     get_best_mode_from_course_key,
-    get_ecommerce_worker_user,
     get_request_value,
+    track_enrollment,
     validate_email_to_link,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
@@ -312,21 +311,20 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             existing_users = {
                 result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
             }
-            LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
-            if serializer.validated_data.get('notify'):
-                enterprise_customer.notify_enrolled_learners(
-                    catalog_api_user=request.user,
-                    course_id=course_run,
-                    users=pending_users | existing_users,
-                )
+            if len(pending_users | existing_users) > 0:
+                LOGGER.info("Successfully bulk enrolled learners: {} into course {}".format(
+                    pending_users | existing_users,
+                    course_run,
+                ))
+                track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, request.user.id, course_run)
+                if serializer.validated_data.get('notify'):
+                    enterprise_customer.notify_enrolled_learners(
+                        catalog_api_user=request.user,
+                        course_id=course_run,
+                        users=pending_users | existing_users,
+                        admin_enrollment=True,
+                    )
 
-            self._create_ecom_orders_for_enrollments(
-                course_run,
-                course_runs_modes[course_run],
-                discount,
-                serializer.validated_data.get('salesforce_id'),
-                existing_users,
-            )
         if email_errors:
             results['invalid_email_addresses'] = email_errors
 
@@ -335,31 +333,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if results['pending']:
             return Response(results, status=HTTP_202_ACCEPTED)
         return Response(results, status=HTTP_201_CREATED)
-
-    def _create_ecom_orders_for_enrollments(self,
-                                            course_run_key,
-                                            mode,
-                                            discount,
-                                            salesforce_id,
-                                            succeeded_enrollments):
-        """
-        Create ecommerce enrollment order for provided enrollments
-        """
-        paid_modes = ['verified', 'professional']
-        enterprise_customer = self.get_object()
-        if mode in paid_modes:
-            enrollments = [{
-                "lms_user_id": success.id,
-                "email": success.email,
-                "username": success.username,
-                "course_run_key": course_run_key,
-                "discount_percentage": float(discount),
-                "enterprise_customer_name": enterprise_customer.name,
-                "enterprise_customer_uuid": str(enterprise_customer.uuid),
-                "mode": mode,
-                "sales_force_id": salesforce_id,
-            } for success in succeeded_enrollments]
-            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
     @action(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup], detail=False)
@@ -1191,3 +1164,93 @@ class TableauAuthView(generics.GenericAPIView):
         }
         response = requests.request("POST", url, headers=headers, data=payload, files=files)
         return Response(data=response.text)
+
+
+class NotificationReadView(APIView):
+    """
+    API to mark notifications as read.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
+    throttle_classes = (ServiceUserThrottle,)
+
+    REQUIRED_PARAM_NOTIFICATION_ID = 'notification_id'
+    REQUIRED_PARAM_ENTERPRISE_SLUG = 'enterprise_slug'
+
+    MISSING_REQUIRED_PARAMS_MSG = 'Some required parameter(s) missing: {}'
+
+    def get_required_query_params(self, request):
+        """
+        Gets ``notification_id`` and ``enterprise_slug``.
+        which are the relevant parameters for this API endpoint.
+
+        :param request: The request to this endpoint.
+        :return: The ``notification_id`` and ``enterprise_slug`` from the request.
+        """
+        enterprise_slug = get_request_value(request, self.REQUIRED_PARAM_ENTERPRISE_SLUG, '')
+        notification_id = get_request_value(request, self.REQUIRED_PARAM_NOTIFICATION_ID, '')
+        if not (notification_id and enterprise_slug):
+            raise AdminNotificationAPIRequestError(
+                self.get_missing_params_message([
+                    (self.REQUIRED_PARAM_NOTIFICATION_ID, bool(notification_id)),
+                    (self.REQUIRED_PARAM_ENTERPRISE_SLUG, bool(enterprise_slug)),
+                ])
+            )
+        return notification_id, enterprise_slug
+
+    def get_missing_params_message(self, parameter_state):
+        """
+        Get a user-friendly message indicating a missing parameter for the API endpoint.
+        """
+        params = ', '.join(name for name, present in parameter_state if not present)
+        return self.MISSING_REQUIRED_PARAMS_MSG.format(params)
+
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def post(self, request):
+        """
+        POST /enterprise/api/v1/read_notification
+
+        Requires a JSON object of the following format:
+        >>> {
+        >>>     'notification_id': 1,
+        >>>     'enterprise_slug': 'enterprise_slug',
+        >>> }
+
+        Keys:
+        *notification_id*
+            Notification ID which is read by Current User.
+        *enterprise_slug*
+            The slug of the enterprise.
+        """
+        try:
+            notification_id, enterprise_slug = self.get_required_query_params(request)
+        except AdminNotificationAPIRequestError as invalid_request:
+            return Response({'error': str(invalid_request)}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            data = {
+                self.REQUIRED_PARAM_NOTIFICATION_ID: notification_id,
+                self.REQUIRED_PARAM_ENTERPRISE_SLUG: enterprise_slug,
+            }
+            enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(
+                enterprise_customer__slug=enterprise_slug, user_id=request.user.id
+            )
+            notification_read, _ = models.AdminNotificationRead.objects.get_or_create(
+                enterprise_customer_user=enterprise_customer_user,
+                admin_notification_id=notification_id,
+                is_read=True
+            )
+            LOGGER.info(
+                '[Admin Notification API] Notification read request successful. AdminNotificationRead ID'
+                ' {}.'.format(notification_read.id)
+            )
+            return Response(data, status=HTTP_200_OK)
+        except Exception as exc:  # pylint: disable=broad-except
+            LOGGER.error(
+                '[Admin Notification API] Notification read request failed, AdminNotification ID:{},Enterprise Slug:{}'
+                ' User ID:{}, Exception:{}.'.format(notification_id, enterprise_slug, request.user.id, exc)
+            )
+            return Response(
+                {'error': str('Notification read request failed')},
+                status=HTTP_500_INTERNAL_SERVER_ERROR
+            )

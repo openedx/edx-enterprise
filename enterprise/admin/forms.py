@@ -12,6 +12,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import auth
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -21,6 +22,7 @@ from enterprise import utils
 from enterprise.admin.utils import email_or_username__to__email, split_usernames_and_emails
 from enterprise.admin.widgets import SubmitInput
 from enterprise.models import (
+    AdminNotification,
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
@@ -559,6 +561,7 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             "data_type",
             "report_type",
             "delivery_method",
+            "enable_compression",
             "pgp_encryption_key",
             "frequency",
             "day_of_month",
@@ -683,3 +686,49 @@ class EnterpriseFeatureUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
     class Meta:
         model = EnterpriseFeatureUserRoleAssignment
         fields = ['user', 'role']
+
+
+class AdminNotificationForm(forms.ModelForm):
+    """
+    Alternate form for AdminNotification.
+    """
+
+    class Meta:
+        model = AdminNotification
+        fields = '__all__'
+
+    def clean(self):
+        """
+        1. `start_date` and `expiration_date` are mandatory.
+        2. `start_date` must always come before the `expiration_date`.
+        3.  There must be only one admin notification in a date range.
+        """
+        cleaned_data = super().clean()
+
+        start_date = cleaned_data.get('start_date', None)
+        expiration_date = cleaned_data.get('expiration_date', None)
+
+        if start_date is None or expiration_date is None:
+            # Start and expiration dates are mandatory.
+            raise ValidationError('Start and expiration dates are mandatory.')
+
+        if expiration_date < start_date:
+            # `start_date` must always come before the `expiration_date`
+            raise ValidationError({'expiration_date': ['Expiration date should be after start date.']})
+        admin_notification = AdminNotification.objects.filter(
+            Q(start_date__range=(start_date, expiration_date)) |
+            Q(expiration_date__range=(start_date, expiration_date)) |
+            Q(start_date__lt=start_date, expiration_date__gt=expiration_date)
+        ).exclude(
+            pk=self.instance.id
+        ).exists()
+
+        if admin_notification:
+            # This should not happen, as there can be only one admin notification instance in a particular date range.
+            message = _(
+                'Please select different date range. There is another notification scheduled in this date range.',
+            )
+            logger.exception(message)
+
+            raise ValidationError(message)
+        return cleaned_data

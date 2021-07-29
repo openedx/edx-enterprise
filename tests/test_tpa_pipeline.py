@@ -70,14 +70,12 @@ class TestTpaPipeline(unittest.TestCase):
                 active=True
             ).count() == 1
 
-    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
-    def test_handle_enterprise_logistration_not_user_linking(self, multiple_enterprises_feature):
+    def test_handle_enterprise_logistration_not_user_linking(self):
         """
         Test if there is not any enterprise customer then EnterpriseCustomerUser would not be associated with it.
         """
         backend = self.get_mocked_sso_backend()
         self.user = UserFactory()
-        multiple_enterprises_feature.return_value = True
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             enterprise_customer = EnterpriseCustomerFactory(
                 enable_data_sharing_consent=False
@@ -124,22 +122,15 @@ class TestTpaPipeline(unittest.TestCase):
             ).count() == 1
 
     @ddt.data(
-        (False, True, 'facebook'),
-        (True, False, 'facebook'),
-        (True, False, 'facebook'),
-        (False, True, 'facebook'),
-        (True, True, 'google-oauth2'),
-        (False, False, 'google-oauth2'),
-        (False, True, 'google-oauth2'),
-        (True, False, 'google-oauth2'),
+        (False, 'facebook'),
+        (True, 'facebook'),
+        (True, 'google-oauth2'),
+        (False, 'google-oauth2'),
     )
     @ddt.unpack
-    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
     def test_social_auth_user_login_associated_with_multiple_enterprise(self,
                                                                         new_association,
-                                                                        multiple_enterprise_switch,
-                                                                        backend_name,
-                                                                        multiple_enterprises_feature):
+                                                                        backend_name):
         """
         Test redirect to enterprise selection page, if socialAuth user has LMS attached account
         and part of multiple enterprises
@@ -149,7 +140,6 @@ class TestTpaPipeline(unittest.TestCase):
         backend.name = backend_name
         backend.strategy.session_get.return_value = 'not-an-enrollment-url'
         self.user = UserFactory(is_active=True)
-        multiple_enterprises_feature.return_value = multiple_enterprise_switch
         enterprise_customer = EnterpriseCustomerFactory(
             enable_data_sharing_consent=False
         )
@@ -170,7 +160,7 @@ class TestTpaPipeline(unittest.TestCase):
             with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
                 fake_get_ec.return_value = None
                 handle_enterprise_logistration(backend, self.user, **kwargs)
-                if new_association or not multiple_enterprise_switch:
+                if new_association:
                     ent_page_redirect.assert_not_called()
                 else:
                     ent_page_redirect.called_once()
@@ -180,9 +170,7 @@ class TestTpaPipeline(unittest.TestCase):
         (False, 'google-oauth2'),
     )
     @ddt.unpack
-    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
-    def test_social_auth_user_login_associated_with_one_enterprise(self, new_association, backend_name,
-                                                                   multiple_enterprises_feature):
+    def test_social_auth_user_login_associated_with_one_enterprise(self, new_association, backend_name):
         """
         Test that if socialAuth user has edx attached account and is part of one enterprises then redirection url
         is not changed
@@ -192,7 +180,6 @@ class TestTpaPipeline(unittest.TestCase):
         backend.name = backend_name
         backend.strategy.session_get.return_value = 'not-an-enrollment-url'
         self.user = UserFactory(is_active=True)
-        multiple_enterprises_feature.return_value = True
         enterprise_customer = EnterpriseCustomerFactory(
             enable_data_sharing_consent=False
         )
@@ -209,31 +196,20 @@ class TestTpaPipeline(unittest.TestCase):
                 ent_page_redirect.assert_not_called()
 
     @ddt.data(
-        (True, False, True, 'facebook'),
-        (False, False, True, 'facebook'),
-        (True, True, False, 'facebook'),
-        (False, True, False, 'facebook'),
-        (True, True, False, 'facebook'),
-        (False, True, False, 'facebook'),
-        (True, False, True, 'facebook'),
-        (False, False, True, 'facebook'),
-        (True, True, True, 'google-oauth2'),
-        (False, True, True, 'google-oauth2'),
-        (True, False, False, 'google-oauth2'),
-        (False, False, False, 'google-oauth2'),
-        (True, False, True, 'google-oauth2'),
-        (False, False, True, 'google-oauth2'),
-        (True, True, False, 'google-oauth2'),
-        (False, True, False, 'google-oauth2'),
+        (True, False, 'facebook'),
+        (False, False, 'facebook'),
+        (True, True, 'facebook'),
+        (False, True, 'facebook'),
+        (True, True, 'google-oauth2'),
+        (False, True, 'google-oauth2'),
+        (True, False, 'google-oauth2'),
+        (False, False, 'google-oauth2'),
     )
     @ddt.unpack
-    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
     def test_bypass_enterprise_selection_page_for_enrollment_url_login(self,
                                                                        using_enrollment_url,
                                                                        new_association,
-                                                                       multiple_enterprise_switch,
-                                                                       backend_name,
-                                                                       multiple_enterprises_feature):
+                                                                       backend_name):
         """
         Test that enterprise selection page is bypassed if socialAuth user is part of multiple enterprises
         and uses an enrollment url for login
@@ -246,7 +222,6 @@ class TestTpaPipeline(unittest.TestCase):
         else:
             backend.strategy.session_get.return_value = 'not-an-enrollment-url'
         self.user = UserFactory(is_active=True)
-        multiple_enterprises_feature.return_value = multiple_enterprise_switch
         enterprise_customer = EnterpriseCustomerFactory(
             enable_data_sharing_consent=False
         )
@@ -268,7 +243,7 @@ class TestTpaPipeline(unittest.TestCase):
                     'enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
                 fake_get_ec.return_value = None
                 handle_enterprise_logistration(backend, self.user, **kwargs)
-                if new_association or not multiple_enterprise_switch or using_enrollment_url:
+                if new_association or using_enrollment_url:
                     ent_page_redirect.assert_not_called()
                 else:
                     ent_page_redirect.called_once()

@@ -66,3 +66,9 @@ class IntegratedChannelApiClient:
         Send a request to the integrated channel's grade API to update the assessment level reporting status for a user.
         """
         raise NotImplementedError()
+
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        Delete duplicate assignments transmitted through the integrated channel's API.
+        """
+        raise NotImplementedError()

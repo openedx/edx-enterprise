@@ -33,6 +33,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
 from django.template import Context, Template
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlencode, urlquote
@@ -55,6 +56,8 @@ from enterprise.constants import (
     json_serialized_course_modes,
 )
 from enterprise.utils import (
+    ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
+    SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
@@ -404,7 +407,7 @@ class EnterpriseCustomer(TimeStampedModel):
     @property
     def has_multiple_idps(self):
         """
-        Return True if there are any identity providers associated with this enterprise customer.
+        Return True if there are multiple identity providers associated with this enterprise customer.
         """
         # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.count() > 1
@@ -450,6 +453,8 @@ class EnterpriseCustomer(TimeStampedModel):
         # if there is only one identity provider linked with the customer and tpa_hint_param was not provider.
         if self.has_single_idp and not tpa_hint_param:
             return self.identity_providers.first().provider_id
+        if self.has_multiple_idps and not tpa_hint_param:
+            return self.default_provider_idp.provider_id if self.default_provider_idp else None
         # Now if there is not any linked identity provider OR there are multiple identity providers.
         return None
 
@@ -652,7 +657,7 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -660,6 +665,8 @@ class EnterpriseCustomer(TimeStampedModel):
             catalog_api_user: The user for calling the Catalog API
             course_id: The specific course the learners were enrolled in
             users: An iterable of the users or pending users who were enrolled
+            admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
+                When true, we use the admin enrollment template instead.
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
@@ -669,24 +676,42 @@ class EnterpriseCustomer(TimeStampedModel):
             )
             return
 
-        course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-        params = {}
-        # add tap_hint if there is only one IdP attached with enterprise_customer
-        if self.identity_providers.count() == 1:
-            params = {'tpa_hint': self.identity_providers.first().provider_id}
-        course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
-
-        lms_root_url = utils.get_configuration_value_for_site(
-            self.site,
-            'LMS_ROOT_URL',
-            settings.LMS_ROOT_URL
-        )
-        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-            site=lms_root_url,
-            login_or_register='{login_or_register}',  # We don't know the value at this time
-            course_path=course_path
-        )
+        dashboard_url = None
         course_name = course_details.get('title')
+        if admin_enrollment:
+            course_path = 'course/{course_id}'.format(course_id=course_id)
+            dashboard_url = utils.get_configuration_value_for_site(
+                self.site,
+                'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+            )
+            destination_url = '{site}/{login_or_register}?next=/{slug}/{course_path}'.format(
+                site=dashboard_url,
+                login_or_register='{login_or_register}',  # We don't know the value at this time
+                slug=self.slug,
+                course_path=course_path
+            )
+        else:
+            course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+            params = {}
+            # add tap_hint if there is only one IdP attached with enterprise_customer
+            if self.has_single_idp:
+                params = {'tpa_hint': self.identity_providers.first().provider_id}
+
+            elif self.has_multiple_idps and self.default_provider_idp:
+                params = {'tpa_hint': self.default_provider_idp.provider_id}
+            course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+
+            lms_root_url = utils.get_configuration_value_for_site(
+                self.site,
+                'LMS_ROOT_URL',
+                settings.LMS_ROOT_URL
+            )
+            destination_url = '{site}/{login_or_register}?next={course_path}'.format(
+                site=lms_root_url,
+                login_or_register='{login_or_register}',  # We don't know the value at this time
+                course_path=course_path
+            )
 
         try:
             course_start = parse_lms_api_datetime(course_details.get('start'))
@@ -710,8 +735,10 @@ class EnterpriseCustomer(TimeStampedModel):
                         'type': 'course',
                         'start': course_start,
                     },
+                    dashboard_url=dashboard_url,
                     enterprise_customer=self,
-                    email_connection=email_conn
+                    email_connection=email_conn,
+                    admin_enrollment=admin_enrollment,
                 )
 
 
@@ -855,6 +882,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
+    history = HistoricalRecords()
 
     class Meta:
         app_label = 'enterprise'
@@ -863,7 +891,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
         """
         Override to handle creation of EnterpriseCustomerUser records.
 
@@ -1021,7 +1049,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 )
             )
             try:
-                enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
+                enrollment_api_client.enroll_user_in_course(
+                    self.username,
+                    course_run_id,
+                    mode,
+                    cohort=cohort,
+                    enterprise_uuid=str(self.enterprise_customer.uuid)
+                )
             except HttpClientError as exc:
                 succeeded = False
                 default_message = 'No error message provided'
@@ -2187,7 +2221,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
         """
         Saves this ``EnterpriseCatalogQuery``.
 
@@ -2235,13 +2269,28 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         'placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.'
     )
 
+    template_type_choices = [
+        (SELF_ENROLL_EMAIL_TEMPLATE_TYPE, 'Self Enrollment Template'),
+        (ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE, 'Admin Enrollment Template'),
+    ]
+
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
+
+    # an empty / null enterprise_customer indicates a default/fallback template
     enterprise_customer = models.OneToOneField(
         EnterpriseCustomer,
         related_name="enterprise_enrollment_template",
-        on_delete=models.deletion.CASCADE
+        on_delete=models.deletion.CASCADE,
+        null=True,
+        blank=True,
+    )
+    template_type = models.CharField(
+        max_length=255,
+        choices=template_type_choices,
+        default=SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
+        help_text=f'Use either {SELF_ENROLL_EMAIL_TEMPLATE_TYPE} or {ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE}'
     )
     history = HistoricalRecords()
 
@@ -2275,9 +2324,10 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
         """
         Return human-readable string representation.
         """
-        return '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
-            self.enterprise_customer.uuid
-        )
+        if self.enterprise_customer:
+            uuid = self.enterprise_customer.uuid
+            return f'<EnrollmentNotificationEmailTemplate (id: {self.id}) for EnterpriseCustomer with UUID {uuid}>'
+        return f'<EnrollmentNotificationEmailTemplate (id: {self.id}) Default template for type {self.template_type}>'
 
     def __repr__(self):
         """
@@ -2325,8 +2375,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (DATA_TYPE_GRADE, DATA_TYPE_GRADE),
         (DATA_TYPE_COMPLETION, DATA_TYPE_COMPLETION),
         (DATA_TYPE_COURSE_STRUCTURE, DATA_TYPE_COURSE_STRUCTURE),
-
     )
+
+    # Data types that are allowed to be sent without compression, all other data types must be compressed.
+    ALLOWED_NON_COMPRESSION_DATA_TYPES = (DATA_TYPE_CATALOG, )  # pylint: disable=invalid-name
 
     # These types are only valid for the enterprise customer named `Pearson`. We are adding these Reports temporarily
     # and will be reverted after Aurora based reports will be available.
@@ -2367,6 +2419,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         default=DELIVERY_METHOD_EMAIL,
         verbose_name=_("Delivery Method"),
         help_text=_("The method in which the data should be sent.")
+    )
+    enable_compression = models.BooleanField(
+        default=True,
+        help_text=_(
+            "Specifies whether report should be compressed. Without compression files will not be password protected "
+            "or encrypted."
+        )
     )
     pgp_encryption_key = models.TextField(
         null=True,
@@ -2538,7 +2597,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     def clean(self):
         """
-        Override of clean method to perform additional validation on frequency and day_of_month/day_of week.
+        Override of clean method to perform additional validation on frequency, day_of_month/day_of week
+        and compression.
         """
         validation_errors = {}
 
@@ -2578,6 +2638,17 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 validation_errors['decrypted_sftp_password'] = _(
                     'Decrypted SFTP password must be set if the delivery method is SFTP.'
                 )
+
+        # Check enable_compression flag is set as expected.
+        if not self.enable_compression and (
+                self.data_type not in self.ALLOWED_NON_COMPRESSION_DATA_TYPES
+                or self.delivery_method != self.DELIVERY_METHOD_SFTP
+        ):
+            allowed_data_types = ", ".join(self.ALLOWED_NON_COMPRESSION_DATA_TYPES)
+            validation_errors['enable_compression'] = (
+                f'Compression can only be disabled for the following data types: {allowed_data_types} and '
+                f'delivery method: {self.DELIVERY_METHOD_SFTP}'
+            )
 
         if validation_errors:
             raise ValidationError(validation_errors)
@@ -2640,7 +2711,11 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
     .. no_pii:
     """
 
-    role_class = SystemWideEnterpriseRole
+    role = models.ForeignKey(
+        SystemWideEnterpriseRole,
+        related_name="system_wide_role_assignments",
+        on_delete=models.CASCADE,
+    )
 
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
@@ -2654,6 +2729,8 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
             'BEFORE selecting from this dropdown.'
         ),
     )
+
+    history = HistoricalRecords()
 
     def has_access_to_all_contexts(self):
         """
@@ -2832,6 +2909,126 @@ class EnterpriseAnalyticsUser(TimeStampedModel):
             enterprise_customer_user=self.enterprise_customer_user.id,
             analytics_user_id=self.analytics_user_id,
         )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class AdminNotificationFilter(TimeStampedModel):
+    """
+    Model for Admin Notification Filters.
+
+    .. no_pii:
+    """
+    filter = models.CharField(
+        max_length=50,
+        blank=False,
+        null=False,
+        unique=True,
+        help_text=_('Filters to show banner notifications conditionally.')
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Admin Notification Filter')
+        verbose_name_plural = _('Admin Notification Filters')
+        ordering = ('filter',)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<AdminNotificationFilter id:{id} filter:{filter}>'.format(id=self.id, filter=self.filter)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class AdminNotification(TimeStampedModel):
+    """
+    Model for Admin Notification.
+
+    .. no_pii:
+    """
+    text = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_('Notification banner which will appear '
+                    'to enterprise admin on admin portal.')
+    )
+
+    admin_notification_filter = models.ManyToManyField(
+        AdminNotificationFilter,
+        blank=True,
+        related_name='notification_filter'
+    )
+
+    is_active = models.BooleanField(default=True)
+    start_date = models.DateField(default=timezone.now)
+    expiration_date = models.DateField(default=timezone.now)
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Enterprise Customer Admin Notification')
+        verbose_name_plural = _('Enterprise Customer Admin Notifications')
+        ordering = ('start_date',)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<AdminNotification id:{id} text:{text}>'.format(id=self.id, text=self.text)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class AdminNotificationRead(TimeStampedModel):
+    """
+    Model for Admin Notification Read Status.
+
+    .. no_pii:
+    """
+    enterprise_customer_user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE
+    )
+    is_read = models.BooleanField(default=False)
+    admin_notification = models.ForeignKey(
+        AdminNotification,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Admin Notification Read')
+        verbose_name_plural = _('Admin Notifications Read')
+        ordering = ('is_read',)
+        unique_together = (('enterprise_customer_user', 'admin_notification'),)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<AdminNotificationRead id={id} enterprise_customer_user={enterprise_customer_user}>'.format(
+            id=self.id, enterprise_customer_user=self.enterprise_customer_user)
 
     def __repr__(self):
         """

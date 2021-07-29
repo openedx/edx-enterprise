@@ -15,6 +15,178 @@ Change Log
 
 Unreleased
 ----------
+* Nothing
+
+[3.27.9]
+--------
+* Fix SAP Course Completion payload format again.
+
+[3.27.8]
+--------
+* Fix SAP Course Completion payload format.
+
+[3.27.7]
+--------
+* Replace EnrollmentApiClient calls from Bulk enrollment with a newly minted python api call (non-REST) from edx-platform
+
+[3.27.6]
+--------
+* Filter available IDPs for Enterprise Customers by new boolean flag on ProviderConfig model.
+
+[3.27.5]
+--------
+* Removing CSOD Integrated Channel from the list of supported channels for the content metadata transmission task.
+
+[3.27.4]
+--------
+* Add pagination handling to integrated channels Blackboard client
+
+[3.27.3]
+--------
+* Adds flag to SAP Success Factors customer configuration to switch SAP endpoints for learner completion calls.
+
+[3.27.2]
+--------
+* Ensure deletion and unlinking of a ``EnterpriseCustomerUser`` record only deletes the ``enterprise_learner`` system-wide role for that
+  particular ``EnterpriseCustomerUser``, as opposed to all ``enterprise_learner`` roles associated with the user.
+
+[3.27.1]
+--------
+* Updates bulk enrollment email template.
+
+[3.27.0]
+--------
+* Added enterprise uuid support in course enrollment.  ERTE-5
+
+[3.26.23]
+---------
+* Fix the way that ``page_size`` is passed as a param to the ``get_content_metadata`` endpoint.
+  Add a unit test for the ``EnterpriseCatalogApiClient.get_content_metadata()`` method, which
+  was previously untested.
+
+[3.26.22]
+---------
+* Set the EnterpriseCatalogApiClient get_content_metadata request page_size parameter to 50; the enterprise-catalog
+  service has a default page_size of 10.  This change means that we'll make a smaller overall number of SELECTs
+  against the enterprise-catalog database.
+
+[3.26.21]
+---------
+* Adds error handling and logging to the assignment deduplication management command.
+
+[3.26.20]
+---------
+* Updates requirements and style changes to match the latest Pylint.
+
+[3.26.19]
+---------
+* Updates to integrated channels catalogs to transmit help text.
+
+[3.26.18]
+---------
+* Overriding default chunk size for SAP and Canvas integrations.
+
+[3.26.17]
+---------
+* Adds Segment tracking for bulk enrollment method.
+
+[3.26.16]
+---------
+* Added history tables for EnterpriseCustomerUser and SystemWideEnterpriseUserRoleAssignment.
+
+[3.26.15]
+---------
+* Added management command to clean up duplicate transmitted assignments for the integrated channels.
+
+[3.26.14]
+---------
+* Fixed issue with API version in Tableau client.
+
+[3.26.13]
+---------
+* Fixed issue with CourseEnrollment receiver when learner has multiple enterprises.
+
+[3.26.12]
+---------
+* Canvas integrated channel now supports create_or_update pattern for courses. Detects/logs deleted courses.
+
+[3.26.11]
+---------
+* Removed ``ENABLE_MULTIPLE_USER_ENTERPRISES_FEATURE`` waffle switch
+
+[3.26.10]
+---------
+* Fix forward for parameter rename changing the signals API in 3.26.7
+
+[3.26.9]
+--------
+* Added support to use default idp in Enterprise slug login if there are multiple.
+
+[3.26.8]
+--------
+* added support for redirecting user to default IDP, in case multiple IDPs's attached
+
+[3.26.7]
+--------
+* developer-only facing updates to standardize LMS Integrated Channels logging.
+
+[3.26.6]
+--------
+* added an update api call to assign tableau user roles
+
+[3.26.5]
+--------
+* fix: Bypass slumber's getattr definition when requesting enrollments for usernames starting with '_'
+  (because slumber will raise an AttributeError from getattr when requesting a resource that starts with '_').
+
+[3.26.4]
+--------
+* removed unnecessary call to ecom in bulk enrollment (process of assigning a license already accounts for this)
+
+[3.26.3]
+--------
+* added --skip-unlink param in unlink_enterprise_customer_learners command to just remove DSC records.
+
+[3.26.2]
+---------
+* Added logs for enterprise users created in tableau.
+
+[3.26.1]
+--------
+* Added check to configure reports only for Catalog over SFTP.
+
+[3.26.0]
+---------
+* Added support for admin scheduled banners that run from date x to date y.
+
+[3.25.2]
+--------
+* Log exception stack trace during DSC licensed-enrollment flow, so that
+  we can look at log messages and understand what exactly is failing.
+
+[3.25.1]
+--------
+* bug fix, properly handle API response pagination from Canvas.
+
+[3.25.0]
+--------
+* added management command to unlink learners from their enterprise and
+  deleting DSC and EnterpriseCourseEnrolment records.
+
+[3.24.0]
+--------
+* added ``enable_compression`` flag in EnterpriseCustomerReportConfiguration table.
+
+[3.23.12]
+---------
+* Database based template system for enrollment emails, including support for Admin and Self enroll modes.
+  Admin mode for Bulk enrollment, existing enrollment emails still use the current template.
+
+[3.23.11]
+---------
+* Log more specific information about HTTP client errors that are caught when using the LMS
+  enrollment API.  Also send an exception event to the monitoring service when this happens, even
+  though we handle the exception "gracefully".
 
 [3.23.10]
 ---------

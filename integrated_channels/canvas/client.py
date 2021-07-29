@@ -3,17 +3,24 @@
 Client for connecting to Canvas.
 """
 import json
+import logging
 from http import HTTPStatus
 
 import requests
-from requests.utils import quote
+from dateutil.parser import parse
 from six.moves.urllib.parse import quote_plus, urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
+from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+
+LOGGER = logging.getLogger(__name__)
+
+
+MESSAGE_WHEN_COURSE_WAS_DELETED = 'Course was deleted previously, skipping create/update'
 
 
 class CanvasAPIClient(IntegratedChannelApiClient):
@@ -52,40 +59,76 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('canvas')
         self.session = None
         self.expires_at = None
-        self.course_create_url = CanvasAPIClient.course_create_endpoint(
-            self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id
-        )
-
-    @staticmethod
-    def course_create_endpoint(canvas_base_url, canvas_account_id):
-        """
-        Returns endpoint to POST to for course creation
-        """
-        return '{}/api/v1/accounts/{}/courses'.format(
-            canvas_base_url,
-            canvas_account_id,
-        )
-
-    @staticmethod
-    def course_update_endpoint(canvas_base_url, course_id):
-        """
-        Returns endpoint to PUT to for course update
-        """
-        return '{}/api/v1/courses/{}'.format(
-            canvas_base_url,
-            course_id,
-        )
+        self.course_create_url = CanvasUtil.course_create_endpoint(self.enterprise_configuration)
 
     def create_content_metadata(self, serialized_data):
+        """
+        Creates a course in Canvas.
+        If course is not found, easy!  create it as usual
+        If course is found, it will have one of the following `workflow_state` values:
+                available: issue an update with latest field values
+                completed: this happens if a course has been concluded. Update it to change status
+                  to offer by using course[event]=offer (which makes course published in Canvas)
+                unpublished: still just update
+                deleted: take no action for now.
+        For information of Canvas workflow_states see `course[event]` at:
+        https://canvas.instructure.com/doc/api/courses.html#method.courses.update
+        """
         self._create_session()
 
-        # step 1: create the course
-        status_code, response_text = self._post(self.course_create_url, serialized_data)
-        created_course_id = json.loads(response_text)['id']
+        course_details = json.loads(serialized_data.decode('utf-8'))['course']
+        edx_course_id = course_details['integration_id']
+        located_course = CanvasUtil.find_course_by_course_id(
+            self.enterprise_configuration,
+            self.session,
+            edx_course_id
+        )
 
-        # step 2: upload image_url and any other details
-        self._update_course_details(created_course_id, serialized_data)
+        if not located_course:
+            # Course does not exist: Create the course
+            status_code, response_text = self._post(self.course_create_url, serialized_data)
+            created_course_id = json.loads(response_text)['id']
+
+            # step 2: upload image_url and any other details
+            self._update_course_details(created_course_id, course_details)
+        else:
+            workflow_state = located_course['workflow_state']
+            if workflow_state.lower() == 'deleted':
+                LOGGER.error(
+                    generate_formatted_log(
+                        'canvas',
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        edx_course_id,
+                        'Course with integration_id = {edx_course_id} found in deleted state, '
+                        'not attempting to create/update'.format(
+                            edx_course_id=edx_course_id,
+                        ),
+                    )
+                )
+                status_code = 200
+                response_text = MESSAGE_WHEN_COURSE_WAS_DELETED
+            else:
+                # 'unpublished', 'completed' or 'available' cases
+                LOGGER.warning(
+                    generate_formatted_log(
+                        'canvas',
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        edx_course_id,
+                        'Course with canvas_id = {course_id},'
+                        'integration_id = {edx_course_id} found in workflow_state={workflow_state},'
+                        ' attempting to update instead of creating it'.format(
+                            course_id=located_course["id"],
+                            edx_course_id=edx_course_id,
+                            workflow_state=workflow_state,
+                        ),
+                    )
+                )
+                status_code, response_text = self._update_course_details(
+                    located_course['id'],
+                    course_details,
+                )
 
         return status_code, response_text
 
@@ -93,10 +136,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = self._get_course_id_from_integration_id(integration_id)
+        course_id = CanvasUtil.get_course_id_from_edx_course_id(
+            self.enterprise_configuration,
+            self.session,
+            integration_id,
+        )
 
-        url = CanvasAPIClient.course_update_endpoint(
-            self.enterprise_configuration.canvas_base_url,
+        url = CanvasUtil.course_update_endpoint(
+            self.enterprise_configuration,
             course_id,
         )
 
@@ -106,7 +153,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = self._get_course_id_from_integration_id(integration_id)
+        course_id = CanvasUtil.get_course_id_from_edx_course_id(
+            self.enterprise_configuration,
+            self.session,
+            integration_id,
+        )
 
         url = '{}/api/v1/courses/{}'.format(
             self.enterprise_configuration.canvas_base_url,
@@ -182,29 +233,222 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # Todo: There isn't a great way for users to delete course completion data
         pass
 
-    # Private Methods
+    def cleanup_duplicate_assignment_records(self, courses):
+        """
+        For each course provided, iterate over assessments contained within the associated Canvas course and remove all
+        but the most recent, unique assessments sorted by `updated_at`.
 
-    def _update_course_details(self, course_id, serialized_data):
+        Args:
+            - courses: iterable set of unique course IDs
         """
-        Update a course for image_url (and possibly other settings in future)
-        This is used only for settings that are not settable in the initial course creation
+        self._create_session()
+        failures = []
+        num_assignments_removed = 0
+        num_failed_assignments = 0
+        for edx_course in courses:
+            canvas_course = CanvasUtil.find_course_by_course_id(
+                self.enterprise_configuration,
+                self.session,
+                edx_course
+            )
+
+            # Add any missing courses to a list of failed courses
+            if not canvas_course:
+                failures.append(edx_course)
+                continue
+
+            canvas_assignments_url = CanvasUtil.course_assignments_endpoint(
+                self.enterprise_configuration,
+                canvas_course['id']
+            )
+
+            # Dict of most current, unique assignments in the course
+            current_assignments = {}
+
+            # Running list of duplicate assignments (ID's) that need to be deleted
+            assignments_to_delete = []
+
+            current_page_count = 0
+            more_pages_present = True
+
+            # Continue iterating over assignment responses while more paginated results exist or until the page count
+            # limit is hit
+            while more_pages_present and current_page_count < 150:
+                resp = self.session.get(canvas_assignments_url)
+
+                if resp.status_code >= 400:
+                    LOGGER.error(
+                        generate_formatted_log(
+                            'canvas',
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            edx_course,
+                            'Failed to retrieve assignments for Canvas course: {} while running deduplication, '
+                            'associated edx course: {}'.format(
+                                canvas_course['id'],
+                                edx_course
+                            )
+                        )
+                    )
+                    more_pages_present = False
+                else:
+                    # Result of paginated response from the Canvas course assignments API
+                    assignments_resp = resp.json()
+
+                    # Ingest Canvas assignments API response and replace older duplicated assignments in current
+                    # assignments. All older duplicated assignment IDs are added to `assignments_to_delete`
+                    current_assignments, assignments_to_delete = self._parse_unique_newest_assignments(
+                        current_assignments,
+                        assignments_to_delete,
+                        assignments_resp
+                    )
+
+                    # Determine if another page of results exists
+                    next_page = CanvasUtil.determine_next_results_page(resp)
+                    if next_page:
+                        canvas_assignments_url = next_page
+                        current_page_count += 1
+                    else:
+                        more_pages_present = False
+
+            # Remove all assignments from the current course and record the number of assignments removed
+            assignments_removed, individual_assignment_failures = \
+                self._bulk_remove_course_assignments(
+                    canvas_course.get('id'),
+                    assignments_to_delete
+                )
+            num_assignments_removed += len(assignments_removed)
+            num_failed_assignments += len(individual_assignment_failures)
+
+        if failures or num_failed_assignments:
+            message = 'Failed to dedup all assignments for the following courses: {}. ' \
+                      'Number of individual assignments that failed to be deleted: {}. ' \
+                      'Total assignments removed: {}.'.format(
+                          failures,
+                          num_failed_assignments,
+                          num_assignments_removed
+                      )
+            status_code = 400
+        else:
+            message = 'Removed {} duplicate assignments from Canvas.'.format(num_assignments_removed)
+            status_code = 200
+
+        return status_code, message
+
+    # Private Methods
+    def _bulk_remove_course_assignments(self, course_id, assignments_to_remove):
         """
+        Take a Canvas course ID and remove all assessments associated a list of Canvas course assignment IDs.
+
+        Args:
+            - course_id: Canvas course ID
+            - assignments_to_remove: List of assignment ID's to be removed contained with the provided course.
+        """
+        removed_items = []
+        failures = []
+        for assignment_id in assignments_to_remove:
+            try:
+                assignment_url = CanvasUtil.course_assignments_endpoint(
+                    self.enterprise_configuration,
+                    course_id
+                ) + '/{}'.format(assignment_id)
+                self._delete(assignment_url)
+                removed_items.append(assignment_id)
+            except ClientError:  # pylint: disable=broad-except
+                # we do not want assignment deletes to cause failures
+                failures.append(assignment_id)
+        return removed_items, failures
+
+    def _parse_unique_newest_assignments(self, current_assignments, assignments_to_delete, assignment_response_json):
+        """
+        Ingest an assignments response from Canvas into a dictionary of most current, unique assignments found and a
+        running list of assignments to delete
+
+        Args:
+            - current_assignments: dictionary containing information on most current unique assignments contained within
+            a Canvas course.
+                Example:
+                    {
+                        'edX+816': {
+                            'id': 10,
+                            'updated_at': '2021-06-10T13:57:19Z',
+                        },
+                        'edX+100': {
+                            'id': 11,
+                            'updated_at': '2021-06-10T13:58:19Z',
+                        }
+                    }
+
+            - assignments_to_delete: list of Canvas assignment IDs associated with duplicate assignments to be deleted
+
+            - assignment_response_json: json repr of the requests' Response object returned by Canvas' course
+            assignments API
+        """
+        for assignment in assignment_response_json:
+            integration_id = assignment['integration_id']
+            current_assignment = current_assignments.get(integration_id)
+            if current_assignment:
+                if parse(current_assignment['updated_at']) < parse(assignment['updated_at']):
+                    assignments_to_delete.append(current_assignment['id'])
+                    current_assignments[integration_id] = {
+                        'id': assignment['id'],
+                        'updated_at': assignment['updated_at']
+                    }
+                else:
+                    assignments_to_delete.append(assignment['id'])
+            else:
+                current_assignments[integration_id] = {
+                    'id': assignment['id'],
+                    'updated_at': assignment['updated_at']
+                }
+
+        return current_assignments, assignments_to_delete
+
+    def _update_course_details(self, course_id, course_details):
+        """
+        Update a course for image_url (and possibly other settings in future).
+        Also sets course to 'offer' state by sending 'course[event]=offer',
+        which makes the course published in Canvas.
+
+        Arguments:
+          - course_id (Number): Canvas Course id
+          - course_details (dict): { 'image_url' } : optional, used if present for course[image_url]
+        """
+        response_code = None
+        response_text = None
+        url = CanvasUtil.course_update_endpoint(
+            self.enterprise_configuration,
+            course_id,
+        )
+        # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
+        update_payload = {'course': {'event': 'offer'}}
         try:
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
-            content_metadata_item = json.loads(serialized_data.decode('utf-8'))['course']
-            if "image_url" in content_metadata_item:
-                url = CanvasAPIClient.course_update_endpoint(
-                    self.enterprise_configuration.canvas_base_url,
-                    course_id,
-                )
-                # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
-                self._put(url, json.dumps({
-                    'course': {'image_url': content_metadata_item['image_url'], 'event': 'offer'}
-                }).encode('utf-8'))
-        except Exception:  # pylint: disable=broad-except
+            if "image_url" in course_details:
+                update_payload['course']['image_url'] = course_details['image_url']
+
+            response_code, response_text = self._put(url, json.dumps(update_payload).encode('utf-8'))
+        except Exception as course_exc:  # pylint: disable=broad-except
             # we do not want course image update to cause failures
-            pass
+            edx_course_id = course_details["integration_id"]
+            exc_string = str(course_exc)
+            LOGGER.error(
+                generate_formatted_log(
+                    'canvas',
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    edx_course_id,
+                    'Failed to update details for course, '
+                    'canvas_course_id={canvas_course_id}. '
+                    'Details: {details}'.format(
+                        canvas_course_id=course_id,
+                        details=exc_string,
+                    )
+                )
+            )
+
+        return response_code, response_text
 
     def _post(self, url, data):
         """
@@ -272,43 +516,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             ) from error
 
         return integration_id
-
-    def _get_course_id_from_integration_id(self, integration_id):
-        """
-        To obtain course ID we have to request all courses associated with the integrated
-        account and match the one with our integration ID.
-
-        Args:
-            integration_id (string): The ID retrieved from the transmission payload.
-        """
-        url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
-            self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id,
-            quote(integration_id),
-        )
-        resp = self.session.get(url)
-        all_courses_response = resp.json()
-
-        if resp.status_code >= 400:
-            raise ClientError(
-                all_courses_response.reason,
-                all_courses_response.status_code
-            )
-
-        course_id = None
-        for course in all_courses_response:
-            if course['integration_id'] == integration_id:
-                course_id = course['id']
-                break
-
-        if not course_id:
-            raise ClientError(
-                "No Canvas courses found with associated integration ID: {}.".format(
-                    integration_id
-                ),
-                HTTPStatus.NOT_FOUND.value
-            )
-        return course_id
 
     def _search_for_canvas_user_by_email(self, user_email):
         """
@@ -378,37 +585,53 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             course_id (str) : the Canvas course ID relating to the course which the client is currently
             transmitting learner data to.
         """
-        # First, check if the course assignment already exists
+        # Check if the course assignment already exists
         canvas_assignments_url = '{canvas_base_url}/api/v1/courses/{course_id}/assignments'.format(
             canvas_base_url=self.enterprise_configuration.canvas_base_url,
             course_id=course_id
         )
         resp = self.session.get(canvas_assignments_url)
 
-        if resp.status_code >= 400:
-            raise ClientError(
-                "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
-                    resp.text,
-                ),
-                resp.status_code
-            )
+        more_pages_present = True
+        current_page_count = 0
+        assignment_id = ''
 
-        assignments_resp = resp.json()
-        assignment_id = None
-        for assignment in assignments_resp:
-            try:
-                if assignment['integration_id'] == integration_id:
-                    assignment_id = assignment['id']
-                    break
-            # The validation check above should ensure that we have a 200 response from Canvas, but sanity catch if we
-            # have a unexpected response format
-            except (KeyError, ValueError, TypeError) as error:
+        # current_page_count serves as a timeout, limiting to a max of 150 pages of requests
+        while more_pages_present and current_page_count < 150:
+            if resp.status_code >= 400:
                 raise ClientError(
                     "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
                         resp.text,
                     ),
                     resp.status_code
-                ) from error
+                )
+
+            assignments_resp = resp.json()
+            for assignment in assignments_resp:
+                try:
+                    if assignment['integration_id'] == integration_id:
+                        assignment_id = assignment['id']
+                        break
+
+                # The integration ID check above should ensure that we have a 200 response from Canvas,
+                # but sanity catch if we have a unexpected response format
+                except (KeyError, ValueError, TypeError) as error:
+                    raise ClientError(
+                        "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
+                            resp.text,
+                        ),
+                        resp.status_code
+                    ) from error
+
+            if not assignment_id:
+                next_page = CanvasUtil.determine_next_results_page(resp)
+                if next_page:
+                    resp = self.session.get(next_page)
+                    current_page_count += 1
+                else:
+                    more_pages_present = False
+            else:
+                more_pages_present = False
 
         # Canvas requires a course assignment for a learner to be assigned a grade.
         # If no assignment has been made yet, create it.
@@ -441,12 +664,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Helper method to take necessary learner data and post to Canvas as a submission to the correlated assignment.
         """
         submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
-                         '{assignment_id}/submissions/{user_id}'.format(
-                             base_url=self.enterprise_configuration.canvas_base_url,
-                             course_id=course_id,
-                             assignment_id=assignment_id,
-                             user_id=canvas_user_id
-                         )
+            '{assignment_id}/submissions/{user_id}'.format(
+                base_url=self.enterprise_configuration.canvas_base_url,
+                course_id=course_id,
+                assignment_id=assignment_id,
+                user_id=canvas_user_id
+            )
 
         # The percent grade from the grades api is represented as a decimal
         submission_data = {

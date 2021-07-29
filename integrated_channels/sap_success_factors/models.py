@@ -117,6 +117,22 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         verbose_name=_("Transmit Total Hours"),
         help_text=_("Include totalHours in the transmitted completion data")
     )
+    prevent_self_submit_grades = models.BooleanField(
+        default=False,
+        verbose_name="Prevent Learner From Self-Submitting Grades",
+        help_text=_("When set to True, the integration will use the "
+                    "generic edX service user ('sapsf_user_id') "
+                    "defined in the SAP Customer Configuration for course completion.")
+    )
+
+    # overriding base model field, to use chunk size 1 default
+    transmission_chunk_size = models.IntegerField(
+        default=1,
+        help_text=(
+            _("The maximum number of data items to transmit to the integrated channel "
+              "with each request.")
+        )
+    )
 
     def get_locales(self, default_locale=None):
         """

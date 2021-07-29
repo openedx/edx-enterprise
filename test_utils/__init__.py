@@ -211,8 +211,9 @@ def update_search_with_enterprise_context(search_result, add_utm_info):
 def fake_render(request, template, context):  # pylint: disable=unused-argument
     """
     Switch the request to use a template that does not depend on edx-platform.
+    The choice of the template here is arbitrary, as long as it renders successfully for tests.
     """
-    return render(request, 'enterprise/emails/user_notification.html', context=context)
+    return render(request, 'enterprise/_data_sharing_decline_modal.html', context=context)
 
 
 def assert_url(first, second):
@@ -383,7 +384,7 @@ class EnterpriseFormViewTestCase(TestCase):
         super().setUp()
         # create a temporary template file
         # rendering View's template fails becuase of dependency on edx-platform
-        tpl = tempfile.NamedTemporaryFile(
+        tpl = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
             prefix='test_template.',
             suffix=".html",
             dir=os.path.join(settings.REPO_ROOT, 'templates/enterprise/'),
@@ -404,6 +405,30 @@ class EmptyCacheMixin:
     """
     Mixin the clears the default cache before each test function.
     """
+
     def setUp(self):
         super().setUp()
         caches['default'].clear()
+
+
+class ReturnValueSpy:
+    """
+    Helper class to be used with mock and patch so that inner commands may be inspected.
+    Useful for integration tests. Example Usage with a management command:
+    def test():
+        with patch('low_level_class.my_m', ReturnValueSpy(goo)) as goo_mock:
+            x = foo()
+            x = foo()
+            print(goo_mock.return_values)
+            assert goo_mock.return_values == [3, 3]
+
+    """
+
+    def __init__(self, func):
+        self.func = func
+        self.return_values = []
+
+    def __call__(self, *args, **kwargs):
+        answer = self.func(*args, **kwargs)
+        self.return_values.append(answer)
+        return answer

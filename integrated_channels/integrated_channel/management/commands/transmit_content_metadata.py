@@ -38,6 +38,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         Transmit the courseware data for the EnterpriseCustomer(s) to the active integration channels.
         """
         username = options['catalog_user']
+        options['content_metadata_job_support'] = True
 
         # Before we do a whole bunch of database queries, make sure that the user we were passed exists.
         try:
