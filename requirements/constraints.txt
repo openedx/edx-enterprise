@@ -42,3 +42,6 @@ pytest<7.0
 
 # pinning it to latest release.
 celery==5.0.4
+
+# django-countries versions <=7 don't have support for django 3.2
+django-countries>7.0
