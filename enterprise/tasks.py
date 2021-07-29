@@ -56,7 +56,7 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
     """
     Create enterprise enrollment for user if course_id part of catalog for the ENT customer.
     """
-    enterprise_customer_user = enterprise_customer_model().objects.get(
+    enterprise_customer_user = enterprise_customer_user_model().objects.get(
         id=enterprise_customer_user_id
     )
     # Prevent duplicate records from being created if possible
@@ -103,11 +103,11 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
             )
 
 
-def enterprise_customer_model():
+def enterprise_customer_user_model():
     """
-    Returns the ``EnterpriseCustomer`` class.
+    Returns the ``EnterpriseCustomerUser`` class.
     """
-    return apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
 
 
 def enterprise_course_enrollment_model():

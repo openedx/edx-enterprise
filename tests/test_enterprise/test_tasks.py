@@ -8,7 +8,7 @@ import unittest
 import mock
 from pytest import mark
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseEnrollmentSource
 from enterprise.tasks import create_enterprise_enrollment, send_enterprise_email_notification
 from enterprise.utils import serialize_notification_content
 from test_utils.factories import (
@@ -115,7 +115,10 @@ class TestEnterpriseTasks(unittest.TestCase):
         users = [UserFactory(username=f'user{user_id}') for user_id in range_list]
         course_details = {'title': 'course_title', 'start': '2021-09-21T00:01:10'}
         admin_enrollment = True
-        mock_email_conn.return_value = mock.MagicMock()
+
+        mail_conn = mock.MagicMock()
+        mock_email_conn.return_value.__enter__.return_value = mail_conn
+
         email_items = serialize_notification_content(
             enterprise_customer,
             course_details,
@@ -133,7 +136,7 @@ class TestEnterpriseTasks(unittest.TestCase):
             item['enrolled_in'],
             item['dashboard_url'],
             enterprise_customer.uuid,
-            email_connection=mock_email_conn,
+            email_connection=mail_conn,
             admin_enrollment=admin_enrollment,
         ) for item in email_items]
         mock_send_notification.assert_has_calls(calls)
