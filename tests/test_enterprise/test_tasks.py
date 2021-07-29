@@ -8,7 +8,7 @@ import unittest
 import mock
 from pytest import mark
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseEnrollmentSource
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
 from enterprise.tasks import create_enterprise_enrollment, send_enterprise_email_notification
 from enterprise.utils import serialize_notification_content
 from test_utils.factories import (
