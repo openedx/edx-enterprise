@@ -627,7 +627,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         if user is None:
             with raises(TypeError):
                 utils.send_email_notification_message(
-                    model_to_dict(user),
+                    user,
                     enrolled_in,
                     dashboard_url,
                     enterprise_customer.uuid,
