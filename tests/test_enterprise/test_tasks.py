@@ -3,6 +3,7 @@
 Tests for the `edx-enterprise` tasks module.
 """
 
+import copy
 import unittest
 
 import mock
@@ -105,6 +106,47 @@ class TestEnterpriseTasks(unittest.TestCase):
             self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 1
+
+    @mock.patch('enterprise.tasks.mail.get_connection')
+    @mock.patch('enterprise.tasks.send_email_notification_message')
+    def test_enterprise_email_notification_failsafe(self, mock_send_notification, mock_email_conn):
+        """
+        Verify one failure does not interrupt emails for all learners
+        """
+        enterprise_customer = EnterpriseCustomerFactory()
+
+        mock_send_notification.side_effect = Exception("Any thing that happens during email")
+
+        mail_conn = mock.MagicMock()
+        mock_email_conn.return_value.__enter__.return_value = mail_conn
+
+        item1 = {
+            "user": {'username': 'test'},
+            "enrolled_in": {
+                "name": "test_course",
+                "url": "https://test/url",
+                "type": "course",
+                "start": "2021-01-01T00:10:10",
+            },
+            "dashboard_url": "https://test/url",
+            "enterprise_customer_uuid": enterprise_customer.uuid,
+            "admin_enrollment": True,
+        }
+        item2 = copy.copy(item1)
+        item2["user"]["user_email"] = "abc@test.com"
+
+        email_items = [item1, item2]
+
+        # check exception is logged at ERROR level twice, in this case
+        # but causes no failures otherwise
+        with self.assertLogs('enterprise.tasks', level='ERROR') as log_cm:
+            send_enterprise_email_notification(
+                enterprise_customer.uuid,
+                True,
+                email_items,
+            )
+            self.assertEqual(2, len(log_cm.records))
+        mock_email_conn.assert_called_once()
 
     @mock.patch('enterprise.tasks.mail.get_connection')
     @mock.patch('enterprise.tasks.send_email_notification_message')
