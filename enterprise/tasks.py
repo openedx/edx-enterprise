@@ -41,6 +41,10 @@ def send_enterprise_email_notification(
     with mail.get_connection() as email_conn:
         for item in email_items:
             course_name = item['enrolled_in']['name']
+            if 'username' in item['user']:
+                username = item['user']['username']
+            else:
+                username = 'no_username_found'
             try:
                 send_email_notification_message(
                     item['user'],
@@ -52,9 +56,10 @@ def send_enterprise_email_notification(
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.exception(
-                    f"Failed notifying user: "
-                    f"enterprise_customer_uuid: {enterprise_customer_uuid}"
-                    f"of enterprise enrollment in course {course_name}",
+                    "Failed notifying user: {}"
+                    "enterprise_customer_uuid: {}"
+                    "of enterprise enrollment in course {}"
+                    .format(username, enterprise_customer_uuid, course_name),
                     exc_info=exc,
                 )
 
