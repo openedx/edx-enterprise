@@ -69,7 +69,7 @@ from test_utils import (
     update_program_with_enterprise_context,
 )
 from test_utils.decorators import mock_api_response
-from test_utils.factories import FAKER
+from test_utils.factories import FAKER, PendingEnterpriseCustomerUserFactory
 from test_utils.fake_enterprise_api import get_default_branding_object
 
 fake = Faker()
@@ -3308,7 +3308,6 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         {
             'body': {
                 'licenses_info': [{'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'}]
-
             },
             'expected_code': 400,
             'expected_response': {
@@ -3427,9 +3426,11 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
+        mock_notify_task,
         mock_track_enroll,
         mock_get_course_mode,
         body,
@@ -3468,6 +3469,128 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
         else:
             mock_track_enroll.assert_not_called()
+
+        # no notifications to be sent unless 'notify' specifically asked for in payload
+        mock_notify_task.assert_not_called()
+
+    @ddt.data(
+        {
+            'body': {
+                'notify': 'true',
+                'licenses_info': [
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                    },
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                    },
+                ]
+            },
+            'expected_code': 202,
+            'expected_response': {
+                'successes': [],
+                'pending': [
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'}
+                ],
+                'failures': []
+            },
+            'expected_num_pending_licenses': 4,
+            'expected_events': [
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+            ],
+        },
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
+    # pylint: disable=unused-argument
+    def test_bulk_enrollment_with_notification(
+        self,
+        mock_notify_task,
+        mock_track_enroll,
+        mock_get_course_mode,
+        body,
+        expected_code,
+        expected_response,
+        expected_num_pending_licenses,
+        expected_events,
+    ):
+        """
+        Tests the bulk enrollment endpoint at enroll_learners_in_courses.
+        Explicitly checks that notification is invoked precisely once per course,
+        with the associated learners included
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+
+        self.assertEqual(len(PendingEnrollment.objects.all()), 0)
+
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, expected_code)
+
+        response_json = response.json()
+        self.assertEqual(expected_response, response_json)
+        self.assertEqual(len(PendingEnrollment.objects.all()), expected_num_pending_licenses)
+
+        mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
+
+        # verify notification sent correctly for each course to applicable learners
+        unique_course_keys = {item['course_run_key'] for item in body['licenses_info']}
+        unique_learners = {item['email'] for item in body['licenses_info']}
+        unique_ent_customer_users = set()
+        for learner in unique_learners:
+            try:
+                # alternative was to have a factory that uses django_get_or_create
+                # but did not want to change the existing factory or create a new one
+                unique_ent_customer_users.add(
+                    PendingEnterpriseCustomerUser.objects.get(user_email=learner)
+                )
+            except PendingEnterpriseCustomerUser.DoesNotExist:
+                unique_ent_customer_users.add(PendingEnterpriseCustomerUserFactory(
+                    enterprise_customer=enterprise_customer,
+                    user_email=learner
+                ))
+        request_user = self.user
+
+        def _make_call(course_run, enrolled_learners):
+            return mock.call(
+                catalog_api_user=request_user,
+                course_id=course_run,
+                users=enrolled_learners,
+                admin_enrollment=True,
+            )
+        mock_calls = [_make_call(course_run, unique_ent_customer_users) for course_run in unique_course_keys]
+
+        mock_notify_task.assert_has_calls(mock_calls, any_order=True)
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')

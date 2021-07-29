@@ -15,6 +15,7 @@ from pytest import mark, raises
 
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.forms.models import model_to_dict
 from django.test import override_settings
 
 from enterprise import utils
@@ -436,17 +437,17 @@ class TestEnterpriseUtils(unittest.TestCase):
                     user,
                     enrolled_in,
                     dashboard_url,
-                    enterprise_customer
+                    enterprise_customer.uuid
                 )
         else:
             conn = mail.get_connection()
             user_cls = user.pop('class')
             user = user_cls(**user)
             utils.send_email_notification_message(
-                user,
+                model_to_dict(user),
                 enrolled_in,
                 dashboard_url,
-                enterprise_customer,
+                enterprise_customer.uuid,
                 email_connection=conn,
             )
             assert len(mail.outbox) == 1
@@ -485,10 +486,10 @@ class TestEnterpriseUtils(unittest.TestCase):
         dashboard_url = 'http://lms.example.com'
 
         utils.send_email_notification_message(
-            user,
+            model_to_dict(user),
             enrolled_in,
             dashboard_url,
-            enterprise_customer,
+            enterprise_customer.uuid,
             email_connection=conn,
             admin_enrollment=True,
         )
@@ -629,17 +630,17 @@ class TestEnterpriseUtils(unittest.TestCase):
                     user,
                     enrolled_in,
                     dashboard_url,
-                    enterprise_customer
+                    enterprise_customer.uuid,
                 )
         else:
             conn = mail.get_connection()
             user_cls = user.pop('class')
             user = user_cls(**user)
             utils.send_email_notification_message(
-                user,
+                model_to_dict(user),
                 enrolled_in,
                 dashboard_url,
-                enterprise_customer,
+                enterprise_customer.uuid,
                 email_connection=conn,
             )
             assert len(mail.outbox) == 1
@@ -658,10 +659,12 @@ class TestEnterpriseUtils(unittest.TestCase):
         )
     )
     @ddt.unpack
+    @mock.patch('enterprise.utils.get_enterprise_customer')
     def test_send_email_notification_message_with_site_from_email_override(
             self,
             site_config_from_email_address,
-            expected_from_email_address
+            expected_from_email_address,
+            mock_get_ent_customer,
     ):
         """
         Test that we can successfully override a from email address per site.
@@ -686,12 +689,14 @@ class TestEnterpriseUtils(unittest.TestCase):
 
         enterprise_customer = EnterpriseCustomerFactory(site=site)
 
+        mock_get_ent_customer.return_value = enterprise_customer
+
         conn = mail.get_connection()
         utils.send_email_notification_message(
-            user,
+            model_to_dict(user),
             enrolled_in,
             dashboard_url,
-            enterprise_customer,
+            enterprise_customer.uuid,
             email_connection=conn,
         )
 

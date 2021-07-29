@@ -8,11 +8,46 @@ from logging import getLogger
 from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
+from django.apps import apps
+from django.core import mail
 from django.db import IntegrityError
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
+from enterprise.utils import send_email_notification_message
 
 LOGGER = getLogger(__name__)
+
+
+@shared_task
+@set_code_owner_attribute
+def send_enterprise_email_notification(
+    enterprise_customer_uuid,
+    admin_enrollment,
+    email_items,
+):
+    """
+    Send enrollment email notifications to specified learners
+
+    Arguments:
+        * enterprise_customer_uuid (UUID)
+        * admin_enrollment=False : If True, this indicates admin based enrollment (e.g., bulk enrollment)
+        *
+        * email_items: list of dictionary objects with keys:
+        *   user (dict): a dict with either of the following forms:
+              - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
+              - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
+        *   enrolled_in (dict): name and optionally other keys needed by templates
+        *   dashboard_url (str)
+    """
+    with mail.get_connection() as email_conn:
+        for item in email_items:
+            send_email_notification_message(
+                item['user'],
+                item['enrolled_in'],
+                item['dashboard_url'],
+                enterprise_customer_uuid,
+                email_connection=email_conn,
+                admin_enrollment=admin_enrollment,
+            )
 
 
 @shared_task
@@ -21,12 +56,12 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
     """
     Create enterprise enrollment for user if course_id part of catalog for the ENT customer.
     """
-    enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+    enterprise_customer_user = enterprise_customer_user_model().objects.get(
         id=enterprise_customer_user_id
     )
     # Prevent duplicate records from being created if possible
     # before we need to make a call to discovery
-    if EnterpriseCourseEnrollment.objects.filter(
+    if enterprise_course_enrollment_model().objects.filter(
             enterprise_customer_user=enterprise_customer_user,
             course_id=course_id,
     ).exists():
@@ -52,11 +87,13 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
         # we believe a Source of ENROLLMENT_TASK is more clear.
 
         try:
-            EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_course_enrollment_model().objects.get_or_create(
                 course_id=course_id,
                 enterprise_customer_user=enterprise_customer_user,
                 defaults={
-                    'source': EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK),
+                    'source': enterprise_enrollment_source_model().get_source(
+                        enterprise_enrollment_source_model().ENROLLMENT_TASK,
+                    ),
                 }
             )
         except IntegrityError:
@@ -64,3 +101,27 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
                 "IntegrityError on attempt at EnterpriseCourseEnrollment for user with id [%s] "
                 "and course id [%s]", enterprise_customer_user.user_id, course_id,
             )
+
+
+def enterprise_customer_user_model():
+    """
+    Returns the ``EnterpriseCustomerUser`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+
+
+def enterprise_course_enrollment_model():
+    """
+    Returns the ``EnterpriseCourseEnrollment`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+
+
+def enterprise_enrollment_source_model():
+    """
+    Returns the ``EnterpriseEnrollmentSource`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name

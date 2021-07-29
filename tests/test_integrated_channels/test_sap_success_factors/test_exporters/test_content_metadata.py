@@ -10,7 +10,7 @@ import mock
 import responses
 from pytest import mark
 
-from enterprise.api_client.lms import parse_lms_api_datetime
+from enterprise.utils import parse_lms_api_datetime
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin

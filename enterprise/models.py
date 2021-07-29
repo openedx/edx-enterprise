@@ -26,7 +26,6 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
-from django.core import mail
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -36,7 +35,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
-from django.utils.http import urlencode, urlquote
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
@@ -47,7 +45,7 @@ from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
+from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
@@ -55,6 +53,7 @@ from enterprise.constants import (
     DefaultColors,
     json_serialized_course_modes,
 )
+from enterprise.tasks import send_enterprise_email_notification
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
     SELF_ENROLL_EMAIL_TEMPLATE_TYPE,
@@ -66,6 +65,7 @@ from enterprise.utils import (
     get_enterprise_worker_user,
     get_platform_logo_url,
     get_user_valid_idp,
+    serialize_notification_content,
     track_enrollment,
 )
 from enterprise.validators import (
@@ -664,7 +664,7 @@ class EnterpriseCustomer(TimeStampedModel):
         Args:
             catalog_api_user: The user for calling the Catalog API
             course_id: The specific course the learners were enrolled in
-            users: An iterable of the users or pending users who were enrolled
+            users: An iterable of the users (or pending users) who were enrolled
             admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
                 When true, we use the admin enrollment template instead.
         """
@@ -675,71 +675,14 @@ class EnterpriseCustomer(TimeStampedModel):
                          "Proceeding with enrollment, but notifications won't be sent").format(course_id)
             )
             return
-
-        dashboard_url = None
-        course_name = course_details.get('title')
-        if admin_enrollment:
-            course_path = 'course/{course_id}'.format(course_id=course_id)
-            dashboard_url = utils.get_configuration_value_for_site(
-                self.site,
-                'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
-            )
-            destination_url = '{site}/{login_or_register}?next=/{slug}/{course_path}'.format(
-                site=dashboard_url,
-                login_or_register='{login_or_register}',  # We don't know the value at this time
-                slug=self.slug,
-                course_path=course_path
-            )
-        else:
-            course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-            params = {}
-            # add tap_hint if there is only one IdP attached with enterprise_customer
-            if self.has_single_idp:
-                params = {'tpa_hint': self.identity_providers.first().provider_id}
-
-            elif self.has_multiple_idps and self.default_provider_idp:
-                params = {'tpa_hint': self.default_provider_idp.provider_id}
-            course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
-
-            lms_root_url = utils.get_configuration_value_for_site(
-                self.site,
-                'LMS_ROOT_URL',
-                settings.LMS_ROOT_URL
-            )
-            destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-                site=lms_root_url,
-                login_or_register='{login_or_register}',  # We don't know the value at this time
-                course_path=course_path
-            )
-
-        try:
-            course_start = parse_lms_api_datetime(course_details.get('start'))
-        except (TypeError, ValueError):
-            course_start = None
-            LOGGER.exception(
-                'None or empty value passed as course start date.\nCourse Details:\n{course_details}'.format(
-                    course_details=course_details,
-                )
-            )
-
-        with mail.get_connection() as email_conn:
-            for user in users:
-                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
-                destination_url = destination_url.format(login_or_register=login_or_register)
-                utils.send_email_notification_message(
-                    user=user,
-                    enrolled_in={
-                        'name': course_name,
-                        'url': destination_url,
-                        'type': 'course',
-                        'start': course_start,
-                    },
-                    dashboard_url=dashboard_url,
-                    enterprise_customer=self,
-                    email_connection=email_conn,
-                    admin_enrollment=admin_enrollment,
-                )
+        email_items = serialize_notification_content(
+            self,
+            course_details,
+            course_id,
+            users,
+            admin_enrollment,
+        )
+        send_enterprise_email_notification.delay(self.uuid, admin_enrollment, email_items)
 
 
 class EnterpriseCustomerUserManager(models.Manager):

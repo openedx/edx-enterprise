@@ -10,7 +10,7 @@ import ddt
 import mock
 from pytest import raises
 
-from enterprise.api_client.lms import parse_lms_api_datetime
+from enterprise.utils import parse_lms_api_datetime
 from integrated_channels import utils
 
 

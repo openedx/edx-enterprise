@@ -3,7 +3,6 @@
 Utilities to get details from the course catalog API.
 """
 
-import datetime
 import logging
 from functools import wraps
 from time import time
@@ -15,7 +14,6 @@ from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 from slumber.utils import copy_kwargs, url_join
 
 from django.conf import settings
-from django.utils import timezone
 
 from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
 from enterprise.utils import NotConnectedToOpenEdX, get_enterprise_worker_user
@@ -32,8 +30,6 @@ except ImportError:
 
 
 LOGGER = logging.getLogger(__name__)
-LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
 
 
 class NoAuthenticationLmsApiClient:
@@ -588,28 +584,3 @@ class NoAuthLMSClient(NoAuthenticationLmsApiClient):
             dict: Response containing LMS service health.
         """
         return self.client.heartbeat.get()
-
-
-def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):
-    """
-    Parse a received datetime into a timezone-aware, Python datetime object.
-
-    Arguments:
-        datetime_string: A string to be parsed.
-        datetime_format: A datetime format string to be used for parsing
-
-    """
-    if isinstance(datetime_string, datetime.datetime):
-        date_time = datetime_string
-    else:
-        try:
-            date_time = datetime.datetime.strptime(datetime_string, datetime_format)
-        except ValueError:
-            date_time = datetime.datetime.strptime(datetime_string, LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE)
-
-    # If the datetime format didn't include a timezone, then set to UTC.
-    # Note that if we're using the default LMS_API_DATETIME_FORMAT, it ends in 'Z',
-    # which denotes UTC for ISO-8661.
-    if date_time.tzinfo is None:
-        date_time = date_time.replace(tzinfo=timezone.utc)
-    return date_time

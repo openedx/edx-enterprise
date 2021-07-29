@@ -7,8 +7,7 @@ from logging import getLogger
 
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise.api_client.lms import parse_lms_api_datetime
-from enterprise.utils import get_closest_course_run, is_course_run_available_for_enrollment
+from enterprise.utils import get_closest_course_run, is_course_run_available_for_enrollment, parse_lms_api_datetime
 from enterprise.views import CourseEnrollmentView
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.sap_success_factors.exporters.utils import transform_language_code

@@ -173,3 +173,6 @@ AVAILABLE_LANGUAGES = [
     ('en', u'English'),
     ('es-419', u'Español (Latinoamérica)'),  # Spanish (Latin America)
 ]
+
+LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'

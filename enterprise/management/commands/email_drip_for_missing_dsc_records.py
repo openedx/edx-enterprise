@@ -14,9 +14,8 @@ from django.urls import reverse
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient
-from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCourseEnrollment
-from enterprise.utils import get_configuration_value
+from enterprise.utils import get_configuration_value, parse_lms_api_datetime
 
 try:
     from openedx.features.enterprise_support.utils import is_course_accessed
