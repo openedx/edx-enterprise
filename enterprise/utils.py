@@ -546,7 +546,7 @@ def serialize_notification_content(
         login_or_register = 'register' if is_pending_user else 'login'
         destination_url = destination_url.format(login_or_register=login_or_register)
         email_items.append({
-            "user": model_to_dict(user),
+            "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
             "enrolled_in": {
                 'name': course_name,
                 'url': destination_url,
