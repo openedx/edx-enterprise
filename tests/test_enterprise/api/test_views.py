@@ -3590,7 +3590,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             )
         mock_calls = [_make_call(course_run, unique_ent_customer_users) for course_run in unique_course_keys]
 
-        mock_notify_task.assert_has_calls(mock_calls)
+        mock_notify_task.assert_has_calls(mock_calls, any_order=True)
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
