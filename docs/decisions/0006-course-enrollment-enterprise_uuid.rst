@@ -4,7 +4,7 @@ Adding enterprise_uuid in course enrollment event
 Status
 ======
 
-Pending
+Accepted
 
 Context
 =======
