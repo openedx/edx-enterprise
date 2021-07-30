@@ -1855,6 +1855,16 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         """
         return "<EnterpriseCatalogQuery '{title}' >".format(title=self.title)
 
+    def delete(self, *args, **kwargs):
+        """
+        Deletes this ``EnterpriseCatalogQuery``.
+        """
+        super().delete(*args, **kwargs)
+        LOGGER.exception(
+            "Instance {ent_catalog_query} (PK: {PK}) deleted. All associated enterprise customer catalogs are now "
+            "unlinked and will not receive updates.".format(ent_catalog_query=self, PK=self.pk)
+        )
+
 
 @python_2_unicode_compatible
 class EnterpriseCustomerCatalog(TimeStampedModel):

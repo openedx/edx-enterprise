@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.12]
+---------
+* Prevent django admin deletions of catalog queries. Added management command to bulk update catalogs of their query IDs
+
 [3.27.11]
 ---------
 * Avoid failure when an email send in the learners loop fails, for notify_enrolled_learners
