@@ -297,9 +297,20 @@ class TestUtils(unittest.TestCase):
         expected_email_items = [expected_email_item(user) for user in users]
         assert email_items == expected_email_items
 
+    @ddt.data(
+        [(True, 'http://test.learner.portal'), (False, None)]
+    )
     @mock.patch("enterprise.utils.get_configuration_value_for_site")
-    def test_serialize_notification_content_admin_enroll(self, mock_get_config_value_for_site):
+    @mock.patch("enterprise.utils.get_learner_portal_url")
+    def test_serialize_notification_content(
+        self,
+        admin_enrollment,
+        exp_dashboard_url,
+        mock_get_learner_portal_url,
+        mock_get_config_value_for_site,
+    ):
         mock_get_config_value_for_site.return_value = LMS_BASE_URL
+        mock_get_learner_portal_url.return_value = "http://test.learner.portal"
         ent_customer, users, course_id, course_details = self.setup_notification_test_data()
 
         email_items = serialize_notification_content(
@@ -307,15 +318,16 @@ class TestUtils(unittest.TestCase):
             course_details,
             course_id,
             users,
-            admin_enrollment=True,
+            admin_enrollment=admin_enrollment,
         )
 
         def expected_email_item(user):
-            course_path = 'course/{course_id}'.format(course_id=course_details.get('course'))
-            enrolled_url = '{site}/{slug}/{course_path}'.format(
+            course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+            login_or_register = is_pending_user(user)
+            enrolled_url = '{site}/{login_or_register}?next={course_path}'.format(
                 site=LMS_BASE_URL,
-                slug=ent_customer.slug,
-                course_path=course_path,
+                login_or_register=login_or_register,
+                course_path=course_path
             )
             return {
                 "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
@@ -325,9 +337,9 @@ class TestUtils(unittest.TestCase):
                     'type': 'course',
                     'start': parse_lms_api_datetime(course_details.get('start'))
                 },
-                "dashboard_url": LMS_BASE_URL,
+                "dashboard_url": exp_dashboard_url,
                 "enterprise_customer_uuid": ent_customer.uuid,
-                "admin_enrollment": True,
+                "admin_enrollment": admin_enrollment,
             }
 
         expected_email_items = [expected_email_item(user) for user in users]

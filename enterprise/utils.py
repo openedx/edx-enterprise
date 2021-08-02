@@ -467,6 +467,17 @@ def is_pending_user(user):
     return hasattr(user, 'user_email') and not hasattr(user, 'first_name')
 
 
+def get_learner_portal_url(enterprise_customer):
+    """
+    Learner portal url for enterprise_customer
+    """
+    return get_configuration_value_for_site(
+        enterprise_customer.site,
+        'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+        settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+    )
+
+
 def serialize_notification_content(
     enterprise_customer,
     course_details,
@@ -503,41 +514,24 @@ def serialize_notification_content(
     """
     dashboard_url = None
     course_name = course_details.get('title')
-    parent_course_id = course_details.get('course')
-    slug = enterprise_customer.slug
+    course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+    params = {}
+
     if admin_enrollment:
-        course_path = 'course/{course_id}'.format(course_id=parent_course_id)
-        dashboard_url = get_configuration_value_for_site(
-            enterprise_customer.site,
-            'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-            settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
-        )
-        destination_url = '{site}/{slug}/{course_path}'.format(
-            site=dashboard_url,
-            course_path=course_path,
-            slug=slug,
-        )
-    else:
-        course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-        params = {}
-        # add tap_hint if there is only one IdP attached with enterprise_customer
-        if enterprise_customer.has_single_idp:
-            params = {'tpa_hint': enterprise_customer.identity_providers.first().provider_id}
+        dashboard_url = get_learner_portal_url(enterprise_customer)
 
-        elif enterprise_customer.has_multiple_idps and enterprise_customer.default_provider_idp:
-            params = {'tpa_hint': enterprise_customer.default_provider_idp.provider_id}
-        course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+    # add tap_hint if there is only one IdP attached with enterprise_customer
+    if enterprise_customer.has_single_idp:
+        params = {'tpa_hint': enterprise_customer.identity_providers.first().provider_id}
+    elif enterprise_customer.has_multiple_idps and enterprise_customer.default_provider_idp:
+        params = {'tpa_hint': enterprise_customer.default_provider_idp.provider_id}
+    course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
 
-        lms_root_url = get_configuration_value_for_site(
-            enterprise_customer.site,
-            'LMS_ROOT_URL',
-            settings.LMS_ROOT_URL
-        )
-        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-            site=lms_root_url,
-            login_or_register='{login_or_register}',  # We don't know the value at this time
-            course_path=course_path
-        )
+    lms_root_url = get_configuration_value_for_site(
+        enterprise_customer.site,
+        'LMS_ROOT_URL',
+        settings.LMS_ROOT_URL
+    )
 
     try:
         course_start = parse_lms_api_datetime(course_details.get('start'))
@@ -549,24 +543,14 @@ def serialize_notification_content(
             )
         )
 
-    def resolve_dest_url(is_pending: bool) -> str:
-        if admin_enrollment:
-            return '{site}/{slug}/{course_path}'.format(
-                site=dashboard_url,
-                course_path=course_path,
-                slug=slug,
-            )
-
-        login_or_register = 'register' if is_pending else 'login'
-        return '{site}/{login_or_register}?next={course_path}'.format(
+    email_items = []
+    for user in users:
+        login_or_register = 'register' if is_pending_user(user) else 'login'
+        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
             site=lms_root_url,
             login_or_register=login_or_register,
             course_path=course_path
         )
-
-    email_items = []
-    for user in users:
-        destination_url = resolve_dest_url(is_pending_user(user))
         email_items.append({
             "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
             "enrolled_in": {
