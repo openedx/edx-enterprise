@@ -267,38 +267,10 @@ class TestUtils(unittest.TestCase):
         course_details = {'title': 'a_course', 'start': '2021-01-01T00:10:10', 'course': 'edx+123'}
         return ent_customer, users, course_id, course_details
 
-    @mock.patch("enterprise.utils.get_configuration_value_for_site")
-    def test_serialize_notification_content_self_enroll(self, mock_get_config_value_for_site):
-        mock_get_config_value_for_site.return_value = LMS_BASE_URL
-        ent_customer, users, course_id, course_details = self.setup_notification_test_data()
-
-        email_items = serialize_notification_content(ent_customer, course_details, course_id, users)
-
-        def expected_email_item(user):
-            course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-            login_or_register = 'register' if is_pending_user(user) else 'login'
-            return {
-                "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
-                "enrolled_in": {
-                    'name': course_details.get('title'),
-                    'url': "{lms_base_url}/{login_or_register}?next={course_path}".format(
-                        lms_base_url=LMS_BASE_URL,
-                        course_path=urlquote("{}?{}".format(course_path, urlencode([]))),
-                        login_or_register=login_or_register,
-                    ),
-                    'type': 'course',
-                    'start': parse_lms_api_datetime(course_details.get('start'))
-                },
-                "dashboard_url": None,
-                "enterprise_customer_uuid": ent_customer.uuid,
-                "admin_enrollment": False,
-            }
-
-        expected_email_items = [expected_email_item(user) for user in users]
-        assert email_items == expected_email_items
-
+    @ddt.unpack
     @ddt.data(
-        [(True, 'http://test.learner.portal'), (False, None)]
+        (True, 'http://test.learner.portal'),
+        (False, None),
     )
     @mock.patch("enterprise.utils.get_configuration_value_for_site")
     @mock.patch("enterprise.utils.get_learner_portal_url")
@@ -323,7 +295,8 @@ class TestUtils(unittest.TestCase):
 
         def expected_email_item(user):
             course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-            login_or_register = is_pending_user(user)
+            course_path = urlquote("{}?{}".format(course_path, urlencode([])))
+            login_or_register = 'register' if is_pending_user(user) else 'login'
             enrolled_url = '{site}/{login_or_register}?next={course_path}'.format(
                 site=LMS_BASE_URL,
                 login_or_register=login_or_register,
