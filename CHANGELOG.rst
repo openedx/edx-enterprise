@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.14]
+---------
+* Adding the ability to specify parameters in the bulk catalog query ID updated management command.
+
 [3.27.13]
 ---------
 * Revert 'Start my course' links in bulk enrollment emails to courseware based links instead of learner portal.
