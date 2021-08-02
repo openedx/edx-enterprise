@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.13]
+---------
+* Revert 'Start my course' links in bulk enrollment emails to courseware based links instead of learner portal.
+
 [3.27.12]
 ---------
 * Prevent django admin deletions of catalog queries. Added management command to bulk update catalogs of their query IDs
