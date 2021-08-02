@@ -167,7 +167,7 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdminNotification
-        fields = ('id', 'text')
+        fields = ('id', 'title', 'text')
 
 
 class EnterpriseCustomerSerializer(serializers.ModelSerializer):
