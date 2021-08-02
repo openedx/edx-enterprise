@@ -4,15 +4,27 @@ Tests for the `edx-enterprise` utils module.
 """
 import unittest
 from unittest import mock
+from urllib.parse import urlencode
 
 import ddt
 from pytest import mark
 
 from django.conf import settings
+from django.forms.models import model_to_dict
+from django.utils.http import urlquote
 
 from enterprise.models import EnterpriseCourseEnrollment
-from enterprise.utils import enroll_licensed_users_in_courses, get_idiff_list, get_platform_logo_url
+from enterprise.utils import (
+    enroll_licensed_users_in_courses,
+    get_idiff_list,
+    get_platform_logo_url,
+    is_pending_user,
+    parse_lms_api_datetime,
+    serialize_notification_content,
+)
 from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
+
+LMS_BASE_URL = 'https://lms.base.url'
 
 
 @mark.django_db
@@ -238,3 +250,85 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result['pending'][0]['email'], 'pending-user-email@example.com')
         self.assertFalse(result['successes'])
         self.assertFalse(result['failures'])
+
+    def setup_notification_test_data(self):
+        """
+        Creates data needed for testing serialization of email notifications data
+        """
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        user = factories.UserFactory()
+        pending_user = factories.PendingEnterpriseCustomerUserFactory()
+        users = [user, pending_user]
+
+        course_id = 'course-v1:edx+123+T2021'
+        course_details = {'title': 'a_course', 'start': '2021-01-01T00:10:10', 'course': 'edx+123'}
+        return ent_customer, users, course_id, course_details
+
+    @mock.patch("enterprise.utils.get_configuration_value_for_site")
+    def test_serialize_notification_content_self_enroll(self, mock_get_config_value_for_site):
+        mock_get_config_value_for_site.return_value = LMS_BASE_URL
+        ent_customer, users, course_id, course_details = self.setup_notification_test_data()
+
+        email_items = serialize_notification_content(ent_customer, course_details, course_id, users)
+
+        def expected_email_item(user):
+            course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+            login_or_register = 'register' if is_pending_user(user) else 'login'
+            return {
+                "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
+                "enrolled_in": {
+                    'name': course_details.get('title'),
+                    'url': "{lms_base_url}/{login_or_register}?next={course_path}".format(
+                        lms_base_url=LMS_BASE_URL,
+                        course_path=urlquote("{}?{}".format(course_path, urlencode([]))),
+                        login_or_register=login_or_register,
+                    ),
+                    'type': 'course',
+                    'start': parse_lms_api_datetime(course_details.get('start'))
+                },
+                "dashboard_url": None,
+                "enterprise_customer_uuid": ent_customer.uuid,
+                "admin_enrollment": False,
+            }
+
+        expected_email_items = [expected_email_item(user) for user in users]
+        assert email_items == expected_email_items
+
+    @mock.patch("enterprise.utils.get_configuration_value_for_site")
+    def test_serialize_notification_content_admin_enroll(self, mock_get_config_value_for_site):
+        mock_get_config_value_for_site.return_value = LMS_BASE_URL
+        ent_customer, users, course_id, course_details = self.setup_notification_test_data()
+
+        email_items = serialize_notification_content(
+            ent_customer,
+            course_details,
+            course_id,
+            users,
+            admin_enrollment=True,
+        )
+
+        def expected_email_item(user):
+            course_path = 'course/{course_id}'.format(course_id=course_details.get('course'))
+            enrolled_url = '{site}/{slug}/{course_path}'.format(
+                site=LMS_BASE_URL,
+                slug=ent_customer.slug,
+                course_path=course_path,
+            )
+            return {
+                "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
+                "enrolled_in": {
+                    'name': course_details.get('title'),
+                    'url': enrolled_url,
+                    'type': 'course',
+                    'start': parse_lms_api_datetime(course_details.get('start'))
+                },
+                "dashboard_url": LMS_BASE_URL,
+                "enterprise_customer_uuid": ent_customer.uuid,
+                "admin_enrollment": True,
+            }
+
+        expected_email_items = [expected_email_item(user) for user in users]
+        assert email_items == expected_email_items

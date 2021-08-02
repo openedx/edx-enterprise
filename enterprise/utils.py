@@ -460,6 +460,13 @@ def find_enroll_email_template(enterprise_customer, template_type):
     return enterprise_template_config
 
 
+def is_pending_user(user):
+    """
+    Returns true if pending_user attributes are detected
+    """
+    return hasattr(user, 'user_email') and not hasattr(user, 'first_name')
+
+
 def serialize_notification_content(
     enterprise_customer,
     course_details,
@@ -472,7 +479,8 @@ def serialize_notification_content(
 
     Arguments:
     * enterprise_customer (enterprise.models.EnterpriseCustomer)
-    * course_details (dict): With at least 'title' and 'start' keys (usually obtained via CourseCatalogApiClient)
+    * course_details (dict): With at least 'title', 'start' and 'course' keys
+       (usually obtained via CourseCatalogApiClient)
     * course_id (str)
     * users (list): list of users to enroll (each user should be a User or PendingEnterpriseCustomerUser)
 
@@ -495,18 +503,19 @@ def serialize_notification_content(
     """
     dashboard_url = None
     course_name = course_details.get('title')
+    parent_course_id = course_details.get('course')
+    slug = enterprise_customer.slug
     if admin_enrollment:
-        course_path = 'course/{course_id}'.format(course_id=course_id)
+        course_path = 'course/{course_id}'.format(course_id=parent_course_id)
         dashboard_url = get_configuration_value_for_site(
             enterprise_customer.site,
             'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
             settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
         )
-        destination_url = '{site}/{login_or_register}?next=/{slug}/{course_path}'.format(
+        destination_url = '{site}/{slug}/{course_path}'.format(
             site=dashboard_url,
-            login_or_register='{login_or_register}',  # We don't know the value at this time
-            slug=enterprise_customer.slug,
-            course_path=course_path
+            course_path=course_path,
+            slug=slug,
         )
     else:
         course_path = '/courses/{course_id}/course'.format(course_id=course_id)
@@ -540,11 +549,24 @@ def serialize_notification_content(
             )
         )
 
+    def resolve_dest_url(is_pending: bool) -> str:
+        if admin_enrollment:
+            return '{site}/{slug}/{course_path}'.format(
+                site=dashboard_url,
+                course_path=course_path,
+                slug=slug,
+            )
+
+        login_or_register = 'register' if is_pending else 'login'
+        return '{site}/{login_or_register}?next={course_path}'.format(
+            site=lms_root_url,
+            login_or_register=login_or_register,
+            course_path=course_path
+        )
+
     email_items = []
     for user in users:
-        is_pending_user = hasattr(user, 'user_email') and not hasattr(user, 'first_name')
-        login_or_register = 'register' if is_pending_user else 'login'
-        destination_url = destination_url.format(login_or_register=login_or_register)
+        destination_url = resolve_dest_url(is_pending_user(user))
         email_items.append({
             "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
             "enrolled_in": {
