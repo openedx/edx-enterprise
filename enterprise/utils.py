@@ -520,7 +520,7 @@ def serialize_notification_content(
     if admin_enrollment:
         dashboard_url = get_learner_portal_url(enterprise_customer)
 
-    # add tap_hint if there is only one IdP attached with enterprise_customer
+    # add tpa_hint if there is only one IdP attached with enterprise_customer
     if enterprise_customer.has_single_idp:
         params = {'tpa_hint': enterprise_customer.identity_providers.first().provider_id}
     elif enterprise_customer.has_multiple_idps and enterprise_customer.default_provider_idp:
