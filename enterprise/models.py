@@ -12,6 +12,7 @@ from logging import getLogger
 from uuid import UUID, uuid4
 
 import six
+from config_models.models import ConfigurationModel
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rest_api_client.exceptions import HttpClientError
@@ -1864,6 +1865,31 @@ class EnterpriseCatalogQuery(TimeStampedModel):
             "Instance {ent_catalog_query} (PK: {PK}) deleted. All associated enterprise customer catalogs are now "
             "unlinked and will not receive updates.".format(ent_catalog_query=self, PK=self.pk)
         )
+
+
+# pylint: disable=feature-toggle-needs-doc
+class BulkCatalogQueryUpdateCommandConfiguration(ConfigurationModel):
+    """
+    Manages configuration for a run of the cert_generation management command.
+
+    .. no_pii:
+    """
+
+    class Meta:
+        app_label = "enterprise"
+        verbose_name = "bulk_update_catalog_query_id argument"
+
+    arguments = models.TextField(
+        blank=True,
+        help_text=(
+            "Arguments for the 'bulk_update_catalog_query_id' management command. Specify like '<old ID> <new ID>'"
+        ),
+        default="",
+    )
+
+    def __str__(self):
+        return str(self.arguments)
+# pylint: disable=feature-toggle-needs-doc
 
 
 @python_2_unicode_compatible

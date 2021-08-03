@@ -4,10 +4,15 @@ Django management command for bulk updating EnterpriseCustomerCatalog record's E
 """
 
 import logging
+import shlex
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
-from enterprise.models import EnterpriseCatalogQuery, EnterpriseCustomerCatalog
+from enterprise.models import (
+    BulkCatalogQueryUpdateCommandConfiguration,
+    EnterpriseCatalogQuery,
+    EnterpriseCustomerCatalog,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,12 +36,35 @@ class Command(BaseCommand):
             action='store',
             help='New catalog query ID to replace the old one.'
         )
+        parser.add_argument(
+            '--args-from-database',
+            action='store_true',
+            help='Use arguments from the BulkCatalogQueryUpdateCommandConfiguration model instead of the command line'
+        )
+
+    def get_args_from_database(self):
+        """
+        Returns an options dictionary from the current BulkCatalogQueryUpdateCommandConfiguration model.
+        """
+        config = BulkCatalogQueryUpdateCommandConfiguration.current()
+        if not config.enabled:
+            raise CommandError(
+                "BulkCatalogQueryUpdateCommandConfiguration is disabled, but --args-from-database was requested"
+            )
+
+        args = shlex.split(config.arguments)
+        parser = self.create_parser("manage.py", "bulk_updates_catalog_query_id")
+
+        return vars(parser.parse_args(args))
 
     def handle(self, *args, **options):
         """
         Entry point for management command execution.
         """
         LOGGER.info("Starting bulk update of EnterpriseCatalog's enterprise catalog query IDs")
+
+        if options['args_from_database']:
+            options = self.get_args_from_database()
 
         old_id = options['old_id']
         new_id = options['new_id']

@@ -6,11 +6,12 @@ Forms to be used in the enterprise djangoapp.
 import re
 from logging import getLogger
 
+from config_models.admin import ConfigurationModelAdmin
 from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
 
 from django import forms
 from django.conf import settings
-from django.contrib import auth
+from django.contrib import admin, auth
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -23,6 +24,7 @@ from enterprise.admin.utils import email_or_username__to__email, split_usernames
 from enterprise.admin.widgets import SubmitInput
 from enterprise.models import (
     AdminNotification,
+    BulkCatalogQueryUpdateCommandConfiguration,
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
@@ -732,3 +734,10 @@ class AdminNotificationForm(forms.ModelForm):
 
             raise ValidationError(message)
         return cleaned_data
+
+
+@admin.register(BulkCatalogQueryUpdateCommandConfiguration)
+class BulkCatalogQueryUpdateCommandConfigurationAdmin(ConfigurationModelAdmin):
+    """
+    Admin form for the BulkCatalogQueryUpdateCommandConfiguration model
+    """
