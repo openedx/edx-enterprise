@@ -2937,11 +2937,19 @@ class AdminNotification(TimeStampedModel):
 
     .. no_pii:
     """
+    title = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_('Notification banner title which will appear '
+                    'to enterprise admin on admin portal.')
+    )
+
     text = models.CharField(
         max_length=255,
         blank=False,
         null=False,
-        help_text=_('Notification banner which will appear '
+        help_text=_('Notification banner text which will appear '
                     'to enterprise admin on admin portal.')
     )
 
@@ -2957,8 +2965,8 @@ class AdminNotification(TimeStampedModel):
 
     class Meta:
         app_label = 'enterprise'
-        verbose_name = _('Enterprise Customer Admin Notification')
-        verbose_name_plural = _('Enterprise Customer Admin Notifications')
+        verbose_name = _('Admin Notification')
+        verbose_name_plural = _('Admin Notifications')
         ordering = ('start_date',)
 
     def __str__(self):

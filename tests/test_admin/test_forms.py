@@ -895,6 +895,7 @@ class TestAdminNotificationForm(unittest.TestCase):
         """
         super().setUp()
         self.form_data = {
+            'title': 'Notification Banner title for admin',
             'text': 'Notification Banner text for admin',
             'start_date': date.today(),
             'expiration_date': date.today(),

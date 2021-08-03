@@ -978,7 +978,7 @@ class AdminNotificationAdmin(admin.ModelAdmin):
 
     model = AdminNotification
     form = AdminNotificationForm
-    list_display = ('id', 'text', 'is_active', 'start_date', 'expiration_date', 'created', 'modified')
+    list_display = ('id', 'title', 'text', 'is_active', 'start_date', 'expiration_date', 'created', 'modified')
     filter_horizontal = ('admin_notification_filter',)
 
 

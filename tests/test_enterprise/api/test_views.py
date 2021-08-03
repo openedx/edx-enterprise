@@ -1128,7 +1128,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
-                'enterprise_notification_banner': {'text': ''},
+                'enterprise_notification_banner': {'text': '', 'title': ''},
             }],
         ),
         (
@@ -1176,7 +1176,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'identity_providers': [],
                     'enterprise_customer_catalogs': [],
                     'reply_to': 'fake_reply@example.com',
-                    'enterprise_notification_banner': {'text': ''},
+                    'enterprise_notification_banner': {'text': '', 'title': ''},
                 }
             }],
         ),
@@ -1240,7 +1240,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     },
                 ],
                 'enterprise_customer_catalogs': [],
-                'enterprise_notification_banner': {'text': ''},
+                'enterprise_notification_banner': {'text': '', 'title': ''},
             }],
         ),
         (
@@ -1288,7 +1288,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'reply_to': 'fake_reply@example.com',
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [FAKE_UUIDS[0]],
-                'enterprise_notification_banner': {'text': ''},
+                'enterprise_notification_banner': {'text': '', 'title': ''},
             }],
         ),
         (
@@ -1481,7 +1481,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
                 'reply_to': 'fake_reply@example.com',
-                'enterprise_notification_banner': {'text': ''},
+                'enterprise_notification_banner': {'text': '', 'title': ''},
             }
         else:
             assert response == expected_error
