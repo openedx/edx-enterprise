@@ -8,7 +8,6 @@ import unittest
 import mock
 from pytest import mark
 
-from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
 from test_utils import factories
 from test_utils.fake_catalog_api import (
@@ -47,18 +46,8 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         """
         ``BlackboardContentMetadataExporter``'s ``export`` produces the expected export.
         """
-        fake_content_metadata = get_fake_content_metadata_no_program()
-        fake_catalog = get_fake_catalog()
-        fake_catalog_modified_at = max(
-            fake_catalog['content_last_modified'], fake_catalog['catalog_modified']
-        )
-        fake_catalogs_last_modified = {
-            get_content_metadata_item_id(
-                content_metadata
-            ): fake_catalog_modified_at for content_metadata in fake_content_metadata
-        }
-        mock_get_content_metadata.return_value = fake_content_metadata, fake_catalogs_last_modified
-        mock_get_enterprise_catalog.return_value = fake_catalog
+        mock_get_content_metadata.return_value = get_fake_content_metadata_no_program()
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
 
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()

@@ -37,7 +37,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
         self.jwt_builder = jwt_builder.start()
         self.addCleanup(jwt_builder.stop)
-        self.fake_content_metadata = get_fake_content_metadata()
         self.fake_catalog = get_fake_catalog()
         self.fake_catalog_modified_at = max(
             self.fake_catalog['content_last_modified'], self.fake_catalog['catalog_modified']
@@ -45,7 +44,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         self.fake_catalogs_last_modified = {
             get_content_metadata_item_id(
                 content_metadata
-            ): self.fake_catalog_modified_at for content_metadata in self.fake_content_metadata
+            ): self.fake_catalog_modified_at for content_metadata in get_fake_content_metadata()
         }
         super().setUp()
 
@@ -55,7 +54,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
-        mock_get_content_metadata.return_value = self.fake_content_metadata, self.fake_catalogs_last_modified
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         mock_get_enterprise_catalog.return_value = self.fake_catalog
         exporter = ContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
@@ -70,8 +69,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
-        mock_ent_catalog_api.return_value.get_content_metadata.return_value = \
-            self.fake_content_metadata, self.fake_catalogs_last_modified
+        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         mock_ent_catalog_api.return_value.get_enterprise_catalog.return_value = self.fake_catalog
         exporter = ContentMetadataExporter('fake-user', self.config)
         exporter.export()
@@ -79,10 +77,11 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert mock_ent_catalog_api.return_value.get_enterprise_catalog.call_args[0][0] == \
             self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid
         mock_ent_catalog_api.return_value.get_content_metadata.assert_called_with(
-            enterprise_catalogs=[self.fake_catalog],
-            catalogs_last_modified={self.fake_catalog['uuid']: self.fake_catalog_modified_at}
+            self.config.enterprise_customer,
+            [self.config.enterprise_customer.enterprise_customer_catalogs.first()]
         )
 
+        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         enterprise_catalog_data = {
             'uuid': str(self.enterprise_customer_catalog.uuid),
             'title': self.enterprise_customer_catalog.title,
@@ -91,9 +90,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             'content_last_modified': str(self.enterprise_customer_catalog.enterprise_catalog_query.modified),
             'catalog_modified': str(self.enterprise_customer_catalog.modified)
         }
-        catalog_modified_date = max(
-            enterprise_catalog_data['content_last_modified'], enterprise_catalog_data['catalog_modified']
-        )
+        # catalog_modified_date = max(
+        #     enterprise_catalog_data['content_last_modified'], enterprise_catalog_data['catalog_modified']
+        # )
         mock_ent_catalog_api.return_value.get_enterprise_catalog.return_value = enterprise_catalog_data
         self.config.catalogs_to_transmit = str(self.enterprise_customer_catalog.uuid)
         self.config.save()
@@ -104,8 +103,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert mock_ent_catalog_api.return_value.get_enterprise_catalog.call_args[0][0] == \
             self.config.customer_catalogs_to_transmit.first().uuid
         mock_ent_catalog_api.return_value.get_content_metadata.assert_called_with(
-            enterprise_catalogs=[enterprise_catalog_data],
-            catalogs_last_modified={enterprise_catalog_data['uuid']: catalog_modified_date}
+            self.config.enterprise_customer,
+            [self.enterprise_customer_catalog]
         )
 
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
@@ -113,8 +112,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` raises an exception when DATA_TRANSFORM_MAPPING is invalid.
         """
-        mock_api_client.return_value.get_content_metadata.return_value = \
-            self.fake_content_metadata, self.fake_catalogs_last_modified
+        mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         mock_api_client.return_value.get_enterprise_catalog.return_value = self.fake_catalog
         ContentMetadataExporter.DATA_TRANSFORM_MAPPING['fake-key'] = 'fake-value'
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -136,10 +134,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             integrated_channel_code=self.config.channel_code(),
-            catalog_last_changed='2021-07-16T15:11:10.521611Z'
+            content_last_changed='2021-07-16T15:11:10.521611Z'
         )
-        mock_ent_catalog_api.return_value.get_content_metadata.return_value = \
-            self.fake_content_metadata, self.fake_catalogs_last_modified
+        mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         mock_ent_catalog_api.return_value.get_enterprise_catalog.return_value = self.fake_catalog
         exporter = ContentMetadataExporter('fake-user', self.config)
         payload = exporter.export()

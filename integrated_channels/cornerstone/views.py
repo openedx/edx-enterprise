@@ -118,11 +118,11 @@ class CornerstoneCoursesUpdates(BaseViewSet):
         return Response(data)
 
 
-class CornerstoneCoursesListView(generics.ListAPIView):
+class CornerstoneCoursesListView(BaseViewSet):
     """
         **Use Cases**
 
-            Get a list of courses to share on cornerstone filtered by an enterprise customer.
+            Get a list of all catalog courses to share on cornerstone filtered by an enterprise customer.
 
         **Example Requests**
 

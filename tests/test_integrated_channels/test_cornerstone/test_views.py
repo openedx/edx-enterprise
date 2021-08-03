@@ -12,7 +12,6 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 from django.utils import dateparse
 
-from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import APITest, factories
 from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
@@ -38,10 +37,23 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         )
         # Mocks
         self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
-        jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-        self.jwt_builder = jwt_builder.start()
-        self.addCleanup(jwt_builder.stop)
         super().setUp()
+
+    def test_course_list_unauthorized_non_customer(self):
+        """
+        Verify the contains_content_items endpoint rejects users that are not catalog learners
+        """
+        self.client.logout()
+        response = self.client.get(self.course_list_url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_course_update_unauthorized_non_customer(self):
+        """
+        Verify the contains_content_items endpoint rejects users that are not catalog learners
+        """
+        self.client.logout()
+        response = self.client.get(self.course_updates_url)
+        self.assertEqual(response.status_code, 401)
 
     @responses.activate
     def test_course_list_without_ciid(self):
@@ -69,18 +81,8 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         Test courses list view produces desired json when SKIP_KEY_IF_NONE is set to False
         """
-        fake_content_metadata = get_fake_content_metadata()
-        fake_catalog = get_fake_catalog()
-        fake_catalog_modified_at = max(
-            fake_catalog['content_last_modified'], fake_catalog['catalog_modified']
-        )
-        fake_catalogs_last_modified = {
-            get_content_metadata_item_id(
-                content_metadata
-            ): fake_catalog_modified_at for content_metadata in fake_content_metadata
-        }
-        mock_get_content_metadata.return_value = fake_content_metadata, fake_catalogs_last_modified
-        mock_get_enterprise_catalog.return_value = fake_catalog
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -106,12 +108,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         Test courses list view produces desired json
         """
-        fake_content_metadata = get_fake_content_metadata()
-        mock_last_modified = {
-            get_content_metadata_item_id(content_metadata): None for content_metadata in fake_content_metadata
-        }
-        mock_get_content_metadata.return_value = fake_content_metadata, mock_last_modified
-
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -137,8 +134,6 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
         assert len(created_transmissions) == len(get_fake_content_metadata())
-        for transmission_item in created_transmissions:
-            assert transmission_item.catalog_last_changed is None
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
@@ -147,14 +142,11 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         Test courses updates view produces desired json and saves transmission items
         """
         fake_content_metadata = get_fake_content_metadata()
-        test_modified_datetime = '2020-07-16T15:11:10.521611Z'
-        catalogs_last_modified = {
-            get_content_metadata_item_id(
-                content_metadata
-            ): test_modified_datetime for content_metadata in fake_content_metadata
-        }
-        mock_get_content_metadata.return_value = fake_content_metadata, catalogs_last_modified
+        mock_get_content_metadata.return_value = fake_content_metadata
         mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        transmission_changed = {
+            dateparse.parse_datetime(content['content_last_modified']) for content in fake_content_metadata
+        }
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_updates_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -178,6 +170,6 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         created_transmissions = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
-        assert len(created_transmissions) == len(fake_content_metadata)
+        assert len(created_transmissions) == len(get_fake_content_metadata())
         for transmission_item in created_transmissions:
-            assert transmission_item.catalog_last_changed == dateparse.parse_datetime(test_modified_datetime)
+            assert transmission_item.content_last_changed in transmission_changed

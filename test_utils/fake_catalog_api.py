@@ -93,7 +93,8 @@ FAKE_COURSE_RUN = {
     'reporting_type': 'mooc',
     'eligible_for_financial_aid': True,
     'content_type': 'courserun',
-    'has_enrollable_seats': True
+    'has_enrollable_seats': True,
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
 }
 FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
 FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
@@ -132,7 +133,8 @@ FAKE_COURSE = {
     'marketing_url': None,
     'content_type': 'course',
     'enrollment_url': FAKE_URL,
-    'programs': []
+    'programs': [],
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
 }
 
 FAKE_PROGRAM_RESPONSE1 = {
@@ -1018,7 +1020,8 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "weeks_to_complete_max": None,
     "aggregation_key": "program:" + FAKE_UUIDS[3],
     'enrollment_url': FAKE_URL,
-    "is_program_eligible_for_one_click_purchase": True
+    "is_program_eligible_for_one_click_purchase": True,
+    'content_last_modified': '2021-08-18T00:32:33.754662Z'
 }
 
 FAKE_SEARCH_ALL_PROGRAM_RESULT_2 = {
@@ -1322,9 +1325,9 @@ def get_fake_content_metadata():
     Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata.
     """
     content_metadata = OrderedDict()
-    content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
-    content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
-    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = FAKE_SEARCH_ALL_PROGRAM_RESULT_1
+    content_metadata[FAKE_COURSE_RUN['key']] = copy.deepcopy(FAKE_COURSE_RUN)
+    content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
+    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = copy.deepcopy(FAKE_SEARCH_ALL_PROGRAM_RESULT_1)
     return list(content_metadata.values())
 
 
@@ -1333,8 +1336,8 @@ def get_fake_content_metadata_no_program():
     Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata without a program.
     """
     content_metadata = OrderedDict()
-    content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
-    content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
+    content_metadata[FAKE_COURSE_RUN['key']] = copy.deepcopy(FAKE_COURSE_RUN)
+    content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
     return list(content_metadata.values())
 
 

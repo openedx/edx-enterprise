@@ -49,7 +49,7 @@ Channels, we have decided to address requests to the enterprise catalog on two f
 
 2. Add an additional request/check to the Integrated Channel's exporter that will retrieve the last time either a
 catalog or the associated content metadata of a catalog has been changed (whichever is most recent). This timestamp will
-be compared to the `catalog_last_changed` field of the ContentMetadataItemTransmission object, which is the `catalog
+be compared to the `content_last_changed` field of the ContentMetadataItemTransmission object, which is the `catalog
 last modified` value retrieved from the customer's most recent successful transmission. If there
 is no updated needed, then the exporter will refrain from querying enterprise catalog for the catalog's metadata.
 

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.17]
+---------
+* Integrated channels now checks and uses catalog modified times to determine if an update is needed before retrieving content metadata.
+
 [3.27.16]
 ---------
 * Making bulk catalog query ID update params optional

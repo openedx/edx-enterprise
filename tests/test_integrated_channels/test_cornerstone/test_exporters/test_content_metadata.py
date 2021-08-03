@@ -13,7 +13,6 @@ import responses
 from freezegun import freeze_time
 from pytest import mark
 
-from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from test_utils import FAKE_UUIDS, factories
@@ -64,18 +63,8 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         ``CornerstoneContentMetadataExporter``'s ``export`` produces the expected export.
         """
-        fake_content_metadata = get_fake_content_metadata()
-        fake_catalog = get_fake_catalog()
-        fake_catalog_modified_at = max(
-            fake_catalog['content_last_modified'], fake_catalog['catalog_modified']
-        )
-        fake_catalogs_last_modified = {
-            get_content_metadata_item_id(
-                content_metadata
-            ): fake_catalog_modified_at for content_metadata in fake_content_metadata
-        }
-        mock_get_content_metadata.return_value = fake_content_metadata, fake_catalogs_last_modified
-        mock_get_enterprise_catalog.return_value = fake_catalog
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([

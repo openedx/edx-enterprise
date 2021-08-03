@@ -10,7 +10,6 @@ import mock
 import responses
 from pytest import mark
 
-from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.moodle.exporters.content_metadata import MoodleContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
@@ -48,15 +47,7 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         fake_content_metadata = get_fake_content_metadata()
         fake_catalog = get_fake_catalog()
-        fake_catalog_modified_at = max(
-            fake_catalog['content_last_modified'], fake_catalog['catalog_modified']
-        )
-        fake_catalogs_last_modified = {
-            get_content_metadata_item_id(
-                content_metadata
-            ): fake_catalog_modified_at for content_metadata in fake_content_metadata
-        }
-        mock_get_content_metadata.return_value = fake_content_metadata, fake_catalogs_last_modified
+        mock_get_content_metadata.return_value = fake_content_metadata
         mock_get_enterprise_catalog.return_value = fake_catalog
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()

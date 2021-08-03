@@ -51,12 +51,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the exported and transformed content metadata as a dictionary regardless if there is an update needed.
         """
-        enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
-            self.enterprise_customer.enterprise_customer_catalogs.all()
-
-        catalogs_last_modified = {str(catalog.uuid): None for catalog in enterprise_customer_catalogs}
-        enterprise_customer_catalogs = [{'uuid': str(catalog.uuid)} for catalog in enterprise_customer_catalogs]
-        return self._get_enterprise_catalog_metadata(enterprise_customer_catalogs, catalogs_last_modified)
+        return self.export(force_retrieve_all_catalogs=True)
 
     def transform_organizations(self, content_metadata_item):
         """

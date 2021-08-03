@@ -38,11 +38,11 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Transmit content metadata items to the integrated channel.
         """
-        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times = \
+        items_to_create, items_to_update, items_to_delete, transmission_map, content_update_times_by_id = \
             self._partition_items(payload)
         self._transmit_delete(items_to_delete)
-        self._transmit_create(items_to_create, items_catalog_updated_times)
-        self._transmit_update(items_to_update, transmission_map, items_catalog_updated_times)
+        self._transmit_create(items_to_create, content_update_times_by_id)
+        self._transmit_update(items_to_update, transmission_map, content_update_times_by_id)
 
     def _partition_items(self, channel_metadata_item_map):
         """
@@ -74,10 +74,10 @@ class ContentMetadataTransmitter(Transmitter):
             if transmitted_item is not None:
                 if diff(channel_metadata, transmitted_item.channel_metadata):
                     items_to_update[content_id] = channel_metadata
-                    items_catalog_updated_times[content_id] = item.catalog_last_changed
+                    items_catalog_updated_times[content_id] = item.content_last_changed
             else:
                 items_to_create[content_id] = channel_metadata
-                items_catalog_updated_times[content_id] = item.catalog_last_changed
+                items_catalog_updated_times[content_id] = item.content_last_changed
 
         LOGGER.info(
             'Preparing to transmit creation of [%s] content metadata items with plugin configuration [%s]: [%s]',
@@ -228,7 +228,7 @@ class ContentMetadataTransmitter(Transmitter):
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     content_id=content_id,
                     channel_metadata=channel_metadata,
-                    catalog_last_changed=items_catalog_updated_times.get(content_id)
+                    content_last_changed=items_catalog_updated_times.get(content_id)
                 )
             )
         ContentMetadataItemTransmission.objects.bulk_create(transmissions)
@@ -240,7 +240,7 @@ class ContentMetadataTransmitter(Transmitter):
         for content_id, channel_metadata in content_metadata_item_map.items():
             transmission = transmission_map[content_id]
             transmission.channel_metadata = channel_metadata
-            transmission.catalog_last_changed = items_catalog_updated_times[content_id]
+            transmission.content_last_changed = items_catalog_updated_times[content_id]
             transmission.save()
 
     def _delete_transmissions(self, content_metadata_item_ids):
