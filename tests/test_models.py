@@ -47,7 +47,6 @@ from enterprise.models import (
     logo_path,
 )
 from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from test_utils import EmptyCacheMixin, assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 
@@ -1737,55 +1736,6 @@ class TestDataSharingConsent(unittest.TestCase):
         )
         expected_to_str = "<DataSharingConsent for user lowly_bob of Enterprise rich_enterprise>"
         assert expected_to_str == method(dsc)
-
-
-@ddt.ddt
-@mark.django_db
-class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
-    """
-    Tests of the ``EnterpriseCustomerPluginConfiguration`` base model.
-    """
-
-    def setUp(self):
-        self.enterprise_customer = factories.EnterpriseCustomerFactory()
-        self.config = EnterpriseCustomerPluginConfiguration(enterprise_customer=self.enterprise_customer)
-        super().setUp()
-
-    def test_channel_code_raises(self):
-        with raises(NotImplementedError):
-            self.config.channel_code()
-
-    @mock.patch('integrated_channels.integrated_channel.models.LearnerExporter')
-    def test_get_learner_data_exporter(self, mock_learner_exporter):
-        """
-        The configuration returns the appropriate learner exporter.
-        """
-        mock_learner_exporter.return_value = 'mock_learner_exporter'
-        assert self.config.get_learner_data_exporter(None) == 'mock_learner_exporter'
-
-    @mock.patch('integrated_channels.integrated_channel.models.LearnerTransmitter')
-    def test_get_learner_data_transmitter_raises(self, mock_learner_transmitter):
-        """
-        The configuration returns the appropriate learner transmitter.
-        """
-        mock_learner_transmitter.return_value = 'mock_learner_transmitter'
-        assert self.config.get_learner_data_transmitter() == 'mock_learner_transmitter'
-
-    @mock.patch('integrated_channels.integrated_channel.models.ContentMetadataExporter')
-    def test_get_course_data_exporter_raises(self, mock_course_exporter):
-        """
-        The configuration returns the appropriate course exporter.
-        """
-        mock_course_exporter.return_value = 'mock_course_exporter'
-        assert self.config.get_content_metadata_exporter(None) == 'mock_course_exporter'
-
-    @mock.patch('integrated_channels.integrated_channel.models.ContentMetadataTransmitter')
-    def test_get_course_data_transmitter_raises(self, mock_course_transmitter):
-        """
-        The configuration returns the appropriate course transmitter.
-        """
-        mock_course_transmitter.return_value = 'mock_course_transmitter'
-        assert self.config.get_content_metadata_transmitter() == 'mock_course_transmitter'
 
 
 @mark.django_db

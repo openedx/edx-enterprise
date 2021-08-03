@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+
+[3.28.0]
+---------
+* Added support for Django 3.0, 3.1 and 3.2
+
 [3.27.27]
 ---------
 * Adds enterprise catalog query title as an optional attribute to create/update post requests on the catalog service.

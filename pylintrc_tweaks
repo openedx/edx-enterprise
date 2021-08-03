@@ -7,3 +7,4 @@ no-docstring-rgx=(__.*__)|Meta
 [MESSAGES CONTROL]
 disable+ =
     logging-format-interpolation,
+    no-member,

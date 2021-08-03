@@ -24,7 +24,7 @@ jaraco.functools==3.3.0
     #   cheroot
     #   jaraco.text
     #   tempora
-jaraco.text==3.5.0
+jaraco.text==3.5.1
     # via jaraco.collections
 jasmine==3.8.1
     # via -r requirements/js_test.in
