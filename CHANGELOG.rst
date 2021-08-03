@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.16]
+---------
+* Making bulk catalog query ID update params optional
+
 [3.27.15]
 ---------
 * Added title field in ``AdminNotification`` table.
