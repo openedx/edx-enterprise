@@ -40,7 +40,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         Test that the bulk_update_catalog_query_id command will only update enterprise catalogs who's
         enterprise_catalog_query_ids match the provided old_id value
         """
-        call_command(self.command, self.enterprise_catalog_query_1.id, self.enterprise_catalog_query_3.id)
+        call_command(self.command, old_id=self.enterprise_catalog_query_1.id, new_id=self.enterprise_catalog_query_3.id)
         assert EnterpriseCustomerCatalog.objects.filter(
             enterprise_catalog_query_id=self.enterprise_catalog_query_3.id
         ).first()

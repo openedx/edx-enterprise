@@ -27,13 +27,15 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'old_id',
-            action='store',
+            '-o', '--old_id',
+            metavar='OLD_ID',
+            dest='old_id',
             help='Old catalog query ID to be replaced.'
         )
         parser.add_argument(
-            'new_id',
-            action='store',
+            '-n', '--new_id',
+            metavar='NEW_ID',
+            dest='new_id',
             help='New catalog query ID to replace the old one.'
         )
         parser.add_argument(
@@ -62,12 +64,16 @@ class Command(BaseCommand):
         Entry point for management command execution.
         """
         LOGGER.info("Starting bulk update of EnterpriseCatalog's enterprise catalog query IDs")
-
         if options['args_from_database']:
             options = self.get_args_from_database()
 
-        old_id = options['old_id']
-        new_id = options['new_id']
+        old_id = options.get('old_id')
+        new_id = options.get('new_id')
+        if not old_id:
+            raise CommandError('You must specify an old query ID')
+        if not new_id:
+            raise CommandError('You must specify a new query ID')
+
         uuids_to_change = []
         if EnterpriseCatalogQuery.objects.filter(id=new_id).first():
             # pylint: disable=no-member
