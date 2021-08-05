@@ -69,6 +69,52 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
     @ddt.data(
         (
+            {},
+            None
+        ),
+        (
+            {
+                'end': 'test_end_string'
+            },
+            'test_end_string'
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_end(self, content_metadata_item, expected_end_value):
+        """
+        ``CanvasContentMetadataExporter``'s ``transform_end`` returns string passed in from
+        Content metadata or None if no 'end' field present on content_metadata_item.
+        """
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        end = exporter.transform_end(content_metadata_item)
+        assert end == expected_end_value
+
+    @ddt.data(
+        (
+            {},
+            None
+        ),
+        (
+            {
+                'start': 'test_start_string'
+            },
+            'test_start_string'
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_start(self, content_metadata_item, expected_start_value):
+        """
+        ``CanvasContentMetadataExporter``'s ``transform_start`` returns string passed in from
+        Content metadata or None if no 'start' field present on content_metadata_item.
+        """
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        start = exporter.transform_start(content_metadata_item)
+        assert start == expected_start_value
+
+    @ddt.data(
+        (
             {
                 'enrollment_url': 'http://some/enrollment/url/',
                 'title': 'edX Demonstration Course',

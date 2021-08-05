@@ -26,6 +26,7 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'course_code': 'key',
         'indexed': 'indexed'
     }
+    SKIP_KEY_IF_NONE = True
 
     LONG_STRING_LIMIT = 2000
 
@@ -78,3 +79,17 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         Whether to make the course default to the public index or not.
         """
         return 1
+
+    def transform_start(self, content_metadata_item):
+        """
+        Returns none if no start date is available (the case for courses),
+        and the start date (the case for course run data)
+        """
+        return content_metadata_item.get('start', None)
+
+    def transform_end(self, content_metadata_item):
+        """
+        Returns none if no end date is available (the case for courses),
+         and the end date (the case for course run data)
+        """
+        return content_metadata_item.get('end', None)
