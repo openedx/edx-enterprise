@@ -26,7 +26,7 @@ UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 LOGGER = getLogger(__name__)
 
 
-def encode_course_key_for_lms(edx_course_key):
+def encode_course_key_into_base64(edx_course_key):
     """
     Base64 encodes edx course key (string) into a form safe (string) for use with LMS such as Cornerstone
     e.g., Cornerstone does not allow some chars
@@ -40,7 +40,7 @@ def encode_course_key_for_lms(edx_course_key):
     return base64.urlsafe_b64encode(edx_course_key.encode("utf-8")).decode('utf-8')
 
 
-def decode_course_key_from_lms(lms_course_key):
+def decode_course_key_from_base64(lms_course_key):
     """
     Decodes the base64 urlsafe encoded lms_course_key, into an edX course key (string)
     """
