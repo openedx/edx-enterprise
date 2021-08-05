@@ -12,6 +12,8 @@ from collections import OrderedDict
 from datetime import datetime
 from logging import getLogger
 
+import pytz
+
 from django.apps import apps
 from django.utils import dateparse
 
@@ -185,12 +187,12 @@ class ContentMetadataExporter(Exporter):
         content_last_modified = enterprise_catalog_data.get('content_last_modified')
         content_last_modified = dateparse.parse_datetime(
             content_last_modified
-        ) if content_last_modified else datetime.min
+        ) if content_last_modified else datetime.min.replace(tzinfo=pytz.UTC)
 
         catalog_modified = enterprise_catalog_data.get('catalog_modified')
         catalog_modified = dateparse.parse_datetime(
             catalog_modified
-        ) if catalog_modified else datetime.min
+        ) if catalog_modified else datetime.min.replace(tzinfo=pytz.UTC)
         return content_last_modified, catalog_modified
 
     def _get_most_recent_catalog_update_time(self):

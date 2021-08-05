@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.19]
+---------
+* Localize timezones on catalog modified min (not found) values
+
 [3.27.18]
 ---------
 * Integrated channels util functions needed to base64 urlsafe encode/decode course keys for use with some LMS systems like Cornerstone.
