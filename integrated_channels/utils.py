@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
+import base64
 
 import requests
 from six.moves import range
@@ -23,6 +24,23 @@ UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 
 LOGGER = getLogger(__name__)
+
+
+def encode_course_key_for_lms(edx_course_key):
+    """
+    Base64 encodes edx course key (string) into a form safe (string) for use with LMS such as Cornerstone
+    e.g., Cornerstone does not allow some chars
+    For Base64, the urlsafe version is used, since it only uses a pretty limited charset, minus the /
+    edX course keys allow these chars `ALLOWED_ID_CHARS = r'[\w\-~.:]'` per: opaque_keys/edx/locator.py
+    """
+    return base64.urlsafe_b64encode(edx_course_key.encode("utf-8")).decode('utf-8')
+
+
+def decode_course_key_from_lms(lms_course_key):
+    """
+    Decodes the base64 urlsafe encoded lms_course_key, into an edX course key (string)
+    """
+    return base64.urlsafe_b64decode(lms_course_key).decode('utf-8')
 
 
 def parse_datetime_to_epoch(datestamp, magnitude=1.0):
