@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.18]
+---------
+* Integrated channels util functions needed to base64 urlsafe encode/decode course keys for use with some LMS systems like Cornerstone.
+
 [3.27.17]
 ---------
 * Integrated channels now checks and uses catalog modified times to determine if an update is needed before retrieving content metadata.
