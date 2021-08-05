@@ -3,13 +3,13 @@
 Utilities common to different integrated channels.
 """
 
+import base64
 import math
 import re
 from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
-import base64
 
 import requests
 from six.moves import range
