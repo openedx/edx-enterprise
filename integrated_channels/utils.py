@@ -31,7 +31,7 @@ def encode_course_key_into_base64(edx_course_key):
     Base64 encodes edx course key (string) into a form safe (string) for use with LMS such as Cornerstone
     e.g., Cornerstone does not allow some chars
     For Base64, the urlsafe version is used, since it only uses a pretty limited charset, minus the /
-    edX course keys allow these chars `ALLOWED_ID_CHARS = r'[\w\-~.:]'` per: opaque_keys/edx/locator.py
+    edX course keys allow these chars `ALLOWED_ID_CHARS` per: opaque_keys/edx/locator.py
     """
     if edx_course_key is None:
         raise ValueError('Cannot process an undefined edx_course_key')
