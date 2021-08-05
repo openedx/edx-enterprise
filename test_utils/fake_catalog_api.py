@@ -93,7 +93,8 @@ FAKE_COURSE_RUN = {
     'reporting_type': 'mooc',
     'eligible_for_financial_aid': True,
     'content_type': 'courserun',
-    'has_enrollable_seats': True
+    'has_enrollable_seats': True,
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
 }
 FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
 FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
@@ -132,7 +133,8 @@ FAKE_COURSE = {
     'marketing_url': None,
     'content_type': 'course',
     'enrollment_url': FAKE_URL,
-    'programs': []
+    'programs': [],
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
 }
 
 FAKE_PROGRAM_RESPONSE1 = {
@@ -1018,7 +1020,8 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "weeks_to_complete_max": None,
     "aggregation_key": "program:" + FAKE_UUIDS[3],
     'enrollment_url': FAKE_URL,
-    "is_program_eligible_for_one_click_purchase": True
+    "is_program_eligible_for_one_click_purchase": True,
+    'content_last_modified': '2021-08-18T00:32:33.754662Z'
 }
 
 FAKE_SEARCH_ALL_PROGRAM_RESULT_2 = {
@@ -1155,6 +1158,15 @@ FAKE_SEARCH_ALL_COURSE_RESULT_3 = {
             "availability": "Current"
         }
     ],
+}
+
+FAKE_CATALOG_RESULT = {
+    'uuid': '0420e487-8f14-4c39-8772-de803781d754',
+    'title': 'for Alex local testing',
+    'enterprise_customer': 'b68fa4bf-53c9-4071-b698-b8d436eb0295',
+    'catalog_query_uuid': None,
+    'content_last_modified': '2020-05-13T14:28:54.679517Z',
+    'catalog_modified': '2020-07-16T15:11:10.521611Z'
 }
 
 
@@ -1301,14 +1313,31 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
     }
 
 
+def get_fake_catalog():
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.get_enterprise_catalog.
+    """
+    return FAKE_CATALOG_RESULT
+
+
 def get_fake_content_metadata():
     """
     Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata.
     """
     content_metadata = OrderedDict()
-    content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
-    content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
-    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = FAKE_SEARCH_ALL_PROGRAM_RESULT_1
+    content_metadata[FAKE_COURSE_RUN['key']] = copy.deepcopy(FAKE_COURSE_RUN)
+    content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
+    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = copy.deepcopy(FAKE_SEARCH_ALL_PROGRAM_RESULT_1)
+    return list(content_metadata.values())
+
+
+def get_fake_content_metadata_no_program():
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata without a program.
+    """
+    content_metadata = OrderedDict()
+    content_metadata[FAKE_COURSE_RUN['key']] = copy.deepcopy(FAKE_COURSE_RUN)
+    content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
     return list(content_metadata.values())
 
 

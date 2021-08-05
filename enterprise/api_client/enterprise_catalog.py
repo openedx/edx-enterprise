@@ -154,9 +154,9 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         Returns:
             list: List of dicts containing content metadata.
         """
+
         content_metadata = OrderedDict()
         enterprise_customer_catalogs = enterprise_catalogs or enterprise_customer.enterprise_customer_catalogs.all()
-
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
@@ -172,7 +172,6 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                     catalog_uuid, str(exc)
                 )
                 raise
-
         return list(content_metadata.values())
 
     @JwtLmsApiClient.refresh_token

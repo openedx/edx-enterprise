@@ -233,7 +233,7 @@ def test_partial_successful_refresh_catalog():
 @responses.activate
 @mark.django_db
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-def test_get_content_metadata():
+def test_get_content_metadata_with_enterprise_catalogs():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
     catalog = EnterpriseCustomerCatalogFactory()
@@ -291,3 +291,46 @@ def test_get_content_metadata():
     assert first_url == first_request_url
     second_request_url = responses.calls[1][0].url
     assert second_url == second_request_url
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_get_content_metadata_without_enterprise_catalogs():
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
+    catalog = EnterpriseCustomerCatalogFactory()
+    url = _url('enterprise-catalogs/{catalog_uuid}/get_content_metadata/?page_size={page_size}'.format(
+        catalog_uuid=catalog.uuid,
+        page_size=page_size,
+    ))
+
+    responses.reset()
+
+    expected_response = {
+        'count': 100,
+        'next': None,
+        'previous': None,
+        'results': [
+            {
+                'content_type': 'course',
+                'key': 'key-{}'.format(index),
+                'data': 'foo',
+            } for index in range(page_size)
+        ]
+    }
+    responses.add(responses.GET, url, json=expected_response)
+    results = client.get_content_metadata(enterprise_customer=catalog.enterprise_customer)
+
+    expected_results = [
+        {
+            'content_type': 'course',
+            'key': 'key-{}'.format(index),
+            'data': 'foo',
+        } for index in range(page_size)
+    ]
+
+    assert results == expected_results
+
+    request_url = responses.calls[0][0].url
+    assert url == request_url

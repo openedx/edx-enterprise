@@ -16,7 +16,7 @@ from pytest import mark
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3, get_fake_content_metadata
+from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3, get_fake_catalog, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 from test_utils.integrated_channels_utils import merge_dicts
 
@@ -58,11 +58,13 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    def test_content_exporter_export(self, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
+    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
         """
         ``CornerstoneContentMetadataExporter``'s ``export`` produces the expected export.
         """
         mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([

@@ -281,6 +281,11 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     integrated_channel_code = models.CharField(max_length=30)
     content_id = models.CharField(max_length=255)
     channel_metadata = JSONField()
+    content_last_changed = models.DateTimeField(
+        help_text='Date of the last time the enterprise catalog associated with this metadata item was updated',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')

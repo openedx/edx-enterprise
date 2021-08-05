@@ -12,7 +12,7 @@ from pytest import mark
 
 from integrated_channels.moodle.exporters.content_metadata import MoodleContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import get_fake_content_metadata
+from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -40,11 +40,15 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    def test_content_exporter_export(self, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
+    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
         """
         ``MoodleContentMetadataExporter``'s ``export`` produces the expected export.
         """
-        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        fake_content_metadata = get_fake_content_metadata()
+        fake_catalog = get_fake_catalog()
+        mock_get_content_metadata.return_value = fake_content_metadata
+        mock_get_enterprise_catalog.return_value = fake_catalog
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([
