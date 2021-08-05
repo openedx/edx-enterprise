@@ -33,6 +33,10 @@ def encode_course_key_for_lms(edx_course_key):
     For Base64, the urlsafe version is used, since it only uses a pretty limited charset, minus the /
     edX course keys allow these chars `ALLOWED_ID_CHARS = r'[\w\-~.:]'` per: opaque_keys/edx/locator.py
     """
+    if edx_course_key is None:
+        raise ValueError('Cannot process an undefined edx_course_key')
+    if not edx_course_key.replace(' ', ''):
+        raise ValueError('Cannot process a spaces-only edx_course_key')
     return base64.urlsafe_b64encode(edx_course_key.encode("utf-8")).decode('utf-8')
 
 

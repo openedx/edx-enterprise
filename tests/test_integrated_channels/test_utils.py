@@ -29,8 +29,8 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
     )
     @ddt.unpack
     def test_encode_course_key_for_lms(self, edx_key, lms_key):
-        assert utils.encode_course_key_for_lms(edx_key) == lms_key
-        assert utils.decode_course_key_from_lms(lms_key) == edx_key
+        assert utils.encode_course_key_into_base64(edx_key) == lms_key
+        assert utils.decode_course_key_from_base64(lms_key) == edx_key
 
     @ddt.data(
         ('2011-01-01T00:00:00Z', '2011-01-01T00:00:00Z', False),
