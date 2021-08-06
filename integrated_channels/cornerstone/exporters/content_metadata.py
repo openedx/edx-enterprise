@@ -14,6 +14,7 @@ from enterprise.utils import get_closest_course_run, get_language_code
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
+    convert_invalid_course_ids,
     get_duration_from_estimated_hours,
     get_image_url,
     get_subjects_from_content_metadata,
@@ -52,6 +53,22 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         Return the exported and transformed content metadata as a dictionary regardless if there is an update needed.
         """
         return self.export(force_retrieve_all_catalogs=True)
+
+    def transform_courserun_key(self, content_metadata_item):
+        """
+        Return the transformed version of the course run key by converting into a string of valid chars by encoding the
+        key with base 64. Because valid course run keys have already been transmitted as courses, and course keys are
+        used to uniquely identify edx courses, we only want to encode the invalid ones as they would have never been
+        created.
+        """
+        return convert_invalid_course_ids(content_metadata_item.get('key'))
+
+    def transform_course_key(self, content_metadata_item):
+        """
+        Return the transformed version of the course key by converting into a string of valid chars by encoding the key
+        with base 64
+        """
+        return convert_invalid_course_ids(content_metadata_item.get('key'))
 
     def transform_organizations(self, content_metadata_item):
         """
