@@ -44,6 +44,8 @@ class TestMoodleApiClient(unittest.TestCase):
         self.user_email = 'testemail@example.com'
         self.moodle_api_path = '/webservice/rest/server.php'
         self.moodle_course_id = random.randint(1, 1000)
+        self._get_courses_response = bytearray('{{"courses": [{{"id": {}}}]}}'.format(self.moodle_course_id), 'utf-8')
+        self.empty_get_courses_response = bytearray('{"courses": []}', 'utf-8')
         self.moodle_module_id = random.randint(1, 1000)
         self.moodle_module_name = 'module'
         self.moodle_user_id = random.randint(1, 1000)
@@ -101,11 +103,31 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
-        client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
-        client.get_course_id.return_value = self.moodle_course_id
+        client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
+
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response._content = self._get_courses_response  # pylint: disable=protected-access
+
+        client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         client.delete_content_metadata(SERIALIZED_DATA)
 
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
+
+    def test_delete_content_metadata_no_course_found(self):
+        """
+        Test that we do not fail on delete when a course is not found on Canvas.
+        """
+        client = MoodleAPIClient(self.enterprise_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
+        client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
+
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response._content = self.empty_get_courses_response  # pylint: disable=protected-access
+        client._get_courses.return_value = mock_response  # pylint: disable=protected-access
+        result = client.delete_content_metadata(SERIALIZED_DATA)
+        assert result.json() == {"result": "Course not found."}
 
     def test_course_completion_with_no_course(self):
         """Test that we properly raise exceptions if the client receives a 404 from Moodle"""

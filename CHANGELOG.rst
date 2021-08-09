@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.22]
+---------
+* Prevent failures on integrated channels delete requests when courses are not found.
+
 [3.27.21]
 ---------
 * Encode invalid course keys for CSOD customers

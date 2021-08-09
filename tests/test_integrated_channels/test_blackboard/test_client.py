@@ -481,6 +481,25 @@ class TestBlackboardApiClient(unittest.TestCase):
         )
         assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
 
+    def test_delete_no_course_found(self):
+        client = self._create_new_mock_client()
+        serialized_data = json.dumps({
+            'externalId': 'a-course-id'
+        }).encode('utf-8')
+
+        client._create_session()  # pylint: disable=protected-access
+        client._delete = unittest.mock.MagicMock(name='_delete')  # pylint: disable=protected-access
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='_resolve_blackboard_course_id',
+            return_value=None
+        )
+
+        status_code, status_text = client.delete_content_metadata(serialized_data)
+        assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
+        assert not client._delete.called  # pylint: disable=protected-access
+        assert status_code == 200
+        assert status_text == 'Course:a-course-id already removed.'
+
     def test_delete_content_metadata(self):
         client = self._create_new_mock_client()
         serialized_data = json.dumps({

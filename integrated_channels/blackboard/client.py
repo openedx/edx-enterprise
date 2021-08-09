@@ -147,7 +147,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
         external_id = channel_metadata_item.get('externalId')
         course_id = self._resolve_blackboard_course_id(external_id)
-        BlackboardAPIClient._validate_course_id(course_id, external_id)
+
+        if not course_id:
+            return HTTPStatus.OK.value, 'Course:{} already removed.'.format(external_id)
 
         LOGGER.info("Deleting course with courseId: %s", course_id)
         update_url = self.generate_course_update_url(course_id)
