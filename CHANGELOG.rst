@@ -17,7 +17,11 @@ Unreleased
 ----------
 * Nothing
 
-[3.28.19]
+[3.27.20]
+---------
+* Handle content_last_modified not provided by enterprise catalog
+
+[3.27.19]
 ---------
 * Localize timezones on catalog modified min (not found) values
 
