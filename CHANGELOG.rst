@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.21]
+---------
+* Encode invalid course keys for CSOD customers
+
 [3.27.20]
 ---------
 * Handle content_last_modified not provided by enterprise catalog
