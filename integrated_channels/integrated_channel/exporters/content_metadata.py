@@ -116,7 +116,20 @@ class ContentMetadataExporter(Exporter):
                         self.enterprise_configuration,
                         json.dumps(transformed, indent=4),
                     )
-                    content_last_modified = item.pop('content_last_modified')
+
+                    # There are some scenarios where `content_last_modified` isn't present in the fetched content
+                    content_last_modified = item.get('content_last_modified')
+                    if content_last_modified:
+                        content_last_modified = item.pop('content_last_modified')
+                    else:
+                        LOGGER.warning(
+                            "content_last_modified field not found for {} - {} under catalog: {}".format(
+                                item.get('content_type'),
+                                item.get('key'),
+                                enterprise_customer_catalog.uuid,
+                            )
+                        )
+
                     content_metadata_item_export = ContentMetadataItemExport(item, transformed, content_last_modified)
                     content_metadata_export[content_metadata_item_export.content_id] = content_metadata_item_export
             else:
