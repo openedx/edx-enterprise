@@ -138,6 +138,28 @@ class ContentMetadataExporter(Exporter):
                 )
         return OrderedDict(sorted(content_metadata_export.items()))
 
+    def _lookup_transform_fx(self, content_metadata_type, edx_data_schema_key):
+        """ Returns a function to map edx data to the LMS data, if one exists.
+        """
+        return (
+            getattr(
+                self,
+                'transform_{content_type}_{edx_data_schema_key}'.format(
+                    content_type=content_metadata_type,
+                    edx_data_schema_key=edx_data_schema_key
+                ),
+                None
+            )
+            or
+            getattr(
+                self,
+                'transform_{edx_data_schema_key}'.format(
+                    edx_data_schema_key=edx_data_schema_key
+                ),
+                None
+            )
+            )
+
     def _transform_item(self, content_metadata_item):
         """
         Transform the provided content metadata item to the schema expected by the integrated channel.
@@ -147,24 +169,7 @@ class ContentMetadataExporter(Exporter):
         for integrated_channel_schema_key, edx_data_schema_key in self.DATA_TRANSFORM_MAPPING.items():
             # Look for transformer functions defined on subclasses.
             # Favor content type-specific functions.
-            transformer = (
-                getattr(
-                    self,
-                    'transform_{content_type}_{edx_data_schema_key}'.format(
-                        content_type=content_metadata_type,
-                        edx_data_schema_key=edx_data_schema_key
-                    ),
-                    None
-                )
-                or
-                getattr(
-                    self,
-                    'transform_{edx_data_schema_key}'.format(
-                        edx_data_schema_key=edx_data_schema_key
-                    ),
-                    None
-                )
-            )
+            transformer = self._lookup_transform_fx(content_metadata_type, edx_data_schema_key)
             if transformer:
                 transformed_value = transformer(content_metadata_item)  # pylint: disable=not-callable
             else:

@@ -3,6 +3,7 @@
 Tests for Canvas content metadata exporters.
 """
 
+from os import terminal_size
 import unittest
 
 import ddt
@@ -69,6 +70,28 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 set(['syllabus_body', 'default_view', 'name'])
                 .issubset(set(item.channel_metadata.keys()))
             )
+
+    @ddt.data(
+        ('course', 'description', False),
+        ('courserun', 'description', False),
+        ('course', 'end', False),
+        ('courserun', 'end', False),
+        ('course', 'start', False),
+        ('courserun', 'start', False),
+        ('courserun', 'start', False),
+        ('course', 'name', True),
+    )
+    @ddt.unpack
+    def test_return_tranformer_fx(self, mock_content_type, mock_expected_edx_schema, should_be_null):
+        """ Glassbox test to ensure transformers for Canvas data exist as expected. """
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        transformer = exporter._lookup_transform_fx(mock_content_type, mock_expected_edx_schema)  # pylint: disable=protected-access
+        if should_be_null:
+            assert transformer is None
+        else:
+            assert transformer
+
+
 
     @ddt.data(
         (
