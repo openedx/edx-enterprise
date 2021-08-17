@@ -41,7 +41,7 @@ class TestCanvasUtils(unittest.TestCase):
             canvas_base_url=self.url_base,
             refresh_token=self.refresh_token,
         )
-        self.get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        self.get_oauth_access_token = unittest.mock.MagicMock(
             name='_get_oauth_access_token',
             return_value=('atoken', 10000)
         )
@@ -56,12 +56,12 @@ class TestCanvasUtils(unittest.TestCase):
                                               {'id': 2, 'parent_account_id': 1}, ]
 
         mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
-        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        mock_session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )
         root_account = CanvasUtil.find_root_canvas_account(self.enterprise_config, mock_session)
-        assert root_account['id'] == 1
+        assert root_account['id'] == 1  # pylint: disable=unsubscriptable-object
 
     def test_find_root_canvas_account_not_found(self):
         success_response = unittest.mock.Mock(spec=Response)
@@ -70,7 +70,7 @@ class TestCanvasUtils(unittest.TestCase):
                                               {'id': 2, 'parent_account_id': 1}, ]
 
         mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
-        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        mock_session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )
@@ -95,7 +95,7 @@ class TestCanvasUtils(unittest.TestCase):
         success_response.json.return_value = [a_course_1, a_course_2]
 
         mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
-        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        mock_session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )
@@ -115,7 +115,7 @@ class TestCanvasUtils(unittest.TestCase):
         }
 
         mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
-        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        mock_session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )
@@ -144,7 +144,7 @@ class TestCanvasUtils(unittest.TestCase):
         success_response.json.return_value = [a_course_1, a_course_2]
 
         mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
-        mock_session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        mock_session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )

@@ -23,8 +23,8 @@ class EnterpriseApiClient(JwtLmsApiClient):
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/enterprise/api/v1/'
     APPEND_SLASH = True
 
-    ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'  # pylint: disable=invalid-name
-    ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT = 'enterprise_catalogs'  # pylint: disable=invalid-name
+    ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
+    ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT = 'enterprise_catalogs'
 
     DEFAULT_VALUE_SAFEGUARD = object()
 

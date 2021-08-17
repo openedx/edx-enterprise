@@ -7,6 +7,6 @@ from rest_framework import routers
 from .views import CornerstoneConfigurationViewSet
 
 app_name = 'cornerstone'
-router = routers.DefaultRouter()  # pylint: disable=invalid-name
+router = routers.DefaultRouter()
 router.register(r'configuration', CornerstoneConfigurationViewSet, basename="configuration")
 urlpatterns = router.urls

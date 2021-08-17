@@ -10,7 +10,7 @@ import unittest
 import ddt
 import mock
 import responses
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urljoin
 from slumber.exceptions import HttpClientError
 
 from django.contrib import auth
@@ -30,19 +30,19 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
     """
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
-    def test_raise_error_missing_course_discovery_api(self, *args):  # pylint: disable=unused-argument
+    def test_raise_error_missing_course_discovery_api(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
             CourseCatalogApiClient(mock.Mock(spec=User))
 
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
-    def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
+    def test_raise_error_missing_catalog_integration(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
             CourseCatalogApiClient(mock.Mock(spec=User))
 
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
-    def test_raise_error_missing_get_edx_api_data(self, *args):  # pylint: disable=unused-argument
+    def test_raise_error_missing_get_edx_api_data(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
             CourseCatalogApiClient(mock.Mock(spec=User))
 
@@ -380,7 +380,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
 
     @responses.activate
     @mock.patch.object(CourseCatalogApiClient, 'get_catalog_results_from_discovery', return_value={'result': 'dummy'})
-    def test_get_catalog_results_cache(self, mocked_get_catalog_results_from_discovery):  # pylint: disable=invalid-name
+    def test_get_catalog_results_cache(self, mocked_get_catalog_results_from_discovery):
         """
         Verify `get_catalog_results` of CourseCatalogApiClient works as expected.
         """
@@ -478,7 +478,7 @@ class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
     """
     Test initialization of CourseCatalogAPIServiceClient.
     """
-    def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
+    def test_raise_error_missing_catalog_integration(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
             CourseCatalogApiServiceClient()
 
@@ -499,7 +499,7 @@ class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
-    def test_success(self, mock_catalog_integration, *args):  # pylint: disable=unused-argument
+    def test_success(self, mock_catalog_integration, *args):
         mock_integration_config = mock.Mock(enabled=True)
         mock_integration_config.get_service_user.return_value = mock.Mock(spec=User)
         mock_catalog_integration.current.return_value = mock_integration_config

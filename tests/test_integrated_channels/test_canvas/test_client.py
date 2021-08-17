@@ -13,7 +13,7 @@ import pytest
 import responses
 from freezegun import freeze_time
 from requests.models import Response
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urljoin
 
 from django.utils import timezone
 
@@ -759,7 +759,7 @@ class TestCanvasApiClient(unittest.TestCase):
                     '<canvas.com?page=1&per_page=10>; rel="first",'
                     '<canvas.com?page=2&per_page=10>; rel="last"'
         }
-        next_page = CanvasUtil.determine_next_results_page(canvas_api_response)  # pylint: disable=protected-access
+        next_page = CanvasUtil.determine_next_results_page(canvas_api_response)
         assert next_page == 'canvas.com?page=2&per_page=10'
 
     def test_parsing_end_of_paginated_results(self):
@@ -773,7 +773,7 @@ class TestCanvasApiClient(unittest.TestCase):
                     '<canvas.com?page=1&per_page=10>; rel="first",'
                     '<canvas.com?page=2&per_page=10>; rel="last"'
         }
-        next_page = CanvasUtil.determine_next_results_page(canvas_api_response)  # pylint: disable=protected-access
+        next_page = CanvasUtil.determine_next_results_page(canvas_api_response)
         assert not next_page
 
     def test_parse_unique_newest_assignments_removes_older_assignments(self):

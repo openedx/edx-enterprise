@@ -19,7 +19,7 @@ from integrated_channels.integrated_channel.management.commands import (
 from integrated_channels.utils import generate_formatted_log
 
 LOGGER = get_task_logger(__name__)
-User = auth.get_user_model()  # pylint: disable=invalid-name
+User = auth.get_user_model()
 
 
 def _log_batch_task_start(task_name, channel_code, job_user_id, integrated_channel_full_config, extra_message=''):

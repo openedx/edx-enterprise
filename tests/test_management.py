@@ -137,6 +137,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     """
     Test the ``transmit_content_metadata`` management command.
     """
+    # pylint: disable=line-too-long
 
     def setUp(self):
         self.user = factories.UserFactory(username='C-3PO')
@@ -197,14 +198,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')  # pylint: disable=line-too-long
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
     def test_transmit_content_metadata_task_with_error(
             self,
             transmit_content_metadata_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
             degreed_create_content_metadata_mock,
-    ):  # pylint: disable=invalid-name
+    ):
         """
         Verify the data transmission task for integrated channels with error.
 
@@ -269,14 +270,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')  # pylint: disable=line-too-long
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
     def test_transmit_content_metadata_task_success(
             self,
             transmit_content_metadata_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
             degreed_create_content_metadata_mock,
-    ):  # pylint: disable=invalid-name
+    ):
         """
         Test the data transmission task.
         """
@@ -331,6 +332,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
             # Because there are no active customers, the process will end early.
             assert not log_capture.records
+    # pylint: enable=line-too-long
 
 
 COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
@@ -1215,7 +1217,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             get_user_from_social_auth_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-    ):  # pylint: disable=invalid-name, unused-argument
+    ):
         """
         Test the unlink inactive sap learners task with valid inactive learners.
         """
@@ -1293,7 +1295,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             self,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-    ):  # pylint: disable=invalid-name
+    ):
         """
         Test the unlink inactive sap learners task with failed response from SAPSF.
         """
@@ -1321,7 +1323,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             get_identity_provider_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-    ):  # pylint: disable=invalid-name
+    ):
         """
         Test the unlink inactive sap learners task with failed response for no identity provider.
         """
@@ -1388,7 +1390,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             self,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-    ):  # pylint: disable=invalid-name
+    ):
         """
         Test the unlink inactive sap learners task with error response from SAPSF catches the error
         """
@@ -1646,7 +1648,6 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
 
-    # pylint: disable=invalid-name
     def _learner_assertions(self, expected_customer=None):
         """ Helper to assert that expected enterprise learner are assigned to expected customers. """
         # AED: 2021-02-12

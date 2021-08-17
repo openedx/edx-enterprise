@@ -10,7 +10,7 @@ class IsInEnterpriseGroup(permissions.BasePermission):
     Find out if the requesting user belongs to a django group meant for granting access to an enterprise feature.
     This check applies to both staff and non-staff users.
     """
-    ALLOWED_API_GROUPS = []  # pylint: disable=invalid-name
+    ALLOWED_API_GROUPS = []
     message = u'User is not allowed to access the view.'
 
     def has_permission(self, request, view):

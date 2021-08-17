@@ -20,12 +20,7 @@ from edx_rest_framework_extensions.auth.jwt.cookies import jwt_cookie_name
 from edx_rest_framework_extensions.auth.jwt.tests.utils import generate_jwt_token, generate_unversioned_payload
 from pytest import mark
 from rest_framework.test import APIClient, APITestCase
-from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
-    parse_qs,
-    urljoin,
-    urlparse,
-    urlsplit,
-)
+from six.moves.urllib.parse import parse_qs, urljoin, urlparse, urlsplit
 
 from django.conf import settings
 from django.core.cache import caches
@@ -37,7 +32,7 @@ from django.urls import reverse
 from enterprise import utils
 from test_utils import factories
 
-FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
+FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]
 TEST_USERNAME = 'api_worker'
 TEST_EMAIL = 'test@email.com'
 TEST_PASSWORD = 'QWERTY'
@@ -285,8 +280,8 @@ class APITest(APITestCase):
         Create a test user and set its password.
         """
         self.user = factories.UserFactory(username=username, is_active=True, **kwargs)
-        self.user.set_password(password)  # pylint: disable=no-member
-        self.user.save()  # pylint: disable=no-member
+        self.user.set_password(password)
+        self.user.save()
 
     def load_json(self, content):
         """

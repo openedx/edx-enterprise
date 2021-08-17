@@ -109,7 +109,7 @@ class TestRouterView(TestCase):
             has_course_mode,
             expected_eligibility,
             enrollment_api_client_mock,
-    ):  # pylint: disable=invalid-name
+    ):
         """
         ``eligible_for_direct_audit_enrollment`` returns whether the request is eligible for direct audit enrollment.
         """

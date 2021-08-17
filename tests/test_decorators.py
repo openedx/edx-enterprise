@@ -11,7 +11,7 @@ import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark, raises
-from six.moves.urllib.parse import parse_qs, unquote, urlparse  # pylint: disable=import-error
+from six.moves.urllib.parse import parse_qs, unquote, urlparse
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -255,7 +255,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         assert view_function.called
 
     @mock.patch('enterprise.decorators.get_identity_provider')
-    def test_force_fresh_session_no_sso_provider(self, mock_get_idp):  # pylint: disable=unused-argument
+    def test_force_fresh_session_no_sso_provider(self, mock_get_idp):
         """
         Test that the force_fresh_session decorator calls the view function
         when no sso provider is configured.

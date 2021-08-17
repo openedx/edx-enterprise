@@ -14,7 +14,7 @@ import responses
 from freezegun import freeze_time
 from mock.mock import MagicMock
 from pytest import mark, raises
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urljoin
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient

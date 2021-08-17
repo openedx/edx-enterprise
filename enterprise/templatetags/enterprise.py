@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 
 from enterprise.utils import strip_html_tags
 
-register = template.Library()  # pylint: disable=invalid-name
+register = template.Library()
 
 MESSAGE_ICONS = {
     'success': 'fa-check-circle',

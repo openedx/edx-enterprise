@@ -22,7 +22,7 @@ from integrated_channels.utils import (
 LOGGER = getLogger(__name__)
 
 
-class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pylint: disable=abstract-method
+class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
     """
     SAP SuccessFactors implementation of ContentMetadataExporter.
     """

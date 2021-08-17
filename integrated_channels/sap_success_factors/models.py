@@ -28,7 +28,6 @@ from integrated_channels.utils import convert_comma_separated_string_to_list
 LOGGER = getLogger(__name__)
 
 
-# pylint: disable=feature-toggle-needs-doc
 @python_2_unicode_compatible
 class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
     """
@@ -287,7 +286,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
         """
         return SAPSuccessFactorsGlobalConfiguration.current().provider_id
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
 

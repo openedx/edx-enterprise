@@ -189,7 +189,7 @@ class TestEnterpriseCustomerManager(unittest.TestCase):
 
     def tearDown(self):
         super().tearDown()
-        EnterpriseCustomer.objects.all().delete()  # pylint: disable=no-member
+        EnterpriseCustomer.objects.all().delete()
 
     def test_active_customers_get_queryset_returns_only_active(self):
         """
@@ -1167,7 +1167,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         Test ``EnterpriseCustomerCatalog`` conversion to string.
         """
         faker = FakerFactory.create()
-        title = faker.name()  # pylint: disable=no-member
+        title = faker.name()
         name = 'EnterpriseWithACatalog'
         enterprise_catalog = EnterpriseCustomerCatalog(
             title=title,
@@ -1620,7 +1620,7 @@ class TestProxyDataSharingConsent(EmptyCacheMixin, TransactionTestCase):
         Test that we can use composite queries for enterprise customers.
         """
         proxy_dsc = ProxyDataSharingConsent(**kwargs)
-        the_only_enterprise_customer = EnterpriseCustomer.objects.all().first()  # pylint: disable=no-member
+        the_only_enterprise_customer = EnterpriseCustomer.objects.all().first()
         assert the_only_enterprise_customer == proxy_dsc.enterprise_customer
 
     @ddt.data(str, repr)

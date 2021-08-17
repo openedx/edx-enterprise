@@ -8,7 +8,7 @@ from http import HTTPStatus
 
 import requests
 from dateutil.parser import parse
-from six.moves.urllib.parse import quote_plus, urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import quote_plus, urljoin
 
 from django.apps import apps
 
@@ -202,7 +202,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return update_grade_response.status_code, update_grade_response.text
 
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def create_course_completion(self, user_id, payload):
         learner_data = json.loads(payload)
         self._create_session()
 
@@ -229,7 +229,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return update_grade_response.status_code, update_grade_response.text
 
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def delete_course_completion(self, user_id, payload):
         # Todo: There isn't a great way for users to delete course completion data
         pass
 
@@ -354,7 +354,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 ) + '/{}'.format(assignment_id)
                 self._delete(assignment_url)
                 removed_items.append(assignment_id)
-            except ClientError:  # pylint: disable=broad-except
+            except ClientError:
                 # we do not want assignment deletes to cause failures
                 failures.append(assignment_id)
         return removed_items, failures

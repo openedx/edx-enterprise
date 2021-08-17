@@ -47,7 +47,7 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             a 404 error is returned.
 
     """
-    def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ
+    def get(self, request, *args, **kwargs):
         app_config = apps.get_app_config('canvas')
         canvas_oauth_token_path = app_config.oauth_token_auth_path
 

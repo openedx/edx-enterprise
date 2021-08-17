@@ -11,7 +11,7 @@ import pytest
 import requests
 import responses
 from freezegun import freeze_time
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urljoin
 
 from django.utils import timezone
 

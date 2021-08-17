@@ -125,7 +125,7 @@ class BaseEnterpriseCustomerView(View):
         Return the default context parameters
         """
         return {
-            'enterprise_customer': EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+            'enterprise_customer': EnterpriseCustomer.objects.get(uuid=customer_uuid)
         }
 
     def _build_context(self, request, customer_uuid):
@@ -300,7 +300,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         ENROLLMENT_URL = 'ENROLLMENT_API_ROOT_URL'
 
     def _get_view_context(self, request, customer_uuid):
-        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)
         search_keyword = self.get_search_keyword(request)
         linked_learners = self.get_enterprise_customer_user_queryset(request, search_keyword, customer_uuid)
         pending_linked_learners = self.get_pending_users_queryset(search_keyword, customer_uuid)
@@ -710,7 +710,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         Returns:
             django.http.response.HttpResponse: HttpResponse
         """
-        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)
         manage_learners_form = ManageLearnersForm(user=request.user, enterprise_customer=enterprise_customer)
 
         return self.get_form_view(
@@ -732,7 +732,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         Returns:
             django.http.response.HttpResponse: HttpResponse
         """
-        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)
         manage_learners_form = ManageLearnersForm(
             request.POST,
             request.FILES,
@@ -844,7 +844,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             django.http.response.HttpResponse: HttpResponse
         """
         # TODO: pylint acts stupid - find a way around it without suppressing
-        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)
         email_to_unlink = request.GET["unlink_email"]
         try:
             EnterpriseCustomerUser.objects.unlink_user(

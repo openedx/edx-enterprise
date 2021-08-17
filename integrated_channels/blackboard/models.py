@@ -193,7 +193,7 @@ class BlackboardLearnerAssessmentDataTransmissionAudit(models.Model):
         """
         return self.__str__()
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
         Sort the keys so the result is consistent and testable.
@@ -275,7 +275,7 @@ class BlackboardLearnerDataTransmissionAudit(models.Model):
         """
         return self.__str__()
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
 

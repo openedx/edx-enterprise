@@ -56,7 +56,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Since Cornerstone is following pull content model we don't need to implement this method
         """
 
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def delete_course_completion(self, user_id, payload):
         """
         Delete a completion status previously sent to the Cornerstone Completion Status endpoint
         Cornerstone does not support this.
@@ -68,7 +68,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         """
         LOGGER.error("Cornerstone integrated channel does not yet support assignment deduplication.")
 
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def create_course_completion(self, user_id, payload):
         """
         Send a completion status payload to the Cornerstone Completion Status endpoint
 

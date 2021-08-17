@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name
 """
 Open edX Enterprise Service documentation build configuration file.
 
@@ -465,7 +464,7 @@ intersphinx_mapping = {
 }
 
 
-def on_init(app):  # pylint: disable=unused-argument
+def on_init(app):
     """
     Run sphinx-apidoc after Sphinx initialization.
 

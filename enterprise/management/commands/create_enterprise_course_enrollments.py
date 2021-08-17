@@ -58,7 +58,6 @@ class Command(BaseCommand):
                 enterprise_customer_uuid
             )
 
-            # pylint: disable=no-member
             enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
 
             try:
@@ -88,7 +87,6 @@ class Command(BaseCommand):
                 # We already have implemented the solution for this (soft deletion).
                 if enterprise_customer_user.exists():
                     enterprise_customer_user = enterprise_customer_user.first()
-                    # pylint: disable=no-member
                     __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                         enterprise_customer_user=enterprise_customer_user,
                         course_id=course_run_id,

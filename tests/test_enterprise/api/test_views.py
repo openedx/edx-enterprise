@@ -17,13 +17,7 @@ from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
-from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
-    parse_qs,
-    urlencode,
-    urljoin,
-    urlsplit,
-    urlunsplit,
-)
+from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -157,8 +151,8 @@ class BaseTestEnterpriseAPIViews(APITest):
         Create a test user and set its password.
         """
         self.user = factories.UserFactory(username=username, is_active=True, is_staff=is_staff, **kwargs)
-        self.user.set_password(password)  # pylint: disable=no-member
-        self.user.save()  # pylint: disable=no-member
+        self.user.set_password(password)
+        self.user.save()
 
     def create_items(self, factory, items):
         """
@@ -384,7 +378,7 @@ class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
         """
         factory_type, factory_data = factory
         if factory_type == factories.EnterpriseCustomerUserFactory:
-            factory_data[0]['user_id'] = self.user.pk  # pylint: disable=no-member
+            factory_data[0]['user_id'] = self.user.pk
 
         self.create_items(*factory)
         if has_permissions:
@@ -1436,8 +1430,8 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
 
         # creating a non staff user so verify the insufficient permission conditions.
         user = factories.UserFactory(username='test_user', is_active=True, is_staff=is_staff)
-        user.set_password('test_password')  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
+        user.set_password('test_password')
+        user.save()
 
         if is_linked_to_enterprise:
             factories.EnterpriseCustomerUserFactory(
@@ -2803,8 +2797,8 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
         """
         # Creating a non staff user so as to verify the insufficient permission conditions.
         user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
+        user.set_password('test_password')
+        user.save()
 
         client = APIClient()
         client.login(username='test_user', password='test_password')
@@ -2962,8 +2956,8 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
         Test that role base permissions works as expected.
         """
         user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
+        user.set_password('test_password')
+        user.save()
         client = APIClient()
         client.login(username='test_user', password='test_password')
 
@@ -3427,7 +3421,6 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.track_enrollment')
     @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
-    # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
         mock_notify_task,
@@ -3522,7 +3515,6 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.track_enrollment')
     @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
-    # pylint: disable=unused-argument
     def test_bulk_enrollment_with_notification(
         self,
         mock_notify_task,
@@ -3594,7 +3586,6 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
-    # pylint: disable=unused-argument
     def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user):
         """
         Tests that bulk users bulk enrollment endpoint properly handles partial failures.
@@ -3749,8 +3740,8 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         Helper method to create the User and Enterprise Customer used in tests.
         """
         user = factories.UserFactory(username=username, is_active=True, is_staff=False)
-        user.set_password(password)  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
+        user.set_password(password)
+        user.save()
 
         enterprise_customer = factories.EnterpriseCustomerFactory()
         factories.EnterpriseCustomerUserFactory(
@@ -4513,8 +4504,8 @@ class TestReadNotificationView(BaseTestEnterpriseAPIViews):
         Helper method to create the User and Enterprise Customer used in tests.
         """
         user = factories.UserFactory(username=username, is_active=True, is_staff=False)
-        user.set_password(password)  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
+        user.set_password(password)
+        user.save()
 
         enterprise_customer = factories.EnterpriseCustomerFactory()
         factories.EnterpriseCustomerUserFactory(

@@ -141,7 +141,7 @@ class Command(BaseCommand):
             customers_by_user_id = self._get_customers_by_user_id(ecu_ids_batch)
 
             assignments_by_user_id_role = self._get_role_assignments_by_user_id_and_role(
-                customers_by_user_id.keys(),
+                customers_by_user_id.keys(),  # pylint: disable=dict-keys-not-iterating
                 role_name,
             )
             log.info(

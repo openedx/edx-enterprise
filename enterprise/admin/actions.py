@@ -25,7 +25,7 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
         header (bool): whether or not to output the column names as the first row
     """
     # adapted from https://gist.github.com/mgerring/3645889
-    def export_as_csv(modeladmin, request, queryset):  # pylint: disable=unused-argument
+    def export_as_csv(modeladmin, request, queryset):
         """
         Export model fields to CSV.
         """
@@ -65,7 +65,7 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
     return export_as_csv
 
 
-def refresh_catalog(self, request, queryset):  # pylint: disable=unused-argument
+def refresh_catalog(self, request, queryset):
     """
     Kicks off background running tasks for refreshing catalogs
     """
@@ -74,7 +74,7 @@ def refresh_catalog(self, request, queryset):  # pylint: disable=unused-argument
 
     # display catalog and task ids that were successfully started refreshing
     updated_message = ''
-    if refreshed_catalogs.items():
+    if refreshed_catalogs:
         updated_message = '<b>The following catalogs are being refreshed:</b><ul>'
         for uuid, task_id in refreshed_catalogs.items():
             updated_message = updated_message + '<li>' + str(uuid) + ' with task id: ' + str(task_id) + '</li>'
@@ -91,6 +91,6 @@ def refresh_catalog(self, request, queryset):  # pylint: disable=unused-argument
     level = messages.INFO
     if failed_to_refresh_catalogs:
         level = messages.ERROR
-        if refreshed_catalogs.items():
+        if refreshed_catalogs:
             level = messages.WARNING
     self.message_user(request, mark_safe(updated_message), level=level)

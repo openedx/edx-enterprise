@@ -9,7 +9,7 @@ import responses
 from faker import Factory as FakerFactory
 from rest_framework.reverse import reverse
 from six import text_type
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
+from six.moves.urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.core.cache import cache

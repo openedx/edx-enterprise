@@ -242,7 +242,7 @@ class LearnerDataTransmissionAudit(models.Model):
         """
         return None
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
 

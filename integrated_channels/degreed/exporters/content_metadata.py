@@ -12,7 +12,7 @@ from integrated_channels.utils import get_image_url, strip_html_tags
 LOGGER = getLogger(__name__)
 
 
-class DegreedContentMetadataExporter(ContentMetadataExporter):  # pylint: disable=abstract-method
+class DegreedContentMetadataExporter(ContentMetadataExporter):
     """
     Degreed implementation of ContentMetadataExporter.
     """
@@ -42,7 +42,7 @@ class DegreedContentMetadataExporter(ContentMetadataExporter):  # pylint: disabl
             get_closest_course_run(course_runs)
         ) if course_runs else ''
         full_description = content_metadata_item.get('full_description') or ''
-        if full_description and 0 < len(full_description + duration_info) <= self.LONG_STRING_LIMIT:     # pylint: disable=len-as-condition
+        if full_description and 0 < len(full_description + duration_info) <= self.LONG_STRING_LIMIT:
             description = full_description
         else:
             description = content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''

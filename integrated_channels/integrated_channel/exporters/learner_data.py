@@ -30,7 +30,7 @@ from integrated_channels.lms_utils import get_course_certificate, get_course_det
 from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
-User = auth.get_user_model()  # pylint: disable=invalid-name
+User = auth.get_user_model()
 
 
 class LearnerExporter(Exporter):
@@ -145,7 +145,7 @@ class LearnerExporter(Exporter):
 
         """
         lms_user_for_filter = kwargs.get('learner_to_transmit')
-        TransmissionAudit = kwargs.get('TransmissionAudit', None)  # pylint: disable=invalid-name
+        TransmissionAudit = kwargs.get('TransmissionAudit', None)
         course_run_id = kwargs.get('course_run_id', None)
         grade = kwargs.get('grade', None)
         subsection_id = kwargs.get('subsection_id')
@@ -201,7 +201,7 @@ class LearnerExporter(Exporter):
 
         return False
 
-    def _determine_enrollments_permitted(  # pylint: disable=invalid-name
+    def _determine_enrollments_permitted(
             self,
             lms_user_for_filter,
             course_run_id,
@@ -254,7 +254,7 @@ class LearnerExporter(Exporter):
         ).order_by('course_id')
         return set(get_course_id_for_enrollment(enrollment) for enrollment in enrollment_queryset)
 
-    def export(self, **kwargs):  # pylint: disable=R0915
+    def export(self, **kwargs):
         """
         Collect learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
         If BOTH learner_to_transmit and course_run_id are present, collected data returned is narrowed to
@@ -278,7 +278,7 @@ class LearnerExporter(Exporter):
         is_passing = kwargs.get('is_passing', False)
         grade = kwargs.get('grade', None)
         skip_transmitted = kwargs.get('skip_transmitted', True)
-        TransmissionAudit = kwargs.get('TransmissionAudit', None)  # pylint: disable=invalid-name
+        TransmissionAudit = kwargs.get('TransmissionAudit', None)
 
         # Fetch the consenting enrollment data, including the enterprise_customer_user.
         # Order by the course_id, to avoid fetching course API data more than we have to.
@@ -449,7 +449,6 @@ class LearnerExporter(Exporter):
         assessment_grade_data: A dict with keys corresponding to different edX course subsections.
         See _collect_assessment_grades_data for the formatted data returned as the value for a given key.
         """
-        # pylint: disable=invalid-name
         LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
         user_subsection_audits = []
         # Create an audit for each of the subsections in the course data.
@@ -475,12 +474,11 @@ class LearnerExporter(Exporter):
             completed_date=None,
             grade=None,
             is_passing=False,
-            grade_percent=None  # pylint: disable=unused-argument
-    ):
+            grade_percent=None
+    ):  # pylint: disable=unused-argument
         """
         Generate a learner data transmission audit with fields properly filled in.
         """
-        # pylint: disable=invalid-name
         LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
         completed_timestamp = None
         course_completed = False

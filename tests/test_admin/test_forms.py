@@ -159,7 +159,7 @@ class TestManageLearnersForm(unittest.TestCase):
     )
     def test_clean_user_already_linked(self, form_entry, existing_username, existing_email):
         user = UserFactory(username=existing_username, email=existing_email)
-        EnterpriseCustomerUserFactory(user_id=user.id)  # pylint: disable=no-member
+        EnterpriseCustomerUserFactory(user_id=user.id)
 
         form = self._make_bound_form(form_entry)
         assert form.is_valid()
@@ -537,7 +537,6 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         provider_id = FAKER.slug()  # pylint: disable=no-member
         name = FAKER.name()
 
-        # pylint: disable=invalid-name
         enterprise_customer_identity_provider = EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=EnterpriseCustomerFactory(site=SiteFactory(domain="site.localhost.com"))
         )

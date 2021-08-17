@@ -330,7 +330,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             create_items(factory, items)
         uuid = items[0].get('enterprise_customer__uuid')
         if uuid:
-            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)
             factories.EnterpriseCustomerCatalogFactory(
                 enterprise_customer=enterprise_customer,
                 content_filter=content_filter
@@ -1051,7 +1051,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             create_items(factory, items)
         uuid = items[0].get('enterprise_customer__uuid')
         if uuid:
-            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)
             factories.EnterpriseCustomerCatalogFactory(
                 enterprise_customer=enterprise_customer,
                 content_filter=content_filter
@@ -1469,7 +1469,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
 
         uuid = items[0].get('enterprise_customer__uuid')
         if uuid:
-            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)
             factories.EnterpriseCustomerCatalogFactory(
                 enterprise_customer=enterprise_customer,
                 content_filter=content_filter

@@ -63,7 +63,6 @@ class TestUtils(unittest.TestCase):
     """
     Tests for utility functions in enterprise.utils
     """
-    # pylint: disable=arguments-renamed
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=False, **kwargs):
         """
@@ -71,8 +70,8 @@ class TestUtils(unittest.TestCase):
         """
         # pylint: disable=attribute-defined-outside-init
         self.user = factories.UserFactory(username=username, is_active=True, is_staff=is_staff, **kwargs)
-        self.user.set_password(password)  # pylint: disable=no-member
-        self.user.save()  # pylint: disable=no-member
+        self.user.set_password(password)
+        self.user.save()
 
     @ddt.unpack
     @ddt.data(

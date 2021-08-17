@@ -39,7 +39,7 @@ try:
 except ImportError:
     saml_provider_configuration = None
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+logger = getLogger(__name__)
 User = auth.get_user_model()
 
 
@@ -422,7 +422,7 @@ class EnterpriseCustomerCatalogAdminForm(forms.ModelForm):
                                  help_text=_("Hold Ctrl when clicking on button to open Preview in new tab"))
 
     @staticmethod
-    def get_catalog_preview_uuid(post_data):  # pylint: disable=invalid-name
+    def get_catalog_preview_uuid(post_data):
         """
         Return the uuid of the catalog the preview button was clicked on
         There must be only one preview button in the POST data.

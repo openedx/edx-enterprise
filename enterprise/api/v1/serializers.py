@@ -267,7 +267,7 @@ class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
         model = models.EnterpriseCustomer
         fields = ('id', 'name')
 
-    id = serializers.CharField(source='uuid')  # pylint: disable=invalid-name
+    id = serializers.CharField(source='uuid')
 
 
 class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
@@ -674,12 +674,12 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
     encrypted_sftp_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
     enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
     enterprise_customer_id = serializers.PrimaryKeyRelatedField(
-        queryset=models.EnterpriseCustomer.objects.all(),  # pylint: disable=no-member
+        queryset=models.EnterpriseCustomer.objects.all(),
         source='enterprise_customer',
         write_only=True
     )
     enterprise_customer_catalogs = EnterpriseCustomerCatalogSerializer(many=True, read_only=True)
-    enterprise_customer_catalog_uuids = serializers.ListField(  # pylint: disable=invalid-name
+    enterprise_customer_catalog_uuids = serializers.ListField(
         write_only=True,
         child=serializers.UUIDField(),
         default=[]

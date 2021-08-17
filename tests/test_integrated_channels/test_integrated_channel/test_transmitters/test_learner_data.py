@@ -53,7 +53,7 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             transmit_single_learner_data(**edx_platform_api_signal_kwargs)
         except TypeError:
             assert False  # if we see a Type error, the test should fail because we failed with bad keyword parameters
-        except Exception:   # pylint: disable=broad-except
+        except Exception:
             pass  # otherwise it's because we set the test up with no data.
 
     @mock.patch("integrated_channels.integrated_channel.models.LearnerDataTransmissionAudit")

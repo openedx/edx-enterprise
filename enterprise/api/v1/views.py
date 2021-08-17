@@ -28,7 +28,7 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
-from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
+from six.moves.urllib.parse import quote_plus, unquote
 
 from django.apps import apps
 from django.conf import settings
@@ -154,7 +154,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return self.serializer_class
 
     @action(detail=False)
-    # pylint: disable=invalid-name,unused-argument
+    # pylint: disable=unused-argument
     def basic_list(self, request, *arg, **kwargs):
         """
         Enterprise Customer's Basic data list without pagination
@@ -169,7 +169,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @action(detail=True)
     @permission_required('enterprise.can_view_catalog', fn=lambda request, pk, course_run_ids, program_uuids: pk)
-    # pylint: disable=invalid-name,unused-argument
+    # pylint: disable=unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
         """
         Return whether or not the specified content is available to the EnterpriseCustomer.
@@ -195,7 +195,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     @action(methods=['post'], permission_classes=[permissions.IsAuthenticated], detail=True)
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
-    # pylint: disable=invalid-name,unused-argument
+    # pylint: disable=unused-argument
     def course_enrollments(self, request, pk):
         """
         Creates a course enrollment for an EnterpriseCustomerUser.
@@ -217,7 +217,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
-    # pylint: disable=invalid-name,unused-argument
+    # pylint: disable=unused-argument
     def enroll_learners_in_courses(self, request, pk):
         """
         Creates a set of licensed enterprise_learners by bulk enrolling them in all specified courses. This endpoint is
@@ -336,7 +336,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
     @action(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup], detail=False)
-    def with_access_to(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
+    def with_access_to(self, request, *args, **kwargs):
         """
         Returns the list of enterprise customers the user has a specified group permission access to.
         """
@@ -355,7 +355,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     @action(detail=False)
     @permission_required('enterprise.can_access_admin_dashboard')
-    def dashboard_list(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
+    def dashboard_list(self, request, *args, **kwargs):
         """
         Supports listing dashboard enterprises for frontend-app-admin-portal.
         """
@@ -522,7 +522,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                     'in Course {course_id} to Course Mode {mode}.'.format(**log_message_kwargs)
                 )
                 return self.EnrollmentTerminationStatus.MOVED_TO_AUDIT
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:
                 msg = (
                     'Enrollment termination: unable to update LMS enrollment for User {user} and '
                     'Enterprise {enterprise} in Course {course_id} to Course Mode {mode} because: {reason}'.format(
@@ -546,7 +546,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                     'from Course {course_id} that contains no audit mode.'.format(**log_message_kwargs)
                 )
                 return self.EnrollmentTerminationStatus.UNENROLLED
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:
                 msg = (
                     'Enrollment termination: unable to unenroll User {user} in Enterprise {enterprise} '
                     'from Course {course_id}  because: {reason}'.format(
@@ -559,7 +559,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
 
     @action(methods=['post'], detail=False)
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request: request.data.get('enterprise_id'))
-    def license_revoke(self, request, *args, **kwargs):  # pylint: disable=W0613
+    def license_revoke(self, request, *args, **kwargs):
         """
         Changes the mode for a user's licensed enterprise course enrollments to the "audit" course mode,
         or unenroll the user if no audit mode exists for a given course.
@@ -808,7 +808,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     @permission_required('enterprise.can_view_catalog', fn=lambda request, *args, **kwargs: None)
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)  # pylint: disable=no-member
+        return super().list(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_view_catalog',
@@ -824,7 +824,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @action(detail=True)
-    # pylint: disable=invalid-name,unused-argument
+    # pylint: disable=unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
         """
         Return whether or not the EnterpriseCustomerCatalog contains the specified content.
@@ -853,7 +853,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, pk, course_key: get_enterprise_customer_from_catalog_id(pk))
-    def course_detail(self, request, pk, course_key):  # pylint: disable=invalid-name,unused-argument
+    def course_detail(self, request, pk, course_key):  # pylint: disable=unused-argument
         """
         Return the metadata for the specified course.
 
@@ -881,7 +881,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, pk, course_id: get_enterprise_customer_from_catalog_id(pk))
-    def course_run_detail(self, request, pk, course_id):  # pylint: disable=invalid-name,unused-argument
+    def course_run_detail(self, request, pk, course_id):  # pylint: disable=unused-argument
         """
         Return the metadata for the specified course run.
 
@@ -909,7 +909,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, pk, program_uuid: get_enterprise_customer_from_catalog_id(pk))
-    def program_detail(self, request, pk, program_uuid):  # pylint: disable=invalid-name,unused-argument
+    def program_detail(self, request, pk, program_uuid):  # pylint: disable=unused-argument
         """
         Return the metadata for the specified program.
 
@@ -955,14 +955,12 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def retrieve(self, request, *args, **kwargs):
-        # pylint: disable=no-member
         return super().retrieve(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id))
     def list(self, request, *args, **kwargs):
-        # pylint: disable=no-member
         return super().list(request, *args, **kwargs)
 
     @permission_required(
@@ -981,21 +979,18 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def update(self, request, *args, **kwargs):
-        # pylint: disable=no-member
         return super().update(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def partial_update(self, request, *args, **kwargs):
-        # pylint: disable=no-member
         return super().partial_update(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def destroy(self, request, *args, **kwargs):
-        # pylint: disable=no-member
         return super().destroy(request, *args, **kwargs)
 
 

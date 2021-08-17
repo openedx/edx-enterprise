@@ -52,7 +52,7 @@ class LearnerTransmitter(Transmitter):
                 - remote_user_id: The remote ID field name on the audit model that will map to the learner.
         """
         app_label, enterprise_customer_uuid, lms_user_id = self._generate_common_params(**kwargs)
-        TransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        TransmissionAudit = apps.get_model(
             app_label=app_label,
             model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
         )
@@ -105,7 +105,7 @@ class LearnerTransmitter(Transmitter):
                 - remote_user_id: The remote ID field name of the learner on the audit model.
         """
         app_label, enterprise_customer_uuid, _ = self._generate_common_params(**kwargs)
-        TransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        TransmissionAudit = apps.get_model(
             app_label=app_label,
             model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
         )
@@ -176,7 +176,7 @@ class LearnerTransmitter(Transmitter):
                 - remote_user_id: The remote ID field name of the learner on the audit model.
         """
         app_label, enterprise_customer_uuid, _ = self._generate_common_params(**kwargs)
-        TransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        TransmissionAudit = apps.get_model(
             app_label=app_label,
             model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
         )

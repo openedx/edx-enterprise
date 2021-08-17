@@ -41,7 +41,7 @@ class TestUtils(unittest.TestCase):
         )
 
         now = datetime.now()
-        # pylint: disable=no-member
+
         self.course_overview_mock_data = dict(
             id=self.faker.text(max_nb_chars=25),  # pylint: disable=no-member
             display_name=self.faker.text(max_nb_chars=25),  # pylint: disable=no-member
@@ -65,7 +65,7 @@ class TestUtils(unittest.TestCase):
     @mock.patch('integrated_channels.xapi.utils.get_user_social_auth')
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
-    def test_send_course_enrollment_statement(self, mock_get_user_social_auth, *args):  # pylint: disable=unused-argument
+    def test_send_course_enrollment_statement(self, mock_get_user_social_auth, *args):
         """
         Verify that send_course_enrollment_statement sends xAPI statement to LRS.
         """
@@ -86,7 +86,7 @@ class TestUtils(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch(MODULE_PATH + 'EnterpriseXAPIClient')
     @mock.patch('integrated_channels.xapi.utils.get_user_social_auth')
-    def test_send_course_enrollment_statement_success(self, mock_get_user_social_auth, mock_xapi_client, *args):  # pylint: disable=unused-argument
+    def test_send_course_enrollment_statement_success(self, mock_get_user_social_auth, mock_xapi_client, *args):
         """
         Verify that send_course_enrollment_statement sends xAPI statement to LRS.
         """
@@ -106,7 +106,7 @@ class TestUtils(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch(MODULE_PATH + 'EnterpriseXAPIClient')
     @mock.patch('integrated_channels.xapi.utils.get_user_social_auth')
-    def test_send_course_enrollment_statement_client_error(self, mock_get_user_social_auth, mock_xapi_client, *args):  # pylint: disable=unused-argument
+    def test_send_course_enrollment_statement_client_error(self, mock_get_user_social_auth, mock_xapi_client, *args):
         """
         Verify that send_course_enrollment_statement sends xAPI statement to LRS.
         """
@@ -125,7 +125,7 @@ class TestUtils(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch('integrated_channels.xapi.utils.get_user_social_auth')
-    def test_send_course_completion_statement(self, mock_get_user_social_auth, *args):  # pylint: disable=unused-argument
+    def test_send_course_completion_statement(self, mock_get_user_social_auth, *args):
         """
         Verify that send_course_completion_statement sends xAPI statement to LRS.
         """

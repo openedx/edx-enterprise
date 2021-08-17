@@ -22,7 +22,7 @@ from consent.mixins import ConsentModelMixin
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomer
 
-mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
+mark_safe_lazy = lazy(mark_safe, six.text_type)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -71,7 +71,7 @@ class DataSharingConsentQuerySet(models.query.QuerySet):
             return ProxyDataSharingConsent(**original_kwargs)
 
 
-class DataSharingConsentManager(models.Manager.from_queryset(DataSharingConsentQuerySet)):  # pylint: disable=no-member
+class DataSharingConsentManager(models.Manager.from_queryset(DataSharingConsentQuerySet)):
     """
     Model manager for :class:`.DataSharingConsent` model.
 
@@ -116,7 +116,7 @@ class ProxyDataSharingConsent(ConsentModelMixin):
                 ec_keys[enterprise_customer_detail] = value
 
         if ec_keys:
-            enterprise_customer = EnterpriseCustomer.objects.get(**ec_keys)  # pylint: disable=no-member
+            enterprise_customer = EnterpriseCustomer.objects.get(**ec_keys)
 
         self.enterprise_customer = enterprise_customer
         self.username = username
@@ -179,7 +179,7 @@ class ProxyDataSharingConsent(ConsentModelMixin):
         self._exists = consent.exists
         return consent
 
-    def save(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def save(self, *args, **kwargs):
         """
         Synonym function for ``commit``.
         """
