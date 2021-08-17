@@ -49,7 +49,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             HTTPError: If we received a failure response code from SAP SuccessFactors.
             ClientError: If an unexpected response format was received that we could not parse.
         """
-        SAPSuccessFactorsGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
+        SAPSuccessFactorsGlobalConfiguration = apps.get_model(
             'sap_success_factors',
             'SAPSuccessFactorsGlobalConfiguration'
         )
@@ -236,7 +236,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             url (str): The url to post to.
             payload (str): The json encoded payload to post.
         """
-        SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(  # pylint: disable=invalid-name
+        SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(
             'sap_success_factors',
             'SAPSuccessFactorsEnterpriseCustomerConfiguration'
         )

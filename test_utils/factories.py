@@ -58,7 +58,6 @@ User = auth.get_user_model()
 
 
 # pylint: disable=no-member
-# pylint: disable=invalid-name
 class SiteFactory(factory.django.DjangoModelFactory):
     """
     Factory class for Site model.

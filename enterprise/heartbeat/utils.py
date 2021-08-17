@@ -21,8 +21,8 @@ class Status:
     """
     Status constants for service health check.
     """
-    OK = u'OK'  # pylint: disable=invalid-name
-    UNAVAILABLE = u'UNAVAILABLE'  # pylint: disable=invalid-name
+    OK = u'OK'
+    UNAVAILABLE = u'UNAVAILABLE'
 
 
 def run_checks():

@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.23]
+---------
+* Add logging of user id for troubleshooting in a couple of locations.
+* Clean up pylint suppressions and rules using latest rules set by edx-lint.
+
 [3.27.22]
 ---------
 * Prevent failures on integrated channels delete requests when courses are not found.

@@ -87,7 +87,7 @@ class CornerstoneCoursesUpdates(BaseViewSet):
             empty result.
     """
 
-    def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ
+    def get(self, request, *args, **kwargs):
         enterprise_customer_uuid = request.GET.get('ciid')
         if not enterprise_customer_uuid:
             return Response(
@@ -178,7 +178,7 @@ class CornerstoneCoursesListView(BaseViewSet):
 
     """
 
-    def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ
+    def get(self, request, *args, **kwargs):
         enterprise_customer_uuid = request.GET.get('ciid')
         if not enterprise_customer_uuid:
             return Response(

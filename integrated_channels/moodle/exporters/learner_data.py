@@ -25,7 +25,7 @@ class MoodleLearnerExporter(LearnerExporter):
             completed_date=None,
             is_passing=False,
             **kwargs
-    ):  # pylint: disable=arguments-differ,unused-argument
+    ):  # pylint: disable=arguments-differ
         """
         Return a MoodleLearnerDataTransmissionAudit with the given enrollment and course completion data.
         If completed_date is None, then course completion has not been met.
@@ -48,7 +48,7 @@ class MoodleLearnerExporter(LearnerExporter):
                  ))))
             return None
 
-        MoodleLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        MoodleLearnerDataTransmissionAudit = apps.get_model(
             'moodle',
             'MoodleLearnerDataTransmissionAudit'
         )

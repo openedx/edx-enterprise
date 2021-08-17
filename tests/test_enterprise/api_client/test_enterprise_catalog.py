@@ -203,7 +203,7 @@ def test_failing_refresh_catalog():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     refreshed_catalogs, failed_to_refresh_catalogs = client.refresh_catalogs(EnterpriseCustomerCatalog.objects.all())
     assert failed_to_refresh_catalogs[0] == catalog.uuid
-    assert len(refreshed_catalogs.items()) == 0
+    assert len(refreshed_catalogs) == 0
 
 
 @responses.activate
@@ -226,7 +226,7 @@ def test_partial_successful_refresh_catalog():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     refreshed_catalogs, failed_to_refresh_catalogs = client.refresh_catalogs(EnterpriseCustomerCatalog.objects.all())
     assert failed_to_refresh_catalogs[0] == catalog2.uuid
-    assert len(refreshed_catalogs.items()) == 1
+    assert len(refreshed_catalogs) == 1
     assert refreshed_catalogs.get(catalog1.uuid) == task_id
 
 

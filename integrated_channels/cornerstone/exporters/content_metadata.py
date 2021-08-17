@@ -23,7 +23,7 @@ from integrated_channels.utils import (
 LOGGER = getLogger(__name__)
 
 
-class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: disable=abstract-method
+class CornerstoneContentMetadataExporter(ContentMetadataExporter):
     """
     Cornerstone implementation of ContentMetadataExporter.
     """
@@ -128,7 +128,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the languages supported by course or `English` as default if no languages found.
         """
-        CornerstoneGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
+        CornerstoneGlobalConfiguration = apps.get_model(
             'cornerstone',
             'CornerstoneGlobalConfiguration'
         )
@@ -147,7 +147,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         and length limits.
         """
         full_description = content_metadata_item.get('full_description') or ''
-        if 0 < len(full_description) <= self.LONG_STRING_LIMIT:  # pylint: disable=len-as-condition
+        if 0 < len(full_description) <= self.LONG_STRING_LIMIT:
             return full_description
         return content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''
 
@@ -157,7 +157,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         subjects = []
         course_subjects = get_subjects_from_content_metadata(content_metadata_item)
-        CornerstoneGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
+        CornerstoneGlobalConfiguration = apps.get_model(
             'cornerstone',
             'CornerstoneGlobalConfiguration'
         )

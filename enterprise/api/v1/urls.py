@@ -9,7 +9,7 @@ from django.conf.urls import url
 
 from enterprise.api.v1 import views
 
-router = DefaultRouter()  # pylint: disable=invalid-name
+router = DefaultRouter()
 router.register("enterprise_catalogs", views.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs')
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register(

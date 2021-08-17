@@ -25,7 +25,7 @@ class BlackboardLearnerExporter(LearnerExporter):
             completed_date=None,
             is_passing=False,
             **kwargs
-    ):  # pylint: disable=arguments-differ,unused-argument
+    ):  # pylint: disable=arguments-differ
         """
         Return a BlackboardLearnerDataTransmissionAudit with the given enrollment and course completion data.
         If completed_date is None, then course completion has not been met.
@@ -48,7 +48,7 @@ class BlackboardLearnerExporter(LearnerExporter):
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        BlackboardLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        BlackboardLearnerDataTransmissionAudit = apps.get_model(
             'blackboard',
             'BlackboardLearnerDataTransmissionAudit'
         )
@@ -94,7 +94,7 @@ class BlackboardLearnerExporter(LearnerExporter):
                  ))))
             return None
 
-        blackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        blackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(
             'blackboard',
             'blackboardLearnerAssessmentDataTransmissionAudit'
         )

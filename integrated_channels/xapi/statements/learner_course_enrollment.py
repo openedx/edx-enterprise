@@ -4,7 +4,7 @@
 xAPI statement for learner course enrollment.
 """
 
-from tincan import LanguageMap, Verb  # pylint: disable=E0401
+from tincan import LanguageMap, Verb
 
 from integrated_channels.xapi.constants import X_API_VERB_REGISTERED
 from integrated_channels.xapi.statements.base import EnterpriseStatement

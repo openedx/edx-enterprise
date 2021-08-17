@@ -379,5 +379,5 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         return resp.status_code, resp.text
 
     @moodle_request_wrapper
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def delete_course_completion(self, user_id, payload):
         pass

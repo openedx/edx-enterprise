@@ -15,7 +15,6 @@ from enterprise.constants import (
 )
 
 
-# pylint: disable=feature-toggle-needs-doc
 # This is not a feature toggle.
 class UpdateRoleAssignmentsWithCustomersConfig(ConfigurationModel):
     """

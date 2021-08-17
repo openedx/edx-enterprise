@@ -9,7 +9,7 @@ import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -144,7 +144,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         default_context.update(expected_context)
         assert response.status_code == 200
         for key, value in default_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+            assert response.context[key] == value
 
     def test_get_no_patches(self):
         """
@@ -168,7 +168,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The Enterprise Program landing page is rendered appropriately given some context.
         """
@@ -412,7 +412,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The Enterprise Program landing page is rendered appropriately given that the user is enrolled in the program.
         """
@@ -569,7 +569,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The DSC-declined message is rendered if DSC is not given.
         """
@@ -624,7 +624,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The message about no price information found is rendered if the program extender fails to get price info.
         """
@@ -667,7 +667,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The message about the program being unenrollable is displayed.
         """
@@ -706,7 +706,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program.
         """
@@ -729,7 +729,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program type.
         """
@@ -758,7 +758,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    def test_get_program_enrollment_page_for_nonexisting_ec(self, *args):  # pylint: disable=unused-argument
+    def test_get_program_enrollment_page_for_nonexisting_ec(self, *args):
         """
         The user will see the HTTP 404 (Not Found) page in case of no matching ``EnterpriseCustomer``.
         """
@@ -777,7 +777,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             self,
             registry_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The user is redirected to the login screen to sign in with an enterprise-linked SSO when inactive.
         """
@@ -817,7 +817,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             program_data_extender_mock,
             course_catalog_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The user will be redirected to the program's dashboard when already certificate-eligible for the program.
         """
@@ -848,7 +848,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             self,
             course_catalog_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         We raise a 404 when there are Discovery API-related errors.
         """
@@ -869,7 +869,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             program_data_extender_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The user is redirected to the program dashboard on POST if already certificate eligible for the program.
         """
@@ -904,7 +904,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             get_dsc_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The user is redirected to the DSC page when DSC is needed.
         """
@@ -945,7 +945,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             get_dsc_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The user is redirected to the basket page when something needs to be bought.
         """
@@ -977,7 +977,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         """
         The Enterprise Program landing page is rendered appropriately given some context.
         """

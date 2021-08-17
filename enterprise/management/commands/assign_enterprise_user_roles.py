@@ -110,7 +110,7 @@ class Command(BaseCommand):
         LOGGER.info('Fetching new batch of enterprise customer users from indexes: %s to %s', start, end)
         return User.objects.filter(pk__in=self._get_enterprise_customer_user_ids())[start:end]
 
-    def _get_enterprise_enrollment_api_admin_users_batch(self, start, end):     # pylint: disable=invalid-name
+    def _get_enterprise_enrollment_api_admin_users_batch(self, start, end):
         """
         Returns a batched queryset of User objects.
         """
@@ -121,7 +121,7 @@ class Command(BaseCommand):
         """
         Returns a batched queryset of User objects.
         """
-        Application = apps.get_model(OAUTH2_PROVIDER_APPLICATION_MODEL)     # pylint: disable=invalid-name
+        Application = apps.get_model(OAUTH2_PROVIDER_APPLICATION_MODEL)
         LOGGER.info('Fetching new batch of enterprise catalog admin users from indexes: %s to %s', start, end)
         catalog_admin_user_ids = Application.objects.filter(
             user_id__in=self._get_enterprise_customer_user_ids()

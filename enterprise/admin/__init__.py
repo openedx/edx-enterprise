@@ -10,7 +10,7 @@ from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
 from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.conf.urls import url
@@ -284,7 +284,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     has_identity_provider.boolean = True
     has_identity_provider.short_description = u'Identity provider'
 
-    def manage_learners_data_sharing_consent(self, request, obj):  # pylint: disable=unused-argument
+    def manage_learners_data_sharing_consent(self, request, obj):
         """
         Object tool handler method - redirects to "Clear Learners Data Sharing Consent" view
         """
@@ -294,7 +294,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     manage_learners_data_sharing_consent.label = "Clear Data Sharing Consent"
     manage_learners_data_sharing_consent.short_description = "Clear Data Sharing Consent for a Learner."
 
-    def manage_learners(self, request, obj):  # pylint: disable=unused-argument
+    def manage_learners(self, request, obj):
         """
         Object tool handler method - redirects to "Manage Learners" view
         """
@@ -305,7 +305,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     manage_learners.label = "Manage Learners"
     manage_learners.short_description = "Allows managing learners for this Enterprise Customer"
 
-    def transmit_courses_metadata(self, request, obj):  # pylint: disable=unused-argument
+    def transmit_courses_metadata(self, request, obj):
         """
         Object tool handler method - redirects to `Transmit Courses Metadata` view.
         """
@@ -578,7 +578,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         preview_url = reverse("admin:" + UrlNames.PREVIEW_EMAIL_TEMPLATE, args=(obj.pk, preview_type))
         return HttpResponseRedirect(preview_url)
 
-    def preview_as_course(self, request, obj):  # pylint: disable=unused-argument
+    def preview_as_course(self, request, obj):
         """
         Redirect to preview the HTML template in the context of a course.
         """
@@ -589,7 +589,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         "Preview the HTML template rendered in the context of a course enrollment."
     )
 
-    def preview_as_program(self, request, obj):  # pylint: disable=unused-argument
+    def preview_as_program(self, request, obj):
         """
         Redirect to preview the HTML template in the context of a program.
         """

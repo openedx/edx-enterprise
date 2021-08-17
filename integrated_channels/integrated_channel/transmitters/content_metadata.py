@@ -201,7 +201,6 @@ class ContentMetadataTransmitter(Transmitter):
         Return the ContentMetadataItemTransmission models for previously
         transmitted content metadata items.
         """
-        # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
@@ -215,7 +214,6 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Create ContentMetadataItemTransmission models for the given content metadata items.
         """
-        # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
@@ -247,7 +245,6 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Delete ContentMetadataItemTransmission models associated with the given content metadata items.
         """
-        # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'

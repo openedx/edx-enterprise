@@ -122,7 +122,7 @@ def enterprise_customer_user_model():
     Returns the ``EnterpriseCustomerUser`` class.
     This function is needed to avoid circular ref issues when model classes call tasks in this module.
     """
-    return apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseCustomerUser')
 
 
 def enterprise_course_enrollment_model():
@@ -130,7 +130,7 @@ def enterprise_course_enrollment_model():
     Returns the ``EnterpriseCourseEnrollment`` class.
     This function is needed to avoid circular ref issues when model classes call tasks in this module.
     """
-    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
 
 
 def enterprise_enrollment_source_model():
@@ -138,4 +138,4 @@ def enterprise_enrollment_source_model():
     Returns the ``EnterpriseEnrollmentSource`` class.
     This function is needed to avoid circular ref issues when model classes call tasks in this module.
     """
-    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')

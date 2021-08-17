@@ -109,7 +109,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             enterprise_catalog_client_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         content_filter = {
             'key': [
                 course_id,
@@ -208,14 +208,14 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     "from Starfleet Academy."
                 ),
         }.items():
-            assert response.context[key] == expected_value  # pylint:disable=no-member
+            assert response.context[key] == expected_value
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_get_course_specific_consent_improperly_configured_course_catalog(
             self,
             course_catalog_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
 
         course_catalog_api_client_mock.side_effect = ImproperlyConfigured("There is no active CatalogIntegration.")
@@ -258,7 +258,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     def test_get_course_specific_consent_invalid_get_params(
             self,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
@@ -292,7 +292,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     def test_get_course_specific_consent_unauthenticated_user(
             self,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -329,7 +329,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     def test_get_course_specific_consent_bad_api_response(
             self,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
@@ -359,7 +359,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     def test_get_course_specific_consent_not_needed(
             self,
             course_catalog_api_client_mock,
-    ):  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         course_catalog_api_client = course_catalog_api_client_mock.return_value
@@ -403,7 +403,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             mock_get_course_mode,
             mock_enrollment_api_client,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
@@ -479,7 +479,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_catalog_client_mock,
             mock_get_course_mode,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
@@ -558,7 +558,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_catalog_api_client_mock,
             mock_enrollment_api_client,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
@@ -646,7 +646,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             mock_get_course_mode,
             mock_enrollment_api_client,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -703,7 +703,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         resp = self.client.post(self.url, post_data)
 
-        assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
+        assert resp.url.endswith(expected_redirect_url)
         assert resp.status_code == 302
 
         # we'll only create an enrollment record if (1) creation is not deferred, (2) the learner gave consent without
@@ -741,7 +741,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_catalog_client_mock,
             mock_enrollment_api_client,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         defer_creation = False
         consent_provided = True
         expected_redirect_url = 'successful_enrollment'
@@ -795,7 +795,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         resp = self.client.post(self.url, post_data)
 
-        assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
+        assert resp.url.endswith(expected_redirect_url)
         assert resp.status_code == 302
 
         assert not mock_enrollment_api_client.return_value.get_course_modes.called
@@ -807,7 +807,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             self,
             reverse_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -848,7 +848,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             self,
             reverse_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:does+not+exist'
         data_sharing_consent = True
@@ -1121,7 +1121,7 @@ class TestProgramDataSharingPermissions(TestCase):
                     "from Starfleet Academy."
                 ),
         }.items():
-            assert response.context[key] == value  # pylint:disable=no-member
+            assert response.context[key] == value
 
 
 @mark.django_db
@@ -1252,7 +1252,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             get_data_sharing_consent_mock,
             course_catalog_api_client_view_mock,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         get_data_sharing_consent_mock.return_value.consent_required.return_value = True
         get_data_sharing_consent_mock.return_value.enterprise_customer = self.enterprise_customer
         course_catalog_api_client_view_mock.return_value.get_course_run.return_value = self.course_run_details
@@ -1308,7 +1308,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             })
 
         for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint:disable=no-member
+            assert response.context[key] == value
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @ddt.data(True, False)
@@ -1316,7 +1316,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             self,
             view_for_course,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         self.user.is_staff = False
         self.user.save()
         self._login()
@@ -1339,7 +1339,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             self,
             view_for_course,
             *args
-    ):  # pylint: disable=unused-argument,invalid-name
+    ):
         self._login()
         params = {
             'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
@@ -1385,4 +1385,4 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             })
 
         for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint:disable=no-member
+            assert response.context[key] == value

@@ -56,7 +56,7 @@ class EnterpriseSelectionForm(forms.Form):
         enterprise = cleaned_data.get('enterprise')
 
         try:
-            EnterpriseCustomer.objects.get(uuid=enterprise)  # pylint: disable=no-member
+            EnterpriseCustomer.objects.get(uuid=enterprise)
         except EnterpriseCustomer.DoesNotExist as no_customer_error:
             raise forms.ValidationError(_("Enterprise not found")) from no_customer_error
 

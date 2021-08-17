@@ -26,7 +26,7 @@ class DegreedLearnerExporter(LearnerExporter):
             completed_date=None,
             is_passing=False,
             **kwargs
-    ):  # pylint: disable=arguments-differ,unused-argument
+    ):  # pylint: disable=arguments-differ
         """
         Return a DegreedLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
@@ -37,7 +37,7 @@ class DegreedLearnerExporter(LearnerExporter):
         # Degreed expects completion dates of the form 'yyyy-mm-dd'.
         completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
         if enterprise_enrollment.enterprise_customer_user.get_remote_id() is not None:
-            DegreedLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+            DegreedLearnerDataTransmissionAudit = apps.get_model(
                 'degreed',
                 'DegreedLearnerDataTransmissionAudit'
             )

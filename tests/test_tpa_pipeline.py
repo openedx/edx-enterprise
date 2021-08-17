@@ -157,7 +157,7 @@ class TestTpaPipeline(unittest.TestCase):
             active=True
         )
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
+            with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:
                 fake_get_ec.return_value = None
                 handle_enterprise_logistration(backend, self.user, **kwargs)
                 if new_association:
@@ -190,7 +190,7 @@ class TestTpaPipeline(unittest.TestCase):
             active=False
         )
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
+            with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:
                 fake_get_ec.return_value = None
                 handle_enterprise_logistration(backend, self.user, **kwargs)
                 ent_page_redirect.assert_not_called()
@@ -240,7 +240,7 @@ class TestTpaPipeline(unittest.TestCase):
         )
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             with mock.patch(
-                    'enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
+                    'enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:
                 fake_get_ec.return_value = None
                 handle_enterprise_logistration(backend, self.user, **kwargs)
                 if new_association or using_enrollment_url:

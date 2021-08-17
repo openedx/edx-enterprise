@@ -51,7 +51,7 @@ class Command(BaseCommand):
         super().add_arguments(parser)
 
     @staticmethod
-    def parse_arguments(*args, **options):  # pylint: disable=unused-argument
+    def parse_arguments(*args, **options):
         """
         Parse and validate arguments for send_course_enrollments command.
 
@@ -72,7 +72,6 @@ class Command(BaseCommand):
 
         if enterprise_customer_uuid:
             try:
-                # pylint: disable=no-member
                 enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
             except EnterpriseCustomer.DoesNotExist as no_user_error:
                 raise CommandError('Enterprise customer with uuid "{enterprise_customer_uuid}" does not exist.'.format(

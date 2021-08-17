@@ -8,7 +8,7 @@ import warnings
 from functools import wraps
 
 from requests.utils import quote
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse  # pylint: disable=import-error
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from django.http import Http404
 from django.shortcuts import redirect

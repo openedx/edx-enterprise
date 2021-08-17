@@ -95,13 +95,13 @@ class DataSharingConsentTextOverridesAdmin(DjangoObjectActions, SimpleHistoryAdm
         url = reverse('grant_data_sharing_permissions') + '?{}'.format(urlencode(params))
         return HttpResponseRedirect(url)
 
-    def preview_as_course(self, request, consent_page):  # pylint: disable=unused-argument
+    def preview_as_course(self, request, consent_page):
         """
         Renders data sharing consent page in course context
         """
         return self.preview(consent_page, course_id='course-v1:edX+TestX+Test_Course')
 
-    def preview_as_program(self, request, consent_page):  # pylint: disable=unused-argument
+    def preview_as_program(self, request, consent_page):
         """
         Renders data sharing consent page in program context
         """

@@ -36,7 +36,7 @@ try:
 except ImportError:
     CourseEnrollment = None
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
 
 

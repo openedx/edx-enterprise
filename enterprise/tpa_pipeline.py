@@ -13,7 +13,7 @@ from enterprise.utils import get_identity_provider, get_social_auth_from_idp
 try:
     from social_core.pipeline.partial import partial
 except ImportError:
-    from enterprise.decorators import null_decorator as partial  # pylint:disable=ungrouped-imports
+    from enterprise.decorators import null_decorator as partial
 
 try:
     from social_django.models import UserSocialAuth
@@ -28,7 +28,7 @@ except ImportError:
 LOGGER = getLogger(__name__)
 
 
-def get_enterprise_customer_for_running_pipeline(request, pipeline):  # pylint: disable=invalid-name
+def get_enterprise_customer_for_running_pipeline(request, pipeline):
     """
     Get the EnterpriseCustomer associated with a running pipeline.
     """
@@ -43,7 +43,7 @@ def get_enterprise_customer_for_sso(sso_provider_id):
     Get the EnterpriseCustomer object tied to an identity provider.
     """
     try:
-        return EnterpriseCustomer.objects.get(  # pylint: disable=no-member
+        return EnterpriseCustomer.objects.get(
             enterprise_customer_identity_providers__provider_id=sso_provider_id
         )
     except EnterpriseCustomer.DoesNotExist:
@@ -61,6 +61,7 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         **kwargs: Any remaining pipeline variables
 
     """
+    LOGGER.info(f'Beginning enterprise logistration for LMS user {user.id}')
     request = backend.strategy.request
     enterprise_customer = get_enterprise_customer_for_running_pipeline(
         request,
@@ -187,7 +188,7 @@ def handle_redirect_after_social_auth_login(backend, user):
         )
 
 
-def select_enterprise_page_as_redirect_url(strategy):  # pylint: disable=invalid-name
+def select_enterprise_page_as_redirect_url(strategy):
     """
     Change the redirect url for the user to enterprise selection page.
     """

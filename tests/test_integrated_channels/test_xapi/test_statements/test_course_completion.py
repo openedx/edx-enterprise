@@ -28,11 +28,11 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
         self.site = Mock(domain='xapi.testing.com')
         self.user = factories.UserFactory()
         self.mock_social_auth = Mock(provider='tpa-saml', uid='default:edxsso')
-        # pylint: disable=no-member
+
         self.course_overview = Mock(
             id='course-v1:edX+DemoX+Demo_Course',
-            display_name=faker.text(max_nb_chars=25),
-            short_description=faker.text(),
+            display_name=faker.text(max_nb_chars=25),  # pylint: disable=no-member
+            short_description=faker.text(),  # pylint: disable=no-member
             course_key='edX+DemoX',
             course_uuid='b1e7c719af3c42288c6f50e2124bb913',
         )

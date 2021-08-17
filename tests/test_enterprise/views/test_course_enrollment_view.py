@@ -11,7 +11,7 @@ import mock
 from dateutil.parser import parse
 from faker import Factory as FakerFactory
 from pytest import mark
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode
 from slumber.exceptions import HttpClientError
 
 from django.conf import settings
@@ -147,7 +147,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         default_context.update(expected_context)
         assert response.status_code == 200
         for key, value in default_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+            assert response.context[key] == value
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
@@ -163,7 +163,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         future_date = datetime.datetime.utcnow() + datetime.timedelta(days=365)
         setup_course_catalog_api_client_mock(
             course_catalog_client_mock,
@@ -227,7 +227,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
@@ -279,7 +279,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             ent_catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify the course modes displayed on enterprise course enrollment page.
 
@@ -390,7 +390,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             catalog_api_client_views_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify course modes and messages displayed on course enrollment page.
 
@@ -460,7 +460,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify course modes and messages displayed on course enrollment page.
 
@@ -545,7 +545,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Test consent declined message is rendered.
         """
@@ -621,7 +621,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The message indicating that the course is currently unopen to new learners is rendered.
         """
@@ -692,7 +692,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         The course enrollment landing page returns context indicating that the course is unenrollable.
         """
@@ -737,7 +737,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         setup_course_catalog_api_client_mock(
             course_catalog_client_mock,
             course_run_overrides={'min_effort': None, 'max_effort': 1},
@@ -800,7 +800,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         setup_course_catalog_api_client_mock(
             course_catalog_client_mock,
             course_run_overrides={'min_effort': None, 'max_effort': None, 'image': None},
@@ -864,7 +864,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
@@ -931,7 +931,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that the context of the enterprise course enrollment page has
         empty course start date if course details has no start date.
@@ -965,7 +965,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             'course_in_future': False,
         }
         for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+            assert response.context[key] == value
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
@@ -979,7 +979,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user will see generic info message in case of invalid
         or non existing course.
@@ -1026,7 +1026,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user will see generic info message in case of error while
         getting the course details from CourseApiClient.
@@ -1073,7 +1073,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user will see generic error message in case of invalid
         enterprise customer uuid.
@@ -1116,7 +1116,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enrollment_api_client_mock,
             catalog_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user will see HTTP 404 (Not Found) in case of invalid
         enterprise customer uuid.
@@ -1137,7 +1137,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             self,
             registry_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user is redirected to login screen to sign in with an
         enterprise-linked SSO.
@@ -1187,7 +1187,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             catalog_api_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that the user will be redirected to the course home page when
         the user is already enrolled.
@@ -1261,10 +1261,10 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             get_data_sharing_consent_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
-            ecommerce_api_client_mock,
+            ecommerce_api_client_mock,  # pylint: disable=unused-argument
             track_enrollment_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = self.demo_course_id
         get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=False))
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
@@ -1354,7 +1354,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enrollment_api_client_mock,
             course_catalog_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = self.demo_course_id
         get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=True))
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
@@ -1425,7 +1425,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enrollment_api_client_mock,
             course_catalog_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = self.demo_course_id
         get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=True))
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
@@ -1512,7 +1512,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enrollment_api_client_mock,
             course_catalog_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
@@ -1577,7 +1577,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enrollment_api_client_mock,
             catalog_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         course_id = self.demo_course_id
         get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=False))
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
@@ -1630,7 +1630,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         # Set up Ecommerce API client that returns an error
         broken_price_details_mock = mock.MagicMock()
         method_name = 'baskets.calculate.get'
@@ -1696,7 +1696,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_catalog_client_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._setup_embargo_api(embargo_api_mock)
 
         # Set up course catalog API client
@@ -1758,7 +1758,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             registry_mock,
             embargo_api_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         self._setup_embargo_api(embargo_api_mock, redirect_url=self.EMBARGO_REDIRECT_URL)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',

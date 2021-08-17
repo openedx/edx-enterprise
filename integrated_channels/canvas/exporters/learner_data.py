@@ -26,7 +26,7 @@ class CanvasLearnerExporter(LearnerExporter):
             completed_date=None,
             is_passing=False,
             **kwargs
-    ):  # pylint: disable=arguments-differ,unused-argument
+    ):  # pylint: disable=arguments-differ
         """
         Return a CanvasLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
@@ -49,7 +49,7 @@ class CanvasLearnerExporter(LearnerExporter):
         percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
 
-        CanvasLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        CanvasLearnerDataTransmissionAudit = apps.get_model(
             'canvas',
             'CanvasLearnerDataTransmissionAudit'
         )
@@ -100,7 +100,7 @@ class CanvasLearnerExporter(LearnerExporter):
                  ))))
             return None
 
-        CanvasLearnerAssessmentDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        CanvasLearnerAssessmentDataTransmissionAudit = apps.get_model(
             'canvas',
             'CanvasLearnerAssessmentDataTransmissionAudit'
         )

@@ -153,8 +153,7 @@ class TestEnterpriseTasks(unittest.TestCase):
     def test_send_enterprise_email_notification(self, mock_send_notification, mock_email_conn):
         enterprise_customer = EnterpriseCustomerFactory()
         pending_user = PendingEnterpriseCustomerUserFactory()
-        range_list = range(1, 10)
-        users = [UserFactory(username=f'user{user_id}') for user_id in range_list]
+        users = [UserFactory(username=f'user{user_id}') for user_id in range(1, 10)]
         course_details = {'title': 'course_title', 'start': '2021-09-21T00:01:10'}
         admin_enrollment = True
 

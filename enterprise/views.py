@@ -17,7 +17,7 @@ from edx_rest_api_client.exceptions import HttpClientError
 from ipware.ip import get_client_ip
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
-from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit  # pylint: disable=import-error
+from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -131,7 +131,6 @@ def get_global_context(request, enterprise_customer=None):
     Get the set of variables that are needed by default across views.
     """
     platform_name = get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME)
-    # pylint: disable=no-member
     context = {
         'enterprise_customer': enterprise_customer,
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
@@ -2285,7 +2284,6 @@ class RouterView(NonAtomicView):
     A router or gateway view for managing Enterprise workflows.
     """
 
-    # pylint: disable=invalid-name
     COURSE_ENROLLMENT_VIEW_URL = '/enterprise/{}/course/{}/enroll/'
     PROGRAM_ENROLLMENT_VIEW_URL = '/enterprise/{}/program/{}/enroll/'
     HANDLE_CONSENT_ENROLLMENT_VIEW_URL = '/enterprise/handle_consent_enrollment/{}/course/{}/'
@@ -2442,7 +2440,6 @@ class RouterView(NonAtomicView):
         """
         Run some custom POST logic for Enterprise workflows before routing the user through existing views.
         """
-        # pylint: disable=unused-variable
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
 

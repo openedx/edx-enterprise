@@ -27,11 +27,10 @@ class TestSendCourseEnrollments(unittest.TestCase):
         super().setUp()
         faker = FakerFactory.create()
 
-        # pylint: disable=no-member
         self.course_overview = mock.Mock(
             id='course-v1:edX+DemoX+Demo_Course',
-            display_name=faker.text(max_nb_chars=25),
-            short_description=faker.text(),
+            display_name=faker.text(max_nb_chars=25),  # pylint: disable=no-member
+            short_description=faker.text(),  # pylint: disable=no-member
             key='edX+DemoX',
         )
 
@@ -100,7 +99,6 @@ class TestSendCourseEnrollments(unittest.TestCase):
         MODULE_PATH + 'CourseEnrollment',
         mock.MagicMock()
     )
-    # pylint: disable=invalid-name
     @mock.patch(
         MODULE_PATH + 'Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock(), mock.MagicMock()])

@@ -20,7 +20,7 @@ def get_data_sharing_consent(username, enterprise_customer_uuid, course_id=None,
     :param program_uuid (optional): A program to which consent may be related
     :return: The data sharing consent object, or None if the enterprise customer for the given UUID does not exist.
     """
-    EnterpriseCustomer = apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+    EnterpriseCustomer = apps.get_model('enterprise', 'EnterpriseCustomer')
     try:
         if course_id:
             return get_course_data_sharing_consent(username, course_id, enterprise_customer_uuid)
@@ -39,7 +39,7 @@ def get_course_data_sharing_consent(username, course_id, enterprise_customer_uui
     :return: The data sharing consent object
     """
     # Prevent circular imports.
-    DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')  # pylint: disable=invalid-name
+    DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')
     return DataSharingConsent.objects.proxied_get(
         username=username,
         course_id=course_id,

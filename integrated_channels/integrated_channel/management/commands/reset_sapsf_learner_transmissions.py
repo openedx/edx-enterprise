@@ -52,7 +52,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("FAILED: start or end dates times are not valid"))
             return
 
-        SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(
             'sap_success_factors',
             'SapSuccessFactorsLearnerDataTransmissionAudit'
         )

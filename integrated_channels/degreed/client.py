@@ -8,7 +8,7 @@ import logging
 import time
 
 import requests
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 
@@ -54,7 +54,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         """
         LOGGER.error("Degreed integrated channel does not yet support assignment deduplication.")
 
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def create_course_completion(self, user_id, payload):
         """
         Send a completion status payload to the Degreed Completion Status endpoint
 
@@ -77,7 +77,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             self.COMPLETION_PROVIDER_SCOPE
         )
 
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def delete_course_completion(self, user_id, payload):
         """
         Delete a completion status previously sent to the Degreed Completion Status endpoint
 

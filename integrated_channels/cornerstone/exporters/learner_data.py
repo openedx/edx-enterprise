@@ -38,7 +38,7 @@ class CornerstoneLearnerExporter(LearnerExporter):
         if completed_date is not None:
             course_completed = True
 
-        CornerstoneLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        CornerstoneLearnerDataTransmissionAudit = apps.get_model(
             'cornerstone',
             'CornerstoneLearnerDataTransmissionAudit'
         )

@@ -4,7 +4,7 @@
 xAPI statement for course completion.
 """
 
-from tincan import LanguageMap, Result, Score, Verb  # pylint: disable=E0401
+from tincan import LanguageMap, Result, Score, Verb
 
 from integrated_channels.xapi.constants import MAX_SCORE, MIN_SCORE, X_API_VERB_COMPLETED
 from integrated_channels.xapi.statements.base import EnterpriseStatement

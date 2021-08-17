@@ -77,7 +77,7 @@ class Command(BaseCommand):
 
     def _create_enterprise_customer(self, name, site):
         """ Gets or creates an EnterpriseCustomer """
-        enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
+        enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(
             name=name,
             site_id=site.id,
             slug=slugify(name),

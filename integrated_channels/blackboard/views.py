@@ -52,7 +52,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             HTTP 404 if state is not valid or contained in the set of registered enterprises
 
     """
-    def get(self, request, *args, **kwargs):  # pylint: disable=arguments-differ
+    def get(self, request, *args, **kwargs):
         app_config = apps.get_app_config('blackboard')
         oauth_token_path = app_config.oauth_token_auth_path
 

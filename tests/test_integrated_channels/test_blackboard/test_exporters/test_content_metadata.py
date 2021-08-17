@@ -58,7 +58,7 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
             FAKE_COURSE['key'],
         ])
 
-        expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()
+        expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()  # pylint: disable=dict-keys-not-iterating
         for item in content_items.values():
             self.assertTrue(
                 set(expected_keys)

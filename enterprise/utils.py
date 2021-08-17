@@ -15,7 +15,6 @@ import tableauserverclient as TSC
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 from edx_rest_api_client.exceptions import HttpClientError
-# pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 from tableauserverclient.server.endpoint.exceptions import ServerResponseError
 
@@ -109,10 +108,10 @@ ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
 
 LOGGER = logging.getLogger(__name__)
 
-User = auth.get_user_model()  # pylint: disable=invalid-name
+User = auth.get_user_model()
 
 try:
-    from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
+    from common.djangoapps.third_party_auth.provider import Registry
 except ImportError as exception:
     LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
     LOGGER.warning(exception)
@@ -659,35 +658,35 @@ def enterprise_customer_model():
     """
     Returns the ``EnterpriseCustomer`` class.
     """
-    return apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseCustomer')
 
 
 def enterprise_enrollment_source_model():
     """
     Returns the ``EnterpriseEnrollmentSource`` class.
     """
-    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')
 
 
 def enterprise_customer_user_model():
     """
     Returns the ``EnterpriseCustomerUser`` class.
     """
-    return apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseCustomerUser')
 
 
 def enterprise_course_enrollment_model():
     """
     Returns the ``EnterpriseCourseEnrollment`` class.
     """
-    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
 
 
-def licensed_enterprise_course_enrollment_model():  # pylint: disable=invalid-name
+def licensed_enterprise_course_enrollment_model():
     """
     returns the ``LicensedEnterpriseCourseEnrollment`` class.
     """
-    return apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+    return apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')
 
 
 def get_enterprise_customer(uuid):
@@ -697,9 +696,9 @@ def get_enterprise_customer(uuid):
     :param uuid: The universally unique ID of the enterprise customer.
     :return: The ``EnterpriseCustomer`` instance, or ``None`` if it doesn't exist.
     """
-    EnterpriseCustomer = enterprise_customer_model()  # pylint: disable=invalid-name
+    EnterpriseCustomer = enterprise_customer_model()
     try:
-        return EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+        return EnterpriseCustomer.objects.get(uuid=uuid)
     except EnterpriseCustomer.DoesNotExist:
         return None
 
@@ -725,7 +724,7 @@ def get_enterprise_uuids_for_user_and_course(auth_user, course_run_id, active=No
     return enterprise_course_enrollment_model().get_enterprise_uuids_with_user_and_course(
         auth_user.id,
         course_run_id,
-        active)  # pylint: disable=invalid-name
+        active)
 
 
 def get_enterprise_customer_for_user(auth_user):
@@ -743,9 +742,9 @@ def get_enterprise_customer_for_user(auth_user):
         (EnterpriseCustomer): enterprise customer associated with the current user.
 
     """
-    EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+    EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')
     try:
-        return EnterpriseCustomerUser.objects.get(user_id=auth_user.id).enterprise_customer  # pylint: disable=no-member
+        return EnterpriseCustomerUser.objects.get(user_id=auth_user.id).enterprise_customer
     except EnterpriseCustomerUser.DoesNotExist:
         return None
 
@@ -762,9 +761,9 @@ def get_enterprise_customer_user(user_id, enterprise_uuid):
         (EnterpriseCustomerUser): enterprise customer user record
 
     """
-    EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+    EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')
     try:
-        return EnterpriseCustomerUser.objects.get(  # pylint: disable=no-member
+        return EnterpriseCustomerUser.objects.get(
             enterprise_customer__uuid=enterprise_uuid,
             user_id=user_id
         )
@@ -854,10 +853,10 @@ def get_enterprise_customer_or_404(enterprise_uuid):
         (EnterpriseCustomer): The EnterpriseCustomer given the UUID.
 
     """
-    EnterpriseCustomer = enterprise_customer_model()  # pylint: disable=invalid-name
+    EnterpriseCustomer = enterprise_customer_model()
     try:
         enterprise_uuid = UUID(enterprise_uuid)
-        return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)  # pylint: disable=no-member
+        return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
     except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist) as no_customer_error:
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
         raise Http404 from no_customer_error

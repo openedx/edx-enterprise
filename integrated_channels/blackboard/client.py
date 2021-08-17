@@ -9,7 +9,7 @@ import logging
 from http import HTTPStatus
 
 import requests
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 
@@ -232,7 +232,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         )
         return submission_response.status_code, success_body
 
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+    def delete_course_completion(self, user_id, payload):
         """TODO: course completion deletion is currently not easily supported"""
 
     @staticmethod

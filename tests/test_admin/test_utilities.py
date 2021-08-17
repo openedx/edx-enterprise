@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 
 from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, parse_csv
 from test_utils.factories import FAKER, UserFactory
-from test_utils.file_helpers import MakeCsvStreamContextManager  # pylint: disable=ungrouped-imports
+from test_utils.file_helpers import MakeCsvStreamContextManager
 
 
 class TestParseCSV(unittest.TestCase):

@@ -201,7 +201,7 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         """
         return self.__str__()
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
 
@@ -292,7 +292,7 @@ class CanvasLearnerDataTransmissionAudit(models.Model):
         """
         return self.__str__()
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
 

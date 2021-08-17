@@ -166,7 +166,7 @@ class ContentMetadataExporter(Exporter):
                 )
             )
             if transformer:
-                transformed_value = transformer(content_metadata_item)  # pylint: disable=not-callable
+                transformed_value = transformer(content_metadata_item)
             else:
                 # The concrete subclass does not define an override for the given field,
                 # so just use the data key to index the content metadata item dictionary.
@@ -213,7 +213,6 @@ class ContentMetadataExporter(Exporter):
         Retrieve the last modified time of the catalog belonging to the most recent ContentMetadataItemTransmission for
         an enterprise customer.
         """
-        # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'

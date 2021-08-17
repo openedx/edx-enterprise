@@ -7,6 +7,6 @@ from rest_framework import routers
 from .views import MoodleConfigurationViewSet
 
 app_name = 'moodle'
-router = routers.DefaultRouter()  # pylint: disable=invalid-name
+router = routers.DefaultRouter()
 router.register(r'configuration', MoodleConfigurationViewSet, basename="configuration")
 urlpatterns = router.urls

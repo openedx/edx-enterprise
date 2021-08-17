@@ -8,7 +8,7 @@ import uuid
 import ddt
 import mock
 from pytest import mark
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.test import Client, TestCase

@@ -21,7 +21,7 @@ from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
+from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
@@ -82,8 +82,8 @@ except ImportError:
     CourseEnrollment = None
 
 LOGGER = getLogger(__name__)
-User = auth.get_user_model()  # pylint: disable=invalid-name
-mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
+User = auth.get_user_model()
+mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 
 class EnterpriseCustomerManager(models.Manager):
@@ -271,22 +271,22 @@ class EnterpriseCustomer(TimeStampedModel):
         ), on_delete=models.CASCADE
     )
 
-    enable_portal_code_management_screen = models.BooleanField(  # pylint: disable=invalid-name
+    enable_portal_code_management_screen = models.BooleanField(
         default=False,
         help_text=_("Specifies whether to allow access to the code management screen in the admin portal.")
     )
 
-    enable_portal_reporting_config_screen = models.BooleanField(  # pylint: disable=invalid-name
+    enable_portal_reporting_config_screen = models.BooleanField(
         default=False,
         help_text=_("Specifies whether to allow access to the reporting configurations screen in the admin portal.")
     )
 
-    enable_portal_subscription_management_screen = models.BooleanField(  # pylint: disable=invalid-name
+    enable_portal_subscription_management_screen = models.BooleanField(
         default=False,
         help_text=_("Specifies whether to allow access to the subscription management screen in the admin portal.")
     )
 
-    enable_portal_saml_configuration_screen = models.BooleanField(  # pylint: disable=invalid-name
+    enable_portal_saml_configuration_screen = models.BooleanField(
         default=False,
         help_text=_("Specifies whether to allow access to the saml configuration screen in the admin portal")
     )
@@ -296,7 +296,7 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
     )
 
-    enable_integrated_customer_learner_portal_search = models.BooleanField(  # pylint: disable=invalid-name
+    enable_integrated_customer_learner_portal_search = models.BooleanField(
         "Enable learner portal search for LMS customers",
         default=True,
         help_text=_(
@@ -305,12 +305,12 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    enable_analytics_screen = models.BooleanField(  # pylint: disable=invalid-name
+    enable_analytics_screen = models.BooleanField(
         default=False,
         help_text=_("Specifies whether to allow access to the analytics screen in the admin portal.")
     )
 
-    enable_portal_lms_configurations_screen = models.BooleanField(  # pylint: disable=invalid-name
+    enable_portal_lms_configurations_screen = models.BooleanField(
         default=False,
         help_text=_("Specifies whether to allow access to the external LMS configuration screen in the admin portal.")
     )
@@ -364,7 +364,7 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     @property
-    def enterprise_customer_identity_provider(self):  # pylint: disable=invalid-name
+    def enterprise_customer_identity_provider(self):
         """
         Returns the first instance from EnterpriseCustomerIdentityProvider relation.
         """
@@ -402,7 +402,6 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return True if there are any identity providers associated with this enterprise customer.
         """
-        # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.exists()
 
     @property
@@ -410,7 +409,6 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return True if there are multiple identity providers associated with this enterprise customer.
         """
-        # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.count() > 1
 
     @property
@@ -418,7 +416,6 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return default_provider if associated with this enterprise customer.
         """
-        # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.filter(default_provider=True).first()
 
     @property
@@ -426,7 +423,6 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return True if there are exactly one identity provider associated with this enterprise customer.
         """
-        # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.count() == 1
 
     @property
@@ -436,7 +432,6 @@ class EnterpriseCustomer(TimeStampedModel):
 
         Returns False if enterprise customer does not have any identity provider.
         """
-        # pylint: disable=no-member
         return all(
             identity_provider.sync_learner_profile_data
             for identity_provider in self.identity_providers
@@ -463,7 +458,6 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return human-readable string representation.
         """
-        # pylint: disable=no-member
         return "<EnterpriseCustomer {code:x}: {name}>".format(code=self.uuid.time_low, name=self.name)
 
     def __repr__(self):
@@ -531,7 +525,6 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return DataSharingConsentTextOverrides associated with this instance.
         """
-        # pylint: disable=invalid-name
         DataSharingConsentTextOverrides = apps.get_model('consent', 'DataSharingConsentTextOverrides')
         queryset = DataSharingConsentTextOverrides.objects.filter(enterprise_customer=self)
         if published_only:
@@ -835,13 +828,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
+    def save(self, *args, **kwargs):
         """
         Override to handle creation of EnterpriseCustomerUser records.
 
         This is needed because of soft deletion of EnterpriseCustomerUser records.
         This will handle all of get_or_create/update_or_create/create methods.
         """
+        LOGGER.info(f'Saving EnterpriseCustomerUser for LMS user id {self.user_id}')
         if self.pk is None:
             # We are trying to create a new object but it may be possible that an existing unlinked
             # record exists, so if an existing record exists then just update that with linked=True
@@ -853,7 +847,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 )
                 self.linked = True
                 # An existing record has been found so update auto primary key with primay key of existing record
-                self.pk = existing.pk  # pylint: disable=invalid-name
+                self.pk = existing.pk
                 # Update the kwargs so that Django will update the existing record instead of creating a new one
                 kwargs = dict(kwargs, **{'force_insert': False, 'force_update': True})
             except EnterpriseCustomerUser.DoesNotExist:
@@ -901,7 +895,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         Returns:
             QuerySet (DataSharingConsent): The filtered DataSharingConsent QuerySet.
         """
-        DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')  # pylint: disable=invalid-name
+        DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')
         return DataSharingConsent.objects.filter(
             enterprise_customer=self.enterprise_customer,
             username=self.username
@@ -1136,7 +1130,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
 @python_2_unicode_compatible
 class PendingEnterpriseCustomerUser(TimeStampedModel):
-    # pylint: disable=line-too-long
     """
     Model that stores "future members" of enterprise customer.
 
@@ -1147,7 +1140,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     .. pii: The user_email field contains PII, but locally deleted via enterprise.signals.handle_user_post_save when the learner registers a new account.  As an additional safety measure, we also delete this row (if found) during user retirement.
     .. pii_types: email_address
     .. pii_retirement: local_api, consumer_api
-    """  # pylint: enable=line-too-long
+    """
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False, on_delete=models.CASCADE)
     user_email = models.EmailField(null=False, blank=False)
@@ -1867,7 +1860,6 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         )
 
 
-# pylint: disable=feature-toggle-needs-doc
 class BulkCatalogQueryUpdateCommandConfiguration(ConfigurationModel):
     """
     Manages configuration for a run of the cert_generation management command.
@@ -1889,7 +1881,6 @@ class BulkCatalogQueryUpdateCommandConfiguration(ConfigurationModel):
 
     def __str__(self):
         return str(self.arguments)
-# pylint: disable=feature-toggle-needs-doc
 
 
 @python_2_unicode_compatible
@@ -2200,7 +2191,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-renamed
+    def save(self, *args, **kwargs):
         """
         Saves this ``EnterpriseCatalogQuery``.
 
@@ -2357,7 +2348,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     )
 
     # Data types that are allowed to be sent without compression, all other data types must be compressed.
-    ALLOWED_NON_COMPRESSION_DATA_TYPES = (DATA_TYPE_CATALOG, )  # pylint: disable=invalid-name
+    ALLOWED_NON_COMPRESSION_DATA_TYPES = (DATA_TYPE_CATALOG, )
 
     # These types are only valid for the enterprise customer named `Pearson`. We are adding these Reports temporarily
     # and will be reverted after Aurora based reports will be available.
@@ -2716,7 +2707,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         Returns true if the role for this assignment is ``ENTERPRISE_OPERATOR_ROLE``,
         or if ``applies_to_all_contexts`` is true; returns false otherwise.
         """
-        return (self.role.name == ENTERPRISE_OPERATOR_ROLE) or self.applies_to_all_contexts  # pylint: disable=no-member
+        return (self.role.name == ENTERPRISE_OPERATOR_ROLE) or self.applies_to_all_contexts
 
     def get_context(self):
         """
@@ -2736,7 +2727,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         """
         return "<SystemWideEnterpriseUserRoleAssignment for User {user} assigned to role {role}>".format(
             user=self.user.id,
-            role=self.role.name  # pylint: disable=no-member
+            role=self.role.name
         )
 
     def __repr__(self):

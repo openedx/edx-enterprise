@@ -3,7 +3,7 @@
 Test mixins for enterprise tests.
 """
 
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode
 
 from django.contrib import messages
 
@@ -48,7 +48,7 @@ class MessagesMixin:
         Verify that expected messages are included in the context of response.
         """
         response_messages = [
-            (msg.level, msg.message) for msg in test_client_response.context['messages']  # pylint: disable=no-member
+            (msg.level, msg.message) for msg in test_client_response.context['messages']
         ]
         assert response_messages == expected_log_messages
 

@@ -7,6 +7,6 @@ from rest_framework import routers
 from .views import DegreedConfigurationViewSet
 
 app_name = 'degreed'
-router = routers.DefaultRouter()  # pylint: disable=invalid-name
+router = routers.DefaultRouter()
 router.register(r'configuration', DegreedConfigurationViewSet, basename="configuration")
 urlpatterns = router.urls

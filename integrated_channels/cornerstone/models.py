@@ -27,7 +27,6 @@ LOGGER = getLogger(__name__)
 User = auth.get_user_model()
 
 
-# pylint: disable=feature-toggle-needs-doc
 @python_2_unicode_compatible
 class CornerstoneGlobalConfiguration(ConfigurationModel):
     """
@@ -233,7 +232,7 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
         """
         return self.__str__()
 
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
 

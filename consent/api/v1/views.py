@@ -73,7 +73,7 @@ class DataSharingConsentView(APIView):
     REQUIRED_PARAM_USERNAME = 'username'
     REQUIRED_PARAM_COURSE_ID = 'course_id'
     REQUIRED_PARAM_PROGRAM_UUID = 'program_uuid'
-    REQUIRED_PARAM_ENTERPRISE_CUSTOMER = 'enterprise_customer_uuid'  # pylint: disable=invalid-name
+    REQUIRED_PARAM_ENTERPRISE_CUSTOMER = 'enterprise_customer_uuid'
 
     CONSENT_EXISTS = 'exists'
     CONSENT_GRANTED = 'consent_provided'

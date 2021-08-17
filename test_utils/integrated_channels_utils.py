@@ -30,7 +30,7 @@ def mock_course_overview(pacing='instructor', end=timezone.now()):
         'end': end,
         'pacing': pacing,
     }
-    return namedtuple("CourseOverview", dictionary.keys())(*dictionary.values())
+    return namedtuple("CourseOverview", dictionary.keys())(*dictionary.values())  # pylint: disable=dict-keys-not-iterating
 
 
 def mock_single_learner_grade(percent=0.0, passing=False):
@@ -39,4 +39,4 @@ def mock_single_learner_grade(percent=0.0, passing=False):
         'percent': percent,
         'passed': passing,
     }
-    return namedtuple("CourseGrade", dictionary.keys())(*dictionary.values())
+    return namedtuple("CourseGrade", dictionary.keys())(*dictionary.values())  # pylint: disable=dict-keys-not-iterating

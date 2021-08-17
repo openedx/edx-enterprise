@@ -7,7 +7,7 @@ import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode
 
 from django.http import HttpResponse
 from django.test import Client, TestCase
@@ -72,7 +72,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
             self,
             registry_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user is redirected to LMS dashboard in case there is
         no parameter `course_mode` in the request querystring.
@@ -107,7 +107,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
             registry_mock,
             enrollment_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user gets HTTP 404 response if there is no enterprise in
         database against the provided enterprise UUID or if enrollment API
@@ -150,7 +150,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
             enrollment_api_client_mock,
             get_ec_user_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user is redirected to LMS dashboard in case the provided
         course mode does not exist.
@@ -197,7 +197,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
             enrollment_api_client_mock,
             track_enrollment_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user is redirected to course in case the provided
         course mode is audit track.
@@ -255,7 +255,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
             enrollment_api_client_mock,
             track_enrollment_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Verify that user is redirected to course in case the provided
         course mode is audit track.

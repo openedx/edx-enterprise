@@ -49,7 +49,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
         sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id()
 
         if sapsf_user_id is not None:
-            SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+            SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(
                 'sap_success_factors',
                 'SapSuccessFactorsLearnerDataTransmissionAudit'
             )

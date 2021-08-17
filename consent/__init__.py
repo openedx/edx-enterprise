@@ -14,4 +14,4 @@ of gate that an enterprise stands at.
 
 __version__ = "0.1.0"
 
-default_app_config = "consent.apps.ConsentConfig"  # pylint: disable=invalid-name
+default_app_config = "consent.apps.ConsentConfig"

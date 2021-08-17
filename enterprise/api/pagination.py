@@ -6,7 +6,7 @@ Pagination helpers for enterprise api.
 from collections import OrderedDict
 
 from rest_framework.response import Response
-from six.moves.urllib.parse import urlparse  # pylint: disable=import-error
+from six.moves.urllib.parse import urlparse
 
 
 def get_paginated_response(data, request):

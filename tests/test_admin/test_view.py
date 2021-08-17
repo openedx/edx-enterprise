@@ -44,7 +44,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from test_utils import fake_enrollment_api  # pylint: disable=ungrouped-imports
+from test_utils import fake_enrollment_api
 from test_utils.factories import (
     FAKER,
     DataSharingConsentFactory,
@@ -413,7 +413,7 @@ class BaseTestEnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         self.assertRedirects(post_response, self.view_url, fetch_redirect_response=False)
         get_response = self.client.get(self.view_url)
         response_messages = set(
-            (m.level, m.message) for m in get_response.context['messages']  # pylint: disable=no-member
+            (m.level, m.message) for m in get_response.context['messages']
         )
         assert response_messages == expected_messages
 

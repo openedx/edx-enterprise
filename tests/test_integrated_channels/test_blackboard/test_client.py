@@ -31,6 +31,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     Test Blackboard API client methods.
     """
 
+    # pylint: disable=protected-access
     def setUp(self):
         super().setUp()
         self.token = 'token'
@@ -57,7 +58,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     def _create_new_mock_client(self):
         """Test client instance with oauth token filled in"""
         client = BlackboardAPIClient(self.enterprise_config)
-        client._get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._get_oauth_access_token = unittest.mock.MagicMock(
             name='_get_oauth_access_token',
             return_value=(self.token, 10000)
         )
@@ -75,19 +76,19 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         response_404 = unittest.mock.Mock(spec=Response)
         response_404.status_code = 404
         response_404.text = "{'error': 'No course found.'}"
 
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=response_404
         )
 
         with pytest.raises(ClientError) as client_error:
-            client._resolve_blackboard_course_id(self.course_id)  # pylint: disable=protected-access
+            client._resolve_blackboard_course_id(self.course_id)
 
         assert client_error.value.message == response_404.text
         assert client_error.value.status_code == response_404.status_code
@@ -103,7 +104,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         success_response = unittest.mock.Mock(spec=Response)
         success_response.status_code = 200
@@ -114,31 +115,31 @@ class TestBlackboardApiClient(unittest.TestCase):
             ]
         }
 
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )
 
-        assert client._resolve_blackboard_course_id(self.course_id) == self.blackboard_course_id  # pylint: disable=protected-access
+        assert client._resolve_blackboard_course_id(self.course_id) == self.blackboard_course_id
 
     def test_get_blackboard_user_404s(self):
         """Test that we properly handle failure cases when retrieving the blackboard user ID."""
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         response_404 = unittest.mock.Mock(spec=Response)
         response_404.status_code = 404
         response_404.text = "{'error': 'No user found.'}"
 
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=response_404
         )
 
         with pytest.raises(ClientError) as client_error:
-            client._get_bb_user_id_from_enrollments(self.user_email, self.blackboard_course_id)  # pylint: disable=protected-access
+            client._get_bb_user_id_from_enrollments(self.user_email, self.blackboard_course_id)
 
         assert client_error.value.message == response_404.text
         assert client_error.value.status_code == response_404.status_code
@@ -151,7 +152,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         success_response = unittest.mock.Mock(spec=Response)
         success_response.status_code = 200
@@ -170,12 +171,12 @@ class TestBlackboardApiClient(unittest.TestCase):
             ]
         }
 
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_response
         )
 
-        assert client._get_bb_user_id_from_enrollments(  # pylint: disable=protected-access
+        assert client._get_bb_user_id_from_enrollments(
             self.user_email,
             self.blackboard_course_id
         ) == self.blackboard_user_id
@@ -185,19 +186,19 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         response_500 = unittest.mock.Mock(spec=Response)
         response_500.status_code = 500
         response_500.text = "{'error': 'Something went wrong'}"
 
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=response_500
         )
 
         with pytest.raises(ClientError) as client_error:
-            client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+            client._get_or_create_integrated_grade_column(
                 self.blackboard_course_id,
                 self.blackboard_grade_column_name,
                 self.course_subsection_id,
@@ -218,7 +219,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         wrong_external_id = 'ayylmao'
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         success_get_response = unittest.mock.Mock(spec=Response)
         success_get_response.status_code = 200
@@ -230,7 +231,7 @@ class TestBlackboardApiClient(unittest.TestCase):
                 },
             ]
         }
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_get_response
         )
@@ -238,13 +239,13 @@ class TestBlackboardApiClient(unittest.TestCase):
         failed_post_response = unittest.mock.Mock(spec=Response)
         failed_post_response.status_code = 500
         failed_post_response.text = "{'error': 'Something went wrong'}"
-        client.session.post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.post = unittest.mock.MagicMock(
             name="_post",
             return_value=failed_post_response
         )
 
         with pytest.raises(ClientError) as client_error:
-            client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+            client._get_or_create_integrated_grade_column(
                 self.blackboard_course_id,
                 self.blackboard_grade_column_name,
                 self.course_subsection_id,
@@ -259,7 +260,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         success_get_response = unittest.mock.Mock(spec=Response)
         success_get_response.status_code = 200
@@ -272,12 +273,12 @@ class TestBlackboardApiClient(unittest.TestCase):
             ]
         }
 
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_get_response
         )
 
-        result = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+        result = client._get_or_create_integrated_grade_column(
             self.blackboard_course_id,
             self.blackboard_grade_column_name,
             self.course_subsection_id,
@@ -293,7 +294,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         wrong_external_id = 'ayylmao'
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         success_get_response = unittest.mock.Mock(spec=Response)
         success_get_response.status_code = 200
@@ -305,7 +306,7 @@ class TestBlackboardApiClient(unittest.TestCase):
                 },
             ]
         }
-        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.get = unittest.mock.MagicMock(
             name="_get",
             return_value=success_get_response
         )
@@ -315,12 +316,12 @@ class TestBlackboardApiClient(unittest.TestCase):
         success_post_response.json.return_value = {
             'id': self.blackboard_grade_column_id
         }
-        client.session.post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.post = unittest.mock.MagicMock(
             name="_post",
             return_value=success_post_response
         )
 
-        result = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+        result = client._get_or_create_integrated_grade_column(
             self.blackboard_course_id,
             self.blackboard_grade_column_name,
             self.course_subsection_id,
@@ -334,18 +335,18 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         failed_patch_response = unittest.mock.Mock(spec=Response)
         failed_patch_response.status_code = 500
         failed_patch_response.text = "{'error': 'Something went wrong'}"
-        client.session.patch = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.patch = unittest.mock.MagicMock(
             name="_patch",
             return_value=failed_patch_response
         )
 
         with pytest.raises(ClientError) as client_error:
-            client._submit_grade_to_blackboard(  # pylint: disable=protected-access
+            client._submit_grade_to_blackboard(
                 100,
                 self.blackboard_course_id,
                 self.blackboard_grade_column_id,
@@ -360,19 +361,19 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         grade = 100
 
         success_patch_response = unittest.mock.Mock(spec=Response)
         success_patch_response.status_code = 200
         success_patch_response.json.return_value = {'score': grade}
-        client.session.patch = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.session.patch = unittest.mock.MagicMock(
             name="_patch",
             return_value=success_patch_response
         )
 
-        result = client._submit_grade_to_blackboard(  # pylint: disable=protected-access
+        result = client._submit_grade_to_blackboard(
             grade,
             self.blackboard_course_id,
             self.blackboard_grade_column_id,
@@ -387,7 +388,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
         client.session.get = unittest.mock.MagicMock(
             name='_get',
             return_value=COURSE_NOT_FOUND_RESPONSE
@@ -414,8 +415,8 @@ class TestBlackboardApiClient(unittest.TestCase):
         success_response.status_code = 200
         success_response.json.return_value = {'id': bb_course_id}
 
-        client._create_session()  # pylint: disable=protected-access
-        client._post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._create_session()
+        client._post = unittest.mock.MagicMock(
             name="_post",
             return_value=success_response
         )
@@ -427,11 +428,11 @@ class TestBlackboardApiClient(unittest.TestCase):
                               ' integration content={bb_course_id}'.format(bb_course_id=bb_course_id)
 
         expected_url = client.generate_create_course_content_child_url(bb_course_id, bb_course_id)
-        client._post.assert_called_with(  # pylint: disable=protected-access
+        client._post.assert_called_with(
             expected_url, metadata_content.get('course_child_content_metadata')
         )
 
-    def test_update_content_metadata_success(self):  # pylint: disable=protected-access
+    def test_update_content_metadata_success(self):
         client = self._create_new_mock_client()
         content_metadata = {
             'externalId': 'a-course-id',
@@ -447,24 +448,24 @@ class TestBlackboardApiClient(unittest.TestCase):
         course_content_success_response.status_code = 200
         course_content_success_response.json.return_value = {'results': [{'title': 'edX Integration'}]}
 
-        client._create_session()  # pylint: disable=protected-access
-        client._patch = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._create_session()
+        client._patch = unittest.mock.MagicMock(
             name='_patch',
             return_value=success_response
         )
-        client._delete = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._delete = unittest.mock.MagicMock(
             name='_delete',
             return_value=success_response
         )
-        client._post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._post = unittest.mock.MagicMock(
             name='_post',
             return_value=success_response
         )
-        client._get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._get = unittest.mock.MagicMock(
             name='_get',
             return_value=course_content_success_response
         )
-        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
             name='_resolve_blackboard_course_id',
             return_value='a-course-id'
         )
@@ -475,11 +476,11 @@ class TestBlackboardApiClient(unittest.TestCase):
         assert status_text == 'hooray'
 
         expected_url = client.generate_course_update_url('a-course-id')
-        client._patch.assert_called_with(  # pylint: disable=protected-access
+        client._patch.assert_called_with(
             expected_url,
             content_metadata.get('course_metadata')
         )
-        assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
+        assert client._resolve_blackboard_course_id.CalledProcessError
 
     def test_delete_no_course_found(self):
         client = self._create_new_mock_client()
@@ -487,16 +488,16 @@ class TestBlackboardApiClient(unittest.TestCase):
             'externalId': 'a-course-id'
         }).encode('utf-8')
 
-        client._create_session()  # pylint: disable=protected-access
-        client._delete = unittest.mock.MagicMock(name='_delete')  # pylint: disable=protected-access
-        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._create_session()
+        client._delete = unittest.mock.MagicMock(name='_delete')
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
             name='_resolve_blackboard_course_id',
             return_value=None
         )
 
         status_code, status_text = client.delete_content_metadata(serialized_data)
-        assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
-        assert not client._delete.called  # pylint: disable=protected-access
+        assert client._resolve_blackboard_course_id.CalledProcessError
+        assert not client._delete.called
         assert status_code == 200
         assert status_text == 'Course:a-course-id already removed.'
 
@@ -510,12 +511,12 @@ class TestBlackboardApiClient(unittest.TestCase):
         success_response.text = ''
         success_response.json.return_value = {}
 
-        client._create_session()  # pylint: disable=protected-access
-        client._delete = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._create_session()
+        client._delete = unittest.mock.MagicMock(
             name='_delete',
             return_value=success_response
         )
-        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
             name='_resolve_blackboard_course_id',
             return_value='a-course-id'
         )
@@ -526,10 +527,10 @@ class TestBlackboardApiClient(unittest.TestCase):
         assert status_text == ''
 
         expected_url = client.generate_course_update_url('a-course-id')
-        client._delete.assert_called_with(expected_url)  # pylint: disable=protected-access
-        assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
+        client._delete.assert_called_with(expected_url)
+        assert client._resolve_blackboard_course_id.CalledProcessError
 
-    def test_client_behavior_on_successful_learner_data_transmission(self):  # pylint: disable=protected-access
+    def test_client_behavior_on_successful_learner_data_transmission(self):
         """
         Test that given successful requests for Blackboard learner data,
         the client makes the appropriate _patch call to update a user's grade
@@ -537,25 +538,25 @@ class TestBlackboardApiClient(unittest.TestCase):
         client = self._create_new_mock_client()
 
         # Mock the course ID request
-        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
             name='_resolve_blackboard_course_id',
             return_value=self.course_id,
         )
 
         # Mock the enrollments request
-        client._get_bb_user_id_from_enrollments = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._get_bb_user_id_from_enrollments = unittest.mock.MagicMock(
             name='_get_bb_user_id_from_enrollments',
             return_value=self.blackboard_user_id
         )
 
         # Mock the gradebook/column request
-        client._get_or_create_integrated_grade_column = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client._get_or_create_integrated_grade_column = unittest.mock.MagicMock(
             name='_get_or_create_integrated_grade_column',
             return_value=self.blackboard_grade_column_id
         )
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
         client.session.patch = unittest.mock.MagicMock(
             name='_patch',
             return_value=SUCCESSFUL_RESPONSE
@@ -579,7 +580,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         properly log and handle the clean up.
         """
         client = self._create_new_mock_client()
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
         content_metadata = {
             'course_content_metadata': {'test': 'a-course-id'}
         }
@@ -589,7 +590,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         successful_response.text = 'course deleted'
         successful_response.json.return_value = {}
 
-        client.delete_course_from_blackboard = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.delete_course_from_blackboard = unittest.mock.MagicMock(
             name='delete blackboard course',
             return_value=successful_response
         )
@@ -636,7 +637,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         properly log and handle the clean up.
         """
         client = self._create_new_mock_client()
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
         bb_content_id = 'test_bb_content_id'
         content_metadata = {
             'course_content_metadata': {'test': 'a-course-id'}
@@ -647,12 +648,12 @@ class TestBlackboardApiClient(unittest.TestCase):
         successful_response.text = 'delete request successful'
         successful_response.json.return_value = {}
 
-        client.delete_course_from_blackboard = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.delete_course_from_blackboard = unittest.mock.MagicMock(
             name='delete blackboard course',
             return_value=successful_response
         )
 
-        client.delete_course_content_from_blackboard = unittest.mock.MagicMock(  # pylint: disable=protected-access
+        client.delete_course_content_from_blackboard = unittest.mock.MagicMock(
             name='delete blackboard content',
             return_value=successful_response
         )
@@ -711,7 +712,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         Blackboard and correctly finds a gradebook column on a follow up page of results.
         """
         client = self._create_new_mock_client()
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         blackboard_page_one_response = {
             'results': [{
@@ -759,7 +760,7 @@ class TestBlackboardApiClient(unittest.TestCase):
             )
 
             # find the grade column on the second page of results
-            column_id = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+            column_id = client._get_or_create_integrated_grade_column(
                 self.blackboard_course_id,
                 self.blackboard_grade_column_name,
                 self.course_id
@@ -773,7 +774,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         that a gradebook column does not exist.
         """
         client = self._create_new_mock_client()
-        client._create_session()  # pylint: disable=protected-access
+        client._create_session()
 
         blackboard_page_one_response = {
             'results': [{
@@ -819,10 +820,11 @@ class TestBlackboardApiClient(unittest.TestCase):
             )
 
             # traverse over all pages, post a new column if column isn't found
-            column_id = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+            column_id = client._get_or_create_integrated_grade_column(
                 self.blackboard_course_id,
                 self.blackboard_grade_column_name,
                 self.course_id
             )
 
         assert column_id == self.blackboard_grade_column_id
+    # pylint: enable=protected-access
