@@ -12,7 +12,7 @@ aniso8601==9.0.1
     #   edx-tincan-py35
 billiard==3.6.4.0
     # via celery
-bleach==3.3.0
+bleach==3.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -24,11 +24,11 @@ certifi==2021.5.30
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
-cffi==1.14.5
+cffi==1.14.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cryptography
-chardet==4.0.0
+charset-normalizer==2.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
@@ -45,7 +45,7 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.2.0
     # via celery
-code-annotations==1.1.2
+code-annotations==1.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -74,19 +74,18 @@ django==2.2.24
     #   drf-jwt
     #   edx-django-utils
     #   edx-drf-extensions
-    #   edx-opaque-keys
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
-django-cache-memoize==0.1.9
+django-cache-memoize==0.1.10
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-config-models==2.1.2
+django-config-models==2.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-countries==5.5
+django-countries==7.2.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -104,7 +103,7 @@ django-filter==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-ipware==3.0.2
+django-ipware==3.0.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -125,7 +124,7 @@ django-simple-history==3.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-waffle==2.2.0
+django-waffle==2.2.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -148,28 +147,29 @@ drf-jwt==1.19.0
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==4.1.0
+edx-django-utils==4.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.5.0
+edx-drf-extensions==6.6.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.2.1
+edx-opaque-keys[django]==2.2.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-drf-extensions
-edx-rbac==1.4.2
+edx-rbac==1.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-rest-api-client==5.3.0
+edx-rest-api-client==5.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -182,7 +182,7 @@ future==0.18.2
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   pyjwkest
-idna==2.10
+idna==3.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
@@ -205,15 +205,15 @@ markupsafe==2.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-newrelic==6.4.3.160
+newrelic==6.6.0.162
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
-packaging==20.9
+packaging==21.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
-path==13.1.0
+path==16.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   path.py
@@ -225,7 +225,7 @@ pbr==5.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
-pillow==8.2.0
+pillow==8.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -281,7 +281,7 @@ pyyaml==5.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-requests==2.25.1
+requests==2.26.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -308,7 +308,6 @@ six==1.16.0
     #   -r requirements/base.in
     #   bleach
     #   click-repl
-    #   django-countries
     #   edx-drf-extensions
     #   edx-rbac
     #   pyjwkest
@@ -329,11 +328,11 @@ stevedore==3.3.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.15.0
+tableauserverclient==0.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-testfixtures==6.17.1
+testfixtures==6.18.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
