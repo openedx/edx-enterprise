@@ -4,7 +4,6 @@ User-facing views for the Enterprise app.
 """
 
 import datetime
-from enterprise.tasks import enterprise_enrollment_source_model
 import json
 import re
 from logging import getLogger
