@@ -3458,6 +3458,10 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             self.assertEqual(expected_response, response_json)
         self.assertEqual(len(PendingEnrollment.objects.all()), expected_num_pending_licenses)
 
+        if expected_num_pending_licenses == 1:
+            self.assertEqual(PendingEnrollment.objects.get().source.slug, 
+                EnterpriseEnrollmentSource.CUSTOMER_ADMIN)
+
         if expected_events:
             mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
         else:

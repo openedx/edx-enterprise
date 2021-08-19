@@ -4,6 +4,7 @@ User-facing views for the Enterprise app.
 """
 
 import datetime
+from enterprise.tasks import enterprise_enrollment_source_model
 import json
 import re
 from logging import getLogger
@@ -555,10 +556,13 @@ class GrantDataSharingPermissions(View):
             enterprise_customer=enterprise_customer,
             user_id=request.user.id
         )
+        enterprise_enrollment_source = EnterpriseEnrollmentSource.get_source(
+            EnterpriseEnrollmentSource.ENROLLMENT_URL)
         enterprise_customer_user.update_session(request)
         __, created = get_create_ent_enrollment(
             course_id,
             enterprise_customer_user,
+            enterprise_enrollment_source,
             license_uuid=license_uuid,
         )
         if created:
@@ -1207,6 +1211,8 @@ class HandleConsentEnrollment(View):
         # provided `enterprise_uuid`.
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
         enterprise_customer_user = get_enterprise_customer_user(request.user.id, enterprise_customer.uuid)
+        enterprise_enrollment_source = EnterpriseEnrollmentSource.get_source(
+            EnterpriseEnrollmentSource.ENROLLMENT_URL)
 
         if not course_modes:
             context_data = get_global_context(request, enterprise_customer)
@@ -1238,7 +1244,8 @@ class HandleConsentEnrollment(View):
         # enrollment
         __, created = get_create_ent_enrollment(
             course_id,
-            enterprise_customer_user
+            enterprise_customer_user,
+            enterprise_enrollment_source
         )
         if created:
             track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
