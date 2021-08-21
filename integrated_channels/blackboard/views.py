@@ -3,7 +3,7 @@ Views containing APIs for Blackboard integrated channel
 """
 
 import base64
-
+import logging
 import requests
 from rest_framework import generics
 from rest_framework.exceptions import APIException, NotFound, ParseError
@@ -16,7 +16,7 @@ from django.conf import settings
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 
-# TODO: Refactor candidate (duplication with canvas views.py)
+LOGGER = logging.getLogger(__name__)
 
 
 class BlackboardCompleteOAuthView(generics.ListAPIView):
@@ -52,6 +52,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             HTTP 404 if state is not valid or contained in the set of registered enterprises
 
     """
+
     def get(self, request, *args, **kwargs):
         app_config = apps.get_app_config('blackboard')
         oauth_token_path = app_config.oauth_token_auth_path
@@ -110,6 +111,14 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         try:
             data = auth_response.json()
             refresh_token = data['refresh_token']
+            LOGGER.info("BLACKBOARD: response from {} contained: token_type={},"
+                        "expires_in={}, scope={}, user_id={}".format(
+                            auth_token_url,
+                            data['token_type'],
+                            data['expires_in'],
+                            data['scope'],
+                            data['user_id'],
+                        ))
         except KeyError as exception:
             raise ParseError(
                 "BLACKBOARD: failed to find refresh_token in auth response. "
@@ -124,8 +133,11 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                 "BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response)
             ) from exception
 
-        enterprise_config.refresh_token = refresh_token
-        enterprise_config.save()
+        if not refresh_token:
+            LOGGER.error("BLACKBOARD: An empty refresh_token was obtained from Blackboard, not using it.")
+        else:
+            enterprise_config.refresh_token = refresh_token
+            enterprise_config.save()
 
         return Response()
 

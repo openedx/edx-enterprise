@@ -321,12 +321,30 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             }
         )
         if auth_response.status_code >= 400:
-            raise ClientError(auth_response.text, auth_response.status_code)
+            raise ClientError(
+                "Access token fetch failure: enterprise_customer_uuid: {}, blackboard_base_url: {}, "
+                "auth_response_text: {}, config_last_modified: {}".format(
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    self.enterprise_configuration.blackboard_base_url,
+                    auth_response.text,
+                    self.enterprise_configuration.modified,
+                ), auth_response.status_code)
         try:
             data = auth_response.json()
             # do not forget to save the new refresh token otherwise subsequent requests will fail
-            self.enterprise_configuration.refresh_token = data["refresh_token"]
-            self.enterprise_configuration.save()
+            fetched_refresh_token = data["refresh_token"]
+            if fetched_refresh_token and fetched_refresh_token.strip():
+                self.enterprise_configuration.refresh_token = fetched_refresh_token
+                self.enterprise_configuration.save()
+            else:
+                raise ClientError(
+                    "Refresh token is invalid. enterprise_customer_uuid: {}, blackboard_base_url: {}, "
+                    "auth_response_text: {}, config_last_modified: {}".format(
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        self.enterprise_configuration.blackboard_base_url,
+                        auth_response.text,
+                        self.enterprise_configuration.modified,
+                    ), HTTPStatus.INTERNAL_SERVER_ERROR.value)
             return data['access_token'], data["expires_in"]
         except (KeyError, ValueError) as error:
             raise ClientError(auth_response.text, auth_response.status_code) from error
