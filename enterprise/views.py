@@ -556,7 +556,8 @@ class GrantDataSharingPermissions(View):
             user_id=request.user.id
         )
         enterprise_enrollment_source = EnterpriseEnrollmentSource.get_source(
-            EnterpriseEnrollmentSource.ENROLLMENT_URL)
+            EnterpriseEnrollmentSource.ENROLLMENT_URL
+        )
         enterprise_customer_user.update_session(request)
         __, created = get_create_ent_enrollment(
             course_id,

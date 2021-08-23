@@ -1084,6 +1084,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
+        assert enrollment.source is not None
+        assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
@@ -1127,6 +1129,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
+        assert enrollment.source is not None
+        assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
         num_messages = len(mail.outbox)
         assert num_messages == 0
         enrollment_instance.enroll_user_in_course.assert_called_once_with(
@@ -1265,6 +1269,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
+        assert enrollment.source is not None
+        assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
         num_messages = len(mail.outbox)
         assert num_messages == 1
 

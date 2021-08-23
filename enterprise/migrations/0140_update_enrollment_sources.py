@@ -1,18 +1,18 @@
 from django.db import migrations
 
-ENTERPRISE_ENROLLMENT_SOURCES = {
-    'Admin Enterprise Enrollment': 'customer_admin'
+ADDITIONAL_ENTERPRISE_ENROLLMENT_SOURCES = {
+    'Customer Admin Enrollment': 'customer_admin'
 }
 
-def add_enterprise_enrollment_source(apps, schema_editor):
+def add_new_enterprise_enrollment_source(apps, schema_editor):
     enrollment_sources = apps.get_model('enterprise', 'EnterpriseEnrollmentSource')
-    for name, slug in ENTERPRISE_ENROLLMENT_SOURCES.items():
+    for name, slug in ADDITIONAL_ENTERPRISE_ENROLLMENT_SOURCES.items():
         enrollment_sources.objects.update_or_create(name=name, slug=slug)
 
 
-def drop_enterprise_enrollment_source(apps, schema_editor):
+def drop_new_enterprise_enrollment_source(apps, schema_editor):
     enrollment_sources = apps.get_model('enterprise', 'EnterpriseEnrollmentSource')
-    enrollment_sources.objects.filter(name__in=ENTERPRISE_ENROLLMENT_SOURCES).delete()
+    enrollment_sources.objects.filter(name__in=ADDITIONAL_ENTERPRISE_ENROLLMENT_SOURCES).delete()
 
 class Migration(migrations.Migration):
 
@@ -21,6 +21,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(code=add_enterprise_enrollment_source, reverse_code=drop_enterprise_enrollment_source)
+        migrations.RunPython(
+            code=add_new_enterprise_enrollment_source, reverse_code=drop_new_enterprise_enrollment_source
+        )
 
     ]

@@ -1668,7 +1668,15 @@ def get_create_ent_enrollment(
 
     If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
     """
-    source = enterprise_enrollment_source
+    if enterprise_enrollment_source is not None:
+        source = enterprise_enrollment_source
+    else:
+        raise TypeError("Failed to create enterprise enrollment for {user} in course {course}: "
+                        "Enterprise enrollment source is not defined".format(
+                            user=enterprise_customer_user.user_id,
+                            course=course_id,
+                        )
+                        )
     # Create the Enterprise backend database records for this course
     # enrollment
     enterprise_course_enrollment, created = enterprise_course_enrollment_model().objects.get_or_create(
