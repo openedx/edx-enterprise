@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.24]
+---------
+* Adding a new EnterpriseEnrollmentSource to be used for bulk enrollment.
+
 [3.27.23]
 ---------
 * Add logging of user id for troubleshooting in a couple of locations.

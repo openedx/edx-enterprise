@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """
 Database models for enterprise.
@@ -1273,6 +1272,7 @@ class EnterpriseEnrollmentSource(TimeStampedModel):
 
     MANUAL = 'manual'
     API = 'enterprise_api'
+    CUSTOMER_ADMIN = 'customer_admin'
     ENROLLMENT_URL = 'enrollment_url'
     OFFER_REDEMPTION = 'offer_redemption'
     ENROLLMENT_TASK = 'enrollment_task'

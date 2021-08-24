@@ -1660,6 +1660,7 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
 def get_create_ent_enrollment(
         course_id,
         enterprise_customer_user,
+        enterprise_enrollment_source,
         license_uuid=None,
 ):
     """
@@ -1667,7 +1668,15 @@ def get_create_ent_enrollment(
 
     If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
     """
-    source = enterprise_enrollment_source_model().get_source(enterprise_enrollment_source_model().ENROLLMENT_URL)
+    if enterprise_enrollment_source is not None:
+        source = enterprise_enrollment_source
+    else:
+        raise TypeError("Failed to create enterprise enrollment for {user} in course {course}: "
+                        "Enterprise enrollment source is not defined".format(
+                            user=enterprise_customer_user.user_id,
+                            course=course_id,
+                        )
+                        )
     # Create the Enterprise backend database records for this course
     # enrollment
     enterprise_course_enrollment, created = enterprise_course_enrollment_model().objects.get_or_create(
@@ -1737,7 +1746,10 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                 succeeded = customer_admin_enroll_user(enterprise_customer, user, course_mode, course_run_key)
                 if succeeded:
                     enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
-                    get_create_ent_enrollment(course_run_key, enterprise_customer_user, license_uuid=license_uuid)
+                    enrollment_source = enterprise_enrollment_source_model().get_source(
+                        enterprise_enrollment_source_model().CUSTOMER_ADMIN)
+                    get_create_ent_enrollment(
+                        course_run_key, enterprise_customer_user, enrollment_source, license_uuid=license_uuid)
                     results['successes'].append({'user': user, 'email': user_email, 'course_run_key': course_run_key})
                 else:
                     results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
@@ -1747,7 +1759,7 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                     course_mode,
                     course_run_key,
                     enrollment_source=enterprise_enrollment_source_model().get_source(
-                        enterprise_enrollment_source_model().MANUAL
+                        enterprise_enrollment_source_model().CUSTOMER_ADMIN
                     ),
                     discount=discount,
                     license_uuid=license_uuid
