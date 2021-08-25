@@ -12,11 +12,12 @@ import requests
 from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
+from django.db import transaction
 
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +35,8 @@ COURSE_CONTENT_DELETE_PATH = '/learn/api/public/v1/courses/{course_id}/contents/
 GRADEBOOK_COLUMN_DESC = "edX learner's grade"
 PAGE_TRAVERSAL_LIMIT = 250
 
+CHANNEL_NAME = 'blackboard'
+
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
     """
@@ -49,7 +52,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             configuration model for connecting with Blackboard
         """
         super().__init__(enterprise_configuration)
-        self.config = apps.get_app_config('blackboard')
+        self.config = apps.get_app_config(CHANNEL_NAME)
         self.session = None
         self.expires_at = None
 
@@ -70,7 +73,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['course_metadata']['courseId'] = course_id_generated
 
-        LOGGER.info("Creating course with courseId: %s", external_id)
+        LOGGER.info(generate_formatted_log(
+            CHANNEL_NAME.upper(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            external_id,
+            f"Creating course with courseId: {external_id}, and generated course_id: {course_id_generated}"
+        )
+        )
         self._create_session()
         create_url = self.generate_course_create_url()
         response = self._post(create_url, copy_of_channel_metadata['course_metadata'])
@@ -83,7 +93,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 HTTPStatus.NOT_FOUND.value
             )
 
-        LOGGER.info("Creating content page for Blackboard course with course ID={}".format(external_id))
+        LOGGER.info(generate_formatted_log(
+            CHANNEL_NAME.upper(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            external_id,
+            f"Creating content page for Blackboard course with course ID={external_id}"
+        )
+        )
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
         success_body = 'Successfully created Blackboard integration course={bb_course_id} with integration ' \
@@ -303,12 +320,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             ClientError: If an unexpected response format was received that we could not parse.
         """
 
-        if not self.enterprise_configuration.refresh_token:
-            raise ClientError(
-                "Failed to generate oauth access token: Refresh token required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR.value
-            )
-
         if (not self.enterprise_configuration.blackboard_base_url
                 or not self.config.oauth_token_auth_path):
             raise ClientError(
@@ -320,37 +331,53 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.config.oauth_token_auth_path,
         )
 
-        auth_token_params = {
-            'grant_type': 'refresh_token',
-            'refresh_token': self.enterprise_configuration.refresh_token,
-        }
-
-        auth_response = requests.post(
-            auth_token_url,
-            auth_token_params,
-            headers={
-                'Authorization': self._create_auth_header(),
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        )
-        if auth_response.status_code >= 400:
-            raise self._create_client_error("Access token fetch failure", auth_response)
-        try:
-            data = auth_response.json()
-            # do not forget to save the new refresh token otherwise subsequent requests will fail
-            fetched_refresh_token = data["refresh_token"]
-            if fetched_refresh_token and fetched_refresh_token.strip():
-                self.enterprise_configuration.refresh_token = fetched_refresh_token
-                self.enterprise_configuration.save()
-            else:
-                raise self._create_client_error(
-                    "Refresh token is invalid",
-                    auth_response,
-                    HTTPStatus.INTERNAL_SERVER_ERROR.value,
+        # Refresh token handling atomic block
+        with transaction.atomic():
+            """
+            Using atomic here because we need to use the most recently obtained refresh token always
+            since any time we use a refresh token to get a new one, the prior one is invalidated
+            and we MUST use the new one for the next request.
+            """
+            if not self.enterprise_configuration.refresh_token:
+                raise ClientError(
+                    "Failed to generate oauth access token: Refresh token required.",
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
                 )
-            return data['access_token'], data["expires_in"]
-        except (KeyError, ValueError) as error:
-            raise ClientError(auth_response.text, auth_response.status_code) from error
+
+            auth_token_params = {
+                'grant_type': 'refresh_token',
+                'refresh_token': self.enterprise_configuration.refresh_token,
+            }
+
+            auth_response = requests.post(
+                auth_token_url,
+                auth_token_params,
+                headers={
+                    'Authorization': self._create_auth_header(),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            )
+            if auth_response.status_code >= 400:
+                raise self._create_client_error("Access token fetch failure", auth_response)
+            try:
+                data = auth_response.json()
+                # do not forget to save the new refresh token otherwise subsequent requests will fail
+                fetched_refresh_token = data["refresh_token"]
+                if fetched_refresh_token and fetched_refresh_token.strip():
+                    self.enterprise_configuration.refresh_token = fetched_refresh_token
+                    self.enterprise_configuration.save()
+                    # We do not want any fail-prone code in this atomic block after this line
+                    # it's because if something else fails, it will roll back the just-saved
+                    # refresh token!
+                else:
+                    raise self._create_client_error(
+                        "Refresh token is invalid",
+                        auth_response,
+                        HTTPStatus.INTERNAL_SERVER_ERROR.value,
+                    )
+                return data['access_token'], data["expires_in"]
+            except (KeyError, ValueError) as error:
+                raise ClientError(auth_response.text, auth_response.status_code) from error
 
     def _create_auth_header(self):
         """
