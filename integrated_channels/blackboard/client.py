@@ -392,11 +392,13 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     # it's because if something else fails, it will roll back the just-saved
                     # refresh token!
                 else:
-                    raise self._create_client_error(
-                        "Refresh token is invalid",
-                        auth_response,
-                        HTTPStatus.INTERNAL_SERVER_ERROR.value,
-                    )
+                    LOGGER.info(generate_formatted_log(
+                        CHANNEL_NAME.upper(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "New refresh token was not recived, continuing to use existing one."
+                    ))
                 return data['access_token'], data["expires_in"]
             except (KeyError, ValueError) as error:
                 raise ClientError(auth_response.text, auth_response.status_code) from error
