@@ -327,6 +327,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
     def _get_oauth_access_token(self):
         """Fetch access token using refresh_token workflow from Blackboard
 
+        Using atomic block for refresh token handling code, because we need to use the
+        most recently obtained refresh token always
+        Since any time we use a refresh token to get a new one, the prior one is invalidated
+        and we MUST use the new one for the next request.
+
         Returns:
             access_token (str): the OAuth access token to access the Blackboard server
             expires_in (int): the number of seconds after which token will expire
@@ -348,11 +353,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         # Refresh token handling atomic block
         with transaction.atomic():
-            """
-            Using atomic here because we need to use the most recently obtained refresh token always
-            since any time we use a refresh token to get a new one, the prior one is invalidated
-            and we MUST use the new one for the next request.
-            """
             if not self.enterprise_configuration.refresh_token:
                 raise ClientError(
                     "Failed to generate oauth access token: Refresh token required.",
@@ -380,6 +380,13 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 fetched_refresh_token = data["refresh_token"]
                 if fetched_refresh_token and fetched_refresh_token.strip():
                     self.enterprise_configuration.refresh_token = fetched_refresh_token
+                    LOGGER.info(generate_formatted_log(
+                        CHANNEL_NAME.upper(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "Fetched a new refresh token, saving it to database"
+                    ))
                     self.enterprise_configuration.save()
                     # We do not want any fail-prone code in this atomic block after this line
                     # it's because if something else fails, it will roll back the just-saved
