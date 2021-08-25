@@ -4,6 +4,7 @@ Views containing APIs for Blackboard integrated channel
 
 import base64
 import logging
+
 import requests
 from rest_framework import generics
 from rest_framework.exceptions import APIException, NotFound, ParseError
