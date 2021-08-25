@@ -279,6 +279,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.expires_at,
         )
 
+    def _create_client_error(self, message_prefix, auth_response, status_code=None):
+        """
+        Returns: A ClientError instance with useful contextual information
+        If status_code is not provided, includes the auth_response.status_code by default.
+        """
+        return ClientError(f"BLACKBOARD: {message_prefix}, "
+                           f"enterprise_customer_uuid: {self.enterprise_configuration.enterprise_customer.uuid}, "
+                           f"blackboard_base_url: {self.enterprise_configuration.blackboard_base_url}, "
+                           f"auth_response_text: {auth_response.text}"
+                           f"config_last_modified: {self.enterprise_configuration.modified}",
+                           status_code if status_code else auth_response.status_code,
+                           )
+
     def _get_oauth_access_token(self):
         """Fetch access token using refresh_token workflow from Blackboard
 
@@ -321,14 +334,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             }
         )
         if auth_response.status_code >= 400:
-            raise ClientError(
-                "Access token fetch failure: enterprise_customer_uuid: {}, blackboard_base_url: {}, "
-                "auth_response_text: {}, config_last_modified: {}".format(
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    self.enterprise_configuration.blackboard_base_url,
-                    auth_response.text,
-                    self.enterprise_configuration.modified,
-                ), auth_response.status_code)
+            raise self._create_client_error("Access token fetch failure", auth_response)
         try:
             data = auth_response.json()
             # do not forget to save the new refresh token otherwise subsequent requests will fail
@@ -337,14 +343,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 self.enterprise_configuration.refresh_token = fetched_refresh_token
                 self.enterprise_configuration.save()
             else:
-                raise ClientError(
-                    "Refresh token is invalid. enterprise_customer_uuid: {}, blackboard_base_url: {}, "
-                    "auth_response_text: {}, config_last_modified: {}".format(
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        self.enterprise_configuration.blackboard_base_url,
-                        auth_response.text,
-                        self.enterprise_configuration.modified,
-                    ), HTTPStatus.INTERNAL_SERVER_ERROR.value)
+                raise self._create_client_error(
+                    "Refresh token is invalid",
+                    auth_response,
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value,
+                )
             return data['access_token'], data["expires_in"]
         except (KeyError, ValueError) as error:
             raise ClientError(auth_response.text, auth_response.status_code) from error
