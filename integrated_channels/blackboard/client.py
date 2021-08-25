@@ -83,9 +83,24 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         )
         self._create_session()
         create_url = self.generate_course_create_url()
-        response = self._post(create_url, copy_of_channel_metadata['course_metadata'])
+        try:
+            response = self._post(create_url, copy_of_channel_metadata['course_metadata'])
+        except ClientError as error:
+            if error.status_code == 409 and 'Unique ID conflicts' in error.message:
+                # course already exists!
+                msg_body = f"Course already exists with course_id {external_id}, not attempting creation"
+                LOGGER.info(generate_formatted_log(
+                    CHANNEL_NAME,
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    external_id,
+                    msg_body,
+                ))
+                return HTTPStatus.NOT_MODIFIED.value, msg_body
+            else:
+                raise error
 
-        # We wrap error handling in the post, but sanity check for the ID
+            # We wrap error handling in the post, but sanity check for the ID
         bb_course_id = response.json().get('id')
         if not bb_course_id:
             raise ClientError(
