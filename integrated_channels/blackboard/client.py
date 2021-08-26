@@ -35,8 +35,6 @@ COURSE_CONTENT_DELETE_PATH = '/learn/api/public/v1/courses/{course_id}/contents/
 GRADEBOOK_COLUMN_DESC = "edX learner's grade"
 PAGE_TRAVERSAL_LIMIT = 250
 
-CHANNEL_NAME = 'blackboard'
-
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
     """
@@ -52,7 +50,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             configuration model for connecting with Blackboard
         """
         super().__init__(enterprise_configuration)
-        self.config = apps.get_app_config(CHANNEL_NAME)
+        self.config = apps.get_app_config('blackboard')
         self.session = None
         self.expires_at = None
 
@@ -74,13 +72,12 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata['course_metadata']['courseId'] = course_id_generated
 
         LOGGER.info(generate_formatted_log(
-            CHANNEL_NAME.upper(),
+            self.config.brief_channel_name.upper(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             external_id,
             f"Creating course with courseId: {external_id}, and generated course_id: {course_id_generated}"
-        )
-        )
+        ))
         self._create_session()
         create_url = self.generate_course_create_url()
         try:
@@ -88,9 +85,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         except ClientError as error:
             if error.status_code == 409 and 'Unique ID conflicts' in error.message:
                 # course already exists!
-                msg_body = f"Course already exists with course_id {external_id}, not attempting creation"
+                msg_body = f"Course already exists with course_id {external_id}, and generated course_id: {course_id_generated}, not attempting creation"
                 LOGGER.info(generate_formatted_log(
-                    CHANNEL_NAME,
+                    self.config.brief_channel_name.upper(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     external_id,
@@ -109,11 +106,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             )
 
         LOGGER.info(generate_formatted_log(
-            CHANNEL_NAME.upper(),
+            self.config.brief_channel_name.upper(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             external_id,
-            f"Creating content page for Blackboard course with course ID={external_id}"
+            f"Creating content page for Blackboard course with course ID={external_id}, and generated course_id: {course_id_generated}"
         ))
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
@@ -312,7 +309,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
     def _formatted_message(self, msg):
         generate_formatted_log(
-            CHANNEL_NAME.upper(),
+            self.config.brief_channel_name.upper(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             None,
