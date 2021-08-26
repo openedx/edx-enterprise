@@ -61,7 +61,7 @@ class TestCanvasUtils(unittest.TestCase):
             return_value=success_response
         )
         root_account = CanvasUtil.find_root_canvas_account(self.enterprise_config, mock_session)
-        assert root_account['id'] == 1  # pylint: disable=unsubscriptable-object
+        assert root_account['id'] == 1
 
     def test_find_root_canvas_account_not_found(self):
         success_response = unittest.mock.Mock(spec=Response)

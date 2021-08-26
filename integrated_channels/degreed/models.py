@@ -10,7 +10,6 @@ from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.degreed.exporters.content_metadata import DegreedContentMetadataExporter
 from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
@@ -21,7 +20,6 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 LOGGER = getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class DegreedGlobalConfiguration(ConfigurationModel):
     """
     The global configuration for integrating with Degreed.
@@ -66,7 +64,6 @@ class DegreedGlobalConfiguration(ConfigurationModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Degreed.
@@ -180,7 +177,6 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         return DegreedContentMetadataExporter(user, self)
 
 
-@python_2_unicode_compatible
 class DegreedLearnerDataTransmissionAudit(models.Model):
     """
     The payload we sent to Degreed at a given point in time for an enterprise course enrollment.

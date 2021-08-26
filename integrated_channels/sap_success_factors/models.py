@@ -9,7 +9,6 @@ from logging import getLogger
 from config_models.models import ConfigurationModel
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from integrated_channels.exceptions import ClientError
@@ -28,7 +27,6 @@ from integrated_channels.utils import convert_comma_separated_string_to_list
 LOGGER = getLogger(__name__)
 
 
-@python_2_unicode_compatible
 class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
     """
     The global configuration for integrating with SuccessFactors.
@@ -58,7 +56,6 @@ class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
         return self.__str__()
 
 
-@python_2_unicode_compatible
 class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with SuccessFactors.
@@ -231,7 +228,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             )
 
 
-@python_2_unicode_compatible
 class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     """
     The payload we sent to SuccessFactors at a given point in time for an enterprise course enrollment.
