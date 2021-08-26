@@ -85,7 +85,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         except ClientError as error:
             if error.status_code == 409 and 'Unique ID conflicts' in error.message:
                 # course already exists!
-                msg_body = f"Course already exists with course_id {external_id}, and generated course_id: {course_id_generated}, not attempting creation"
+                msg_body = (f"Course already exists with course_id {external_id},"
+                            f" and generated course_id: {course_id_generated}, not attempting creation")
                 LOGGER.info(generate_formatted_log(
                     self.config.brief_channel_name.upper(),
                     self.enterprise_configuration.enterprise_customer.uuid,
@@ -110,7 +111,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             external_id,
-            f"Creating content page for Blackboard course with course ID={external_id}, and generated course_id: {course_id_generated}"
+            (f"Creating content page for Blackboard course with course ID={external_id},"
+             f" and generated course_id: {course_id_generated}")
         ))
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
