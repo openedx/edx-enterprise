@@ -87,7 +87,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 # course already exists!
                 msg_body = (f"Course already exists with course_id {external_id},"
                             f" and generated course_id: {course_id_generated}, not attempting creation")
-                LOGGER.info(generate_formatted_log(
+                LOGGER.warning(generate_formatted_log(
                     self.config.brief_channel_name.upper(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
