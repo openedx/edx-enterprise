@@ -100,7 +100,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             else:
                 raise error
 
-            # We wrap error handling in the post, but sanity check for the ID
+        # We wrap error handling in the post, but sanity check for the ID
         bb_course_id = response.json().get('id')
         if not bb_course_id:
             raise ClientError(
@@ -114,8 +114,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             None,
             external_id,
             f"Creating content page for Blackboard course with course ID={external_id}"
-        )
-        )
+        ))
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
         success_body = 'Successfully created Blackboard integration course={bb_course_id} with integration ' \
@@ -311,18 +310,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.expires_at,
         )
 
-    def _create_client_error(self, message_prefix, auth_response):
-        """
-        Returns: A ClientError instance with useful contextual information
-        """
-        return ClientError(f"BLACKBOARD: {message_prefix}, "
-                           f"enterprise_customer_uuid: {self.enterprise_configuration.enterprise_customer.uuid}, "
-                           f"blackboard_base_url: {self.enterprise_configuration.blackboard_base_url}, "
-                           f"auth_response_text: {auth_response.text}"
-                           f"config_last_modified: {self.enterprise_configuration.modified}",
-                           auth_response.status_code,
-                           )
-
     def _formatted_message(self, msg):
         generate_formatted_log(
             CHANNEL_NAME.upper(),
@@ -387,7 +374,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 }
             )
             if auth_response.status_code >= 400:
-                raise self._create_client_error("Access token fetch failure", auth_response)
+                raise ClientError(
+                    f"BLACKBOARD: Access/Refresh token fetch failure, "
+                    f"enterprise_customer_uuid: {self.enterprise_configuration.enterprise_customer.uuid}, "
+                    f"blackboard_base_url: {self.enterprise_configuration.blackboard_base_url}, "
+                    f"auth_response_text: {auth_response.text}"
+                    f"config_last_modified: {self.enterprise_configuration.modified}",
+                    auth_response.status_code,
+                )
             try:
                 data = auth_response.json()
                 # do not forget to save the new refresh token otherwise subsequent requests will fail
