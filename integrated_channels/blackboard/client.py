@@ -323,6 +323,21 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                            auth_response.status_code,
                            )
 
+    def _formatted_message(self, msg):
+        generate_formatted_log(
+            CHANNEL_NAME.upper(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            None,
+            msg,
+        )
+
+    def _log_info(self, msg):
+        LOGGER.info(self._formatted_message(msg))
+
+    def _log_error(self, msg):
+        LOGGER.error(self._formatted_message(msg))
+
     def _get_oauth_access_token(self):
         """Fetch access token using refresh_token workflow from Blackboard
 
@@ -377,34 +392,17 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 data = auth_response.json()
                 # do not forget to save the new refresh token otherwise subsequent requests will fail
                 if "refresh_token" not in data:
-                    LOGGER.info(generate_formatted_log(
-                        CHANNEL_NAME.upper(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        "Server did not return refresh_token, keeping existing one"
-                    ))
+                    self._log_info("Server did not return refresh_token, keeping existing one")
                 else:
                     # refresh token was returned by server, needs to be used
                     fetched_refresh_token = data["refresh_token"]
                     if not fetched_refresh_token.strip():
                         # we are out of luck, can't use this invalid token
-                        LOGGER.error(generate_formatted_log(
-                            CHANNEL_NAME.upper(),
-                            self.enterprise_configuration.enterprise_customer.uuid,
-                            None,
-                            None,
-                            "Fetched a new refresh token, but it was empty, not using it!"
-                        ))
+                        # and we probably can't get unstuck without customer re-doing oauth url workflow
+                        self._log_error("Fetched a new refresh token, but it was empty, not using it!")
                     else:
                         self.enterprise_configuration.refresh_token = fetched_refresh_token
-                        LOGGER.info(generate_formatted_log(
-                            CHANNEL_NAME.upper(),
-                            self.enterprise_configuration.enterprise_customer.uuid,
-                            None,
-                            None,
-                            "Fetched a new refresh token, replacing current one"
-                        ))
+                        self._log_info("Fetched a new refresh token, replacing current one")
                         self.enterprise_configuration.save()
                         # We do not want any fail-prone code in this atomic block after this line
                         # it's because if something else fails, it will roll back the just-saved
