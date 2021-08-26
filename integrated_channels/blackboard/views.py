@@ -22,15 +22,19 @@ LOGGER = logging.getLogger(__name__)
 
 def log_auth_response(auth_token_url, data):
     """
-    Logs the response from a refresh_token fetch endpoint
+    Logs the response from a refresh_token fetch.
+    some fields may be absent in the response:
+    ref: https://www.oauth.com/oauth2-servers/access-tokens/access-token-response/
     """
+    scope = data['scope'] if 'scope' in data else 'not_found'
+    user_id = data['user_id'] if 'user_id' in data else 'not_found'
     LOGGER.info("BLACKBOARD: response from {} contained: token_type={},"
                 "expires_in={}, scope={}, user_id={}".format(
                     auth_token_url,
                     data['token_type'],
                     data['expires_in'],
-                    data['scope'],
-                    data['user_id'],
+                    scope,
+                    user_id,
                 ))
 
 
