@@ -20,6 +20,20 @@ from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerCo
 LOGGER = logging.getLogger(__name__)
 
 
+def log_auth_response(auth_token_url, data):
+    """
+    Logs the response from a refresh_token fetch endpoint
+    """
+    LOGGER.info("BLACKBOARD: response from {} contained: token_type={},"
+                "expires_in={}, scope={}, user_id={}".format(
+                    auth_token_url,
+                    data['token_type'],
+                    data['expires_in'],
+                    data['scope'],
+                    data['user_id'],
+                ))
+
+
 class BlackboardCompleteOAuthView(generics.ListAPIView):
     """
         **Use Cases**
@@ -101,6 +115,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         }
 
         auth_token_url = urljoin(enterprise_config.blackboard_base_url, oauth_token_path)
+
         auth_response = requests.post(
             auth_token_url,
             access_token_request_params,
@@ -111,18 +126,24 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
 
         try:
             data = auth_response.json()
+            if 'refresh_token' not in data:
+                raise ValueError("BLACKBOARD: failed to find refresh_token in auth response. "
+                                 "Auth response text: {}, Response code: {}, JSON response: {}".format(
+                                     auth_response.text,
+                                     auth_response.status_code,
+                                     data,
+                                 ))
+
+            log_auth_response(auth_token_url, data)
             refresh_token = data['refresh_token']
-            LOGGER.info("BLACKBOARD: response from {} contained: token_type={},"
-                        "expires_in={}, scope={}, user_id={}".format(
-                            auth_token_url,
-                            data['token_type'],
-                            data['expires_in'],
-                            data['scope'],
-                            data['user_id'],
-                        ))
+            if refresh_token.strip():
+                enterprise_config.refresh_token = refresh_token
+                enterprise_config.save()
+            else:
+                LOGGER.error("BLACKBOARD: Invalid/empty refresh_token! Cannot use it.")
         except KeyError as exception:
             raise ParseError(
-                "BLACKBOARD: failed to find refresh_token in auth response. "
+                "BLACKBOARD: failed to find required data in auth response. "
                 "Auth response text: {}, Response code: {}, JSON response: {}".format(
                     auth_response.text,
                     auth_response.status_code,
@@ -133,12 +154,6 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             raise ParseError(
                 "BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response)
             ) from exception
-
-        if not refresh_token:
-            LOGGER.error("BLACKBOARD: An empty refresh_token was obtained from Blackboard, not using it.")
-        else:
-            enterprise_config.refresh_token = refresh_token
-            enterprise_config.save()
 
         return Response()
 
