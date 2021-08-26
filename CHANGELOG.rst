@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.25]
+---------
+* Blackboard Integrated channel oauth2 refresh token handling fixes.
+
 [3.27.24]
 ---------
 * Adding a new EnterpriseEnrollmentSource to be used for bulk enrollment.
