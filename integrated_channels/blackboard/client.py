@@ -376,28 +376,39 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             try:
                 data = auth_response.json()
                 # do not forget to save the new refresh token otherwise subsequent requests will fail
-                fetched_refresh_token = data["refresh_token"]
-                if fetched_refresh_token and fetched_refresh_token.strip():
-                    self.enterprise_configuration.refresh_token = fetched_refresh_token
+                if "refresh_token" not in data:
                     LOGGER.info(generate_formatted_log(
                         CHANNEL_NAME.upper(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "Fetched a new refresh token, saving it to database"
+                        "Server did not return refresh_token, keeping existing one"
                     ))
-                    self.enterprise_configuration.save()
-                    # We do not want any fail-prone code in this atomic block after this line
-                    # it's because if something else fails, it will roll back the just-saved
-                    # refresh token!
                 else:
-                    LOGGER.info(generate_formatted_log(
-                        CHANNEL_NAME.upper(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        "New refresh token was not recived, continuing to use existing one."
-                    ))
+                    # refresh token was returned by server, needs to be used
+                    fetched_refresh_token = data["refresh_token"]
+                    if not fetched_refresh_token.strip():
+                        # we are out of luck, can't use this invalid token
+                        LOGGER.error(generate_formatted_log(
+                            CHANNEL_NAME.upper(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            "Fetched a new refresh token, but it was empty, not using it!"
+                        ))
+                    else:
+                        self.enterprise_configuration.refresh_token = fetched_refresh_token
+                        LOGGER.info(generate_formatted_log(
+                            CHANNEL_NAME.upper(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            "Fetched a new refresh token, replacing current one"
+                        ))
+                        self.enterprise_configuration.save()
+                        # We do not want any fail-prone code in this atomic block after this line
+                        # it's because if something else fails, it will roll back the just-saved
+                        # refresh token!
                 return data['access_token'], data["expires_in"]
             except (KeyError, ValueError) as error:
                 raise ClientError(auth_response.text, auth_response.status_code) from error
