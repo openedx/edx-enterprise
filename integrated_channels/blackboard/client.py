@@ -311,17 +311,16 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.expires_at,
         )
 
-    def _create_client_error(self, message_prefix, auth_response, status_code=None):
+    def _create_client_error(self, message_prefix, auth_response):
         """
         Returns: A ClientError instance with useful contextual information
-        If status_code is not provided, includes the auth_response.status_code by default.
         """
         return ClientError(f"BLACKBOARD: {message_prefix}, "
                            f"enterprise_customer_uuid: {self.enterprise_configuration.enterprise_customer.uuid}, "
                            f"blackboard_base_url: {self.enterprise_configuration.blackboard_base_url}, "
                            f"auth_response_text: {auth_response.text}"
                            f"config_last_modified: {self.enterprise_configuration.modified}",
-                           status_code if status_code else auth_response.status_code,
+                           auth_response.status_code,
                            )
 
     def _get_oauth_access_token(self):
