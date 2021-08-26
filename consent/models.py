@@ -10,7 +10,6 @@ from simple_history.models import HistoricalRecords
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -222,7 +221,7 @@ class Consent(TimeStampedModel):
         return bool(self.pk)
 
 
-class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-no-explicit-unicode
+class DataSharingConsent(ConsentModelMixin, Consent):
     """
     An abstract representation of Data Sharing Consent granted to an Enterprise for a course by a User.
 
@@ -254,7 +253,6 @@ class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-n
     history = HistoricalRecords()
 
 
-@python_2_unicode_compatible
 class DataSharingConsentTextOverrides(TimeStampedModel):
     """
     Stores texts overrides for data sharing consent page.
