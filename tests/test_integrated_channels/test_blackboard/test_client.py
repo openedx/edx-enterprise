@@ -6,6 +6,7 @@ Tests for clients in integrated_channels.blackboard.
 import json
 import random
 import unittest
+from urllib.parse import urljoin
 
 import pytest
 import responses
@@ -63,6 +64,52 @@ class TestBlackboardApiClient(unittest.TestCase):
             return_value=(self.token, 10000)
         )
         return client
+
+    def test_oauth_absent_refresh_token_fails(self):
+        enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
+            client_id='id2',
+            client_secret='secret',
+            blackboard_base_url='https://base.url.2',
+            refresh_token='',
+        )
+        client = BlackboardAPIClient(enterprise_config)
+        with self.assertRaises(ClientError):
+            client._get_oauth_access_token()
+        assert enterprise_config.refresh_token == ''
+
+    def test_oauth_valid_refresh_token_replaces_existing(self):
+        """
+        Our db already contains the initial refresh_token
+        a valid refresh_token is used to replace it, and access_token is obtained
+        """
+        enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
+            client_id='id3',
+            client_secret='secret',
+            blackboard_base_url='https://base.url.3',
+            refresh_token='a-token',
+        )
+        client = BlackboardAPIClient(enterprise_config)
+        auth_token_url = urljoin(
+            enterprise_config.blackboard_base_url,
+            client.config.oauth_token_auth_path
+        )
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                auth_token_url,
+                json={
+                    'refresh_token': 'new-refresh-token',
+                    'token_type': 'refresh_token',
+                    'expires_in': '2020-02-01',
+                    'access_token': 'a0token',
+                },
+                status=200
+            )
+            assert enterprise_config.refresh_token == 'a-token'
+            access_token, expires_in = client._get_oauth_access_token()
+            assert access_token == 'a0token'
+            assert expires_in == '2020-02-01'
+            assert enterprise_config.refresh_token == 'new-refresh-token'
 
     def test_client_has_valid_configs(self):
         api_client = BlackboardAPIClient(self.enterprise_config)
