@@ -3,6 +3,7 @@ Views containing APIs for Blackboard integrated channel
 """
 
 import base64
+import logging
 
 import requests
 from rest_framework import generics
@@ -16,7 +17,25 @@ from django.conf import settings
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 
-# TODO: Refactor candidate (duplication with canvas views.py)
+LOGGER = logging.getLogger(__name__)
+
+
+def log_auth_response(auth_token_url, data):
+    """
+    Logs the response from a refresh_token fetch.
+    some fields may be absent in the response:
+    ref: https://www.oauth.com/oauth2-servers/access-tokens/access-token-response/
+    """
+    scope = data['scope'] if 'scope' in data else 'not_found'
+    user_id = data['user_id'] if 'user_id' in data else 'not_found'
+    LOGGER.info("BLACKBOARD: response from {} contained: token_type={},"
+                "expires_in={}, scope={}, user_id={}".format(
+                    auth_token_url,
+                    data['token_type'],
+                    data['expires_in'],
+                    scope,
+                    user_id,
+                ))
 
 
 class BlackboardCompleteOAuthView(generics.ListAPIView):
@@ -52,6 +71,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             HTTP 404 if state is not valid or contained in the set of registered enterprises
 
     """
+
     def get(self, request, *args, **kwargs):
         app_config = apps.get_app_config('blackboard')
         oauth_token_path = app_config.oauth_token_auth_path
@@ -99,6 +119,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         }
 
         auth_token_url = urljoin(enterprise_config.blackboard_base_url, oauth_token_path)
+
         auth_response = requests.post(
             auth_token_url,
             access_token_request_params,
@@ -109,10 +130,24 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
 
         try:
             data = auth_response.json()
+            if 'refresh_token' not in data:
+                raise ValueError("BLACKBOARD: failed to find refresh_token in auth response. "
+                                 "Auth response text: {}, Response code: {}, JSON response: {}".format(
+                                     auth_response.text,
+                                     auth_response.status_code,
+                                     data,
+                                 ))
+
+            log_auth_response(auth_token_url, data)
             refresh_token = data['refresh_token']
+            if refresh_token.strip():
+                enterprise_config.refresh_token = refresh_token
+                enterprise_config.save()
+            else:
+                LOGGER.error("BLACKBOARD: Invalid/empty refresh_token! Cannot use it.")
         except KeyError as exception:
             raise ParseError(
-                "BLACKBOARD: failed to find refresh_token in auth response. "
+                "BLACKBOARD: failed to find required data in auth response. "
                 "Auth response text: {}, Response code: {}, JSON response: {}".format(
                     auth_response.text,
                     auth_response.status_code,
@@ -123,9 +158,6 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             raise ParseError(
                 "BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response)
             ) from exception
-
-        enterprise_config.refresh_token = refresh_token
-        enterprise_config.save()
 
         return Response()
 

@@ -761,6 +761,7 @@ class BlackboardEnterpriseCustomerConfigurationFactory(factory.django.DjangoMode
     blackboard_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     client_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     client_secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    refresh_token = factory.LazyAttribute(lambda x: FAKER.uuid4())
 
 
 class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):

@@ -16,6 +16,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     """
     Tests for BlackboardConfigurationViewSet REST endpoints
     """
+
     def setUp(self):
         super().setUp()
         self.user.is_superuser = True
@@ -29,6 +30,7 @@ class BlackboardConfigurationViewSetTests(APITest):
 
         self.enterprise_customer_conf = factories.BlackboardEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
+            refresh_token='',
         )
 
     @mock.patch('enterprise.rules.crum.get_current_request')

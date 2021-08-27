@@ -12,11 +12,12 @@ import requests
 from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
+from django.db import transaction
 
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 
@@ -70,10 +71,32 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['course_metadata']['courseId'] = course_id_generated
 
-        LOGGER.info("Creating course with courseId: %s", external_id)
+        LOGGER.info(generate_formatted_log(
+            self.config.brief_channel_name.upper(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            external_id,
+            f"Creating course with courseId: {external_id}, and generated course_id: {course_id_generated}"
+        ))
         self._create_session()
         create_url = self.generate_course_create_url()
-        response = self._post(create_url, copy_of_channel_metadata['course_metadata'])
+        try:
+            response = self._post(create_url, copy_of_channel_metadata['course_metadata'])
+        except ClientError as error:
+            if error.status_code == 409 and 'Unique ID conflicts' in error.message:
+                # course already exists!
+                msg_body = (f"Course already exists with course_id {external_id},"
+                            f" and generated course_id: {course_id_generated}, not attempting creation")
+                LOGGER.warning(generate_formatted_log(
+                    self.config.brief_channel_name.upper(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    external_id,
+                    msg_body,
+                ))
+                return HTTPStatus.NOT_MODIFIED.value, msg_body
+            else:
+                raise error
 
         # We wrap error handling in the post, but sanity check for the ID
         bb_course_id = response.json().get('id')
@@ -83,7 +106,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 HTTPStatus.NOT_FOUND.value
             )
 
-        LOGGER.info("Creating content page for Blackboard course with course ID={}".format(external_id))
+        LOGGER.info(generate_formatted_log(
+            self.config.brief_channel_name.upper(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            external_id,
+            (f"Creating content page for Blackboard course with course ID={external_id},"
+             f" and generated course_id: {course_id_generated}")
+        ))
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
         success_body = 'Successfully created Blackboard integration course={bb_course_id} with integration ' \
@@ -279,8 +309,28 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.expires_at,
         )
 
+    def _formatted_message(self, msg):
+        generate_formatted_log(
+            self.config.brief_channel_name.upper(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            None,
+            msg,
+        )
+
+    def _log_info(self, msg):
+        LOGGER.info(self._formatted_message(msg))
+
+    def _log_error(self, msg):
+        LOGGER.error(self._formatted_message(msg))
+
     def _get_oauth_access_token(self):
         """Fetch access token using refresh_token workflow from Blackboard
+
+        Using atomic block for refresh token handling code, because we need to use the
+        most recently obtained refresh token always
+        Since any time we use a refresh token to get a new one, the prior one is invalidated
+        and we MUST use the new one for the next request.
 
         Returns:
             access_token (str): the OAuth access token to access the Blackboard server
@@ -289,12 +339,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             HTTPError: If we received a failure response code.
             ClientError: If an unexpected response format was received that we could not parse.
         """
-
-        if not self.enterprise_configuration.refresh_token:
-            raise ClientError(
-                "Failed to generate oauth access token: Refresh token required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR.value
-            )
 
         if (not self.enterprise_configuration.blackboard_base_url
                 or not self.config.oauth_token_auth_path):
@@ -307,29 +351,58 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.config.oauth_token_auth_path,
         )
 
-        auth_token_params = {
-            'grant_type': 'refresh_token',
-            'refresh_token': self.enterprise_configuration.refresh_token,
-        }
+        # Refresh token handling atomic block
+        with transaction.atomic():
+            if not self.enterprise_configuration.refresh_token:
+                raise ClientError(
+                    "Failed to generate oauth access token: Refresh token required.",
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
+                )
 
-        auth_response = requests.post(
-            auth_token_url,
-            auth_token_params,
-            headers={
-                'Authorization': self._create_auth_header(),
-                'Content-Type': 'application/x-www-form-urlencoded'
+            auth_token_params = {
+                'grant_type': 'refresh_token',
+                'refresh_token': self.enterprise_configuration.refresh_token,
             }
-        )
-        if auth_response.status_code >= 400:
-            raise ClientError(auth_response.text, auth_response.status_code)
-        try:
-            data = auth_response.json()
-            # do not forget to save the new refresh token otherwise subsequent requests will fail
-            self.enterprise_configuration.refresh_token = data["refresh_token"]
-            self.enterprise_configuration.save()
-            return data['access_token'], data["expires_in"]
-        except (KeyError, ValueError) as error:
-            raise ClientError(auth_response.text, auth_response.status_code) from error
+
+            auth_response = requests.post(
+                auth_token_url,
+                auth_token_params,
+                headers={
+                    'Authorization': self._create_auth_header(),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            )
+            if auth_response.status_code >= 400:
+                raise ClientError(
+                    f"BLACKBOARD: Access/Refresh token fetch failure, "
+                    f"enterprise_customer_uuid: {self.enterprise_configuration.enterprise_customer.uuid}, "
+                    f"blackboard_base_url: {self.enterprise_configuration.blackboard_base_url}, "
+                    f"auth_response_text: {auth_response.text}"
+                    f"config_last_modified: {self.enterprise_configuration.modified}",
+                    auth_response.status_code,
+                )
+            try:
+                data = auth_response.json()
+                # do not forget to save the new refresh token otherwise subsequent requests will fail
+                if "refresh_token" not in data:
+                    self._log_info("Server did not return refresh_token, keeping existing one")
+                else:
+                    # refresh token was returned by server, needs to be used
+                    fetched_refresh_token = data["refresh_token"]
+                    if not fetched_refresh_token.strip():
+                        # we are out of luck, can't use this invalid token
+                        # and we probably can't get unstuck without customer re-doing oauth url workflow
+                        self._log_error("Fetched a new refresh token, but it was empty, not using it!")
+                    else:
+                        self.enterprise_configuration.refresh_token = fetched_refresh_token
+                        self._log_info("Fetched a new refresh token, replacing current one")
+                        self.enterprise_configuration.save()
+                        # We do not want any fail-prone code in this atomic block after this line
+                        # it's because if something else fails, it will roll back the just-saved
+                        # refresh token!
+                return data['access_token'], data["expires_in"]
+            except (KeyError, ValueError) as error:
+                raise ClientError(auth_response.text, auth_response.status_code) from error
 
     def _create_auth_header(self):
         """

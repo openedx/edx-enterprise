@@ -80,14 +80,14 @@ class TestBlackboardAPIViews(APITestCase):
             rsps.add(
                 responses.POST,
                 auth_token_url,
-                json={'refresh_token': self.refresh_token},
+                json={'refresh_token': self.refresh_token, 'token_type': 'refresh_token', 'expires_in': '2020-02-01'},
                 status=200
             )
-            self.client.get(oauth_complete_url)
-
-        assert BlackboardEnterpriseCustomerConfiguration.objects.get(
-            enterprise_customer=self.enterprise_customer
-        ).refresh_token == self.refresh_token
+            response = self.client.get(oauth_complete_url)
+            assert response.status_code == 200
+            assert BlackboardEnterpriseCustomerConfiguration.objects.get(
+                enterprise_customer=self.enterprise_customer
+            ).refresh_token == self.refresh_token
 
     def test_refresh_token_request_without_required_params(self):
         """
@@ -148,4 +148,4 @@ class TestBlackboardAPIViews(APITestCase):
 
         assert response.status_code == 404
         assert response.json()['detail'] == \
-               'No Blackboard configuration found for enterprise: {}'.format(ENTERPRISE_ID)
+            'No Blackboard configuration found for enterprise: {}'.format(ENTERPRISE_ID)
