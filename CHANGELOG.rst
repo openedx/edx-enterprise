@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.26]
+---------
+* Refactor data-sharing consent GET and POST handlers to not have too many statements,
+  because readability matters.
+
 [3.27.25]
 ---------
 * Blackboard Integrated channel oauth2 refresh token handling fixes.
