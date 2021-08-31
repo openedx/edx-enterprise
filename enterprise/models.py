@@ -2319,6 +2319,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     DATA_TYPE_PROGRESS = 'progress'  # Refers to gathering progress data from Vertica (to be deprecated)
     DATA_TYPE_PROGRESS_V2 = 'progress_v2'  # Refers to gathering progress data from the Analytics Data API
+    DATA_TYPE_PROGRESS_V3 = 'progress_v3'  # Refers to gathering progress data from the Analytics Data API
     DATA_TYPE_CATALOG = 'catalog'
     DATA_TYPE_ENGAGEMENT = 'engagement'  # Refers to gathering engagement data from the Analytics Data API
     DATA_TYPE_GRADE = 'grade'
@@ -2327,6 +2328,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     DATA_TYPE_CHOICES = (
         (DATA_TYPE_PROGRESS, DATA_TYPE_PROGRESS),
         (DATA_TYPE_PROGRESS_V2, DATA_TYPE_PROGRESS_V2),
+        (DATA_TYPE_PROGRESS_V3, DATA_TYPE_PROGRESS_V3),
         (DATA_TYPE_CATALOG, DATA_TYPE_CATALOG),
         (DATA_TYPE_ENGAGEMENT, DATA_TYPE_ENGAGEMENT),
         (DATA_TYPE_GRADE, DATA_TYPE_GRADE),
