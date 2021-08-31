@@ -46,7 +46,8 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             content_filter,
             enabled_course_modes,
             publish_audit_enrollment_urls,
-            catalog_query_uuid):
+            catalog_query_uuid,
+            query_title=None):
         """Creates an enterprise catalog."""
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)
         post_data = {
@@ -58,6 +59,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             'enabled_course_modes': enabled_course_modes,
             'publish_audit_enrollment_urls': json.dumps(publish_audit_enrollment_urls),
             'catalog_query_uuid': catalog_query_uuid,
+            'query_title': query_title,
         }
         try:
             LOGGER.info(

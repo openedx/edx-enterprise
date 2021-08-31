@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.27.27]
+---------
+* Adds enterprise catalog query title as an optional attribute to create/update post requests on the catalog service.
+
 [3.27.26]
 ---------
 * Refactor data-sharing consent GET and POST handlers to not have too many statements,

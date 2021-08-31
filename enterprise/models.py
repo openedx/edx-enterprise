@@ -1802,10 +1802,10 @@ class EnterpriseCatalogQuery(TimeStampedModel):
     """
 
     title = models.CharField(
-        default='All Content',
         max_length=255,
-        blank=False,
-        null=False
+        blank=True,
+        unique=True,
+        null=True,
     )
     content_filter = JSONField(
         default={},

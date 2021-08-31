@@ -255,7 +255,8 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
     """
     catalog_uuid = instance.uuid
     catalog_query_uuid = str(instance.enterprise_catalog_query.uuid) if instance.enterprise_catalog_query else None
-
+    query_title = getattr(instance.enterprise_catalog_query, 'title', None) \
+        if instance.enterprise_catalog_query else None
     try:
         catalog_client = EnterpriseCatalogApiClient()
         if kwargs['created']:
@@ -283,7 +284,8 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 instance.content_filter,
                 instance.enabled_course_modes,
                 instance.publish_audit_enrollment_urls,
-                catalog_query_uuid
+                catalog_query_uuid,
+                query_title,
             )
         else:
             # catalog with matching uuid does exist in enterprise-catalog
@@ -296,6 +298,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 'enabled_course_modes': instance.enabled_course_modes,
                 'publish_audit_enrollment_urls': instance.publish_audit_enrollment_urls,
                 'catalog_query_uuid': catalog_query_uuid,
+                'query_title': query_title,
             }
             catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
         # Refresh catalog on all creates and updates
