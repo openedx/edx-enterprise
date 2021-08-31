@@ -891,7 +891,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.content_filter,
             enterprise_catalog.enabled_course_modes,
             enterprise_catalog.publish_audit_enrollment_urls,
-            str(enterprise_catalog.enterprise_catalog_query.uuid)
+            str(enterprise_catalog.enterprise_catalog_query.uuid),
+            enterprise_catalog.enterprise_catalog_query.title,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -913,6 +914,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.enabled_course_modes,
             enterprise_catalog.publish_audit_enrollment_urls,
             str(enterprise_catalog.enterprise_catalog_query.uuid),
+            enterprise_catalog.enterprise_catalog_query.title,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -933,7 +935,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             content_filter=enterprise_catalog.content_filter,
             enabled_course_modes=enterprise_catalog.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls,
-            catalog_query_uuid=str(enterprise_catalog.enterprise_catalog_query.uuid)
+            catalog_query_uuid=str(enterprise_catalog.enterprise_catalog_query.uuid),
+            query_title=enterprise_catalog.enterprise_catalog_query.title,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -986,7 +989,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             content_filter=enterprise_catalog_2.content_filter,
             enabled_course_modes=enterprise_catalog_2.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls,
-            catalog_query_uuid=str(test_query.uuid)
+            catalog_query_uuid=str(test_query.uuid),
+            query_title=test_query.title,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
 
