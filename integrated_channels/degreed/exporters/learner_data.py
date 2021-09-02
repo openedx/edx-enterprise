@@ -10,7 +10,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import generate_formatted_log, is_course_completed
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = getLogger(__name__)
 
