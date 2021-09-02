@@ -142,9 +142,9 @@ class TestLearnerExporter(unittest.TestCase):
             else:
                 assert subsection_record.grade == 1.0
 
-    @ mock.patch('enterprise.models.EnrollmentApiClient')
-    @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     def test_collect_learner_data_without_consent(self, mock_get_course_details, mock_grades_api, mock_enrollment_api):
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -172,8 +172,8 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_assessment_data
         assert mock_grades_api.call_count == 0
 
-    @ mock.patch('enterprise.models.EnrollmentApiClient')
-    @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     def test_collect_learner_data_no_course_details(self, mock_get_course_details, mock_enrollment_api):
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -189,10 +189,10 @@ class TestLearnerExporter(unittest.TestCase):
         learner_data = list(self.exporter.export())
         assert not learner_data
 
-    @ mock.patch('enterprise.models.EnrollmentApiClient')
-    @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
-    @ mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate(
             self, mock_get_course_certificate, mock_course_catalog_api, mock_get_course_details, mock_enrollment_api
     ):
