@@ -107,7 +107,7 @@ class TestLearnerExporter(unittest.TestCase):
         learner_data_record = learner_data_records[0]
         assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
         assert learner_data_record.course_id == enterprise_course_enrollment.course_id
-        assert learner_data_record.course_completed == expected_course_completed)
+        assert learner_data_record.course_completed == expected_course_completed
         assert learner_data_record.completed_timestamp == (self.NOW_TIMESTAMP if completed_date is not None else None)
         assert learner_data_record.grade == 'A+'
 
@@ -116,13 +116,13 @@ class TestLearnerExporter(unittest.TestCase):
         Test that the base learner subsection data exporter generates appropriate learner records from assessment grade
         data.
         """
-        enterprise_course_enrollment=factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user = self.enterprise_customer_user,
-            course_id = self.course_id,
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
         )
-        exporter=LearnerExporter('fake-user', self.config)
+        exporter = LearnerExporter('fake-user', self.config)
 
-        assessment_grade_data={
+        assessment_grade_data = {
             'subsection_1': {
                 'grade': 0.9,
                 'subsection_id': 'sub_1'
@@ -149,28 +149,28 @@ class TestLearnerExporter(unittest.TestCase):
     @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     def test_collect_learner_data_without_consent(self, mock_get_course_details, mock_grades_api, mock_enrollment_api):
         factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user = self.enterprise_customer_user,
-            course_id = self.course_id,
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
         )
 
-        self.data_sharing_consent.granted=False
+        self.data_sharing_consent.granted = False
         self.data_sharing_consent.save()
 
         # Return random course details
-        mock_get_course_details.return_value=mock_course_overview(
-            pacing = 'self'
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='self'
         )
 
         # Return enrollment mode data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value=dict(
-            mode = "verified"
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
+            mode="verified"
         )
 
-        learner_data=list(self.exporter.export())
+        learner_data = list(self.exporter.export())
         assert not learner_data
         assert mock_grades_api.call_count == 0
 
-        learner_assessment_data=list(self.exporter.bulk_assessment_level_export())
+        learner_assessment_data = list(self.exporter.bulk_assessment_level_export())
         assert not learner_assessment_data
         assert mock_grades_api.call_count == 0
 
@@ -178,17 +178,17 @@ class TestLearnerExporter(unittest.TestCase):
     @ mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     def test_collect_learner_data_no_course_details(self, mock_get_course_details, mock_enrollment_api):
         factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user = self.enterprise_customer_user,
-            course_id = self.course_id,
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
         )
 
         # Return no course details
-        mock_get_course_details.return_value=None
+        mock_get_course_details.return_value = None
 
         # Return empty enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value={}
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {}
 
-        learner_data=list(self.exporter.export())
+        learner_data = list(self.exporter.export())
         assert not learner_data
 
     @ mock.patch('enterprise.models.EnrollmentApiClient')
@@ -198,12 +198,12 @@ class TestLearnerExporter(unittest.TestCase):
     def test_learner_data_instructor_paced_no_certificate(
             self, mock_get_course_certificate, mock_course_catalog_api, mock_get_course_details, mock_enrollment_api
     ):
-        mock_course_catalog_api.return_value.get_course_id.return_value=self.course_key
-        mock_get_course_certificate.return_value=None
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_course_certificate.return_value = None
 
-        enrollment=factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user = self.enterprise_customer_user,
-            course_id = self.course_id,
+        enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
         )
 
         # Return instructor-paced course details
