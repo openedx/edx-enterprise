@@ -80,14 +80,12 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
 
     @ddt.data(
-        (None, False),
-        (None, True),
-        (NOW, False),
-        (NOW, True),
+        (None),
+        (NOW),
     )
     @ddt.unpack
     @freeze_time(NOW)
-    def test_get_learner_data_record(self, completed_date, is_passing):
+    def test_get_learner_data_record(self, completed_date):
         """
         The base ``get_learner_data_record`` method returns a ``LearnerDataTransmissionAudit`` with appropriate values.
         """

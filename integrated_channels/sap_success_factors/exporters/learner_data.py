@@ -15,7 +15,7 @@ from integrated_channels.catalog_service_utils import get_course_id_for_enrollme
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-from integrated_channels.utils import is_course_completed, parse_datetime_to_epoch_millis
+from integrated_channels.utils import parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
@@ -30,7 +30,6 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             enterprise_enrollment,
             completed_date=None,
             grade=None,
-            is_passing=False,
             course_completed=False,
     ):
         """

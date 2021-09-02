@@ -285,7 +285,6 @@ class LearnerExporter(Exporter):
         lms_user_for_filter = kwargs.get('learner_to_transmit', None)
         course_run_id = kwargs.get('course_run_id', None)
         completed_date = kwargs.get('completed_date', None)
-        is_passing = kwargs.get('is_passing', False)
         grade = kwargs.get('grade', None)
         skip_transmitted = kwargs.get('skip_transmitted', True)
         TransmissionAudit = kwargs.get('TransmissionAudit', None)
@@ -333,6 +332,11 @@ class LearnerExporter(Exporter):
                 user = User.objects.get(pk=lms_user_id)
                 completion_summary = get_completion_summary(course_id, user)
                 incomplete_count = completion_summary.incomplete_count
+                LOGGER.info(
+                    generate_formatted_log(
+                        channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                        f'Incomplete count for audit enrollment is {incomplete_count}'
+                    ))
 
             # For instructor-paced and non-audit courses, let the certificate determine course completion
             if course_details.pacing == 'instructor' and not is_audit_enrollment:
@@ -340,13 +344,9 @@ class LearnerExporter(Exporter):
                     self._collect_certificate_data(enterprise_enrollment, channel_name)
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    '_collect_certificate_data finished with CompletedDate: {completed_date},'
-                    ' Grade: {grade}, IsPassing: {is_passing},'
-                    .format(
-                        completed_date=completed_date_from_api,
-                        grade=grade_from_api,
-                        is_passing=is_passing_from_api
-                    )))
+                    f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
+                    ' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+                ))
             # For self-paced courses, check the Grades API
             else:
                 completed_date_from_api, grade_from_api, is_passing_from_api = \
@@ -497,7 +497,7 @@ class LearnerExporter(Exporter):
             completed_date=None,
             grade=None,
             course_completed=False,
-    ):  # pylint: disable=unused-argument
+    ):
         """
         Generate a learner data transmission audit with fields properly filled in.
         """
@@ -553,11 +553,9 @@ class LearnerExporter(Exporter):
             certificate = None
             LOGGER.error(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
+                f'get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
                 ' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.'
-                .format(
-                    enterprise_enrollment=enterprise_enrollment,
-                )))
+            ))
 
         if not certificate:
             return completed_date, grade, is_passing, percent_grade
