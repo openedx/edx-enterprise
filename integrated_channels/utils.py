@@ -334,3 +334,15 @@ def refresh_session_if_expired(oauth_access_token_function, session=None, expire
             new_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
         return new_session, new_expires_at
     return session, expires_at
+
+
+def is_course_completed(enterprise_enrollment, completed_date, is_passing, incomplete_count):
+    '''
+    For non audit, this requires passing and completed_date
+    For audit enrollment, just returns if incomplete_count = 0
+    '''
+    if enterprise_enrollment.is_audit_enrollment:
+        if not incomplete_count:
+            raise ValueError('Incomplete count is required if using audit enrollment')
+        return incomplete_count == 0
+    return completed_date is not None and is_passing

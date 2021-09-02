@@ -15,7 +15,7 @@ from integrated_channels.catalog_service_utils import get_course_id_for_enrollme
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-from integrated_channels.utils import parse_datetime_to_epoch_millis
+from integrated_channels.utils import is_course_completed, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
@@ -31,7 +31,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             completed_date=None,
             grade=None,
             is_passing=False,
-            grade_percent=None
+            course_completed=False,
     ):
         """
         Return a SapSuccessFactorsLearnerDataTransmissionAudit with the given enrollment and course completion data.
@@ -41,10 +41,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
         If no remote ID can be found, return None.
         """
         completed_timestamp = None
-        course_completed = False
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
-            course_completed = is_passing
 
         sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id()
 

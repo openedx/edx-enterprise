@@ -9,7 +9,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import generate_formatted_log, parse_datetime_to_epoch_millis
+from integrated_channels.utils import generate_formatted_log, is_course_completed, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
@@ -23,12 +23,11 @@ class BlackboardLearnerExporter(LearnerExporter):
             self,
             enterprise_enrollment,
             completed_date=None,
-            is_passing=False,
+            course_completed=False,
             **kwargs
     ):  # pylint: disable=arguments-differ
         """
         Return a BlackboardLearnerDataTransmissionAudit with the given enrollment and course completion data.
-        If completed_date is None, then course completion has not been met.
         If no remote ID can be found, return None.
         """
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
@@ -52,12 +51,13 @@ class BlackboardLearnerExporter(LearnerExporter):
             'blackboard',
             'BlackboardLearnerDataTransmissionAudit'
         )
+
         return [
             BlackboardLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 blackboard_user_email=enterprise_customer_user.user_email,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
-                course_completed=completed_date is not None and is_passing,
+                course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
             )

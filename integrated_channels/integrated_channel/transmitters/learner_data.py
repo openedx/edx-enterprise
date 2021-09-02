@@ -197,9 +197,12 @@ class LearnerTransmitter(Transmitter):
             lms_user_id = LearnerExporterUtility.lms_user_id_for_ent_course_enrollment_id(
                 enterprise_enrollment_id)
 
-            if learner_data.completed_timestamp is None:
+            if not learner_data.course_completed:
                 # The user has not completed the course, so we shouldn't send a completion status call
-                LOGGER.info('Skipping in-progress enterprise enrollment {}'.format(enterprise_enrollment_id))
+                LOGGER.info(generate_formatted_log(
+                    app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
+                    'Skipping in-progress enterprise enrollment {}'.format(enterprise_enrollment_id)
+                ))
                 continue
 
             grade = getattr(learner_data, 'grade', None)

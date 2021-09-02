@@ -10,7 +10,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, is_course_completed
 
 LOGGER = getLogger(__name__)
 
@@ -24,7 +24,7 @@ class DegreedLearnerExporter(LearnerExporter):
             self,
             enterprise_enrollment,
             completed_date=None,
-            is_passing=False,
+            course_completed=False,
             **kwargs
     ):  # pylint: disable=arguments-differ
         """
@@ -48,14 +48,14 @@ class DegreedLearnerExporter(LearnerExporter):
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=get_course_id_for_enrollment(enterprise_enrollment),
-                    course_completed=completed_date is not None and is_passing,
+                    course_completed=course_completed,
                     completed_timestamp=completed_timestamp,
                 ),
                 DegreedLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=enterprise_enrollment.course_id,
-                    course_completed=completed_date is not None and is_passing,
+                    course_completed=course_completed,
                     completed_timestamp=completed_timestamp,
                 )
             ]
