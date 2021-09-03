@@ -69,7 +69,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
     )
     @ddt.unpack
     @freeze_time(NOW)
-    def test_get_learner_data_record(self, completed_date, is_passing):
+    def test_get_learner_data_record(self, completed_date, course_completed):
         """
         The base ``get_learner_data_record`` method returns a ``LearnerDataTransmissionAudit`` with appropriate values.
         """
@@ -81,7 +81,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         learner_data_records = exporter.get_learner_data_records(
             enterprise_course_enrollment,
             completed_date=completed_date,
-            is_passing=is_passing,
+            course_completed=course_completed,
         )
         assert len(learner_data_records) == 2
         assert learner_data_records[0].course_id == self.course_key
@@ -90,7 +90,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         for learner_data_record in learner_data_records:
             assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
             assert learner_data_record.degreed_user_email == 'degreed@email.com'
-            assert learner_data_record.course_completed == (completed_date is not None and is_passing)
+            assert learner_data_record.course_completed == course_completed
             assert learner_data_record.completed_timestamp == (
                 self.NOW.strftime('%F') if completed_date is not None else None
             )
