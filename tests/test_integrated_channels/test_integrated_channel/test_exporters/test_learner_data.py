@@ -80,8 +80,8 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
 
     @ddt.data(
-        (None),
-        (NOW),
+        (None,),
+        (NOW,),
     )
     @ddt.unpack
     @freeze_time(NOW)
@@ -194,7 +194,11 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate(
-            self, mock_get_course_certificate, mock_course_catalog_api, mock_get_course_details, mock_enrollment_api
+            self,
+            mock_get_course_certificate,
+            mock_course_catalog_api,
+            mock_get_course_details,
+            mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         mock_get_course_certificate.return_value = None

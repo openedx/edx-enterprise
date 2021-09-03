@@ -327,11 +327,12 @@ class LearnerExporter(Exporter):
                 continue
 
             # For audit courses, check if 100% completed
+            # which we define as: no non-gated content is remaining
             incomplete_count = None
             if is_audit_enrollment:
                 user = User.objects.get(pk=lms_user_id)
                 completion_summary = get_completion_summary(course_id, user)
-                incomplete_count = completion_summary.incomplete_count
+                incomplete_count = completion_summary.get('incomplete_count')
                 LOGGER.info(
                     generate_formatted_log(
                         channel_name, enterprise_customer_uuid, lms_user_id, course_id,
@@ -340,31 +341,25 @@ class LearnerExporter(Exporter):
 
             # For instructor-paced and non-audit courses, let the certificate determine course completion
             if course_details.pacing == 'instructor' and not is_audit_enrollment:
-                completed_date_from_api, grade_from_api, is_passing_from_api = \
+                completed_date_from_api, grade_from_api, is_passing_from_api, _ = \
                     self._collect_certificate_data(enterprise_enrollment, channel_name)
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
                     f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
-                    ' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+                    f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
                 ))
             # For self-paced courses, check the Grades API
             else:
-                completed_date_from_api, grade_from_api, is_passing_from_api = \
+                completed_date_from_api, grade_from_api, is_passing_from_api, _ = \
                     self._collect_grades_data(enterprise_enrollment, course_details, channel_name)
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    '_collect_grades_data finished with: CourseMode: {mode}, '
-                    ' CompletedDate: {completed_date},'
-                    ' Grade: {grade},'
-                    ' IsPassing: {is_passing},'
-                    ' Audit Mode?: {is_audit_enrollment}'
-                    .format(
-                        mode=enterprise_enrollment.mode,
-                        completed_date=completed_date_from_api,
-                        grade=grade_from_api,
-                        is_passing=is_passing_from_api,
-                        is_audit_enrollment=is_audit_enrollment,
-                    )))
+                    f'_collect_grades_data finished with: CourseMode: {enterprise_enrollment.mode}, '
+                    f' CompletedDate: {completed_date_from_api},'
+                    f' Grade: {grade_from_api},'
+                    f' IsPassing: {is_passing_from_api},'
+                    f' Audit Mode?: {is_audit_enrollment}'
+                ))
 
             # Apply the Source of Truth for Grades
             records = self.get_learner_data_records(
@@ -398,10 +393,8 @@ class LearnerExporter(Exporter):
 
         LOGGER.info(generate_formatted_log(
             channel_name, None, lms_user_for_filter, course_run_id,
-            'export finished. Did not export records for EnterpriseCourseEnrollment objects: {remaining_enrollments}.'
-            .format(
-                remaining_enrollments=enrollment_ids_to_export,
-            )))
+            f'export finished. Did not export records for EnterpriseCourseEnrollment objects: {enrollment_ids_to_export}.'
+        ))
 
     def _filter_out_pre_transmitted_enrollments(
             self,
