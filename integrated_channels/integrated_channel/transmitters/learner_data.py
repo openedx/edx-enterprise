@@ -201,7 +201,8 @@ class LearnerTransmitter(Transmitter):
                 # The user has not completed the course, so we shouldn't send a completion status call
                 LOGGER.info(generate_formatted_log(
                     app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
-                    'Skipping in-progress enterprise enrollment {}'.format(enterprise_enrollment_id)
+                    f'Skipping in-progress enterprise enrollment:: id: {enterprise_enrollment_id}'
+                    f', course_id: {learner_data.course_id}'
                 ))
                 continue
 
