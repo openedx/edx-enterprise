@@ -393,7 +393,8 @@ class LearnerExporter(Exporter):
 
         LOGGER.info(generate_formatted_log(
             channel_name, None, lms_user_for_filter, course_run_id,
-            f'export finished. Did not export records for EnterpriseCourseEnrollment objects: {enrollment_ids_to_export}.'
+            f'export finished. Did not export records for EnterpriseCourseEnrollment objects: '
+            f' {enrollment_ids_to_export}.'
         ))
 
     def _filter_out_pre_transmitted_enrollments(
@@ -546,8 +547,8 @@ class LearnerExporter(Exporter):
             certificate = None
             LOGGER.error(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
-                ' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.'
+                'get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
+                f' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.'
             ))
 
         if not certificate:

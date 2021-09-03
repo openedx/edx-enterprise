@@ -26,7 +26,7 @@ class CanvasLearnerExporter(LearnerExporter):
             completed_date=None,
             course_completed=False,
             **kwargs
-    ):
+    ):  # pylint: disable=arguments-differ
         """
         Return a CanvasLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
