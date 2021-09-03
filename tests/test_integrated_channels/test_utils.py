@@ -15,6 +15,9 @@ from enterprise.utils import parse_lms_api_datetime
 from integrated_channels import utils
 
 
+ent_enrollment = namedtuple('enterprise_enrollment', ['is_audit_enrollment'])
+
+
 @ddt.ddt
 class TestIntegratedChannelsUtils(unittest.TestCase):
     """
@@ -112,7 +115,6 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             'upgrade_deadline': '2000-10-13T13:10:04Z'
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
-        ent_enrollment = namedtuple('enroll', ['is_audit_enrollment'])
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=True)
         assert utils.is_course_completed(enterprise_enrollment, None, True, 0)
 
@@ -123,7 +125,6 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             'upgrade_deadline': '9000-10-13T13:11:04Z'
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_non_expired
-        ent_enrollment = namedtuple('enroll', ['is_audit_enrollment'])
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=True)
         assert not utils.is_course_completed(enterprise_enrollment, None, True, 0)
 
@@ -134,7 +135,6 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             'upgrade_deadline': '2000-10-13T13:01:04Z'
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
-        ent_enrollment = namedtuple('enroll', ['is_audit_enrollment'])
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
         assert utils.is_course_completed(enterprise_enrollment, '2000-10-13T13:11:04Z', True, 0)
 
@@ -145,6 +145,5 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             'upgrade_deadline': '2000-10-13T13:11:04Z'
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
-        ent_enrollment = namedtuple('enroll', ['is_audit_enrollment'])
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
         assert not utils.is_course_completed(enterprise_enrollment, None, False, 0)
