@@ -2,11 +2,11 @@
 """
 Tests for migrations, especially potentially risky data migrations.
 """
+from io import StringIO
 
 from django.core.management import call_command
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
-from django.utils.six import StringIO
 
 
 class MigrationTests(TestCase):
