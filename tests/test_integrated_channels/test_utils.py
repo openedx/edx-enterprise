@@ -3,8 +3,8 @@
 Tests for the utilities used by integration channels.
 """
 
-from collections import namedtuple
 import unittest
+from collections import namedtuple
 from datetime import timedelta
 
 import ddt
@@ -13,7 +13,6 @@ from pytest import raises
 
 from enterprise.utils import parse_lms_api_datetime
 from integrated_channels import utils
-
 
 ent_enrollment = namedtuple('enterprise_enrollment', ['is_audit_enrollment'])
 
