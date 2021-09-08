@@ -30,8 +30,6 @@ class CanvasLearnerExporter(LearnerExporter):
         """
         Return a CanvasLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
-        If completed_date is None, then course completion has not been met.
-
         If no remote ID can be found, return None.
         """
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user

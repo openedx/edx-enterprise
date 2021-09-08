@@ -220,9 +220,7 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsec
         latest_transmitted_tx = already_transmitted.latest('id')
         return latest_transmitted_tx and getattr(latest_transmitted_tx, 'grade', None) == grade
     except transmission.DoesNotExist:
-        pass
-
-    return False
+        return False
 
 
 def get_duration_from_estimated_hours(estimated_hours):
