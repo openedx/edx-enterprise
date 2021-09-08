@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.28.3]
+---------
+* Integrated channels: log response code and message if SAP post fails
+
 [3.28.2]
 ---------
 * Add `progress_v3` report type for enterprise reporting.
