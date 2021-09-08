@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.28.2]
+---------
+* Add `progress_v3` report type for enterprise reporting.
+
 [3.28.1]
 ---------
 * Inject a failure reason into the ``failure_url`` query params when a verified course mode
