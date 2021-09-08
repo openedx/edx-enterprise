@@ -273,6 +273,9 @@ class LearnerExporter(Exporter):
         '''
         Fetch grades info using either certificate api, or grades api.
         Note: This logic is going to be refactored, so that audit enrollments are treated separately
+        - For audit enrollments, currently will fetch using grades api,
+        - For non audit, it still calls grades api if pacing !=instructor otherwise calls certificate api
+        This pacing logic needs cleanup for a more accurate piece of logic since pacing should not be relevant
         '''
         is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
