@@ -17,6 +17,9 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.4]
+---------
+* Integrated channels: audit track completion status now based on incomplete non-gated content
 
 [3.28.3]
 ---------
