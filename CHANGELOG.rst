@@ -18,11 +18,6 @@ Unreleased
 * Nothing
 
 
-[3.28.1]
----------
-* Inject a failure reason into the ``failure_url`` query params when a verified course mode
-  is not available for DSC-based enrollments.
-
 [3.28.0]
 ---------
 * Added support for Django 3.0, 3.1 and 3.2

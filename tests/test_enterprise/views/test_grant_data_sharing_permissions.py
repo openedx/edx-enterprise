@@ -3,13 +3,11 @@
 Tests for the ``GrantDataSharingPermissions`` view of the Enterprise app.
 """
 
-import json
 import uuid
 
 import ddt
 import mock
 from dateutil.parser import parse
-from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
 
 from django.conf import settings
@@ -19,7 +17,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
-from enterprise.views import FAILED_ENROLLMENT_REASON_QUERY_PARAM, VERIFIED_MODE_UNAVAILABLE, add_reason_to_failure_url
 from integrated_channels.exceptions import ClientError
 from test_utils import fake_render
 from test_utils.factories import (
@@ -45,9 +42,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
-
-        LicensedEnterpriseCourseEnrollment.objects.all().delete()
-        EnterpriseCourseEnrollment.objects.all().delete()
         super().setUp()
 
     url = reverse('grant_data_sharing_permissions')
@@ -890,107 +884,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert resp.status_code == 404
         dsc.refresh_from_db()
         assert dsc.granted is False
-
-    def test_add_reason_to_failure_url(self):
-        base_failure_url = 'https://example.com/?enrollment_failed=true'
-        failure_reason = 'something weird happened'
-
-        actual_url = add_reason_to_failure_url(base_failure_url, failure_reason)
-        expected_url = (
-            'https://example.com/?enrollment_failed=true&'
-            '{reason_param}=something+weird+happened'.format(
-                reason_param=FAILED_ENROLLMENT_REASON_QUERY_PARAM,
-            )
-        )
-        self.assertEqual(actual_url, expected_url)
-
-    @mock.patch('enterprise.views.reverse', return_value='/dashboard')
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.get_best_mode_from_course_key')
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @ddt.data(True, False)
-    def test_get_dsc_verified_mode_unavailable(
-        self,
-        is_post,
-        mock_course_catalog_api_client,
-        mock_enrollment_api_client,
-        mock_enterprise_catalog_client,
-        mock_get_course_mode,
-        *args,
-    ):
-        self._login()
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        license_uuid = str(uuid.uuid4())
-
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-        )
-        EnterpriseCustomerCatalogFactory(
-            enterprise_customer=enterprise_customer,
-            content_filter={'key': [course_id]},
-        )
-        ecu = EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer
-        )
-        DataSharingConsentFactory(
-            username=self.user.username,
-            course_id=course_id,
-            enterprise_customer=enterprise_customer,
-            granted=not is_post,
-        )
-
-        mock_course_catalog_api_client.return_value.program_exists.return_value = True
-        mock_course_catalog_api_client.return_value.get_course_id.return_value = course_id
-
-        enterprise_catalog_client = mock_enterprise_catalog_client.return_value
-        enterprise_catalog_client.enterprise_contains_content_items.return_value = True
-
-        course_mode = 'verified'
-        mock_get_course_mode.return_value = course_mode
-
-        mock_get_enrollment = mock_enrollment_api_client.return_value.get_course_enrollment
-        mock_get_enrollment.return_value = None
-
-        mock_enroll_user = mock_enrollment_api_client.return_value.enroll_user_in_course
-        client_error_content = json.dumps(
-            {'message': VERIFIED_MODE_UNAVAILABLE.enrollment_client_error}
-        ).encode()
-        mock_enroll_user.side_effect = HttpClientError(content=client_error_content)
-
-        params = {
-            'enterprise_customer_uuid': str(enterprise_customer.uuid),
-            'course_id': course_id,
-            'next': 'https://success.url',
-            'redirect_url': 'https://success.url',
-            'failure_url': 'https://failure.url',
-            'license_uuid': license_uuid,
-            'data_sharing_consent': True,
-        }
-        if is_post:
-            response = self.client.post(self.url, data=params)
-        else:
-            response = self.client.get(self.url, data=params)
-
-        assert response.status_code == 302
-        self.assertRedirects(
-            response,
-            'https://failure.url?failure_reason={}'.format(VERIFIED_MODE_UNAVAILABLE.failure_reason_message),
-            fetch_redirect_response=False,
-        )
-
-        assert EnterpriseCourseEnrollment.objects.filter(
-            enterprise_customer_user=ecu,
-            course_id=course_id,
-        ).exists() is False
-
-        assert LicensedEnterpriseCourseEnrollment.objects.filter(
-            license_uuid=license_uuid,
-        ).exists() is False
 
 
 @mark.django_db
