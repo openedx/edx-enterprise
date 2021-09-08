@@ -326,6 +326,23 @@ class LearnerExporter(Exporter):
                     )))
                 continue
 
+            # audit and verified reporting of completion across LMS systems
+            #  ticket2: investigate SAP completion endpoint to see if it can support audit and verified completions
+            # ticket1: cleanup logic around pacing and instead use the cert vs grades system
+
+            # if audit:
+            #   check completion content and upgrade
+            # else:
+            #   get cert
+            #   if cert: easier to find completed status, grades
+            #     completed_date
+            #     is_passing
+            #   else:
+            #     check grades api values
+            #     check is_passing, and check completion_count
+            #     completed = is_passing AND nongated content is completed
+            #
+
             # For audit courses, check if 100% completed
             # which we define as: no non-gated content is remaining
             incomplete_count = None
@@ -341,7 +358,7 @@ class LearnerExporter(Exporter):
 
             # For instructor-paced and non-audit courses, let the certificate determine course completion
             if course_details.pacing == 'instructor' and not is_audit_enrollment:
-                completed_date_from_api, grade_from_api, is_passing_from_api, _ = \
+                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment, channel_name)
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
@@ -350,7 +367,7 @@ class LearnerExporter(Exporter):
                 ))
             # For self-paced courses, check the Grades API
             else:
-                completed_date_from_api, grade_from_api, is_passing_from_api, _ = \
+                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_grades_data(enterprise_enrollment, course_details, channel_name)
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
@@ -371,7 +388,8 @@ class LearnerExporter(Exporter):
                     completed_date,
                     is_passing_from_api,
                     incomplete_count,
-                )
+                ),
+                grade_percent=grade_percent,
             )
 
             if records:
@@ -491,7 +509,8 @@ class LearnerExporter(Exporter):
             completed_date=None,
             grade=None,
             course_completed=False,
-    ):
+            grade_percent=None,
+    ):  # pylint: disable=unused-argument
         """
         Generate a learner data transmission audit with fields properly filled in.
         """

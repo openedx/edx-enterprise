@@ -25,7 +25,8 @@ class CornerstoneLearnerExporter(LearnerExporter):
             completed_date=None,
             grade=None,
             course_completed=False,
-    ):
+            **kwargs,
+    ):  # pylint: disable=arguments-differ
         """
         Return a CornerstoneLearnerDataTransmissionAudit with the given enrollment and course completion data.
 

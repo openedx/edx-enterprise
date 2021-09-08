@@ -31,7 +31,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             completed_date=None,
             grade=None,
             course_completed=False,
-    ):
+            **kwargs,
+    ):   # pylint: disable=arguments-differ
         """
         Return a SapSuccessFactorsLearnerDataTransmissionAudit with the given enrollment and course completion data.
 

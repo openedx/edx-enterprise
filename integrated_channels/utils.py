@@ -217,8 +217,8 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsec
         if subsection_id:
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
 
-        if already_transmitted.latest('id') and getattr(already_transmitted.latest('id'), 'grade', None) == grade:
-            return True
+        latest_transmitted_tx = already_transmitted.latest('id')
+        return latest_transmitted_tx and getattr(latest_transmitted_tx, 'grade', None) == grade
     except transmission.DoesNotExist:
         pass
 
