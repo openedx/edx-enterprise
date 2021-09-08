@@ -26,7 +26,7 @@ class DegreedLearnerExporter(LearnerExporter):
             completed_date=None,
             course_completed=False,
             **kwargs
-    ):  # pylint: disable=arguments-differ, unused-argument
+    ):  # pylint: disable=arguments-differ
         """
         Return a DegreedLearnerDataTransmissionAudit with the given enrollment and course completion data.
 

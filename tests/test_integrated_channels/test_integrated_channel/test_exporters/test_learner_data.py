@@ -430,7 +430,7 @@ class TestLearnerExporter(unittest.TestCase):
 
         for report in learner_data:
             assert report.enterprise_course_enrollment_id == enrollment.id
-            assert report.course_completed == True
+            assert report.course_completed
             assert report.completed_timestamp == expected_completion
             assert report.grade == expected_grade
 
