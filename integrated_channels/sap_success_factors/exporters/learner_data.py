@@ -30,21 +30,17 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             enterprise_enrollment,
             completed_date=None,
             grade=None,
-            is_passing=False,
-            grade_percent=None
-    ):
+            course_completed=False,
+            **kwargs,
+    ):   # pylint: disable=arguments-differ
         """
         Return a SapSuccessFactorsLearnerDataTransmissionAudit with the given enrollment and course completion data.
-
-        If completed_date is None and the learner isn't passing, then course completion has not been met.
 
         If no remote ID can be found, return None.
         """
         completed_timestamp = None
-        course_completed = False
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
-            course_completed = is_passing
 
         sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id()
 

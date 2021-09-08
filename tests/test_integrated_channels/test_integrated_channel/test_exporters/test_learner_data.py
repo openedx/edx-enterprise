@@ -80,14 +80,12 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
 
     @ddt.data(
-        (None, False),
-        (None, True),
-        (NOW, False),
-        (NOW, True),
+        (None,),
+        (NOW,),
     )
     @ddt.unpack
     @freeze_time(NOW)
-    def test_get_learner_data_record(self, completed_date, is_passing):
+    def test_get_learner_data_record(self, completed_date):
         """
         The base ``get_learner_data_record`` method returns a ``LearnerDataTransmissionAudit`` with appropriate values.
         """
@@ -95,18 +93,19 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+        expected_course_completed = True
         exporter = LearnerExporter('fake-user', self.config)
         learner_data_records = exporter.get_learner_data_records(
             enterprise_course_enrollment,
             completed_date=completed_date,
             grade='A+',
-            is_passing=is_passing,
+            course_completed=expected_course_completed,
         )
 
         learner_data_record = learner_data_records[0]
         assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
         assert learner_data_record.course_id == enterprise_course_enrollment.course_id
-        assert learner_data_record.course_completed == (completed_date is not None and is_passing)
+        assert learner_data_record.course_completed == expected_course_completed
         assert learner_data_record.completed_timestamp == (self.NOW_TIMESTAMP if completed_date is not None else None)
         assert learner_data_record.grade == 'A+'
 
@@ -195,7 +194,11 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate(
-            self, mock_get_course_certificate, mock_course_catalog_api, mock_get_course_details, mock_enrollment_api
+            self,
+            mock_get_course_certificate,
+            mock_course_catalog_api,
+            mock_get_course_details,
+            mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         mock_get_course_certificate.return_value = None
@@ -258,9 +261,17 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_instructor_paced_with_certificate(
-            self, mock_course_catalog_api, mock_get_course_certificate, mock_get_course_details, mock_enrollment_api
+            self,
+            mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
+            mock_get_course_certificate,
+            mock_get_course_details,
+            mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
@@ -268,6 +279,9 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+        mock_is_course_completed.return_value = True
 
         # Return a mock certificate
         certificate = dict(
@@ -366,6 +380,8 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_self_paced_course(
             self,
@@ -375,6 +391,8 @@ class TestLearnerExporter(unittest.TestCase):
             expected_grade,
             course_enrollment_mode,
             mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
             mock_get_course_details,
             mock_get_single_user_grade,
             mock_course_enrollment_class
@@ -385,6 +403,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+
+        mock_is_course_completed.return_value = True
 
         # Mock self-paced course details
         mock_get_course_details.return_value = mock_course_overview(
@@ -409,7 +430,7 @@ class TestLearnerExporter(unittest.TestCase):
 
         for report in learner_data:
             assert report.enterprise_course_enrollment_id == enrollment.id
-            assert report.course_completed == (passing and expected_completion is not None)
+            assert report.course_completed
             assert report.completed_timestamp == expected_completion
             assert report.grade == expected_grade
 
@@ -463,18 +484,24 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_multiple_courses(
             self,
             pacing,
             grade,
             mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
             mock_get_course_details,
             mock_get_single_user_grade,
             mock_get_course_certificate,
             mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+        mock_is_course_completed.return_value = True
 
         enrollment1 = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -552,9 +579,10 @@ class TestLearnerExporter(unittest.TestCase):
 
         assert learner_data[0].course_id == self.course_key
         assert learner_data[1].course_id == self.course_id
+        # note: the course_completed is a function of the mock_is_course_completed mock
         for report1 in learner_data[0:1]:
             assert report1.enterprise_course_enrollment_id == enrollment1.id
-            assert not report1.course_completed
+            assert report1.course_completed
             assert report1.completed_timestamp is None
             assert report1.grade == LearnerExporter.GRADE_INCOMPLETE
 
@@ -569,7 +597,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert learner_data[5].course_id == self.course_id
         for report3 in learner_data[4:5]:
             assert report3.enterprise_course_enrollment_id == enrollment3.id
-            assert not report3.course_completed
+            assert report3.course_completed
             assert report3.completed_timestamp is None
             assert report3.grade == LearnerExporter.GRADE_INCOMPLETE
 
@@ -587,6 +615,8 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_audit_data_reporting(
             self,
@@ -595,6 +625,8 @@ class TestLearnerExporter(unittest.TestCase):
             mode,
             expected_data_len,
             mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
             mock_get_course_details,
             mock_get_single_user_grade,
             mock_course_enrollment_class
@@ -605,6 +637,10 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+
+        mock_is_course_completed.return_value = True
 
         # Set the audit track data passback configuration
         self.enterprise_customer.enable_audit_enrollment = enable_audit_enrollment

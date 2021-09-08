@@ -1651,6 +1651,8 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         Returns True iff this enrollment is currently active.
         """
+        if not self.course_enrollment:
+            return False
         return self.course_enrollment.is_active
 
     @property
@@ -1658,6 +1660,8 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         Returns the mode of the ``student.CourseEnrollment`` associated with this enterprise course enrollment record.
         """
+        if not self.course_enrollment:
+            return None
         return self.course_enrollment.mode
 
     @classmethod

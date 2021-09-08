@@ -23,12 +23,11 @@ class MoodleLearnerExporter(LearnerExporter):
             self,
             enterprise_enrollment,
             completed_date=None,
-            is_passing=False,
+            course_completed=False,
             **kwargs
     ):  # pylint: disable=arguments-differ
         """
         Return a MoodleLearnerDataTransmissionAudit with the given enrollment and course completion data.
-        If completed_date is None, then course completion has not been met.
         If no remote ID can be found, return None.
         """
         enterprise_learner = enterprise_enrollment.enterprise_customer_user
@@ -60,7 +59,7 @@ class MoodleLearnerExporter(LearnerExporter):
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 moodle_user_email=enterprise_learner.user_email,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
-                course_completed=completed_date is not None and is_passing,
+                course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
             ),
@@ -68,7 +67,7 @@ class MoodleLearnerExporter(LearnerExporter):
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 moodle_user_email=enterprise_learner.user_email,
                 course_id=enterprise_enrollment.course_id,
-                course_completed=completed_date is not None and is_passing,
+                course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
             )

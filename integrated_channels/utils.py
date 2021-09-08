@@ -11,13 +11,15 @@ from itertools import islice
 from logging import getLogger
 from string import Formatter
 
+import pytz
 import requests
 from six.moves import range
 
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from enterprise.utils import parse_lms_api_datetime
+from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime
+from integrated_channels.catalog_service_utils import get_course_run_for_enrollment
 
 UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
@@ -215,12 +217,10 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsec
         if subsection_id:
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
 
-        if already_transmitted.latest('id') and getattr(already_transmitted.latest('id'), 'grade', None) == grade:
-            return True
+        latest_transmitted_tx = already_transmitted.latest('id')
+        return latest_transmitted_tx and getattr(latest_transmitted_tx, 'grade', None) == grade
     except transmission.DoesNotExist:
-        pass
-
-    return False
+        return False
 
 
 def get_duration_from_estimated_hours(estimated_hours):
@@ -334,3 +334,36 @@ def refresh_session_if_expired(oauth_access_token_function, session=None, expire
             new_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
         return new_session, new_expires_at
     return session, expires_at
+
+
+def get_upgrade_deadline(course_run):
+    """
+    Returns upgrade_deadline of a verified seat if found. Otherwise returns None.
+    """
+    for seat in course_run.get('seats', []):
+        if seat.get('type') == 'verified':
+            return parse_datetime_handle_invalid(seat.get('upgrade_deadline'))
+    return None
+
+
+def is_course_completed(enterprise_enrollment, completed_date, is_passing, incomplete_count):
+    '''
+    For non audit, this requires passing and completed_date
+    For audit enrollment, returns True if:
+     - for non upgradable course:
+        - no more non-gated content is left
+     - for upgradable course:
+        - the verified upgrade deadline has passed AND no more non-gated content is left
+    '''
+    if enterprise_enrollment.is_audit_enrollment:
+        if incomplete_count is None:
+            raise ValueError('Incomplete count is required if using audit enrollment')
+        course_run = get_course_run_for_enrollment(enterprise_enrollment)
+        upgrade_deadline = get_upgrade_deadline(course_run)
+        if upgrade_deadline is None:
+            return incomplete_count == 0
+        else:
+            # for upgradable course check deadline passed as well
+            now = datetime.now(pytz.UTC)
+            return incomplete_count == 0 and upgrade_deadline < now
+    return completed_date is not None and is_passing

@@ -4,6 +4,7 @@ Tests for the utilities used by integration channels.
 """
 
 import unittest
+from collections import namedtuple
 from datetime import timedelta
 
 import ddt
@@ -12,6 +13,8 @@ from pytest import raises
 
 from enterprise.utils import parse_lms_api_datetime
 from integrated_channels import utils
+
+ent_enrollment = namedtuple('enterprise_enrollment', ['is_audit_enrollment'])
 
 
 @ddt.ddt
@@ -103,3 +106,43 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
     def test_strfdelta_value_error(self):
         with raises(ValueError):
             utils.strfdelta(timedelta(days=1), input_type='invalid_type')
+
+    @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
+    def test_is_course_completed_audit_complete(self, mock_get_course_run_for_enrollment):
+        course_run_verify_expired = {'seats': [{
+            'type': 'verified',
+            'upgrade_deadline': '2000-10-13T13:10:04Z'
+        }]}
+        mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
+        enterprise_enrollment = ent_enrollment(is_audit_enrollment=True)
+        assert utils.is_course_completed(enterprise_enrollment, None, True, 0)
+
+    @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
+    def test_is_course_completed_audit_incomplete(self, mock_get_course_run_for_enrollment):
+        course_run_verify_non_expired = {'seats': [{
+            'type': 'verified',
+            'upgrade_deadline': '9000-10-13T13:11:04Z'
+        }]}
+        mock_get_course_run_for_enrollment.return_value = course_run_verify_non_expired
+        enterprise_enrollment = ent_enrollment(is_audit_enrollment=True)
+        assert not utils.is_course_completed(enterprise_enrollment, None, True, 0)
+
+    @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
+    def test_is_course_completed_nonaudit_complete(self, mock_get_course_run_for_enrollment):
+        course_run_verify_expired = {'seats': [{
+            'type': 'verified',
+            'upgrade_deadline': '2000-10-13T13:01:04Z'
+        }]}
+        mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
+        enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
+        assert utils.is_course_completed(enterprise_enrollment, '2000-10-13T13:11:04Z', True, 0)
+
+    @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
+    def test_is_course_completed_nonaudit_incomplete(self, mock_get_course_run_for_enrollment):
+        course_run_verify_expired = {'seats': [{
+            'type': 'verified',
+            'upgrade_deadline': '2000-10-13T13:11:04Z'
+        }]}
+        mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
+        enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
+        assert not utils.is_course_completed(enterprise_enrollment, None, False, 0)

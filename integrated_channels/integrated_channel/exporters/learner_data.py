@@ -26,8 +26,18 @@ from enterprise.api_client.lms import GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.lms_utils import get_course_certificate, get_course_details, get_single_user_grade
-from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
+from integrated_channels.lms_utils import (
+    get_completion_summary,
+    get_course_certificate,
+    get_course_details,
+    get_single_user_grade,
+)
+from integrated_channels.utils import (
+    generate_formatted_log,
+    is_already_transmitted,
+    is_course_completed,
+    parse_datetime_to_epoch_millis,
+)
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
@@ -254,6 +264,71 @@ class LearnerExporter(Exporter):
         ).order_by('course_id')
         return set(get_course_id_for_enrollment(enrollment) for enrollment in enrollment_queryset)
 
+    def get_grades_summary(
+        self,
+        course_details,
+        enterprise_enrollment,
+        channel_name,
+    ):
+        '''
+        Fetch grades info using either certificate api, or grades api.
+        Note: This logic is going to be refactored, so that audit enrollments are treated separately
+        - For audit enrollments, currently will fetch using grades api,
+        - For non audit, it still calls grades api if pacing !=instructor otherwise calls certificate api
+        This pacing logic needs cleanup for a more accurate piece of logic since pacing should not be relevant
+        '''
+        is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
+        lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
+        enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
+        course_id = enterprise_enrollment.course_id
+
+        # For instructor-paced and non-audit courses, let the certificate determine course completion
+        if course_details.pacing == 'instructor' and not is_audit_enrollment:
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+                self._collect_certificate_data(enterprise_enrollment, channel_name)
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
+                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+            ))
+        # For self-paced courses, check the Grades API
+        else:
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+                self._collect_grades_data(enterprise_enrollment, course_details, channel_name)
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                f'_collect_grades_data finished with: CourseMode: {enterprise_enrollment.mode}, '
+                f' CompletedDate: {completed_date_from_api},'
+                f' Grade: {grade_from_api},'
+                f' IsPassing: {is_passing_from_api},'
+                f' Audit Mode?: {is_audit_enrollment}'
+            ))
+        return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent
+
+    def get_incomplete_content_count(self, enterprise_enrollment, channel_name):
+        '''
+        Fetch incomplete content count using completion blocks LMS api
+        Will return None for non audit enrollment
+        '''
+        incomplete_count = None
+        is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
+        if not is_audit_enrollment:
+            return incomplete_count
+        lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
+        enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
+        course_id = enterprise_enrollment.course_id
+
+        user = User.objects.get(pk=lms_user_id)
+        completion_summary = get_completion_summary(course_id, user)
+        incomplete_count = completion_summary.get('incomplete_count')
+        LOGGER.info(
+            generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                f'Incomplete count for audit enrollment is {incomplete_count}'
+            ))
+
+        return incomplete_count
+
     def export(self, **kwargs):
         """
         Collect learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
@@ -275,7 +350,6 @@ class LearnerExporter(Exporter):
         lms_user_for_filter = kwargs.get('learner_to_transmit', None)
         course_run_id = kwargs.get('course_run_id', None)
         completed_date = kwargs.get('completed_date', None)
-        is_passing = kwargs.get('is_passing', False)
         grade = kwargs.get('grade', None)
         skip_transmitted = kwargs.get('skip_transmitted', True)
         TransmissionAudit = kwargs.get('TransmissionAudit', None)
@@ -293,7 +367,6 @@ class LearnerExporter(Exporter):
         enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_permitted]
 
         for enterprise_enrollment in enrollments_permitted:
-            is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
             enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
             course_id = enterprise_enrollment.course_id
@@ -317,43 +390,28 @@ class LearnerExporter(Exporter):
                     )))
                 continue
 
-            # For instructor-paced and non-audit courses, let the certificate determine course completion
-            if course_details.pacing == 'instructor' and not is_audit_enrollment:
-                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
-                    self._collect_certificate_data(enterprise_enrollment, channel_name)
-                LOGGER.info(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    '_collect_certificate_data finished with CompletedDate: {completed_date},'
-                    ' Grade: {grade}, IsPassing: {is_passing},'
-                    .format(
-                        completed_date=completed_date_from_api,
-                        grade=grade_from_api,
-                        is_passing=is_passing_from_api
-                    )))
-            # For self-paced courses, check the Grades API
-            else:
-                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
-                    self._collect_grades_data(enterprise_enrollment, course_details, is_audit_enrollment, channel_name)
-                LOGGER.info(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    '_collect_grades_data finished with CompletedDate: {completed_date},'
-                    ' Grade: {grade}, IsPassing: {is_passing},'
-                    .format(
-                        completed_date=completed_date_from_api,
-                        grade=grade_from_api,
-                        is_passing=is_passing_from_api
-                    )))
+            # For audit courses, check if 100% completed
+            # which we define as: no non-gated content is remaining
+            incomplete_count = self.get_incomplete_content_count(enterprise_enrollment, channel_name)
+
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = self.get_grades_summary(
+                course_details,
+                enterprise_enrollment,
+                channel_name,
+            )
 
             # Apply the Source of Truth for Grades
-            grade = grade_from_api
-            completed_date = completed_date_from_api
-            is_passing = is_passing_from_api
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
-                completed_date=completed_date,
-                grade=grade,
-                is_passing=is_passing,
-                grade_percent=grade_percent
+                completed_date=completed_date_from_api,
+                grade=grade_from_api,
+                course_completed=is_course_completed(
+                    enterprise_enrollment,
+                    completed_date,
+                    is_passing_from_api,
+                    incomplete_count,
+                ),
+                grade_percent=grade_percent,
             )
 
             if records:
@@ -375,10 +433,9 @@ class LearnerExporter(Exporter):
 
         LOGGER.info(generate_formatted_log(
             channel_name, None, lms_user_for_filter, course_run_id,
-            'export finished. Did not export records for EnterpriseCourseEnrollment objects: {remaining_enrollments}.'
-            .format(
-                remaining_enrollments=enrollment_ids_to_export,
-            )))
+            f'export finished. Did not export records for EnterpriseCourseEnrollment objects: '
+            f' {enrollment_ids_to_export}.'
+        ))
 
     def _filter_out_pre_transmitted_enrollments(
             self,
@@ -473,18 +530,16 @@ class LearnerExporter(Exporter):
             enterprise_enrollment,
             completed_date=None,
             grade=None,
-            is_passing=False,
-            grade_percent=None
+            course_completed=False,
+            grade_percent=None,
     ):  # pylint: disable=unused-argument
         """
         Generate a learner data transmission audit with fields properly filled in.
         """
         LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
         completed_timestamp = None
-        course_completed = False
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
-            course_completed = is_passing
 
         return [
             LearnerDataTransmissionAudit(
@@ -534,10 +589,8 @@ class LearnerExporter(Exporter):
             LOGGER.error(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
                 'get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
-                ' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.'
-                .format(
-                    enterprise_enrollment=enterprise_enrollment,
-                )))
+                f' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.'
+            ))
 
         if not certificate:
             return completed_date, grade, is_passing, percent_grade
@@ -602,7 +655,7 @@ class LearnerExporter(Exporter):
 
         return assessment_grades
 
-    def _collect_grades_data(self, enterprise_enrollment, course_details, is_audit_enrollment, channel_name):
+    def _collect_grades_data(self, enterprise_enrollment, course_details, channel_name):
         """
         Collect the learner completion data from the Grades API.
 
@@ -648,7 +701,7 @@ class LearnerExporter(Exporter):
         if course_end_date is not None and course_end_date < now:
             completed_date = course_end_date
             grade = self.grade_passing if is_passing else self.grade_failing
-            grade = self.grade_audit if is_audit_enrollment else grade
+            grade = self.grade_audit if enterprise_enrollment.is_audit_enrollment else grade
 
         # * Or, the learner has a passing grade (as of now)
         elif is_passing:

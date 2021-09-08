@@ -13,6 +13,11 @@ except ImportError:
     CourseGradeFactory = None
     CourseOverview = None
 
+try:
+    from lms.djangoapps.courseware.courses import get_course_blocks_completion_summary
+except ImportError:
+    get_course_blocks_completion_summary = None
+
 from enterprise.utils import NotConnectedToOpenEdX
 
 
@@ -89,3 +94,25 @@ def get_course_details(course_key):
     course_id = CourseKey.from_string(course_key)
     course_overview = CourseOverview.get_from_id(course_id)
     return course_overview
+
+
+def get_completion_summary(course_key, user):
+    """
+    Fetch completion summary for course + user using course blocks completions api
+    Args:
+        course_key (string): string course key
+        user (django.contrib.auth.User): user instance
+    Returns:
+        object containing fields: complete_count, incomplete_count, locked_count
+
+    If there is a problem loading the CourseOverview class, throws NotConnectedToOpenEdX
+    If issues with course_key string, throws a InvalidKeyError
+    If course details not found, throws CourseOverview.DoesNotExist
+    """
+    if not get_course_blocks_completion_summary:
+        raise NotConnectedToOpenEdX(
+            'To use get_course_blocks_completion_summary() function, this package must be '
+            'installed in an Open edX environment.'
+        )
+    course_id = CourseKey.from_string(course_key)
+    return get_course_blocks_completion_summary(course_id, user)

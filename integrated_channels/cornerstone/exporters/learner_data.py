@@ -24,19 +24,14 @@ class CornerstoneLearnerExporter(LearnerExporter):
             enterprise_enrollment,
             completed_date=None,
             grade=None,
-            is_passing=False,
-            grade_percent=None
-    ):
+            course_completed=False,
+            **kwargs,
+    ):  # pylint: disable=arguments-differ
         """
         Return a CornerstoneLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
-        If completed_date is None, then course completion has not been met.
-
         CornerstoneLearnerDataTransmissionAudit object should exit already if not then return None.
         """
-        course_completed = False
-        if completed_date is not None:
-            course_completed = True
 
         CornerstoneLearnerDataTransmissionAudit = apps.get_model(
             'cornerstone',
