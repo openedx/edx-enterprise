@@ -22,6 +22,7 @@ from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
 )
+from test_utils.factories import EnterpriseCustomerFactory
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5)
 
@@ -76,6 +77,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             sapsf_user_id=self.user_id,
             secret=self.client_secret
         )
+        self.enterprise_config.enterprise_customer = EnterpriseCustomerFactory()
         self.completion_payload = {
             "userID": "abc123",
             "courseID": "course-v1:ColumbiaX+DS101X+1T2016",

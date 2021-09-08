@@ -15,8 +15,11 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
+
+CONTENT_TYPE_APP_JSON = 'application/json'
 
 
 class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable=abstract-method
@@ -68,7 +71,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 }
             },
             auth=(client_id, client_secret),
-            headers={'content-type': 'application/json'}
+            headers={'content-type': CONTENT_TYPE_APP_JSON}
         )
 
         try:
@@ -119,7 +122,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             session = requests.Session()
             session.timeout = self.SESSION_TIMEOUT
             session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-            session.headers['content-type'] = 'application/json'
+            session.headers['content-type'] = CONTENT_TYPE_APP_JSON
             self.session = session
             self.expires_at = expires_at
 
@@ -254,7 +257,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             data=payload,
             headers={
                 'Authorization': 'Bearer {}'.format(oauth_access_token),
-                'content-type': 'application/json'
+                'content-type': CONTENT_TYPE_APP_JSON
             }
         )
 
@@ -277,6 +280,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         """
         self._create_session()
         response = self.session.post(url, data=payload)
+        if response.status_code >= 400:
+            LOGGER.error(generate_formatted_log(
+                'SAPSF',
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f'Error status_code {response.status_code} and response: {response.text}'
+                f' while posting to URL {url} with payload {payload}'
+            ))
         return response.status_code, response.text
 
     def get_inactive_sap_learners(self):
