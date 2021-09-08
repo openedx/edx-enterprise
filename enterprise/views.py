@@ -6,6 +6,7 @@ User-facing views for the Enterprise app.
 import datetime
 import json
 import re
+from collections import namedtuple
 from logging import getLogger
 from uuid import UUID
 
@@ -109,7 +110,8 @@ LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/course
 LMS_LOGIN_URL = urljoin(settings.LMS_ROOT_URL, '/login')
 ENTERPRISE_GENERAL_ERROR_PAGE = 'enterprise/enterprise_error_page_with_messages.html'
 
-
+# Constants used for logging errors that occur during
+# the Data-sharing consent flow
 CATALOG_API_CONFIG_ERROR_CODE = 'ENTGDS004'
 CUSTOMER_DOES_NOT_EXIST_ERROR_CODE = 'ENTGDS008'
 CONTENT_ID_DOES_NOT_EXIST_ERROR_CODE = 'ENTGDS000'
@@ -118,6 +120,8 @@ NO_CONSENT_RECORD_ERROR_CODE = 'ENTGDS0002'
 REDIRECT_URLS_MISSING_ERROR_CODE = 'ENTGDS003'
 COURSE_MODE_DOES_NOT_EXIST_ERROR_CODE = 'ENTHCE000'
 ROUTER_VIEW_NO_COURSE_ID_ERROR_CODE = 'ENTRV000'
+VERIFIED_MODE_UNAVAILABLE_ERROR_CODE = 'ENTGDS110'
+ENROLLMENT_INTEGRITY_ERROR_CODE = 'ENTGDS009'
 
 DSC_ERROR_MESSAGES_BY_CODE = {
     CATALOG_API_CONFIG_ERROR_CODE: 'Course catalog api configuration error.',
@@ -128,6 +132,8 @@ DSC_ERROR_MESSAGES_BY_CODE = {
     REDIRECT_URLS_MISSING_ERROR_CODE: 'Required request values missing for action to be carried out.',
     COURSE_MODE_DOES_NOT_EXIST_ERROR_CODE: 'Course_modes for course not found.',
     ROUTER_VIEW_NO_COURSE_ID_ERROR_CODE: 'In Router View, could not find course run with given id.',
+    VERIFIED_MODE_UNAVAILABLE_ERROR_CODE: 'The [verified] course mode is expired or otherwise unavailable',
+    ENROLLMENT_INTEGRITY_ERROR_CODE: 'IntegrityError while creating EnterpriseCourseEnrollment.',
 }
 
 
@@ -147,6 +153,31 @@ def _log_error_message(error_code, exception=None, logger_method=LOGGER.error, *
 
     logger_method(log_message)
     return log_message
+
+
+# The query param used to indicate some reason for enrollment failure;
+# added to the `failure_url` that can be redirected to during the
+# DSC enrollment flow.
+FAILED_ENROLLMENT_REASON_QUERY_PARAM = 'failure_reason'
+
+
+class VerifiedModeUnavailableException(Exception):
+    """
+    Exception that indicates the verified enrollment mode
+    has expired or is otherwise unavaible for a course run.
+    """
+
+
+FailedEnrollmentReason = namedtuple(
+    'FailedEnrollmentReason',
+    ['enrollment_client_error', 'failure_reason_message']
+)
+
+
+VERIFIED_MODE_UNAVAILABLE = FailedEnrollmentReason(
+    enrollment_client_error='The [verified] course mode is expired or otherwise unavailable',
+    failure_reason_message='verified_mode_unavailable',
+)
 
 
 def verify_edx_resources():
@@ -239,6 +270,18 @@ def should_upgrade_to_licensed_enrollment(consent_record, license_uuid):
     the DSC GET endpoint again.
     """
     return consent_record is not None and consent_record.granted and license_uuid
+
+
+def add_reason_to_failure_url(base_failure_url, failure_reason):
+    """
+    Adds a query param to the given ``base_failure_url`` indicating
+    why an enrollment has failed.
+    """
+    (scheme, netloc, path, query, fragment) = list(urlsplit(base_failure_url))
+    query_dict = parse_qs(query)
+    query_dict[FAILED_ENROLLMENT_REASON_QUERY_PARAM] = failure_reason
+    new_query = urlencode(query_dict, doseq=True)
+    return urlunsplit((scheme, netloc, path, new_query, fragment))
 
 
 class NonAtomicView(View):
@@ -615,7 +658,11 @@ class GrantDataSharingPermissions(View):
                 existing_enrollment = enrollment_api_client.get_course_enrollment(
                     request.user.username, course_id
                 )
-                if not existing_enrollment or existing_enrollment.get('mode') == constants.CourseModes.AUDIT:
+                if (
+                        not existing_enrollment or
+                        existing_enrollment.get('mode') == constants.CourseModes.AUDIT or
+                        existing_enrollment.get('is_active') is False
+                ):
                     course_mode = get_best_mode_from_course_key(course_id)
                     LOGGER.info(
                         'Retrieved Course Mode: {course_modes} for Course {course_id}'.format(
@@ -654,37 +701,36 @@ class GrantDataSharingPermissions(View):
                                 'message': error_message,
                             }
                         )
-                        raise
+                        if VERIFIED_MODE_UNAVAILABLE.enrollment_client_error in error_message:
+                            raise VerifiedModeUnavailableException(error_message) from exc
+                        raise Exception(error_message) from exc
             try:
                 self.create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid)
-            except IntegrityError:
-                error_code = 'ENTGDS009'
-                log_message = (
-                    '[Enterprise DSC API] IntegrityError while creating EnterpriseCourseEnrollment.'
-                    'Course: {course_id}, '
-                    'Program: {program_uuid}, '
-                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
-                    'User: {user_id}, '
-                    'License UUID: {license_uuid}, '
-                    'ErrorCode: {error_code}'.format(
-                        course_id=course_id,
-                        program_uuid=program_uuid,
-                        enterprise_customer_uuid=enterprise_customer.uuid,
-                        user_id=request.user.id,
-                        license_uuid=license_uuid,
-                        error_code=error_code,
-                    )
+            except IntegrityError as exc:
+                _log_error_message(
+                    ENROLLMENT_INTEGRITY_ERROR_CODE, exception=exc,
+                    course_id=course_id, program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_customer.uuid,
+                    user_id=request.user.id, license_uuid=license_uuid,
                 )
-                LOGGER.exception(log_message)
 
-    def _upgrade_to_licensed_enrollment(
+    def _do_enrollment_and_redirect(
         self, request, enterprise_customer,
         course_id, program_uuid, license_uuid,
-        success_url, failure_url,
+        success_url, failure_url, consent_record=None, consent_provided=True,
     ):
         """
-        Helper to create a licensed enrollment.
+        Helper to enroll a learner into a course, handle an expected error about
+        verified course modes not being available, and return an appropriate
+        redirect url.
         """
+        error_message_kwargs = {
+            'course_id': course_id,
+            'program_uuid': program_uuid,
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'user_id': request.user.id,
+            'license_uuid': license_uuid,
+        }
         try:
             self._enroll_learner_in_course(
                 request=request,
@@ -693,12 +739,27 @@ class GrantDataSharingPermissions(View):
                 program_uuid=program_uuid,
                 license_uuid=license_uuid,
             )
+            if consent_record:
+                consent_record.granted = consent_provided
+                consent_record.save()
             return redirect(success_url)
+        except VerifiedModeUnavailableException as exc:
+            _log_error_message(
+                error_code=VERIFIED_MODE_UNAVAILABLE_ERROR_CODE,
+                exception=exc,
+                **error_message_kwargs,
+            )
+            return redirect(
+                add_reason_to_failure_url(
+                    failure_url,
+                    VERIFIED_MODE_UNAVAILABLE.failure_reason_message,
+                )
+            )
         except Exception as exc:  # pylint: disable=broad-except
             _log_error_message(
-                error_code=LICENSED_ENROLLMENT_ERROR_CODE, exception=exc, course_id=course_id,
-                program_uuid=program_uuid, enterprise_customer_uuid=enterprise_customer.uuid,
-                user_id=request.user.id, license_uuid=license_uuid,
+                error_code=LICENSED_ENROLLMENT_ERROR_CODE,
+                exception=exc,
+                **error_message_kwargs,
             )
             return redirect(failure_url)
 
@@ -757,7 +818,7 @@ class GrantDataSharingPermissions(View):
                 not enterprise_customer.requests_data_sharing_consent or
                 should_upgrade_to_licensed_enrollment(consent_record, license_uuid)
             ):
-                return self._upgrade_to_licensed_enrollment(
+                return self._do_enrollment_and_redirect(
                     request, enterprise_customer,
                     course_id, program_uuid, license_uuid,
                     success_url, failure_url,
@@ -865,17 +926,11 @@ class GrantDataSharingPermissions(View):
         defer_creation = request.POST.get('defer_creation')
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required() and consent_provided:
-            try:
-                self._enroll_learner_in_course(
-                    request=request,
-                    enterprise_customer=enterprise_customer,
-                    course_id=course_id,
-                    program_uuid=program_uuid,
-                    license_uuid=license_uuid)
-                consent_record.granted = consent_provided
-                consent_record.save()
-            except Exception:  # pylint: disable=broad-except
-                return redirect(failure_url)
+            return self._do_enrollment_and_redirect(
+                request, enterprise_customer,
+                course_id, program_uuid, license_uuid,
+                success_url, failure_url, consent_record=consent_record,
+            )
 
         return redirect(success_url if consent_provided else failure_url)
 

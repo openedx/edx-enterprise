@@ -203,7 +203,7 @@ def update_search_with_enterprise_context(search_result, add_utm_info):
     return search_result
 
 
-def fake_render(request, template, context):  # pylint: disable=unused-argument
+def fake_render(request, template, context, **kwargs):  # pylint: disable=unused-argument
     """
     Switch the request to use a template that does not depend on edx-platform.
     The choice of the template here is arbitrary, as long as it renders successfully for tests.
