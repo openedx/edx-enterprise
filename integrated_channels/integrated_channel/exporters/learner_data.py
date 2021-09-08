@@ -326,23 +326,6 @@ class LearnerExporter(Exporter):
                     )))
                 continue
 
-            # audit and verified reporting of completion across LMS systems
-            #  ticket2: investigate SAP completion endpoint to see if it can support audit and verified completions
-            # ticket1: cleanup logic around pacing and instead use the cert vs grades system
-
-            # if audit:
-            #   check completion content and upgrade
-            # else:
-            #   get cert
-            #   if cert: easier to find completed status, grades
-            #     completed_date
-            #     is_passing
-            #   else:
-            #     check grades api values
-            #     check is_passing, and check completion_count
-            #     completed = is_passing AND nongated content is completed
-            #
-
             # For audit courses, check if 100% completed
             # which we define as: no non-gated content is remaining
             incomplete_count = None
