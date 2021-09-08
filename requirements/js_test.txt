@@ -14,7 +14,7 @@ jaraco.classes==3.2.1
     # via
     #   -r requirements/js_test.in
     #   jaraco.collections
-jaraco.collections==3.3.0
+jaraco.collections==3.4.0
     # via
     #   -r requirements/js_test.in
     #   cherrypy
@@ -26,15 +26,15 @@ jaraco.functools==3.3.0
     #   tempora
 jaraco.text==3.5.1
     # via jaraco.collections
-jasmine==3.8.1
+jasmine==3.9.0
     # via -r requirements/js_test.in
-jasmine-core==3.8.0
+jasmine-core==3.9.0
     # via jasmine
 jinja2==2.11.3
     # via jasmine
 markupsafe==2.0.1
     # via jinja2
-more-itertools==8.8.0
+more-itertools==8.9.0
     # via
     #   cheroot
     #   cherrypy

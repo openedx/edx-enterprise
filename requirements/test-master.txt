@@ -12,7 +12,7 @@ aniso8601==9.0.1
     #   edx-tincan-py35
 billiard==3.6.4.0
     # via celery
-bleach==3.3.1
+bleach==4.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -49,7 +49,7 @@ code-annotations==1.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-cryptography==3.4.7
+cryptography==3.4.8
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -103,7 +103,7 @@ django-filter==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-ipware==3.0.7
+django-ipware==4.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -147,7 +147,7 @@ drf-jwt==1.19.0
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==4.2.0
+edx-django-utils==4.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -156,6 +156,7 @@ edx-django-utils==4.2.0
     #   edx-rest-api-client
 edx-drf-extensions==6.6.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
@@ -204,7 +205,7 @@ markupsafe==2.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-newrelic==6.6.0.162
+newrelic==6.8.1.164
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -224,11 +225,11 @@ pbr==5.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
-pillow==8.3.1
+pillow==8.3.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-prompt-toolkit==3.0.19
+prompt-toolkit==3.0.20
     # via click-repl
 psutil==5.8.0
     # via
@@ -320,7 +321,7 @@ sqlparse==0.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
-stevedore==3.3.0
+stevedore==3.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -331,7 +332,7 @@ tableauserverclient==0.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-testfixtures==6.18.0
+testfixtures==6.18.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
