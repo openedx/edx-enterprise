@@ -30,8 +30,6 @@ class DegreedLearnerExporter(LearnerExporter):
         """
         Return a DegreedLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
-        If completed_date is None, then course completion has not been met.
-
         If no remote ID can be found, return None.
         """
         # Degreed expects completion dates of the form 'yyyy-mm-dd'.

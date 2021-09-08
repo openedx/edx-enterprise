@@ -30,8 +30,6 @@ class CornerstoneLearnerExporter(LearnerExporter):
         """
         Return a CornerstoneLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
-        If completed_date is None, then course completion has not been met.
-
         CornerstoneLearnerDataTransmissionAudit object should exit already if not then return None.
         """
 

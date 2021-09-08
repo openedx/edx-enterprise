@@ -28,7 +28,6 @@ class MoodleLearnerExporter(LearnerExporter):
     ):  # pylint: disable=arguments-differ
         """
         Return a MoodleLearnerDataTransmissionAudit with the given enrollment and course completion data.
-        If completed_date is None, then course completion has not been met.
         If no remote ID can be found, return None.
         """
         enterprise_learner = enterprise_enrollment.enterprise_customer_user

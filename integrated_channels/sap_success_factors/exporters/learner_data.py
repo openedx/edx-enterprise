@@ -36,8 +36,6 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
         """
         Return a SapSuccessFactorsLearnerDataTransmissionAudit with the given enrollment and course completion data.
 
-        If completed_date is None and the learner isn't passing, then course completion has not been met.
-
         If no remote ID can be found, return None.
         """
         completed_timestamp = None

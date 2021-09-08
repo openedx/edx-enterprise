@@ -103,6 +103,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         learner_data_records = exporter.get_learner_data_records(
             self.enterprise_course_enrollment,
             completed_date=completed_date,
+            course_completed=True,
         )
         assert learner_data_records[0].course_id == self.course_key
         assert learner_data_records[0].user_id == self.user.id
@@ -110,7 +111,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         assert learner_data_records[0].subdomain == self.subdomain
         assert learner_data_records[0].callback_url == self.callback_url
         assert learner_data_records[0].session_token == self.session_token
-        assert learner_data_records[0].course_completed == (completed_date is not None)
+        assert learner_data_records[0].course_completed
         assert learner_data_records[0].enterprise_course_enrollment_id == self.enterprise_course_enrollment.id
         assert learner_data_records[0].completed_timestamp == (
             self.NOW if completed_date is not None else None
@@ -135,8 +136,10 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     def test_api_client_called_with_appropriate_payload(
         self,
+        mock_is_course_completed,
         mock_get_course_details,
         mock_get_course_certificate,
         mock_post_request
@@ -144,6 +147,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         """
         Test sending of course completion data to cornerstone progress API
         """
+        mock_is_course_completed.return_value = True
         mock_get_course_details.return_value = mock_course_overview(
             pacing="instructor",
             end="2022-06-21T12:58:17.428373Z",
