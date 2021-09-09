@@ -42,7 +42,9 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id()
+        sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
+            self.enterprise_configuration.idp_id
+        )
 
         if sapsf_user_id is not None:
             SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(

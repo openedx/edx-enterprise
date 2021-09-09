@@ -45,6 +45,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
 
+    idp_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("If provided, will be used as IDP slug to locate remote id for learners")
+    )
+
     active = models.BooleanField(
         blank=False,
         null=False,

@@ -544,6 +544,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(factory.django.Dja
     sapsf_company_id = factory.LazyAttribute(lambda x: FAKER.company())
     sapsf_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     user_type = SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER
+    idp_id = None
 
 
 class SapSuccessFactorsLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):

@@ -56,6 +56,7 @@ class TestPendingEnrollment(unittest.TestCase):
     """
     Test for pending enrollment
     """
+
     def setUp(self):
         email = 'bob@jones.com'
         course_id = 'course-v1:edX+DemoX+DemoCourse'
@@ -79,6 +80,7 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
     """
     Test for EnterpriseCourseEnrollment
     """
+
     def setUp(self):
         self.username = 'DarthVader'
         self.user = factories.UserFactory(username=self.username)
@@ -605,7 +607,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
-    def test_get_remote_id(self, provider_id, expected_value, called, mock_third_party_api):
+    def test_get_remote_id(self, provider_id, expected_value, remote_id_called, mock_third_party_api):
         user = factories.UserFactory(username="hi")
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
         if provider_id:
@@ -616,7 +618,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         mock_third_party_api.return_value.get_remote_id.return_value = 'saml-user-id'
         actual_value = enterprise_customer_user.get_remote_id()
         assert actual_value == expected_value
-        if called:
+        if remote_id_called:
             mock_third_party_api.return_value.get_remote_id.assert_called_once_with(provider_id, "hi")
         else:
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
@@ -643,6 +645,33 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         mock_social_auth_from_idp.return_value = True
         _ = enterprise_customer_user.get_remote_id()
         mock_third_party_api.return_value.get_remote_id.assert_called_once_with(default_idp, "hello")
+
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    def test_get_remote_id_specific_idp(self, mock_third_party_api):
+        '''
+        When specific idp slug is provided, get_remote_id should verify slug, and honor it if valid
+        '''
+        user = factories.UserFactory(username="hello")
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
+        non_default_idp_id = "non-default-identity"
+        default_idp_id = "by-default-identity"
+
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            provider_id=non_default_idp_id,
+            enterprise_customer=enterprise_customer_user.enterprise_customer
+        )
+
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            provider_id=default_idp_id,
+            enterprise_customer=enterprise_customer_user.enterprise_customer,
+            default_provider=True
+        )
+        mock_third_party_api.return_value.get_remote_id.return_value = 'specified-user-id'
+
+        remote_id = enterprise_customer_user.get_remote_id(idp_id=non_default_idp_id)
+
+        assert remote_id == 'specified-user-id'
+        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(non_default_idp_id, "hello")
 
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
@@ -2112,8 +2141,8 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
                 config.clean()
             data_types = ", ".join(EnterpriseCustomerReportingConfiguration.ALLOWED_NON_COMPRESSION_DATA_TYPES)
             assert context.exception.messages[0] == \
-                   f'Compression can only be disabled for the following data types: {data_types} and ' \
-                   f'delivery method: {EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP}'
+                f'Compression can only be disabled for the following data types: {data_types} and ' \
+                f'delivery method: {EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP}'
         else:
             config.clean()
 

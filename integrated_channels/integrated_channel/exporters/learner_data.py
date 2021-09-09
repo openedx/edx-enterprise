@@ -308,7 +308,7 @@ class LearnerExporter(Exporter):
     def get_incomplete_content_count(self, enterprise_enrollment, channel_name):
         '''
         Fetch incomplete content count using completion blocks LMS api
-        Will return None for non audit enrollment
+        Will return None for non audit enrollment (but this does not have to be the case necessarily)
         '''
         incomplete_count = None
         is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
