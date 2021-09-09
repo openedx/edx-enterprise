@@ -17,10 +17,13 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.6]
+---------
+* SAP integrated channel now uses idp_id explicitly when calling get_remote_id()
+
 [3.28.5]
 ---------
 * Fixed datetime issue in email_drip_for_missing_dsc_records.
-
 
 [3.28.4]
 ---------
