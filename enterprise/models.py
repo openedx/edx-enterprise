@@ -913,9 +913,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         return self.__str__()
 
-    def get_remote_id(self):
+    def get_remote_id(self, idp_id=None):
         """
         Retrieve the SSO provider's identifier for this user from the LMS Third Party API.
+        In absence of idp_id, returns id from default idp
+
+        Arguments:
+        * idp_id (str) (optional): If provided, idp resolutoin skipped and specified idp used
+          to locate remote id
 
         Returns None if:
         * the user doesn't exist, or
@@ -923,6 +928,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
         * the remote identity is not found.
         """
         user = self.user
+        if idp_id:
+            enterprise_worker = get_enterprise_worker_user()
+            client = ThirdPartyAuthApiClient(enterprise_worker)
+            return client.get_remote_id(idp_id, user.username)
         if user and self.enterprise_customer.has_identity_providers:
             identity_provider = None
             if self.enterprise_customer.has_multiple_idps:
