@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.5]
+---------
+* Fixed datetime issue in email_drip_for_missing_dsc_records.
+
+
 [3.28.4]
 ---------
 * Integrated channels: audit track completion status now based on incomplete non-gated content

@@ -31,7 +31,7 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
     """
     command = 'email_drip_for_missing_dsc_records'
 
-    def create_enrollments(self, num_learners, enrollment_date):
+    def create_enrollments(self, num_learners, enrollment_time):
         """
         Create test users and enrollments in database
 
@@ -71,14 +71,16 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
                 enterprise_customer_user=enterprise_customer_user,
                 course_id=course_id,
             )
-            enterprise_course_enrollment.created = enrollment_date
+            enterprise_course_enrollment.created = enrollment_time
             enterprise_course_enrollment.save()
 
     def setUp(self):
         super().setUp()
-        today = timezone.now().date()
-        self.create_enrollments(num_learners=3, enrollment_date=today - timedelta(days=1))
-        self.create_enrollments(num_learners=5, enrollment_date=today - timedelta(days=10))
+        now = timezone.now()
+        # creating enrollments for yesterday.
+        self.create_enrollments(num_learners=3, enrollment_time=now - timedelta(days=1))
+        # creating enrollments for 10 days before.
+        self.create_enrollments(num_learners=5, enrollment_time=now - timedelta(days=10))
 
     @mock.patch(
         'enterprise.management.commands.email_drip_for_missing_dsc_records.DataSharingConsent.objects.proxied_get'
