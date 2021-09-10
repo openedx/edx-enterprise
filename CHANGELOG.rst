@@ -17,9 +17,13 @@ Unreleased
 ----------
 * Nothing
 
-[3.28.7]
+[3.28.8]
 ---------
 * SAP integrated channel django form gets missing idp id field
+
+[3.28.7]
+---------
+* Degreed integrated channel now uses idp_id explicitly when calling get_remote_id()
 
 [3.28.6]
 ---------
