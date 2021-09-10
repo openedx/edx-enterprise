@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.9]
+---------
+* Include a ``failure_reason=dsc_denied`` to the DSC failure url when learner denies the DSC terms.
+
 [3.28.8]
 ---------
 * SAP integrated channel django form gets missing idp id field
