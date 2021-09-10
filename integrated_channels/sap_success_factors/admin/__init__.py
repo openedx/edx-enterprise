@@ -40,6 +40,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     """
     fields = (
         'enterprise_customer',
+        'idp_id',
         'active',
         'sapsf_base_url',
         'sapsf_company_id',
