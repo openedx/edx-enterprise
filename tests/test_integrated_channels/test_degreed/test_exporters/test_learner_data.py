@@ -9,6 +9,7 @@ import unittest
 import ddt
 import mock
 from freezegun import freeze_time
+from mock.mock import MagicMock
 from pytest import mark
 
 from django.utils import timezone
@@ -102,3 +103,22 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         self.tpa_client.return_value.get_remote_id.return_value = None
         exporter = DegreedLearnerExporter('fake-user', self.config)
         assert exporter.get_learner_data_records(factories.EnterpriseCourseEnrollmentFactory()) is None
+
+    @mock.patch('integrated_channels.degreed.exporters.learner_data.get_course_id_for_enrollment')
+    def test_get_remote_id_called_with_idp_id(self, mock_get_course_id_for_enrollment):
+        mock_get_course_id_for_enrollment.return_value = 'test:id'
+        enterprise_configuration = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            idp_id='test-id'
+        )
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
+        enterprise_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user
+        )
+        enterprise_enrollment.enterprise_customer_user.get_remote_id = MagicMock()
+        exporter = DegreedLearnerExporter(factories.UserFactory(), enterprise_configuration)
+
+        exporter.get_learner_data_records(enterprise_enrollment)
+        enterprise_enrollment.enterprise_customer_user.get_remote_id.assert_called_once_with(
+            enterprise_configuration.idp_id
+        )

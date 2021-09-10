@@ -34,7 +34,9 @@ class DegreedLearnerExporter(LearnerExporter):
         """
         # Degreed expects completion dates of the form 'yyyy-mm-dd'.
         completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
-        if enterprise_enrollment.enterprise_customer_user.get_remote_id() is not None:
+        if enterprise_enrollment.enterprise_customer_user.get_remote_id(
+            self.enterprise_configuration.idp_id
+        ) is not None:
             DegreedLearnerDataTransmissionAudit = apps.get_model(
                 'degreed',
                 'DegreedLearnerDataTransmissionAudit'
