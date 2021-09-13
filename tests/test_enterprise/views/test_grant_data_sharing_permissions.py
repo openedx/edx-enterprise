@@ -622,21 +622,21 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
         (True, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
-        (True, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
+        (True, False, '/failure_url?failure_reason=dsc_denied', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
         (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
-        (False, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
+        (False, False, '/failure_url?failure_reason=dsc_denied', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
         (True, True, '/successful_enrollment', 'edX+DemoX', str(uuid.uuid4())),
-        (True, False, '/failure_url', 'edX+DemoX', str(uuid.uuid4())),
+        (True, False, '/failure_url?failure_reason=dsc_denied', 'edX+DemoX', str(uuid.uuid4())),
         (False, True, '/successful_enrollment', 'edX+DemoX', str(uuid.uuid4())),
-        (False, False, '/failure_url', 'edX+DemoX', str(uuid.uuid4())),
+        (False, False, '/failure_url?failure_reason=dsc_denied', 'edX+DemoX', str(uuid.uuid4())),
         (True, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', ''),
-        (True, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (True, False, '/failure_url?failure_reason=dsc_denied', 'course-v1:edX+DemoX+Demo_Course', ''),
         (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', ''),
-        (False, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (False, False, '/failure_url?failure_reason=dsc_denied', 'course-v1:edX+DemoX+Demo_Course', ''),
         (True, True, '/successful_enrollment', 'edX+DemoX', ''),
-        (True, False, '/failure_url', 'edX+DemoX', ''),
+        (True, False, '/failure_url?failure_reason=dsc_denied', 'edX+DemoX', ''),
         (False, True, '/successful_enrollment', 'edX+DemoX', ''),
-        (False, False, '/failure_url', 'edX+DemoX', ''),
+        (False, False, '/failure_url?failure_reason=dsc_denied', 'edX+DemoX', ''),
     )
     @ddt.unpack
     def test_post_course_specific_consent(
@@ -1157,7 +1157,8 @@ class TestProgramDataSharingPermissions(TestCase):
         response = self.client.post(self.url, params, follow=False)
         # No need to update the consent record if consent not provided
         assert consent_record.save.called is False
-        self.assertRedirects(response, 'https://facebook.com/', fetch_redirect_response=False)
+        expected_failure_url = 'https://facebook.com/?failure_reason=dsc_denied'
+        self.assertRedirects(response, expected_failure_url, fetch_redirect_response=False)
 
     def test_post_program_consent_deferred(self):
         consent_record = self.get_data_sharing_consent.return_value

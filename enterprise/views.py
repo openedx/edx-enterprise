@@ -178,6 +178,10 @@ VERIFIED_MODE_UNAVAILABLE = FailedEnrollmentReason(
     enrollment_client_error='The [verified] course mode is expired or otherwise unavailable',
     failure_reason_message='verified_mode_unavailable',
 )
+DSC_DENIED = FailedEnrollmentReason(
+    enrollment_client_error='Data Sharing Consent terms must be accepted in order to enroll',
+    failure_reason_message='dsc_denied',
+)
 
 
 def verify_edx_resources():
@@ -931,8 +935,15 @@ class GrantDataSharingPermissions(View):
                 course_id, program_uuid, license_uuid,
                 success_url, failure_url, consent_record=consent_record,
             )
+        if consent_provided:
+            return redirect(success_url)
 
-        return redirect(success_url if consent_provided else failure_url)
+        return redirect(
+            add_reason_to_failure_url(
+                failure_url,
+                DSC_DENIED.failure_reason_message,
+            )
+        )
 
 
 class EnterpriseLoginView(FormView):
