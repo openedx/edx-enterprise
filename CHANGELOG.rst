@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.10]
+---------
+* Integrated channel transmitter completions routine now logs as error, any status codes greater than or equal to 400
+
 [3.28.9]
 ---------
 * Include a ``failure_reason=dsc_denied`` to the DSC failure url when learner denies the DSC terms.
