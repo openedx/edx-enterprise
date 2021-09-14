@@ -2,15 +2,15 @@
 Tests for the base learner data transmitter.
 """
 
-from mock.mock import MagicMock
-from integrated_channels.exceptions import ClientError
 import unittest
 from unittest.mock import Mock
 
 import ddt
 import mock
+from mock.mock import MagicMock
 from pytest import mark
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
