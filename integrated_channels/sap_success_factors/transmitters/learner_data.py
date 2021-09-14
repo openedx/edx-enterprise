@@ -29,17 +29,17 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
             client=client
         )
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, exporter, **kwargs):
         """
         Send a completion status call to SAP SuccessFactors using the client.
 
         Args:
-            payload: The learner completion data payload to send to SAP SuccessFactors
+            exporter: The learner data exporter for SAP SuccessFactors
         """
         kwargs['app_label'] = 'sap_success_factors'
         kwargs['model_name'] = 'SapSuccessFactorsLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'sapsf_user_id'
-        super().transmit(payload, **kwargs)
+        super().transmit(exporter, **kwargs)
 
     def handle_transmission_error(self, learner_data, client_exception, integrated_channel_name,
                                   enterprise_customer_uuid, learner_id, course_id):

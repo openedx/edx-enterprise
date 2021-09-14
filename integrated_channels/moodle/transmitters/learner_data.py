@@ -22,14 +22,14 @@ class MoodleLearnerTransmitter(LearnerTransmitter):
             client=client
         )
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, exporter, **kwargs):
         """
         Send a completion status call to Moodle using the client.
 
         Args:
-            payload: The learner completion data payload to send to Moodle
+            exporter: The learner data exporter for Moodle
         """
         kwargs['app_label'] = 'moodle'
         kwargs['model_name'] = 'MoodleLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'moodle_user_email'
-        super().transmit(payload, **kwargs)
+        super().transmit(exporter, **kwargs)

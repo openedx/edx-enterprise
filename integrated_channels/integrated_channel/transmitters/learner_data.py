@@ -4,6 +4,7 @@ Generic learner data transmitter for integrated channels.
 """
 
 import logging
+from http import HTTPStatus
 
 from django.apps import apps
 
@@ -164,12 +165,12 @@ class LearnerTransmitter(Transmitter):
 
             learner_data.save()
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, exporter, **kwargs):
         """
         Send a completion status call to the integrated channel using the client.
 
         Args:
-            payload: The learner completion data payload to send to the integrated channel.
+            exporter: The learner data exporter.
             kwargs: Contains integrated channel-specific information for customized transmission variables.
                 - app_label: The app label of the integrated channel for whom to store learner data records for.
                 - model_name: The name of the specific learner data record model to use.
@@ -190,7 +191,7 @@ class LearnerTransmitter(Transmitter):
         # one by course key and one by course run id.
         # If the transmission with the course key succeeds, the next one will get skipped.
         # If it fails, the one with the course run id will be attempted and (presumably) succeed.
-        for learner_data in payload.export(**kwargs):
+        for learner_data in exporter.export(**kwargs):
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
 
             enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id
@@ -219,6 +220,9 @@ class LearnerTransmitter(Transmitter):
                     getattr(learner_data, kwargs.get('remote_user_id')),
                     serialized_payload
                 )
+                if code >= HTTPStatus.BAD_REQUEST.value:
+                    raise ClientError(f'Client create_course_completion failed: {body}', code)
+
                 LOGGER.info(generate_formatted_log(
                     app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
                     'Successfully sent completion status call for enterprise enrollment {}'.format(
