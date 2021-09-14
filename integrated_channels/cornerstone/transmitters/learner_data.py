@@ -27,7 +27,7 @@ class CornerstoneLearnerTransmitter(LearnerTransmitter):
         Send a completion status call to Cornerstone using the client.
 
         Args:
-            payload: The learner completion data payload to send to Cornerstone
+            payload: The learner exporter for Cornerstone
         """
         kwargs['app_label'] = 'cornerstone'
         kwargs['model_name'] = 'CornerstoneLearnerDataTransmissionAudit'

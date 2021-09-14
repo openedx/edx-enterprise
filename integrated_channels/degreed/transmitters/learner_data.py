@@ -27,7 +27,7 @@ class DegreedLearnerTransmitter(LearnerTransmitter):
         Send a completion status call to Degreed using the client.
 
         Args:
-            payload: The learner completion data payload to send to Degreed
+            payload: The learner exporter for Degreed
         """
         kwargs['app_label'] = 'degreed'
         kwargs['model_name'] = 'DegreedLearnerDataTransmissionAudit'

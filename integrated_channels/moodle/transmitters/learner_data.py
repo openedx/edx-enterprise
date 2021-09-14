@@ -27,7 +27,7 @@ class MoodleLearnerTransmitter(LearnerTransmitter):
         Send a completion status call to Moodle using the client.
 
         Args:
-            payload: The learner completion data payload to send to Moodle
+            payload: The learner data exporter for Moodle
         """
         kwargs['app_label'] = 'moodle'
         kwargs['model_name'] = 'MoodleLearnerDataTransmissionAudit'

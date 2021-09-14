@@ -4,6 +4,7 @@ Generic learner data transmitter for integrated channels.
 """
 
 import logging
+from http import HTTPStatus
 
 from django.apps import apps
 
@@ -169,7 +170,7 @@ class LearnerTransmitter(Transmitter):
         Send a completion status call to the integrated channel using the client.
 
         Args:
-            payload: The learner completion data payload to send to the integrated channel.
+            payload: The learner data exporter.
             kwargs: Contains integrated channel-specific information for customized transmission variables.
                 - app_label: The app label of the integrated channel for whom to store learner data records for.
                 - model_name: The name of the specific learner data record model to use.
@@ -219,6 +220,9 @@ class LearnerTransmitter(Transmitter):
                     getattr(learner_data, kwargs.get('remote_user_id')),
                     serialized_payload
                 )
+                if code >= HTTPStatus.BAD_REQUEST.value:
+                    raise ClientError(f'Client create_course_completion failed: {body}', code)
+
                 LOGGER.info(generate_formatted_log(
                     app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
                     'Successfully sent completion status call for enterprise enrollment {}'.format(

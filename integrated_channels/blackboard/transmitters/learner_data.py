@@ -27,7 +27,7 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
         Send a completion status call to Blackboard using the client.
 
         Args:
-            payload: The learner completion data payload to send to Blackboard
+            payload: The learner completion exporter for Blackboard
         """
         kwargs['app_label'] = 'blackboard'
         kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'

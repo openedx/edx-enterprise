@@ -34,7 +34,7 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
         Send a completion status call to SAP SuccessFactors using the client.
 
         Args:
-            payload: The learner completion data payload to send to SAP SuccessFactors
+            payload: The learner data exporter for SAP SuccessFactors
         """
         kwargs['app_label'] = 'sap_success_factors'
         kwargs['model_name'] = 'SapSuccessFactorsLearnerDataTransmissionAudit'

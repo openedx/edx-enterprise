@@ -27,7 +27,7 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
         Send a completion status call to Canvas using the client.
 
         Args:
-            payload: The learner completion data payload to send to Canvas
+            payload: The learner exporter for Canvas
         """
         kwargs['app_label'] = 'canvas'
         kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'

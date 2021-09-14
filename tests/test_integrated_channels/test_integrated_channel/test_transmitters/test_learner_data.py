@@ -7,8 +7,10 @@ from unittest.mock import Mock
 
 import ddt
 import mock
+from mock.mock import MagicMock
 from pytest import mark
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
@@ -21,6 +23,7 @@ class TestLearnerDataTransmitter(unittest.TestCase):
     """
     Tests for the class ``LearnerDataTransmitter``.
     """
+
     def setUp(self):
         super().setUp()
 
@@ -86,3 +89,22 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         assert learner_data_transmission_audit_mock.save.called
         assert learner_data_transmission_audit_mock.error_message == ''
         assert learner_data_transmission_audit_mock.status == '200'
+
+    @mock.patch('integrated_channels.integrated_channel.transmitters.'
+                'learner_data.LearnerExporterUtility.lms_user_id_for_ent_course_enrollment_id')
+    @mock.patch('integrated_channels.integrated_channel.transmitters.learner_data.is_already_transmitted')
+    def test_raises_client_error_on_status_code(self, is_already_tx, mock_lms_id):
+        mock_lms_id.return_value = 'abc'
+        is_already_tx.return_value = False
+        self.learner_transmitter.client.create_course_completion = Mock(return_value=(401, 'fail'))
+        exporter = MagicMock()
+        records = MagicMock()
+        records.course_completed = True
+        records.serialize = Mock(return_value='serialized data')
+        exporter.export = MagicMock(return_value=[records])
+        self.learner_transmitter.handle_transmission_error = Mock()
+        self.learner_transmitter.transmit(
+            exporter,
+            remote_user_id='user_id'
+        )
+        self.learner_transmitter.handle_transmission_error.assert_called_once()
