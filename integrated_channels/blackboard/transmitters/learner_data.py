@@ -22,17 +22,17 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
             client=client
         )
 
-    def transmit(self, exporter, **kwargs):
+    def transmit(self, payload, **kwargs):
         """
         Send a completion status call to Blackboard using the client.
 
         Args:
-            exporter: The learner exporter for Blackboard
+            payload: The learner completion exporter for Blackboard
         """
         kwargs['app_label'] = 'blackboard'
         kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'blackboard_user_email'
-        super().transmit(exporter, **kwargs)
+        super().transmit(payload, **kwargs)
 
     def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
         """

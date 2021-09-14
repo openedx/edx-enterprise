@@ -22,14 +22,14 @@ class CornerstoneLearnerTransmitter(LearnerTransmitter):
             client=client
         )
 
-    def transmit(self, exporter, **kwargs):
+    def transmit(self, payload, **kwargs):
         """
         Send a completion status call to Cornerstone using the client.
 
         Args:
-            exporter: The learner data exporter for Cornerstone
+            payload: The learner exporter for Cornerstone
         """
         kwargs['app_label'] = 'cornerstone'
         kwargs['model_name'] = 'CornerstoneLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'user_guid'
-        super().transmit(exporter, **kwargs)
+        super().transmit(payload, **kwargs)

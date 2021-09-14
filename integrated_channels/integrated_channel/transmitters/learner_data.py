@@ -165,12 +165,12 @@ class LearnerTransmitter(Transmitter):
 
             learner_data.save()
 
-    def transmit(self, exporter, **kwargs):
+    def transmit(self, payload, **kwargs):
         """
         Send a completion status call to the integrated channel using the client.
 
         Args:
-            exporter: The learner data exporter.
+            payload: The learner data exporter.
             kwargs: Contains integrated channel-specific information for customized transmission variables.
                 - app_label: The app label of the integrated channel for whom to store learner data records for.
                 - model_name: The name of the specific learner data record model to use.
@@ -191,7 +191,7 @@ class LearnerTransmitter(Transmitter):
         # one by course key and one by course run id.
         # If the transmission with the course key succeeds, the next one will get skipped.
         # If it fails, the one with the course run id will be attempted and (presumably) succeed.
-        for learner_data in exporter.export(**kwargs):
+        for learner_data in payload.export(**kwargs):
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
 
             enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id

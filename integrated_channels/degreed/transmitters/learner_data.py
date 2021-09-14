@@ -22,14 +22,14 @@ class DegreedLearnerTransmitter(LearnerTransmitter):
             client=client
         )
 
-    def transmit(self, exporter, **kwargs):
+    def transmit(self, payload, **kwargs):
         """
         Send a completion status call to Degreed using the client.
 
         Args:
-            exporter: The learner data exporter for Degreed
+            payload: The learner exporter for Degreed
         """
         kwargs['app_label'] = 'degreed'
         kwargs['model_name'] = 'DegreedLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'degreed_user_email'
-        super().transmit(exporter, **kwargs)
+        super().transmit(payload, **kwargs)

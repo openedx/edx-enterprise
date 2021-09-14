@@ -22,17 +22,17 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
             client=client
         )
 
-    def transmit(self, exporter, **kwargs):
+    def transmit(self, payload, **kwargs):
         """
         Send a completion status call to Canvas using the client.
 
         Args:
-            exporter: The learner data exporter for Canvas
+            payload: The learner exporter for Canvas
         """
         kwargs['app_label'] = 'canvas'
         kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'canvas_user_email'
-        super().transmit(exporter, **kwargs)
+        super().transmit(payload, **kwargs)
 
     def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
         """
