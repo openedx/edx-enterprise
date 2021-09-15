@@ -16,7 +16,7 @@ attrs==21.2.0
     # via
     #   -r requirements/test-master.txt
     #   celery
-bleach==3.3.1
+bleach==4.1.0
     # via -r requirements/test-master.txt
     # via
     #   -c requirements/constraints.txt
@@ -56,7 +56,7 @@ code-annotations==1.2.0
     # via -r requirements/test-master.txt
 coverage==5.5
     # via pytest-cov
-cryptography==3.4.7
+cryptography==3.4.8
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields
@@ -67,7 +67,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==6.2.1
+diff-cover==6.3.5
     # via -r requirements/test.in
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
@@ -100,7 +100,7 @@ django-fernet-fields==0.6
     # via -r requirements/test-master.txt
 django-filter==2.4.0
     # via -r requirements/test-master.txt
-django-ipware==3.0.7
+django-ipware==4.0.0
     # via -r requirements/test-master.txt
 django-model-utils==4.1.1
     # via
@@ -132,7 +132,7 @@ drf-jwt==1.19.0
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==4.2.0
+edx-django-utils==4.4.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -140,6 +140,7 @@ edx-django-utils==4.2.0
     #   edx-rest-api-client
 edx-drf-extensions==6.6.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
     #   edx-rbac
 edx-opaque-keys[django]==2.2.2
@@ -156,7 +157,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==8.10.3
+faker==8.12.1
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -170,7 +171,7 @@ idna==3.2
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==4.6.3
+importlib-metadata==4.8.1
     # via inflect
 inflect==3.0.2
     # via
@@ -203,9 +204,9 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-more-itertools==8.8.0
+more-itertools==8.9.0
     # via zipp
-newrelic==6.6.0.162
+newrelic==6.8.1.164
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -224,7 +225,7 @@ pbr==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   stevedore
-pillow==8.3.1
+pillow==8.3.2
     # via -r requirements/test-master.txt
 pluggy==0.13.1
     # via
@@ -249,7 +250,7 @@ pycryptodomex==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.9.0
+pygments==2.10.0
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -269,7 +270,7 @@ pyparsing==2.4.7
     # via
     #   -r requirements/test-master.txt
     #   packaging
-pytest==6.2.4
+pytest==6.2.5
     # via
     #   -c requirements/constraints.txt
     #   pytest-catchlog
@@ -344,7 +345,7 @@ sqlparse==0.4.1
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==3.3.0
+stevedore==3.4.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -352,7 +353,7 @@ stevedore==3.3.0
     #   edx-opaque-keys
 tableauserverclient==0.16.0
     # via -r requirements/test-master.txt
-testfixtures==6.18.0
+testfixtures==6.18.1
     # via
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
@@ -388,3 +389,6 @@ zipp==1.0.0
     # via
     #   -c requirements/constraints.txt
     #   importlib-metadata
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

@@ -20,7 +20,7 @@ aniso8601==9.0.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-tincan-py35
-astroid==2.6.5
+astroid==2.7.3
     # via
     #   pylint
     #   pylint-celery
@@ -40,7 +40,7 @@ billiard==3.6.4.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-bleach==3.3.1
+bleach==4.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -117,7 +117,7 @@ coverage==5.5
     # via
     #   -r requirements/test.txt
     #   pytest-cov
-cryptography==3.4.7
+cryptography==3.4.8
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -132,7 +132,7 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==6.2.1
+diff-cover==6.3.5
     # via -r requirements/test.txt
 distlib==0.3.2
     # via virtualenv
@@ -153,7 +153,6 @@ django==2.2.24
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-i18n-tools
-    #   edx-lint
     #   edx-rbac
     #   jsonfield2
     #   rest-condition
@@ -189,7 +188,7 @@ django-filter==2.4.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-ipware==3.0.7
+django-ipware==4.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -252,7 +251,7 @@ drf-jwt==1.19.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==4.2.0
+edx-django-utils==4.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -262,13 +261,14 @@ edx-django-utils==4.2.0
     #   edx-rest-api-client
 edx-drf-extensions==6.6.0
     # via
+    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
 edx-i18n-tools==0.7.0
     # via -r requirements/dev.in
-edx-lint==5.0.0
+edx-lint==5.1.0
     # via -r requirements/dev.in
 edx-opaque-keys[django]==2.2.2
     # via
@@ -297,7 +297,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
-faker==8.10.3
+faker==8.12.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -325,7 +325,7 @@ imagesize==1.2.0
     # via
     #   -r requirements/doc.txt
     #   sphinx
-importlib-metadata==4.6.3
+importlib-metadata==4.8.1
     # via
     #   -r requirements/test.txt
     #   inflect
@@ -386,11 +386,11 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
-more-itertools==8.8.0
+more-itertools==8.9.0
     # via
     #   -r requirements/test.txt
     #   zipp
-newrelic==6.6.0.162
+newrelic==6.8.1.164
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -425,7 +425,7 @@ pbr==5.6.0
     #   stevedore
 pep517==0.11.0
     # via pip-tools
-pillow==8.3.1
+pillow==8.3.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -434,8 +434,10 @@ pip-tools==6.2.0
     # via -r requirements/dev.in
 pkginfo==1.7.1
     # via twine
-platformdirs==2.2.0
-    # via virtualenv
+platformdirs==2.3.0
+    # via
+    #   pylint
+    #   virtualenv
 pluggy==0.13.1
     # via
     #   -r requirements/test.txt
@@ -448,7 +450,7 @@ pockets==0.9.1
     #   sphinxcontrib-napoleon
 polib==1.1.1
     # via edx-i18n-tools
-prompt-toolkit==3.0.19
+prompt-toolkit==3.0.20
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -482,7 +484,7 @@ pycryptodomex==3.10.1
     #   pyjwkest
 pydocstyle==6.1.1
     # via -r requirements/dev.in
-pygments==2.9.0
+pygments==2.10.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -504,7 +506,7 @@ pyjwt[crypto]==1.7.1
     #   -r requirements/test.txt
     #   drf-jwt
     #   edx-rest-api-client
-pylint==2.9.6
+pylint==2.10.2
     # via
     #   edx-lint
     #   pylint-celery
@@ -530,7 +532,7 @@ pyparsing==2.4.7
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   packaging
-pytest==6.2.4
+pytest==6.2.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
@@ -686,7 +688,7 @@ sqlparse==0.4.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django
-stevedore==3.3.0
+stevedore==3.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -700,7 +702,7 @@ tableauserverclient==0.16.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-testfixtures==6.18.0
+testfixtures==6.18.1
     # via
     #   -r requirements/dev.in
     #   -r requirements/doc.txt
@@ -720,15 +722,15 @@ toml==0.10.2
     #   pytest
     #   pytest-cov
     #   tox
-tomli==1.2.0
+tomli==1.2.1
     # via pep517
-tox==3.24.1
+tox==3.24.3
     # via
     #   -r requirements/dev.in
     #   tox-battery
 tox-battery==0.6.1
     # via -r requirements/dev.in
-tqdm==4.62.0
+tqdm==4.62.2
     # via twine
 twine==1.11.0
     # via -r requirements/dev.in
@@ -751,7 +753,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.7.0
+virtualenv==20.7.2
     # via tox
 wcwidth==0.2.5
     # via
@@ -765,7 +767,7 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-wheel==0.36.2
+wheel==0.37.0
     # via
     #   -r requirements/dev.in
     #   pip-tools
