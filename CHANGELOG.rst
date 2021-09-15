@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.11]
+---------
+* Create "enterprise_learner" role when ``EnterpriseCustomerUser`` records are re-linked.
+* When ``EnterpriseCustomerUser`` records get deleted, also delete the "enterprise_admin" role specific to the relevant enterprise customer.
+
 [3.28.10]
 ---------
 * Integrated channel transmitter completions routine now logs as error, any status codes greater than or equal to 400

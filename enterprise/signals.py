@@ -132,10 +132,9 @@ def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # p
     Delete the associated enterprise admin role assignment record when deleting an EnterpriseCustomerUser record.
     """
     if instance.user:
-        # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
-        # so that we delete a specific instance of a role assignment
         roles_api.delete_admin_role_assignment(
             user=instance.user,
+            enterprise_customer=instance.enterprise_customer,
         )
 
 
@@ -156,12 +155,18 @@ def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # 
             instance.user,
             enterprise_customer=instance.enterprise_customer,
         )
-    elif not kwargs['created'] and not instance.linked:
-        # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_learner role
-        roles_api.delete_learner_role_assignment(
-            user=instance.user,
-            enterprise_customer=instance.enterprise_customer,
-        )
+    elif not kwargs['created']:
+        # EnterpriseCustomerUser record was updated
+        if instance.linked:
+            roles_api.assign_learner_role(
+                instance.user,
+                enterprise_customer=instance.enterprise_customer,
+            )
+        else:
+            roles_api.delete_learner_role_assignment(
+                user=instance.user,
+                enterprise_customer=instance.enterprise_customer,
+            )
 
 
 @receiver(post_delete, sender=EnterpriseCustomerUser)
