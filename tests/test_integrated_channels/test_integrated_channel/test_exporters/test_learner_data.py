@@ -20,6 +20,9 @@ from test_utils.integrated_channels_utils import mock_course_overview, mock_sing
 
 
 def create_ent_enrollment_mock(is_audit=True):
+    '''
+    creates a magicmock instance for enterprise enrollment
+    '''
     enterprise_enrollment = MagicMock()
     enterprise_enrollment.enterprise_customer_user = MagicMock()
     enterprise_enrollment.enterprise_customer_user.user_id = 1
