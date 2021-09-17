@@ -745,6 +745,9 @@ class LearnerExporterUtility:
 
     @staticmethod
     def get_course_details_by_id(course_id):
+        '''
+        Convenience method to fetch course details or None (if not found)
+        '''
         course_details = None
         error_message = None
         try:
