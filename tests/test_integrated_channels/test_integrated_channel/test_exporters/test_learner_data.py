@@ -8,6 +8,7 @@ import unittest
 import ddt
 import mock
 from freezegun import freeze_time
+from mock.mock import MagicMock
 from pytest import mark
 
 from django.utils import timezone
@@ -16,6 +17,19 @@ from integrated_channels.integrated_channel.exporters.learner_data import Learne
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 from test_utils import factories
 from test_utils.integrated_channels_utils import mock_course_overview, mock_single_learner_grade
+
+
+def create_ent_enrollment_mock(is_audit=True):
+    '''
+    creates a magicmock instance for enterprise enrollment
+    '''
+    enterprise_enrollment = MagicMock()
+    enterprise_enrollment.enterprise_customer_user = MagicMock()
+    enterprise_enrollment.enterprise_customer_user.user_id = 1
+    enterprise_enrollment.enterprise_customer_user.enterprise_customer = MagicMock()
+    enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid = 'abc'
+    enterprise_enrollment.is_audit_enrollment = MagicMock(return_value=is_audit)
+    return enterprise_enrollment
 
 
 @mark.django_db
@@ -736,3 +750,46 @@ class TestLearnerExporter(unittest.TestCase):
         assert len(unique_enrollments) == 2
         assert self.course_id in unique_enrollments
         assert self.course_id_2 in unique_enrollments
+
+    def test_grades_summary_for_completed_audit_has_autofilled_date(self):
+        '''
+        We will insert a current date time stamp for audit enrollment,
+        if it's completed, and if the grades api returns no completion date
+        '''
+        exporter = LearnerExporter('fake-user', self.config)
+        course_details = mock_course_overview()
+        enterprise_enrollment = create_ent_enrollment_mock()
+        incomplete_count = 0
+
+        exporter.collect_grades_data = MagicMock(return_value=(None, None, None, None, ))
+        completed_date_from_api, _, _, _ = exporter.get_grades_summary(
+            course_details,
+            enterprise_enrollment,
+            'test-channel',
+            incomplete_count
+        )
+        # if we autofill the date, then this shouldn't be None since collect_grades_data is set to
+        # return a None value for completed_date
+        assert completed_date_from_api is not None
+        exporter.collect_grades_data.assert_called_once()
+
+    def test_grades_summary_for_incompleted_audit_honors_existing_date(self):
+        '''
+        If there is a completed_date from the api called by collect_grades_data
+        still honor it rather than override using now, just as a safety measure
+        '''
+        exporter = LearnerExporter('fake-user', self.config)
+        course_details = mock_course_overview()
+        enterprise_enrollment = create_ent_enrollment_mock()
+        incomplete_count = 0
+
+        a_date = timezone.now()
+        exporter.collect_grades_data = MagicMock(return_value=(a_date, None, None, None, ))
+        completed_date_from_api, _, _, _ = exporter.get_grades_summary(
+            course_details,
+            enterprise_enrollment,
+            'test-channel',
+            incomplete_count
+        )
+        assert completed_date_from_api is a_date
+        exporter.collect_grades_data.assert_called_once()
