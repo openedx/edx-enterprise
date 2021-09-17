@@ -269,6 +269,7 @@ class LearnerExporter(Exporter):
         course_details,
         enterprise_enrollment,
         channel_name,
+        incomplete_count=None,
     ):
         '''
         Fetch grades info using either certificate api, or grades api.
@@ -276,6 +277,9 @@ class LearnerExporter(Exporter):
         - For audit enrollments, currently will fetch using grades api,
         - For non audit, it still calls grades api if pacing !=instructor otherwise calls certificate api
         This pacing logic needs cleanup for a more accurate piece of logic since pacing should not be relevant
+
+        Returns: tuple with values:
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent
         '''
         is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
@@ -294,7 +298,7 @@ class LearnerExporter(Exporter):
         # For self-paced courses, check the Grades API
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
-                self._collect_grades_data(enterprise_enrollment, course_details, channel_name)
+                self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
             LOGGER.info(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
                 f'_collect_grades_data finished with: CourseMode: {enterprise_enrollment.mode}, '
@@ -303,6 +307,17 @@ class LearnerExporter(Exporter):
                 f' IsPassing: {is_passing_from_api},'
                 f' Audit Mode?: {is_audit_enrollment}'
             ))
+
+        # there is a case for audit enrollment, we are reporting completion based on
+        # content count cmopleted, so we may not get a completed_date_from_api
+        # and the model requires a completed_date field
+        if incomplete_count == 0 and enterprise_enrollment.is_audit_enrollment and completed_date_from_api is None:
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                'Setting completed_date to now() for audit course with all non-gated content done.'
+            ))
+            completed_date_from_api = timezone.now()
+
         return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent
 
     def get_incomplete_content_count(self, enterprise_enrollment, channel_name):
@@ -312,6 +327,10 @@ class LearnerExporter(Exporter):
         '''
         incomplete_count = None
         is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
+
+        # The decision to not get incomplete count for non audit enrollments can be questioned
+        # Right now we don't use this number for non audit. But this condition can be just removed
+        # if we decide we need this for non audit enrollments too
         if not is_audit_enrollment:
             return incomplete_count
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
@@ -371,23 +390,15 @@ class LearnerExporter(Exporter):
             enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
             course_id = enterprise_enrollment.course_id
 
-            course_details = None
-            try:
-                course_details = get_course_details(course_id)
-            except (InvalidKeyError, CourseOverview.DoesNotExist):
-                LOGGER.error(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    'get_course_details failed for EnterpriseCourseEnrollment {enterprise_enrollment_pk}'.format(
-                        enterprise_enrollment_pk=enterprise_enrollment.pk
-                    )), exc_info=True)
+            course_details, error_message = LearnerExporterUtility.get_course_details_by_id(course_id)
 
             if course_details is None:
                 # Course not found, so we have nothing to report.
                 LOGGER.error(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    'get_course_details returned None for EnterpriseCourseEnrollment {enterprise_enrollment_pk}'.format(
-                        enterprise_enrollment_pk=enterprise_enrollment.pk
-                    )))
+                    f'get_course_details returned None for EnterpriseCourseEnrollment {enterprise_enrollment.pk}'
+                    f', error_message: {error_message}'
+                ))
                 continue
 
             # For audit courses, check if 100% completed
@@ -398,6 +409,7 @@ class LearnerExporter(Exporter):
                 course_details,
                 enterprise_enrollment,
                 channel_name,
+                incomplete_count,
             )
 
             # Apply the Source of Truth for Grades
@@ -655,7 +667,7 @@ class LearnerExporter(Exporter):
 
         return assessment_grades
 
-    def _collect_grades_data(self, enterprise_enrollment, course_details, channel_name):
+    def collect_grades_data(self, enterprise_enrollment, course_details, channel_name):
         """
         Collect the learner completion data from the Grades API.
 
@@ -721,7 +733,7 @@ class LearnerExporter(Exporter):
 class LearnerExporterUtility:
     """ Utility class namespace for accessing Django objects in a common way. """
 
-    @ staticmethod
+    @staticmethod
     def lms_user_id_for_ent_course_enrollment_id(enterprise_course_enrollment_id):
         """ Returns the ID of the LMS User for the EnterpriseCourseEnrollment id passed in
         or None if EnterpriseCourseEnrollment not found """
@@ -730,3 +742,17 @@ class LearnerExporterUtility:
                 id=enterprise_course_enrollment_id).enterprise_customer_user.user_id
         except EnterpriseCourseEnrollment.DoesNotExist:
             return None
+
+    @staticmethod
+    def get_course_details_by_id(course_id):
+        '''
+        Convenience method to fetch course details or None (if not found)
+        '''
+        course_details = None
+        error_message = None
+        try:
+            course_details = get_course_details(course_id)
+        except (InvalidKeyError, CourseOverview.DoesNotExist):
+            error_message = f'get_course_details failed for course_id {course_id}'
+
+        return course_details, error_message
