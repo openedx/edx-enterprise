@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.12]
+---------
+* Integrated channels automatically fill in current date for audit completions if date not available.
+
 [3.28.11]
 ---------
 * Create "enterprise_learner" role when ``EnterpriseCustomerUser`` records are re-linked.
