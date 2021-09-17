@@ -329,7 +329,7 @@ class LearnerExporter(Exporter):
         is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
 
         # The decision to not get incomplete count for non audit enrollments can be questioned
-        # Right now we don't use this number for non audit. But this conditoin can be just removed
+        # Right now we don't use this number for non audit. But this condition can be just removed
         # if we decide we need this for non audit enrollments too
         if not is_audit_enrollment:
             return incomplete_count
