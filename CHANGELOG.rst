@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.13]
+---------
+* fixes the way moodle queries for courses ENT-4806
+
 [3.28.12]
 ---------
 * Integrated channels automatically fill in current date for audit completions if date not available.
