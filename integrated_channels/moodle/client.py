@@ -262,7 +262,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params = {
             'wstoken': self.token,
             'wsfunction': 'core_course_get_courses_by_field',
-            'field': 'shortname',
+            'field': 'idnumber',
             'value': key,
             'moodlewsrestformat': 'json'
         }
