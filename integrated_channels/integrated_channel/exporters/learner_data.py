@@ -154,6 +154,7 @@ class LearnerExporter(Exporter):
         * ``learner_to_transmit``: REQUIRED User object, representing the learner whose data is being exported.
 
         """
+        channel = kwargs.get('channel_name', '<channel>')
         lms_user_for_filter = kwargs.get('learner_to_transmit')
         TransmissionAudit = kwargs.get('TransmissionAudit', None)
         course_run_id = kwargs.get('course_run_id', None)
@@ -169,6 +170,16 @@ class LearnerExporter(Exporter):
 
         # We are transmitting for an enrollment, so grab just the one.
         enterprise_enrollment = enrollment_queryset.first()
+
+        if not enterprise_enrollment:
+            LOGGER.error(generate_formatted_log(
+                channel,
+                self.enterprise_customer.uuid,
+                lms_user_for_filter.id,
+                course_run_id,
+                f'No enterprise_enrollment found, cannot transmit this grade data for subsection {subsection_id}',
+            ))
+            yield from ()
 
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
