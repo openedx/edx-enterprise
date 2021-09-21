@@ -36,10 +36,10 @@ def moodle_request_wrapper(method):
             # This cannot be converted to JSON thus the above fails miserably.
             # The above can fail with different errors depending on the format of the returned page.
             # Moodle of course does not tell us what is wrong in any part of this HTML.
-            log_format_keys = { 'method': method.__name__, 
-                                'code': response.status_code, 
+            log_format_keys = { 'method': method.__name__,
+                                'code': response.status_code,
                                 'enterprise_configuration_id': self.enterprise_configuration.id }
-            log_format_string = '''
+            log_format_string = '''\
                                 Moodle API task "{method}" for enterprise_configuration "{enterprise_configuration_id}" 
                                 failed due to unknown error with code "{code}".
                                 '''
