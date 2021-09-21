@@ -7,6 +7,7 @@ grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 
+from http import HTTPStatus
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
@@ -16,6 +17,8 @@ from django.apps import apps
 from django.contrib import auth
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+
+from integrated_channels.exceptions import ClientError
 
 try:
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
@@ -172,14 +175,13 @@ class LearnerExporter(Exporter):
         enterprise_enrollment = enrollment_queryset.first()
 
         if not enterprise_enrollment:
-            LOGGER.error(generate_formatted_log(
+            raise ClientError(generate_formatted_log(
                 channel,
                 self.enterprise_customer.uuid,
                 lms_user_for_filter.id,
                 course_run_id,
                 f'No enterprise_enrollment found, cannot transmit this grade data for subsection {subsection_id}',
-            ))
-            yield from ()
+            ), HTTPStatus.NOT_FOUND.value)
 
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
