@@ -36,9 +36,14 @@ def moodle_request_wrapper(method):
             # This cannot be converted to JSON thus the above fails miserably.
             # The above can fail with different errors depending on the format of the returned page.
             # Moodle of course does not tell us what is wrong in any part of this HTML.
-            raise ClientError('Moodle API task "{method}" for enterprise_configuration "{enterprise_configuration_id}" failed due to unknown error with code "{code}".'.format(
-                method=method.__name__, code=response.status_code, enterprise_configuration_id=self.enterprise_configuration.id), response.status_code
-            ) from error
+            log_format_keys = { 'method': method.__name__, 
+                                'code': response.status_code, 
+                                'enterprise_configuration_id': self.enterprise_configuration.id }
+            log_format_string = '''
+                                Moodle API task "{method}" for enterprise_configuration "{enterprise_configuration_id}" 
+                                failed due to unknown error with code "{code}".
+                                '''
+            raise ClientError(log_format_string.format(**log_format_keys), response.status_code) from error
         if isinstance(body, list):
             # On course creation (and ONLY course creation) success,
             # Moodle returns a list of JSON objects, because of course it does.
