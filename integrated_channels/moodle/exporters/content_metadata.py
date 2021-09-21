@@ -1,10 +1,9 @@
 """
 Content metadata exporter for Moodle
 """
-
+from datetime import timezone
 from logging import getLogger
 
-from datetime import timezone
 from dateutil.parser import parse
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
