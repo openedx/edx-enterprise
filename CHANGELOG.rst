@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.15]
+---------
+* integrated channels: single learner assessment exporter logging is not helpful right now so improve it.
+
 [3.28.14]
 ---------
 * logging improvement when calling integrated channels extract_integration_id
