@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.16]
+---------
+* Fix import error used by bulk enrollment in utils
+
 [3.28.15]
 ---------
 * integrated channels: single learner assessment exporter logging is not helpful right now so improve it.
