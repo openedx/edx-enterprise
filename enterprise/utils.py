@@ -53,7 +53,7 @@ except ImportError:
     lms_enroll_user_in_course = None
 
 try:
-    from openedx.core.djangoapps.course_groups.cohorts import CourseUserGroup
+    from openedx.core.djangoapps.course_groups.models import CourseUserGroup
     from openedx.core.djangoapps.enrollments.errors import CourseEnrollmentError
 except ImportError:
     CourseUserGroup = None
