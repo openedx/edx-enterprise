@@ -502,17 +502,27 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """
         if not data:
             raise ClientError("No data to transmit.", HTTPStatus.NOT_FOUND.value)
+
         try:
-            integration_id = json.loads(
-                data.decode("utf-8")
-            )['course']['integration_id']
-        except KeyError as error:
-            raise ClientError(
-                "Could not transmit data, no integration ID present.", HTTPStatus.NOT_FOUND.value
-            ) from error
+            decoded_payload = data.decode("utf-8")
+            decoded_json = json.loads(decoded_payload)
         except AttributeError as error:
             raise ClientError(
-                "Unable to decode data.", HTTPStatus.BAD_REQUEST.value
+                f"Unable to decode data. Type of data was {type(data)}", HTTPStatus.BAD_REQUEST.value
+            ) from error
+
+        try:
+            integration_id = decoded_json['course']['integration_id']
+        except KeyError as error:
+            LOGGER.exception(generate_formatted_log(
+                'canvas',
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f'KeyError processing decoded json. decoded payload was: {decoded_payload}'
+            ), exc_info=error)
+            raise ClientError(
+                "Could not transmit data, no integration ID present.", HTTPStatus.NOT_FOUND.value
             ) from error
 
         return integration_id

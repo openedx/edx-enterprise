@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.14]
+---------
+* logging improvement when calling integrated channels extract_integration_id
+
 [3.28.13]
 ---------
 * fixes the way moodle queries for courses ENT-4806

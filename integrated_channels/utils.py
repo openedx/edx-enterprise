@@ -289,7 +289,7 @@ def generate_formatted_log(
     return '[integrated_channel:{channel_name}]'\
         '[integrated_channel_enterprise_customer_uuid:{enterprise_customer_uuid}]' \
         '[integrated_channel_lms_user:{lms_user_id}]'\
-        '[integrated_channel_course_key:{course_or_course_run_key}]{message}'.format(
+        '[integrated_channel_course_key:{course_or_course_run_key}] {message}'.format(
             enterprise_customer_uuid=enterprise_customer_uuid,
             channel_name=channel_name,
             message=message,
