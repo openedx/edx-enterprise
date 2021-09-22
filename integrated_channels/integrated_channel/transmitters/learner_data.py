@@ -60,6 +60,7 @@ class LearnerTransmitter(Transmitter):
         kwargs.update(
             TransmissionAudit=TransmissionAudit,
         )
+        kwargs.update(channel_name=app_label)
 
         # Even though we're transmitting a learner, they can have records per assessment (multiple per course).
         for learner_data in exporter.single_assessment_level_export(**kwargs):

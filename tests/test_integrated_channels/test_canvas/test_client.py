@@ -1008,7 +1008,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(poorly_formatted_data)
 
-        assert client_error.value.message == 'Unable to decode data.'
+        assert client_error.value.message == "Unable to decode data. Type of data was <class 'str'>"
 
     def update_fails_with_poorly_constructed_data(self, request_type):
         """
