@@ -25,6 +25,7 @@ from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
 from django.db import utils
+from django.db.models.query import QuerySet
 from django.forms.models import model_to_dict
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -2069,7 +2070,10 @@ def batch(iterable, batch_size=1):
     Returns:
         generator: iterates through each batch of an iterable
     """
-    iterable_len = len(iterable)
+    if isinstance(iterable, QuerySet):
+        iterable_len = iterable.count()
+    else:
+        iterable_len = len(iterable)
     for index in range(0, iterable_len, batch_size):
         yield iterable[index:min(index + batch_size, iterable_len)]
 
