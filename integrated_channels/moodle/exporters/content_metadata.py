@@ -1,7 +1,7 @@
 """
 Content metadata exporter for Moodle
 """
-
+from datetime import timezone
 from logging import getLogger
 
 from dateutil.parser import parse
@@ -103,7 +103,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         """
         start_date = content_metadata_item.get('start', None)
         if start_date:
-            return int(parse(start_date).timestamp())
+            return int(parse(start_date).replace(tzinfo=timezone.utc).timestamp())
         return None
 
     def transform_end(self, content_metadata_item):
@@ -112,5 +112,5 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         """
         end_date = content_metadata_item.get('end', None)
         if end_date:
-            return int(parse(end_date).timestamp())
+            return int(parse(end_date).replace(tzinfo=timezone.utc).timestamp())
         return None

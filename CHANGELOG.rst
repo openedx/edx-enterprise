@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.17]
+---------
+* Improve error logging in the Moodle integration
+
 [3.28.16]
 ---------
 * Fix import error used by bulk enrollment in utils
