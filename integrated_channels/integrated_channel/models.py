@@ -78,6 +78,12 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
             "selected from the newest catalog."
         ),
     )
+    disable_learner_data_transmissions = models.BooleanField(
+        default=False,
+        verbose_name="Disable Learner Data Transmission",
+        help_text=_("When set to True, the configured customer will no longer receive learner data transmissions, both"
+                    " scheduled and signal based")
+    )
 
     class Meta:
         abstract = True

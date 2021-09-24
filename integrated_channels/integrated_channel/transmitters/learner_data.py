@@ -62,13 +62,26 @@ class LearnerTransmitter(Transmitter):
         )
         kwargs.update(channel_name=app_label)
 
+        if self.enterprise_configuration.disable_learner_data_transmissions:
+            LOGGER.info(generate_formatted_log(
+                app_label,
+                enterprise_customer_uuid,
+                lms_user_id,
+                None,
+                "Single learner data assessment level transmission skipped as customer's configuration has marked "
+                "learner data reporting as disabled."
+            ))
+            return
+
         # Even though we're transmitting a learner, they can have records per assessment (multiple per course).
         for learner_data in exporter.single_assessment_level_export(**kwargs):
             LOGGER.info(generate_formatted_log(
-                app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
-                'create_assessment_reporting started for enrollment {enrollment_id}'.format(
-                        enrollment_id=learner_data.enterprise_course_enrollment_id,
-                        )))
+                app_label,
+                enterprise_customer_uuid,
+                lms_user_id,
+                learner_data.course_id,
+                f'create_assessment_reporting started for enrollment {learner_data.enterprise_course_enrollment_id}'
+            ))
 
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
             try:
@@ -79,19 +92,29 @@ class LearnerTransmitter(Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(learner_data, client_error,
-                                               app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id)
+                self.handle_transmission_error(
+                    learner_data,
+                    client_error,
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id
+                )
 
             except Exception:
                 # Log additional data to help debug failures but just have Exception bubble
                 self._log_exception_supplemental_data(
-                    learner_data, 'create_assessment_reporting', app_label,
-                    enterprise_customer_uuid, lms_user_id, learner_data.course_id)
+                    learner_data,
+                    'create_assessment_reporting',
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id
+                )
                 raise
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
-
             learner_data.save()
 
     def assessment_level_transmit(self, exporter, **kwargs):
@@ -115,25 +138,40 @@ class LearnerTransmitter(Transmitter):
             TransmissionAudit=TransmissionAudit,
         )
 
+        if self.enterprise_configuration.disable_learner_data_transmissions:
+            LOGGER.info(generate_formatted_log(
+                app_label,
+                enterprise_customer_uuid,
+                None,
+                None,
+                "Bulk learner data assessment level transmission skipped as customer's configuration has marked "
+                "learner data reporting as disabled."
+            ))
+            return
+
         # Retrieve learner data for each existing enterprise enrollment under the enterprise customer
         # and transmit the data according to the current enterprise configuration.
         for learner_data in exporter.bulk_assessment_level_export():
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
             enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id
             lms_user_id = LearnerExporterUtility.lms_user_id_for_ent_course_enrollment_id(
-                enterprise_enrollment_id)
+                enterprise_enrollment_id
+            )
 
             # Check the last transmission for the current enrollment and see if the old grades match the new ones
             if is_already_transmitted(
-                    TransmissionAudit,
-                    enterprise_enrollment_id,
-                    learner_data.grade,
-                    learner_data.subsection_id
+                TransmissionAudit,
+                enterprise_enrollment_id,
+                learner_data.grade,
+                learner_data.subsection_id
             ):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
-                    app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
-                    'Skipping previously sent EnterpriseCourseEnrollment {}'.format(enterprise_enrollment_id)
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'Skipping previously sent EnterpriseCourseEnrollment {enterprise_enrollment_id}'
                 ))
                 continue
 
@@ -143,27 +181,39 @@ class LearnerTransmitter(Transmitter):
                     serialized_payload
                 )
                 LOGGER.info(generate_formatted_log(
-                    app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
-                    'create_assessment_reporting successfully completed for EnterpriseCourseEnrollment {}'.format(
-                        enterprise_enrollment_id,
-                    )
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'create_assessment_reporting successfully completed for EnterpriseCourseEnrollment '
+                    f'{enterprise_enrollment_id}'
                 ))
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(learner_data, client_error, app_label,
-                                               enterprise_customer_uuid, lms_user_id, learner_data.course_id)
+                self.handle_transmission_error(
+                    learner_data,
+                    client_error,
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id
+                )
 
             except Exception:
                 # Log additional data to help debug failures but just have Exception bubble
                 self._log_exception_supplemental_data(
-                    learner_data, 'create_assessment_reporting', app_label,
-                    enterprise_customer_uuid, lms_user_id, learner_data.course_id)
+                    learner_data,
+                    'create_assessment_reporting',
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id
+                )
                 raise
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
-
             learner_data.save()
 
     def transmit(self, payload, **kwargs):
@@ -185,6 +235,18 @@ class LearnerTransmitter(Transmitter):
         kwargs.update(
             TransmissionAudit=TransmissionAudit,
         )
+
+        if self.enterprise_configuration.disable_learner_data_transmissions:
+            LOGGER.info(generate_formatted_log(
+                app_label,
+                enterprise_customer_uuid,
+                None,
+                None,
+                "Completion level learner data transmission skipped as customer's configuration has marked learner data"
+                " reporting as disabled."
+            ))
+            return
+
         # Since we have started sending courses to integrated channels instead of course runs,
         # we need to attempt to send transmissions with course keys and course run ids in order to
         # ensure that we account for whether courses or course runs exist in the integrated channel.
@@ -197,12 +259,16 @@ class LearnerTransmitter(Transmitter):
 
             enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id
             lms_user_id = LearnerExporterUtility.lms_user_id_for_ent_course_enrollment_id(
-                enterprise_enrollment_id)
+                enterprise_enrollment_id
+            )
 
             if not learner_data.course_completed:
                 # The user has not completed the course, so we shouldn't send a completion status call
                 LOGGER.info(generate_formatted_log(
-                    app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
                     f'Skipping in-progress enterprise enrollment:: id: {enterprise_enrollment_id}'
                     f', course_id: {learner_data.course_id}'
                 ))
@@ -212,8 +278,12 @@ class LearnerTransmitter(Transmitter):
             if is_already_transmitted(TransmissionAudit, enterprise_enrollment_id, grade):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
-                    app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
-                    'Skipping previously sent enterprise enrollment {}'.format(enterprise_enrollment_id)))
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'Skipping previously sent enterprise enrollment {enterprise_enrollment_id}'
+                ))
                 continue
 
             try:
@@ -225,27 +295,38 @@ class LearnerTransmitter(Transmitter):
                     raise ClientError(f'Client create_course_completion failed: {body}', code)
 
                 LOGGER.info(generate_formatted_log(
-                    app_label, enterprise_customer_uuid, lms_user_id, learner_data.course_id,
-                    'Successfully sent completion status call for enterprise enrollment {}'.format(
-                        enterprise_enrollment_id,
-                    )
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'Successfully sent completion status call for enterprise enrollment {enterprise_enrollment_id}'
                 ))
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(learner_data, client_error, app_label,
-                                               enterprise_customer_uuid, lms_user_id, learner_data.course_id)
+                self.handle_transmission_error(
+                    learner_data,
+                    client_error,
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id
+                )
 
             except Exception:
                 # Log additional data to help debug failures but have Exception bubble
                 self._log_exception_supplemental_data(
-                    learner_data, 'create_assessment_reporting', app_label,
-                    enterprise_customer_uuid, lms_user_id, learner_data.course_id)
+                    learner_data,
+                    'create_assessment_reporting',
+                    app_label,
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id
+                )
                 raise
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
-
             learner_data.save()
 
     def deduplicate_assignment_records_transmit(self, exporter, **kwargs):
