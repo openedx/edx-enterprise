@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.19]
+---------
+* fix: addition Moodle field changes
+
 [3.28.18]
 ---------
 * Added customer config based learner data transmission feature flag
