@@ -43,9 +43,10 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         self.learner_transmitter = LearnerTransmitter(self.enterprise_config)
 
     def test_transmit_single_learner_data_signal_kwargs(self):
-        """ transmit_single_learner_data is called with kwargs as a shared task from OpenEdx,
-        so test that interface hasn't changed. """
-
+        """
+        transmit_single_learner_data is called with kwargs as a shared task from OpenEdx,
+        so test that interface hasn't changed.
+        """
         edx_platform_api_signal_kwargs = {
             'username': "fake_username",
             'course_run_id': "TEST_COURSE_RUN_KEY"
@@ -65,7 +66,6 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         """
         Test successful creation assessment level learner data during transmission.
         """
-
         LearnerExporterMock = LearnerExporter
 
         # Serialized payload is used in the client's assessment reporting as well as the transmission audit check.
@@ -108,3 +108,32 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             remote_user_id='user_id'
         )
         self.learner_transmitter.handle_transmission_error.assert_called_once()
+
+    def test_learner_data_transmission_feature_flag(self):
+        """
+        Test that a customer's configuration can disable learner data transmissions
+        """
+        # Set feature flag to true
+        self.enterprise_config.disable_learner_data_transmissions = True
+
+        self.learner_transmitter.client.create_assessment_reporting = Mock()
+        self.learner_transmitter.client.create_course_completion = Mock()
+
+        LearnerExporterMock = LearnerExporter
+        self.learner_transmitter.single_learner_assessment_grade_transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        assert not self.learner_transmitter.client.create_assessment_reporting.called
+
+        self.learner_transmitter.assessment_level_transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        assert not self.learner_transmitter.client.create_assessment_reporting.called
+
+        self.learner_transmitter.transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        assert not self.learner_transmitter.client.create_course_completion.called

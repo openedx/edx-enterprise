@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.18]
+---------
+* Added customer config based learner data transmission feature flag
+
 [3.28.17]
 ---------
 * Improve error logging in the Moodle integration
