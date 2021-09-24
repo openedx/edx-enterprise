@@ -19,7 +19,7 @@ Unreleased
 
 [3.28.19]
 ---------
-* fix: addition Moodle field changes
+* fix: additional Moodle field changes
 
 [3.28.18]
 ---------
