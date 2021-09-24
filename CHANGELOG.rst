@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.11]
+---------
+* docs: added adr for zero state browsing with universal link
+
 [3.30.10]
 ---------
 * fix: refactor moodle _post to use body params
