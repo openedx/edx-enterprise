@@ -335,19 +335,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):
-        moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
+        moodle_course_id = self.get_course_id(serialized_data['courses[0][idnumber]'])
         serialized_data['courses[0][id]'] = moodle_course_id
         serialized_data['wsfunction'] = 'core_course_update_courses'
         return self._post(serialized_data)
 
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
-        response = self._get_courses(serialized_data['courses[0][shortname]'])
+        response = self._get_courses(serialized_data['courses[0][idnumber]'])
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
             LOGGER.info(
                 "No course found while attempting to delete edX course: {} from moodle.".format(
-                    serialized_data['courses[0][shortname]']
+                    serialized_data['courses[0][idnumber]']
                 )
             )
             # Hacky way of getting around the request wrapper validation
