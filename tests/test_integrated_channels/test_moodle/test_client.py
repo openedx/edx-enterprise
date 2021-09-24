@@ -17,7 +17,8 @@ from test_utils import factories
 
 SERIALIZED_DATA = {
     'courses[0][summary]': 'edX Demonstration Course',
-    'courses[0][shortname]': 'edX+DemoX',
+    'courses[0][shortname]': 'edX Demonstration Course (edX+DemoX)',
+    'courses[0][idnumber]': 'edX+DemoX',
     'courses[0][startdate]': '2030-01-01T00:00:00Z',
     'courses[0][enddate]': '2030-03-01T00:00:00Z',
 }
