@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.20]
+---------
+* feat: Added enterprise_learner role assignment backfill management command
+
 [3.28.19]
 ---------
 * fix: additional Moodle field changes
