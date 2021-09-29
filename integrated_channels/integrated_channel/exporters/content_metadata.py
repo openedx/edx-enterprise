@@ -130,12 +130,32 @@ class ContentMetadataExporter(Exporter):
                             )
                         )
 
-                    content_metadata_item_export = ContentMetadataItemExport(item, transformed, content_last_modified)
+                    content_metadata_item_export = ContentMetadataItemExport(
+                        item,
+                        transformed,
+                        content_last_modified,
+                        enterprise_customer_catalog.uuid
+                    )
                     content_metadata_export[content_metadata_item_export.content_id] = content_metadata_item_export
             else:
                 LOGGER.info(
                     "Skipping export of catalog:{} because no updates are needed.".format(enterprise_customer_catalog)
                 )
+                ContentMetadataItemTransmission = apps.get_model(
+                    'integrated_channel',
+                    'ContentMetadataItemTransmission'
+                )
+                past_catalog_transmission_queryset = ContentMetadataItemTransmission.objects.filter(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid
+                )
+                for past_transmission in past_catalog_transmission_queryset:
+                    # In order to determine if something doesn't need updates vs needing to be deleted, the transmitter
+                    # expects a value to be present for every content item within the customer's catalogs. By adding the
+                    # past transmission, the transmitter will recognize that no update is needed.
+                    content_metadata_export[past_transmission.content_id] = past_transmission
+
         return OrderedDict(sorted(content_metadata_export.items()))
 
     def _transform_item(self, content_metadata_item):
@@ -232,8 +252,9 @@ class ContentMetadataItemExport:
     Object representation of a content metadata item export.
     """
 
-    def __init__(self, content_metadata_item, channel_content_metadata_item, content_last_changed=None):
+    def __init__(self, content_metadata_item, channel_content_metadata_item, enterprise_customer_catalog_uuid, content_last_changed=None):
         self.content_id = get_content_metadata_item_id(content_metadata_item)
         self.metadata = content_metadata_item
         self.channel_metadata = channel_content_metadata_item
         self.content_last_changed = content_last_changed
+        self.enterprise_customer_catalog_uuid = enterprise_customer_catalog_uuid

@@ -5,6 +5,7 @@ Database models for Enterprise Integrated Channel.
 
 import json
 import logging
+from uuid import UUID, uuid4
 
 from jsonfield.fields import JSONField
 
@@ -296,6 +297,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True
     )
+    enterprise_customer_catalog_uuid = models.UUIDField()
 
     class Meta:
         unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')

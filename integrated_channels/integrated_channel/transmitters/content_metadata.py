@@ -38,10 +38,10 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Transmit content metadata items to the integrated channel.
         """
-        items_to_create, items_to_update, items_to_delete, transmission_map, content_update_times_by_id = \
-            self._partition_items(payload)
+        items_to_create, items_to_update, items_to_delete, transmission_map, content_update_times_by_id, \
+            content_catalog_map = self._partition_items(payload)
         self._transmit_delete(items_to_delete)
-        self._transmit_create(items_to_create, content_update_times_by_id)
+        self._transmit_create(items_to_create, content_update_times_by_id, content_catalog_map)
         self._transmit_update(items_to_update, transmission_map, content_update_times_by_id)
 
     def _partition_items(self, channel_metadata_item_map):
@@ -53,6 +53,7 @@ class ContentMetadataTransmitter(Transmitter):
         items_to_update = {}
         items_to_delete = {}
         transmission_map = {}
+        content_catalog_map = {}
         items_catalog_updated_times = {}
         export_content_ids = channel_metadata_item_map.keys()
 
@@ -77,6 +78,7 @@ class ContentMetadataTransmitter(Transmitter):
                     items_catalog_updated_times[content_id] = item.content_last_changed
             else:
                 items_to_create[content_id] = channel_metadata
+                content_catalog_map[content_id] = item.enterprise_customer_catalog_uuid
                 items_catalog_updated_times[content_id] = item.content_last_changed
 
         LOGGER.info(
@@ -98,7 +100,8 @@ class ContentMetadataTransmitter(Transmitter):
             list(items_to_delete.keys()),
         )
 
-        return items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times
+        return items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times, \
+            content_catalog_map
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         """
@@ -118,7 +121,7 @@ class ContentMetadataTransmitter(Transmitter):
             sort_keys=True
         ).encode('utf-8')
 
-    def _transmit_create(self, channel_metadata_item_map, items_catalog_updated_times):
+    def _transmit_create(self, channel_metadata_item_map, items_catalog_updated_times, content_catalog_map):
         """
         Transmit content metadata creation to integrated channel.
         """
@@ -142,7 +145,7 @@ class ContentMetadataTransmitter(Transmitter):
                 )
                 LOGGER.exception(exc)
             else:
-                self._create_transmissions(chunk, items_catalog_updated_times)
+                self._create_transmissions(chunk, items_catalog_updated_times, content_catalog_map)
 
     def _transmit_update(self, channel_metadata_item_map, transmission_map, items_catalog_updated_times):
         """
@@ -210,7 +213,7 @@ class ContentMetadataTransmitter(Transmitter):
             integrated_channel_code=self.enterprise_configuration.channel_code()
         )
 
-    def _create_transmissions(self, content_metadata_item_map, items_catalog_updated_times):
+    def _create_transmissions(self, content_metadata_item_map, items_catalog_updated_times, content_catalog_map):
         """
         Create ContentMetadataItemTransmission models for the given content metadata items.
         """
@@ -226,7 +229,8 @@ class ContentMetadataTransmitter(Transmitter):
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     content_id=content_id,
                     channel_metadata=channel_metadata,
-                    content_last_changed=items_catalog_updated_times.get(content_id)
+                    content_last_changed=items_catalog_updated_times.get(content_id),
+                    enterprise_customer_catalog_uuid=content_catalog_map.get(content_id)
                 )
             )
         ContentMetadataItemTransmission.objects.bulk_create(transmissions)
