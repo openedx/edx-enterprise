@@ -698,6 +698,9 @@ class AdminNotificationForm(forms.ModelForm):
     class Meta:
         model = AdminNotification
         fields = '__all__'
+        widgets = {
+            'text': forms.Textarea(attrs={'cols': 80, 'rows': 5}),
+        }
 
     def clean(self):
         """
