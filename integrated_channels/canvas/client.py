@@ -91,7 +91,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
 
         if not located_course:
-            breakpoint()
             # Course does not exist: Create the course
             status_code, response_text = self._post(
                 self.course_create_url,
