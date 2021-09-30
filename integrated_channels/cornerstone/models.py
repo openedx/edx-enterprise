@@ -252,3 +252,28 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
             },
             sort_keys=True
         )
+
+class CornerstoneCourseKey(models.Model):
+    """
+    Model for mapping long course keys to uuid's in order to comply with cornerstone's
+    50 character limit for course keys
+
+    .. no_pii:
+    """
+    internal_course_id = models.CharField(
+        primary_key=True,
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_('This is the edX course key that is used as a unique identifier.')
+    )
+
+    external_course_id = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_('This is the course key that is being sent to our partners.')
+    )
+
+    class Meta:
+        app_label = 'cornerstone'

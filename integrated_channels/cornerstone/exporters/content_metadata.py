@@ -11,10 +11,10 @@ import pytz
 from django.apps import apps
 
 from enterprise.utils import get_closest_course_run, get_language_code
+from integrated_channels.cornerstone.utils import convert_invalid_course_ids
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
-    convert_invalid_course_ids,
     get_duration_from_estimated_hours,
     get_image_url,
     get_subjects_from_content_metadata,

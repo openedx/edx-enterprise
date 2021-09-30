@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
-from uuid import UUID, uuid4
 
 import pytz
 import requests
@@ -27,24 +26,6 @@ UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 
 LOGGER = getLogger(__name__)
-
-
-def convert_invalid_course_ids(course_id):
-    """
-    Regex check a course ID to see if it contains any invalid chars. If it does then encode the string, otherwise
-    return the original course ID.
-    """
-    re2 = re.compile(r"[|<>.&%\s\\/\“]+")
-    if re2.search(course_id):
-        # If the course key contains any of the invalid chars, encode the key
-        course_id = encode_course_key_into_base64(course_id)
-    # If the encoded or unencoded version of the key are over 50 characters, they will error out
-    # in cornerstone, so we convert them to a uuid.
-    if len(course_id) > 50:
-        course_id = uuid4()
-    return course_id
-
-
 def encode_course_key_into_base64(edx_course_key):
     """
     Base64 encodes edx course key (string) into a form safe (string) for use with LMS such as Cornerstone

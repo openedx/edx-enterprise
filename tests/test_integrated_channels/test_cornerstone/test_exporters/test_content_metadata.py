@@ -176,7 +176,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     @ddt.unpack
     def test_transform_key_2(self, item_key):
         """
-        Transforming long keys to make sure they become uuid's 
+        Transforming long keys to make sure they become uuids
         """
         item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_key)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)

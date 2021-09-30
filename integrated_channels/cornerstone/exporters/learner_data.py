@@ -4,14 +4,12 @@ Learner data exporter for Enterprise Integrated Channel Cornerstone.
 """
 
 from logging import getLogger
-from enterprise.models import CornerstoneCourseKeys
-
 from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
+from integrated_channels.cornerstone.utils import add_cornerstone_key_pair
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.utils import generate_formatted_log
-from integrated_channels.utils import convert_invalid_course_ids
 
 LOGGER = getLogger(__name__)
 
@@ -42,9 +40,7 @@ class CornerstoneLearnerExporter(LearnerExporter):
 
         try:
             course_id = get_course_id_for_enrollment(enterprise_enrollment)
-            key_mapping, ___ = CornerstoneCourseKeys.objects.get_or_create(
-                internal_course_id=course_id, defaults=
-                {'external_course_id': convert_invalid_course_ids(course_id)})
+            key_mapping = add_cornerstone_key_pair(course_id)
             csod_learner_data_transmission = CornerstoneLearnerDataTransmissionAudit.objects.get(
                 user_id=enterprise_enrollment.enterprise_customer_user.user.id,
                 course_id=key_mapping.external_course_id,
