@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
+from uuid import UUID, uuid4
 
 import pytz
 import requests
@@ -36,7 +37,11 @@ def convert_invalid_course_ids(course_id):
     re2 = re.compile(r"[|<>.&%\s\\/\“]+")
     if re2.search(course_id):
         # If the course key contains any of the invalid chars, encode the key
-        return encode_course_key_into_base64(course_id)
+        course_id = encode_course_key_into_base64(course_id)
+    # If the encoded or unencoded version of the key are over 50 characters, they will error out
+    # in cornerstone, so we convert them to a uuid.
+    if len(course_id) > 50:
+        course_id = uuid4()
     return course_id
 
 

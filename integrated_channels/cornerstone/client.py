@@ -4,6 +4,7 @@ Client for connecting to Cornerstone.
 """
 
 import base64
+from enterprise.models import CornerstoneCourseKeys
 import json
 import logging
 
@@ -79,10 +80,14 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         callback_url = json_payload['data'].pop('callbackUrl')
         session_token = json_payload['data'].pop('sessionToken')
 
-        # When exporting content metadata, we encode course keys that contain invalid chars.
+        # When exporting content metadata, we encode course keys that contain invalid chars or
+        # set them to uuids to comply with Cornerstone standards
         course_id = json_payload['data'].get('courseId')
-        json_payload['data']['courseId'] = convert_invalid_course_ids(course_id)
+        key_mapping, ___ = CornerstoneCourseKeys.objects.get_or_create(
+            internal_course_id=course_id, defaults=
+            {'external_course_id': convert_invalid_course_ids(course_id)})
 
+        json_payload['data']['courseId'] = key_mapping.internal_course_id
         url = '{base_url}{callback_url}{completion_path}?sessionToken={session_token}'.format(
             base_url=self.enterprise_configuration.cornerstone_base_url,
             callback_url=callback_url,
