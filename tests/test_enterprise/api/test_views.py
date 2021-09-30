@@ -55,6 +55,7 @@ from test_utils import (
     TEST_SLUG,
     TEST_USERNAME,
     APITest,
+    enterprise_report_choices,
     factories,
     fake_catalog_api,
     fake_enterprise_api,
@@ -4604,3 +4605,127 @@ class TestReadNotificationView(BaseTestEnterpriseAPIViews):
             }
         )
         assert response.status_code == 403
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerReportTypesView(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerReportTypesView
+    """
+
+    REPORT_TYPES_ENDPOINT = 'enterprise-report-types'
+
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        user.set_password(password)
+        user.save()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        return user, enterprise_customer
+
+    def _add_feature_role(self, user, feature_role):
+        """
+        Helper method to create a feature_role and connect it to the User
+        """
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(
+            name=feature_role
+        )
+        EnterpriseFeatureUserRoleAssignment.objects.create(user=user, role=feature_role_object)
+
+    @ddt.data(
+        (False, enterprise_report_choices.LIMITED_REPORT_TYPES),
+        (True, enterprise_report_choices.FULL_REPORT_TYPES),
+    )
+    @ddt.unpack
+    def test_get_enterprise_report_types(self, is_pearson, expected_report_choices):
+        """
+        Test that `EnterpriseCustomerReportTypesView` returns expected response.
+        """
+        enterprise_slug = 'pearson' if is_pearson else 'some-slug'
+        enterprise_customer = factories.EnterpriseCustomerFactory(slug=enterprise_slug)
+        expected_report_types = expected_report_choices
+
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                self.REPORT_TYPES_ENDPOINT, kwargs={'enterprise_uuid': enterprise_customer.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected_report_types)
+
+    def test_get_enterprise_not_found(self):
+        """
+        Test that `EnterpriseCustomerReportTypesView` returns correct response when enterprise is not found.
+        """
+        non_existed_id = 100
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                self.REPORT_TYPES_ENDPOINT, kwargs={'enterprise_uuid': non_existed_id}
+            )
+        )
+        self.assertEqual(response.status_code, 404)
+        response = response.json()
+        self.assertEqual(response['detail'], 'Could not find the enterprise customer.')
+
+    def test_get_report_types_post_method_not_allowed(self):
+        """
+        Test that `EnterpriseCustomerReportTypesView` does not allow POST method.
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(self.REPORT_TYPES_ENDPOINT, kwargs={'enterprise_uuid': 1}),
+            data=json.dumps({'some': 'postdata'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 405)
+        response = response.json()
+        self.assertEqual(response['detail'], 'Method "POST" not allowed.')
+
+    def test_get_report_types_not_logged_in(self):
+        """
+        Test that `EnterpriseCustomerReportTypesView` only allows logged in users.
+        """
+        client = APIClient()
+        # User is not logged in.
+        response = client.get(
+            settings.TEST_SERVER + reverse(self.REPORT_TYPES_ENDPOINT, kwargs={'enterprise_uuid': 1})
+        )
+        self.assertEqual(response.status_code, 401)
+        response = response.json()
+        self.assertEqual(response['detail'], 'Authentication credentials were not provided.')
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        (False, status.HTTP_403_FORBIDDEN),
+        (True, status.HTTP_200_OK),
+    )
+    @ddt.unpack
+    def test_auth_report_types_view(self, has_feature_role, expected_status, request_or_stub_mock):
+        """
+        Tests that the EnterpriseCustomerReportTypesView::get endpoint auth works as expected.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_DASHBOARD_ADMIN_ROLE)
+
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.get(
+            '{server}{view_url}'.format(
+                server=settings.TEST_SERVER,
+                view_url=reverse(self.REPORT_TYPES_ENDPOINT, kwargs={'enterprise_uuid': enterprise_customer.uuid})
+            ),
+        )
+        self.assertEqual(response.status_code, expected_status)

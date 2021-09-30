@@ -57,6 +57,11 @@ urlpatterns = [
         views.TableauAuthView.as_view(),
         name='tableau-token'
     ),
+    url(
+        r'^enterprise_report_types/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        views.EnterpriseCustomerReportTypesView.as_view(),
+        name='enterprise-report-types'
+    ),
 ]
 
 urlpatterns += router.urls
