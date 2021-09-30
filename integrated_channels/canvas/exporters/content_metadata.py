@@ -52,6 +52,10 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
                 base_description=base_description, short_description=short_description
             )
 
+        description = (f"{description} <br />"
+                       f"<br />Starts: {content_metadata_item.get('start', 'N/A')}"
+                       f"<br />Ends: {content_metadata_item.get('end', 'N/A')}")
+
         return description
 
     def transform_default_view(self, content_metadata_item):  # pylint: disable=unused-argument
