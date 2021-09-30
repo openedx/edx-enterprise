@@ -4,6 +4,7 @@ Tests for the base content metadata transmitter.
 """
 
 import unittest
+import uuid
 
 import ddt
 import mock
@@ -64,7 +65,11 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         content_id = 'course:DemoX'
         channel_metadata = {'update': True}
         payload = {
-            content_id: ContentMetadataItemExport({'key': content_id, 'content_type': 'course'}, channel_metadata)
+            content_id: ContentMetadataItemExport(
+                {'key': content_id, 'content_type': 'course'},
+                channel_metadata,
+                uuid.uuid4()
+            )
         }
         self.create_content_metadata_mock.return_value = (200, '{"success":"true"}')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
@@ -89,7 +94,11 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         content_id = 'course:DemoX'
         channel_metadata = {'update': True}
         payload = {
-            content_id: ContentMetadataItemExport({'key': content_id, 'content_type': 'course'}, channel_metadata)
+            content_id: ContentMetadataItemExport(
+                {'key': content_id, 'content_type': 'course'},
+                channel_metadata,
+                uuid.uuid4()
+            )
         }
         self.create_content_metadata_mock.side_effect = ClientError('error occurred')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
@@ -118,7 +127,11 @@ class TestContentMetadataTransmitter(unittest.TestCase):
             channel_metadata={}
         ).save()
         payload = {
-            content_id: ContentMetadataItemExport({'key': content_id, 'content_type': 'course'}, channel_metadata)
+            content_id: ContentMetadataItemExport(
+                {'key': content_id, 'content_type': 'course'},
+                channel_metadata,
+                uuid.uuid4()
+            )
         }
         self.update_content_metadata_mock.return_value = (200, '{"success":"true"}')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
@@ -149,7 +162,11 @@ class TestContentMetadataTransmitter(unittest.TestCase):
             channel_metadata=channel_metadata
         ).save()
         payload = {
-            content_id: ContentMetadataItemExport({'key': content_id, 'content_type': 'course'}, channel_metadata)
+            content_id: ContentMetadataItemExport(
+                {'key': content_id, 'content_type': 'course'},
+                channel_metadata,
+                uuid.uuid4()
+            )
         }
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
         transmitter.transmit(payload)
@@ -171,7 +188,11 @@ class TestContentMetadataTransmitter(unittest.TestCase):
             channel_metadata={}
         ).save()
         payload = {
-            content_id: ContentMetadataItemExport({'key': content_id, 'content_type': 'course'}, channel_metadata)
+            content_id: ContentMetadataItemExport(
+                {'key': content_id, 'content_type': 'course'},
+                channel_metadata,
+                uuid.uuid4()
+            )
         }
         self.update_content_metadata_mock.side_effect = ClientError('error occurred')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)

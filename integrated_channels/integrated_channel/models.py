@@ -5,7 +5,6 @@ Database models for Enterprise Integrated Channel.
 
 import json
 import logging
-from uuid import UUID, uuid4
 
 from jsonfield.fields import JSONField
 
@@ -205,6 +204,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter = self.get_learner_data_transmitter()
         transmitter.deduplicate_assignment_records_transmit(exporter)
 
+    def update_content_transmission_catalog(self, user):
+        """
+        Update transmission audits to contain the content's associated catalog uuid.
+        """
+        exporter = self.get_content_metadata_exporter(user)
+        exporter.update_content_transmissions_catalog_uuids()
+
 
 class LearnerDataTransmissionAudit(models.Model):
     """
@@ -297,7 +303,11 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True
     )
-    enterprise_customer_catalog_uuid = models.UUIDField()
+    enterprise_customer_catalog_uuid = models.UUIDField(
+        help_text='The enterprise catalog that this metadata item was derived from',
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')

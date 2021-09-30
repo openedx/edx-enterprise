@@ -105,11 +105,15 @@ class ContentMetadataExporter(Exporter):
                 )
 
             if force_retrieve_all_catalogs or need_catalog_update:
-                content_metadata_item = self.enterprise_catalog_api.get_content_metadata(
+                content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                     self.enterprise_customer,
                     [enterprise_customer_catalog]
                 )
-                for item in content_metadata_item:
+                LOGGER.info(
+                    f'Content metadata exporter found {len(content_metadata_items)} items that need updates'
+                    f' under catalog {enterprise_customer_catalog.uuid}'
+                )
+                for item in content_metadata_items:
                     transformed = self._transform_item(item)
                     LOGGER.debug(
                         'Exporting content metadata item with plugin configuration [%s]: [%s]',
@@ -131,16 +135,13 @@ class ContentMetadataExporter(Exporter):
                         )
 
                     content_metadata_item_export = ContentMetadataItemExport(
-                        item,
-                        transformed,
-                        content_last_modified,
-                        enterprise_customer_catalog.uuid
+                        content_metadata_item=item,
+                        channel_content_metadata_item=transformed,
+                        content_last_changed=content_last_modified,
+                        enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid
                     )
                     content_metadata_export[content_metadata_item_export.content_id] = content_metadata_item_export
             else:
-                LOGGER.info(
-                    "Skipping export of catalog:{} because no updates are needed.".format(enterprise_customer_catalog)
-                )
                 ContentMetadataItemTransmission = apps.get_model(
                     'integrated_channel',
                     'ContentMetadataItemTransmission'
@@ -149,6 +150,10 @@ class ContentMetadataExporter(Exporter):
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid
+                )
+                LOGGER.info(
+                    f'Content metadata exporter found {len(past_catalog_transmission_queryset)} past content items that'
+                    f' need no update under catalog {enterprise_customer_catalog.uuid}'
                 )
                 for past_transmission in past_catalog_transmission_queryset:
                     # In order to determine if something doesn't need updates vs needing to be deleted, the transmitter
@@ -246,15 +251,51 @@ class ContentMetadataExporter(Exporter):
             return past_transmissions[0]['content_last_changed']
         return None
 
+    def update_content_transmissions_catalog_uuids(self):
+        """
+        Retrieve all content under the enterprise customer's catalog(s) and update all past transmission audits to have
+        it's associated catalog uuid.
+        """
+        enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
+            self.enterprise_customer.enterprise_customer_catalogs.all()
+
+        for enterprise_customer_catalog in enterprise_customer_catalogs:
+            content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
+                self.enterprise_customer,
+                [enterprise_customer_catalog]
+            )
+            content_ids = [get_content_metadata_item_id(item) for item in content_metadata_items]
+            ContentMetadataItemTransmission = apps.get_model(
+                'integrated_channel',
+                'ContentMetadataItemTransmission'
+            )
+            transmission_items = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id__in=content_ids
+            )
+            LOGGER.info(
+                f'Found {len(transmission_items)} past content transmissions that need to be updated with their'
+                f' respective catalog (catalog: {enterprise_customer_catalog.uuid}) UUIDs'
+            )
+            for item in transmission_items:
+                item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
+                item.save()
+
 
 class ContentMetadataItemExport:
     """
     Object representation of a content metadata item export.
     """
 
-    def __init__(self, content_metadata_item, channel_content_metadata_item, enterprise_customer_catalog_uuid, content_last_changed=None):
+    def __init__(
+        self,
+        content_metadata_item,
+        channel_content_metadata_item,
+        enterprise_customer_catalog_uuid,
+        content_last_changed=None
+    ):
         self.content_id = get_content_metadata_item_id(content_metadata_item)
-        self.metadata = content_metadata_item
         self.channel_metadata = channel_content_metadata_item
         self.content_last_changed = content_last_changed
         self.enterprise_customer_catalog_uuid = enterprise_customer_catalog_uuid

@@ -31,14 +31,14 @@ class CornerstoneContentMetadataTransmitter(ContentMetadataTransmitter):
             payload (OrderedDict): course metadata dictionary corresponding to the result of the content metadata
             exporter's export.
         """
-        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times = \
-            self._partition_items(payload)
+        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times, \
+            content_catalog_map = self._partition_items(payload)
         self._transmit_delete(items_to_delete)
-        self._transmit_create(items_to_create, items_catalog_updated_times)
+        self._transmit_create(items_to_create, items_catalog_updated_times, content_catalog_map)
         self._transmit_update(items_to_update, transmission_map, items_catalog_updated_times)
         return self._prepare_items_for_transmission(payload)
 
-    def _transmit_create(self, channel_metadata_item_map, items_catalog_updated_times):
+    def _transmit_create(self, channel_metadata_item_map, items_catalog_updated_times, content_catalog_map):
         """
         Generate the appropriate ContentMetadataItemTransmission objects according to the channel_metadata_item_map
 
@@ -54,7 +54,7 @@ class CornerstoneContentMetadataTransmitter(ContentMetadataTransmitter):
         )
         create_chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
         for chunk in islice(create_chunk_items, transmission_limit):
-            self._create_transmissions(chunk, items_catalog_updated_times)
+            self._create_transmissions(chunk, items_catalog_updated_times, content_catalog_map)
 
     def _transmit_update(self, channel_metadata_item_map, transmission_map, items_catalog_updated_times):
         """

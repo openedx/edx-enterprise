@@ -5,6 +5,7 @@ Tests for the SAP SuccessFactors content metadata transmitter.
 
 import logging
 import unittest
+import uuid
 
 import mock
 import responses
@@ -77,11 +78,13 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             transmitter.transmit({
                 content_id: ContentMetadataItemExport(
                     {'key': content_id, 'content_type': 'course'},
-                    {'courseID': content_id, 'update': True}
+                    {'courseID': content_id, 'update': True},
+                    uuid.uuid4()
                 ),
                 content_id_2: ContentMetadataItemExport(
                     {'key': content_id_2, 'content_type': 'course'},
-                    {'courseID': content_id_2, 'update': True}
+                    {'courseID': content_id_2, 'update': True},
+                    uuid.uuid4()
                 )
             })
             assert len(log_capture.records) == 2
@@ -121,11 +124,13 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         transmitter.transmit({
             content_id: ContentMetadataItemExport(
                 {'key': content_id, 'content_type': 'course'},
-                {'courseID': content_id, 'update': True}
+                {'courseID': content_id, 'update': True},
+                uuid.uuid4()
             ),
             content_id_2: ContentMetadataItemExport(
                 {'key': content_id_2, 'content_type': 'course'},
-                {'courseID': content_id_2, 'update': True}
+                {'courseID': content_id_2, 'update': True},
+                uuid.uuid4()
             ),
         })
         assert update_content_metadata_mock.call_count == 1
@@ -160,11 +165,13 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             transmitter.transmit({
                 content_id: ContentMetadataItemExport(
                     {'key': content_id, 'content_type': 'course'},
-                    {'courseID': content_id, 'update': True}
+                    {'courseID': content_id, 'update': True},
+                    uuid.uuid4()
                 ),
                 content_id_2: ContentMetadataItemExport(
                     {'key': content_id_2, 'content_type': 'course'},
-                    {'courseID': content_id_2, 'update': True}
+                    {'courseID': content_id_2, 'update': True},
+                    uuid.uuid4()
                 ),
             })
             assert update_content_metadata_mock.call_count == 2

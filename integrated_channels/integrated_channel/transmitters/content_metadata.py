@@ -67,6 +67,7 @@ class ContentMetadataTransmitter(Transmitter):
 
         # Compare what is currently being transmitted to what was transmitted
         # previously, identifying items that need to be created or updated.
+        skipped_content_ids = []
         for item in channel_metadata_item_map.values():
             content_id = item.content_id
             channel_metadata = item.channel_metadata
@@ -76,11 +77,18 @@ class ContentMetadataTransmitter(Transmitter):
                 if diff(channel_metadata, transmitted_item.channel_metadata):
                     items_to_update[content_id] = channel_metadata
                     items_catalog_updated_times[content_id] = item.content_last_changed
+                else:
+                    skipped_content_ids.append(content_id)
             else:
                 items_to_create[content_id] = channel_metadata
                 content_catalog_map[content_id] = item.enterprise_customer_catalog_uuid
                 items_catalog_updated_times[content_id] = item.content_last_changed
 
+        if skipped_content_ids:
+            LOGGER.info(
+                f'Transmitter skipping transmission of {skipped_content_ids} as no changes from previous transmission '
+                f'were found'
+            )
         LOGGER.info(
             'Preparing to transmit creation of [%s] content metadata items with plugin configuration [%s]: [%s]',
             len(items_to_create),
