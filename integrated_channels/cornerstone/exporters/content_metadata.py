@@ -11,7 +11,7 @@ import pytz
 from django.apps import apps
 
 from enterprise.utils import get_closest_course_run, get_language_code
-from integrated_channels.cornerstone.utils import convert_invalid_course_ids
+from integrated_channels.cornerstone.utils import convert_invalid_course_id
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
@@ -61,14 +61,14 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
         used to uniquely identify edx courses, we only want to encode the invalid ones as they would have never been
         created.
         """
-        return convert_invalid_course_ids(content_metadata_item.get('key'))
+        return convert_invalid_course_id(content_metadata_item.get('key'))
 
     def transform_course_key(self, content_metadata_item):
         """
         Return the transformed version of the course key by converting into a string of valid chars by encoding the key
         with base 64
         """
-        return convert_invalid_course_ids(content_metadata_item.get('key'))
+        return convert_invalid_course_id(content_metadata_item.get('key'))
 
     def transform_organizations(self, content_metadata_item):
         """

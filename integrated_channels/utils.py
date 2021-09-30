@@ -26,6 +26,8 @@ UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 
 LOGGER = getLogger(__name__)
+
+
 def encode_course_key_into_base64(edx_course_key):
     """
     Base64 encodes edx course key (string) into a form safe (string) for use with LMS such as Cornerstone

@@ -159,7 +159,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     )
     @responses.activate
     @ddt.unpack
-    def test_transform_key_1(self, item_key, expected_id):
+    def test_encode_course_key(self, item_key, expected_id):
         """
         Transforming a course key encodes the string if and only if invalid chars are present, otherwise it's a noop
         """
@@ -174,7 +174,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     )
     @responses.activate
     @ddt.unpack
-    def test_transform_key_2(self, item_key):
+    def test_long_course_key(self, item_key):
         """
         Transforming long keys to make sure they become uuids
         """

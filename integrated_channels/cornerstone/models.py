@@ -253,6 +253,7 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
             sort_keys=True
         )
 
+
 class CornerstoneCourseKey(models.Model):
     """
     Model for mapping long course keys to uuid's in order to comply with cornerstone's

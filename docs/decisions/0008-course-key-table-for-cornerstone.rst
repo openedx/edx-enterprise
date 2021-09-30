@@ -31,6 +31,15 @@ currently implemented (using url encoded course key) will remain, unless the enc
 The uuid will be generated when we are transmitting course content metadata, and also when they report learner 
 data back to us. 
 
+We also started an exploration of whether there are existing uuids we can use to map to course keys. We found that there are 
+uuids in Discovery for courses:
+https://github.com/edx/course-discovery/blob/master/course_discovery/apps/course_metadata/models.py#L768
+and courseruns: 
+https://github.com/edx/course-discovery/blob/master/course_discovery/apps/course_metadata/models.py#L1277
+but we are still in the stages of finding out whether they are stable throughout their lifespan to be used. Turns out only 
+courses with 'published' state in discovery have stable uuids. Because there are some unknowns there, this fix will allow us 
+a more immediate remediation.
+
 
 Consequences
 ============
