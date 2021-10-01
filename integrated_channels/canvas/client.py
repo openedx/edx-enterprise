@@ -81,7 +81,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # this makes the course use a 'participation' type of 'Course' instead of the default 'Term'
         # which allows us to correctly tell Canvas to honor start/end dates instead of using the
         # one from the default Term Canvas may end up using for this course
-        desired_payload['restrict_enrollments_to_course_dates'] = 'true'
+        desired_payload['restrict_enrollments_to_course_dates'] = True
 
         edx_course_id = course_details['integration_id']
         located_course = CanvasUtil.find_course_by_course_id(
@@ -91,6 +91,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
 
         if not located_course:
+            LOGGER.info(
+                generate_formatted_log(
+                    'canvas',
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    edx_course_id,
+                    f'Creating new course with payload {desired_payload}',
+                )
+            )
             # Course does not exist: Create the course
             status_code, response_text = self._post(
                 self.course_create_url,
