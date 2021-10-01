@@ -1876,11 +1876,11 @@ class TestBackfillLearnerRoleAssignmentsCommand(unittest.TestCase):
             )
 
             # Make sure we see the skip message
-            log_capture.check_present(
-                ('enterprise.management.commands.backfill_learner_role_assignments',
+            log_capture.check_present((
+                'enterprise.management.commands.backfill_learner_role_assignments',
                 'INFO',
-                'Found MultipleObjectsReturned for user user-0. Skipping.')
-            )
+                'Found MultipleObjectsReturned for user user-0. Skipping.'
+            ))
 
     def test_user_role_assignments_created(self):
         """
