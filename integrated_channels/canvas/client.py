@@ -81,7 +81,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # this makes the course use a 'participation' type of 'Course' instead of the default 'Term'
         # which allows us to correctly tell Canvas to honor start/end dates instead of using the
         # one from the default Term Canvas may end up using for this course
-        desired_payload['restrict_enrollments_to_course_dates'] = True
+        desired_payload['course']['restrict_enrollments_to_course_dates'] = True
 
         edx_course_id = course_details['integration_id']
         located_course = CanvasUtil.find_course_by_course_id(
