@@ -2,11 +2,29 @@
 Content metadata exporter for Canvas
 """
 
+from datetime import datetime
 from logging import getLogger
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
 LOGGER = getLogger(__name__)
+
+
+def convert_date_str(date_str):
+    '''
+    Returns formatted date string from ISO8601 format (e.g. 2011-01-01T01:00Z)
+    to a human readable suitable for use in Canvas
+    Return 'N/A' if input arg is None, or 'N/A'
+    If format is not ISO8601, returns original string.
+    '''
+    if not date_str:
+        return 'N/A'
+    try:
+        start_date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ') if date_str != 'N/A' else date_str
+        formatted_start_date = start_date.strftime('%a %b %d %Y %H:%M:%S') if start_date != 'N/A' else start_date
+    except ValueError:
+        return date_str
+    return formatted_start_date
 
 
 class CanvasContentMetadataExporter(ContentMetadataExporter):
@@ -52,9 +70,11 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
                 base_description=base_description, short_description=short_description
             )
 
+        formatted_start_date = convert_date_str(content_metadata_item.get('start', 'N/A'))
+        formatted_end_date = convert_date_str(content_metadata_item.get('end', 'N/A'))
         description = (f"{description} <br />"
-                       f"<br />Starts: {content_metadata_item.get('start', 'N/A')}"
-                       f"<br />Ends: {content_metadata_item.get('end', 'N/A')}")
+                       f"<br />Starts: {formatted_start_date}"
+                       f"<br />Ends: {formatted_end_date}")
 
         return description
 

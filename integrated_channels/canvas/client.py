@@ -419,9 +419,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Also sets course to 'offer' state by sending 'course[event]=offer',
         which makes the course published in Canvas.
 
-        Also enforces Course (in case we did not create it that way)
-        to use the participation type of 'Course'
-
         Arguments:
           - course_id (Number): Canvas Course id
           - course_details (dict): { 'image_url' } : optional, used if present for course[image_url]
@@ -433,7 +430,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             course_id,
         )
         # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
-        update_payload = {'course': {'event': 'offer', 'restrict_enrollments_to_course_dates': 'true'}}
+        update_payload = {'course': {'event': 'offer'}}
         try:
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
