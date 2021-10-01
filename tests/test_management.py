@@ -1851,7 +1851,7 @@ class TestBackfillLearnerRoleAssignmentsCommand(unittest.TestCase):
         user = User.objects.first()
 
         # Create some duplicate role assignments
-        for i in range(2):
+        for _ in range(2):
             factories.SystemWideEnterpriseUserRoleAssignment(
                 user=user,
                 role=roles_api.learner_role(),
