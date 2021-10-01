@@ -81,7 +81,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # this makes the course use a 'participation' type of 'Course' instead of the default 'Term'
         # which allows us to correctly tell Canvas to honor start/end dates instead of using the
         # one from the default Term Canvas may end up using for this course
-        desired_payload['restrict_enrollments_to_course_dates'] = True
+        desired_payload['restrict_enrollments_to_course_dates'] = 'true'
 
         edx_course_id = course_details['integration_id']
         located_course = CanvasUtil.find_course_by_course_id(
@@ -419,6 +419,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Also sets course to 'offer' state by sending 'course[event]=offer',
         which makes the course published in Canvas.
 
+        Also enforces Course (in case we did not create it that way)
+        to use the participation type of 'Course'
+
         Arguments:
           - course_id (Number): Canvas Course id
           - course_details (dict): { 'image_url' } : optional, used if present for course[image_url]
@@ -430,7 +433,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             course_id,
         )
         # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
-        update_payload = {'course': {'event': 'offer'}}
+        update_payload = {'course': {'event': 'offer', 'restrict_enrollments_to_course_dates': 'true'}}
         try:
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
