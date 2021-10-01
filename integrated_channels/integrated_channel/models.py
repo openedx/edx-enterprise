@@ -204,6 +204,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter = self.get_learner_data_transmitter()
         transmitter.deduplicate_assignment_records_transmit(exporter)
 
+    def update_content_transmission_catalog(self, user):
+        """
+        Update transmission audits to contain the content's associated catalog uuid.
+        """
+        exporter = self.get_content_metadata_exporter(user)
+        exporter.update_content_transmissions_catalog_uuids()
+
 
 class LearnerDataTransmissionAudit(models.Model):
     """
@@ -295,6 +302,11 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         help_text='Date of the last time the enterprise catalog associated with this metadata item was updated',
         blank=True,
         null=True
+    )
+    enterprise_customer_catalog_uuid = models.UUIDField(
+        help_text='The enterprise catalog that this metadata item was derived from',
+        blank=True,
+        null=True,
     )
 
     class Meta:

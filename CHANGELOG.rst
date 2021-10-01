@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.21]
+---------
+* bug: The exporter now properly handles instances when enterprise customer catalogs do no need updates.
+
 [3.28.20]
 ---------
 * feat: Added enterprise_learner role assignment backfill management command

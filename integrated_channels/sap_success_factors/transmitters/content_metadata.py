@@ -34,8 +34,8 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         Transmit content metadata items to the integrated channel.
         """
-        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times = \
-            self._partition_items(payload)
+        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times, \
+            content_catalog_map = self._partition_items(payload)
         self._prepare_items_for_delete(items_to_delete)
         prepared_items = {}
         prepared_items.update(items_to_create)
@@ -71,7 +71,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             chunked_items = list(chunk.values())
             self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
 
-        self._create_transmissions(items_to_create, items_catalog_updated_times)
+        self._create_transmissions(items_to_create, items_catalog_updated_times, content_catalog_map)
         self._update_transmissions(items_to_update, transmission_map, items_catalog_updated_times)
         self._delete_transmissions(list(items_to_delete.keys()))
 

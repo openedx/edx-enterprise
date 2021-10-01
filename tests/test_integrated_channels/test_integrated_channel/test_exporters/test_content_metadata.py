@@ -131,16 +131,25 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         last modified time of content's associated catalog, we don't fetch the catalog's metadata.
         """
         # Generate a past transmission item that will indicate no updated needed
-        factories.ContentMetadataItemTransmissionFactory(
+        past_content_transmission = factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed='2021-07-16T15:11:10.521611Z'
+            content_last_changed='2021-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid
         )
         mock_ent_catalog_api.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         mock_ent_catalog_api.return_value.get_enterprise_catalog.return_value = self.fake_catalog
         exporter = ContentMetadataExporter('fake-user', self.config)
         payload = exporter.export()
-        assert len(payload) == 0
+
+        # Even though no metadata was fetched, in order to report a `No updates needed` to the transmitter, the exporter
+        # will still return a payload. However, this payload will contain exactly what's kept in the content item audit
+        # record.
+        assert len(payload) == 1
+        for transmission in payload.values():
+            assert transmission.content_id == past_content_transmission.content_id
+            assert transmission.channel_metadata == past_content_transmission.channel_metadata
+
         # We should make a call for the enterprise catalog, but no call for the metadata because no update needed
         assert mock_ent_catalog_api.return_value.get_content_metadata.call_count == 0
         assert mock_ent_catalog_api.return_value.get_enterprise_catalog.call_count == 1
