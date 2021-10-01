@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.22]
+---------
+* fix: Adding error handling for role assignment backfill management command
+
 [3.28.21]
 ---------
 * bug: The exporter now properly handles instances when enterprise customer catalogs do no need updates.
