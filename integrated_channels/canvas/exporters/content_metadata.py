@@ -42,11 +42,18 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'is_public': 'is_public',
         'self_enrollment': 'self_enrollment',
         'course_code': 'key',
-        'indexed': 'indexed'
+        'indexed': 'indexed',
+        'restrict_enrollments_to_course_dates': 'restrict_enrollments_to_course_dates',
     }
     SKIP_KEY_IF_NONE = True
 
     LONG_STRING_LIMIT = 2000
+
+    def transform_restrict_enrollments_to_course_dates(self, content_metadata_item):  # pylint: disable=unused-argument
+        '''
+        This enforces the course to use the participation type of 'Course' rather than Term
+        '''
+        return True
 
     def transform_description(self, content_metadata_item):
         """

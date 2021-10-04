@@ -78,10 +78,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         desired_payload = json.loads(serialized_data.decode('utf-8'))
         course_details = desired_payload['course']
-        # this makes the course use a 'participation' type of 'Course' instead of the default 'Term'
-        # which allows us to correctly tell Canvas to honor start/end dates instead of using the
-        # one from the default Term Canvas may end up using for this course
-        desired_payload['course']['restrict_enrollments_to_course_dates'] = True
 
         edx_course_id = course_details['integration_id']
         located_course = CanvasUtil.find_course_by_course_id(
@@ -103,7 +99,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             # Course does not exist: Create the course
             status_code, response_text = self._post(
                 self.course_create_url,
-                json.dumps(desired_payload).encode('utf-8'),
+                serialized_data,
             )
             created_course_id = json.loads(response_text)['id']
 
@@ -160,18 +156,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             integration_id,
         )
 
-        desired_payload = json.loads(serialized_data.decode('utf-8'))
-        # this makes the course use a 'participation' type of 'Course' instead of the default 'Term'
-        # which allows us to correctly tell Canvas to honor start/end dates instead of using the
-        # one from the default Term Canvas may end up using for this course
-        desired_payload['course']['restrict_enrollments_to_course_dates'] = True
-
         url = CanvasUtil.course_update_endpoint(
             self.enterprise_configuration,
             course_id,
         )
 
-        return self._put(url, json.dumps(desired_payload).encode('utf-8'))
+        return self._put(url, serialized_data)
 
     def delete_content_metadata(self, serialized_data):
         self._create_session()
