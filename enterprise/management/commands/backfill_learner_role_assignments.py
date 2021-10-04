@@ -7,6 +7,7 @@ import logging
 from time import sleep
 
 from django.contrib import auth
+from django.core.exceptions import MultipleObjectsReturned
 from django.core.management.base import BaseCommand
 
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
@@ -65,11 +66,15 @@ class Command(BaseCommand):
                 user = User.objects.get(id=ecu.user_id)
                 enterprise_customer = ecu.enterprise_customer
 
-                role_assignment, created = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-                    user=user,
-                    role=role,
-                    enterprise_customer=enterprise_customer
-                )
+                try:
+                    role_assignment, created = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+                        user=user,
+                        role=role,
+                        enterprise_customer=enterprise_customer
+                    )
+                except MultipleObjectsReturned:
+                    log.info('Found MultipleObjectsReturned for user %s. Skipping.', user)
+                    continue
 
                 if created:
                     log.info(

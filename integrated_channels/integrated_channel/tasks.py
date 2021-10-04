@@ -141,6 +141,36 @@ def cleanup_duplicate_assignment_records(username, channel_code, channel_pk):
 
 @shared_task
 @set_code_owner_attribute
+def update_content_transmission_catalog(username, channel_code, channel_pk):
+    """
+    Task to retrieve all transmitted content items under a specific channel and update audits to contain the content's
+    associated catalog.
+
+    Arguments:
+        username (str): The username of the User to be used for making API requests for learner data.
+        channel_code (str): Capitalized identifier for the integrated channel
+        channel_pk (str): Primary key for identifying integrated channel
+    """
+    start = time.time()
+    api_user = User.objects.get(username=username)
+
+    integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
+
+    _log_batch_task_start('update_content_transmission_catalog', channel_code, api_user.id, integrated_channel)
+
+    integrated_channel.update_content_transmission_catalog(api_user)
+    duration = time.time() - start
+    _log_batch_task_finish(
+        'update_content_transmission_catalog',
+        channel_code,
+        api_user.id,
+        integrated_channel,
+        duration
+    )
+
+
+@shared_task
+@set_code_owner_attribute
 def transmit_single_learner_data(username, course_run_id):
     """
     Task to send single learner data to each linked integrated channel.
