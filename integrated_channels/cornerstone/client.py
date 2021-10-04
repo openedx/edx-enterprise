@@ -11,8 +11,8 @@ import requests
 
 from django.apps import apps
 
+from integrated_channels.cornerstone.utils import get_or_create_key_pair
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import convert_invalid_course_ids
 
 LOGGER = logging.getLogger(__name__)
 
@@ -79,10 +79,11 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         callback_url = json_payload['data'].pop('callbackUrl')
         session_token = json_payload['data'].pop('sessionToken')
 
-        # When exporting content metadata, we encode course keys that contain invalid chars.
+        # When exporting content metadata, we encode course keys that contain invalid chars or
+        # set them to uuids to comply with Cornerstone standards
         course_id = json_payload['data'].get('courseId')
-        json_payload['data']['courseId'] = convert_invalid_course_ids(course_id)
-
+        key_mapping = get_or_create_key_pair(course_id)
+        json_payload['data']['courseId'] = key_mapping.internal_course_id
         url = '{base_url}{callback_url}{completion_path}?sessionToken={session_token}'.format(
             base_url=self.enterprise_configuration.cornerstone_base_url,
             callback_url=callback_url,

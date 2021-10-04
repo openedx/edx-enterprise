@@ -5,6 +5,7 @@ Tests for Cornerstone content metadata exporters.
 
 import datetime
 import unittest
+from uuid import UUID
 
 import ddt
 import mock
@@ -158,13 +159,28 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     )
     @responses.activate
     @ddt.unpack
-    def test_transform_key(self, item_key, expected_id):
+    def test_encode_course_key(self, item_key, expected_id):
         """
         Transforming a course key encodes the string if and only if invalid chars are present, otherwise it's a noop
         """
         item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_key)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_course_key(item_content_metadata) == expected_id
+
+    @ddt.data(
+        (
+            {'key': 'testing+out+very+very+very+very+long+course+id+T2020'},
+        )
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_long_course_key(self, item_key):
+        """
+        Transforming long keys to make sure they become uuids
+        """
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_key)
+        exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
+        assert isinstance(exporter.transform_course_key(item_content_metadata), UUID)
 
     @ddt.data(
         (

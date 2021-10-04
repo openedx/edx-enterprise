@@ -8,6 +8,7 @@ from logging import getLogger
 from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
+from integrated_channels.cornerstone.utils import get_or_create_key_pair
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.utils import generate_formatted_log
 
@@ -39,9 +40,11 @@ class CornerstoneLearnerExporter(LearnerExporter):
         )
 
         try:
+            course_id = get_course_id_for_enrollment(enterprise_enrollment)
+            key_mapping = get_or_create_key_pair(course_id)
             csod_learner_data_transmission = CornerstoneLearnerDataTransmissionAudit.objects.get(
                 user_id=enterprise_enrollment.enterprise_customer_user.user.id,
-                course_id=get_course_id_for_enrollment(enterprise_enrollment),
+                course_id=key_mapping.external_course_id,
             )
             csod_learner_data_transmission.enterprise_course_enrollment_id = enterprise_enrollment.id
             csod_learner_data_transmission.grade = grade

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.23]
+---------
+* Fix cornerstone character limit bug with dict database table
+
 [3.28.22]
 ---------
 * fix: Adding error handling for role assignment backfill management command
