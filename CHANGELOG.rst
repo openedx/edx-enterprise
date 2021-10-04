@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.2]
+--------
+* fix: switch is_revoked to True on LicensedEnterpriseCourseEnrollment after license expiration
+
 [3.30.1]
 --------
 * Allowing management commands to optionally run on inactive Integrated Channel configurations

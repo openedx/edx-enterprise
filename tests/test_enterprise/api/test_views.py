@@ -3255,8 +3255,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
         enterprise_course_enrollment.refresh_from_db()
         licensed_course_enrollment.refresh_from_db()
 
-        self.assertTrue(enterprise_course_enrollment.saved_for_later)
-        self.assertTrue(licensed_course_enrollment.is_revoked)
+        self.assertFalse(enterprise_course_enrollment.saved_for_later)
+        self.assertFalse(licensed_course_enrollment.is_revoked)
 
         if has_audit_mode:
             client_instance = mock_enrollment_client.return_value
@@ -3698,8 +3698,6 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
         licensed_course_enrollment.refresh_from_db()
         enterprise_course_enrollment.refresh_from_db()
 
-        assert not licensed_course_enrollment.is_revoked
-
         if not is_course_completed:
             if has_audit_mode:
                 client_instance = mock_enrollment_client.return_value
@@ -3714,9 +3712,11 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
                     username=enterprise_customer_user.username,
                     course_id=enterprise_course_enrollment.course_id,
                 )
+            assert licensed_course_enrollment.is_revoked
             assert enterprise_course_enrollment.saved_for_later
         else:
             assert not enterprise_course_enrollment.saved_for_later
+            assert not licensed_course_enrollment.is_revoked
 
     def test_unenroll_expired_licensed_enrollments_no_license_ids(self):
         post_data = {
