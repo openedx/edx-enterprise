@@ -149,6 +149,17 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'enrollment_url': 'http://some/enrollment/url/'
             },
             '<a href=http://some/enrollment/url/>Go to edX course page</a><br /> <br /><br />Starts: N/A<br />Ends: N/A'
+        ),
+        (
+            {
+                'enrollment_url': 'http://some/enrollment/url/',
+                'title': 'edX Demonstration Course',
+                'short_description': 'Some short description.',
+                'start': '2011-01-01T01:00:00Z',
+                'end': '2011-03-01T01:00:00Z'
+            },
+            ('<a href=http://some/enrollment/url/>Go to edX course page</a><br />Some short description. <br />'
+             '<br />Starts: Sat Jan 01 2011 01:00:00<br />Ends: Tue Mar 01 2011 01:00:00')
         )
 
     )
