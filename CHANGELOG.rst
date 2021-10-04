@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.21]
+---------
+* Fix cornerstone character limit bug with dict database table
+
 [3.28.20]
 ---------
 * feat: Added enterprise_learner role assignment backfill management command
