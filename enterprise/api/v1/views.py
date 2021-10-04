@@ -616,7 +616,6 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             except EnrollmentModificationException as exc:
                 revocation_results[course_id] = {'success': False, 'message': str(exc)}
                 any_failures = True
-                enterprise_enrollment.license.revoke()
 
         status_code = status.HTTP_200_OK if not any_failures else status.HTTP_422_UNPROCESSABLE_ENTITY
         return Response(revocation_results, status=status_code)
@@ -660,8 +659,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                     "unenrolled to status %s."
                 ), enterprise_course_enrollment.licensed_with.license_uuid, termination_status)
                 if termination_status != self.EnrollmentTerminationStatus.COURSE_COMPLETED:
-                    enterprise_course_enrollment.saved_for_later = True
-                    enterprise_course_enrollment.save()
+                    enterprise_course_enrollment.license.revoke()
             except EnrollmentModificationException as exc:
                 LOGGER.error((
                     "Failed to unenroll EnterpriseCourseEnrollment record for enterprise license %s. "
