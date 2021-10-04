@@ -208,3 +208,12 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_indexed(content_metadata_item) == 1
+
+    @responses.activate
+    def test_transform_restrict_enrollments_to_course_dates(self):
+        """
+        `CanvasContentMetadataExporter``'s ''transform_restrict_enrollments_to_course_dates` returns True as a value
+        """
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_restrict_enrollments_to_course_dates(content_metadata_item) is True
