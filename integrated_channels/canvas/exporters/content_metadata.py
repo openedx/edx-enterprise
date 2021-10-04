@@ -2,11 +2,29 @@
 Content metadata exporter for Canvas
 """
 
+from datetime import datetime
 from logging import getLogger
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
 LOGGER = getLogger(__name__)
+
+
+def convert_date_str(date_str):
+    '''
+    Returns formatted date string from ISO8601 format (e.g. 2011-01-01T01:00:10Z)
+    to a human readable suitable for use in Canvas
+    Return 'N/A' if input arg is None, or 'N/A'
+    If format is not ISO8601, returns original string.
+    '''
+    if not date_str or date_str == 'N/A':
+        return date_str
+    try:
+        start_date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ')
+        formatted_start_date = start_date.strftime('%a %b %d %Y %H:%M:%S')
+    except ValueError:
+        return date_str
+    return formatted_start_date
 
 
 class CanvasContentMetadataExporter(ContentMetadataExporter):
@@ -24,11 +42,18 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'is_public': 'is_public',
         'self_enrollment': 'self_enrollment',
         'course_code': 'key',
-        'indexed': 'indexed'
+        'indexed': 'indexed',
+        'restrict_enrollments_to_course_dates': 'restrict_enrollments_to_course_dates',
     }
     SKIP_KEY_IF_NONE = True
 
     LONG_STRING_LIMIT = 2000
+
+    def transform_restrict_enrollments_to_course_dates(self, content_metadata_item):  # pylint: disable=unused-argument
+        '''
+        This enforces the course to use the participation type of 'Course' rather than Term
+        '''
+        return True
 
     def transform_description(self, content_metadata_item):
         """
@@ -51,6 +76,12 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
             description = "{base_description}{short_description}".format(
                 base_description=base_description, short_description=short_description
             )
+
+        formatted_start_date = convert_date_str(content_metadata_item.get('start', 'N/A'))
+        formatted_end_date = convert_date_str(content_metadata_item.get('end', 'N/A'))
+        description = (f"{description} <br />"
+                       f"<br />Starts: {formatted_start_date}"
+                       f"<br />Ends: {formatted_end_date}")
 
         return description
 

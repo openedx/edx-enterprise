@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.28.24]
+---------
+* Integrated channels Canvas: now fills in Start/end dates in description, and uses Course participation type
+
 [3.28.23]
 ---------
 * Fix cornerstone character limit bug with dict database table

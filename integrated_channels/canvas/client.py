@@ -76,7 +76,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """
         self._create_session()
 
-        course_details = json.loads(serialized_data.decode('utf-8'))['course']
+        desired_payload = json.loads(serialized_data.decode('utf-8'))
+        course_details = desired_payload['course']
+
         edx_course_id = course_details['integration_id']
         located_course = CanvasUtil.find_course_by_course_id(
             self.enterprise_configuration,
@@ -85,8 +87,20 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
 
         if not located_course:
+            LOGGER.info(
+                generate_formatted_log(
+                    'canvas',
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    edx_course_id,
+                    f'Creating new course with payload {desired_payload}',
+                )
+            )
             # Course does not exist: Create the course
-            status_code, response_text = self._post(self.course_create_url, serialized_data)
+            status_code, response_text = self._post(
+                self.course_create_url,
+                serialized_data,
+            )
             created_course_id = json.loads(response_text)['id']
 
             # step 2: upload image_url and any other details

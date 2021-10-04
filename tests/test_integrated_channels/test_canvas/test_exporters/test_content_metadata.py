@@ -125,7 +125,7 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'full_description': 'Detailed description of edx demo course.',
             },
             '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
-            'Detailed description of edx demo course.'
+            'Detailed description of edx demo course. <br /><br />Starts: N/A<br />Ends: N/A'
         ),
         (
             {
@@ -133,7 +133,7 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'title': 'edX Demonstration Course',
             },
             '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
-            'edX Demonstration Course'
+            'edX Demonstration Course <br /><br />Starts: N/A<br />Ends: N/A'
         ),
         (
             {
@@ -142,13 +142,24 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'short_description': 'Some short description.',
             },
             '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
-            'Some short description.'
+            'Some short description. <br /><br />Starts: N/A<br />Ends: N/A'
         ),
         (
             {
                 'enrollment_url': 'http://some/enrollment/url/'
             },
-            '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
+            '<a href=http://some/enrollment/url/>Go to edX course page</a><br /> <br /><br />Starts: N/A<br />Ends: N/A'
+        ),
+        (
+            {
+                'enrollment_url': 'http://some/enrollment/url/',
+                'title': 'edX Demonstration Course',
+                'short_description': 'Some short description.',
+                'start': '2011-01-01T01:00:00Z',
+                'end': '2011-03-01T01:00:00Z'
+            },
+            ('<a href=http://some/enrollment/url/>Go to edX course page</a><br />Some short description. <br />'
+             '<br />Starts: Sat Jan 01 2011 01:00:00<br />Ends: Tue Mar 01 2011 01:00:00')
         )
 
     )
@@ -197,3 +208,12 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_indexed(content_metadata_item) == 1
+
+    @responses.activate
+    def test_transform_restrict_enrollments_to_course_dates(self):
+        """
+        `CanvasContentMetadataExporter``'s ''transform_restrict_enrollments_to_course_dates` returns True as a value
+        """
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_restrict_enrollments_to_course_dates(content_metadata_item) is True
