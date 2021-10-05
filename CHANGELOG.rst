@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.1]
+--------
+* Allowing management commands to optionally run on inactive Integrated Channel configurations
+
 [3.30.0]
 ---------
 * Switched back to ``jsonfield`` from ``jsonfield2``
