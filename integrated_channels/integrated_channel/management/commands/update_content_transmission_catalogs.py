@@ -34,7 +34,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         Update all past content transmission items to have their respective catalog's uuid.
         """
         username = options['catalog_user']
-
+        options['prevent_disabled_configurations'] = False
         # Before we do a whole bunch of database queries, make sure that the user we were passed exists.
         try:
             User.objects.get(username=username)

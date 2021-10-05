@@ -84,7 +84,8 @@ class IntegratedChannelCommandMixin:
 
         Raises errors when invalid options are encountered.
 
-        See ``add_arguments`` for the accepted options.
+        Note: in order to retrieve in active configurations, the option `prevent_disabled_configurations` must be set to
+        false. For other available configurations, see ``add_arguments`` for all accepted options.
         """
         assessment_level_support = options.get('assessment_level_support', False)
         content_metadata_job_support = options.get('content_metadata_job_support', False)
@@ -94,9 +95,11 @@ class IntegratedChannelCommandMixin:
             content_metadata_job_support=content_metadata_job_support,
         )
         filter_kwargs = {
-            'active': True,
             'enterprise_customer__active': True,
         }
+        if options.get('prevent_disabled_configurations', True):
+            filter_kwargs['active'] = True
+
         enterprise_customer = self.get_enterprise_customer(options.get('enterprise_customer'))
 
         if enterprise_customer:
