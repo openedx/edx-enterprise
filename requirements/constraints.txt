@@ -18,9 +18,6 @@ inflect==3.0.2
 # zip has dropped support for python 3.5 after 1.0.0
 zipp==1.0.0
 
-#jsonfield2 version 3.1.0 drops support for python3.5
-jsonfield2==3.0.3
-
 # mock has dropped support for python 3.5 after 3.0.5
 mock==3.0.5
 

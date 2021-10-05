@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.0]
+---------
+* Switched back to ``jsonfield`` from ``jsonfield2``
+
 [3.29.0]
 ---------
 * Added api for fetching field choices from EnterpriseCustomerReportingConfiguration
