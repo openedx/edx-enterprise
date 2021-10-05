@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.29.0]
+---------
+* Added api for fetching field choices from EnterpriseCustomerReportingConfiguration
+
 [3.28.24]
 ---------
 * Integrated channels Canvas: now fills in Start/end dates in description, and uses Course participation type

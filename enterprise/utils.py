@@ -700,7 +700,7 @@ def get_enterprise_customer(uuid):
     EnterpriseCustomer = enterprise_customer_model()
     try:
         return EnterpriseCustomer.objects.get(uuid=uuid)
-    except EnterpriseCustomer.DoesNotExist:
+    except (EnterpriseCustomer.DoesNotExist, ValidationError):
         return None
 
 
