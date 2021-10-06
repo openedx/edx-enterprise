@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.4]
+--------
+* fix: Blackboard integrated channel now correctly synchronizes the one-and-only valid refresh_token
+
 [3.30.3]
 --------
 * fix: content_filter in django admin was broken after the jsonfield upgrade, so this contains fix for that
