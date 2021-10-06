@@ -109,6 +109,9 @@ class TestBlackboardApiClient(unittest.TestCase):
             access_token, expires_in = client._get_oauth_access_token()
             assert access_token == 'a0token'
             assert expires_in == '2020-02-01'
+
+            # refresh_token update won't be visible until we fetch updated value
+            assert enterprise_config.refresh_token == 'a-token'
             # because the refresh token can be updated within the boundary of
             # the _get_oauth_access_token in a transaction, we won't detect
             # the new value until we refresh_from_db
