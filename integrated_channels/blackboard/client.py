@@ -352,8 +352,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         )
 
         # Refresh token handling atomic block
+        # DO NOT USE self.enterprise_config in this block!
+        # Here we don't use the config passed from the constructor directly
+        # instead we fetch a transaction safe instance using select_for_update
+        # so that multiple sessions such as this
+        # don't interfere with each other's Blackboard refresh token state. Blackboard only allows
+        # only valid refresh token at a time, and once it's used it's invalidated and needs to be
+        # replaced by a new token
         with transaction.atomic():
-            if not self.enterprise_configuration.refresh_token:
+            channel_config = apps.get_model(
+                'blackboard',
+                'BlackboardEnterpriseCustomerConfiguration'
+            ).objects.select_for_update().get(pk=self.enterprise_configuration.pk)
+            if not channel_config.refresh_token:
                 raise ClientError(
                     "Failed to generate oauth access token: Refresh token required.",
                     HTTPStatus.INTERNAL_SERVER_ERROR.value
@@ -361,7 +372,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
             auth_token_params = {
                 'grant_type': 'refresh_token',
-                'refresh_token': self.enterprise_configuration.refresh_token,
+                'refresh_token': channel_config.refresh_token,
             }
 
             auth_response = requests.post(
@@ -375,10 +386,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             if auth_response.status_code >= 400:
                 raise ClientError(
                     f"BLACKBOARD: Access/Refresh token fetch failure, "
-                    f"enterprise_customer_uuid: {self.enterprise_configuration.enterprise_customer.uuid}, "
-                    f"blackboard_base_url: {self.enterprise_configuration.blackboard_base_url}, "
+                    f"enterprise_customer_uuid: {channel_config.enterprise_customer.uuid}, "
+                    f"blackboard_base_url: {channel_config.blackboard_base_url}, "
                     f"auth_response_text: {auth_response.text}"
-                    f"config_last_modified: {self.enterprise_configuration.modified}",
+                    f"config_last_modified: {channel_config.modified}",
                     auth_response.status_code,
                 )
             try:
@@ -394,9 +405,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                         # and we probably can't get unstuck without customer re-doing oauth url workflow
                         self._log_error("Fetched a new refresh token, but it was empty, not using it!")
                     else:
-                        self.enterprise_configuration.refresh_token = fetched_refresh_token
+                        channel_config.refresh_token = fetched_refresh_token
                         self._log_info("Fetched a new refresh token, replacing current one")
-                        self.enterprise_configuration.save()
+                        channel_config.save()
                         # We do not want any fail-prone code in this atomic block after this line
                         # it's because if something else fails, it will roll back the just-saved
                         # refresh token!
