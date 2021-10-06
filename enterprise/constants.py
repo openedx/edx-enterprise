@@ -166,7 +166,7 @@ def json_serialized_course_modes():
     """
     :return: serialized course modes.
     """
-    return json.dumps(COURSE_MODE_SORT_ORDER)
+    return COURSE_MODE_SORT_ORDER
 
 
 AVAILABLE_LANGUAGES = [
