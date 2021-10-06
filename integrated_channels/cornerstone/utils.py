@@ -65,7 +65,7 @@ def convert_invalid_course_id(course_id):
     # If the encoded or unencoded version of the key are over 50 characters, they will error out
     # in cornerstone, so we convert them to a uuid.
     if len(safe_course_id) > 50:
-        safe_course_id = uuid4()
+        safe_course_id = str(uuid4())
     return safe_course_id
 
 

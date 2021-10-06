@@ -99,6 +99,9 @@ FAKE_COURSE_RUN = {
 FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
 FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
 
+FAKE_INVALID_KEY_COURSE_RUN = copy.deepcopy(FAKE_COURSE_RUN)
+FAKE_INVALID_KEY_COURSE_RUN['key'] = 'course-v1:edX+Thisissuperlong+weneedthistobethelongestitseverbeen<.>'
+
 FAKE_COURSE = {
     'key': 'edX+DemoX',
     'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
@@ -1328,6 +1331,16 @@ def get_fake_content_metadata():
     content_metadata[FAKE_COURSE_RUN['key']] = copy.deepcopy(FAKE_COURSE_RUN)
     content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
     content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = copy.deepcopy(FAKE_SEARCH_ALL_PROGRAM_RESULT_1)
+    return list(content_metadata.values())
+
+
+def get_fake_content_metadata_with_invalid_key():
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata with a course key that won't pass
+    CSOD validation
+    """
+    content_metadata = OrderedDict()
+    content_metadata[FAKE_INVALID_KEY_COURSE_RUN['key']] = copy.deepcopy(FAKE_INVALID_KEY_COURSE_RUN)
     return list(content_metadata.values())
 
 
