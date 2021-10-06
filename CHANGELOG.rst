@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.3]
+--------
+* fix: content_filter in django admin was broken after the jsonfield upgrade, so this contains fix for that
+
 [3.30.2]
 --------
 * fix: switch is_revoked to True on LicensedEnterpriseCourseEnrollment after license expiration
