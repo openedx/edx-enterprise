@@ -121,7 +121,7 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
-        formset.form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
+        formset.form.base_fields['content_filter'].initial = get_default_catalog_content_filter()
         return formset
 
 
@@ -794,7 +794,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)
-        form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
+        form.base_fields['content_filter'].initial = get_default_catalog_content_filter()
         return form
 
     def get_actions(self, request):
