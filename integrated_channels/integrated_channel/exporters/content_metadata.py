@@ -85,6 +85,10 @@ class ContentMetadataExporter(Exporter):
         content_metadata_export = {}
         force_retrieve_all_catalogs = kwargs.get('force_retrieve_all_catalogs', False)
 
+        # DUE TO ERRORS IN DETECTING CATALOG UPDATES ALL CONTENT WILL BE FORCE RETRIEVED FROM THE
+        # CATALOG SERVICE AS OF 10-06-2021. TODO: remove force retrieval
+        force_retrieve_all_catalogs = True
+
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             need_catalog_update = False
             if not force_retrieve_all_catalogs:

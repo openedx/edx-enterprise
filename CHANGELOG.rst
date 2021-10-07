@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.6]
+--------
+* maint: Integrated channels detection system of catalog changes needed is now disabled via override.
+
 [3.30.5]
 --------
 * fix: Integrated channels data transforming generates json serializable fields.
