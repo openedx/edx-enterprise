@@ -187,7 +187,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
             'enable_integrated_customer_learner_portal_search',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
-            'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner'
+            'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)

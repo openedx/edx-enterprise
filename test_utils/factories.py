@@ -105,6 +105,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     default_language = 'en'
     sender_alias = factory.LazyAttribute(lambda x: FAKER.word())
     reply_to = factory.LazyAttribute(lambda x: FAKER.email())
+    hide_labor_market_data = False
 
 
 class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFactory):

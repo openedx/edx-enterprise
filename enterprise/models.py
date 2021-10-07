@@ -293,6 +293,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
     )
 
+    hide_labor_market_data = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether the labor market data should be made known to the learner in learner portal.")
+    )
+
     enable_integrated_customer_learner_portal_search = models.BooleanField(
         "Enable learner portal search for LMS customers",
         default=True,
