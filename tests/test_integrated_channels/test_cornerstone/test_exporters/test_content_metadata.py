@@ -5,7 +5,6 @@ Tests for Cornerstone content metadata exporters.
 
 import datetime
 import unittest
-from uuid import UUID
 
 import ddt
 import mock
@@ -18,7 +17,12 @@ from integrated_channels.cornerstone.exporters.content_metadata import Cornersto
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from integrated_channels.utils import encode_course_key_into_base64
 from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3, get_fake_catalog, get_fake_content_metadata
+from test_utils.fake_catalog_api import (
+    FAKE_SEARCH_ALL_COURSE_RESULT_3,
+    get_fake_catalog,
+    get_fake_content_metadata,
+    get_fake_content_metadata_with_invalid_key,
+)
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 from test_utils.integrated_channels_utils import merge_dicts
 
@@ -74,6 +78,30 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             'course-v1:edX+DemoX+Demo_Course',
             FAKE_UUIDS[3],
         ])
+
+    @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.json.dumps')
+    @mock.patch('integrated_channels.cornerstone.utils.uuid4')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
+    def test_content_export_with_invalid_chars(
+        self,
+        mock_get_enterprise_catalog,
+        mock_get_content_metadata,
+        mock_uuid,
+        mock_json_dumps
+    ):
+        """
+        ``CornerstoneContentMetadataExporter``'s ``export`` produces the expected export when invalid chars are found in
+        the courses content key.
+        """
+        mock_uuid.return_value = FAKE_UUIDS[4]
+        mock_get_content_metadata.return_value = get_fake_content_metadata_with_invalid_key()
+        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
+        content_items = exporter.export()
+
+        assert list(content_items.keys()) == [get_fake_content_metadata_with_invalid_key()[0].get('key')]
+        assert mock_json_dumps.call_args[0][0].get('ID') == str(FAKE_UUIDS[4])
 
     @ddt.data(
         (
@@ -174,13 +202,15 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     )
     @responses.activate
     @ddt.unpack
-    def test_long_course_key(self, item_key):
+    @mock.patch('integrated_channels.cornerstone.utils.uuid4')
+    def test_long_course_key(self, item_key, mock_uuid):
         """
         Transforming long keys to make sure they become uuids
         """
+        mock_uuid.return_value = FAKE_UUIDS[4]
         item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_key)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
-        assert isinstance(exporter.transform_course_key(item_content_metadata), UUID)
+        assert exporter.transform_course_key(item_content_metadata) == str(FAKE_UUIDS[4])
 
     @ddt.data(
         (

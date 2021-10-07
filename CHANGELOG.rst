@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.5]
+--------
+* fix: Integrated channels data transforming generates json serializable fields.
+
 [3.30.4]
 --------
 * fix: Blackboard integrated channel now correctly synchronizes the one-and-only valid refresh_token
