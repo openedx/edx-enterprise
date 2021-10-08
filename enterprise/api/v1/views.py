@@ -35,6 +35,7 @@ from django.conf import settings
 from django.core import exceptions, mail
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 
@@ -70,13 +71,14 @@ from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_cours
 
 try:
     from common.djangoapps.course_modes.models import CourseMode
+    from common.djangoapps.student.models import CourseEnrollment
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
 except ImportError:
     get_course_overviews = None
     get_certificate_for_user = None
+    CourseEnrollment = None
     CourseMode = None
-
 
 LOGGER = getLogger(__name__)
 
@@ -412,6 +414,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
     queryset = models.LicensedEnterpriseCourseEnrollment.objects.all()
     serializer_class = serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
     REQ_EXP_LICENSE_UUIDS_PARAM = 'expired_license_uuids'
+    OPT_IGNORE_ENROLLMENTS_MODIFIED_AFTER_PARAM = 'ignore_enrollments_modified_after'
 
     class EnrollmentTerminationStatus:
         """
@@ -558,6 +561,32 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                 LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
                 raise EnrollmentModificationException(msg) from exc
 
+    def _course_enrollment_modified_at_by_user_and_course_id(self, licensed_enrollments):
+        """
+        Returns a dict containing the last time a course enrollment was modified.
+        The keys are in the form of f'{user_id}{course_id}'.
+        """
+        enterprise_course_enrollments = [
+            licensed_enrollment.enterprise_course_enrollment for licensed_enrollment in licensed_enrollments
+        ]
+        user_ids = [str(ece.enterprise_customer_user.user_id) for ece in enterprise_course_enrollments]
+        course_ids = [str(ece.course_id) for ece in enterprise_course_enrollments]
+        course_enrollment_histories = CourseEnrollment.history.filter(
+            user_id__in=user_ids,
+            course_id__in=course_ids
+        ).order_by('-history_date')
+
+        result = {}
+
+        for history in course_enrollment_histories:
+            user_id = history.user_id
+            course_id = str(history.course_id)
+            key = f'{user_id}{course_id}'
+            if key not in result:
+                result[key] = history.history_date
+
+        return result
+
     @action(methods=['post'], detail=False)
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request: request.data.get('enterprise_id'))
     def license_revoke(self, request, *args, **kwargs):
@@ -626,14 +655,40 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
         """
         Changes the mode for licensed enterprise course enrollments to the "audit" course mode,
         or unenroll the user if no audit mode exists for each expired license uuid
+
+        Args:
+            expired_license_uuids: The expired license uuids.
+            ignore_enrollments_modified_after: All course enrollments modified past this given date will be ignored,
+                                               i.e. the enterprise subscription plan expiration date.
         """
+        if not all([get_course_overviews, get_certificate_for_user, CourseEnrollment, CourseMode]):
+            raise NotConnectedToOpenEdX(
+                _('To use this endpoint, this package must be '
+                  'installed in an Open edX environment.')
+            )
+
         expired_license_uuids = get_request_value(request, self.REQ_EXP_LICENSE_UUIDS_PARAM, '')
+        ignore_enrollments_modified_after = get_request_value(
+            request,
+            self.OPT_IGNORE_ENROLLMENTS_MODIFIED_AFTER_PARAM,
+            None
+        )
 
         if not expired_license_uuids:
             return Response(
                 'Parameter {} must be provided'.format(self.REQ_EXP_LICENSE_UUIDS_PARAM),
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        if ignore_enrollments_modified_after:
+            ignore_enrollments_modified_after = parse_datetime(ignore_enrollments_modified_after)
+            if not ignore_enrollments_modified_after:
+                return Response(
+                    'Parameter {} is malformed, please provide a date in ISO-8601 format'.format(
+                        self.OPT_IGNORE_ENROLLMENTS_MODIFIED_AFTER_PARAM
+                    ),
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         licensed_enrollments = models.LicensedEnterpriseCourseEnrollment.objects.filter(
             license_uuid__in=expired_license_uuids
@@ -645,11 +700,43 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
         )
         indexed_overviews = {overview.get('id'): overview for overview in course_overviews}
 
+        course_enrollment_modified_at_by_user_and_course_id = \
+            self._course_enrollment_modified_at_by_user_and_course_id(
+                licensed_enrollments
+            ) if ignore_enrollments_modified_after else {}
+
         any_failures = False
+
         for licensed_enrollment in licensed_enrollments:
             enterprise_course_enrollment = licensed_enrollment.enterprise_course_enrollment
+            user_id = enterprise_course_enrollment.enterprise_customer_user.user_id
             course_id = enterprise_course_enrollment.course_id
             course_overview = indexed_overviews.get(course_id)
+
+            if licensed_enrollment.is_revoked:
+                LOGGER.info(
+                    'Enrollment termination: not updating enrollment in {} for User {} '
+                    'licensed enterprise enrollment has already been revoked in the past.'.format(
+                        course_id,
+                        user_id
+                    )
+                )
+                continue
+
+            if ignore_enrollments_modified_after:
+                key = f'{user_id}{course_id}'
+                course_enrollment_modified_at = course_enrollment_modified_at_by_user_and_course_id[key]
+                if course_enrollment_modified_at >= ignore_enrollments_modified_after:
+                    LOGGER.info(
+                        'Enrollment termination: not updating enrollment in {} for User {} '
+                        'course enrollment has been modified past {}.'.format(
+                            course_id,
+                            user_id,
+                            ignore_enrollments_modified_after
+                        )
+                    )
+                    continue
+
             try:
                 termination_status = self._terminate_enrollment(
                     enrollment_api_client, enterprise_course_enrollment, course_overview
