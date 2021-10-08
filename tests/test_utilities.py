@@ -1568,11 +1568,11 @@ class TestEnterpriseUtils(unittest.TestCase):
                         weeks_to_complete=4,
                         availability='Current',
                     ),
-                    fake_catalog_api.create_course_run_dict(end="2021-10-14T13:11:03Z")
+                    fake_catalog_api.create_course_run_dict()
                 ],
             },
             [],
-            fake_catalog_api.create_course_run_dict(end="2021-10-14T13:11:03Z"),
+            fake_catalog_api.create_course_run_dict(),
         ),
         (   # It will return the active run
             {

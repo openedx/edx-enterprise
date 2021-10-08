@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` api module.
 
 import json
 import uuid
+from datetime import timedelta
 from operator import itemgetter
 from smtplib import SMTPException
 
@@ -3656,6 +3657,16 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
     Test expired license course enrollment
     """
 
+    def test_unenroll_expired_licensed_enrollments_unplugged(self):
+        post_data = {
+            'expired_license_uuids': ['uuid']
+        }
+        with self.assertRaises(NotConnectedToOpenEdX):
+            self.client.post(
+                settings.TEST_SERVER + EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT,
+                data=post_data,
+            )
+
     @ddt.data(
         {'is_course_completed': False, 'has_audit_mode': True},
         {'is_course_completed': True, 'has_audit_mode': True},
@@ -3663,6 +3674,7 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
         {'is_course_completed': True, 'has_audit_mode': False},
     )
     @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
     @mock.patch('enterprise.api.v1.views.CourseMode')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
     @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
@@ -3673,6 +3685,7 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
             mock_enrollment_client,
             mock_cert_for_user,
             mock_course_mode,
+            _,
             is_course_completed,
             has_audit_mode,
     ):
@@ -3727,10 +3740,102 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
             assert not enterprise_course_enrollment.saved_for_later
             assert not licensed_course_enrollment.is_revoked
 
-    def test_unenroll_expired_licensed_enrollments_no_license_ids(self):
+    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.CourseMode')
+    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    def test_unenroll_expired_licensed_enrollments_no_license_ids(
+            self,
+            *_
+    ):
         post_data = {
             'user_id': self.user.id,
             'expired_license_uuids': []
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT,
+            data=post_data,
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.CourseMode')
+    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    def test_unenroll_expired_licensed_enrollments_ignore_enrollments_modified_after(
+            self,
+            mock_get_overviews,
+            mock_enrollment_client,
+            mock_cert_for_user,
+            mock_course_mode,
+            mock_course_enrollment
+    ):
+        (
+            enterprise_customer_user,
+            enterprise_course_enrollment,
+            licensed_course_enrollment,
+        ) = self._revocation_factory_objects()
+
+        mock_course_mode.mode_for_course.return_value = True
+        mock_get_overviews.return_value = [{
+            'id': enterprise_course_enrollment.course_id,
+            'pacing': 'instructor',
+            'has_started': True,
+            'has_ended': False,
+        }]
+        mock_cert_for_user.return_value = {'is_passing': False}
+        mock_enrollment_client.return_value = mock.Mock(
+            update_course_enrollment_mode_for_user=mock.Mock(),
+        )
+        expired_license_uuid = licensed_course_enrollment.license_uuid
+        mock_enrollment_client.return_value = mock.Mock(
+            update_course_enrollment_mode_for_user=mock.Mock(),
+        )
+
+        mock_course_enrollment.history.filter.return_value = mock.Mock(
+            order_by=mock.Mock(return_value=[
+                mock.Mock(
+                    user_id=enterprise_customer_user.user_id,
+                    course_id=enterprise_course_enrollment.course_id,
+                    history_date=self.now
+                )
+            ])
+        )
+
+        post_data = {
+            'expired_license_uuids': [str(expired_license_uuid)],
+            'ignore_enrollments_modified_after': (self.now - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        self.client.post(
+            settings.TEST_SERVER + EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT,
+            data=post_data,
+            format='json',
+        )
+
+        licensed_course_enrollment.refresh_from_db()
+        enterprise_course_enrollment.refresh_from_db()
+
+        assert not enterprise_course_enrollment.saved_for_later
+        assert not licensed_course_enrollment.is_revoked
+        assert mock_enrollment_client.unenroll_user_from_course.call_count == 0
+
+    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.CourseMode')
+    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    def test_unenroll_expired_licensed_enrollments_bad_ignore_enrollments_modified_after(
+            self,
+            *_
+    ):
+        post_data = {
+            'user_id': self.user.id,
+            'expired_license_uuids': [uuid.uuid4()],
+            'ignore_enrollments_modified_after': 'bogus'
         }
         response = self.client.post(
             settings.TEST_SERVER + EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT,
