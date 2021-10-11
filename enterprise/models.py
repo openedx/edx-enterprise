@@ -2933,11 +2933,12 @@ class AdminNotification(TimeStampedModel):
     )
 
     text = models.CharField(
-        max_length=255,
+        max_length=512,
         blank=False,
         null=False,
-        help_text=_('Notification banner text which will appear '
-                    'to enterprise admin on admin portal.')
+        help_text=_('Notification banner text which will appear to enterprise admin on admin portal. '
+                    'You can enter maximum of 512 characters. '
+                    'This text support markdown. See https://commonmark.org/help/ for the supported markdown features.')
     )
 
     admin_notification_filter = models.ManyToManyField(

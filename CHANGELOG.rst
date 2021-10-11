@@ -17,6 +17,13 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.7]
+---------
+* update admin banner notification text field with following changes
+* increase max_length from 255 to 512
+* update help text
+* use textarea widget in django admin
+
 [3.30.6]
 --------
 * maint: Integrated channels detection system of catalog changes needed is now disabled via override.
