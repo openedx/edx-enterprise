@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.9]
+---------
+* chore: Don't expire courses that have been modified after given date
+
 [3.30.8]
 ---------
 * feat: Added a boolean in EnterpriseCustomer to specify whether labor market data should be available in learner portal
