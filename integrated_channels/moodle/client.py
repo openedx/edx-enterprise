@@ -6,7 +6,7 @@ Client for connecting to Moodle.
 import json
 import logging
 from http import HTTPStatus
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 
 import requests
 
@@ -114,6 +114,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         Compile common params and run request's post function
         """
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
         params = {
             'wstoken': self.token,
             'moodlewsrestformat': 'json',
@@ -121,18 +124,18 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params.update(additional_params)
         if method_url:
             response = requests.post(
-                url='{url}&{querystring}'.format(
-                    url=method_url,
-                    querystring=urlencode(params)
-                )
+                url=method_url,
+                data=params,
+                headers=headers
             )
         else:
             response = requests.post(
-                url='{url}{api_path}?{querystring}'.format(
+                url='{url}{api_path}'.format(
                     url=self.enterprise_configuration.moodle_base_url,
-                    api_path=self.MOODLE_API_PATH,
-                    querystring=urlencode(params)
-                )
+                    api_path=self.MOODLE_API_PATH
+                ),
+                data=params,
+                headers=headers
             )
         return response
 
