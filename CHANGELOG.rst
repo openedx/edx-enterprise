@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.10]
+---------
+* fix: refactor moodle _post to use body params
+
 [3.30.9]
 ---------
 * chore: Don't expire courses that have been modified after given date
