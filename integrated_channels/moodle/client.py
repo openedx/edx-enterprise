@@ -6,7 +6,7 @@ Client for connecting to Moodle.
 import json
 import logging
 from http import HTTPStatus
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 
 import requests
 
