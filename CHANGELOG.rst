@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.8]
+---------
+* feat: Added a boolean in EnterpriseCustomer to specify whether labor market data should be available in learner portal
+
 [3.30.7]
 ---------
 * update admin banner notification text field with following changes

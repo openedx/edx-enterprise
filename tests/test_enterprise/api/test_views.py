@@ -1097,7 +1097,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enforce_data_sharing_consent': 'at_enrollment', 'enable_audit_data_reporting': True,
                 'site__domain': 'example.com', 'site__name': 'example.com',
                 'contact_email': 'fake@example.com', 'sender_alias': 'Test Sender Alias',
-                'reply_to': 'fake_reply@example.com',
+                'reply_to': 'fake_reply@example.com', 'hide_labor_market_data': False,
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1119,6 +1119,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'reply_to': 'fake_reply@example.com',
+                'hide_labor_market_data': False,
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1142,6 +1143,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__contact_email': 'fake@example.com',
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
+                'enterprise_customer__hide_labor_market_data': False,
 
             }],
             [{
@@ -1171,6 +1173,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'identity_providers': [],
                     'enterprise_customer_catalogs': [],
                     'reply_to': 'fake_reply@example.com',
+                    'hide_labor_market_data': False,
                     'enterprise_notification_banner': {'text': '', 'title': ''},
                 }
             }],
@@ -1204,6 +1207,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__contact_email': 'fake@example.com',
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
+                'enterprise_customer__hide_labor_market_data': False,
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1228,6 +1232,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
                 'reply_to': 'fake_reply@example.com',
+                'hide_labor_market_data': False,
                 'identity_providers': [
                     {
                         "provider_id": FAKE_UUIDS[0],
@@ -1255,6 +1260,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__contact_email': 'fake@example.com',
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
+                'enterprise_customer__hide_labor_market_data': False,
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1281,6 +1287,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
                 'reply_to': 'fake_reply@example.com',
+                'hide_labor_market_data': False,
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [FAKE_UUIDS[0]],
                 'enterprise_notification_banner': {'text': '', 'title': ''},
@@ -1426,6 +1433,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             'contact_email': 'fake@example.com',
             'sender_alias': 'Test Sender Alias',
             'reply_to': 'fake_reply@example.com',
+            'hide_labor_market_data': False,
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
 
@@ -1476,6 +1484,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
                 'reply_to': 'fake_reply@example.com',
+                'hide_labor_market_data': False,
                 'enterprise_notification_banner': {'text': '', 'title': ''},
             }
         else:

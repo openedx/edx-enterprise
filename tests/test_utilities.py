@@ -141,6 +141,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "sender_alias",
                 "system_wide_role_assignments",
                 "reply_to",
+                "hide_labor_market_data",
             ]
         ),
         (
