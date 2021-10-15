@@ -11,8 +11,14 @@ import responses
 from pytest import mark
 
 from integrated_channels.degreed.exporters.content_metadata import DegreedContentMetadataExporter
-from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
+from test_utils import factories
+from test_utils.fake_catalog_api import (
+    FAKE_COURSE,
+    FAKE_COURSE_RUN,
+    FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+    get_fake_catalog_diff_create_w_program,
+    get_fake_content_metadata,
+)
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -39,20 +45,20 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
-    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_export(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         ``DegreedContentMetadataExporter``'s ``export`` produces the expected export.
         """
         mock_get_content_metadata.return_value = get_fake_content_metadata()
-        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
         exporter = DegreedContentMetadataExporter('fake-user', self.config)
-        content_items = exporter.export()
-        assert sorted(list(content_items.keys())) == sorted([
-            'edX+DemoX',
-            'course-v1:edX+DemoX+Demo_Course',
-            FAKE_UUIDS[3],
-        ])
+        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        for key in create_payload:
+            assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key'], FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']]
+            assert key in content_updated_mapping.keys()
+        assert not update_payload
+        assert not delete_payload
 
     @ddt.data(
         (

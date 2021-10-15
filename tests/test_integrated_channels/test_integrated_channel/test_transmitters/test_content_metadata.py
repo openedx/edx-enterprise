@@ -5,13 +5,13 @@ Tests for the base content metadata transmitter.
 
 import unittest
 import uuid
+from datetime import datetime
 
 import ddt
 import mock
 from pytest import mark
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataItemExport
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from test_utils import factories
@@ -63,17 +63,22 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         Test successful creation of content metadata during transmission.
         """
         content_id = 'course:DemoX'
+        content_id_2 = 'course:DemoX2'
         channel_metadata = {'update': True}
-        payload = {
-            content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
-                channel_metadata,
-                uuid.uuid4()
-            )
+        create_payload = {
+            content_id: channel_metadata,
+            content_id_2: channel_metadata,
+        }
+        update_payload = {}
+        delete_payload = {}
+        delete_payload = {}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
+            content_id_2: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()}
         }
         self.create_content_metadata_mock.return_value = (200, '{"success":"true"}')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
 
         self.create_content_metadata_mock.assert_called()
         self.update_content_metadata_mock.assert_not_called()
@@ -93,16 +98,15 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         """
         content_id = 'course:DemoX'
         channel_metadata = {'update': True}
-        payload = {
-            content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
-                channel_metadata,
-                uuid.uuid4()
-            )
+        create_payload = {content_id: channel_metadata}
+        update_payload = {}
+        delete_payload = {}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
         }
         self.create_content_metadata_mock.side_effect = ClientError('error occurred')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
 
         self.create_content_metadata_mock.assert_called()
         self.update_content_metadata_mock.assert_not_called()
@@ -120,22 +124,25 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         """
         content_id = 'course:DemoX'
         channel_metadata = {'update': True}
-        ContentMetadataItemTransmission(
+        past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata={}
-        ).save()
-        payload = {
-            content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
-                channel_metadata,
-                uuid.uuid4()
-            )
+        )
+        past_transmission.save()
+
+        past_transmission.channel_metadata = channel_metadata
+        create_payload = {}
+        update_payload = {content_id: past_transmission}
+        delete_payload = {}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
         }
+
         self.update_content_metadata_mock.return_value = (200, '{"success":"true"}')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
 
         self.create_content_metadata_mock.assert_not_called()
         self.update_content_metadata_mock.assert_called()
@@ -161,15 +168,14 @@ class TestContentMetadataTransmitter(unittest.TestCase):
             content_id=content_id,
             channel_metadata=channel_metadata
         ).save()
-        payload = {
-            content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
-                channel_metadata,
-                uuid.uuid4()
-            )
+        create_payload = {}
+        update_payload = {}
+        delete_payload = {}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
         }
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
 
         self.create_content_metadata_mock.assert_not_called()
         self.update_content_metadata_mock.assert_not_called()
@@ -181,22 +187,22 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         """
         content_id = 'course:DemoX'
         channel_metadata = {'update': True}
-        ContentMetadataItemTransmission(
+        past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata={}
-        ).save()
-        payload = {
-            content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
-                channel_metadata,
-                uuid.uuid4()
-            )
+        )
+        past_transmission.save()
+        create_payload = {}
+        update_payload = {content_id: past_transmission}
+        delete_payload = {}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
         }
         self.update_content_metadata_mock.side_effect = ClientError('error occurred')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
 
         self.create_content_metadata_mock.assert_not_called()
         self.update_content_metadata_mock.assert_called()
@@ -210,49 +216,31 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert updated_transmission.channel_metadata == {}
 
+    @mark.django_db
+    @ddt.ddt
     def test_transmit_delete_success(self):
         """
         Test successful deletion of content metadata during transmission.
         """
         content_id = 'course:DemoX'
         channel_metadata = {'update': True}
-        ContentMetadataItemTransmission(
+        past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata
-        ).save()
-        payload = {}
+        )
+        past_transmission.save()
+
+        create_payload = {}
+        update_payload = {}
+        delete_payload = {content_id: past_transmission}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
+        }
         self.delete_content_metadata_mock.return_value = (200, '{"success":"true"}')
         transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
-
-        self.create_content_metadata_mock.assert_not_called()
-        self.update_content_metadata_mock.assert_not_called()
-        self.delete_content_metadata_mock.assert_called()
-
-        assert not ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_config.enterprise_customer,
-            integrated_channel_code=self.enterprise_config.channel_code(),
-            content_id=content_id,
-        )
-
-    def test_transmit_delete_failure(self):
-        """
-        Test successful deletion of content metadata during transmission.
-        """
-        content_id = 'course:DemoX'
-        channel_metadata = {'update': True}
-        ContentMetadataItemTransmission(
-            enterprise_customer=self.enterprise_config.enterprise_customer,
-            integrated_channel_code=self.enterprise_config.channel_code(),
-            content_id=content_id,
-            channel_metadata=channel_metadata
-        ).save()
-        payload = {}
-        self.delete_content_metadata_mock.side_effect = ClientError('error occurred')
-        transmitter = ContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit(payload)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
 
         self.create_content_metadata_mock.assert_not_called()
         self.update_content_metadata_mock.assert_not_called()
@@ -262,4 +250,40 @@ class TestContentMetadataTransmitter(unittest.TestCase):
             enterprise_customer=self.enterprise_config.enterprise_customer,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
+            channel_metadata=channel_metadata
+        ).first().deleted_at
+
+    def test_transmit_delete_failure(self):
+        """
+        Test that a failure during deletion of content metadata during transmission will not update records.
+        """
+        content_id = 'course:DemoX'
+        channel_metadata = {'update': True}
+        past_transmission = ContentMetadataItemTransmission(
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_id=content_id,
+            channel_metadata=channel_metadata
         )
+        past_transmission.save()
+
+        create_payload = {}
+        update_payload = {}
+        delete_payload = {content_id: past_transmission}
+        content_updated_mapping = {
+            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
+        }
+        self.delete_content_metadata_mock.side_effect = ClientError('error occurred')
+        transmitter = ContentMetadataTransmitter(self.enterprise_config)
+        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
+
+        self.create_content_metadata_mock.assert_not_called()
+        self.update_content_metadata_mock.assert_not_called()
+        self.delete_content_metadata_mock.assert_called()
+
+        assert not ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_id=content_id,
+            channel_metadata=channel_metadata
+        ).first().deleted_at

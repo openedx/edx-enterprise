@@ -5,7 +5,7 @@ Tests for the `edx-enterprise` api module.
 
 import json
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from operator import itemgetter
 from smtplib import SMTPException
 
@@ -70,6 +70,7 @@ from test_utils.fake_enterprise_api import get_default_branding_object
 
 fake = Faker()
 
+MOCK_ENTERPRISE_CUSTOMER_MODIFIED = str(datetime.now())
 ENTERPRISE_CATALOGS_LIST_ENDPOINT = reverse('enterprise-catalogs-list')
 ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
     'enterprise-catalogs-detail',
@@ -1099,6 +1100,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'site__domain': 'example.com', 'site__name': 'example.com',
                 'contact_email': 'fake@example.com', 'sender_alias': 'Test Sender Alias',
                 'reply_to': 'fake_reply@example.com', 'hide_labor_market_data': False,
+                'modified': '2021-10-20T19:01:31Z',
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1126,6 +1128,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [],
                 'enterprise_notification_banner': {'text': '', 'title': ''},
+                'modified': '2021-10-20T19:01:31Z',
             }],
         ),
         (
@@ -1134,6 +1137,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             itemgetter('user_id'),
             [{
                 'id': 1, 'user_id': 0,
+                'enterprise_customer__modified': '2021-10-20T19:01:31Z',
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__name': 'Test Enterprise Customer',
                 'enterprise_customer__slug': TEST_SLUG,
@@ -1176,6 +1180,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'reply_to': 'fake_reply@example.com',
                     'hide_labor_market_data': False,
                     'enterprise_notification_banner': {'text': '', 'title': ''},
+                    'modified': '2021-10-20T19:01:31Z',
                 }
             }],
         ),
@@ -1209,6 +1214,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__modified': '2021-10-20T19:01:31Z',
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1242,6 +1248,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 ],
                 'enterprise_customer_catalogs': [],
                 'enterprise_notification_banner': {'text': '', 'title': ''},
+                'modified': '2021-10-20T19:01:31Z',
             }],
         ),
         (
@@ -1262,6 +1269,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__modified': '2021-10-20T19:01:31Z',
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1292,6 +1300,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'identity_providers': [],
                 'enterprise_customer_catalogs': [FAKE_UUIDS[0]],
                 'enterprise_notification_banner': {'text': '', 'title': ''},
+                'modified': '2021-10-20T19:01:31Z',
             }],
         ),
         (
@@ -1435,6 +1444,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             'sender_alias': 'Test Sender Alias',
             'reply_to': 'fake_reply@example.com',
             'hide_labor_market_data': False,
+            'modified': '2021-10-20T19:32:12Z',
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
 
@@ -1487,6 +1497,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'reply_to': 'fake_reply@example.com',
                 'hide_labor_market_data': False,
                 'enterprise_notification_banner': {'text': '', 'title': ''},
+                'modified': '2021-10-20T19:32:12Z',
             }
         else:
             assert response == expected_error

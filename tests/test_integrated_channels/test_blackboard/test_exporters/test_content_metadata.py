@@ -13,7 +13,7 @@ from test_utils import factories
 from test_utils.fake_catalog_api import (
     FAKE_COURSE,
     FAKE_COURSE_RUN,
-    get_fake_catalog,
+    get_fake_catalog_diff_create,
     get_fake_content_metadata_no_program,
 )
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -41,28 +41,28 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
-    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_export(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         ``BlackboardContentMetadataExporter``'s ``export`` produces the expected export.
         """
         mock_get_content_metadata.return_value = get_fake_content_metadata_no_program()
-        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
 
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
-        content_items = exporter.export()
+        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
 
         # not testing with program content type yet (it just generates a lot of keyError)
-        assert sorted(list(content_items.keys())) == sorted([
-            FAKE_COURSE_RUN['key'],
-            FAKE_COURSE['key'],
-        ])
-
+        for key in create_payload:
+            assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
+            assert key in content_updated_mapping
+        assert not update_payload
+        assert not delete_payload
         expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()  # pylint: disable=dict-keys-not-iterating
-        for item in content_items.values():
+        for item in create_payload.values():
             self.assertTrue(
                 set(expected_keys)
-                .issubset(set(item.channel_metadata.keys()))
+                .issubset(set(item.keys()))
             )
 
     def test_transform_course_metadata(self):

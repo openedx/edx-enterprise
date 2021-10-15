@@ -30,15 +30,20 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             client=client
         )
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, create_payload, update_payload, delete_payload, content_updated_mapping, **kwargs):
         """
         Transmit content metadata items to the integrated channel.
         """
-        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times, \
-            content_catalog_map = self._partition_items(payload)
+        # Since delete_payload is a mapping between content key and past transmission record, we need to create a
+        # mapping between content key and channel_metadata. Then we can prepare the channel metadata for deletion
+        items_to_delete = {key: item.channel_metadata for key, item in delete_payload.items()}
         self._prepare_items_for_delete(items_to_delete)
+
         prepared_items = {}
-        prepared_items.update(items_to_create)
+        prepared_items.update(create_payload)
+
+        # Do the same work to the update payload as was done to the delete payload above
+        items_to_update = {key: item.channel_metadata for key, item in update_payload.items()}
         prepared_items.update(items_to_update)
         prepared_items.update(items_to_delete)
 
@@ -62,17 +67,17 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                 # Remove the failed items from the create/update/delete dictionaries,
                 # so ContentMetadataItemTransmission objects are not synchronized for
                 # these items below.
-                self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
+                self._remove_failed_items(chunked_items, create_payload, items_to_update, items_to_delete)
 
         # If API transmission limit is set then mark the rest of the items as not transmitted.
         # Since, chunk_items is a generator and we have already iterated through the items that need to
         # be transmitted. Rest of the items are the ones that need to marked as not transmitted.
         for chunk in chunk_items:
             chunked_items = list(chunk.values())
-            self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
+            self._remove_failed_items(chunked_items, create_payload, items_to_update, items_to_delete)
 
-        self._create_transmissions(items_to_create, items_catalog_updated_times, content_catalog_map)
-        self._update_transmissions(items_to_update, transmission_map, items_catalog_updated_times)
+        self._create_transmissions(create_payload, content_updated_mapping)
+        self._update_transmissions(update_payload, content_updated_mapping)
         self._delete_transmissions(list(items_to_delete.keys()))
 
     def _remove_failed_items(self, failed_items, items_to_create, items_to_update, items_to_delete):

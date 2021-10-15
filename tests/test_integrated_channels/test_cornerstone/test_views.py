@@ -14,7 +14,7 @@ from django.utils import dateparse
 
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import APITest, factories
-from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
+from test_utils.fake_catalog_api import get_fake_catalog_diff_create_w_program, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -76,13 +76,13 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
-    def test_course_list_with_skip_key_if_none_false(self, mock_get_enterprise_catalog, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_course_list_with_skip_key_if_none_false(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         Test courses list view produces desired json when SKIP_KEY_IF_NONE is set to False
         """
         mock_get_content_metadata.return_value = get_fake_content_metadata()
-        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -104,11 +104,13 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
                 self.assertIn(key, keys)
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    def test_course_list(self, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_course_list(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         Test courses list view produces desired json
         """
         mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -136,14 +138,14 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         assert len(created_transmissions) == len(get_fake_content_metadata())
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
-    def test_course_updates(self, mock_get_enterprise_catalog, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_course_updates(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         Test courses updates view produces desired json and saves transmission items
         """
         fake_content_metadata = get_fake_content_metadata()
         mock_get_content_metadata.return_value = fake_content_metadata
-        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
         transmission_changed = {
             dateparse.parse_datetime(content['content_last_modified']) for content in fake_content_metadata
         }

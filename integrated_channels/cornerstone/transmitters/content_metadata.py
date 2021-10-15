@@ -2,13 +2,8 @@
 """
 Class for transmitting content metadata to Cornerstone.
 """
-from itertools import islice
-
-from django.conf import settings
-
 from integrated_channels.cornerstone.client import CornerstoneAPIClient
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
-from integrated_channels.utils import chunks
 
 
 class CornerstoneContentMetadataTransmitter(ContentMetadataTransmitter):
@@ -22,82 +17,67 @@ class CornerstoneContentMetadataTransmitter(ContentMetadataTransmitter):
             client=client
         )
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, create_payload, update_payload, delete_payload, content_updated_mapping, **kwargs):
         """
-        Prepare content metadata items for cornerstone API consumer. Generate, update or delete a
-        ContentMetadataItemTransmission object depending on the state of the consumers catalog metadata.
+        Prepare content metadata items for cornerstone API consumer. Update and create all necessary records before
+        formatting the data for transmission.
 
         Args:
-            payload (OrderedDict): course metadata dictionary corresponding to the result of the content metadata
-            exporter's export.
-        """
-        items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times, \
-            content_catalog_map = self._partition_items(payload)
-        self._transmit_delete(items_to_delete)
-        self._transmit_create(items_to_create, items_catalog_updated_times, content_catalog_map)
-        self._transmit_update(items_to_update, transmission_map, items_catalog_updated_times)
-        return self._prepare_items_for_transmission(payload)
+            create_payload (dict): Object mapping of content key to transformed channel metadata for transmitting a
+                creation payload to the external LMS
 
-    def _transmit_create(self, channel_metadata_item_map, items_catalog_updated_times, content_catalog_map):
+            update_payload (dict): Object mapping of content key to updated content metadata transmission record for
+                transmitting an update payload to the external LMS
+
+            delete_payload (dict): Object mapping of content key to updated content metadata transmission record for
+                transmitting a delete payload to the external LMS
+
+            content_updated_mapping (dict): Mapping between content key to both catalog UUID and the content's last
+                modified time
+        """
+        self._transmit_delete(delete_payload)
+        self._transmit_create(create_payload, content_updated_mapping)
+        self._transmit_update(update_payload)
+        return self._prepare_update_and_create_items_for_transmission(create_payload, update_payload)
+
+    def _transmit_create(self, channel_metadata_item_map, content_updated_mapping):
         """
         Generate the appropriate ContentMetadataItemTransmission objects according to the channel_metadata_item_map
 
         Args:
-            channel_metadata_item_map (dict): A dictionary representation of the courses to be created based on the
-            exported content metadata.
+            channel_metadata_item_map (dict): A dictionary representation of the content to be created based on the
+                exported content metadata.
 
-            items_catalog_updated_times (dict): Mapping between course keys and the last updated time of the associated
-                enterprise catalog
+            items_catalog_updated_times (dict): Mapping between content keys and the last updated time of the associated
+                enterprise catalog and the catalog uuid
         """
-        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
-            self.enterprise_configuration.channel_code()
-        )
-        create_chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
-        for chunk in islice(create_chunk_items, transmission_limit):
-            self._create_transmissions(chunk, items_catalog_updated_times, content_catalog_map)
+        self._create_transmissions(channel_metadata_item_map, content_updated_mapping)
 
-    def _transmit_update(self, channel_metadata_item_map, transmission_map, items_catalog_updated_times):
+    def _transmit_update(self, update_payload):
         """
         Update the appropriate ContentMetadataItemTransmission objects according to the channel_metadata_item_map and
         transmission_map
 
         Args:
-            channel_metadata_item_map (dict): A dictionary representation of the courses to be updated based on the
-            exported content metadata.
-
-            transmission_map (dict): A dictionary mapping of which transmission items to be updated.
-
-            items_catalog_updated_times (dict): Mapping between course keys and the last updated time of the associated
-                enterprise catalog
-            """
-        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
-            self.enterprise_configuration.channel_code()
-        )
-        update_chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
-        for chunk in islice(update_chunk_items, transmission_limit):
-            self._update_transmissions(chunk, transmission_map, items_catalog_updated_times)
+            update_payload (dict): Mapping between content keys and updated ContentMetadataItemTransmission record
+        """
+        updated_metadata_mapping = {key: item.channel_metadata for key, item in update_payload.items()}
+        self._update_transmissions(update_payload, updated_metadata_mapping)
 
     def _transmit_delete(self, channel_metadata_item_map):
         """
         Remove the appropriate ContentMetadataItemTransmission objects according to the channel_metadata_item_map
 
         Args:
-            channel_metadata_item_map (dict): A dictionary representation of the courses to be removed based on the
-            exported content metadata.
+            channel_metadata_item_map (dict): A dictionary representation of the content to be removed based on the
+                exported content metadata.
         """
-        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
-            self.enterprise_configuration.channel_code()
-        )
-        delete_chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
-        for chunk in islice(delete_chunk_items, transmission_limit):
-            self._delete_transmissions(chunk.keys())
+        self._delete_transmissions(channel_metadata_item_map)
 
-    def _prepare_items_for_transmission(self, channel_metadata_items):
+    def _prepare_update_and_create_items_for_transmission(self, create_payload, update_payload):
         """
-        Format the content metadata to what CSOD consumers expect.
+        Format the content metadata to what CSOD consumers expect ie a singular list of content metadata items.
         """
-        course_list = [
-            item.channel_metadata
-            for item in channel_metadata_items.values()
-        ]
-        return course_list
+        created_items_list = list(create_payload.values())
+        updated_items_list = [item.channel_metadata for item in update_payload.values()]
+        return created_items_list + updated_items_list

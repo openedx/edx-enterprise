@@ -7,15 +7,10 @@ metadata for content contained in the catalogs associated with a particular
 enterprise customer.
 """
 
-import json
-from collections import OrderedDict
-from datetime import datetime
 from logging import getLogger
 
-import pytz
-
 from django.apps import apps
-from django.utils import dateparse
+from django.db.models import Q
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
@@ -75,6 +70,110 @@ class ContentMetadataExporter(Exporter):
         super().__init__(user, enterprise_configuration)
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
+    def _get_catalog_content_keys(self, enterprise_customer_catalog):
+        """
+        Retrieve all non-deleted content transmissions under a given customer's catalog
+        """
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        past_transmissions = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            integrated_channel_code=self.enterprise_configuration.channel_code(),
+            enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+            deleted_at__isnull=True,
+        ).values('content_id')
+        if not past_transmissions:
+            return []
+        return [key.get('content_id') for key in past_transmissions]
+
+    def _check_matched_content_updated_at(
+        self,
+        enterprise_customer_catalog,
+        matched_items,
+        force_retrieve_all_catalogs
+    ):
+        """
+        Take a list of content keys and their respective last updated time and build an mapping between content keys and
+        past content metadata transmission record when the last updated time comes after the last updated time of the
+        record.
+
+        Args:
+            enterprise_customer_catalog (EnterpriseCustomerCatalog): The enterprise catalog object
+
+            matched_items (list): A list of dicts containing content keys and the last datetime that the respective
+                content was updated
+
+            force_retrieve_all_catalogs (Bool): If set to True, all content under the catalog will be retrieved,
+                regardless of the last updated at time
+        """
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        items_to_update = {}
+        for matched_item in matched_items:
+            content_query = Q(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                content_id=matched_item.get('content_key'),
+                deleted_at__isnull=True,
+            )
+
+            # If not force_retrieve_all_catalogs, filter for content records where `content last changed` is less than
+            # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
+            last_changed_query = Q(content_last_changed__lt=matched_item.get('date_updated'))
+            last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
+            if not force_retrieve_all_catalogs:
+                content_query.add(last_changed_query, Q.AND)
+
+            items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
+            item = items_to_update_query.first()
+            if item:
+                items_to_update[matched_item.get('content_key')] = item
+        return items_to_update
+
+    def _get_catalog_diff(self, enterprise_catalog, content_keys, force_retrieve_all_catalogs):
+        """
+        From the enterprise catalog API, request a catalog diff based off of a list of content keys. Using the diff,
+        retrieve past content metadata transmission records for update and delete payloads.
+        """
+        items_to_create, items_to_delete, matched_items = self.enterprise_catalog_api.get_catalog_diff(
+            enterprise_catalog,
+            content_keys
+        )
+        content_to_update = self._check_matched_content_updated_at(
+            enterprise_catalog,
+            matched_items,
+            force_retrieve_all_catalogs
+        )
+        content_to_delete = self._retrieve_past_transmission_content(
+            enterprise_catalog,
+            items_to_delete
+        )
+        return items_to_create, content_to_update, content_to_delete
+
+    def _retrieve_past_transmission_content(self, enterprise_customer_catalog, items):
+        """
+        Retrieve all past content metadata transmission records that have a `content_id` contained within a provided
+        list.
+        """
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        content_keys = [item.get('content_key') for item in items]
+
+        past_content_query = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            integrated_channel_code=self.enterprise_configuration.channel_code(),
+            enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+            content_id__in=content_keys
+        )
+        return past_content_query.all()
+
     def export(self, **kwargs):
         """
         Export transformed content metadata if there has been an update to the consumer's catalogs
@@ -82,90 +181,77 @@ class ContentMetadataExporter(Exporter):
         enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
-        content_metadata_export = {}
-        force_retrieve_all_catalogs = kwargs.get('force_retrieve_all_catalogs', False)
+        LOGGER.info(
+            f'Beginning export for customer: {self.enterprise_customer.uuid} with catalogs: '
+            f'{enterprise_customer_catalogs}'
+        )
 
-        # DUE TO ERRORS IN DETECTING CATALOG UPDATES ALL CONTENT WILL BE FORCE RETRIEVED FROM THE
-        # CATALOG SERVICE AS OF 10-06-2021. TODO: remove force retrieval
-        force_retrieve_all_catalogs = True
-
+        create_payload = {}
+        update_payload = {}
+        delete_payload = {}
+        content_updated_mapping = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
-            need_catalog_update = False
-            if not force_retrieve_all_catalogs:
-                # Retrieve the time at which the catalog and it's content were last updated
-                content_last_modified, catalog_modified = self._get_enterprise_catalog_last_changed(
-                    enterprise_customer_catalog
-                )
-                # Retrieve whatever modification happened more recently
-                catalog_last_modified = max(
-                    content_last_modified,
-                    catalog_modified
-                )
-                last_successful_transmission = self._get_most_recent_catalog_update_time()
-                # If the last successful transmission was since the last time the catalog was updated, there's no need
-                # for an update
-                need_catalog_update = (
-                    not last_successful_transmission or (last_successful_transmission < catalog_last_modified)
-                )
+            content_keys = self._get_catalog_content_keys(enterprise_customer_catalog)
 
-            if force_retrieve_all_catalogs or need_catalog_update:
+            LOGGER.info(
+                f'Retrieved content keys: {content_keys} for past transmissions to customer: '
+                f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
+            )
+
+            # From the saved content records, use the enterprise catalog API to determine what needs sending
+            items_to_create, items_to_update, items_to_delete = self._get_catalog_diff(
+                enterprise_customer_catalog,
+                content_keys,
+                kwargs.get('force_retrieve_all_catalogs', False)
+            )
+
+            LOGGER.info(
+                f'Buckets returned by the enterprise-catalog service for catalog {enterprise_customer_catalog.uuid} - '
+                f'items_to_create: {items_to_create},  items_to_update: {items_to_update}, items_to_delete: '
+                f'{items_to_delete}'
+            )
+
+            # We only need to fetch content metadata if there are items to update or create
+            if items_to_create or items_to_update:
+                # Todo: create a content item specific fetch content metadata endpoint in enterprise catalog so all data
+                # isn't required to fetch
                 content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                     self.enterprise_customer,
                     [enterprise_customer_catalog]
                 )
-                LOGGER.info(
-                    f'Content metadata exporter found {len(content_metadata_items)} items that need updates'
-                    f' under catalog {enterprise_customer_catalog.uuid}'
-                )
                 for item in content_metadata_items:
-                    transformed = self._transform_item(item)
-                    LOGGER.debug(
-                        'Exporting content metadata item with plugin configuration [%s]: [%s]',
-                        self.enterprise_configuration,
-                        json.dumps(transformed, indent=4),
-                    )
+                    key = get_content_metadata_item_id(item)
 
-                    # There are some scenarios where `content_last_modified` isn't present in the fetched content
-                    content_last_modified = item.get('content_last_modified')
-                    if content_last_modified:
-                        content_last_modified = item.pop('content_last_modified')
-                    else:
-                        LOGGER.warning(
-                            "content_last_modified field not found for {} - {} under catalog: {}".format(
-                                item.get('content_type'),
-                                item.get('key'),
-                                enterprise_customer_catalog.uuid,
-                            )
-                        )
+                    # Used to save modified times and catalog uuid's to sent transmission records
+                    content_updated_mapping[key] = {
+                        'modified': item.get('content_last_modified'),
+                        'catalog_uuid': enterprise_customer_catalog.uuid
+                    }
 
-                    content_metadata_item_export = ContentMetadataItemExport(
-                        content_metadata_item=item,
-                        channel_content_metadata_item=transformed,
-                        content_last_changed=content_last_modified,
-                        enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid
-                    )
-                    content_metadata_export[content_metadata_item_export.content_id] = content_metadata_item_export
-            else:
-                ContentMetadataItemTransmission = apps.get_model(
-                    'integrated_channel',
-                    'ContentMetadataItemTransmission'
-                )
-                past_catalog_transmission_queryset = ContentMetadataItemTransmission.objects.filter(
-                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                    integrated_channel_code=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid
-                )
-                LOGGER.info(
-                    f'Content metadata exporter found {len(past_catalog_transmission_queryset)} past content items that'
-                    f' need no update under catalog {enterprise_customer_catalog.uuid}'
-                )
-                for past_transmission in past_catalog_transmission_queryset:
-                    # In order to determine if something doesn't need updates vs needing to be deleted, the transmitter
-                    # expects a value to be present for every content item within the customer's catalogs. By adding the
-                    # past transmission, the transmitter will recognize that no update is needed.
-                    content_metadata_export[past_transmission.content_id] = past_transmission
+                    # transform the content metadata into the channel specific format
+                    transformed_item = self._transform_item(item)
+                    items_create_keys = [key.get('content_key') for key in items_to_create]
+                    if key in items_create_keys:
+                        create_payload[key] = transformed_item
+                    elif key in items_to_update.keys():
+                        existing_record = items_to_update.get(key)
+                        existing_record.channel_metadata = transformed_item
+                        existing_record.content_last_changed = item.get('content_last_modified')
+                        # Sanity check
+                        existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
 
-        return OrderedDict(sorted(content_metadata_export.items()))
+                        update_payload[key] = existing_record
+
+            # Deleting transmissions doesn't require us to fetch content metadata
+            for content in items_to_delete:
+                delete_payload[content.content_id] = content
+
+        LOGGER.info(
+            f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '
+            f'{create_payload}, update_payload: {update_payload}, delete_payload: {delete_payload}'
+        )
+
+        return create_payload, update_payload, delete_payload, content_updated_mapping
 
     def _transform_item(self, content_metadata_item):
         """
@@ -219,42 +305,6 @@ class ContentMetadataExporter(Exporter):
 
         return transformed_item
 
-    def _get_enterprise_catalog_last_changed(self, enterprise_catalog):
-        """
-        Retrieves catalog metadata, specifically selecting for `content_last_modified` and `catalog_modified`.
-        """
-        enterprise_catalog_data = self.enterprise_catalog_api.get_enterprise_catalog(
-            enterprise_catalog.uuid
-        )
-        content_last_modified = enterprise_catalog_data.get('content_last_modified')
-        content_last_modified = dateparse.parse_datetime(
-            content_last_modified
-        ) if content_last_modified else datetime.min.replace(tzinfo=pytz.UTC)
-
-        catalog_modified = enterprise_catalog_data.get('catalog_modified')
-        catalog_modified = dateparse.parse_datetime(
-            catalog_modified
-        ) if catalog_modified else datetime.min.replace(tzinfo=pytz.UTC)
-        return content_last_modified, catalog_modified
-
-    def _get_most_recent_catalog_update_time(self):
-        """
-        Retrieve the last modified time of the catalog belonging to the most recent ContentMetadataItemTransmission for
-        an enterprise customer.
-        """
-        ContentMetadataItemTransmission = apps.get_model(
-            'integrated_channel',
-            'ContentMetadataItemTransmission'
-        )
-        past_transmissions = ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            integrated_channel_code=self.enterprise_configuration.channel_code(),
-            content_last_changed__isnull=False,
-        ).values('content_last_changed').order_by('-content_last_changed')
-        if past_transmissions:
-            return past_transmissions[0]['content_last_changed']
-        return None
-
     def update_content_transmissions_catalog_uuids(self):
         """
         Retrieve all content under the enterprise customer's catalog(s) and update all past transmission audits to have
@@ -285,21 +335,3 @@ class ContentMetadataExporter(Exporter):
             for item in transmission_items:
                 item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
                 item.save()
-
-
-class ContentMetadataItemExport:
-    """
-    Object representation of a content metadata item export.
-    """
-
-    def __init__(
-        self,
-        content_metadata_item,
-        channel_content_metadata_item,
-        enterprise_customer_catalog_uuid,
-        content_last_changed=None
-    ):
-        self.content_id = get_content_metadata_item_id(content_metadata_item)
-        self.channel_metadata = channel_content_metadata_item
-        self.content_last_changed = content_last_changed
-        self.enterprise_customer_catalog_uuid = enterprise_customer_catalog_uuid

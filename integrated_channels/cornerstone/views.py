@@ -114,7 +114,7 @@ class CornerstoneCoursesUpdates(BaseViewSet):
         )
         exporter = enterprise_config.get_content_metadata_exporter(worker_user)
         transmitter = enterprise_config.get_content_metadata_transmitter()
-        data = transmitter.transmit(exporter.export())
+        data = transmitter.transmit(*exporter.export())
         return Response(data)
 
 
@@ -205,5 +205,5 @@ class CornerstoneCoursesListView(BaseViewSet):
         )
         exporter = enterprise_config.get_content_metadata_exporter(worker_user)
         transmitter = enterprise_config.get_content_metadata_transmitter()
-        data = transmitter.transmit(exporter.export_force_all_catalogs())
+        data = transmitter.transmit(*exporter.export_force_all_catalogs())
         return Response(data)
