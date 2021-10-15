@@ -55,7 +55,6 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
 from enterprise.utils import (
@@ -74,11 +73,13 @@ try:
     from common.djangoapps.student.models import CourseEnrollment
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
+    from openedx.core.djangoapps.enrollments import api as enrollment_api
 except ImportError:
     get_course_overviews = None
     get_certificate_for_user = None
     CourseEnrollment = None
     CourseMode = None
+    enrollment_api = None
 
 LOGGER = getLogger(__name__)
 
@@ -483,14 +484,13 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             for enrollment in licensed_enrollments
         }
 
-    def _terminate_enrollment(self, enrollment_api_client, enterprise_enrollment, course_overview):
+    def _terminate_enrollment(self, enterprise_enrollment, course_overview):
         """
         Helper method that switches the given enrollment to audit track, or, if
         no audit track exists for the given course, deletes the enrollment.
         Will do nothing if the user has already "completed" the course run.
 
         Args:
-            enrollment_api_client (EnrollmentApiClient): The client with which we make requests to modify enrollments.
             enterprise_enrollment (EnterpriseCourseEnrollment): The enterprise enrollment which we attempt to revoke.
             course_overview (CourseOverview): The course overview object associated with the enrollment. Used
                 to check for course completion.
@@ -516,7 +516,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
 
         if CourseMode.mode_for_course(course_run_id, audit_mode):
             try:
-                enrollment_api_client.update_course_enrollment_mode_for_user(
+                enrollment_api.update_enrollment(
                     username=enterprise_customer_user.username,
                     course_id=course_run_id,
                     mode=audit_mode,
@@ -538,13 +538,11 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                 raise EnrollmentModificationException(msg) from exc
         else:
             try:
-                successfully_unenrolled = enrollment_api_client.unenroll_user_from_course(
+                enrollment_api.update_enrollment(
                     username=enterprise_customer_user.username,
                     course_id=course_run_id,
+                    is_active=False
                 )
-                if not successfully_unenrolled:
-                    raise Exception(self.EnrollmentTerminationStatus.UNENROLL_FAILED)
-
                 LOGGER.info(
                     'Enrollment termination: successfully unenrolled User {user}, in Enterprise {enterprise} '
                     'from Course {course_id} that contains no audit mode.'.format(**log_message_kwargs)
@@ -607,7 +605,10 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
 
         The first four messages are the values of constants that a client may expect to receive and parse accordingly.
         """
-        if not all([get_course_overviews, get_certificate_for_user, CourseMode]):
+        dependencies = [
+            CourseMode, get_certificate_for_user, get_course_overviews, enrollment_api
+        ]
+        if not all(dependencies):
             raise NotConnectedToOpenEdX(
                 _('To use this endpoint, this package must be '
                   'installed in an Open edX environment.')
@@ -628,17 +629,13 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
         )
         enrollments_by_course_id = self._enrollments_by_course_for_licensed_user(enterprise_customer_user)
 
-        enrollment_api_client = EnrollmentApiClient()
-
         revocation_results = {}
         any_failures = False
         for course_overview in get_course_overviews(list(enrollments_by_course_id.keys())):
             course_id = str(course_overview.get('id'))
             enterprise_enrollment = enrollments_by_course_id.get(course_id)
             try:
-                revocation_status = self._terminate_enrollment(
-                    enrollment_api_client, enterprise_enrollment, course_overview
-                )
+                revocation_status = self._terminate_enrollment(enterprise_enrollment, course_overview)
                 revocation_results[course_id] = {'success': True, 'message': revocation_status}
                 if revocation_status != self.EnrollmentTerminationStatus.COURSE_COMPLETED:
                     enterprise_enrollment.license.revoke()
@@ -661,7 +658,11 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             ignore_enrollments_modified_after: All course enrollments modified past this given date will be ignored,
                                                i.e. the enterprise subscription plan expiration date.
         """
-        if not all([get_course_overviews, get_certificate_for_user, CourseEnrollment, CourseMode]):
+
+        dependencies = [
+            CourseEnrollment, CourseMode, get_certificate_for_user, get_course_overviews, enrollment_api
+        ]
+        if not all(dependencies):
             raise NotConnectedToOpenEdX(
                 _('To use this endpoint, this package must be '
                   'installed in an Open edX environment.')
@@ -694,7 +695,6 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             license_uuid__in=expired_license_uuids
         ).select_related('enterprise_course_enrollment')
 
-        enrollment_api_client = EnrollmentApiClient()
         course_overviews = get_course_overviews(
             list(licensed_enrollments.values_list('enterprise_course_enrollment__course_id', flat=True))
         )
@@ -738,9 +738,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                     continue
 
             try:
-                termination_status = self._terminate_enrollment(
-                    enrollment_api_client, enterprise_course_enrollment, course_overview
-                )
+                termination_status = self._terminate_enrollment(enterprise_course_enrollment, course_overview)
                 LOGGER.info((
                     "EnterpriseCourseEnrollment record with enterprise license %s "
                     "unenrolled to status %s."
