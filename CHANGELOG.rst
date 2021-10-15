@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.12]
+---------
+* chore: update course enrollments through lms
+
 [3.30.11]
 ---------
 * docs: added adr for zero state browsing with universal link
