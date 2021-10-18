@@ -249,7 +249,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         grade_column_id = self._get_or_create_integrated_grade_column(
             course_id,
             "(edX Integration) Final Grade",
-            "edx_final_grade"
+            "edx_final_grade",
+            include_in_calculations=True,
         )
 
         grade = learner_data.get('grade') * 100
@@ -442,7 +443,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         return str(abs(hash(external_id)))
 
-    def generate_blackboard_gradebook_column_data(self, external_id, grade_column_name, points_possible):
+    def generate_blackboard_gradebook_column_data(self, external_id, grade_column_name, points_possible, include_in_calculations=False):
         """
         Properly formatted json data to create a new gradebook column in a blackboard course
 
@@ -467,6 +468,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     "type": "None",
                 }
             },
+            "includeInCalculations": include_in_calculations,
         }
 
     def generate_gradebook_url(self, course_id):
@@ -630,7 +632,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             HTTPStatus.NOT_FOUND.value
         )
 
-    def _get_or_create_integrated_grade_column(self, bb_course_id, grade_column_name, external_id, points_possible=100):
+    def _get_or_create_integrated_grade_column(self, bb_course_id, grade_column_name, external_id, points_possible=100, include_in_calculations=False):
         """
         Helper method to search an edX integrated Blackboard course for the designated edX grade column.
         If the column does not yet exist within the course, create it.
@@ -684,7 +686,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         if not grade_column_id:
             grade_column_data = self.generate_blackboard_gradebook_column_data(
-                external_id, grade_column_name, points_possible
+                external_id, grade_column_name, points_possible, include_in_calculations
             )
             response = self._post(self.generate_create_grade_column_url(bb_course_id), grade_column_data)
             parsed_response = response.json()
