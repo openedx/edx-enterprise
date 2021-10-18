@@ -3,7 +3,6 @@
 Database models for Enterprise Integrated Channel Degreed.
 """
 
-import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
@@ -89,12 +88,6 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         )
     )
 
-    degreed_company_id = models.CharField(
-        max_length=255,
-        verbose_name="Degreed Organization Code",
-        help_text="The organization code provided to the enterprise customer by Degreed."
-    )
-
     degreed_base_url = models.CharField(
         max_length=255,
         verbose_name="Degreed Base URL",
@@ -103,15 +96,10 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
 
     degreed_token_fetch_base_url = models.CharField(
         max_length=255,
+        null=True,
+        blank=True,
         verbose_name="Degreed2 URL base to fetch tokens, separate from degreed_base_url",
         help_text="If provided, will be used as base url instead of degreed_base_url to fetch tokens"
-    )
-
-    provider_id = models.CharField(
-        max_length=100,
-        default='EDX',
-        verbose_name="Provider Code",
-        help_text="The provider code that Degreed gives to the content provider."
     )
 
     history = HistoricalRecords()
@@ -227,33 +215,3 @@ class Degreed2LearnerDataTransmissionAudit(models.Model):
         Return uniquely identifying string representation.
         """
         return self.__str__()
-
-    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
-        """
-        Return a JSON-serialized representation.
-
-        Sort the keys so the result is consistent and testable.
-
-        Can take the following keyword arguments:
-            - `enterprise_configuration`: used to get the `degreed_company_id` to be sent in the payload.
-
-        # TODO: When we refactor to use a serialization flow consistent with how course metadata
-        # is serialized, remove the serialization here and make the learner data exporter handle the work.
-        """
-        enterprise_configuration = kwargs.get('enterprise_configuration')
-        degreed_company_id = enterprise_configuration.degreed_company_id \
-            if hasattr(enterprise_configuration, 'degreed_company_id') else ''
-        return json.dumps(self._payload_data(degreed_company_id), sort_keys=True)
-
-    def _payload_data(self, degreed_company_id):
-        """
-        Convert the audit record's fields into Degreed key/value pairs.
-        """
-        return {
-            'orgCode': degreed_company_id,
-            'completions': [{
-                'email': self.degreed_user_email,
-                'id': self.course_id,
-                'completionDate': self.completed_timestamp,
-            }]
-        }
