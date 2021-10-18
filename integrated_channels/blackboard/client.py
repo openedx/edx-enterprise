@@ -443,7 +443,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         return str(abs(hash(external_id)))
 
-    def generate_blackboard_gradebook_column_data(self, external_id, grade_column_name, points_possible, include_in_calculations=False):
+    def generate_blackboard_gradebook_column_data(self, external_id, grade_column_name, points_possible,
+                                                  include_in_calculations=False):
         """
         Properly formatted json data to create a new gradebook column in a blackboard course
 
@@ -632,7 +633,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             HTTPStatus.NOT_FOUND.value
         )
 
-    def _get_or_create_integrated_grade_column(self, bb_course_id, grade_column_name, external_id, points_possible=100, include_in_calculations=False):
+    def _get_or_create_integrated_grade_column(self, bb_course_id, grade_column_name, external_id, points_possible=100,
+                                               include_in_calculations=False):
         """
         Helper method to search an edX integrated Blackboard course for the designated edX grade column.
         If the column does not yet exist within the course, create it.
@@ -656,8 +658,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             for grade_column in grade_columns:
                 if grade_column.get('externalId') == external_id:
                     grade_column_id = grade_column.get('id')
+                    # if includeInCalculations has legacy value, correct it
+                    if grade_column.get('includeInCalculations') != include_in_calculations:
+                        calculations_data = {"includeInCalculations": include_in_calculations}
+                        self._patch(self.generate_create_grade_column_url(bb_course_id), calculations_data)
                     break
-
             # Blackboard's pagination is returned within the response json if it exists
             # Example:
             # Response = {
