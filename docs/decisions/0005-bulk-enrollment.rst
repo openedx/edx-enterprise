@@ -23,6 +23,7 @@ There is an `EnrollmentApiClient` which has an `enroll_user_in_course()` method 
 
 There is also a method to create pending user enrollments for non-edX users at:
   `models::EnterpriseCustomer::enroll_user_pending_registration()`
+
 This method also handles multiple courses.
 
 Due to the scale and volume considerations, an api endpoint is needed that caters to the bulk

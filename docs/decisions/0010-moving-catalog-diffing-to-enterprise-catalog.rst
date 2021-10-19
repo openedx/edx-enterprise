@@ -20,9 +20,9 @@ endpoint.
 
 - **How do the Integrated Channels currently handle customer catalog data?**
 
-existing flow chart:
+Existing flow chart:
 
-.. image:: ../images/0009-moving-catalog-diffing-to-enterprise-catalog.rst
+.. image:: ../images/past-integrated-channels-metadata-flow.png
   :width: 500
 
 Currently on a scheduled job, the Integrated Channels' content metadata exporter iterates over each customer's catalog
@@ -51,7 +51,7 @@ Decisions
 
 - **How the Integrated Channels could better determine if customer metadata needs updating**
 
-proposed flow chart:
+Proposed flow chart:
 
 .. image:: ../images/new-integrated-channels-metadata-flow.png
   :width: 500

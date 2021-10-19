@@ -31,14 +31,12 @@ we need to offer a best approximation sense of `course_completed`.
 Decisions
 =========
 
-Integrated channels will determine the `course_completed` for each enrollment with the following logic:
+Integrated channels will determine the `course_completed` for each enrollment with the following logic::
 
-```
-if audit_enrollment:
-    Transmit course as complete for this learner, if no non-gated content is remaining to be finished
-else:
-    Transmit course as complete if certificate or grading data indicates completion_date is available.
-```
+    if audit_enrollment:
+        Transmit course as complete for this learner, if no non-gated content is remaining to be finished
+    else:
+        Transmit course as complete if certificate or grading data indicates completion_date is available.
 
 
 Consequences
