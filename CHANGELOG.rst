@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.14]
+---------
+fix: blackboard logging function was not returning desired string
+
 [3.30.13]
 ---------
 fix: properly weight blackboard grades

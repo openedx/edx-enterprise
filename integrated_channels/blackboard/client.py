@@ -312,7 +312,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         )
 
     def _formatted_message(self, msg):
-        generate_formatted_log(
+        return generate_formatted_log(
             self.config.brief_channel_name.upper(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
