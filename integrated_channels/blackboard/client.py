@@ -26,6 +26,7 @@ GRADEBOOK_PATH = '/learn/api/public/v1/courses/{course_id}/gradebook/columns'
 ENROLLMENT_PATH = '/learn/api/public/v1/courses/{course_id}/users'
 COURSE_PATH = '/learn/api/public/v1/courses'
 POST_GRADE_COLUMN_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns'
+PATCH_GRADE_COLUMN_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns/{column_id}'
 POST_GRADE_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns/{column_id}/users/{user_id}'
 COURSE_V3_PATH = '/learn/api/public/v3/courses/{course_id}'
 COURSES_V3_PATH = '/learn/api/public/v3/courses'
@@ -531,6 +532,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             path=POST_GRADE_COLUMN_PATH.format(course_id=course_id),
         )
 
+    def generate_update_grade_column_url(self, course_id, column_id):
+        """
+        Blackboard API url helper method.
+        Path: Update course grade column
+        """
+        return '{base}{path}'.format(
+            base=self.enterprise_configuration.blackboard_base_url,
+            path=PATCH_GRADE_COLUMN_PATH.format(
+                course_id=course_id,
+                column_id=column_id,
+            ),
+        )
+
     def generate_post_users_grade_url(self, course_id, column_id, user_id):
         """
         Blackboard API url helper method.
@@ -659,9 +673,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 if grade_column.get('externalId') == external_id:
                     grade_column_id = grade_column.get('id')
                     # if includeInCalculations has legacy value, correct it
-                    if grade_column.get('includeInCalculations') != include_in_calculations:
+                    if grade_column.get('includeInCalculations') and grade_column.get('includeInCalculations') != include_in_calculations:
                         calculations_data = {"includeInCalculations": include_in_calculations}
-                        self._patch(self.generate_create_grade_column_url(bb_course_id), calculations_data)
+                        self._patch(self.generate_update_grade_column_url(bb_course_id, grade_column_id), calculations_data)
                     break
             # Blackboard's pagination is returned within the response json if it exists
             # Example:
