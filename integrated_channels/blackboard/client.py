@@ -676,7 +676,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     if (
                         grade_column.get('includeInCalculations') and
                         grade_column.get('includeInCalculations') != include_in_calculations
-                        ):
+                    ):
                         calculations_data = {"includeInCalculations": include_in_calculations}
                         self._patch(
                             self.generate_update_grade_column_url(bb_course_id, grade_column_id),
