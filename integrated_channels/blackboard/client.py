@@ -681,7 +681,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                         self._patch(
                             self.generate_update_grade_column_url(bb_course_id, grade_column_id),
                             calculations_data
-                            )
+                        )
                     break
             # Blackboard's pagination is returned within the response json if it exists
             # Example:
