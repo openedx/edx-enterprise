@@ -773,15 +773,15 @@ class TestBlackboardApiClient(unittest.TestCase):
 
         blackboard_search_response = {
                 'results': [{
-                'id': self.blackboard_grade_column_id,
-                'externalId': self.course_id,
-                'name': self.blackboard_grade_column_name,
-                'description': "edX learner's grade.",
-                'created': '2021-07-16T19:46:29.698Z',
-                'score': {'possible': 100.0},
-                'availability': {'available': 'Yes'},
-                'includeInCalculations': True,
-            }],
+                    'id': self.blackboard_grade_column_id,
+                    'externalId': self.course_id,
+                    'name': self.blackboard_grade_column_name,
+                    'description': "edX learner's grade.",
+                    'created': '2021-07-16T19:46:29.698Z',
+                    'score': {'possible': 100.0},
+                    'availability': {'available': 'Yes'},
+                    'includeInCalculations': True,
+                }],
         }
 
         with responses.RequestsMock() as rsps:
