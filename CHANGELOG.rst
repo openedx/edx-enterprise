@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.30.13]
+---------
+fix: properly weight blackboard grades
+
 [3.30.12]
 ---------
 * chore: update course enrollments through lms
