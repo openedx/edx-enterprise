@@ -3064,8 +3064,10 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
     def test_post_license_revoke_invalid_data(self):
         with mock.patch('enterprise.api.v1.views.CourseMode'), \
+                mock.patch('enterprise.api.v1.views.get_course_overviews'), \
                 mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-                mock.patch('enterprise.api.v1.views.get_course_overviews'):
+                mock.patch('enterprise.api.v1.views.enrollment_api'):
+
             post_data = {
                 'user_id': 'bob',
             }
@@ -3078,7 +3080,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
     def test_post_license_revoke_403(self):
         with mock.patch('enterprise.api.v1.views.CourseMode'), \
                 mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-                mock.patch('enterprise.api.v1.views.get_course_overviews'):
+                mock.patch('enterprise.api.v1.views.get_course_overviews'), \
+                mock.patch('enterprise.api.v1.views.enrollment_api'):
 
             enterprise_customer = factories.EnterpriseCustomerFactory()
             self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
@@ -3100,14 +3103,14 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
     )
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.enrollment_api')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
     def test_post_license_revoke_all_successes(
             self,
             mock_get_overviews,
             mock_get_certificate,
-            mock_enrollment_client,
+            mock_enrollment_api,
             mock_course_mode,
             is_course_completed,
             has_audit_mode,
@@ -3131,8 +3134,8 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
         mock_get_overviews.return_value = [mock_get_overviews_response]
         mock_get_certificate.return_value = {'is_passing': False}
-        mock_enrollment_client.return_value = mock.Mock(
-            update_course_enrollment_mode_for_user=mock.Mock(),
+        mock_enrollment_api.return_value = mock.Mock(
+            update_enrollment=mock.Mock(),
         )
 
         post_data = {
@@ -3173,42 +3176,34 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
         if not is_course_completed:
             if has_audit_mode:
-                client_instance = mock_enrollment_client.return_value
-                client_instance.update_course_enrollment_mode_for_user.assert_called_once_with(
+                mock_enrollment_api.update_enrollment.assert_called_once_with(
                     username=enterprise_customer_user.username,
                     course_id=enterprise_course_enrollment.course_id,
                     mode=mock_course_mode.AUDIT,
                 )
             else:
-                client_instance = mock_enrollment_client.return_value
-                client_instance.unenroll_user_from_course.assert_called_once_with(
+                mock_enrollment_api.update_enrollment.assert_called_once_with(
                     username=enterprise_customer_user.username,
                     course_id=enterprise_course_enrollment.course_id,
+                    is_active=False,
                 )
 
     @ddt.data(
-        {'has_audit_mode': True, 'enrollment_update_error': 'update exception',
-         'unenrollment_success': None, 'unenrollment_error': None},
-        {'has_audit_mode': False, 'enrollment_update_error': None,
-         'unenrollment_success': False, 'unenrollment_error': None},
-        {'has_audit_mode': False, 'enrollment_update_error': None,
-         'unenrollment_success': None, 'unenrollment_error': 'unenrollment exception'},
+        {'has_audit_mode': True},
+        {'has_audit_mode': False}
     )
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.enrollment_api')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
     def test_post_license_revoke_all_errors(
             self,
             mock_get_overviews,
             mock_get_certificate,
-            mock_enrollment_client,
+            mock_enrollment_api,
             mock_course_mode,
             has_audit_mode,
-            enrollment_update_error,
-            unenrollment_success,
-            unenrollment_error,
     ):
         mock_course_mode.mode_for_course.return_value = has_audit_mode
         (
@@ -3230,16 +3225,11 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
 
         mock_get_overviews.return_value = [mock_get_overviews_response]
         mock_get_certificate.return_value = {'is_passing': False}
-        mock_enrollment_client.return_value = mock.Mock(
-            update_course_enrollment_mode_for_user=mock.Mock(),
+        mock_enrollment_api.return_value = mock.Mock(
+            update_enrollment=mock.Mock(),
         )
 
-        client_instance = mock_enrollment_client.return_value
-        client_instance.unenroll_user_from_course.return_value = unenrollment_success
-        if enrollment_update_error:
-            client_instance.update_course_enrollment_mode_for_user.side_effect = Exception(enrollment_update_error)
-        if unenrollment_error:
-            client_instance.unenroll_user_from_course.side_effect = Exception(unenrollment_error)
+        mock_enrollment_api.update_enrollment.side_effect = Exception('Something went wrong')
 
         post_data = {
             'user_id': self.user.id,
@@ -3251,16 +3241,11 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
         )
 
         course_id = enterprise_course_enrollment.course_id
-        EnrollmentTerminationStatus = LicensedEnterpriseCourseEnrollmentViewSet.EnrollmentTerminationStatus
 
         self.assertEqual(status.HTTP_422_UNPROCESSABLE_ENTITY, response.status_code)
         self.assertFalse(response.data[course_id]['success'])
-        if enrollment_update_error:
-            self.assertIn(enrollment_update_error, response.data[course_id]['message'])
-        if unenrollment_success is False:
-            self.assertIn(EnrollmentTerminationStatus.UNENROLL_FAILED, response.data[course_id]['message'])
-        if unenrollment_error:
-            self.assertIn(unenrollment_error, response.data[course_id]['message'])
+
+        self.assertIn('Something went wrong', response.data[course_id]['message'])
 
         enterprise_course_enrollment.refresh_from_db()
         licensed_course_enrollment.refresh_from_db()
@@ -3269,17 +3254,16 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
         self.assertFalse(licensed_course_enrollment.is_revoked)
 
         if has_audit_mode:
-            client_instance = mock_enrollment_client.return_value
-            client_instance.update_course_enrollment_mode_for_user.assert_called_once_with(
+            mock_enrollment_api.update_enrollment.assert_called_once_with(
                 username=enterprise_customer_user.username,
                 course_id=enterprise_course_enrollment.course_id,
                 mode=mock_course_mode.AUDIT,
             )
         else:
-            client_instance = mock_enrollment_client.return_value
-            client_instance.unenroll_user_from_course.assert_called_once_with(
+            mock_enrollment_api.update_enrollment.assert_called_once_with(
                 username=enterprise_customer_user.username,
                 course_id=enterprise_course_enrollment.course_id,
+                is_active=False
             )
 
 
@@ -3677,12 +3661,12 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.CourseEnrollment')
     @mock.patch('enterprise.api.v1.views.CourseMode')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.enrollment_api')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments(
             self,
             mock_get_overviews,
-            mock_enrollment_client,
+            mock_enrollment_api,
             mock_cert_for_user,
             mock_course_mode,
             _,
@@ -3704,8 +3688,8 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
             'has_ended': is_course_completed,
         }]
         mock_cert_for_user.return_value = {'is_passing': False}
-        mock_enrollment_client.return_value = mock.Mock(
-            update_course_enrollment_mode_for_user=mock.Mock(),
+        mock_enrollment_api.return_value = mock.Mock(
+            update_enrollment=mock.Mock(),
         )
 
         post_data = {
@@ -3722,17 +3706,16 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
 
         if not is_course_completed:
             if has_audit_mode:
-                client_instance = mock_enrollment_client.return_value
-                client_instance.update_course_enrollment_mode_for_user.assert_called_once_with(
+                mock_enrollment_api.update_enrollment.assert_called_once_with(
                     username=enterprise_customer_user.username,
                     course_id=enterprise_course_enrollment.course_id,
                     mode=mock_course_mode.AUDIT,
                 )
             else:
-                client_instance = mock_enrollment_client.return_value
-                client_instance.unenroll_user_from_course.assert_called_once_with(
+                mock_enrollment_api.update_enrollment.assert_called_once_with(
                     username=enterprise_customer_user.username,
                     course_id=enterprise_course_enrollment.course_id,
+                    is_active=False
                 )
             assert licensed_course_enrollment.is_revoked
             assert enterprise_course_enrollment.saved_for_later
@@ -3743,7 +3726,7 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.CourseEnrollment')
     @mock.patch('enterprise.api.v1.views.CourseMode')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.enrollment_api')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments_no_license_ids(
             self,
@@ -3764,12 +3747,12 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
     @mock.patch('enterprise.api.v1.views.CourseEnrollment')
     @mock.patch('enterprise.api.v1.views.CourseMode')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.enrollment_api')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments_ignore_enrollments_modified_after(
             self,
             mock_get_overviews,
-            mock_enrollment_client,
+            mock_enrollment_api,
             mock_cert_for_user,
             mock_course_mode,
             mock_course_enrollment
@@ -3788,13 +3771,10 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
             'has_ended': False,
         }]
         mock_cert_for_user.return_value = {'is_passing': False}
-        mock_enrollment_client.return_value = mock.Mock(
-            update_course_enrollment_mode_for_user=mock.Mock(),
+        mock_enrollment_api.return_value = mock.Mock(
+            update_enrollment=mock.Mock(),
         )
         expired_license_uuid = licensed_course_enrollment.license_uuid
-        mock_enrollment_client.return_value = mock.Mock(
-            update_course_enrollment_mode_for_user=mock.Mock(),
-        )
 
         mock_course_enrollment.history.filter.return_value = mock.Mock(
             order_by=mock.Mock(return_value=[
@@ -3821,12 +3801,12 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
 
         assert not enterprise_course_enrollment.saved_for_later
         assert not licensed_course_enrollment.is_revoked
-        assert mock_enrollment_client.unenroll_user_from_course.call_count == 0
+        assert mock_enrollment_api.update_enrollment.call_count == 0
 
     @mock.patch('enterprise.api.v1.views.CourseEnrollment')
     @mock.patch('enterprise.api.v1.views.CourseMode')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.enrollment_api')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments_bad_ignore_enrollments_modified_after(
             self,
