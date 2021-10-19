@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     "integrated_channels.integrated_channel",
     "integrated_channels.cornerstone",
     "integrated_channels.degreed",
+    "integrated_channels.degreed2",
     "integrated_channels.canvas",
     "integrated_channels.blackboard",
     "integrated_channels.moodle",
@@ -147,7 +148,7 @@ ENTERPRISE_SUPPORT_URL = "http://foo"
 
 ENTERPRISE_TAGLINE = "High-quality online learning opportunities from the world's best universities"
 
-OAUTH_ID_TOKEN_EXPIRATION = 60*60  # in seconds
+OAUTH_ID_TOKEN_EXPIRATION = 60 * 60  # in seconds
 
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 

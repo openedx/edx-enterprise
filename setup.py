@@ -99,6 +99,7 @@ setup(
         "integrated_channels",
         "integrated_channels.integrated_channel",
         "integrated_channels.degreed",
+        "integrated_channels.degreed2",
         "integrated_channels.canvas",
         "integrated_channels.blackboard",
         "integrated_channels.cornerstone",

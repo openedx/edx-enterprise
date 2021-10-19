@@ -37,9 +37,8 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         "active",
         "key",
         "secret",
-        "degreed_company_id",
         "degreed_base_url",
-        "provider_id",
+        "degreed_token_fetch_base_url",
     )
 
     readonly_fields = (

@@ -21,7 +21,7 @@ LOGGER = getLogger(__name__)
 
 class Degreed2GlobalConfiguration(ConfigurationModel):
     """
-    The global configuration for integrating with Degreed.
+    The global configuration for integrating with Degreed (API version 2).
 
     .. no_pii:
     """
@@ -98,14 +98,14 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         max_length=255,
         null=True,
         blank=True,
-        verbose_name="Degreed2 URL base to fetch tokens, separate from degreed_base_url",
+        verbose_name="Degreed token fetch base url",
         help_text="If provided, will be used as base url instead of degreed_base_url to fetch tokens"
     )
 
     history = HistoricalRecords()
 
     class Meta:
-        app_label = 'degreed'
+        app_label = 'degreed2'
 
     def __str__(self):
         """
