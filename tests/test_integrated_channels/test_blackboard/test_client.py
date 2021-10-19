@@ -763,6 +763,50 @@ class TestBlackboardApiClient(unittest.TestCase):
                 )
                 assert not client.delete_course_from_blackboard.called
 
+    def test_client_assignment_update_on_find(self):
+        """
+        Test that the _get_or_create_integrated_grade_column method properly updates courses
+        with the correct `include_in_calculations` settings as it searches for them
+        """
+        client = self._create_new_mock_client()
+        client._create_session()
+
+        blackboard_search_response = {
+            'results': [{
+                'id': self.blackboard_grade_column_id,
+                'externalId': self.course_id,
+                'name': self.blackboard_grade_column_name,
+                'description': "edX learner's grade.",
+                'created': '2021-07-16T19:46:29.698Z',
+                'score': {'possible': 100.0},
+                'availability': {'available': 'Yes'},
+                'includeInCalculations': True,
+            }],
+        }
+
+        with responses.RequestsMock() as rsps:
+            # Requests mock will iteratively return registered responses on subsequent calls
+            rsps.add(
+                responses.GET,
+                client.generate_gradebook_url(self.blackboard_course_id),
+                json=blackboard_search_response
+            )
+            rsps.add(
+                responses.PATCH,
+                client.generate_update_grade_column_url(self.blackboard_course_id, self.blackboard_grade_column_id),
+                json={"includeInCalculations": False}
+            )
+
+            # find the grade column on the second page of results
+            column_id = client._get_or_create_integrated_grade_column(
+                self.blackboard_course_id,
+                self.blackboard_grade_column_name,
+                self.course_id,
+                include_in_calculations=False
+            )
+
+        assert column_id == self.blackboard_grade_column_id
+
     def test_client_finds_assignment_on_second_results_page(self):
         """
         Test that the _get_or_create_integrated_grade_column method properly traverses over paginated results from
