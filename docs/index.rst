@@ -20,13 +20,15 @@ Contents:
    internationalization
    segment_events
    modules
+
+.. toctree::
+   :maxdepth: 1
+
    changelog
 
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: Decisions
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   decisions/*
