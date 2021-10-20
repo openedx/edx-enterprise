@@ -19,50 +19,6 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 LOGGER = getLogger(__name__)
 
 
-class Degreed2GlobalConfiguration(ConfigurationModel):
-    """
-    The global configuration for integrating with Degreed (API version 2).
-
-    .. no_pii:
-    """
-
-    completion_status_api_path = models.CharField(
-        max_length=255,
-        verbose_name="Completion Status API Path",
-        help_text="The API path for making completion POST/DELETE requests to Degreed."
-    )
-
-    course_api_path = models.CharField(
-        max_length=255,
-        verbose_name="Course Metadata API Path",
-        help_text="The API path for making course metadata POST/DELETE requests to Degreed."
-    )
-
-    oauth_api_path = models.CharField(
-        max_length=255,
-        verbose_name="OAuth API Path",
-        help_text=(
-            "The API path for making OAuth-related POST requests to Degreed. "
-            "This will be used to gain the OAuth access token which is required for other API calls."
-        )
-    )
-
-    class Meta:
-        app_label = 'degreed2'
-
-    def __str__(self):
-        """
-        Return a human-readable string representation of the object.
-        """
-        return "<Degreed2GlobalConfiguration with id {id}>".format(id=self.id)
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
-
-
 class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Degreed2.

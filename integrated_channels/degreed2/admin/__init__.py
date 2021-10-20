@@ -3,27 +3,9 @@
 Django admin integration for configuring degreed app to communicate with Degreed systems.
 """
 
-from config_models.admin import ConfigurationModelAdmin
-
 from django.contrib import admin
 
-from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration, Degreed2GlobalConfiguration
-
-
-@admin.register(Degreed2GlobalConfiguration)
-class Degreed2GlobalConfigurationAdmin(ConfigurationModelAdmin):
-    """
-    Django admin model for DegreedGlobalConfiguration.
-    """
-
-    list_display = (
-        "completion_status_api_path",
-        "course_api_path",
-        "oauth_api_path",
-    )
-
-    class Meta:
-        model = Degreed2GlobalConfiguration
+from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 
 
 @admin.register(Degreed2EnterpriseCustomerConfiguration)

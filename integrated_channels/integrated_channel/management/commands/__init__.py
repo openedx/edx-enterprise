@@ -13,6 +13,7 @@ from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerCo
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 
@@ -24,6 +25,7 @@ INTEGRATED_CHANNEL_CHOICES = OrderedDict([
         CanvasEnterpriseCustomerConfiguration,
         CornerstoneEnterpriseCustomerConfiguration,
         DegreedEnterpriseCustomerConfiguration,
+        Degreed2EnterpriseCustomerConfiguration,
         MoodleEnterpriseCustomerConfiguration,
         SAPSuccessFactorsEnterpriseCustomerConfiguration,
     )
@@ -45,6 +47,7 @@ CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES = OrderedDict([
         BlackboardEnterpriseCustomerConfiguration,
         CanvasEnterpriseCustomerConfiguration,
         DegreedEnterpriseCustomerConfiguration,
+        Degreed2EnterpriseCustomerConfiguration,
         MoodleEnterpriseCustomerConfiguration,
         SAPSuccessFactorsEnterpriseCustomerConfiguration,
     )

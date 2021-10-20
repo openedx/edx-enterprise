@@ -14,6 +14,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
     """
 
     CONTENT_WRITE_SCOPE = "content:write"
+    ALL_DESIRED_SCOPES = "content:read,content:write,completions:write,completions:read"
     SESSION_TIMEOUT = 60
 
     def __init__(self, enterprise_configuration):
@@ -38,9 +40,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             configuration model for connecting with Degreed
         """
         super().__init__(enterprise_configuration)
-        self.global_degreed_config = apps.get_model('degreed2', 'Degreed2GlobalConfiguration').current()
         self.session = None
         self.expires_at = None
+        app_config = apps.get_app_config('degreed2')
+        self.oauth_api_path = app_config.oauth_api_path
+        self.courses_api_path = app_config.courses_api_path
 
     def create_assessment_reporting(self, user_id, payload):
         """
@@ -112,9 +116,9 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
-                urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.course_api_path),
+                urljoin(self.enterprise_configuration.degreed_base_url, self.course_api_path),
                 serialized_data,
-                self.CONTENT_WRITE_SCOPE
+                self.ALL_DESIRED_SCOPES
             )
         except requests.exceptions.RequestException as exc:
             raise ClientError(
@@ -181,40 +185,34 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         Instantiate a new session object for use in connecting with Degreed
         """
-        now = datetime.datetime.utcnow()
-        if self.session is None or self.expires_at is None or now >= self.expires_at:
-            # Create a new session with a valid token
-            if self.session:
-                self.session.close()
-            oauth_access_token, expires_at = self._get_oauth_access_token(scope)
-            session = requests.Session()
-            session.timeout = self.SESSION_TIMEOUT
-            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-            session.headers['content-type'] = 'application/json'
-            self.session = session
-            self.expires_at = expires_at
+        self.session, self.expires_at = refresh_session_if_expired(
+            self._get_oauth_access_token,
+            self.session,
+            self.expires_at,
+        )
 
     def _get_oauth_access_token(self, scope):
         """ Retrieves OAuth 2.0 access token using the client credentials grant.
+        Prefers using the degreed_token_fetch_base_url over the degreed_base_url, if present, to fetch the access token.
 
         Args:
-            scope (str): Must be one of the scopes Degreed expects:
-                        - `CONTENT_PROVIDER_SCOPE`
-                        - `COMPLETION_PROVIDER_SCOPE`
-
+            scope (str): Must be one or comma separated list of the scopes Degreed expects
         Returns:
             tuple: Tuple containing access token string and expiration datetime.
         Raises:
             HTTPError: If we received a failure response code from Degreed.
             ClientError: If an unexpected response format was received that we could not parse.
         """
+        config = self.enterprise_configuration
+        base_url = config.degreed_token_fetch_base_url or config.degreed_base_url
+        breakpoint()
         response = requests.post(
-            urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.oauth_api_path),
+            urljoin(base_url, self.oauth_api_path),
             data={
                 'grant_type': 'client_credentials',
                 'scope': scope,
-                'client_id': self.enterprise_configuration.client_id,
-                'client_secret': self.enterprise_configuration.client_secret,
+                'client_id': config.client_id,
+                'client_secret': config.client_secret,
             },
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
