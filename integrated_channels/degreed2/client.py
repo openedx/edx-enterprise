@@ -13,7 +13,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +44,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         app_config = apps.get_app_config('degreed2')
         self.oauth_api_path = app_config.oauth_api_path
         self.courses_api_path = app_config.courses_api_path
+        # to log without having to pass channel_name, ent_customer_uuid each time
+        self.make_log_msg = lambda course_key, message, lms_user_id=None: generate_formatted_log(
+            'degreed2',
+            self.enterprise_configuration.enterprise_customer.uuid,
+            lms_user_id,
+            course_key,
+            message,
+        )
 
     def create_assessment_reporting(self, user_id, payload):
         """
@@ -77,7 +85,20 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If Degreed API request fails.
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        self._sync_content_metadata(channel_metadata_item['courses'], 'post')
+        a_course = channel_metadata_item['courses']
+        status_code, response_body = self._sync_content_metadata(a_course, 'post')
+        if status_code == 409:
+            # course already exists, don't raise failure, but log and move on
+            LOGGER.warning(
+                self.make_log_msg(
+                    a_course.get('external-id'),
+                    f'Course with integration_id = {a_course.get("external-id")} already exists, '
+                )
+            )
+        elif status_code >= 400:
+            raise ClientError(
+                f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}'
+            )
 
     def update_content_metadata(self, serialized_data):
         """
@@ -135,14 +156,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                     message=str(exc)
                 )
             ) from exc
-
-        if status_code >= 400:
-            raise ClientError(
-                'Degreed2APIClient request failed with status {status_code}: {message}'.format(
-                    status_code=status_code,
-                    message=response_body
-                )
-            )
+        return status_code, response_body
 
     def _post(self, url, data, scope):
         """
