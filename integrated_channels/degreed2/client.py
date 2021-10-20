@@ -3,9 +3,8 @@
 Client for connecting to Degreed2.
 """
 
-import datetime
+import json
 import logging
-import time
 
 import requests
 from six.moves.urllib.parse import urljoin
@@ -77,7 +76,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Raises:
             ClientError: If Degreed API request fails.
         """
-        self._sync_content_metadata(serialized_data, 'post')
+        channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
+        self._sync_content_metadata(channel_metadata_item['courses'], 'post')
 
     def update_content_metadata(self, serialized_data):
         """
@@ -89,7 +89,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Raises:
             ClientError: If Degreed API request fails.
         """
-        self._sync_content_metadata(serialized_data, 'patch')
+        channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
+        self._sync_content_metadata(channel_metadata_item['courses'], 'patch')
 
     def delete_content_metadata(self, serialized_data):
         """
@@ -101,23 +102,30 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Raises:
             ClientError: If Degreed API request fails.
         """
-        self._sync_content_metadata(serialized_data, 'delete')
+        channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
+        self._sync_content_metadata(channel_metadata_item['courses'], 'delete')
 
-    def _sync_content_metadata(self, serialized_data, http_method):
+    def _sync_content_metadata(self, json_payload, http_method):
         """
         Synchronize content metadata using the Degreed course content API.
 
         Args:
-            serialized_data: JSON-encoded object containing content metadata.
+            json_payload: JSON object containing content metadata.
             http_method: The HTTP method to use for the API request.
 
         Raises:
             ClientError: If Degreed API request fails.
         """
+        json_to_send = {
+            "data": {
+                "type": "content/courses",
+                "attributes": json_payload,
+            }
+        }
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
-                urljoin(self.enterprise_configuration.degreed_base_url, self.course_api_path),
-                serialized_data,
+                urljoin(self.enterprise_configuration.degreed_base_url, self.courses_api_path),
+                json_to_send,
                 self.ALL_DESIRED_SCOPES
             )
         except requests.exceptions.RequestException as exc:
@@ -142,13 +150,13 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
         Args:
             url (str): The url to send a POST request to.
-            data (str): The json encoded payload to POST.
+            data (str): The json payload to POST.
             scope (str): Must be one of the scopes Degreed expects:
                         - `CONTENT_WRITE_SCOPE`
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.post(url, data=data)
+        response = self.session.post(url, json=data)
         return response.status_code, response.text
 
     def _patch(self, url, data, scope):
@@ -157,13 +165,13 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
         Args:
             url (str): The url to send a POST request to.
-            data (str): The json encoded payload to POST.
+            data (str): The json payload to POST.
             scope (str): Must be one of the scopes Degreed expects:
                         - `CONTENT_WRITE_SCOPE`
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.patch(url, data=data)
+        response = self.session.patch(url, json=data)
         return response.status_code, response.text
 
     def _delete(self, url, data, scope):
@@ -172,13 +180,13 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
         Args:
             url (str): The url to send a DELETE request to.
-            data (str): The json encoded payload to DELETE.
+            data (str): The json payload to DELETE.
             scope (str): Must be one of the scopes Degreed expects:
                         - `CONTENT_PROVIDER_SCOPE`
                         - `COMPLETION_PROVIDER_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.delete(url, data=data)
+        response = self.session.delete(url, json=data)
         return response.status_code, response.text
 
     def _create_session(self, scope):
@@ -186,7 +194,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Instantiate a new session object for use in connecting with Degreed
         """
         self.session, self.expires_at = refresh_session_if_expired(
-            self._get_oauth_access_token,
+            lambda: self._get_oauth_access_token(scope),
             self.session,
             self.expires_at,
         )
@@ -205,21 +213,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         config = self.enterprise_configuration
         base_url = config.degreed_token_fetch_base_url or config.degreed_base_url
-        breakpoint()
         response = requests.post(
             urljoin(base_url, self.oauth_api_path),
             data={
                 'grant_type': 'client_credentials',
                 'scope': scope,
-                'client_id': config.client_id,
-                'client_secret': config.client_secret,
+                'client_id': config.key,
+                'client_secret': config.secret,
             },
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
 
         try:
             data = response.json()
-            expires_at = data['expires_in'] + int(time.time())
-            return data['access_token'], datetime.datetime.utcfromtimestamp(expires_at)
+            return data['access_token'], data['expires_in']
         except (KeyError, ValueError) as error:
             raise ClientError(response.text, response.status_code) from error

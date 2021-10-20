@@ -22,8 +22,8 @@ class Degreed2ContentMetadataTransmitter(ContentMetadataTransmitter):
         )
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
+        # similar to canvas, we can't create courses in bulk hence limiting to size 1
+        # this of course only is accurate if transmission chunk size is 1
         return {
-            'courses': channel_metadata_items,
-            'orgCode': self.enterprise_configuration.degreed_company_id,
-            'providerCode': self.enterprise_configuration.provider_id,
+            'courses': channel_metadata_items[0],
         }

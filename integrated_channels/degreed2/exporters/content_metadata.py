@@ -22,14 +22,14 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
     LONG_STRING_LIMIT = 2000
 
     DATA_TRANSFORM_MAPPING = {
-        'contentId': 'key',
         'title': 'title',
-        'description': 'description',
-        'imageUrl': 'image',
+        'summary': 'description',
+        'image-url': 'image',
         'url': 'enrollment_url',
         'language': 'content_language',
-        'externalId': 'key',
+        'external-id': 'key',
         'duration': 'duration',
+        'duration-type': 'Days',
     }
 
     def transform_duration(self, content_metadata_item):
