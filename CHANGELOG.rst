@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.31.1]
+---------
+fix: pip-tools upgrade
+
 [3.31.0]
 ---------
 feat: new integrated channels content metadata transmitter flow
