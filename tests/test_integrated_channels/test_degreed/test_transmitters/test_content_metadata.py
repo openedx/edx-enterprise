@@ -1,5 +1,5 @@
 """
-Tests for the Blackboard content metadata transmitter.
+Tests for the Degreed content metadata transmitter.
 """
 
 import unittest
@@ -9,15 +9,15 @@ import mock
 import responses
 from pytest import mark
 
-from integrated_channels.blackboard.transmitters.content_metadata import BlackboardContentMetadataTransmitter
+from integrated_channels.degreed.transmitters.content_metadata import DegreedContentMetadataTransmitter
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import factories
 
 
 @mark.django_db
-class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
+class TestDegreedContentMetadataTransmitter(unittest.TestCase):
     """
-    Tests for the class ``BlackboardContentMetadataTransmitter``.
+    Tests for the class ``DegreedContentMetadataTransmitter``.
     """
 
     def setUp(self):
@@ -26,24 +26,14 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
         self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory(
             enterprise_customer=enterprise_customer
         )
-        self.enterprise_config = factories.BlackboardEnterpriseCustomerConfigurationFactory(
+        self.enterprise_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=enterprise_customer
         )
 
-    def test_prepare_items_for_transmission(self):
-        transmitter = BlackboardContentMetadataTransmitter(self.enterprise_config)
-        channel_metadata_items = [{'field': 'value'}]
-        expected_items = channel_metadata_items[0]
-
-        # pylint: disable=protected-access
-        assert transmitter._prepare_items_for_transmission(
-            channel_metadata_items
-        ) == expected_items
-
     @responses.activate
-    @mock.patch('integrated_channels.blackboard.client.BlackboardAPIClient.create_content_metadata')
-    @mock.patch('integrated_channels.blackboard.client.BlackboardAPIClient.delete_content_metadata')
-    @mock.patch('integrated_channels.blackboard.client.BlackboardAPIClient.update_content_metadata')
+    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
+    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.delete_content_metadata')
+    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.update_content_metadata')
     def test_transmit_content_metadata_updates_records(
         self,
         create_content_metadata_mock,
@@ -51,8 +41,8 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
         delete_content_metadata_mock
     ):
         """
-        Test that the Blackboard content metadata transmitter generates and updates the appropriate content records as
-        well as calls the Blackboard API client for updates, deletes and creates.
+        Test that the Degreed content metadata transmitter generates and updates the appropriate content records as well
+        as calls the Degreed API client for updates, deletes and creates.
         """
         self.enterprise_config.transmission_chunk_size = 3
         self.enterprise_config.save()
@@ -84,7 +74,7 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
         }
         past_transmission_to_update.channel_metadata = new_channel_metadata
 
-        transmitter = BlackboardContentMetadataTransmitter(self.enterprise_config)
+        transmitter = DegreedContentMetadataTransmitter(self.enterprise_config)
         content_updated_mapping = {
             content_id_1: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
             content_id_2: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},

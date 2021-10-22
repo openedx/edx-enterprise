@@ -178,7 +178,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         exporter = self.get_content_metadata_exporter(user)
         transmitter = self.get_content_metadata_transmitter()
-        transmitter.transmit(exporter.export())
+        transmitter.transmit(*exporter.export())
 
     def transmit_single_subsection_learner_data(self, **kwargs):
         """
@@ -307,6 +307,11 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         help_text='The enterprise catalog that this metadata item was derived from',
         blank=True,
         null=True,
+    )
+    deleted_at = models.DateTimeField(
+        help_text='Date when the content transmission was deleted',
+        blank=True,
+        null=True
     )
 
     class Meta:

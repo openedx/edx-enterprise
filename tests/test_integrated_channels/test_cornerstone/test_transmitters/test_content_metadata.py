@@ -1,23 +1,21 @@
 """
-Tests for the Blackboard content metadata transmitter.
+Tests for the Cornerstone content metadata transmitter.
 """
 
 import unittest
 from datetime import datetime
 
-import mock
-import responses
 from pytest import mark
 
-from integrated_channels.blackboard.transmitters.content_metadata import BlackboardContentMetadataTransmitter
+from integrated_channels.cornerstone.transmitters.content_metadata import CornerstoneContentMetadataTransmitter
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import factories
 
 
 @mark.django_db
-class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
+class TestCornerstoneContentMetadataTransmitter(unittest.TestCase):
     """
-    Tests for the class ``BlackboardContentMetadataTransmitter``.
+    Tests for the class ``CornerstoneContentMetadataTransmitter``.
     """
 
     def setUp(self):
@@ -26,33 +24,14 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
         self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory(
             enterprise_customer=enterprise_customer
         )
-        self.enterprise_config = factories.BlackboardEnterpriseCustomerConfigurationFactory(
+        self.enterprise_config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             enterprise_customer=enterprise_customer
         )
 
-    def test_prepare_items_for_transmission(self):
-        transmitter = BlackboardContentMetadataTransmitter(self.enterprise_config)
-        channel_metadata_items = [{'field': 'value'}]
-        expected_items = channel_metadata_items[0]
-
-        # pylint: disable=protected-access
-        assert transmitter._prepare_items_for_transmission(
-            channel_metadata_items
-        ) == expected_items
-
-    @responses.activate
-    @mock.patch('integrated_channels.blackboard.client.BlackboardAPIClient.create_content_metadata')
-    @mock.patch('integrated_channels.blackboard.client.BlackboardAPIClient.delete_content_metadata')
-    @mock.patch('integrated_channels.blackboard.client.BlackboardAPIClient.update_content_metadata')
-    def test_transmit_content_metadata_updates_records(
-        self,
-        create_content_metadata_mock,
-        update_content_metadata_mock,
-        delete_content_metadata_mock
-    ):
+    def test_transmit_content_metadata_updates_records(self):
         """
-        Test that the Blackboard content metadata transmitter generates and updates the appropriate content records as
-        well as calls the Blackboard API client for updates, deletes and creates.
+        Test that the Cornerstone content metadata transmitter generates and updates the appropriate content records as
+        well as returns a transmit payload of both update and create content.
         """
         self.enterprise_config.transmission_chunk_size = 3
         self.enterprise_config.save()
@@ -84,7 +63,7 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
         }
         past_transmission_to_update.channel_metadata = new_channel_metadata
 
-        transmitter = BlackboardContentMetadataTransmitter(self.enterprise_config)
+        transmitter = CornerstoneContentMetadataTransmitter(self.enterprise_config)
         content_updated_mapping = {
             content_id_1: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
             content_id_2: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
@@ -99,7 +78,8 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
         delete_payload = {
             content_id_2: past_transmission_to_delete
         }
-        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
+        transmission = transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
+        assert transmission == [{'courseID': 'something_new'}, new_channel_metadata]
         item_updated = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_1,
@@ -115,6 +95,3 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
             content_id=content_id_3,
         ).first()
         assert item_created.channel_metadata == {'courseID': 'something_new'}
-        assert create_content_metadata_mock.call_count == 1
-        assert update_content_metadata_mock.call_count == 1
-        assert delete_content_metadata_mock.call_count == 1

@@ -122,7 +122,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
             'providerID': self.enterprise_configuration.provider_id,
             'launchURL': content_metadata_item['enrollment_url'],
             'contentTitle': content_metadata_item['title'],
-            'contentID': self.get_content_id(content_metadata_item),
+            'contentID': self._get_content_id(content_metadata_item),
             'launchType': 3,  # This tells SAPSF to launch the course in a new browser window.
             'mobileEnabled': True,  # Always return True per ENT-1401
             'mobileLaunchURL': content_metadata_item['enrollment_url'],
@@ -185,37 +185,6 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
 
         return title_with_locales
 
-    def _get_course_run_start_end_str(self, course_run):
-        """
-        Get the course run start and end as a descriptive string. Also include a note if enrollment is closed.
-        """
-        course_run_start = course_run.get('start')
-        course_run_end = course_run.get('end')
-        date_str = ''
-
-        if course_run_start:
-            date_str += '{starts}: {:%B %Y}'.format(
-                parse_lms_api_datetime(course_run_start),
-                starts=_('Starts')
-            )
-
-        if course_run_end:
-            if date_str:
-                date_str += ', '
-
-            date_str += '{ends}: {:%B %Y}. '.format(
-                parse_lms_api_datetime(course_run_end),
-                ends=_('Ends')
-            )
-        else:
-            if date_str:
-                date_str += '. '
-
-        if not is_course_run_available_for_enrollment(course_run):
-            date_str += 'Enrollment is closed. '
-
-        return date_str
-
     def transform_courserun_description(self, content_metadata_item):
         """
         Return the description of the courserun content item.
@@ -253,7 +222,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         """
         return content_metadata_item['uuid']
 
-    def get_content_id(self, content_metadata_item):
+    def _get_content_id(self, content_metadata_item):
         """
         Return the id for the given content_metadata_item, `uuid` for programs or `key` for other content
         """
@@ -261,3 +230,34 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         if content_metadata_item['content_type'] == 'program':
             content_id = content_metadata_item.get('uuid', '')
         return content_id
+
+    def _get_course_run_start_end_str(self, course_run):
+        """
+        Get the course run start and end as a descriptive string. Also include a note if enrollment is closed.
+        """
+        course_run_start = course_run.get('start')
+        course_run_end = course_run.get('end')
+        date_str = ''
+
+        if course_run_start:
+            date_str += '{starts}: {:%B %Y}'.format(
+                parse_lms_api_datetime(course_run_start),
+                starts=_('Starts')
+            )
+
+        if course_run_end:
+            if date_str:
+                date_str += ', '
+
+            date_str += '{ends}: {:%B %Y}. '.format(
+                parse_lms_api_datetime(course_run_end),
+                ends=_('Ends')
+            )
+        else:
+            if date_str:
+                date_str += '. '
+
+        if not is_course_run_available_for_enrollment(course_run):
+            date_str += 'Enrollment is closed. '
+
+        return date_str

@@ -57,7 +57,7 @@ FAKE_COURSE_RUN = {
     'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
     'announcement': None,
     'video': None,
-    'content_language': None,
+    'content_language': 'English',
     'transcript_languages': [],
     'instructors': [],
     'staff': [
@@ -1321,6 +1321,35 @@ def get_fake_catalog():
     Returns a fake response from EnterpriseCatalogApiClient.get_enterprise_catalog.
     """
     return FAKE_CATALOG_RESULT
+
+
+def get_fake_catalog_diff_create():
+    """
+    Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses are to be created
+    """
+    # items_to_create, items_to_delete, matched_items
+    return [{'content_key': FAKE_COURSE_RUN['key']}, {'content_key': FAKE_COURSE['key']}], [], []
+
+
+def get_fake_catalog_diff_create_w_program():
+    """
+    Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses and a program are to
+    be created
+    """
+    # items_to_create, items_to_delete, matched_items
+    return [
+        {'content_key': FAKE_COURSE_RUN['key']},
+        {'content_key': FAKE_COURSE['key']},
+        {'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']}
+    ], [], []
+
+
+def get_fake_catalog_diff_create_with_invalid_key():
+    """
+    Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where a course has an invalid key by
+    CSOD standards
+    """
+    return [{'content_key': FAKE_INVALID_KEY_COURSE_RUN.get('key')}], [], []
 
 
 def get_fake_content_metadata():

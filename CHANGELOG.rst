@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.31.0]
+---------
+feat: new integrated channels content metadata transmitter flow
+
 [3.30.14]
 ---------
 fix: blackboard logging function was not returning desired string

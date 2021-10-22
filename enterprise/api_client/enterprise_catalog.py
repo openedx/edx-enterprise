@@ -28,6 +28,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
     GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
+    CATALOG_DIFF_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/generate_diff'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     APPEND_SLASH = True
     GET_CONTENT_METADATA_PAGE_SIZE = getattr(settings, 'ENTERPRISE_CATALOG_GET_CONTENT_METADATA_PAGE_SIZE', 50)
@@ -98,6 +99,61 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                     catalog_uuid, str(exc)
                 )
             return {}
+
+    @JwtLmsApiClient.refresh_token
+    def get_catalog_diff(self, enterprise_customer_catalog, content_keys, should_raise_exception=True):
+        """
+        Gets the representational difference between a list of course keys and the current state of content under an
+        enterprise catalog. This difference is returned as three buckets of data: `items_not_found`,
+        `items_not_included` and `items_found`.
+
+        Arguments:
+            enterprise_customer_catalog (EnterpriseCustomerCatalog): The catalog object whose content is being diffed.
+            content_keys (list): List of string content keys
+            should_raise_exception (Bool): Optional param for whether or not api response exceptions should be raised.
+
+        Response:
+            items_to_create: [{
+               "course_key": <content key>>
+            }, {
+            ..
+            }]
+
+            items_to_delete: [{
+               "course_key": <content key>>
+            }, {
+            ..
+            }]
+
+            items_found: [{
+                "course_key": <content key>>,
+                "date_updated": <content last modified datetime>
+            }, {
+                ...
+            }]
+        """
+        catalog_uuid = enterprise_customer_catalog.uuid
+        endpoint = getattr(self.client, self.CATALOG_DIFF_ENDPOINT.format(catalog_uuid))
+        body = {'content_keys': content_keys}
+
+        items_to_delete = {}
+        items_to_create = []
+        items_found = []
+        try:
+            response = endpoint.post(body)
+            items_to_delete = response.get('items_not_found')
+            items_to_create = response.get('items_not_included')
+            items_found = response.get('items_found')
+
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            if should_raise_exception:
+                raise
+
+        return items_to_create, items_to_delete, items_found
 
     @staticmethod
     def get_content_metadata_url(uuid):

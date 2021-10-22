@@ -216,7 +216,7 @@ class LearnerTransmitter(Transmitter):
             learner_data.error_message = body if code >= 400 else ''
             learner_data.save()
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, payload, **kwargs):  # pylint: disable=arguments-differ
         """
         Send a completion status call to the integrated channel using the client.
 

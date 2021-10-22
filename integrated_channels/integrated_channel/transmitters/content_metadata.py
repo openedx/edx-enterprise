@@ -5,9 +5,8 @@ Generic content metadata transmitter for integrated channels.
 
 import json
 import logging
+from datetime import datetime
 from itertools import islice
-
-from jsondiff import diff
 
 from django.apps import apps
 from django.conf import settings
@@ -34,82 +33,28 @@ class ContentMetadataTransmitter(Transmitter):
             client=client
         )
 
-    def transmit(self, payload, **kwargs):
+    def transmit(self, create_payload, update_payload, delete_payload, content_updated_mapping, **kwargs):
         """
-        Transmit content metadata items to the integrated channel.
+        Transmit content metadata items to the integrated channel. Save or update content metadata records according to
+        the type of transmission.
         """
-        items_to_create, items_to_update, items_to_delete, transmission_map, content_update_times_by_id, \
-            content_catalog_map = self._partition_items(payload)
-        self._transmit_delete(items_to_delete)
-        self._transmit_create(items_to_create, content_update_times_by_id, content_catalog_map)
-        self._transmit_update(items_to_update, transmission_map, content_update_times_by_id)
-
-    def _partition_items(self, channel_metadata_item_map):
-        """
-        Return items that need to be created, updated, and deleted along with the
-        current ContentMetadataItemTransmissions.
-        """
-        items_to_create = {}
-        items_to_update = {}
-        items_to_delete = {}
-        transmission_map = {}
-        content_catalog_map = {}
-        items_catalog_updated_times = {}
-        export_content_ids = channel_metadata_item_map.keys()
-
-        # Get the items that were previously transmitted to the integrated channel.
-        # If we are not transmitting something that was previously transmitted,
-        # we need to delete it from the integrated channel.
-        for transmission in self._get_transmissions():
-            transmission_map[transmission.content_id] = transmission
-            if transmission.content_id not in export_content_ids:
-                items_to_delete[transmission.content_id] = transmission.channel_metadata
-
-        # Compare what is currently being transmitted to what was transmitted
-        # previously, identifying items that need to be created or updated.
-        skipped_content_ids = []
-        for item in channel_metadata_item_map.values():
-            content_id = item.content_id
-            channel_metadata = item.channel_metadata
-            transmitted_item = transmission_map.get(content_id, None)
-
-            if transmitted_item is not None:
-                if diff(channel_metadata, transmitted_item.channel_metadata):
-                    items_to_update[content_id] = channel_metadata
-                    items_catalog_updated_times[content_id] = item.content_last_changed
-                else:
-                    skipped_content_ids.append(content_id)
-            else:
-                items_to_create[content_id] = channel_metadata
-                content_catalog_map[content_id] = item.enterprise_customer_catalog_uuid
-                items_catalog_updated_times[content_id] = item.content_last_changed
-
-        if skipped_content_ids:
-            LOGGER.info(
-                f'Transmitter skipping transmission of {skipped_content_ids} as no changes from previous transmission '
-                f'were found'
-            )
         LOGGER.info(
-            'Preparing to transmit creation of [%s] content metadata items with plugin configuration [%s]: [%s]',
-            len(items_to_create),
-            self.enterprise_configuration,
-            list(items_to_create.keys()),
+            f'Transmitting delete payload: {delete_payload} for customer: '
+            f'{self.enterprise_configuration.enterprise_customer.uuid}'
         )
-        LOGGER.info(
-            'Preparing to transmit update of [%s] content metadata items with plugin configuration [%s]: [%s]',
-            len(items_to_update),
-            self.enterprise_configuration,
-            list(items_to_update.keys()),
-        )
-        LOGGER.info(
-            'Preparing to transmit deletion of [%s] content metadata items with plugin configuration [%s]: [%s]',
-            len(items_to_delete),
-            self.enterprise_configuration,
-            list(items_to_delete.keys()),
-        )
+        self._transmit_delete(delete_payload)
 
-        return items_to_create, items_to_update, items_to_delete, transmission_map, items_catalog_updated_times, \
-            content_catalog_map
+        LOGGER.info(
+            f'Transmitting create payload: {create_payload} for customer: '
+            f'{self.enterprise_configuration.enterprise_customer.uuid}'
+        )
+        self._transmit_create(create_payload, content_updated_mapping)
+
+        LOGGER.info(
+            f'Transmitting update payload: {update_payload} for customer: '
+            f'{self.enterprise_configuration.enterprise_customer.uuid}'
+        )
+        self._transmit_update(update_payload)
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         """
@@ -129,7 +74,7 @@ class ContentMetadataTransmitter(Transmitter):
             sort_keys=True
         ).encode('utf-8')
 
-    def _transmit_create(self, channel_metadata_item_map, items_catalog_updated_times, content_catalog_map):
+    def _transmit_create(self, channel_metadata_item_map, content_updated_mapping):
         """
         Transmit content metadata creation to integrated channel.
         """
@@ -153,13 +98,14 @@ class ContentMetadataTransmitter(Transmitter):
                 )
                 LOGGER.exception(exc)
             else:
-                self._create_transmissions(chunk, items_catalog_updated_times, content_catalog_map)
+                self._create_transmissions(chunk, content_updated_mapping)
 
-    def _transmit_update(self, channel_metadata_item_map, transmission_map, items_catalog_updated_times):
+    def _transmit_update(self, update_payload):
         """
         Transmit content metadata update to integrated channel.
         """
-        chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
+        updated_metadata_mapping = {key: item.channel_metadata for key, item in update_payload.items()}
+        chunk_items = chunks(updated_metadata_mapping, self.enterprise_configuration.transmission_chunk_size)
         transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
             self.enterprise_configuration.channel_code()
         )
@@ -179,13 +125,14 @@ class ContentMetadataTransmitter(Transmitter):
                 )
                 LOGGER.exception(exc)
             else:
-                self._update_transmissions(chunk, transmission_map, items_catalog_updated_times)
+                self._update_transmissions(update_payload, chunk)
 
     def _transmit_delete(self, channel_metadata_item_map):
         """
         Transmit content metadata deletion to integrated channel.
         """
-        chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
+        items_to_delete = {key: item.channel_metadata for key, item in channel_metadata_item_map.items()}
+        chunk_items = chunks(items_to_delete, self.enterprise_configuration.transmission_chunk_size)
         transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
             self.enterprise_configuration.channel_code()
         )
@@ -207,21 +154,7 @@ class ContentMetadataTransmitter(Transmitter):
             else:
                 self._delete_transmissions(chunk.keys())
 
-    def _get_transmissions(self):
-        """
-        Return the ContentMetadataItemTransmission models for previously
-        transmitted content metadata items.
-        """
-        ContentMetadataItemTransmission = apps.get_model(
-            'integrated_channel',
-            'ContentMetadataItemTransmission'
-        )
-        return ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            integrated_channel_code=self.enterprise_configuration.channel_code()
-        )
-
-    def _create_transmissions(self, content_metadata_item_map, items_catalog_updated_times, content_catalog_map):
+    def _create_transmissions(self, content_metadata_item_map, content_updated_mapping):
         """
         Create ContentMetadataItemTransmission models for the given content metadata items.
         """
@@ -229,29 +162,60 @@ class ContentMetadataTransmitter(Transmitter):
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
-        transmissions = []
+        create_transmissions = []
+        reactivate_transmissions = []
         for content_id, channel_metadata in content_metadata_item_map.items():
-            transmissions.append(
-                ContentMetadataItemTransmission(
-                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                    integrated_channel_code=self.enterprise_configuration.channel_code(),
-                    content_id=content_id,
-                    channel_metadata=channel_metadata,
-                    content_last_changed=items_catalog_updated_times.get(content_id),
-                    enterprise_customer_catalog_uuid=content_catalog_map.get(content_id)
-                )
+            LOGGER.info(
+                f'Creating content transmission record for course: {content_id} under enterprise customer: '
+                f'{self.enterprise_configuration.enterprise_customer.uuid}.'
             )
-        ContentMetadataItemTransmission.objects.bulk_create(transmissions)
 
-    def _update_transmissions(self, content_metadata_item_map, transmission_map, items_catalog_updated_times):
+            past_transmission = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+                enterprise_customer_catalog_uuid=content_updated_mapping.get(content_id).get('catalog_uuid'),
+                deleted_at__isnull=False,
+            )
+
+            if past_transmission.first():
+                LOGGER.info(
+                    f'Found previously deleted content record while creating record for course: {content_id}'
+                    f'under customer: {self.enterprise_configuration.enterprise_customer.uuid}'
+                )
+                past_transmission.deleted_at = None
+                past_transmission.channel_metadata = channel_metadata
+                past_transmission.content_last_changed = content_updated_mapping.get(content_id)
+                reactivate_transmissions.append(past_transmission.save())
+            else:
+                create_transmissions.append(
+                    ContentMetadataItemTransmission(
+                        enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                        integrated_channel_code=self.enterprise_configuration.channel_code(),
+                        content_id=content_id,
+                        channel_metadata=channel_metadata,
+                        content_last_changed=content_updated_mapping.get(content_id).get('modified'),
+                        enterprise_customer_catalog_uuid=content_updated_mapping.get(content_id).get('catalog_uuid')
+                    )
+                )
+        ContentMetadataItemTransmission.objects.bulk_create(create_transmissions)
+        ContentMetadataItemTransmission.objects.bulk_update(
+            reactivate_transmissions,
+            ['deleted_at', 'channel_metadata', 'content_last_changed']
+        )
+
+    def _update_transmissions(self, update_payload, content_metadata_item_map):
         """
         Update ContentMetadataItemTransmission models for the given content metadata items.
         """
-        for content_id, channel_metadata in content_metadata_item_map.items():
-            transmission = transmission_map[content_id]
-            transmission.channel_metadata = channel_metadata
-            transmission.content_last_changed = items_catalog_updated_times[content_id]
-            transmission.save()
+        for content_id in content_metadata_item_map.keys():
+            transmission = update_payload.get(content_id)
+            if transmission:
+                LOGGER.info(
+                    f'Updating content transmission record for course: {content_id} under enterprise customer: '
+                    f'{self.enterprise_configuration.enterprise_customer.uuid}.'
+                )
+                transmission.save()
 
     def _delete_transmissions(self, content_metadata_item_ids):
         """
@@ -261,8 +225,12 @@ class ContentMetadataTransmitter(Transmitter):
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
+        LOGGER.info(
+            f'Marking content transmission record for courses: {content_metadata_item_ids} as deleted for customer: '
+            f'{self.enterprise_configuration.enterprise_customer.uuid}'
+        )
         ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
-            content_id__in=content_metadata_item_ids
-        ).delete()
+            content_id__in=content_metadata_item_ids,
+        ).update(deleted_at=datetime.now())

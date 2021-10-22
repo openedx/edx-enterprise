@@ -11,8 +11,13 @@ import responses
 from pytest import mark
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
-from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
+from test_utils import factories
+from test_utils.fake_catalog_api import (
+    FAKE_COURSE,
+    FAKE_COURSE_RUN,
+    get_fake_catalog_diff_create,
+    get_fake_content_metadata,
+)
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 GENERIC_CONTENT_METADATA_ITEM = {
@@ -48,26 +53,26 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog')
-    def test_content_exporter_export(self, mock_get_enterprise_catalog, mock_get_content_metadata):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_export(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         ``CanvasContentMetadataExporter``'s ``export`` produces the expected export.
         """
         mock_get_content_metadata.return_value = get_fake_content_metadata()
-        mock_get_enterprise_catalog.return_value = get_fake_catalog()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
 
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
-        content_items = exporter.export()
-        assert sorted(list(content_items.keys())) == sorted([
-            'edX+DemoX',
-            'course-v1:edX+DemoX+Demo_Course',
-            FAKE_UUIDS[3],
-        ])
+        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        for key in create_payload:
+            assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
+            assert key in content_updated_mapping
+        assert not update_payload
+        assert not delete_payload
 
-        for item in content_items.values():
+        for item in create_payload.values():
             self.assertTrue(
                 set(['syllabus_body', 'default_view', 'name'])
-                .issubset(set(item.channel_metadata.keys()))
+                .issubset(set(item.keys()))
             )
 
     @ddt.data(
