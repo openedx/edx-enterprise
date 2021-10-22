@@ -53,6 +53,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             message,
         )
 
+    def get_oauth_url(self):
+        config = self.enterprise_configuration
+        base_url = config.degreed_token_fetch_base_url or config.degreed_base_url
+        return urljoin(base_url, self.oauth_api_path)
+
+    def get_courses_url(self):
+        return urljoin(self.enterprise_configuration.degreed_base_url, self.courses_api_path)
+
     def create_assessment_reporting(self, user_id, payload):
         """
         Not implemented yet.
@@ -85,7 +93,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If Degreed API request fails.
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        a_course = channel_metadata_item['courses']
+        # only expect one course in this array as of now (chunk size is 1)
+        a_course = channel_metadata_item['courses'][0]
         status_code, response_body = self._sync_content_metadata(a_course, 'post')
         if status_code == 409:
             # course already exists, don't raise failure, but log and move on
@@ -99,6 +108,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             raise ClientError(
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}'
             )
+        return status_code, response_body
 
     def update_content_metadata(self, serialized_data):
         """
@@ -111,7 +121,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If Degreed API request fails.
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        self._sync_content_metadata(channel_metadata_item['courses'], 'patch')
+        self._sync_content_metadata(channel_metadata_item['courses'][0], 'patch')
 
     def delete_content_metadata(self, serialized_data):
         """
@@ -124,14 +134,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If Degreed API request fails.
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        self._sync_content_metadata(channel_metadata_item['courses'], 'delete')
+        self._sync_content_metadata(channel_metadata_item['courses'][0], 'delete')
 
     def _sync_content_metadata(self, json_payload, http_method):
         """
         Synchronize content metadata using the Degreed course content API.
 
         Args:
-            json_payload: JSON object containing content metadata.
+            json_payload: JSON object containing content metadata converted into Degreed2 form.
             http_method: The HTTP method to use for the API request.
 
         Raises:
@@ -143,9 +153,10 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 "attributes": json_payload,
             }
         }
+        LOGGER.info(f'About to post payload: {json_to_send}')
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
-                urljoin(self.enterprise_configuration.degreed_base_url, self.courses_api_path),
+                self.get_courses_url(),
                 json_to_send,
                 self.ALL_DESIRED_SCOPES
             )
@@ -226,9 +237,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If an unexpected response format was received that we could not parse.
         """
         config = self.enterprise_configuration
-        base_url = config.degreed_token_fetch_base_url or config.degreed_base_url
         response = requests.post(
-            urljoin(base_url, self.oauth_api_path),
+            self.get_oauth_url(),
             data={
                 'grant_type': 'client_credentials',
                 'scope': scope,

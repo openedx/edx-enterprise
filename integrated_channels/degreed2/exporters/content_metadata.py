@@ -29,8 +29,11 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         'language': 'content_language',
         'external-id': 'key',
         'duration': 'duration',
-        'duration-type': 'Days',
+        'duration-type': 'duration_type',
     }
+
+    def transform_duration_type(self, content_metadata_item):  # pylint: disable=unused-argument
+        return 'Days'
 
     def transform_duration(self, content_metadata_item):
         """

@@ -25,5 +25,5 @@ class Degreed2ContentMetadataTransmitter(ContentMetadataTransmitter):
         # similar to canvas, we can't create courses in bulk hence limiting to size 1
         # this of course only is accurate if transmission chunk size is 1
         return {
-            'courses': channel_metadata_items[0],
+            'courses': [channel_metadata_items[0]],
         }
