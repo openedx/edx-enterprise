@@ -11,7 +11,6 @@ from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.http.request import QueryDict
-from integrated_channels.api.v1 import degreed
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
