@@ -10,6 +10,8 @@ import requests
 from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
+from django.http.request import QueryDict
+from integrated_channels.api.v1 import degreed
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -82,6 +84,31 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Not implemented yet
         """
 
+    def fetch_degreed_course_id(self, external_id):
+        """
+        Fetch the 'id' of a course from Degreed2, given the external-id as a search param
+        'external-id' is the edX course key
+        """
+        # QueryDict converts + to space
+        params = QueryDict(f"filter[external_id]={external_id.replace('+','%2B')}")
+        course_search_url = f'{self.get_courses_url()}?{params.urlencode(safe="[]")}'
+        LOGGER.info(f'Degreed2: Attempting find course via url: {course_search_url}')
+        status_code, response_body = self._get(
+            course_search_url,
+            self.ALL_DESIRED_SCOPES
+        )
+        if status_code >= 400:
+            raise ClientError(
+                f'Degreed2: fetch request failed: attempted, external ID={external_id},'
+                f'received status_code={status_code}'
+            )
+        response_json = json.loads(response_body)
+        if response_json['data']:
+            return response_json['data'][0]['id']
+        raise ClientError(
+            f'Degreed2: Attempted to find degreed course id but failed, external id was {external_id}'
+            f', Response from Degreed was {response_body}')
+
     def create_content_metadata(self, serialized_data):
         """
         Create content metadata using the Degreed course content API.
@@ -95,7 +122,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
         # only expect one course in this array as of now (chunk size is 1)
         a_course = channel_metadata_item['courses'][0]
-        status_code, response_body = self._sync_content_metadata(a_course, 'post')
+        status_code, response_body = self._sync_content_metadata(a_course, 'post', self.get_courses_url())
         if status_code == 409:
             # course already exists, don't raise failure, but log and move on
             LOGGER.warning(
@@ -121,7 +148,28 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If Degreed API request fails.
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        self._sync_content_metadata(channel_metadata_item['courses'][0], 'patch')
+        course_item = channel_metadata_item['courses'][0]
+        external_id = course_item.get('external-id')
+
+        course_id = self.fetch_degreed_course_id(external_id)
+        if not course_id:
+            raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
+
+        patch_url = f'{self.get_courses_url()}/{course_id}'
+        LOGGER.info(f'Degreed2: Attempting course delete via {patch_url}')
+        patch_status_code, patch_response_body = self._sync_content_metadata(
+            course_item,
+            'patch',
+            patch_url,
+            course_id
+        )
+        if patch_status_code >= 400:
+            raise ClientError(
+                f'Degreed2: patch request failed: attempted, external ID={external_id},'
+                f'status_code={patch_status_code}'
+                f'response_body={patch_response_body}'
+            )
+        return patch_status_code, patch_response_body
 
     def delete_content_metadata(self, serialized_data):
         """
@@ -133,16 +181,54 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Raises:
             ClientError: If Degreed API request fails.
         """
+        # {{base_api_url}}/api/v2/content/courses?filter[external_id]=course-v1%3AedX%2B444555666%2B3T2021
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        self._sync_content_metadata(channel_metadata_item['courses'][0], 'delete')
+        course_item = channel_metadata_item['courses'][0]
+        external_id = course_item.get('external-id')
 
-    def _sync_content_metadata(self, json_payload, http_method):
+        del_status_code = None
+        del_response_body = ''
+        try:
+            course_id = self.fetch_degreed_course_id(external_id)
+            if not course_id:
+                raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
+
+            del_url = f'{self.get_courses_url()}/{course_id}'
+            LOGGER.info(f'Degreed2: Attempting course delete via {del_url}')
+            del_status_code, del_response_body = self._delete(
+                del_url,
+                None,
+                self.ALL_DESIRED_SCOPES
+            )
+            if del_status_code >= 400:
+                raise ClientError(
+                    f'Degreed2: delete request failed: attempted, external ID={external_id},'
+                    f'status_code={del_status_code}'
+                    f'response_body={del_response_body}'
+                )
+        except requests.exceptions.RequestException as exc:
+            raise ClientError(
+                'Degreed2APIClient delete request failed: {error} {message}'.format(
+                    error=exc.__class__.__name__,
+                    message=str(exc)
+                )
+            ) from exc
+
+        return del_status_code, del_response_body
+
+    def _sync_content_metadata(self, course_attributes, http_method, override_url, degreed_course_id=None):
         """
         Synchronize content metadata using the Degreed course content API.
+        Invokes the Create/Update operations of degreed api
+        Used for create course, and update course use cases
+        The json sent contains
 
         Args:
-            json_payload: JSON object containing content metadata converted into Degreed2 form.
+            course_attributes: JSON object containing content metadata converted into
+              Degreed2 'attributes' in the payload.
             http_method: The HTTP method to use for the API request.
+            override_url: uses this url to post to
+            course_id: used to append at the end of the url as /ID if provided
 
         Raises:
             ClientError: If Degreed API request fails.
@@ -150,13 +236,18 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         json_to_send = {
             "data": {
                 "type": "content/courses",
-                "attributes": json_payload,
+                "attributes": course_attributes,
             }
         }
+
+        # useful for update use case
+        if degreed_course_id:
+            json_to_send['data']['id'] = degreed_course_id
+
         LOGGER.info(f'About to post payload: {json_to_send}')
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
-                self.get_courses_url(),
+                override_url,
                 json_to_send,
                 self.ALL_DESIRED_SCOPES
             )
@@ -168,6 +259,20 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 )
             ) from exc
         return status_code, response_body
+
+    def _get(self, url, scope):
+        """
+        Make a GET request using the session object to a Degreed2 endpoint.
+
+        Args:
+            url (str): The url to send a GET request to.
+            scope (str): Must be one of the scopes Degreed expects:
+                        - `CONTENT_WRITE_SCOPE`
+                        - `CONTENT_READ_SCOPE`
+        """
+        self._create_session(scope)
+        response = self.session.get(url)
+        return response.status_code, response.text
 
     def _post(self, url, data, scope):
         """
@@ -205,13 +310,13 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
         Args:
             url (str): The url to send a DELETE request to.
-            data (str): The json payload to DELETE.
+            data (str): The json payload to DELETE. None means nothing is sent in payload.
             scope (str): Must be one of the scopes Degreed expects:
                         - `CONTENT_PROVIDER_SCOPE`
                         - `COMPLETION_PROVIDER_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.delete(url, json=data)
+        response = self.session.delete(url, json=data) if data else self.session.delete(url)
         return response.status_code, response.text
 
     def _create_session(self, scope):
