@@ -399,19 +399,13 @@ class TestDegreed2ApiClient(unittest.TestCase):
         """
         A ``requests.RequestException`` is raised when the call for an OAuth2 access token returns no data.
         """
-        responses.add(
-            responses.POST,
-            self.oauth_url,
-            json={},
-            status=200
-        )
-        responses.add(
-            responses.DELETE,
-            self.course_url,
-            json={},
-            status=200
-        )
 
         degreed_api_client = Degreed2APIClient(self.enterprise_config)
+        responses.add(
+            responses.POST,
+            degreed_api_client.get_oauth_url(),
+            json={},
+            status=200
+        )
         with pytest.raises(ClientError):
-            degreed_api_client.delete_content_metadata({})
+            degreed_api_client._get('http://test', 'scope')  # pylint: disable=protected-access
