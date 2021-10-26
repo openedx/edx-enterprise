@@ -79,7 +79,7 @@ class TestUtils(unittest.TestCase):
             {'status': 500, 'error_messages': None},
         )
 
-        self.x_api_client.lrs.save_statement.assert_called()
+        self.x_api_client.lrs.save_statement.assert_called()  # pylint: disable=no-member
 
     @mock.patch('integrated_channels.xapi.client.RemoteLRS', mock.MagicMock())
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
@@ -139,7 +139,7 @@ class TestUtils(unittest.TestCase):
             {'status': 500, 'error_message': None}
         )
 
-        self.x_api_client.lrs.save_statement.assert_called()
+        self.x_api_client.lrs.save_statement.assert_called()  # pylint: disable=no-member
 
     def test_is_success_response(self):
         """
