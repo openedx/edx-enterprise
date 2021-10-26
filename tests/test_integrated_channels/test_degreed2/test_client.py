@@ -237,35 +237,35 @@ class TestDegreed2ApiClient(unittest.TestCase):
         assert response_body == '"{}"'
 
     @responses.activate
-    def test_delete_content_metadata(self):
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_delete_content_metadata(self, mock_fetch_degreed_course_id):
         """
         ``delete_content_metadata`` should use the appropriate URLs for transmission.
         """
+        mock_fetch_degreed_course_id.return_value = 'a_course_id'
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
         responses.add(
             responses.POST,
-            self.oauth_url,
+            oauth_url,
             json=self.expected_token_response_body,
             status=200
         )
         responses.add(
             responses.DELETE,
-            self.course_url,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
             json='{}',
             status=200
         )
 
-        payload = {
-            'orgCode': 'org-code',
-            'providerCode': 'provider-code',
-            'courses': [{
-                'contentId': 'content-id',
-            }],
-        }
-        degreed_api_client = Degreed2APIClient(self.enterprise_config)
-        degreed_api_client.delete_content_metadata(payload)
+        status_code, response_body = degreed_api_client.delete_content_metadata(create_course_payload())
         assert len(responses.calls) == 2
-        assert responses.calls[0].request.url == self.oauth_url
-        assert responses.calls[1].request.url == self.course_url
+        assert responses.calls[0].request.url == oauth_url
+        assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+        assert status_code == 200
+        assert response_body == '"{}"'
 
     @responses.activate
     def test_degreed_api_connection_error(self):
