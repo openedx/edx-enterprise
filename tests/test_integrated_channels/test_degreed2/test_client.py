@@ -332,34 +332,19 @@ class TestDegreed2ApiClient(unittest.TestCase):
         Make a call, have the token expire after waiting some time (technically no time since time is frozen),
         and make a call again and notice 2 OAuth calls in total are required.
         """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
         responses.add(
             responses.POST,
-            self.oauth_url,
+            degreed_api_client.get_oauth_url(),
             json={"expires_in": 0, "access_token": self.access_token},
             status=200
         )
-        responses.add(
-            responses.DELETE,
-            self.course_url,
-            json='{}',
-            status=200
-        )
 
-        payload = {
-            'orgCode': 'org-code',
-            'providerCode': 'provider-code',
-            'courses': [{
-                'contentId': 'content-id',
-            }],
-        }
-        degreed_api_client = Degreed2APIClient(self.enterprise_config)
-        degreed_api_client.delete_content_metadata(payload)
-        degreed_api_client.delete_content_metadata(payload)
-        assert len(responses.calls) == 4
-        assert responses.calls[0].request.url == self.oauth_url
-        assert responses.calls[1].request.url == self.course_url
-        assert responses.calls[2].request.url == self.oauth_url
-        assert responses.calls[3].request.url == self.course_url
+        degreed_api_client._create_session('scope')  # pylint: disable=protected-access
+        degreed_api_client._create_session('scope')  # pylint: disable=protected-access
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
+        assert responses.calls[1].request.url == degreed_api_client.get_oauth_url()
 
     @responses.activate
     def test_existing_token_is_valid(self):
