@@ -27,7 +27,7 @@ class Degreed2LearnerExporter(LearnerExporter):
             **kwargs
     ):  # pylint: disable=arguments-differ
         """
-        Return a DegreedLearnerDataTransmissionAudit with the given enrollment and course completion data.
+        Return a Degreed2LearnerDataTransmissionAudit with the given enrollment and course completion data.
 
         If no remote ID can be found, return None.
         """

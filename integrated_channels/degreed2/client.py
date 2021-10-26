@@ -45,6 +45,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         app_config = apps.get_app_config('degreed2')
         self.oauth_api_path = app_config.oauth_api_path
         self.courses_api_path = app_config.courses_api_path
+        self.completions_api_path = app_config.completions_api_path
         # to log without having to pass channel_name, ent_customer_uuid each time
         self.make_log_msg = lambda course_key, message, lms_user_id=None: generate_formatted_log(
             'degreed2',
@@ -62,6 +63,9 @@ class Degreed2APIClient(IntegratedChannelApiClient):
     def get_courses_url(self):
         return urljoin(self.enterprise_configuration.degreed_base_url, self.courses_api_path)
 
+    def get_completions_url(self):
+        return urljoin(self.enterprise_configuration.degreed_base_url, self.completions_api_path)
+
     def create_assessment_reporting(self, user_id, payload):
         """
         Not implemented yet.
@@ -75,8 +79,41 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def create_course_completion(self, user_id, payload):
         """
-        Not implemented yet
+        Completions status for a learner
+        Ref: https://api.degreed.com/docs/#create-a-new-completion
+
+        Arguments:
+            - user_id: learner's id
+            - payload: (dict) with keys:
+                 {
+                     degreed_user_email,
+                     course_id,
+                     completed_timestamp, (in the format "2018-08-01T00:00:00")
+                 }
+        Returns: status_code, response_text
         """
+        completion_audit_item = json.loads(payload)
+        json_payload = {
+            "data": {
+                "attributes": {
+                    "user-id": user_id,
+                    "user-identifier-type": "Email",
+                    "content-id": completion_audit_item.get('course_id'),
+                    "content-id-type": "externalId",
+                    "content-type": "course",
+                    "completed-at": completion_audit_item.get('completed_timestamp'),
+                }
+            }
+        }
+        LOGGER.info(self.make_log_msg(
+            completion_audit_item.get('course_id'),
+            f'Attempting find course via url: {self.get_completions_url()}')
+        )
+        return self._post(
+            self.get_completions_url(),
+            json_payload,
+            self.ALL_DESIRED_SCOPES
+        )
 
     def delete_course_completion(self, user_id, payload):
         """
@@ -91,7 +128,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         # QueryDict converts + to space
         params = QueryDict(f"filter[external_id]={external_id.replace('+','%2B')}")
         course_search_url = f'{self.get_courses_url()}?{params.urlencode(safe="[]")}'
-        LOGGER.info(f'Degreed2: Attempting find course via url: {course_search_url}')
+        LOGGER.info(self.make_log_msg(external_id, f'Attempting find course via url: {course_search_url}'))
         status_code, response_body = self._get(
             course_search_url,
             self.ALL_DESIRED_SCOPES
@@ -155,7 +192,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
 
         patch_url = f'{self.get_courses_url()}/{course_id}'
-        LOGGER.info(f'Degreed2: Attempting course delete via {patch_url}')
+        LOGGER.info(self.make_log_msg(external_id, f'Attempting course delete via {patch_url}'))
         patch_status_code, patch_response_body = self._sync_content_metadata(
             course_item,
             'patch',
@@ -193,7 +230,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
 
             del_url = f'{self.get_courses_url()}/{course_id}'
-            LOGGER.info(f'Degreed2: Attempting course delete via {del_url}')
+            LOGGER.info(self.make_log_msg(external_id, f'Attempting course delete via {del_url}'))
             del_status_code, del_response_body = self._delete(
                 del_url,
                 None,
@@ -243,7 +280,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         if degreed_course_id:
             json_to_send['data']['id'] = degreed_course_id
 
-        LOGGER.info(f'About to post payload: {json_to_send}')
+        LOGGER.info(self.make_log_msg('', f'About to post payload: {json_to_send}'))
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
                 override_url,
@@ -279,7 +316,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
         Args:
             url (str): The url to send a POST request to.
-            data (str): The json payload to POST.
+            data (dict): The json payload to POST.
             scope (str): Must be one of the scopes Degreed expects:
                         - `CONTENT_WRITE_SCOPE`
                         - `CONTENT_READ_SCOPE`

@@ -88,34 +88,33 @@ class TestDegreed2ApiClient(unittest.TestCase):
         """
         ``create_course_completion`` should use the appropriate URLs for transmission.
         """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
         responses.add(
             responses.POST,
-            self.oauth_url,
+            degreed_api_client.get_oauth_url(),
             json=self.expected_token_response_body,
             status=200
         )
         responses.add(
             responses.POST,
-            self.completion_status_url,
+            degreed_api_client.get_completions_url(),
             json='{}',
             status=200
         )
 
         payload = {
-            'orgCode': self.company_id,
             'completions': [{
                 'employeeId': 'abc123',
                 'id': "course-v1:ColumbiaX+DS101X+1T2016",
                 'completionDate': NOW_TIMESTAMP_FORMATTED,
             }]
         }
-        degreed_api_client = Degreed2APIClient(self.enterprise_config)
         output = degreed_api_client.create_course_completion('fake-user', json.dumps(payload))
 
         assert output == (200, '"{}"')
         assert len(responses.calls) == 2
-        assert responses.calls[0].request.url == self.oauth_url
-        assert responses.calls[1].request.url == self.completion_status_url
+        assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
+        assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
 
     @responses.activate
     def test_delete_course_completion(self):
