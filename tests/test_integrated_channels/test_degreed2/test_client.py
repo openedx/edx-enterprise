@@ -272,9 +272,10 @@ class TestDegreed2ApiClient(unittest.TestCase):
         """
         ``create_content_metadata`` should raise ClientError when API request fails with a connection error.
         """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
         responses.add(
             responses.POST,
-            self.oauth_url,
+            degreed_api_client.get_oauth_url(),
             json=self.expected_token_response_body,
             status=200
         )
@@ -284,15 +285,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
             body=requests.exceptions.RequestException()
         )
 
-        payload = {
-            'orgCode': 'org-code',
-            'providerCode': 'provider-code',
-            'courses': [{
-                'contentId': 'content-id',
-            }],
-        }
+        payload = create_course_payload()
         with pytest.raises(ClientError):
-            degreed_api_client = Degreed2APIClient(self.enterprise_config)
             degreed_api_client.create_content_metadata(payload)
 
     @responses.activate
@@ -300,9 +294,10 @@ class TestDegreed2ApiClient(unittest.TestCase):
         """
         ``create_content_metadata`` should raise ClientError when API request fails with an application error.
         """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
         responses.add(
             responses.POST,
-            self.oauth_url,
+            degreed_api_client.get_oauth_url(),
             json=self.expected_token_response_body,
             status=200
         )
@@ -313,15 +308,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
             status=400
         )
 
-        payload = {
-            'orgCode': 'org-code',
-            'providerCode': 'provider-code',
-            'courses': [{
-                'contentId': 'content-id',
-            }],
-        }
+        payload = create_course_payload()
         with pytest.raises(ClientError):
-            degreed_api_client = Degreed2APIClient(self.enterprise_config)
             degreed_api_client.create_content_metadata(payload)
 
     @responses.activate
