@@ -5,7 +5,7 @@ enterprise_learner_portal serializer
 
 from rest_framework import serializers
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise_learner_portal.utils import get_course_run_status

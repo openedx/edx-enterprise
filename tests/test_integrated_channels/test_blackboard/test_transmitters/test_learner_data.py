@@ -7,6 +7,7 @@ import unittest
 import mock
 from pytest import mark
 
+
 from integrated_channels.blackboard.models import (
     BlackboardLearnerAssessmentDataTransmissionAudit,
     BlackboardLearnerDataTransmissionAudit,

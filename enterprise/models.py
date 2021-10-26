@@ -36,8 +36,8 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_text
 from django.utils.functional import cached_property, lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
@@ -699,7 +699,7 @@ class EnterpriseCustomer(TimeStampedModel):
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
             LOGGER.warning(
-                ugettext("Course details were not found for course key {} - Course Catalog API returned nothing. "
+                gettext("Course details were not found for course key {} - Course Catalog API returned nothing. "
                          "Proceeding with enrollment, but notifications won't be sent").format(course_id)
             )
             return

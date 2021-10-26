@@ -6,7 +6,7 @@ Enterprise Integrated Channel management commands.
 from collections import OrderedDict
 
 from django.core.management.base import CommandError
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise.models import EnterpriseCustomer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration

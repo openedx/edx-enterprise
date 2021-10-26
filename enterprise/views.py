@@ -31,7 +31,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.utils.translation import get_language_from_request
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
 from django.views.generic.edit import FormView

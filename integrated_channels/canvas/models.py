@@ -12,7 +12,7 @@ from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from integrated_channels.canvas.exporters.learner_data import CanvasLearnerExporter

@@ -5,7 +5,7 @@ Utility functions for interfacing with the Django messages framework.
 
 from django.conf import settings
 from django.contrib import messages
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise.utils import get_configuration_value
 

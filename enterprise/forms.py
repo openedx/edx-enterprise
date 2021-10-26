@@ -6,7 +6,7 @@ User-facing forms for the Enterprise app.
 import logging
 
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 
