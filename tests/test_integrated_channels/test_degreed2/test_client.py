@@ -73,12 +73,12 @@ class TestDegreed2ApiClient(unittest.TestCase):
     @responses.activate
     def test_oauth_with_non_json_response(self):
         """ Test  _get_oauth_access_token with non json type response"""
+        client = Degreed2APIClient(self.enterprise_config)
         with pytest.raises(ClientError):
             responses.add(
                 responses.POST,
-                self.oauth_url,
+                client.get_oauth_url(),
             )
-            client = Degreed2APIClient(self.enterprise_config)
             client._get_oauth_access_token(  # pylint: disable=protected-access
                 Degreed2APIClient.ALL_DESIRED_SCOPES
             )
