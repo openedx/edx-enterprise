@@ -366,33 +366,18 @@ class TestDegreed2ApiClient(unittest.TestCase):
         """
         On a second call in the same session, if the token isn't expired we shouldn't need to do another OAuth2 call.
         """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
         responses.add(
             responses.POST,
-            self.oauth_url,
+            degreed_api_client.get_oauth_url(),
             json=self.expected_token_response_body,
             status=200
         )
-        responses.add(
-            responses.DELETE,
-            self.course_url,
-            json='{}',
-            status=200
-        )
 
-        payload = {
-            'orgCode': 'org-code',
-            'providerCode': 'provider-code',
-            'courses': [{
-                'contentId': 'content-id',
-            }],
-        }
-        degreed_api_client = Degreed2APIClient(self.enterprise_config)
-        degreed_api_client.delete_content_metadata(payload)
-        degreed_api_client.delete_content_metadata(payload)
-        assert len(responses.calls) == 3
-        assert responses.calls[0].request.url == self.oauth_url
-        assert responses.calls[1].request.url == self.course_url
-        assert responses.calls[2].request.url == self.course_url
+        degreed_api_client._create_session('scope')  # pylint: disable=protected-access
+        degreed_api_client._create_session('scope')  # pylint: disable=protected-access
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
 
     @responses.activate
     def test_oauth_response_missing_keys(self):
