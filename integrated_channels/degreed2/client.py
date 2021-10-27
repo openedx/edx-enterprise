@@ -117,7 +117,9 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def delete_course_completion(self, user_id, payload):
         """
-        Not implemented yet
+        Not implemented yet. deletion requires completion ID. We don't have a way to get the ID right now.
+        So we may need to store id on our side to be able to do this.
+        https://api.degreed.com/docs/#delete-a-specific-completion
         """
 
     def fetch_degreed_course_id(self, external_id):

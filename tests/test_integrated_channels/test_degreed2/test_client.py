@@ -119,35 +119,11 @@ class TestDegreed2ApiClient(unittest.TestCase):
     @responses.activate
     def test_delete_course_completion(self):
         """
-        ``delete_course_completion`` should use the appropriate URLs for transmission.
+        TODO this feature isn't implemented yet.
         """
-        responses.add(
-            responses.POST,
-            self.oauth_url,
-            json=self.expected_token_response_body,
-            status=200
-        )
-        responses.add(
-            responses.DELETE,
-            self.completion_status_url,
-            json='{}',
-            status=200
-        )
-
-        payload = {
-            'orgCode': self.company_id,
-            'completions': [{
-                'employeeId': 'abc123',
-                'id': "course-v1:ColumbiaX+DS101X+1T2016",
-            }]
-        }
-        degreed_api_client = Degreed2APIClient(self.enterprise_config)
-        output = degreed_api_client.delete_course_completion('fake-user', json.dumps(payload))
-
-        assert output == (200, '"{}"')
-        assert len(responses.calls) == 2
-        assert responses.calls[0].request.url == self.oauth_url
-        assert responses.calls[1].request.url == self.completion_status_url
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        degreed_api_client.delete_course_completion(None, None)
 
     @responses.activate
     def test_create_content_metadata_success(self):
