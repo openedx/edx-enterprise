@@ -5,7 +5,6 @@ Database models for Enterprise Integrated Channel Degreed.
 
 from logging import getLogger
 
-from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 
 from django.db import models
