@@ -121,6 +121,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         So we may need to store id on our side to be able to do this.
         https://api.degreed.com/docs/#delete-a-specific-completion
         """
+        pass
 
     def fetch_degreed_course_id(self, external_id):
         """
