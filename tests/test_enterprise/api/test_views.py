@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` api module.
 """
@@ -8,9 +7,10 @@ import uuid
 from datetime import datetime, timedelta
 from operator import itemgetter
 from smtplib import SMTPException
+from unittest import mock
+from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
-import mock
 import responses
 from faker import Faker
 from path import Path
@@ -18,7 +18,6 @@ from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
-from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -2873,13 +2872,13 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
                 'number_of_codes': '50',
                 'notes': 'Here are helping notes',
             },
-            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': u'50',
-             u'notes': u'Here are helping notes'},
+            {'email': 'johndoe@unknown.com', 'enterprise_name': 'Oracle', 'number_of_codes': '50',
+             'notes': 'Here are helping notes'},
             200,
             None,
             True,
-            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
-            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
+            'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            '\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         ),
         (
             # A valid request without codes
@@ -2889,13 +2888,13 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
                 'number_of_codes': None,
                 'notes': 'Here are helping notes',
             },
-            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': None,
-             u'notes': u'Here are helping notes'},
+            {'email': 'johndoe@unknown.com', 'enterprise_name': 'Oracle', 'number_of_codes': None,
+             'notes': 'Here are helping notes'},
             200,
             None,
             True,
-            u'johndoe@unknown.com from Oracle has requested additional codes. Please reach out to them.'
-            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
+            'johndoe@unknown.com from Oracle has requested additional codes. Please reach out to them.'
+            '\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         ),
         (
             # A valid request without notes
@@ -2905,12 +2904,12 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
                 'number_of_codes': '50',
                 'notes': None,
             },
-            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': u'50',
-             u'notes': None},
+            {'email': 'johndoe@unknown.com', 'enterprise_name': 'Oracle', 'number_of_codes': '50',
+             'notes': None},
             200,
             None,
             True,
-            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
         ),
         (
             # A bad request due to a missing field
@@ -2919,12 +2918,12 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
                 'number_of_codes': '50',
                 'notes': 'Here are helping notes',
             },
-            {u'error': u'Some required parameter(s) missing: enterprise_name'},
+            {'error': 'Some required parameter(s) missing: enterprise_name'},
             400,
             None,
             False,
-            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
-            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
+            'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            '\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         ),
         (
             # Email send issue
@@ -2934,12 +2933,12 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
                 'number_of_codes': '50',
                 'notes': 'Here are helping notes',
             },
-            {u'error': u'Request codes email could not be sent'},
+            {'error': 'Request codes email could not be sent'},
             500,
             SMTPException(),
             True,
-            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
-            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
+            'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            '\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         )
     )
     @ddt.unpack

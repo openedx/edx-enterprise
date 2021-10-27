@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Canvas content metadata exporters.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 import responses
 from pytest import mark
 
@@ -71,7 +70,7 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         for item in create_payload.values():
             self.assertTrue(
-                set(['syllabus_body', 'default_view', 'name'])
+                {'syllabus_body', 'default_view', 'name'}
                 .issubset(set(item.keys()))
             )
 

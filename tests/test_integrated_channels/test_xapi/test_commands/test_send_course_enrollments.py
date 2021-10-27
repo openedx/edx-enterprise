@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Test xAPI management command to send course enrollments data.
 """
 
 import unittest
 import uuid
+from unittest import mock
 
-import mock
 from faker import Factory as FakerFactory
 from pytest import mark, raises
 

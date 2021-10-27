@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the djagno management command `create_missing_dsc_records`.
 """

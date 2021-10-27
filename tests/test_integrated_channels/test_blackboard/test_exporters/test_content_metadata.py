@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Blackboard content metadata exporters.
 """
 
 import unittest
+from unittest import mock
 
-import mock
 from pytest import mark
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
@@ -58,7 +57,7 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
             assert key in content_updated_mapping
         assert not update_payload
         assert not delete_payload
-        expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()  # pylint: disable=dict-keys-not-iterating
+        expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()
         for item in create_payload.values():
             self.assertTrue(
                 set(expected_keys)

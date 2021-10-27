@@ -4,7 +4,7 @@ Remove duplicate transmitted assignments for the integrated channels.
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext as _
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
 from integrated_channels.integrated_channel.tasks import cleanup_duplicate_assignment_records

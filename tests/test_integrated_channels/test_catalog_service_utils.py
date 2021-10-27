@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the catalog_service_utils used by integration channels.
 """
 
 import unittest
+from unittest import mock
 
-import mock
 import pytest
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment

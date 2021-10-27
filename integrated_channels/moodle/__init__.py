@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The Moodle Integrated Channel package.
 """

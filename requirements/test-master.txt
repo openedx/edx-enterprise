@@ -179,7 +179,6 @@ edx-tincan-py35==1.0.0
 future==0.18.2
     # via
     #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
     #   pyjwkest
 idna==3.3
     # via
@@ -299,7 +298,6 @@ semantic-version==2.8.5
 six==1.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
     #   bleach
     #   click-repl
     #   edx-drf-extensions

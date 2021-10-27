@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Moodle learner data transmissions.
 """
 import unittest
+from unittest import mock
 
-import mock
 from pytest import mark
 
 from integrated_channels.moodle.models import MoodleLearnerDataTransmissionAudit
@@ -53,8 +52,6 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
         create_course_completion_mock = mock.patch(
             'integrated_channels.moodle.client.MoodleAPIClient.create_course_completion'
         )
-        self.create_course_completion_mock = create_course_completion_mock.start()
-        self.addCleanup(create_course_completion_mock.stop)
 
         self.create_course_completion_mock = create_course_completion_mock.start()
         self.addCleanup(create_course_completion_mock.stop)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for clients in integrated_channels.
 """
@@ -6,12 +5,12 @@ Tests for clients in integrated_channels.
 import datetime
 import json
 import unittest
+from urllib.parse import urljoin
 
 import pytest
 import requests
 import responses
 from freezegun import freeze_time
-from six.moves.urllib.parse import urljoin
 
 from django.utils import timezone
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the utilities used by integration channels.
 """
@@ -6,10 +5,10 @@ Tests for the utilities used by integration channels.
 import unittest
 from collections import namedtuple
 from datetime import timedelta
+from unittest import mock
 from unittest.mock import MagicMock, PropertyMock
 
 import ddt
-import mock
 from pytest import raises
 
 from enterprise.utils import parse_lms_api_datetime

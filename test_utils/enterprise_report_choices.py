@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Enterprise Django application tests constants.
 """

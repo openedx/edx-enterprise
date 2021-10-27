@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the SAPSF API Client.
 """
@@ -6,15 +5,15 @@ Tests for the SAPSF API Client.
 import datetime
 import json
 import unittest
+from unittest.mock import MagicMock
+from urllib.parse import urljoin
 
 import ddt
 import pytest
 import requests
 import responses
 from freezegun import freeze_time
-from mock.mock import MagicMock
 from pytest import mark, raises
-from six.moves.urllib.parse import urljoin
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient

@@ -2,9 +2,8 @@
 Tests for the `integrated_channels` Cornerstone configuration api.
 """
 import json
+from unittest import mock
 from uuid import uuid4
-
-import mock
 
 from django.urls import reverse
 

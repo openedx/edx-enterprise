@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `integrated_channels.cornerstone.models` models module.
 """
 
 import unittest
+from unittest import mock
 
-import mock
 from freezegun import freeze_time
 from pytest import mark, raises
 

@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the djagno management command `save_enterprise_customer_users`.
 """
 
-import mock
+from unittest import mock
+
 from pytest import mark
 
 from django.core.management import call_command

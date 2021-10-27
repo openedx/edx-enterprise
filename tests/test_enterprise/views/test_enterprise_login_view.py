@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``EnterpriseLoginView`` view of the Enterprise app.
 """
 
+from unittest import mock
+
 import ddt
-import mock
 from pytest import mark
 from testfixtures import LogCapture
 
@@ -148,7 +148,7 @@ class TestEnterpriseLoginView(EnterpriseFormViewTestCase):
             'registry_identity_provider': 'some-dummy-provider',
             'enable_slug_login': True,
             'enterprise_slug': 'ec_slug_other',
-            'expected_response': u'http://provider.login-url.com',
+            'expected_response': 'http://provider.login-url.com',
             'status_code': 200,
             'expected_logger_message': None
         },
@@ -161,7 +161,7 @@ class TestEnterpriseLoginView(EnterpriseFormViewTestCase):
             'registry_identity_provider': 'some-dummy-provider',
             'enable_slug_login': True,
             'enterprise_slug': 'ec_slug_other',
-            'expected_response': u'http://provider.login-url.com',
+            'expected_response': 'http://provider.login-url.com',
             'status_code': 200,
             'expected_logger_message': None
         },

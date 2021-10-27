@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Client for connecting to Degreed.
 """
@@ -6,9 +5,9 @@ Client for connecting to Degreed.
 import datetime
 import logging
 import time
+from urllib.parse import urljoin
 
 import requests
-from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 

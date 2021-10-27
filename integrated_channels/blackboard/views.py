@@ -4,12 +4,12 @@ Views containing APIs for Blackboard integrated channel
 
 import base64
 import logging
+from urllib.parse import urljoin
 
 import requests
 from rest_framework import generics
 from rest_framework.exceptions import APIException, NotFound, ParseError
 from rest_framework.response import Response
-from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
@@ -175,7 +175,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         Auth header in oauth2 token format as per Blackboard doc
         """
         return 'Basic {}'.format(
-            base64.b64encode(u'{key}:{secret}'.format(
+            base64.b64encode('{key}:{secret}'.format(
                 key=enterprise_config.client_id, secret=enterprise_config.client_secret
             ).encode('utf-8')).decode()
         )

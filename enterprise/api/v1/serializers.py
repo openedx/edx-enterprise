@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Serializers for enterprise api version 1.
 """
@@ -16,7 +15,7 @@ from rest_framework.settings import api_settings
 
 from django.contrib import auth
 from django.contrib.sites.models import Site
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
 from enterprise.api.v1.fields import Base64EmailCSVField

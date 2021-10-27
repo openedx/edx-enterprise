@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Database models field validators.
 """
@@ -8,7 +7,7 @@ import re
 
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from enterprise.constants import CONTENT_FILTER_FIELD_TYPES as cftypes
 
@@ -59,12 +58,12 @@ def validate_content_filter_fields(content_filter):
         if key in content_filter.keys():
             if not isinstance(content_filter[key], cftype['type']):
                 raise ValidationError(
-                    "Content filter '%s' must be of type %s" % (key, cftype['type'])
+                    "Content filter '{}' must be of type {}".format(key, cftype['type'])
                 )
             if cftype['type'] == list:
                 if not all(cftype['subtype'] == type(x) for x in content_filter[key]):
                     raise ValidationError(
-                        "Content filter '%s' must contain values of type %s" % (
+                        "Content filter '{}' must contain values of type {}".format(
                             key, cftype['subtype']
                         )
                     )

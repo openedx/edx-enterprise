@@ -43,7 +43,7 @@ def check_pins(our_file, their_file):
         try:
             their_pkg = theirs[pkg]
         except KeyError:
-            print("*** Pinned, but not in {}:".format(their_file))
+            print(f"*** Pinned, but not in {their_file}:")
             print(our_pkg)
             print("")
         else:

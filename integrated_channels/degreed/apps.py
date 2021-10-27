@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Enterprise Integrated Channel Degreed Django application initialization.
 """

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 from django.db import migrations
 
 from enterprise.constants import USE_ENTERPRISE_CATALOG

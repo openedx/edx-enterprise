@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Enterprise Django application constants.
 """
 
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 # We listen to the User post_save signal in order to associate new users
 # with an EnterpriseCustomer when applicable. This it the unique identifier
@@ -25,7 +24,7 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
 )
 WELCOME_TEXT = _('Welcome to {platform_name}.')
 ENTERPRISE_WELCOME_TEXT = _(
-    u'You have left the {strong_start}{enterprise_customer_name}{strong_end} website and are now on the '
+    'You have left the {strong_start}{enterprise_customer_name}{strong_end} website and are now on the '
     '{platform_name} site. {enterprise_customer_name} has partnered with {platform_name} to offer you '
     'high-quality, always available learning programs to help you advance your knowledge and career. '
     '{line_break}Please note that {platform_name} has a different {privacy_policy_link_start}Privacy Policy '
@@ -95,8 +94,8 @@ PROGRAM_TYPE_DESCRIPTION = {
 }
 
 ALLOWED_TAGS = [
-    u'a', u'abbr', u'acronym', u'b', u'blockquote', u'em', u'i',
-    u'li', u'ol', u'strong', u'ul', u'p', u'h1', u'h2',
+    'a', 'abbr', 'acronym', 'b', 'blockquote', 'em', 'i',
+    'li', 'ol', 'strong', 'ul', 'p', 'h1', 'h2',
 ]
 
 DEFAULT_CATALOG_CONTENT_FILTER = {
@@ -168,8 +167,8 @@ def json_serialized_course_modes():
 
 
 AVAILABLE_LANGUAGES = [
-    ('en', u'English'),
-    ('es-419', u'Español (Latinoamérica)'),  # Spanish (Latin America)
+    ('en', 'English'),
+    ('es-419', 'Español (Latinoamérica)'),  # Spanish (Latin America)
 ]
 
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'

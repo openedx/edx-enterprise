@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Views for enterprise_learner_portal app.
 """
@@ -11,7 +10,7 @@ from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX

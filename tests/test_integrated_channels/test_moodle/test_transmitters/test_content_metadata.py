@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the Moodle content metadata transmitter.
 """
 
 import unittest
 from datetime import datetime
+from unittest import mock
 
-import mock
 import responses
 from pytest import mark
 

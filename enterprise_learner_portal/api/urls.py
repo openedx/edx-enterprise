@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 URL definitions for enterprise_learner_portal API endpoint.
 """

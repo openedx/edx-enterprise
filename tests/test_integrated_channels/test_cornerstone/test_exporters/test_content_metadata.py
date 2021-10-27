@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Cornerstone content metadata exporters.
 """
@@ -6,9 +5,9 @@ Tests for Cornerstone content metadata exporters.
 import datetime
 import unittest
 from datetime import timedelta
+from unittest import mock
 
 import ddt
-import mock
 import pytz
 import responses
 from freezegun import freeze_time
@@ -80,7 +79,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
 
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
-            assert key in content_updated_mapping.keys()
+            assert key in content_updated_mapping
         assert not update_payload
         assert not delete_payload
 
@@ -129,7 +128,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         assert not delete_payload
         for key in update_payload:
             assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
-            assert key in content_updated_mapping.keys()
+            assert key in content_updated_mapping
 
         # Sanity check that the regular export won't yield the update payload
         create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
@@ -168,26 +167,26 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         (
 
             {
-                'full_description': u'Test case - is the smallest unit of the testing plan - which includes a '
-                                    u'description of necessary actions and parameters to achieve and verify the '
-                                    u'expected behaviour of a particular function.',
-                'short_description': u'This is short description of course',
+                'full_description': 'Test case - is the smallest unit of the testing plan - which includes a '
+                                    'description of necessary actions and parameters to achieve and verify the '
+                                    'expected behaviour of a particular function.',
+                'short_description': 'This is short description of course',
             },
-            u'This is short description of course',
+            'This is short description of course',
         ),
         (
             {
-                'full_description': u'This is full description of course',
-                'short_description': u'This is short description of course',
+                'full_description': 'This is full description of course',
+                'short_description': 'This is short description of course',
             },
-            u'This is full description of course',
+            'This is full description of course',
         ),
         (
             {
-                'full_description': u'',
-                'short_description': u'',
+                'full_description': '',
+                'short_description': '',
             },
-            u'edX Demonstration Course',
+            'edX Demonstration Course',
         ),
     )
     @responses.activate

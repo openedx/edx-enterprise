@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Permission classes for the Consent API.
 """

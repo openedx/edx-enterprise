@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Integrated channel custom exceptions.
 """

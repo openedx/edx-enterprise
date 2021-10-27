@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` serializer module.
 """
@@ -70,7 +69,7 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
         """
         Perform operations common for all tests once.
         """
-        super(TestEnterpriseCustomerUserWriteSerializer, cls).setUpClass()
+        super().setUpClass()
         cls.ent_user_link_url = settings.TEST_SERVER + reverse('enterprise-learner-list')
         cls.permission = Permission.objects.get(name='Can add Enterprise Customer Learner')
         cls.enterprise_uuids = FAKE_UUIDS[:4]
@@ -128,7 +127,7 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
 
         # activating one of the existing enterprise should de-activate reset of enterprise
         active_enterprise = self.enterprise_uuids[0]
-        expected_inactive_enterprises = list(set(self.enterprise_uuids) - set([active_enterprise]))
+        expected_inactive_enterprises = list(set(self.enterprise_uuids) - {active_enterprise})
         data['enterprise_customer'] = active_enterprise
         data['active'] = True
         self._link_learner_to_enterprise(data)

@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Test for xAPI utility functions.
 """
 
 import unittest
 from datetime import datetime, timedelta
+from unittest import mock
 
-import mock
 from faker import Factory as FakerFactory
 from pytest import mark
 

@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Utility functions for the Enterprise API.
 """
 
 from django.conf import settings
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext as _
 
 from enterprise.models import (
     EnterpriseCustomerCatalog,

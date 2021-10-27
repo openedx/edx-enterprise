@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utility functions for enterprise app.
 """
@@ -6,7 +5,7 @@ import datetime
 import json
 import logging
 import re
-from urllib.parse import urljoin
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID
 
 import bleach
@@ -15,7 +14,6 @@ import tableauserverclient as TSC
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 from edx_rest_api_client.exceptions import HttpClientError
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 from tableauserverclient.server.endpoint.exceptions import ServerResponseError
 
 from django.apps import apps
@@ -35,7 +33,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
 from django.utils.http import urlquote
 from django.utils.text import slugify
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from enterprise.constants import (
@@ -241,7 +239,7 @@ def get_social_auth_from_idp(idp, user=None, user_idp_id=None):
         }
         if user_idp_id:
             provider_slug = tpa_provider.provider_id[5:]
-            social_auth_uid = '{0}:{1}'.format(provider_slug, user_idp_id)
+            social_auth_uid = '{}:{}'.format(provider_slug, user_idp_id)
             filter_kwargs['uid'] = social_auth_uid
         else:
             filter_kwargs['user'] = user

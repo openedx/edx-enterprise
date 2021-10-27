@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Enterprise Integrated Channel Moodle Django application initialization.
 """

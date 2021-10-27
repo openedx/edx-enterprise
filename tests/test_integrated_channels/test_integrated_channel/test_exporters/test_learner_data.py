@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` learner_data export classes.
 """
 import datetime
 import unittest
+from unittest import mock
+from unittest.mock import MagicMock
 
 import ddt
-import mock
 from freezegun import freeze_time
-from mock.mock import MagicMock
 from pytest import mark
 
 from django.utils import timezone

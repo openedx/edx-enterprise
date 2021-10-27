@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 xAPI statement for course completion.
 """

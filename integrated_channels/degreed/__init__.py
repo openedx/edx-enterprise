@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The Degreed Integrated Channel package.
 """

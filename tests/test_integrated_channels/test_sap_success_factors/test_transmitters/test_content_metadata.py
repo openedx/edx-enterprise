@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the SAP SuccessFactors content metadata transmitter.
 """
@@ -7,8 +6,8 @@ import logging
 import unittest
 import uuid
 from datetime import datetime
+from unittest import mock
 
-import mock
 import responses
 from pytest import mark
 from testfixtures import LogCapture

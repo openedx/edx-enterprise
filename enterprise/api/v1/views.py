@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Views for enterprise api version 1 endpoint.
 """
 
 from logging import getLogger
 from smtplib import SMTPException
+from urllib.parse import quote_plus, unquote
 
 import requests
 from django_filters.rest_framework import DjangoFilterBackend
@@ -29,7 +29,6 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
-from six.moves.urllib.parse import quote_plus, unquote
 
 from django.apps import apps
 from django.conf import settings
@@ -38,7 +37,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext as _
 
 from enterprise import models
 from enterprise.api.filters import (
@@ -1233,7 +1232,7 @@ class CouponCodesView(APIView):
             )
             LOGGER.error(error_message)
             return Response(
-                {'error': str('Request codes email could not be sent')},
+                {'error': 'Request codes email could not be sent'},
                 status=HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -1360,7 +1359,7 @@ class NotificationReadView(APIView):
                 ' User ID:{}, Exception:{}.'.format(notification_id, enterprise_slug, request.user.id, exc)
             )
             return Response(
-                {'error': str('Notification read request failed')},
+                {'error': 'Notification read request failed'},
                 status=HTTP_500_INTERNAL_SERVER_ERROR
             )
 

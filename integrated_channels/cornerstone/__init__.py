@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The Cornerstone Integrated Channel package.
 """

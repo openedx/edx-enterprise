@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the djagno management command `create_enterprise_course_enrollments`.
 """
 
-import mock
+from unittest import mock
+
 from pytest import mark, raises
 
 from django.core.management import call_command

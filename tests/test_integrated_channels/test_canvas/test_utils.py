@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for utils in integrated_channels.canvas.
 """

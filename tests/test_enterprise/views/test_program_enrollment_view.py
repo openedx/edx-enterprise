@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``ProgramEnrollmentView`` view of the Enterprise app.
 """
 
 import copy
+from unittest import mock
+from urllib.parse import urlencode
 
 import ddt
-import mock
 from faker import Factory as FakerFactory
 from pytest import mark
-from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured

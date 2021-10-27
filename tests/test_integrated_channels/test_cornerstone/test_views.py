@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Cornerstone views.
 """
 
-import mock
+from unittest import mock
+
 import responses
 from pytest import mark
 from rest_framework import status

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the django management command `email_drip_for_missing_dsc_records`.
 """
 import random
 from datetime import timedelta
+from unittest import mock
 
-import mock
 from pytest import mark
 from testfixtures import LogCapture
 

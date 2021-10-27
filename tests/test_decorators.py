@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` decorators.
 """
@@ -6,12 +5,12 @@ Tests for the `edx-enterprise` decorators.
 import unittest
 import warnings
 from importlib import import_module
+from unittest import mock
+from urllib.parse import parse_qs, unquote, urlparse
 
 import ddt
-import mock
 from faker import Factory as FakerFactory
 from pytest import mark, raises
-from six.moves.urllib.parse import parse_qs, unquote, urlparse
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Assist integrated channels with retrieving content metadata.
 

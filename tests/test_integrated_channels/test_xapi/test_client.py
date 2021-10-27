@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Test for xAPI client.
 """
 
 import unittest
+from unittest import mock
 
-import mock
 from pytest import mark, raises
 
 from integrated_channels.exceptions import ClientError

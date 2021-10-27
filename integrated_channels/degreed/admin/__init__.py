@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django admin integration for configuring degreed app to communicate with Degreed systems.
 """

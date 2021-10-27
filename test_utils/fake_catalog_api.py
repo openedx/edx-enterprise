@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Fake responses for course catalog api.
 """
 
 import copy
 from collections import OrderedDict
-
-import mock
-from six.moves import reduce as six_reduce
+from functools import reduce
+from unittest import mock
 
 from test_utils import FAKE_UUIDS
 
@@ -1239,12 +1237,12 @@ def get_common_course_modes(course_runs):
         set: course modes found in all given course runs
     """
     course_run_modes = [
-        set(seat.get("type") for seat in course_run.get("seats"))
+        {seat.get("type") for seat in course_run.get("seats")}
         for course_run in FAKE_COURSE_RUNS_RESPONSE
         if course_run.get("key") in course_runs
     ]
 
-    return six_reduce(lambda left, right: left & right, course_run_modes)
+    return reduce(lambda left, right: left & right, course_run_modes)
 
 
 def setup_course_catalog_api_client_mock(

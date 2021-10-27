@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Class for transmitting content metadata to Moodle.
 """
@@ -31,7 +30,7 @@ class MoodleContentMetadataTransmitter(ContentMetadataTransmitter):
         items = {}
         for _, item in enumerate(channel_metadata_items):
             for key in item:
-                new_key = 'courses[0][{0}]'.format(key)
+                new_key = 'courses[0][{}]'.format(key)
                 items[new_key] = item[key]
         return items
 

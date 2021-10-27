@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Admin utilities.
 """
@@ -100,7 +99,6 @@ def split_usernames_and_emails(email_field):
     return [name.strip() for name in email_field.split(',')]
 
 
-# pylint: disable=range-builtin-not-iterating
 def paginated_list(object_list, page, page_size=25):
     """
     Returns paginated list.

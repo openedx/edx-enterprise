@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Test xAPI management command to send course completion data.
 """
 
 import unittest
 import uuid
+from unittest import mock
 
-import mock
 from pytest import mark, raises
 
 from django.core.management import CommandError, call_command

@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``EnterpriseSelectionView`` view of the Enterprise app.
 """
 
+from unittest import mock
+
 import ddt
-import mock
 from pytest import mark
 
 from django.test import Client
@@ -70,7 +70,7 @@ class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
         response = self.client.get(self.url + '?success_url={}'.format(self.success_url))
         assert response.status_code == 200
 
-        assert response.context['select_enterprise_message_title'] == u'Select an organization'
+        assert response.context['select_enterprise_message_title'] == 'Select an organization'
         assert response.context['select_enterprise_message_subtitle'] == ENTERPRISE_SELECT_SUBTITLE
 
         assert sorted(response.context['form'].fields.keys()) == sorted(['enterprise', 'success_url'])
@@ -97,7 +97,7 @@ class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
             response = self.client.post(self.url, post_data)
             assert mock_logger.called
             assert mock_logger.call_args.args == (
-                u'[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
+                '[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
                 self.user.username,
                 new_enterprise,
             )
@@ -118,8 +118,8 @@ class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
         """
         incorrect_enterprise = '111'
         errors = [
-            u'Enterprise not found',
-            u'Select a valid choice. 111 is not one of the available choices.'
+            'Enterprise not found',
+            'Select a valid choice. 111 is not one of the available choices.'
         ]
 
         self._login()

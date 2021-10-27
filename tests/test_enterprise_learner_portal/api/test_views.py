@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal app.
 """
 
 import uuid
+from unittest import mock
+from urllib.parse import urlencode
 
 import ddt
-import mock
 from pytest import mark
-from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.test import Client, TestCase

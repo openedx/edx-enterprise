@@ -213,8 +213,6 @@ pbr==5.6.0
     #   stevedore
 pillow==8.4.0
     # via -r requirements/test-master.txt
-pockets==0.9.1
-    # via sphinxcontrib-napoleon
 prompt-toolkit==3.0.21
     # via
     #   -r requirements/test-master.txt
@@ -300,10 +298,8 @@ six==1.16.0
     #   edx-drf-extensions
     #   edx-rbac
     #   edx-sphinx-theme
-    #   pockets
     #   pyjwkest
     #   python-dateutil
-    #   sphinxcontrib-napoleon
 slumber==0.7.1
     # via
     #   -r requirements/test-master.txt
@@ -322,8 +318,6 @@ sphinxcontrib-htmlhelp==2.0.0
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
-sphinxcontrib-napoleon==0.6.1
-    # via -r requirements/doc.in
 sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5

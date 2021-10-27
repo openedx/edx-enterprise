@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Cornerstone Learner Data exporters.
 """
@@ -6,9 +5,9 @@ Tests for Cornerstone Learner Data exporters.
 import datetime
 import re
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 import responses
 from freezegun import freeze_time
 from pytest import mark

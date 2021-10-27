@@ -3,9 +3,9 @@ Tests for enterprise middleware.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark
 
 from django.contrib.sessions.middleware import SessionMiddleware

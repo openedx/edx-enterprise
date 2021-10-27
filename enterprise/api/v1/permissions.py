@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ Custom API permissions. """
 
 from rest_framework import permissions
@@ -11,7 +9,7 @@ class IsInEnterpriseGroup(permissions.BasePermission):
     This check applies to both staff and non-staff users.
     """
     ALLOWED_API_GROUPS = []
-    message = u'User is not allowed to access the view.'
+    message = 'User is not allowed to access the view.'
 
     def has_permission(self, request, view):
         return (

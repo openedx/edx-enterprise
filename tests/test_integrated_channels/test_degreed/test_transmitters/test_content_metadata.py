@@ -4,8 +4,8 @@ Tests for the Degreed content metadata transmitter.
 
 import unittest
 from datetime import datetime
+from unittest import mock
 
-import mock
 import responses
 from pytest import mark
 

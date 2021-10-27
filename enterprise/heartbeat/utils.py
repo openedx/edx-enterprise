@@ -21,8 +21,8 @@ class Status:
     """
     Status constants for service health check.
     """
-    OK = u'OK'
-    UNAVAILABLE = u'UNAVAILABLE'
+    OK = 'OK'
+    UNAVAILABLE = 'UNAVAILABLE'
 
 
 def run_checks():

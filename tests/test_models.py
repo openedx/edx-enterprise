@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` models module.
 """
@@ -9,9 +8,9 @@ import os
 import shutil
 import unittest
 from datetime import timedelta
+from unittest import mock
 
 import ddt
-import mock
 from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
 from freezegun.api import freeze_time
@@ -1868,11 +1867,11 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
     @ddt.data(
         {
             'default_locale': None,
-            'expected_locale': u'English'
+            'expected_locale': 'English'
         },
         {
-            'default_locale': u'Spanish',
-            'expected_locale': u'Spanish'
+            'default_locale': 'Spanish',
+            'expected_locale': 'Spanish'
         },
     )
     @ddt.unpack
@@ -1881,7 +1880,7 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         Verify that ``SAPSuccessFactorsEnterpriseCustomerConfiguration.get_locales`` works without additional_locales
         """
         assert self.config.additional_locales == ''
-        assert self.config.get_locales(default_locale) == set([expected_locale])
+        assert self.config.get_locales(default_locale) == {expected_locale}
 
     def test_locales_w_additional_locales(self):
         """
@@ -1890,7 +1889,7 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         self.config.additional_locales = 'Malay,     Arabic,English United Kingdom,   '
         self.config.save()
 
-        assert self.config.get_locales() == set(['English', 'Malay', 'Arabic', 'English United Kingdom'])
+        assert self.config.get_locales() == {'English', 'Malay', 'Arabic', 'English United Kingdom'}
 
 
 @mark.django_db

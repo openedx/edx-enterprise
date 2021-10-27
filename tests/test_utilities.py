@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` utility functions.
 """
@@ -6,9 +5,9 @@ Tests for the `edx-enterprise` utility functions.
 import datetime
 import unittest
 from collections import namedtuple
+from unittest import mock
 
 import ddt
-import mock
 import pytz
 from faker import Factory as FakerFactory
 from pytest import mark, raises
@@ -366,8 +365,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'alternatives': [
                     (
                         (
-                            ('<html><body>Dear John http://lms.example.com/courses, '
-                             + 'Enterprise Learning, Widgets, Inc</body></html>')
+                            '<html><body>Dear John http://lms.example.com/courses, '
+                            'Enterprise Learning, Widgets, Inc</body></html>'
                         ),
                         'text/html'
                     )
@@ -397,8 +396,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'alternatives': [
                     (
                         (
-                            ('<html><body>Dear johnny_boy http://lms.example.com/courses, '
-                             + 'Master of Awesomeness, MIT</body></html>')
+                            '<html><body>Dear johnny_boy http://lms.example.com/courses, '
+                            'Master of Awesomeness, MIT</body></html>'
                         ),
                         'text/html'
                     )

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 These settings are here to use during tests, because django requires them.
 

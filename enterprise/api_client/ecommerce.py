@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Client for communicating with the E-Commerce API.
 """
@@ -10,7 +9,7 @@ from requests.exceptions import ConnectionError, Timeout  # pylint: disable=rede
 from slumber.exceptions import SlumberBaseException
 
 from django.conf import settings
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext as _
 
 from enterprise.utils import NotConnectedToOpenEdX, format_price
 

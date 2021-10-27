@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unlink inactive enterprise learners of SAP Success Factors from related EnterpriseCustomer(s).
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """edX Enterprise's Consent application.
 
 This application provides a generic Consent API that lets the

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Fields for Enterprise API serializers.
 """

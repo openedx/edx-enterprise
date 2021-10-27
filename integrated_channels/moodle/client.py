@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Client for connecting to Moodle.
 """

@@ -1,17 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``CourseEnrollmentView`` view of the Enterprise app.
 """
 
 import datetime
 from collections import OrderedDict
+from unittest import mock
+from urllib.parse import urlencode
 
 import ddt
-import mock
 from dateutil.parser import parse
 from faker import Factory as FakerFactory
 from pytest import mark
-from six.moves.urllib.parse import urlencode
 from slumber.exceptions import HttpClientError
 
 from django.conf import settings

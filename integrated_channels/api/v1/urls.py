@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 URL definitions for v1 Integrated Channel API endpoints.
 """

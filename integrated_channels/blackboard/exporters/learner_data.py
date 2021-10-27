@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Learner data exporter for Enterprise Integrated Channel Blackboard.
 """

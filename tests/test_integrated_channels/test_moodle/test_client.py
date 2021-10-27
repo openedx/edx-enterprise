@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for clients in integrated_channels.
 """

@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the base exporter.
 """
 
 import unittest
-
-import mock
+from unittest import mock
 
 from integrated_channels.integrated_channel.exporters import Exporter
 

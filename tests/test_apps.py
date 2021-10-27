@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` models module.
 """
 
 import unittest
+from unittest import mock
 
-import mock
 from pytest import mark
 
 from django.contrib import auth

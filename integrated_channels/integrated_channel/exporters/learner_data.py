@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Assist integrated channels with retrieving learner completion data.
 
@@ -138,8 +137,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 # data requires an upstream user identifier that we don't have (due to a
                 # failure of SSO or similar). In such a case, `get_learner_data_record`
                 # would return None, and we'd simply skip yielding it here.
-                for record in records:
-                    yield record
+                yield from records
 
     def single_assessment_level_export(self, **kwargs):
         """
@@ -207,8 +205,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 # data requires an upstream user identifier that we don't have (due to a
                 # failure of SSO or similar). In such a case, `get_learner_data_record`
                 # would return None, and we'd simply skip yielding it here.
-                for record in records:
-                    yield record
+                yield from records
 
     @staticmethod
     def has_data_sharing_consent(enterprise_enrollment):
@@ -276,7 +273,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             enterprise_customer_user__enterprise_customer=self.enterprise_customer,
             enterprise_customer_user__active=True,
         ).order_by('course_id')
-        return set(get_course_id_for_enrollment(enrollment) for enrollment in enrollment_queryset)
+        return {get_course_id_for_enrollment(enrollment) for enrollment in enrollment_queryset}
 
     def get_grades_summary(
         self,

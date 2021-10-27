@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 URL definitions for integrated_channels/canvas API version 1.
 """

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Content metadata exporter for SAP SuccessFactors.
 """
 
 from logging import getLogger
 
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from enterprise.utils import get_closest_course_run, is_course_run_available_for_enrollment, parse_lms_api_datetime
 from enterprise.views import CourseEnrollmentView

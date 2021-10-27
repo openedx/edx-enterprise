@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Pagination helpers for enterprise api.
 """
 
 from collections import OrderedDict
+from urllib.parse import urlparse
 
 from rest_framework.response import Response
-from six.moves.urllib.parse import urlparse
 
 
 def get_paginated_response(data, request):

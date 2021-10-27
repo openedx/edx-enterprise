@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 xAPI Client to send payload data.
 """

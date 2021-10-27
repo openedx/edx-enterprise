@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Enterprise Integrated Channel Blackboard Django application initialization.
 """

@@ -27,7 +27,6 @@ edx-opaque-keys[django]
 edx-rest-api-client
 edx-tincan-py35
 edx-rbac
-future
 jsondiff
 jsonfield
 path.py
@@ -36,7 +35,6 @@ python-dateutil
 pytz
 requests
 rules
-six
 slumber
 stevedore
 tableauserverclient

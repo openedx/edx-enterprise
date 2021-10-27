@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``HandleConsentEnrollment`` view of the Enterprise app.
 """
 
+from unittest import mock
+from urllib.parse import urlencode
+
 import ddt
-import mock
 from faker import Factory as FakerFactory
 from pytest import mark
-from six.moves.urllib.parse import urlencode
 
 from django.http import HttpResponse
 from django.test import Client, TestCase

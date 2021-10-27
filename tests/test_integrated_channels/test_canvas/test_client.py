@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for clients in integrated_channels.
 """
@@ -8,12 +7,12 @@ import json
 import random
 import unittest
 from unittest import mock
+from urllib.parse import urljoin
 
 import pytest
 import responses
 from freezegun import freeze_time
 from requests.models import Response
-from six.moves.urllib.parse import urljoin
 
 from django.utils import timezone
 
@@ -1014,7 +1013,7 @@ class TestCanvasApiClient(unittest.TestCase):
         """
         Helper method to test error handling with poorly constructed data
         """
-        bad_course_to_update = '{"course": {"name": "test_course"}}'.encode()
+        bad_course_to_update = b'{"course": {"name": "test_course"}}'
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
         with pytest.raises(ClientError) as client_error:

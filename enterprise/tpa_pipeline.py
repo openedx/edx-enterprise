@@ -116,7 +116,7 @@ def get_user_from_social_auth(tpa_providers, user_id, enterprise_customer):
         # so to match the original slug, we need to chop off that backend name.
         # We only use saml here, so we are removing the first 5 characters, ie 'saml-'
         provider_slug = tpa_provider.provider_id[5:]
-        social_auth_uid = '{0}:{1}'.format(provider_slug, user_id)
+        social_auth_uid = '{}:{}'.format(provider_slug, user_id)
         providers_backend_names.append(tpa_provider.backend_name)
         social_auth_uids.append(social_auth_uid)
     # we are filtering by both `provider` and `uid` to make use of provider,uid composite index

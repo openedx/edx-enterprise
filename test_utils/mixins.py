@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Test mixins for enterprise tests.
 """
 
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from django.contrib import messages
 

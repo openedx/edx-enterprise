@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Fake implementation of the Enrollment API.
 """

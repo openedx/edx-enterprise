@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Database models for Enterprise Integrated Channel Moodle.
 """
@@ -9,7 +8,7 @@ from logging import getLogger
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.moodle.exporters.content_metadata import MoodleContentMetadataExporter
