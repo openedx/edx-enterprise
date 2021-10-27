@@ -39,13 +39,11 @@ from integrated_channels.cornerstone.models import (
     CornerstoneGlobalConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
 )
+from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import (
     DegreedEnterpriseCustomerConfiguration,
     DegreedGlobalConfiguration,
     DegreedLearnerDataTransmissionAudit,
-)
-from integrated_channels.degreed2.models import (
-    Degreed2EnterpriseCustomerConfiguration,
 )
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, LearnerDataTransmissionAudit
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
