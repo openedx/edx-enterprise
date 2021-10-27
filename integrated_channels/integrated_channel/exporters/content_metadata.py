@@ -213,11 +213,13 @@ class ContentMetadataExporter(Exporter):
 
             # We only need to fetch content metadata if there are items to update or create
             if items_to_create or items_to_update:
-                # Todo: create a content item specific fetch content metadata endpoint in enterprise catalog so all data
-                # isn't required to fetch
+                items_create_keys = [key.get('content_key') for key in items_to_create]
+                items_update_key = list(items_to_update.keys())
+                content_keys_filter = items_create_keys + items_update_key
                 content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                     self.enterprise_customer,
-                    [enterprise_customer_catalog]
+                    [enterprise_customer_catalog],
+                    content_keys_filter,
                 )
                 for item in content_metadata_items:
                     key = get_content_metadata_item_id(item)
@@ -230,10 +232,9 @@ class ContentMetadataExporter(Exporter):
 
                     # transform the content metadata into the channel specific format
                     transformed_item = self._transform_item(item)
-                    items_create_keys = [key.get('content_key') for key in items_to_create]
                     if key in items_create_keys:
                         create_payload[key] = transformed_item
-                    elif key in items_to_update.keys():
+                    elif key in items_update_key:
                         existing_record = items_to_update.get(key)
                         existing_record.channel_metadata = transformed_item
                         existing_record.content_last_changed = item.get('content_last_modified')

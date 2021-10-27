@@ -913,6 +913,20 @@ def get_cache_key(**kwargs):
     return get_django_cache_key(**kwargs)
 
 
+def chunk_content_keys(content_filter, chunk_size):
+    """
+    Chunk a list of content keys according to a provided chunk size
+    """
+    chunks = []
+    index = 0
+    while index < len(content_filter):
+        content_filter_chunk = content_filter[index:index + chunk_size]
+        index += chunk_size
+        chunks += [content_filter_chunk]
+
+    return chunks
+
+
 def traverse_pagination(response, endpoint):
     """
     Traverse a paginated API response.

@@ -200,14 +200,35 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             )
             return {}
 
+    def traverse_get_content_metadata(self, endpoint, query, catalog_uuid):
+        """
+        Helper method to traverse over a paginated response from the enterprise-catalog service's `get_content_metadata`
+        endpoint.
+        """
+        content_metadata = OrderedDict()
+        try:
+            response = endpoint.get(**query)
+            for item in utils.traverse_pagination(response, endpoint):
+                content_id = utils.get_content_metadata_item_id(item)
+                content_metadata[content_id] = item
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            raise
+
+        return content_metadata
+
     @JwtLmsApiClient.refresh_token
-    def get_content_metadata(self, enterprise_customer, enterprise_catalogs=None):
+    def get_content_metadata(self, enterprise_customer, enterprise_catalogs=None, content_keys_filter=None):
         """
         Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
 
         Arguments:
             enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer to return content metadata for.
             enterprise_catalogs (EnterpriseCustomerCatalog): Optional list of EnterpriseCustomerCatalog objects.
+            content_keys_filter (List): List of content keys to filter by in the content metadata endpoint
 
         Returns:
             list: List of dicts containing content metadata.
@@ -218,18 +239,18 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
-            query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
-            try:
-                response = endpoint.get(**query)
-                for item in utils.traverse_pagination(response, endpoint):
-                    content_id = utils.get_content_metadata_item_id(item)
-                    content_metadata[content_id] = item
-            except (SlumberBaseException, ConnectionError, Timeout) as exc:
-                LOGGER.exception(
-                    'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
-                    catalog_uuid, str(exc)
+            if content_keys_filter:
+                chunked_keys_filter = utils.chunk_content_keys(
+                    content_keys_filter,
+                    self.GET_CONTENT_METADATA_PAGE_SIZE
                 )
-                raise
+                for chunk in chunked_keys_filter:
+                    query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE, 'content_keys': chunk}
+                    content_metadata.update(self.traverse_get_content_metadata(endpoint, query, catalog_uuid))
+            else:
+                query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
+                content_metadata.update(self.traverse_get_content_metadata(endpoint, query, catalog_uuid))
+
         return list(content_metadata.values())
 
     @JwtLmsApiClient.refresh_token
