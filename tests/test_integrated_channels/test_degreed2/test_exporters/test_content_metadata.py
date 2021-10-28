@@ -11,6 +11,7 @@ import responses
 from pytest import mark
 
 from integrated_channels.degreed2.exporters.content_metadata import Degreed2ContentMetadataExporter
+from integrated_channels.integrated_channel.exporters import content_metadata
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -135,3 +136,42 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
         """
         exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_description(content_metadata_item) == expected_description
+
+    def test_transform_duration_course(self):
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        content_metadata_item = {
+            "aggregation_key": "course:edX+0089786",
+            "content_type": "course",
+            "full_description": "<p>sdf</p>",
+            "key": "edX+0089786",
+            "short_description": "<p>ssdf</p>",
+            "title": "using exporter to set participation type",
+            "course_runs": [
+                {
+                    "key": "course-v1:edX+0089786+3T2021",
+                    "start": "2021-10-01T16:00:00Z",
+                    "end": "2022-01-01T17:00:00Z",
+                    "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+                },
+                {
+                    "key": "course-v1:edX+0087786+3T2021",
+                    "start": "2019-10-01T16:00:00Z",
+                    "end": "2022-01-02T17:00:00Z",
+                    "uuid": "7d238cc5-88e4-4931-a28e-4193ae4b2618",
+                }
+            ],
+            "uuid": "3580463a-6f9c-48ed-ae8d-b5a012860d75",
+            "advertised_course_run_uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+        }
+        assert exporter.transform_duration(content_metadata_item) == 92
+
+    def test_transform_duration_course_run(self):
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        content_metadata_item = {
+            "content_type": "courserun",
+            "key": "course-v1:edX+0089786+3T2021",
+            "start": "2021-10-01T16:00:00Z",
+            "end": "2022-01-01T17:00:00Z",
+            "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+        }
+        assert exporter.transform_duration(content_metadata_item) == 92

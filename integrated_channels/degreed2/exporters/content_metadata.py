@@ -5,7 +5,7 @@ Content metadata exporter for Degreed.
 
 from logging import getLogger
 
-from enterprise.utils import get_closest_course_run, get_course_run_duration_info
+from enterprise.utils import get_closest_course_run, get_course_run_duration_info, parse_datetime_handle_invalid
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import get_image_url, strip_html_tags
 
@@ -40,7 +40,33 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         TODO
         Returns: duration in days
         """
-        return 1 if content_metadata_item.get('start', None) else 0
+        if content_metadata_item.get('content_type') == 'courserun':
+            start = content_metadata_item.get('start')
+            end = content_metadata_item.get('end')
+        elif content_metadata_item.get('content_type') == 'course':
+            course_runs = content_metadata_item.get('course_runs')
+            if course_runs:
+                course_run = get_closest_course_run(course_runs)
+                if course_run:
+                    start = course_run.get('start')
+                    end = course_run.get('end')
+                else:
+                    LOGGER.error(
+                        f'Cannot find a courserun, so duration being returned 0. '
+                        f'Course item was {content_metadata_item} '
+                    )
+                    return 0
+            else:
+                LOGGER.error(
+                    f'Cannot find even a single courserun, so duration being returned 0. '
+                    f'Course item was {content_metadata_item} '
+                )
+                return 0
+        else:
+            return 0
+        start_date = parse_datetime_handle_invalid(start)
+        end_date = parse_datetime_handle_invalid(end)
+        return (end_date - start_date).days
 
     def transform_description(self, content_metadata_item):
         """
