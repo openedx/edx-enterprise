@@ -235,6 +235,62 @@ def test_partial_successful_refresh_catalog():
 @responses.activate
 @mark.django_db
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_get_content_metadata_with_content_key_filters():
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    client.GET_CONTENT_METADATA_PAGE_SIZE = 1
+    page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
+    catalog = EnterpriseCustomerCatalogFactory()
+    key_1 = 'key-1'
+    key_2 = 'key-2'
+    data = 'foo'
+    content_type = 'course'
+    url = _url(f'enterprise-catalogs/{catalog.uuid}/get_content_metadata/?page_size={page_size}')
+    first_url = url + f'&content_keys={key_1}'
+    second_url = url + f'&content_keys={key_2}'
+    responses.reset()
+
+    first_expected_response = {
+        'count': 1,
+        'next': None,
+        'previous': None,
+        'results': [{
+            'content_type': content_type,
+            'key': key_1,
+            'data': data,
+        }]
+    }
+    second_expected_response = {
+        'count': 1,
+        'next': None,
+        'previous': None,
+        'results': [{
+            'content_type': content_type,
+            'key': key_2,
+            'data': data,
+        }]
+    }
+    responses.add(responses.GET, first_url, json=first_expected_response)
+    responses.add(responses.GET, second_url, json=second_expected_response)
+    results = client.get_content_metadata(catalog.enterprise_customer, [catalog], ['key-1', 'key-2'])
+
+    assert results == [{
+        'content_type': content_type,
+        'key': key_1,
+        'data': data
+    }, {
+        'content_type': content_type,
+        'key': key_2,
+        'data': data
+    }]
+    first_request_url = responses.calls[0][0].url
+    assert first_url == first_request_url
+    second_request_url = responses.calls[1][0].url
+    assert second_url == second_request_url
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_content_metadata_with_enterprise_catalogs():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE

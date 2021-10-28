@@ -211,10 +211,10 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             for item in utils.traverse_pagination(response, endpoint):
                 content_id = utils.get_content_metadata_item_id(item)
                 content_metadata[content_id] = item
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+        except (SlumberBaseException, ConnectionError, Timeout):
             LOGGER.exception(
-                'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
-                catalog_uuid, str(exc)
+                f'Failed to get content metadata for Catalog {catalog_uuid} in enterprise-catalog',
+                exc_info=True,
             )
             raise
 
@@ -239,14 +239,17 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
+            # If content keys filter exists then chunk up the keys into reasonable request sizes
             if content_keys_filter:
-                chunked_keys_filter = utils.chunk_content_keys(
+                chunked_keys_filter = utils.batch(
                     content_keys_filter,
                     self.GET_CONTENT_METADATA_PAGE_SIZE
                 )
+                # A chunk can be larger than the page size so traverse pagination for each individual chunk
                 for chunk in chunked_keys_filter:
                     query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE, 'content_keys': chunk}
                     content_metadata.update(self.traverse_get_content_metadata(endpoint, query, catalog_uuid))
+            # Traverse pagination for the get all content response without filters
             else:
                 query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
                 content_metadata.update(self.traverse_get_content_metadata(endpoint, query, catalog_uuid))
