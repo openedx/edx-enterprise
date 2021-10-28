@@ -70,12 +70,13 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
+        LOGGER.error("Degreed2 integrated channel does not yet support assessment reporting.")
 
     def cleanup_duplicate_assignment_records(self, courses):
         """
         Not implemented yet.
         """
-        LOGGER.error("Degreed integrated channel does not yet support assignment deduplication.")
+        LOGGER.error("Degreed2 integrated channel does not yet support assignment deduplication.")
 
     def create_course_completion(self, user_id, payload):
         """
@@ -121,7 +122,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         So we may need to store id on our side to be able to do this.
         https://api.degreed.com/docs/#delete-a-specific-completion
         """
-        pass
+        LOGGER.error("Degreed2 integrated channel does not yet support deleting course completions.")
 
     def fetch_degreed_course_id(self, external_id):
         """
@@ -195,7 +196,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
 
         patch_url = f'{self.get_courses_url()}/{course_id}'
-        LOGGER.info(self.make_log_msg(external_id, f'Attempting course delete via {patch_url}'))
+        LOGGER.info(self.make_log_msg(external_id, f'Attempting course update via {patch_url}'))
         patch_status_code, patch_response_body = self._sync_content_metadata(
             course_item,
             'patch',
