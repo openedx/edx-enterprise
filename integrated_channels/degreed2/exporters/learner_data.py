@@ -32,7 +32,7 @@ class Degreed2LearnerExporter(LearnerExporter):
         If no remote ID can be found, return None.
         """
         # Degreed expects completion dates of the form 'yyyy-mm-ddTHH:MM:SS'.
-        completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
+        completed_timestamp = completed_date.strftime('%Y-%m-%dT%H:%M:%S') if isinstance(completed_date, datetime) else None
         if enterprise_enrollment.enterprise_customer_user.get_remote_id(
             self.enterprise_configuration.idp_id
         ) is not None:
