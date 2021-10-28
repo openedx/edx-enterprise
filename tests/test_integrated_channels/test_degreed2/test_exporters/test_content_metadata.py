@@ -6,14 +6,11 @@ Tests for Degreed2 content metadata exporters.
 import unittest
 
 import ddt
-import mock
 import responses
 from pytest import mark
 
 from integrated_channels.degreed2.exporters.content_metadata import Degreed2ContentMetadataExporter
-from integrated_channels.integrated_channel.exporters import content_metadata
-from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import get_fake_catalog, get_fake_content_metadata
+from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
