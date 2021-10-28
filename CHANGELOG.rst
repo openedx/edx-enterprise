@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.32.0]
+---------
+feat: Added management command to fix DSC records having spaces instead of +.
+
 [3.31.1]
 ---------
 fix: pip-tools upgrade
