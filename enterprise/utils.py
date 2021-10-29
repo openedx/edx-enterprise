@@ -1605,12 +1605,20 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     return succeeded
 
 
-def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id):
+def customer_admin_enroll_user_with_status(
+        enterprise_customer,
+        user,
+        course_mode,
+        course_id,
+        enrollment_source=None,
+        license_uuid=None
+):
     """
     For use with bulk enrollment, or any use case of admin enrolling a user
 
     Enroll a single user in a course using a particular course mode, indicating it's a
-    customer_admin enrolling a user (such as bulk enrollment)
+    customer_admin enrolling a user (such as bulk enrollment). Return a status based on whether the enrollment existed
+    before attempting to enroll.
 
     TODO: The `enroll_user` function above, used by Django admin, for example, should also be
     rewired to use this new ability, but for now it still uses enrollment client.
@@ -1620,19 +1628,25 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
         user: The user model object who needs to be enrolled in the course
         course_mode: The string representation of the mode with which the enrollment should be created
         course_id: An opaque course_id to enroll in
+        enrollment_source: Source of enrollment, used for tracking enrollments
+        license_uuid: UUID of associated license with the enrollment, used to create a mapping between licenses and
+            enrollments
 
     Returns:
-        succeeded (Boolean): Whether or not enrollment succeeded for the course specified
+        succeeded (Boolean): Whether or not the enrollment succeeded for the course specified
+        created (Boolean): Whether or not the enrollment existed prior to calling method
     """
     enterprise_customer_user, __ = enterprise_customer_user_model().objects.get_or_create(
         enterprise_customer=enterprise_customer,
         user_id=user.id
     )
     succeeded = False
+    new_enrollment = False
     try:
-        # enrolls a user in a course per LMS flow, but does not create enterprise records yet
-        # can return None if Enrollment already exists, does not fail in this case.
-        lms_enroll_user_in_course(
+        # enrolls a user in a course per LMS flow, but this method does not create enterprise records yet so we need to
+        # create it immediately after calling lms_enroll_user_in_course. lms_enroll_user_in_course can return None if
+        # Enrollment already exists, does not fail in this case.
+        new_enrollment = lms_enroll_user_in_course(
             user.username,
             course_id,
             course_mode,
@@ -1643,18 +1657,58 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
     except (CourseEnrollmentError, CourseUserGroup.DoesNotExist) as error:
         logging.exception("Failed to enroll user %s in course %s", user.id, course_id, exc_info=error)
     if succeeded:
-        __, created = enterprise_course_enrollment_model().objects.get_or_create(
+        # If we have a provided enrollment source, use that. Otherwise default to manual.
+        if enrollment_source:
+            source = enrollment_source
+        else:
+            source = enterprise_enrollment_source_model().get_source(
+                enterprise_enrollment_source_model().MANUAL
+            )
+
+        obj, created = enterprise_course_enrollment_model().objects.get_or_create(
             enterprise_customer_user=enterprise_customer_user,
             course_id=course_id,
             defaults={
-                'source': enterprise_enrollment_source_model().get_source(
-                    enterprise_enrollment_source_model().MANUAL
-                )
+                'source': source
             }
         )
+        if license_uuid:
+            licensed_enterprise_course_enrollment_model().objects.get_or_create(
+                license_uuid=license_uuid,
+                enterprise_course_enrollment=obj,
+            )
         if created:
             # Note: this tracking event only caters to bulk enrollment right now.
             track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
+
+    # If new_enrollment is None then the enrollment already existed
+    created = bool(new_enrollment)
+    return succeeded, created
+
+
+def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id, enrollment_source=None):
+    """
+    For use with bulk enrollment, or any use case of admin enrolling a user
+
+    Enroll a single user in a course using a particular course mode, indicating it's a
+    customer_admin enrolling a user (such as bulk enrollment)
+
+    Args:
+        enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
+        user: The user model object who needs to be enrolled in the course
+        course_mode: The string representation of the mode with which the enrollment should be created
+        course_id: An opaque course_id to enroll in
+
+    Returns:
+        succeeded (Boolean): Whether or not enrollment succeeded for the course specified
+    """
+    succeeded, __ = customer_admin_enroll_user_with_status(
+        enterprise_customer,
+        user,
+        course_mode,
+        course_id,
+        enrollment_source
+    )
     return succeeded
 
 
@@ -1744,18 +1798,20 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
         user = User.objects.filter(email=licensed_user_info['email']).first()
         try:
             if user:
-                succeeded = customer_admin_enroll_user(enterprise_customer, user, course_mode, course_run_key)
+                enrollment_source = enterprise_enrollment_source_model().get_source(
+                    enterprise_enrollment_source_model().CUSTOMER_ADMIN
+                )
+                succeeded, created = customer_admin_enroll_user_with_status(
+                    enterprise_customer, user, course_mode, course_run_key, enrollment_source, license_uuid
+                )
                 if succeeded:
-                    enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
-                    enrollment_source = enterprise_enrollment_source_model().get_source(
-                        enterprise_enrollment_source_model().CUSTOMER_ADMIN)
-                    get_create_ent_enrollment(
-                        course_run_key, enterprise_customer_user, enrollment_source, license_uuid=license_uuid)
-                    results['successes'].append({'user': user, 'email': user_email, 'course_run_key': course_run_key})
+                    results['successes'].append(
+                        {'user': user, 'email': user_email, 'course_run_key': course_run_key, 'created': created}
+                    )
                 else:
                     results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
             else:
-                pending_user = enterprise_customer.enroll_user_pending_registration(
+                pending_user, new_enrollments = enterprise_customer.enroll_user_pending_registration_with_status(
                     user_email,
                     course_mode,
                     course_run_key,
@@ -1765,7 +1821,12 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                     discount=discount,
                     license_uuid=license_uuid
                 )
-                results['pending'].append({'user': pending_user, 'email': user_email, 'course_run_key': course_run_key})
+                results['pending'].append({
+                    'user': pending_user,
+                    'email': user_email,
+                    'course_run_key': course_run_key,
+                    'created': new_enrollments[course_run_key],
+                })
         except utils.IntegrityError:
             results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
             continue

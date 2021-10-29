@@ -169,39 +169,57 @@ class ContentMetadataTransmitter(Transmitter):
                 f'Creating content transmission record for course: {content_id} under enterprise customer: '
                 f'{self.enterprise_configuration.enterprise_customer.uuid}.'
             )
-
-            past_transmission = ContentMetadataItemTransmission.objects.filter(
+            past_deleted_transmission = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 content_id=content_id,
-                enterprise_customer_catalog_uuid=content_updated_mapping.get(content_id).get('catalog_uuid'),
                 deleted_at__isnull=False,
             )
 
-            if past_transmission.first():
+            if past_deleted_transmission.first():
                 LOGGER.info(
                     f'Found previously deleted content record while creating record for course: {content_id}'
                     f'under customer: {self.enterprise_configuration.enterprise_customer.uuid}'
                 )
-                past_transmission.deleted_at = None
-                past_transmission.channel_metadata = channel_metadata
-                past_transmission.content_last_changed = content_updated_mapping.get(content_id)
-                reactivate_transmissions.append(past_transmission.save())
+                past_deleted_transmission.deleted_at = None
+                past_deleted_transmission.channel_metadata = channel_metadata
+                past_deleted_transmission.content_last_changed = content_updated_mapping.get(content_id)
+                past_deleted_transmission.enterprise_customer_catalog_uuid = content_updated_mapping.get(
+                    content_id
+                ).get('catalog_uuid')
+                reactivate_transmissions.append(past_deleted_transmission.save())
+
             else:
-                create_transmissions.append(
-                    ContentMetadataItemTransmission(
-                        enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                        integrated_channel_code=self.enterprise_configuration.channel_code(),
-                        content_id=content_id,
-                        channel_metadata=channel_metadata,
-                        content_last_changed=content_updated_mapping.get(content_id).get('modified'),
-                        enterprise_customer_catalog_uuid=content_updated_mapping.get(content_id).get('catalog_uuid')
-                    )
+                # Does there exist a record under a different catalog uuid?
+                past_transmission = ContentMetadataItemTransmission.objects.filter(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    content_id=content_id,
+                    deleted_at__isnull=True,
                 )
-        ContentMetadataItemTransmission.objects.bulk_create(create_transmissions)
+                if past_transmission:
+                    past_transmission.channel_metadata = channel_metadata
+                    past_transmission.content_last_changed = content_updated_mapping.get(content_id)
+                    past_transmission.enterprise_customer_catalog_uuid = content_updated_mapping.get(content_id).get(
+                        'catalog_uuid'
+                    )
+                    reactivate_transmissions.append(past_transmission.save())
+                else:
+                    create_transmissions.append(
+                        ContentMetadataItemTransmission(
+                            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                            integrated_channel_code=self.enterprise_configuration.channel_code(),
+                            content_id=content_id,
+                            channel_metadata=channel_metadata,
+                            content_last_changed=content_updated_mapping.get(content_id).get('modified'),
+                            enterprise_customer_catalog_uuid=content_updated_mapping.get(content_id).get('catalog_uuid')
+                        )
+                    )
+
+        ContentMetadataItemTransmission.objects.bulk_create(create_transmissions, ignore_conflicts=True)
         ContentMetadataItemTransmission.objects.bulk_update(
             reactivate_transmissions,
-            ['deleted_at', 'channel_metadata', 'content_last_changed']
+            ['deleted_at', 'channel_metadata', 'content_last_changed'],
         )
 
     def _update_transmissions(self, update_payload, content_metadata_item_map):
