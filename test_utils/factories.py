@@ -633,8 +633,8 @@ class Degreed2EnterpriseCustomerConfigurationFactory(factory.django.DjangoModelF
     active = True
     degreed_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     degreed_token_fetch_base_url = factory.LazyAttribute(lambda x: FAKER.url())
-    key = factory.LazyAttribute(lambda x: FAKER.uuid4())
-    secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    client_id = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    client_secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
 
 
 class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
