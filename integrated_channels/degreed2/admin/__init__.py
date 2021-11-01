@@ -17,8 +17,8 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     list_display = (
         "enterprise_customer_name",
         "active",
-        "key",
-        "secret",
+        "client_id",
+        "client_secret",
         "degreed_base_url",
         "degreed_token_fetch_base_url",
     )

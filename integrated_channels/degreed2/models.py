@@ -25,7 +25,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
     .. no_pii:
     """
 
-    key = models.CharField(
+    client_id = models.CharField(
         max_length=255,
         verbose_name="API Client ID",
         help_text=(
@@ -34,7 +34,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         )
     )
 
-    secret = models.CharField(
+    client_secret = models.CharField(
         max_length=255,
         verbose_name="API Client Secret",
         help_text=(

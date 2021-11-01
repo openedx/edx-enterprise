@@ -387,8 +387,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             data={
                 'grant_type': 'client_credentials',
                 'scope': scope,
-                'client_id': config.key,
-                'client_secret': config.secret,
+                'client_id': config.client_id,
+                'client_secret': config.client_secret,
             },
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
