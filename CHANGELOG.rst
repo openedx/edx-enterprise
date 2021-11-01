@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.0]
+---------
+feat: New Integrated channel Degreed v2.
+
 [3.32.0]
 ---------
 feat: Added management command to fix DSC records having spaces instead of +.

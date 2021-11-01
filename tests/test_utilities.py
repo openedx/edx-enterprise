@@ -104,6 +104,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "data_sharing_consent_page",
                 "contentmetadataitemtransmission",
                 "cornerstoneenterprisecustomerconfiguration",
+                "degreed2enterprisecustomerconfiguration",
                 "degreedenterprisecustomerconfiguration",
                 "canvasenterprisecustomerconfiguration",
                 "blackboardenterprisecustomerconfiguration",

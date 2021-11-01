@@ -39,6 +39,7 @@ from integrated_channels.cornerstone.models import (
     CornerstoneGlobalConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
 )
+from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import (
     DegreedEnterpriseCustomerConfiguration,
     DegreedGlobalConfiguration,
@@ -612,6 +613,28 @@ class DegreedEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFa
     degreed_user_id = factory.LazyAttribute(lambda x: FAKER.user_name())
     degreed_user_password = factory.LazyAttribute(lambda x: FAKER.word())
     provider_id = 'DEGREED'
+
+
+class Degreed2EnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``Degreed2EnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``Degreed2EnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``Degreed2EnterpriseCustomerConfigurationFactory``.
+        """
+
+        model = Degreed2EnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    degreed_base_url = factory.LazyAttribute(lambda x: FAKER.url())
+    degreed_token_fetch_base_url = factory.LazyAttribute(lambda x: FAKER.url())
+    key = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
 
 
 class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
