@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.1]
+---------
+fix: Rename model field from key to client_id: Degreed2
+
 [3.33.0]
 ---------
 feat: New Integrated channel Degreed v2.
