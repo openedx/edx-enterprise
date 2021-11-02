@@ -313,7 +313,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         activation_links = {}
         for result_kind in ['successes', 'pending']:
             for result in results[result_kind]:
-                activation_links[result['email']] if result.get('activation_link') is not None
+                if result.get('activation_link') is not None:
+                    activation_links[result['email']] = result.get('activation_link')
 
         for course_run in course_runs_modes:
             pending_users = {
