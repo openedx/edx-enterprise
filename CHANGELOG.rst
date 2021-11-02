@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.2]
+---------
+fix: no longer notify learners of already existing enrollments
+
 [3.33.1]
 ---------
 fix: Rename model field from key to client_id: Degreed2

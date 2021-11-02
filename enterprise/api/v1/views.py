@@ -237,7 +237,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     {
                         'email': 'newuser@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+                        'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
                     },
                     ...
                 ]
@@ -310,10 +310,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         for course_run in course_runs_modes:
             pending_users = {
-                result.pop('user') for result in results['pending'] if result['course_run_key'] == course_run
+                result.pop('user') for result in results['pending']
+                if result['course_run_key'] == course_run and result.get('created')
             }
             existing_users = {
-                result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
+                result.pop('user') for result in results['successes']
+                if result['course_run_key'] == course_run and result.get('created')
             }
             if len(pending_users | existing_users) > 0:
                 LOGGER.info("Successfully bulk enrolled learners: {} into course {}".format(
@@ -328,6 +330,22 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         users=pending_users | existing_users,
                         admin_enrollment=True,
                     )
+
+        # Remove the user object from the results for any already existing enrollment cases (ie created = False) as
+        # these are not JSON serializable
+        existing_enrollments = []
+        for result in results['pending']:
+            already_enrolled_pending_user = result.pop('user', None)
+            existing_enrollments.append(already_enrolled_pending_user)
+
+        for result in results['successes']:
+            already_enrolled_user = result.pop('user', None)
+            existing_enrollments.append(already_enrolled_user)
+
+        if existing_enrollments:
+            LOGGER.info(
+                f'Bulk enrollment request submitted for users: {existing_enrollments} who already have enrollments'
+            )
 
         if email_errors:
             results['invalid_email_addresses'] = email_errors

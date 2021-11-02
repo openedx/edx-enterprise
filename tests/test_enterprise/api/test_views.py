@@ -3343,7 +3343,11 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_code': 202,
             'expected_response': {
                 'successes': [],
-                'pending': [{'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'}],
+                'pending': [{
+                    'email': 'abc@test.com',
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'created': True,
+                }],
                 'failures': []
             },
             'expected_num_pending_licenses': 1,
@@ -3369,8 +3373,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'}
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True}
                 ],
                 'failures': []
             },
@@ -3409,10 +3413,18 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'}
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'created': True,
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'created': True,
+                    }
                 ],
                 'failures': []
             },
@@ -3506,10 +3518,18 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'}
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'created': True
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'created': True
+                    }
                 ],
                 'failures': []
             },
@@ -3614,7 +3634,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         course = 'course-v1:edX+DemoX+Demo_Course'
         enrollment_response = {
-            'pending': [{'email': 'abc@test.com', 'course_run_key': course, 'user': pending_ecu}],
+            'pending': [{'email': 'abc@test.com', 'course_run_key': course, 'user': pending_ecu, 'created': True}],
             'successes': [],
             'failures': [{'email': 'xyz@test.com', 'course_run_key': course}]
         }

@@ -602,6 +602,48 @@ class EnterpriseCustomer(TimeStampedModel):
 
         return False
 
+    def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):
+        """
+        Create pending enrollments for the user in any number of courses, which will take effect on registration.
+        Return a dictionary representing status of submitted enrollments.
+
+        Args:
+            email: The email address for the pending link to be created
+            course_mode: The mode with which the eventual enrollment should be created
+            *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
+            cohort (optional): name of cohort to assign
+
+        Returns:
+            The PendingEnterpriseCustomerUser attached to the email address
+            new_enrollments (Dict): course ID keys and new enrollment status values.
+        """
+        pending_ecu, __ = PendingEnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=self,
+            user_email=email
+        )
+        try:
+            license_uuid = UUID(kwargs.get('license_uuid'))
+        except TypeError:
+            license_uuid = None
+
+        new_enrollments = {}
+        for course_id in course_ids:
+            __, created = PendingEnrollment.objects.update_or_create(
+                user=pending_ecu,
+                course_id=course_id,
+                license_uuid=license_uuid,
+                defaults={
+                    'course_mode': course_mode,
+                    'cohort_name': kwargs.get('cohort', None),
+                    'source': kwargs.get('enrollment_source', None),
+                    'discount_percentage': Decimal(kwargs.get('discount', 0.0)).quantize(Decimal('0.00001')),
+                    'sales_force_id': kwargs.get('sales_force_id', None),
+                }
+            )
+            new_enrollments[course_id] = created
+
+        return pending_ecu, new_enrollments
+
     def enroll_user_pending_registration(self, email, course_mode, *course_ids, **kwargs):
         """
         Create pending enrollments for the user in any number of courses, which will take effect on registration.
@@ -614,28 +656,7 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             The PendingEnterpriseCustomerUser attached to the email address
         """
-        pending_ecu, __ = PendingEnterpriseCustomerUser.objects.get_or_create(
-            enterprise_customer=self,
-            user_email=email
-        )
-        try:
-            license_uuid = UUID(kwargs.get('license_uuid'))
-        except TypeError:
-            license_uuid = None
-
-        for course_id in course_ids:
-            PendingEnrollment.objects.update_or_create(
-                user=pending_ecu,
-                course_id=course_id,
-                license_uuid=license_uuid,
-                defaults={
-                    'course_mode': course_mode,
-                    'cohort_name': kwargs.get('cohort', None),
-                    'source': kwargs.get('enrollment_source', None),
-                    'discount_percentage': Decimal(kwargs.get('discount', 0.0)).quantize(Decimal('0.00001')),
-                    'sales_force_id': kwargs.get('sales_force_id', None),
-                }
-            )
+        pending_ecu, __ = self.enroll_user_pending_registration_with_status(email, course_mode, *course_ids, **kwargs)
         return pending_ecu
 
     def clear_pending_registration(self, email, *course_ids):
