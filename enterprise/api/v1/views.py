@@ -308,6 +308,13 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
+
+        # collect the returned activation links for licenses which need activation
+        activation_links = {}
+        for result_kind in ['successes', 'pending']:
+            for result in results[result_kind]:
+                activation_links[result['email']] if result.get('activation_link') is not None
+
         for course_run in course_runs_modes:
             pending_users = {
                 result.pop('user') for result in results['pending']
@@ -329,6 +336,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         course_id=course_run,
                         users=pending_users | existing_users,
                         admin_enrollment=True,
+                        activation_links=activation_links,
                     )
 
         # Remove the user object from the results for any already existing enrollment cases (ie created = False) as

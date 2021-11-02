@@ -674,7 +674,7 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False, activation_links=None):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -698,6 +698,7 @@ class EnterpriseCustomer(TimeStampedModel):
             course_id,
             users,
             admin_enrollment,
+            activation_links,
         )
         send_enterprise_email_notification.delay(self.uuid, admin_enrollment, email_items)
 
