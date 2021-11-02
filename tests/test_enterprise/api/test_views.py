@@ -3374,12 +3374,14 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {   'email': 'abc@test.com',
+                    {
+                        'email': 'abc@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                         'created': True,
                         'activation_link': None,
                     },
-                    {   'email': 'xyz@test.com',
+                    {
+                        'email': 'xyz@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                         'created': True,
                         'activation_link': None,
@@ -3422,12 +3424,14 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {   'email': 'abc@test.com',
+                    {
+                        'email': 'abc@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                         'created': True,
                         'activation_link': None,
                     },
-                    {   'email': 'xyz@test.com',
+                    {
+                        'email': 'xyz@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                         'created': True,
                         'activation_link': None,
