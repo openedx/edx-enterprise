@@ -308,7 +308,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
-
         # collect the returned activation links for licenses which need activation
         activation_links = {}
         for result_kind in ['successes', 'pending']:
