@@ -183,7 +183,8 @@ class TestUtils(unittest.TestCase):
                     'email': self.user.email,
                     'course_run_key': 'course-key-v1',
                     'user': self.user,
-                    'created': True
+                    'created': True,
+                    'activation_link': None,
                 }],
                 'failures': [{'email': failure_user.email, 'course_run_key': 'course-key-v1'}]
             },
@@ -224,7 +225,8 @@ class TestUtils(unittest.TestCase):
                     'email': self.user.email,
                     'course_run_key': 'course-key-v1',
                     'user': self.user,
-                    'created': True
+                    'created': True,
+                    'activation_link': None,
                 }],
                 'failures': []
             },

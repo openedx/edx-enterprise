@@ -3347,6 +3347,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'email': 'abc@test.com',
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                     'created': True,
+                    'activation_link': None,
                 }],
                 'failures': []
             },
@@ -3373,8 +3374,16 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True}
+                    {   'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'created': True,
+                        'activation_link': None,
+                    },
+                    {   'email': 'xyz@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'created': True,
+                        'activation_link': None,
+                    }
                 ],
                 'failures': []
             },
@@ -3413,17 +3422,27 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {   'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'created': True,
+                        'activation_link': None,
+                    },
+                    {   'email': 'xyz@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'created': True,
+                        'activation_link': None,
+                    },
                     {
                         'email': 'abc@test.com',
                         'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
                         'created': True,
+                        'activation_link': None,
                     },
                     {
                         'email': 'xyz@test.com',
                         'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
                         'created': True,
+                        'activation_link': None,
                     }
                 ],
                 'failures': []
@@ -3518,17 +3537,29 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {
                 'successes': [],
                 'pending': [
-                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
-                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course', 'created': True},
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'created': True,
+                        'activation_link': None,
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'created': True,
+                        'activation_link': None,
+                    },
                     {
                         'email': 'abc@test.com',
                         'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'created': True
+                        'created': True,
+                        'activation_link': None,
                     },
                     {
                         'email': 'xyz@test.com',
                         'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'created': True
+                        'created': True,
+                        'activation_link': None,
                     }
                 ],
                 'failures': []
@@ -3608,6 +3639,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 course_id=course_run,
                 users=enrolled_learners,
                 admin_enrollment=True,
+                activation_links={},
             )
         mock_calls = [_make_call(course_run, unique_ent_customer_users) for course_run in unique_course_keys]
 
