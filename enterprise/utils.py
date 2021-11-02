@@ -1811,9 +1811,13 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                     enterprise_customer, user, course_mode, course_run_key, enrollment_source, license_uuid
                 )
                 if succeeded:
-                    results['successes'].append(
-                        {'user': user, 'email': user_email, 'course_run_key': course_run_key, 'created': created, 'activation_link': activation_link}
-                    )
+                    results['successes'].append({
+                        'user': user,
+                        'email': user_email,
+                        'course_run_key': course_run_key,
+                        'created': created,
+                        'activation_link': activation_link,
+                    })
                 else:
                     results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
             else:
