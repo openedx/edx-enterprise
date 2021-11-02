@@ -156,15 +156,19 @@ class ContentMetadataTransmitter(Transmitter):
 
     def _create_transmissions(self, content_metadata_item_map, content_updated_mapping):
         """
-        Create ContentMetadataItemTransmission models for the given content metadata items.
+        Create ContentMetadataItemTransmission models for the given content metadata items. Because records are soft
+        deleted, before creating new records we must verify that there is no previously deleted record under this
+        customer with this content ID. Additionally we must also check if a record exists under this customer under a
+        separate catalog as content over catalogs is overwritten.
         """
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
         create_transmissions = []
-        reactivate_transmissions = []
         for content_id, channel_metadata in content_metadata_item_map.items():
+            catalog_uuid = content_updated_mapping.get(content_id).get('catalog_uuid')
+            content_last_changed = content_updated_mapping.get(content_id).get('modified')
             LOGGER.info(
                 f'Creating content transmission record for course: {content_id} under enterprise customer: '
                 f'{self.enterprise_configuration.enterprise_customer.uuid}.'
@@ -174,21 +178,19 @@ class ContentMetadataTransmitter(Transmitter):
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 content_id=content_id,
                 deleted_at__isnull=False,
-            )
+            ).first()
 
-            if past_deleted_transmission.first():
+            if past_deleted_transmission:
                 LOGGER.info(
                     f'Found previously deleted content record while creating record for course: {content_id}'
-                    f'under customer: {self.enterprise_configuration.enterprise_customer.uuid}'
+                    f'under customer: {self.enterprise_configuration.enterprise_customer.uuid}. Marking record as '
+                    f'active.'
                 )
                 past_deleted_transmission.deleted_at = None
                 past_deleted_transmission.channel_metadata = channel_metadata
-                past_deleted_transmission.content_last_changed = content_updated_mapping.get(content_id)
-                past_deleted_transmission.enterprise_customer_catalog_uuid = content_updated_mapping.get(
-                    content_id
-                ).get('catalog_uuid')
-                reactivate_transmissions.append(past_deleted_transmission.save())
-
+                past_deleted_transmission.content_last_changed = content_last_changed
+                past_deleted_transmission.enterprise_customer_catalog_uuid = catalog_uuid
+                past_deleted_transmission.save()
             else:
                 # Does there exist a record under a different catalog uuid?
                 past_transmission = ContentMetadataItemTransmission.objects.filter(
@@ -196,14 +198,17 @@ class ContentMetadataTransmitter(Transmitter):
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     content_id=content_id,
                     deleted_at__isnull=True,
-                )
+                ).first()
                 if past_transmission:
-                    past_transmission.channel_metadata = channel_metadata
-                    past_transmission.content_last_changed = content_updated_mapping.get(content_id)
-                    past_transmission.enterprise_customer_catalog_uuid = content_updated_mapping.get(content_id).get(
-                        'catalog_uuid'
+                    LOGGER.info(
+                        f'Found past content record under another catalog while creating record for course: '
+                        f'{content_id} under customer: {self.enterprise_configuration.enterprise_customer.uuid}. '
+                        f'Updating records customer catalog uuid to {catalog_uuid}.'
                     )
-                    reactivate_transmissions.append(past_transmission.save())
+                    past_transmission.channel_metadata = channel_metadata
+                    past_transmission.content_last_changed = content_last_changed
+                    past_transmission.enterprise_customer_catalog_uuid = catalog_uuid
+                    past_transmission.save()
                 else:
                     create_transmissions.append(
                         ContentMetadataItemTransmission(
@@ -211,16 +216,11 @@ class ContentMetadataTransmitter(Transmitter):
                             integrated_channel_code=self.enterprise_configuration.channel_code(),
                             content_id=content_id,
                             channel_metadata=channel_metadata,
-                            content_last_changed=content_updated_mapping.get(content_id).get('modified'),
-                            enterprise_customer_catalog_uuid=content_updated_mapping.get(content_id).get('catalog_uuid')
+                            content_last_changed=content_last_changed,
+                            enterprise_customer_catalog_uuid=catalog_uuid
                         )
                     )
-
-        ContentMetadataItemTransmission.objects.bulk_create(create_transmissions, ignore_conflicts=True)
-        ContentMetadataItemTransmission.objects.bulk_update(
-            reactivate_transmissions,
-            ['deleted_at', 'channel_metadata', 'content_last_changed'],
-        )
+        ContentMetadataItemTransmission.objects.bulk_create(create_transmissions, batch_size=50, ignore_conflicts=True)
 
     def _update_transmissions(self, update_payload, content_metadata_item_map):
         """
