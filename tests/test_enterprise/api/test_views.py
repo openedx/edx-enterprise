@@ -1136,7 +1136,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             ENTERPRISE_LEARNER_LIST_ENDPOINT,
             itemgetter('user_id'),
             [{
-                'id': 1, 'user_id': 0,
+                'id': 1, 'user_id': 0, 'created': '2021-10-20T19:01:31Z',
                 'enterprise_customer__modified': '2021-10-20T19:01:31Z',
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__name': 'Test Enterprise Customer',
@@ -1149,10 +1149,10 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
-
             }],
             [{
-                'id': 1, 'user_id': 0, 'user': None, 'active': True, 'data_sharing_consent_records': [], 'groups': [],
+                'id': 1, 'user_id': 0, 'user': None, 'active': True, 'created': '2021-10-20T19:01:31Z',
+                'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'active': True, 'enable_data_sharing_consent': True,
