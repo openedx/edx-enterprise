@@ -685,6 +685,7 @@ class EnterpriseCustomer(TimeStampedModel):
             users: An iterable of the users (or pending users) who were enrolled
             admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
                 When true, we use the admin enrollment template instead.
+            activation_links (dict): a dictionary map of unactivated license user emails to license activation links
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:

@@ -495,6 +495,7 @@ def serialize_notification_content(
        (usually obtained via CourseCatalogApiClient)
     * course_id (str)
     * users (list): list of users to enroll (each user should be a User or PendingEnterpriseCustomerUser)
+    * activation_links (dict): a dictionary map of unactivated license user emails to license activation links
 
     Returns: A list of dictionary objects that are of the form:
       {
