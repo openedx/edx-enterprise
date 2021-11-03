@@ -19,6 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 MOODLE_FINAL_GRADE_ASSIGNMENT_NAME = '(edX integration) Final Grade'
 
+
 class MoodleClientError(ClientError):
     """
     Indicate a problem when interacting with Moodle.
@@ -29,6 +30,7 @@ class MoodleClientError(ClientError):
         self.message = message
         self.moodle_error = moodle_error
         super().__init__(message, status_code)
+
 
 def moodle_request_wrapper(method):
     """
