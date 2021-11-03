@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.3]
+---------
+feat: Change Bulk Enrollment Assignment Logic for Pending learners
+
 [3.33.2]
 ---------
 fix: no longer notify learners of already existing enrollments

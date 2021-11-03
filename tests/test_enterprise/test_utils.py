@@ -183,7 +183,8 @@ class TestUtils(unittest.TestCase):
                     'email': self.user.email,
                     'course_run_key': 'course-key-v1',
                     'user': self.user,
-                    'created': True
+                    'created': True,
+                    'activation_link': None,
                 }],
                 'failures': [{'email': failure_user.email, 'course_run_key': 'course-key-v1'}]
             },
@@ -224,7 +225,8 @@ class TestUtils(unittest.TestCase):
                     'email': self.user.email,
                     'course_run_key': 'course-key-v1',
                     'user': self.user,
-                    'created': True
+                    'created': True,
+                    'activation_link': None,
                 }],
                 'failures': []
             },
@@ -263,11 +265,13 @@ class TestUtils(unittest.TestCase):
         )
         user = factories.UserFactory()
         pending_user = factories.PendingEnterpriseCustomerUserFactory()
-        users = [user, pending_user]
+        needs_activation_user = factories.UserFactory()
+        users = [user, pending_user, needs_activation_user]
+        activation_links = {needs_activation_user.email: 'http://activation.test.learner.portal'}
 
         course_id = 'course-v1:edx+123+T2021'
         course_details = {'title': 'a_course', 'start': '2021-01-01T00:10:10', 'course': 'edx+123'}
-        return ent_customer, users, course_id, course_details
+        return ent_customer, users, course_id, course_details, activation_links
 
     @ddt.unpack
     @ddt.data(
@@ -285,7 +289,7 @@ class TestUtils(unittest.TestCase):
     ):
         mock_get_config_value_for_site.return_value = LMS_BASE_URL
         mock_get_learner_portal_url.return_value = "http://test.learner.portal"
-        ent_customer, users, course_id, course_details = self.setup_notification_test_data()
+        ent_customer, users, course_id, course_details, activation_links = self.setup_notification_test_data()
 
         email_items = serialize_notification_content(
             ent_customer,
@@ -293,19 +297,30 @@ class TestUtils(unittest.TestCase):
             course_id,
             users,
             admin_enrollment=admin_enrollment,
+            activation_links=activation_links,
         )
 
-        def expected_email_item(user):
+        def expected_email_item(user, activation_links):
+            user_dict = model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email'])
+            if 'email' in user_dict:
+                user_email = user_dict['email']
+            elif 'user_email' in user_dict:
+                user_email = user_dict['user_email']
+            else:
+                raise TypeError(('`user` must have one of either `email` or `user_email`.'))
             course_path = '/courses/{course_id}/course'.format(course_id=course_id)
             course_path = urlquote("{}?{}".format(course_path, urlencode([])))
             login_or_register = 'register' if is_pending_user(user) else 'login'
-            enrolled_url = '{site}/{login_or_register}?next={course_path}'.format(
-                site=LMS_BASE_URL,
-                login_or_register=login_or_register,
-                course_path=course_path
-            )
+            if activation_links is not None and activation_links.get(user_email) is not None:
+                enrolled_url = activation_links.get(user_email)
+            else:
+                enrolled_url = '{site}/{login_or_register}?next={course_path}'.format(
+                    site=LMS_BASE_URL,
+                    login_or_register=login_or_register,
+                    course_path=course_path
+                )
             return {
-                "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
+                "user": user_dict,
                 "enrolled_in": {
                     'name': course_details.get('title'),
                     'url': enrolled_url,
@@ -317,5 +332,5 @@ class TestUtils(unittest.TestCase):
                 "admin_enrollment": admin_enrollment,
             }
 
-        expected_email_items = [expected_email_item(user) for user in users]
+        expected_email_items = [expected_email_item(user, activation_links) for user in users]
         assert email_items == expected_email_items

@@ -674,7 +674,8 @@ class EnterpriseCustomer(TimeStampedModel):
         else:
             PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
-    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False):
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users, admin_enrollment=False,
+                                 activation_links=None):
         """
         Notify learners about a course in which they've been enrolled.
 
@@ -684,6 +685,7 @@ class EnterpriseCustomer(TimeStampedModel):
             users: An iterable of the users (or pending users) who were enrolled
             admin_enrollment: Default False. Set to true if using bulk enrollment, for example.
                 When true, we use the admin enrollment template instead.
+            activation_links (dict): a dictionary map of unactivated license user emails to license activation links
         """
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
@@ -698,6 +700,7 @@ class EnterpriseCustomer(TimeStampedModel):
             course_id,
             users,
             admin_enrollment,
+            activation_links,
         )
         send_enterprise_email_notification.delay(self.uuid, admin_enrollment, email_items)
 

@@ -484,6 +484,7 @@ def serialize_notification_content(
     course_id,
     users,
     admin_enrollment=False,
+    activation_links=None,
 ):
     """
     Prepare serializable contents to send emails with (if using tasks to send emails)
@@ -494,6 +495,7 @@ def serialize_notification_content(
        (usually obtained via CourseCatalogApiClient)
     * course_id (str)
     * users (list): list of users to enroll (each user should be a User or PendingEnterpriseCustomerUser)
+    * activation_links (dict): a dictionary map of unactivated license user emails to license activation links
 
     Returns: A list of dictionary objects that are of the form:
       {
@@ -545,14 +547,25 @@ def serialize_notification_content(
 
     email_items = []
     for user in users:
+        user_dict = model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email'])
+        if 'email' in user_dict:
+            user_email = user_dict['email']
+        elif 'user_email' in user_dict:
+            user_email = user_dict['user_email']
+        else:
+            raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
         login_or_register = 'register' if is_pending_user(user) else 'login'
-        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-            site=lms_root_url,
-            login_or_register=login_or_register,
-            course_path=course_path
-        )
+        # if we have an activation link for a license, use that rather than the course URL
+        if activation_links is not None and activation_links.get(user_email) is not None:
+            destination_url = activation_links.get(user_email)
+        else:
+            destination_url = '{site}/{login_or_register}?next={course_path}'.format(
+                site=lms_root_url,
+                login_or_register=login_or_register,
+                course_path=course_path
+            )
         email_items.append({
-            "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
+            "user": user_dict,
             "enrolled_in": {
                 'name': course_name,
                 'url': destination_url,
@@ -1794,6 +1807,7 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
         course_mode = licensed_user_info.get('course_mode')
         course_run_key = licensed_user_info.get('course_run_key')
         license_uuid = licensed_user_info.get('license_uuid')
+        activation_link = licensed_user_info.get('activation_link')
 
         user = User.objects.filter(email=licensed_user_info['email']).first()
         try:
@@ -1805,9 +1819,13 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                     enterprise_customer, user, course_mode, course_run_key, enrollment_source, license_uuid
                 )
                 if succeeded:
-                    results['successes'].append(
-                        {'user': user, 'email': user_email, 'course_run_key': course_run_key, 'created': created}
-                    )
+                    results['successes'].append({
+                        'user': user,
+                        'email': user_email,
+                        'course_run_key': course_run_key,
+                        'created': created,
+                        'activation_link': activation_link,
+                    })
                 else:
                     results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
             else:
@@ -1826,6 +1844,7 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                     'email': user_email,
                     'course_run_key': course_run_key,
                     'created': new_enrollments[course_run_key],
+                    'activation_link': activation_link,
                 })
         except utils.IntegrityError:
             results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
