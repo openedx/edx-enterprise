@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.4]
+---------
+feat: integrated channels only requests content metadata for courses that need updating
+
 [3.33.3]
 ---------
 feat: Change Bulk Enrollment Assignment Logic for Pending learners
