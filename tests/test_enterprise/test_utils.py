@@ -307,7 +307,7 @@ class TestUtils(unittest.TestCase):
             elif 'user_email' in user_dict:
                 user_email = user_dict['user_email']
             else:
-                raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
+                raise TypeError(('`user` must have one of either `email` or `user_email`.'))
             course_path = '/courses/{course_id}/course'.format(course_id=course_id)
             course_path = urlquote("{}?{}".format(course_path, urlencode([])))
             login_or_register = 'register' if is_pending_user(user) else 'login'
