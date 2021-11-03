@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.9]
+---------
+feat: allow filtering enterprise learners by enterprise uuid and enterprise role
+
 [3.33.8]
 ---------
 fix: Moodle duplicate content metadata records detected

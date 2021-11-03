@@ -87,7 +87,7 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
 
     def setUp(self):
         super().setUp()
-        enterprise_customer = factories.EnterpriseCustomerFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
         factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=self.user.id)
         self.url = settings.TEST_SERVER + reverse('enterprise-learner-list')
 
@@ -110,7 +110,7 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
         ('', 'dummy@example.com', False, 1),
     )
     @ddt.unpack
-    def test_filter_for_list(self, username, email, is_staff, expected_data_length):
+    def test_filter_by_user_attributes(self, username, email, is_staff, expected_data_length):
         """
         Filter users through email/username if requesting user is staff, otherwise based off of request user ID.
         """
@@ -120,6 +120,33 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
         assert response.status_code == status.HTTP_200_OK
         data = self.load_json(response.content)
         assert len(data['results']) == expected_data_length
+
+    @ddt.data(
+        ('', '', 1),
+        (FAKE_UUIDS[0], '', 1),
+        (FAKE_UUIDS[1], '', 0),
+        ('', 'enterprise_admin', 0),
+        ('', 'enterprise_learner', 0),
+        (FAKE_UUIDS[0], 'enterprise_learner', 1),
+        (FAKE_UUIDS[1], 'enterprise_learner', 0),
+        (FAKE_UUIDS[0], 'enterprise_admin', 0),
+    )
+    @ddt.unpack
+    @ddt.unpack
+    def test_filter_by_enterprise_attributes(self, enterprise_customer_uuid, role, expected_data_length):
+        """
+        Filter users through enterprise_customer_uuid/role if requesting user is staff.
+        """
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(self.url + "?enterprise_customer_uuid=" + enterprise_customer_uuid + "&role=" + role)
+
+        if role and not enterprise_customer_uuid:
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+        else:
+            assert response.status_code == status.HTTP_200_OK
+            data = self.load_json(response.content)
+            assert len(data['results']) == expected_data_length
 
 
 @ddt.ddt

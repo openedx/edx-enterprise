@@ -433,7 +433,14 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'id', 'enterprise_customer', 'active', 'user_id', 'user', 'data_sharing_consent_records', 'groups'
+            'id',
+            'enterprise_customer',
+            'active',
+            'user_id',
+            'user',
+            'data_sharing_consent_records',
+            'groups',
+            'created'
         )
 
     user = UserSerializer()
