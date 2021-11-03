@@ -20,6 +20,7 @@ from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
@@ -75,6 +76,7 @@ from enterprise.utils import (
     get_platform_logo_url,
     get_program_type_description,
     is_course_run_enrollable,
+    localized_utcnow,
     track_enrollment,
     ungettext_min_max,
     update_query_parameters,
@@ -2339,6 +2341,21 @@ class RouterView(NonAtomicView):
 
         # Enrollments through Cornerstone have some params in querystring, need to store those params if exists.
         if course_key:
+            session_token = request.GET.get('sessionToken')
+            if session_token:
+                csod_customer_configuration_model = apps.get_model(
+                    'integrated_channel',
+                    'CornerstoneEnterpriseCustomerConfiguration'
+                )
+                with transaction.atomic():
+                    cornerstone_customer_configuration = \
+                        csod_customer_configuration_model.objects.select_for_update().filter(
+                            enterprise_customer=enterprise_customer
+                        ).first()
+                    if cornerstone_customer_configuration:
+                        cornerstone_customer_configuration.session_token = session_token
+                        cornerstone_customer_configuration.session_token_modified = localized_utcnow()
+                        cornerstone_customer_configuration.save()
             create_cornerstone_learner_data(request, course_key)
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view

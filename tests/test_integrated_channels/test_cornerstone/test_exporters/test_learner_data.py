@@ -137,6 +137,65 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
+    def test_api_client_uses_config_session_tokens(
+        self,
+        mock_is_course_completed,
+        mock_get_course_details,
+        mock_get_course_certificate,
+        mock_post_request
+    ):
+        """
+        Test sending of course completion data to cornerstone progress API
+        """
+
+        self.config.session_token = 'test_value'
+        self.config.save()
+
+        mock_is_course_completed.return_value = True
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing="instructor",
+            end="2022-06-21T12:58:17.428373Z",
+        )
+
+        # Enrollment API
+        responses.add(
+            responses.GET,
+            urljoin(
+                lms_api.EnrollmentApiClient.API_BASE_URL,
+                "enrollment/{username},{course_id}".format(username=self.user.username, course_id=self.course_id),
+            ),
+            json=dict(mode='verified')
+        )
+
+        # Certificates mock data
+        certificate = dict(
+            username=self.user.username,
+            course_id=self.course_id,
+            created_date="2019-06-21T12:58:17.428373Z",
+            is_passing=True,
+            grade='0.8',
+        )
+        mock_get_course_certificate.return_value = certificate
+
+        call_command('transmit_learner_data', '--api_user', self.staff_user.username, '--channel', 'CSOD')
+
+        expected_url = '{base_url}{callback_url}{completion_path}?sessionToken={session_token}'.format(
+            base_url=self.config.cornerstone_base_url,
+            callback_url=self.callback_url,
+            completion_path=self.global_config.completion_status_api_path,
+            session_token=self.config.session_token,
+        )
+
+        mock_post_request.assert_called_once()
+        actual_url = mock_post_request.call_args[0][0]
+        self.assertEqual(actual_url, expected_url)
+
+    @responses.activate
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.cornerstone.client.requests.post')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     def test_api_client_called_with_appropriate_payload(
         self,
         mock_is_course_completed,
