@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.5]
+---------
+fix: CSOD API session tokens are now saved to the customer's configuration instead of individual transmission audits
+
 [3.33.4]
 ---------
 feat: integrated channels only requests content metadata for courses that need updating
