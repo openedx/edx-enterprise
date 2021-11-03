@@ -546,10 +546,17 @@ def serialize_notification_content(
 
     email_items = []
     for user in users:
+        user_dict = model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email'])
+        if 'email' in user_dict:
+            user_email = user_dict['email']
+        elif 'user_email' in user_dict:
+            user_email = user_dict['user_email']
+        else:
+            raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
         login_or_register = 'register' if is_pending_user(user) else 'login'
         # if we have an activation link for a license, use that rather than the course URL
-        if activation_links is not None and activation_links.get(user.email) is not None:
-            destination_url = activation_links.get(user.email)
+        if activation_links is not None and activation_links.get(user_email) is not None:
+            destination_url = activation_links.get(user_email)
         else:
             destination_url = '{site}/{login_or_register}?next={course_path}'.format(
                 site=lms_root_url,
@@ -557,7 +564,7 @@ def serialize_notification_content(
                 course_path=course_path
             )
         email_items.append({
-            "user": model_to_dict(user, fields=['first_name', 'username', 'user_email', 'email']),
+            "user": user_dict,
             "enrolled_in": {
                 'name': course_name,
                 'url': destination_url,
