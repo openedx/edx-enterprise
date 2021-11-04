@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.7]
+---------
+fix: allow for records to be saved for integrated channels' content across catalogs
+
 [3.33.6]
 ---------
 fix: CSOD API session tokens bugfix
