@@ -2339,8 +2339,7 @@ class RouterView(NonAtomicView):
                 )
             kwargs['course_id'] = course_run_id
 
-        # Enrollments through Cornerstone have some params in querystring, need to store those params if exists.
-        if course_key:
+            # Enrollments through Cornerstone have some params in querystring, need to store those params if exists.
             session_token = request.GET.get('sessionToken')
             if session_token:
                 csod_customer_configuration_model = apps.get_model(
