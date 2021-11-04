@@ -188,8 +188,33 @@ class TestRouterView(TestCase):
         router_view_mock.redirect = mock.MagicMock(return_value=None)
         kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
-            'course_key': 'fake_course_key'
+            'course_key': 'fake_course_key',
         }
+        router_view_mock.get(self.request, **kwargs)
+        router_view_mock.redirect.assert_called_once()
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
+    def test_get_redirects_with_course_key_and_sessionToken(
+            self,
+            router_view_mock,
+            enrollment_api_mock,
+            catalog_api_mock
+    ):
+        """
+        ``get`` performs a redirect with a course key in the request path and
+        exercises the sessionToken/Cornerstone Integrated Channel code path.
+        """
+        enrollment_api_mock.get_enrolled_courses.side_effect = fake_enrollment_api.get_enrolled_courses
+        fake_catalog_api.setup_course_catalog_api_client_mock(catalog_api_mock)
+        router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=False)
+        router_view_mock.redirect = mock.MagicMock(return_value=None)
+        kwargs = {
+            'enterprise_uuid': str(self.enterprise_customer.uuid),
+            'course_key': 'fake_course_key',
+        }
+        self.request.GET['sessionToken'] = 'fake_token'
         router_view_mock.get(self.request, **kwargs)
         router_view_mock.redirect.assert_called_once()
 
