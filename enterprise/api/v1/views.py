@@ -739,16 +739,6 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             course_id = enterprise_course_enrollment.course_id
             course_overview = indexed_overviews.get(course_id)
 
-            if licensed_enrollment.is_revoked:
-                LOGGER.info(
-                    'Enrollment termination: not updating enrollment in {} for User {} '
-                    'licensed enterprise enrollment has already been revoked in the past.'.format(
-                        course_id,
-                        user_id
-                    )
-                )
-                continue
-
             if ignore_enrollments_modified_after:
                 key = f'{user_id}{course_id}'
                 course_enrollment_modified_at = course_enrollment_modified_at_by_user_and_course_id[key]
