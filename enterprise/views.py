@@ -2344,7 +2344,7 @@ class RouterView(NonAtomicView):
             session_token = request.GET.get('sessionToken')
             if session_token:
                 csod_customer_configuration_model = apps.get_model(
-                    'integrated_channel',
+                    'cornerstone',
                     'CornerstoneEnterpriseCustomerConfiguration'
                 )
                 with transaction.atomic():
