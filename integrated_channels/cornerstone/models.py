@@ -100,6 +100,23 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         help_text=_("The base URL used for API requests to Cornerstone, i.e. https://portalName.csod.com")
     )
 
+    session_token = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Cornerstone Session Token",
+        help_text=_(
+            "The most current session token provided for authorization to make API calls to the customer's instance"
+        )
+    )
+
+    session_token_modified = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_(
+            'Date time when session token was last provided'
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:

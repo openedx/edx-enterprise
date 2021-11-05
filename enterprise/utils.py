@@ -2195,3 +2195,8 @@ def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FOR
     if date_time.tzinfo is None:
         date_time = date_time.replace(tzinfo=timezone.utc)
     return date_time
+
+
+def localized_utcnow():
+    """Helper function to return localized utcnow()."""
+    return pytz.UTC.localize(datetime.datetime.utcnow())  # pylint: disable=no-value-for-parameter

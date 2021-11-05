@@ -77,7 +77,9 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         """
         json_payload = json.loads(payload)
         callback_url = json_payload['data'].pop('callbackUrl')
-        session_token = json_payload['data'].pop('sessionToken')
+        session_token = self.enterprise_configuration.session_token
+        if not session_token:
+            session_token = json_payload['data'].pop('sessionToken')
 
         # When exporting content metadata, we encode course keys that contain invalid chars or
         # set them to uuids to comply with Cornerstone standards

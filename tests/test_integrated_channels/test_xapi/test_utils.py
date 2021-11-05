@@ -79,6 +79,8 @@ class TestUtils(unittest.TestCase):
             {'status': 500, 'error_messages': None},
         )
 
+        # Pylint has no way of knowing that the returned value here is a mock, so it assumes it cannot have the
+        # assert_called attr
         self.x_api_client.lrs.save_statement.assert_called()  # pylint: disable=no-member, useless-suppression
 
     @mock.patch('integrated_channels.xapi.client.RemoteLRS', mock.MagicMock())
@@ -139,6 +141,8 @@ class TestUtils(unittest.TestCase):
             {'status': 500, 'error_message': None}
         )
 
+        # Pylint has no way of knowing that the returned value here is a mock, so it assumes it cannot have the
+        # assert_called attr
         self.x_api_client.lrs.save_statement.assert_called()  # pylint: disable=no-member, useless-suppression
 
     def test_is_success_response(self):
