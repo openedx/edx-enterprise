@@ -36,8 +36,6 @@ MULTI_SERIALIZED_DATA = {
     'courses[1][enddate]': '2030-03-01T00:00:00Z',
 }
 
-# MOODLE_COURSE_ID = 100
-
 SUCCESSFUL_RESPONSE = unittest.mock.Mock(spec=Response)
 SUCCESSFUL_RESPONSE.json.return_value = {}
 SUCCESSFUL_RESPONSE.status_code = 200
@@ -107,7 +105,6 @@ class TestMoodleApiClient(unittest.TestCase):
         query string we send to Moodle is formatted correctly.
         """
         expected_data = SERIALIZED_DATA.copy()
-        # expected_data['courses[0][id]'] = self.moodle_course_id
         expected_data['wsfunction'] = 'core_course_create_courses'
 
         client = MoodleAPIClient(self.enterprise_config)

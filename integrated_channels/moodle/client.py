@@ -347,7 +347,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
           [...]
         }
         when sending 1 course and its a dupe, treat as success.
-        when senting N courses and a dupe exists, throw exception since
+        when sending N courses and a dupe exists, throw exception since
         there is no easy way to retry with just the non-dupes.
         """
         # check to see if more than 1 course is being passed
