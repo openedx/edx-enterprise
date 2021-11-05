@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.8]
+---------
+fix: Moodle duplicate content metadata records detected
+
 [3.33.7]
 ---------
 fix: allow for records to be saved for integrated channels' content across catalogs
