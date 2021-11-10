@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.10]
+---------
+fix: incorrectly skipping completion transmissions
+
 [3.33.9]
 ---------
 feat: allow filtering enterprise learners by enterprise uuid and enterprise role
