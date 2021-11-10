@@ -425,6 +425,14 @@ class LearnerExporter(Exporter):
                 incomplete_count,
             )
 
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_run_id,
+                f'kwargs completed_date: '
+                f' {completed_date} '
+                f'api completed_date: '
+                f' {completed_date_from_api} '
+            ))
+
             # Apply the Source of Truth for Grades
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
