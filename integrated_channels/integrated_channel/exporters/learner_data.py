@@ -432,7 +432,7 @@ class LearnerExporter(Exporter):
                 grade=grade_from_api,
                 course_completed=is_course_completed(
                     enterprise_enrollment,
-                    completed_date,
+                    completed_date_from_api,
                     is_passing_from_api,
                     incomplete_count,
                 ),
