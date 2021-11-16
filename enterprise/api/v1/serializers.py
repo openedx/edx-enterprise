@@ -440,7 +440,8 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
             'user',
             'data_sharing_consent_records',
             'groups',
-            'created'
+            'created',
+            'invite_key'
         )
 
     user = UserSerializer()
@@ -1159,3 +1160,73 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
                 'Must include the "licenses_info" parameter in request.'
             )
         return data
+
+
+class EnterpriseCustomerInviteKeyWriteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for writing to the EnterpriseCustomerInviteKey model.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomerInviteKey
+        fields = (
+            'uuid',
+            'enterprise_customer_uuid',
+            'usage_limit',
+            'expiration_date'
+        )
+
+    uuid = serializers.UUIDField(read_only=True)
+    enterprise_customer_uuid = serializers.UUIDField()
+    usage_limit = serializers.IntegerField(required=False)
+    expiration_date = serializers.DateTimeField()
+
+    def create(self, validated_data):
+        return validated_data
+
+    def validate_enterprise_customer_uuid(self, value):
+        """
+        Validates an EnterpriseCustomer with the given enterprise_customer_uuid exists.
+        """
+        try:
+            models.EnterpriseCustomer.objects.get(
+                uuid=value
+            )
+        except models.EnterpriseCustomer.DoesNotExist as no_enterprise_customer_error:
+            msg = f"EnterpriseCustomer with uuid {value} does not exist."
+            raise serializers.ValidationError(msg) from no_enterprise_customer_error
+
+        return value
+
+    def save(self):  # pylint: disable=arguments-differ
+        args = dict(self.validated_data)
+        enterprise_customer_uuid = args.pop('enterprise_customer_uuid')
+        obj = models.EnterpriseCustomerInviteKey.objects.create(
+            enterprise_customer_id=enterprise_customer_uuid,
+            **args
+        )
+        self.validated_data['uuid'] = obj.uuid
+
+
+class EnterpriseCustomerInviteKeyReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Serializer for reading the EnterpriseCustomerInviteKey model.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomerInviteKey
+        fields = (
+            'uuid',
+            'enterprise_customer_uuid',
+            'enterprise_customer_name',
+            'is_valid'
+        )
+
+    enterprise_customer_uuid = serializers.SerializerMethodField()
+    enterprise_customer_name = serializers.SerializerMethodField()
+
+    def get_enterprise_customer_uuid(self, obj):
+        return obj.enterprise_customer.uuid
+
+    def get_enterprise_customer_name(self, obj):
+        return obj.enterprise_customer.name

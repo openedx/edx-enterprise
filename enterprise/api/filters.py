@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.contrib import auth
 
+from enterprise.api.utils import get_enterprise_customer_from_user_id
 from enterprise.models import SystemWideEnterpriseUserRoleAssignment
 
 User = auth.get_user_model()
@@ -121,5 +122,23 @@ class EnterpriseLinkedUserFilterBackend(filters.BaseFilterBackend):
                 'enterprise_customer_users__linked': 1
             }
             queryset = queryset.filter(**filter_kwargs)
+
+        return queryset
+
+
+class EnterpriseCustomerInviteKeyFilterBackend(filters.BaseFilterBackend):
+    """
+    Filter backend to return invite keys under the user's enterprise only.
+
+    * Staff users will bypass this filter.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        """
+        Filter out keys that are not part of the user's enterprise.
+        """
+        if not request.user.is_staff:
+            enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
+            queryset = queryset.filter(enterprise_customer_id=enterprise_customer_uuid)
 
         return queryset
