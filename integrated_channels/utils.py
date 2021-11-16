@@ -215,7 +215,7 @@ def is_already_transmitted(
         latest_transmitted_tx = already_transmitted.latest('id')
         if detect_grade_updated:
             return latest_transmitted_tx and getattr(latest_transmitted_tx, 'grade', None) == grade
-        return latest_transmitted_tx
+        return latest_transmitted_tx is not None
     except transmission.DoesNotExist:
         return False
 
