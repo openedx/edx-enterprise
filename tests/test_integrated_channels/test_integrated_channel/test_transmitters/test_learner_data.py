@@ -42,6 +42,12 @@ class TestLearnerDataTransmitter(unittest.TestCase):
 
         self.learner_transmitter = LearnerTransmitter(self.enterprise_config)
 
+    def test_default_channel_settings(self):
+        """
+        If you add any settings to the ChannelSettingsMixin, add a test here for the common default value
+        """
+        assert LearnerTransmitter(self.enterprise_config).INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK is True
+
     def test_transmit_single_learner_data_signal_kwargs(self):
         """
         transmit_single_learner_data is called with kwargs as a shared task from OpenEdx,

@@ -1,3 +1,8 @@
+"""
+Channel level settings (global for all channels).
+"""
+
+
 class ChannelSettingsMixin:
     """
     Mixin for channel settings that apply to all channels.

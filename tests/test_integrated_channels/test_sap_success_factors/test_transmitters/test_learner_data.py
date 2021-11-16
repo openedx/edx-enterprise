@@ -223,3 +223,11 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         assert payloads[0].error_message == 'error occurred'
         assert payloads[1].status == '200'
         assert payloads[1].error_message == ''
+
+    def test_override_channel_settings(self):
+        """
+        If you add any settings to the ChannelSettingsMixin, add a test here for the common default value
+        """
+        assert learner_data.SapSuccessFactorsLearnerTransmitter(
+            self.enterprise_config
+        ).INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK is False
