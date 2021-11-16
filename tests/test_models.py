@@ -8,11 +8,13 @@ import logging
 import os
 import shutil
 import unittest
+from datetime import timedelta
 
 import ddt
 import mock
 from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
+from freezegun.api import freeze_time
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
@@ -46,7 +48,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
-from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter
+from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter, localized_utcnow
 from test_utils import EmptyCacheMixin, assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 
@@ -2346,3 +2348,39 @@ class TestEnterpriseCatalogQuery(unittest.TestCase):
         catalog.save()
         expected_content_filter = {'key': 'coursev1:course1'}
         assert expected_content_filter == catalog.content_filter
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerInviteKey(unittest.TestCase):
+    """
+    Tests for the EnterpriseCustomerInviteKey model.
+    """
+    NOW = localized_utcnow()
+    VALID_EXPIRATION_DATE = NOW + timedelta(seconds=1)
+    EXPIRED_DATE = NOW - timedelta(seconds=1)
+
+    @ddt.data(
+        {'expiration_date': EXPIRED_DATE, 'usage_limit': 1, 'usage_count': 1, 'expected_is_valid': False},
+        {'expiration_date': EXPIRED_DATE, 'usage_limit': 1, 'usage_count': 0, 'expected_is_valid': False},
+        {'expiration_date': VALID_EXPIRATION_DATE, 'usage_limit': 1, 'usage_count': 1, 'expected_is_valid': False},
+        {'expiration_date': VALID_EXPIRATION_DATE, 'usage_limit': 1, 'usage_count': 0, 'expected_is_valid': True},
+    )
+    @ddt.unpack
+    @freeze_time(NOW)
+    def test_is_valid(self, expiration_date, usage_limit, usage_count, expected_is_valid):
+        """
+        Test ``EnterpriseCustomerInviteKey`` is_valid property.
+        """
+        enterprise_customer_key = factories.EnterpriseCustomerInviteKeyFactory(
+            usage_limit=usage_limit,
+            expiration_date=expiration_date,
+        )
+
+        for _ in range(usage_count):
+            factories.EnterpriseCustomerUserFactory(
+                enterprise_customer=enterprise_customer_key.enterprise_customer,
+                invite_key=enterprise_customer_key
+            )
+
+        self.assertEqual(enterprise_customer_key.is_valid, expected_is_valid)

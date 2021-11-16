@@ -118,6 +118,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "slug",
                 "active",
                 "country",
+                "invite_keys",
                 "hide_course_original_price",
                 "site",
                 "enable_data_sharing_consent",
@@ -158,6 +159,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "user_id",
                 "active",
                 "linked",
+                "invite_key"
             ]
         ),
         (

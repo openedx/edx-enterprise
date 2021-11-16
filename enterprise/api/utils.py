@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 
 from enterprise.models import (
     EnterpriseCustomerCatalog,
+    EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
 )
@@ -87,3 +88,14 @@ def create_message_body(email, enterprise_name, number_of_codes=None, notes=None
                          token_email=email,
                          token_enterprise_name=enterprise_name)
     return body_msg
+
+
+def get_ent_cust_from_enterprise_customer_key(enterprise_customer_key):
+    """
+    Get the enterprise customer id given an enterprise customer key.
+    """
+
+    try:
+        return str(EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key).enterprise_customer_id)
+    except EnterpriseCustomerInviteKey.DoesNotExist:
+        return None
