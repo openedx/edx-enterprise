@@ -108,12 +108,12 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         records.course_completed = True
         records.serialize = Mock(return_value='serialized data')
         exporter.export = MagicMock(return_value=[records])
-        self.learner_transmitter.handle_transmission_error = Mock()
+        self.learner_transmitter.log_transmission_error = Mock()
         self.learner_transmitter.transmit(
             exporter,
             remote_user_id='user_id'
         )
-        self.learner_transmitter.handle_transmission_error.assert_called_once()
+        self.learner_transmitter.log_transmission_error.assert_called_once()
 
     def test_learner_data_transmission_feature_flag(self):
         """
