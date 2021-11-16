@@ -9,6 +9,7 @@ from http import HTTPStatus
 from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
+from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporterUtility
 from integrated_channels.integrated_channel.transmitters import Transmitter
@@ -17,7 +18,7 @@ from integrated_channels.utils import generate_formatted_log, is_already_transmi
 LOGGER = logging.getLogger(__name__)
 
 
-class LearnerTransmitter(Transmitter):
+class LearnerTransmitter(ChannelSettingsMixin, Transmitter):
     """
     A generic learner data transmitter.
 
@@ -92,7 +93,7 @@ class LearnerTransmitter(Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(
+                self.log_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -159,11 +160,13 @@ class LearnerTransmitter(Transmitter):
             )
 
             # Check the last transmission for the current enrollment and see if the old grades match the new ones
+            # note: the property self.include_grade_for_completion_audit_check comes from ChannelSettingsMixin
             if is_already_transmitted(
                 TransmissionAudit,
                 enterprise_enrollment_id,
                 learner_data.grade,
-                learner_data.subsection_id
+                learner_data.subsection_id,
+                detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
             ):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
@@ -191,7 +194,7 @@ class LearnerTransmitter(Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(
+                self.log_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -275,7 +278,12 @@ class LearnerTransmitter(Transmitter):
                 continue
 
             grade = getattr(learner_data, 'grade', None)
-            if is_already_transmitted(TransmissionAudit, enterprise_enrollment_id, grade):
+            if is_already_transmitted(
+                TransmissionAudit,
+                enterprise_enrollment_id,
+                grade,
+                detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
+            ):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
                     app_label,
@@ -304,7 +312,7 @@ class LearnerTransmitter(Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(
+                self.log_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -373,8 +381,8 @@ class LearnerTransmitter(Transmitter):
                 payload=learner_data
             )), exc_info=True)
 
-    def handle_transmission_error(self, learner_data, client_exception,
-                                  integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
+    def log_transmission_error(self, learner_data, client_exception,
+                               integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
         """Handle the case where the transmission fails."""
         LOGGER.exception(generate_formatted_log(
             integrated_channel_name, enterprise_customer_uuid, learner_id, course_id,

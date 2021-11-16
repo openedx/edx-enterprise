@@ -20,6 +20,8 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
     sent to SuccessFactors.
     """
 
+    INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK = False
+
     def __init__(self, enterprise_configuration, client=SAPSuccessFactorsAPIClient):
         """
         By default, use the ``SAPSuccessFactorsAPIClient`` for learner data transmission to SAPSF.
@@ -61,5 +63,5 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                     ecu.user_id, ecu.id, ecu.enterprise_customer
                 )
                 return
-        super().handle_transmission_error(learner_data, client_exception,
-                                          integrated_channel_name, enterprise_customer_uuid, learner_id, course_id)
+        super().log_transmission_error(learner_data, client_exception,
+                                       integrated_channel_name, enterprise_customer_uuid, learner_id, course_id)

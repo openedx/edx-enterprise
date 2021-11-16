@@ -19,6 +19,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from integrated_channels.exceptions import ClientError
+from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
 
 try:
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
@@ -46,7 +47,7 @@ LOGGER = getLogger(__name__)
 User = auth.get_user_model()
 
 
-class LearnerExporter(Exporter):
+class LearnerExporter(ChannelSettingsMixin, Exporter):
     """
     Base class for exporting learner completion data to integrated channels.
     """
@@ -187,7 +188,8 @@ class LearnerExporter(Exporter):
             TransmissionAudit,
             enterprise_enrollment.id,
             grade,
-            subsection_id
+            subsection_id,
+            detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
         )
 
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
@@ -487,7 +489,12 @@ class LearnerExporter(Exporter):
             course_id = enterprise_enrollment.course_id
 
             if transmission_audit and \
-                    is_already_transmitted(transmission_audit, enterprise_enrollment.id, grade):
+                    is_already_transmitted(
+                        transmission_audit,
+                        enterprise_enrollment.id,
+                        grade,
+                        detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
+                    ):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
