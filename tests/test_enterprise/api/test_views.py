@@ -39,6 +39,8 @@ from enterprise.constants import (
 from enterprise.models import (
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerInviteKey,
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
     EnterpriseFeatureRole,
@@ -1152,7 +1154,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'id': 1, 'user_id': 0, 'user': None, 'active': True, 'created': '2021-10-20T19:01:31Z',
-                'data_sharing_consent_records': [], 'groups': [],
+                'invite_key': None, 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'active': True, 'enable_data_sharing_consent': True,
@@ -4890,3 +4892,82 @@ class TestEnterpriseCustomerReportTypesView(BaseTestEnterpriseAPIViews):
             ),
         )
         self.assertEqual(response.status_code, expected_status)
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerInviteKeyViewSet
+    """
+
+    ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT = 'enterprise-customer-invite-key-detail'
+    ENTERPRISE_CUSTOMER_INVITE_KEY_LIST_ENDPOINT = 'enterprise-customer-invite-key-list'
+
+    def setUp(self):
+        super().setUp()
+        enterprise_customer_1 = factories.EnterpriseCustomerFactory()
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory()
+        enterprise_customer_1_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=enterprise_customer_1
+        )
+        self.enterprise_customer_1 = enterprise_customer_1
+        self.enterprise_customer_2 = enterprise_customer_2
+        self.enterprise_customer_1_invite_key = enterprise_customer_1_invite_key
+
+    def tearDown(self):
+        super().tearDown()
+        EnterpriseCustomer.objects.all().delete()
+        EnterpriseCustomerInviteKey.objects.all().delete()
+
+    def test_retrieve_allowed_for_authenticated_users(self):
+        """
+        Test that `EnterpriseCustomerInviteKeyViewSet` does not require roles for for getting an invite key.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT,
+                kwargs={'pk': str(self.enterprise_customer_1_invite_key.uuid)}
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+
+    @ddt.data(True, False)
+    def test_create_allowed_only_for_enterprise_admins(self, is_enterprise_admin):
+        """
+        Test that `EnterpriseCustomerInviteKeyViewSet` only allows enterprise admins to create invite keys.
+        """
+        context = str(self.enterprise_customer_1.uuid) if is_enterprise_admin else str(self.enterprise_customer_2.uuid)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, context)
+
+        future_date = datetime.utcnow() + timedelta(days=365)
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(self.ENTERPRISE_CUSTOMER_INVITE_KEY_LIST_ENDPOINT),
+            data=json.dumps(
+                {
+                    'enterprise_customer_uuid': str(self.enterprise_customer_1.uuid),
+                    'expiration_date': future_date.isoformat()
+                }
+            ),
+            content_type='application/json'
+        )
+
+        expected_status_code = 201 if is_enterprise_admin else 403
+        self.assertEqual(response.status_code, expected_status_code)
+
+    def test_put_method_not_allowed(self):
+        """
+        Test that `EnterpriseCustomerInviteKeyViewSet` does not allow PUT method.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer_1.uuid))
+        response = self.client.put(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT,
+                kwargs={'pk': str(self.enterprise_customer_1_invite_key.uuid)}
+            ),
+            data=json.dumps({'some': 'putdata'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 405)
+        response = response.json()
+        self.assertEqual(response['detail'], 'Method "PUT" not allowed.')

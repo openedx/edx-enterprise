@@ -23,6 +23,7 @@ from enterprise.models import (
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     LicensedEnterpriseCourseEnrollment,
@@ -31,7 +32,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import SELF_ENROLL_EMAIL_TEMPLATE_TYPE
+from enterprise.utils import SELF_ENROLL_EMAIL_TEMPLATE_TYPE, localized_utcnow
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
@@ -159,6 +160,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     active = True
     linked = True
+    invite_key = None
 
 
 class EnterpriseAnalyticsUserFactory(factory.django.DjangoModelFactory):
@@ -854,7 +856,7 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
     """
     ``ContentMetadataItemTransmission`` factory.
 
-    Create an instance of ``ContentMetadataItemTransmission`` with minimal boilerplatesss
+    Create an instance of ``ContentMetadataItemTransmission`` with minimal boilerplate.
     """
 
     class Meta:
@@ -873,3 +875,23 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
         'start': '2030-01-01T00:00:00Z',
         'end': '2030-03-01T00:00:00Z'
     }
+
+
+class EnterpriseCustomerInviteKeyFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerInviteKey factory.
+
+    Creates an instance of EnterpriseCustomerInviteKey with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCustomerInviteKeyFactory.
+        """
+
+        model = EnterpriseCustomerInviteKey
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    usage_limit = 10
+    expiration_date = localized_utcnow()

@@ -4,15 +4,18 @@ Tests for the `edx-enterprise` filters module.
 """
 
 import ddt
+import mock
 from pytest import mark
 from rest_framework import status
 from rest_framework.reverse import reverse
 
 from django.conf import settings
 
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from test_utils import FAKE_UUIDS, TEST_EMAIL, TEST_USERNAME, APITest, factories
 
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
+ENTERPRISE_CUSTOMER_KEY_LIST_ENDPOINT = reverse('enterprise-customer-invite-key-list')
 
 
 @ddt.ddt
@@ -132,7 +135,6 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
         (FAKE_UUIDS[0], 'enterprise_admin', 0),
     )
     @ddt.unpack
-    @ddt.unpack
     def test_filter_by_enterprise_attributes(self, enterprise_customer_uuid, role, expected_data_length):
         """
         Filter users through enterprise_customer_uuid/role if requesting user is staff.
@@ -198,3 +200,50 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                 assert enterprise_customer_response[key] == value
         else:
             assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerInviteKeyFilterBackend(APITest):
+    """
+    Test suite for the ``EnterpriseCustomerInviteKeyFilterBackend`` filter.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.url = settings.TEST_SERVER + ENTERPRISE_CUSTOMER_KEY_LIST_ENDPOINT
+
+        enterprise_customer_1 = factories.EnterpriseCustomerFactory()
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer_1,
+            user_id=self.user.id
+        )
+
+        for _ in range(2):
+            factories.EnterpriseCustomerInviteKeyFactory(
+                enterprise_customer=enterprise_customer_1
+            )
+            factories.EnterpriseCustomerInviteKeyFactory(
+                enterprise_customer=enterprise_customer_2
+            )
+
+    @ddt.data(
+        (True, 4),
+        (False, 2)
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_filter(self, is_staff, expected_data_length, request_mock):
+        """
+        Filter for keys that belong to the enterprise the user is admin of.
+        """
+
+        self.user.is_staff = is_staff
+        self.user.save()
+        request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = self.load_json(response.content)
+        assert len(data['results']) == expected_data_length

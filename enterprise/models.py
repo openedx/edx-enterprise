@@ -39,7 +39,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
 
-from model_utils.models import TimeStampedModel
+from model_utils.models import SoftDeletableModel, TimeStampedModel
 
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
@@ -65,6 +65,7 @@ from enterprise.utils import (
     get_enterprise_worker_user,
     get_platform_logo_url,
     get_user_valid_idp,
+    localized_utcnow,
     serialize_notification_content,
     track_enrollment,
 )
@@ -841,6 +842,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
+    invite_key = models.ForeignKey(
+        'EnterpriseCustomerInviteKey',
+        blank=True,
+        null=True,
+        related_name='linked_enterprise_customer_users',
+        on_delete=models.SET_NULL
+    )
 
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
@@ -3038,3 +3046,59 @@ class AdminNotificationRead(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
+    """
+    Stores an invite key used to link a learner to an enterprise.
+
+    .. no_pii:
+    """
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name="invite_keys",
+        on_delete=models.CASCADE,
+        help_text=_(
+            "The enterprise that can be linked using this key."
+        )
+    )
+
+    usage_limit = models.PositiveIntegerField(
+        blank=False,
+        null=False,
+        default=10000,
+        help_text=_(
+            "The number of times this key can be used to link a learner."
+        )
+    )
+
+    expiration_date = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The key will no longer be valid after this date."
+        )
+    )
+
+    history = HistoricalRecords()
+
+    @property
+    def is_valid(self):
+        """
+        Returns whether the key is still valid (non expired and usage limit has not been reached).
+        """
+        now = localized_utcnow()
+        is_not_expired = now < self.expiration_date
+        usage_count = self.linked_enterprise_customer_users.count()
+        is_usage_under_limit = usage_count < self.usage_limit
+        return is_not_expired and is_usage_under_limit
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return str(self.uuid)

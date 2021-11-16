@@ -56,6 +56,7 @@ from enterprise.models import (
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerType,
     EnterpriseCustomerUser,
@@ -357,6 +358,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'created',
         'enterprise_enrollments',
         'other_enrollments',
+        'invite_key'
     )
 
     # Only include fields that are not database-backed; DB-backed fields
@@ -990,3 +992,25 @@ class AdminNotificationFilterAdmin(admin.ModelAdmin):
 
     model = AdminNotificationFilter
     list_display = ('id', 'filter', 'created', 'modified')
+
+
+@admin.register(EnterpriseCustomerInviteKey)
+class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerInviteKey.
+    """
+
+    fields = (
+        'enterprise_customer',
+        'usage_limit',
+        'expiration_date',
+    )
+
+    readonly_fields = (
+        'uuid',
+    )
+
+    list_display = ('uuid', 'enterprise_customer', 'usage_limit', 'expiration_date')
+
+    class Meta:
+        model = EnterpriseCustomerInviteKey

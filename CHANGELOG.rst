@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.34.1]
+--------
+feat: add enterprise customer invite key model and viewset
+
 [3.34.0]
 --------
 feat: New management command to revert enrollment data
