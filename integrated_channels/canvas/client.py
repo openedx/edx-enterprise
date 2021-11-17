@@ -349,32 +349,31 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return status_code, message
 
-    def update_participation_types(self, canvas_pk):
+    def update_participation_types(self, canvas_pks):
         """
         For each canvas course provided, send an update with the parameter of
         'restrict_enrollments_to_course_dates' to true in order to set the participation types of
         all canvas courses to "Course" instead of "Term", which allows users to view the end date
 
         Args:
-            - canvas_pk: primary key for canvas integrated channel
+            - canvas_pk: list of primary keys of previously transmitted courses from canvas customers
         """
         self._create_session()
 
-        integration_id = canvas_pk
-        course_id = CanvasUtil.get_course_id_from_edx_course_id(
-            self.enterprise_configuration,
-            self.session,
-            integration_id,
-        )
+        for course_pk in canvas_pks:
+            integration_id = course_pk['content_id']
+            course_id = CanvasUtil.get_course_id_from_edx_course_id(
+                self.enterprise_configuration,
+                self.session,
+                integration_id,
+            )
 
-        update_payload = {'course[restrict_enrollments_to_course_dates]': True}
-
-        url = CanvasUtil.course_update_endpoint(
-            self.enterprise_configuration,
-            course_id,
-        )
-
-        return self._put(url, json.dumps(update_payload).encode('utf-8'))
+            update_payload = {'course[restrict_enrollments_to_course_dates]': True}
+            url = CanvasUtil.course_update_endpoint(
+                self.enterprise_configuration,
+                course_id,
+            )
+            self._put(url, json.dumps(update_payload).encode('utf-8'))
 
     # Private Methods
     def _bulk_remove_course_assignments(self, course_id, assignments_to_remove):

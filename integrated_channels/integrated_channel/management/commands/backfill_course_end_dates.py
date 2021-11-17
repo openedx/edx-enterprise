@@ -2,11 +2,11 @@
 Update all courses associated with canvas customer configs to show end dates
 """
 
-from django.contrib import auth
 from django.apps import apps
+from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
-from integrated_channels.canvas.client import CanvasAPIClient
 
+from integrated_channels.canvas.client import CanvasAPIClient
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
 
 User = auth.get_user_model()
@@ -58,6 +58,4 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 deleted_at__isnull=True,
             ).values('content_id')
 
-            canvas_api_client = CanvasAPIClient(canvas_channel)
-            for course_id in transmitted_course_ids:
-                canvas_api_client.update_participation_types(course_id['content_id'])
+            CanvasAPIClient(canvas_channel).update_participation_types(transmitted_course_ids)
