@@ -18,7 +18,7 @@ from integrated_channels.utils import generate_formatted_log, is_already_transmi
 LOGGER = logging.getLogger(__name__)
 
 
-class LearnerTransmitter(ChannelSettingsMixin, Transmitter):
+class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
     """
     A generic learner data transmitter.
 
