@@ -93,7 +93,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(
+                self.process_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -194,7 +194,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(
+                self.process_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -312,7 +312,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.handle_transmission_error(
+                self.process_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -381,9 +381,30 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 payload=learner_data
             )), exc_info=True)
 
-    def handle_transmission_error(self, learner_data, client_exception,
-                                  integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
-        """Handle the case where the transmission fails."""
+    def handle_transmission_error(self, learner_data, client_exception):
+        """
+        Subclasses who wish to do additional processing of transmission error
+        before logging, can do so in overrides of this method
+        """
+
+    def process_transmission_error(
+        self,
+        learner_data,
+        client_exception,
+        integrated_channel_name,
+        enterprise_customer_uuid,
+        learner_id,
+        course_id,
+    ):
+        """
+        applies any needed processing of transmission error before logging it
+        subclasses should override handle_transmission_error if they want to do additional
+        processing of the error before it's logged
+        """
+        self.handle_transmission_error(
+            learner_data,
+            client_exception,
+        )
         LOGGER.exception(generate_formatted_log(
             integrated_channel_name, enterprise_customer_uuid, learner_id, course_id,
             'Failed to send completion status call for enterprise enrollment {}'
