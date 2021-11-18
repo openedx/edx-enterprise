@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.12]
+---------
+feat: SAPSF integrated no longer considers grade change as a reason to retransmit completions.
+
 [3.33.11]
 ---------
 feat: New management command to backfill end dates on Canvas
