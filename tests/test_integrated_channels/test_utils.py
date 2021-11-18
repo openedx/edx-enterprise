@@ -179,7 +179,7 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
 
         enterprise_enrollment_id = 123
 
-       # note: detect_grade_updated=True by default
+        # note: detect_grade_updated=True by default
         assert utils.is_already_transmitted(
             transmission,
             enterprise_enrollment_id,
