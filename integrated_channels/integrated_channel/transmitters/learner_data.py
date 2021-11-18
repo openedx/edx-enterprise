@@ -93,7 +93,7 @@ class LearnerTransmitter(ChannelSettingsMixin, Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.log_transmission_error(
+                self.handle_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -194,7 +194,7 @@ class LearnerTransmitter(ChannelSettingsMixin, Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.log_transmission_error(
+                self.handle_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -312,7 +312,7 @@ class LearnerTransmitter(ChannelSettingsMixin, Transmitter):
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
-                self.log_transmission_error(
+                self.handle_transmission_error(
                     learner_data,
                     client_error,
                     app_label,
@@ -381,8 +381,8 @@ class LearnerTransmitter(ChannelSettingsMixin, Transmitter):
                 payload=learner_data
             )), exc_info=True)
 
-    def log_transmission_error(self, learner_data, client_exception,
-                               integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
+    def handle_transmission_error(self, learner_data, client_exception,
+                                  integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
         """Handle the case where the transmission fails."""
         LOGGER.exception(generate_formatted_log(
             integrated_channel_name, enterprise_customer_uuid, learner_id, course_id,
