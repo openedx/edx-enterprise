@@ -4,7 +4,7 @@ Update all courses associated with canvas customer configs to show end dates
 
 from django.apps import apps
 from django.contrib import auth
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from integrated_channels.canvas.client import CanvasAPIClient
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
@@ -16,34 +16,12 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     """
     Update content transmission items to have their respective catalog's uuid.
     """
-
-    def add_arguments(self, parser):
-        """
-        Add required arguments to the parser.
-        """
-        parser.add_argument(
-            '--catalog_user',
-            dest='catalog_user',
-            required=True,
-            metavar='ENTERPRISE_CATALOG_API_USERNAME',
-            help='Use this user to access the Course Catalog API.'
-        )
-        super().add_arguments(parser)
-
     def handle(self, *args, **options):
         """
         Update all past content transmission items to show end dates.
         """
-
-        # get the edx course ids for every course in canvas
-        username = options['catalog_user']
         options['prevent_disabled_configurations'] = False
         options['channel'] = 'CANVAS'
-
-        try:
-            User.objects.get(username=username)
-        except User.DoesNotExist as no_user_error:
-            raise CommandError('A user with the username {} was not found.'.format(username)) from no_user_error
 
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
