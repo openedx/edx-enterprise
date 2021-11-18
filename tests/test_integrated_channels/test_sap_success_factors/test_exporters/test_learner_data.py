@@ -57,3 +57,18 @@ class TestSAPSuccessFactorLearnerDataExporter(unittest.TestCase):
         enterprise_enrollment.enterprise_customer_user.get_remote_id.assert_called_once_with(
             enterprise_configuration.idp_id
         )
+
+    def test_override_of_default_channel_settings(self):
+        """
+        If you override any settings to the ChannelSettingsMixin, add a test here for those
+        """
+        user = UserFactory()
+        enterprise_customer = EnterpriseCustomerFactory()
+        enterprise_configuration = SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=enterprise_customer,
+            idp_id='test-id'
+        )
+        assert SapSuccessFactorsLearnerExporter(
+            user,
+            enterprise_configuration
+        ).INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK is False

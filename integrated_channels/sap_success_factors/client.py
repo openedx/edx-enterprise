@@ -144,6 +144,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             The body of the response from SAP SuccessFactors, if successful
         Raises:
             HTTPError: if we received a failure response code from SAP SuccessFactors
+            ClientError: if we receive an error response code >=400 from SAPSF
         """
         base_url = self.enterprise_configuration.sapsf_base_url
 
@@ -238,6 +239,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             sap_user_id (str): The user to use to retrieve an auth token.
             url (str): The url to post to.
             payload (str): The json encoded payload to post.
+
+        Raises: ClientError if error status code >=400 from SAPSF
         """
         SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(
             'sap_success_factors',

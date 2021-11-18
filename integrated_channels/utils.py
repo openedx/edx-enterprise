@@ -185,7 +185,13 @@ def get_image_url(content_metadata_item):
     return image_url
 
 
-def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsection_id=None):
+def is_already_transmitted(
+    transmission,
+    enterprise_enrollment_id,
+    grade,
+    subsection_id=None,
+    detect_grade_updated=True,
+):
     """
     Returns: Boolean indicating if completion date for given enrollment is already sent of not.
 
@@ -195,6 +201,7 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsec
         grade: 'Pass' or 'Fail' status
         subsection_id (Optional): The id of the subsection, needed if transmitting assessment level grades as there can
         be multiple per course.
+        detect_grade_updated: default True. if this is False, method does not take into account grade changes
     """
     try:
         already_transmitted = transmission.objects.filter(
@@ -206,7 +213,9 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsec
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
 
         latest_transmitted_tx = already_transmitted.latest('id')
-        return latest_transmitted_tx and getattr(latest_transmitted_tx, 'grade', None) == grade
+        if detect_grade_updated:
+            return latest_transmitted_tx and getattr(latest_transmitted_tx, 'grade', None) == grade
+        return latest_transmitted_tx is not None
     except transmission.DoesNotExist:
         return False
 
