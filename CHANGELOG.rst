@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.11]
+---------
+feat: New management command to backfill end dates on Canvas
+
 [3.33.10]
 ---------
 fix: incorrectly skipping completion transmissions
