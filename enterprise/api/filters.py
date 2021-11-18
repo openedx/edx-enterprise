@@ -4,8 +4,11 @@ Filters for enterprise API.
 """
 
 from rest_framework import filters
+from rest_framework.exceptions import ValidationError
 
 from django.contrib import auth
+
+from enterprise.models import SystemWideEnterpriseUserRoleAssignment
 
 User = auth.get_user_model()
 
@@ -33,25 +36,67 @@ class UserFilterBackend(filters.BaseFilterBackend):
 
 class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
     """
-    Allow filtering based on user's email or username on enterprise customer user api endpoint.
+    Allow filtering on the enterprise customer user api endpoint.
     """
+
+    def _filter_by_user_attributes(self, request, queryset):
+        """
+        Filter queryset by email or username.
+        """
+        email = request.query_params.get('email', None)
+        username = request.query_params.get('username', None)
+
+        query_params = {}
+
+        if email:
+            query_params.update(email=email)
+        if username:
+            query_params.update(username=username)
+
+        if query_params:
+            users = User.objects.filter(**query_params).values_list('id', flat=True)
+            return queryset.filter(user_id__in=users)
+
+        return queryset
+
+    def _filter_by_enterprise_attributes(self, request, queryset):
+        """
+        Filter queryset by enterprise_customer_uuid or enterprise role.
+        """
+        enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid', None)
+        role = request.query_params.get('role', None)
+
+        query_params = {}
+
+        if enterprise_customer_uuid:
+            query_params.update(enterprise_customer_id=enterprise_customer_uuid)
+
+        if role:
+            role_assignment_filters = {'role__name': role}
+
+            if not enterprise_customer_uuid:
+                raise ValidationError('Cannot filter by role without providing enterprise_customer_uuid.')
+
+            role_assignment_filters.update(enterprise_customer_id=enterprise_customer_uuid)
+
+            users_with_role = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                **role_assignment_filters
+            ).values_list('user_id', flat=True)
+
+            query_params.update(user_id__in=users_with_role)
+
+        if query_params:
+            return queryset.filter(**query_params)
+
+        return queryset
 
     def filter_queryset(self, request, queryset, view):
         """
         Apply incoming filters only if user is staff. If not, only filter by user's ID.
         """
         if request.user.is_staff:
-            email = request.query_params.get('email', None)
-            username = request.query_params.get('username', None)
-            query_parameters = {}
-
-            if email:
-                query_parameters.update(email=email)
-            if username:
-                query_parameters.update(username=username)
-            if query_parameters:
-                users = User.objects.filter(**query_parameters).values_list('id', flat=True)
-                queryset = queryset.filter(user_id__in=users)
+            queryset = self._filter_by_user_attributes(request, queryset)
+            queryset = self._filter_by_enterprise_attributes(request, queryset)
         else:
             queryset = queryset.filter(user_id=request.user.id)
 

@@ -20,6 +20,18 @@ LOGGER = logging.getLogger(__name__)
 MOODLE_FINAL_GRADE_ASSIGNMENT_NAME = '(edX integration) Final Grade'
 
 
+class MoodleClientError(ClientError):
+    """
+    Indicate a problem when interacting with Moodle.
+    """
+    def __init__(self, message, status_code=500, moodle_error=None):
+        """Save the status code and message raised from the client."""
+        self.status_code = status_code
+        self.message = message
+        self.moodle_error = moodle_error
+        super().__init__(message, status_code)
+
+
 def moodle_request_wrapper(method):
     """
     Wraps requests to Moodle's API in a token check.
@@ -60,12 +72,13 @@ def moodle_request_wrapper(method):
             self.token = self._get_access_token()  # pylint: disable=protected-access
             response = method(self, *args, **kwargs)
         elif error_code:
-            raise ClientError(
+            raise MoodleClientError(
                 'Moodle API Client Task "{method}" failed with error code '
                 '"{code}" and message: "{msg}" '.format(
                     method=method.__name__, code=error_code, msg=body.get('message'),
                 ),
-                response.status_code
+                response.status_code,
+                error_code,
             )
         elif warnings:
             # More Moodle nonsense!
@@ -110,7 +123,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('moodle')
         self.token = enterprise_configuration.token or self._get_access_token()
 
-    def _post(self, additional_params, method_url=None):
+    def _post(self, additional_params):
         """
         Compile common params and run request's post function
         """
@@ -122,22 +135,25 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'moodlewsrestformat': 'json',
         }
         params.update(additional_params)
-        if method_url:
-            response = requests.post(
-                url=method_url,
-                data=params,
-                headers=headers
-            )
-        else:
-            response = requests.post(
-                url='{url}{api_path}'.format(
-                    url=self.enterprise_configuration.moodle_base_url,
-                    api_path=self.MOODLE_API_PATH
-                ),
-                data=params,
-                headers=headers
-            )
+
+        response = requests.post(
+            url='{url}{api_path}'.format(
+                url=self.enterprise_configuration.moodle_base_url,
+                api_path=self.MOODLE_API_PATH
+            ),
+            data=params,
+            headers=headers
+        )
+
         return response
+
+    @moodle_request_wrapper
+    def _wrapped_post(self, additional_params):
+        """
+        A version of _post which handles error cases, useful
+        for when the caller wants to examine errors
+        """
+        return self._post(additional_params)
 
     def _get_access_token(self):
         """
@@ -318,7 +334,6 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
         return self._post(params)
 
-    @moodle_request_wrapper
     def create_content_metadata(self, serialized_data):
         """
         The below assumes the data is dict/object.
@@ -331,10 +346,23 @@ class MoodleAPIClient(IntegratedChannelApiClient):
           courses[1][fullname]: 'value',
           [...]
         }
+        when sending 1 course and its a dupe, treat as success.
+        when sending N courses and a dupe exists, throw exception since
+        there is no easy way to retry with just the non-dupes.
         """
+        # check to see if more than 1 course is being passed
+        more_than_one_course = serialized_data.get('courses[1][shortname]')
         serialized_data['wsfunction'] = 'core_course_create_courses'
-        response = self._post(serialized_data)
-        return response
+        try:
+            self._wrapped_post(serialized_data)
+        except MoodleClientError as error:
+            # treat duplicate as successful, but only if its a single course
+            # set chunk size settings to 1 if youre seeing a lot of these errors
+            if error.moodle_error == 'shortnametaken' and not more_than_one_course:
+                return True
+            else:
+                raise error
+        return True
 
     @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):

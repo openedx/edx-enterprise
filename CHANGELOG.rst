@@ -17,9 +17,25 @@ Unreleased
 ----------
 * Nothing
 
-[3.33.7]
+[3.33.11]
 ---------
 feat: New management command to backfill end dates on Canvas
+
+[3.33.10]
+---------
+fix: incorrectly skipping completion transmissions
+
+[3.33.9]
+---------
+feat: allow filtering enterprise learners by enterprise uuid and enterprise role
+
+[3.33.8]
+---------
+fix: Moodle duplicate content metadata records detected
+
+[3.33.7]
+---------
+fix: allow for records to be saved for integrated channels' content across catalogs
 
 [3.33.6]
 ---------

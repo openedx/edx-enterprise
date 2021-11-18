@@ -12,7 +12,7 @@ import responses
 from requests.models import Response
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.moodle.client import MoodleAPIClient
+from integrated_channels.moodle.client import MoodleAPIClient, MoodleClientError
 from test_utils import factories
 
 SERIALIZED_DATA = {
@@ -23,11 +23,30 @@ SERIALIZED_DATA = {
     'courses[0][enddate]': '2030-03-01T00:00:00Z',
 }
 
-# MOODLE_COURSE_ID = 100
+MULTI_SERIALIZED_DATA = {
+    'courses[0][summary]': 'edX Demonstration Course',
+    'courses[0][shortname]': 'edX Demonstration Course (edX+DemoX)',
+    'courses[0][idnumber]': 'edX+DemoX',
+    'courses[0][startdate]': '2030-01-01T00:00:00Z',
+    'courses[0][enddate]': '2030-03-01T00:00:00Z',
+    'courses[1][summary]': 'edX Demonstration Course 2',
+    'courses[1][shortname]': 'edX Demonstration Course 2 (edX+DemoX)',
+    'courses[1][idnumber]': 'edX+DemoX2',
+    'courses[1][startdate]': '2030-01-01T00:00:00Z',
+    'courses[1][enddate]': '2030-03-01T00:00:00Z',
+}
 
 SUCCESSFUL_RESPONSE = unittest.mock.Mock(spec=Response)
 SUCCESSFUL_RESPONSE.json.return_value = {}
 SUCCESSFUL_RESPONSE.status_code = 200
+
+
+SHORTNAMETAKEN_RESPONSE = unittest.mock.Mock(spec=Response)
+SHORTNAMETAKEN_RESPONSE.json.return_value = {
+    'errorcode': 'shortnametaken',
+    'message': 'Short name is already used for another course (edX Demonstration Course (edX+DemoX))',
+}
+SHORTNAMETAKEN_RESPONSE.status_code = 200
 
 
 @pytest.mark.django_db
@@ -79,6 +98,46 @@ class TestMoodleApiClient(unittest.TestCase):
             status=200
         )
         assert client.get_course_id('course:test_course') == 2
+
+    def test_successful_create_content_metadata(self):
+        """
+        Test core logic of create_content_metadata to ensure
+        query string we send to Moodle is formatted correctly.
+        """
+        expected_data = SERIALIZED_DATA.copy()
+        expected_data['wsfunction'] = 'core_course_create_courses'
+
+        client = MoodleAPIClient(self.enterprise_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
+        client.create_content_metadata(SERIALIZED_DATA)
+        client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
+
+    def test_duplicate_create_content_metadata(self):
+        """
+        Test core logic of create_content_metadata when a duplicate exists
+        to ensure we handle it properly when only sending a single (treat as success).
+        """
+        expected_data = SERIALIZED_DATA.copy()
+        expected_data['wsfunction'] = 'core_course_create_courses'
+
+        client = MoodleAPIClient(self.enterprise_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SHORTNAMETAKEN_RESPONSE)  # pylint: disable=protected-access
+        client.create_content_metadata(SERIALIZED_DATA)
+        client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
+
+    def test_multi_duplicate_create_content_metadata(self):
+        """
+        Test core logic of create_content_metadata when a duplicate exists
+        to ensure we handle it properly when sending more than one course (throw exception).
+        """
+        expected_data = MULTI_SERIALIZED_DATA.copy()
+        expected_data['wsfunction'] = 'core_course_create_courses'
+
+        client = MoodleAPIClient(self.enterprise_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SHORTNAMETAKEN_RESPONSE)  # pylint: disable=protected-access
+        with self.assertRaises(MoodleClientError):
+            client.create_content_metadata(MULTI_SERIALIZED_DATA)
+        client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
     def test_update_content_metadata(self):
         """
