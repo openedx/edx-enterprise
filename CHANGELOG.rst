@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.33.7]
+---------
+feat: New management command to backfill end dates on Canvas
+
 [3.33.6]
 ---------
 fix: CSOD API session tokens bugfix
