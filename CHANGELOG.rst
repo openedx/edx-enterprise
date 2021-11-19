@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.34.0]
+--------
+feat: New management command to revert enrollment data
+
 [3.33.12]
 ---------
 feat: SAPSF integrated no longer considers grade change as a reason to retransmit completions.
