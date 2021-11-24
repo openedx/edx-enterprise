@@ -13,7 +13,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthenticat
 from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import MethodNotAllowed, NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -41,6 +41,7 @@ from django.utils.translation import ugettext as _
 
 from enterprise import models
 from enterprise.api.filters import (
+    EnterpriseCustomerInviteKeyFilterBackend,
     EnterpriseCustomerUserFilterBackend,
     EnterpriseLinkedUserFilterBackend,
     UserFilterBackend,
@@ -48,6 +49,7 @@ from enterprise.api.filters import (
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.utils import (
     create_message_body,
+    get_ent_cust_from_enterprise_customer_key,
     get_ent_cust_from_report_config_uuid,
     get_enterprise_customer_from_catalog_id,
     get_enterprise_customer_from_user_id,
@@ -1431,3 +1433,53 @@ class EnterpriseCustomerReportTypesView(APIView):
         )
 
         return Response(data=choices, status=HTTP_200_OK)
+
+
+class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
+    """
+    API for accessing enterprise customer keys.
+    """
+    queryset = models.EnterpriseCustomerInviteKey.objects.all()
+    authentication_classes = (JwtAuthentication, SessionAuthentication)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend, EnterpriseCustomerInviteKeyFilterBackend)
+
+    def get_serializer_class(self):
+        """
+        Use a special serializer for any requests that aren't read-only.
+        """
+        if self.request.method in ('POST', 'DELETE'):
+            return serializers.EnterpriseCustomerInviteKeyWriteSerializer
+
+        return serializers.EnterpriseCustomerInviteKeyReadOnlySerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        invite_key = get_object_or_404(models.EnterpriseCustomerInviteKey, pk=kwargs['pk'])
+        serializer = self.get_serializer(invite_key)
+        return Response(serializer.data)
+
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request: request.data.get('enterprise_customer_uuid')
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request, pk: get_ent_cust_from_enterprise_customer_key(pk)
+    )
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed(request.method)
+
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request, pk: get_ent_cust_from_enterprise_customer_key(pk)
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)

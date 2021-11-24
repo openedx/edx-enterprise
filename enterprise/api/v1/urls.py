@@ -30,6 +30,11 @@ router.register(
     views.EnterpriseCustomerReportingConfigurationViewSet,
     'enterprise-customer-reporting',
 )
+router.register(
+    "enterprise-customer-invite-key",
+    views.EnterpriseCustomerInviteKeyViewSet,
+    "enterprise-customer-invite-key"
+)
 
 urlpatterns = [
     url(
