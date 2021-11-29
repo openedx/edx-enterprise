@@ -1114,6 +1114,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
                 'enable_portal_lms_configurations_screen': False,
+                'enable_universal_link': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -1165,6 +1166,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'enable_portal_reporting_config_screen': False,
                     'enable_portal_saml_configuration_screen': False,
                     'enable_portal_lms_configurations_screen': False,
+                    'enable_universal_link': False,
                     'enable_audit_data_reporting': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
@@ -1228,6 +1230,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
                 'enable_portal_lms_configurations_screen': False,
+                'enable_universal_link': False,
                 'enable_audit_data_reporting': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
@@ -1285,6 +1288,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
                 'enable_portal_lms_configurations_screen': False,
+                'enable_universal_link': False,
                 'enable_audit_data_reporting': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
@@ -1439,6 +1443,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             'enable_portal_reporting_config_screen': False,
             'enable_portal_saml_configuration_screen': False,
             'enable_portal_lms_configurations_screen': False,
+            'enable_universal_link': False,
             'site__domain': 'example.com', 'site__name': 'example.com',
             'enable_portal_subscription_management_screen': False,
             'enable_analytics_screen': False,
@@ -1483,6 +1488,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
                 'enable_portal_lms_configurations_screen': False,
+                'enable_universal_link': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
