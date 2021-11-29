@@ -291,7 +291,10 @@ class EnterpriseCustomer(TimeStampedModel):
 
     enable_universal_link = models.BooleanField(
         default=False,
-        help_text=_("Specifies whether to allow univeral link generation in the admin portal.")
+        help_text=_(
+            "Specifies whether universal link generation is enabled for customer. "
+            "Managed via admin portal settings UI."
+        )
     )
 
     enable_learner_portal = models.BooleanField(
