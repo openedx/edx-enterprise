@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.35.0]
+--------
+feat: Adding universal_link field to EnterpriseCustomer model
+
 [3.34.2]
 --------
 feat: add try catch block to skip unfound courses
