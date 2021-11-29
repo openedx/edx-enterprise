@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+
+[3.35.1]
+--------
+docs: Updating help_text for universal_link field on EnterpriseCustomer model
+
 [3.35.0]
 --------
 feat: Adding universal_link field to EnterpriseCustomer model
