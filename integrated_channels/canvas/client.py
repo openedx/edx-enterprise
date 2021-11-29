@@ -362,18 +362,29 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         for course_pk in canvas_pks:
             integration_id = course_pk['content_id']
-            course_id = CanvasUtil.get_course_id_from_edx_course_id(
-                self.enterprise_configuration,
-                self.session,
-                integration_id,
-            )
+            try:
+                course_id = CanvasUtil.get_course_id_from_edx_course_id(
+                    self.enterprise_configuration,
+                    self.session,
+                    integration_id,
+                )
 
-            update_payload = {'course[restrict_enrollments_to_course_dates]': True}
-            url = CanvasUtil.course_update_endpoint(
-                self.enterprise_configuration,
-                course_id,
-            )
-            self._put(url, json.dumps(update_payload).encode('utf-8'))
+                update_payload = {'course[restrict_enrollments_to_course_dates]': True}
+                url = CanvasUtil.course_update_endpoint(
+                    self.enterprise_configuration,
+                    course_id,
+                )
+                self._put(url, json.dumps(update_payload).encode('utf-8'))
+            except ClientError:
+                LOGGER.info(
+                    generate_formatted_log(
+                        'canvas',
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        integration_id,
+                        f'Skipped course with id {integration_id}, not found in Canvas',
+                    )
+                )
 
     # Private Methods
     def _bulk_remove_course_assignments(self, course_id, assignments_to_remove):
