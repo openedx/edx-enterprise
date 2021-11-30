@@ -81,6 +81,22 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         transmitter.transmit(self.exporter())
         self.create_course_completion_mock.assert_not_called()
 
+    def test_avoid_retransmit_on_grade_change(self):
+        """
+        SAPSF does not support retransmsmitting completion, so we don't do that
+        if just a grade changed relative to what is already saved
+        """
+
+        self.payloads[0].save()
+
+        # let's try to send a payload with everything same except the grade
+        payload = self.payloads[0]
+        payload.grade = 'a_bit_different_grade'
+
+        transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
+        transmitter.transmit(self.exporter([payload]))
+        self.create_course_completion_mock.assert_not_called()
+
     def test_transmit_success(self):
         """
         Learner data transmission is successful and the payload is saved with the appropriate data.
@@ -223,3 +239,11 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         assert payloads[0].error_message == 'error occurred'
         assert payloads[1].status == '200'
         assert payloads[1].error_message == ''
+
+    def test_override_channel_settings(self):
+        """
+        If you add any settings to the ChannelSettingsMixin, add a test here for the common default value
+        """
+        assert learner_data.SapSuccessFactorsLearnerTransmitter(
+            self.enterprise_config
+        ).INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK is False

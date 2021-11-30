@@ -89,6 +89,12 @@ class TestLearnerExporter(unittest.TestCase):
         assert isinstance(self.exporter, LearnerExporter)
         super().setUp()
 
+    def test_default_channel_settings(self):
+        """
+        If you add any settings to the ChannelSettingsMixin, add a test here for the common default value
+        """
+        assert LearnerExporter('fake-user', self.config).INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK is True
+
     def test_collect_learner_data_no_enrollments(self):
         learner_data = list(self.exporter.export())
         assert not learner_data

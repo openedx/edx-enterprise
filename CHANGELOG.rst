@@ -17,6 +17,35 @@ Unreleased
 ----------
 * Nothing
 
+
+[3.35.1]
+--------
+docs: Updating help_text for universal_link field on EnterpriseCustomer model
+
+[3.35.0]
+--------
+feat: Adding universal_link field to EnterpriseCustomer model
+
+[3.34.2]
+--------
+feat: add try catch block to skip unfound courses
+
+[3.34.1]
+--------
+feat: add enterprise customer invite key model and viewset
+
+[3.34.0]
+--------
+feat: New management command to revert enrollment data
+
+[3.33.12]
+---------
+feat: SAPSF integrated no longer considers grade change as a reason to retransmit completions.
+
+[3.33.11]
+---------
+feat: New management command to backfill end dates on Canvas
+
 [3.33.10]
 ---------
 fix: incorrectly skipping completion transmissions

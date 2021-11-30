@@ -1484,7 +1484,6 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-
 class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
     """
     View for 

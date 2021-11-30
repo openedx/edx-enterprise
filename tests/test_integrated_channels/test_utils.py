@@ -6,6 +6,7 @@ Tests for the utilities used by integration channels.
 import unittest
 from collections import namedtuple
 from datetime import timedelta
+from unittest.mock import MagicMock, PropertyMock
 
 import ddt
 import mock
@@ -146,3 +147,80 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
         assert not utils.is_course_completed(enterprise_enrollment, None, False, 0)
+
+    @ddt.data((True, True,), (False, False,))
+    @ddt.unpack
+    def test_is_already_transmitted_with_grade_considered(
+        self,
+        grade_should_match_audit,
+        expected_is_already_transmitted,
+    ):
+        """
+        When detect_grade_updated is True, grade is also matched against passed grade,
+        when comparing audit records
+        """
+        transmission = MagicMock()
+        transmission.objects.filter = MagicMock()
+        mock_audit_record = MagicMock()
+        mock_audit_record.latest = MagicMock()
+        matching_grade = 'A+'
+
+        mock_audit_record_from_audit_logs = MagicMock()
+        grade_match = PropertyMock(return_value=matching_grade)
+        grade_non_matched = PropertyMock(return_value='B+')
+        if grade_should_match_audit:
+            type(mock_audit_record_from_audit_logs).grade = grade_match
+        else:
+            type(mock_audit_record_from_audit_logs).grade = grade_non_matched
+
+        mock_audit_record.latest.return_value = mock_audit_record_from_audit_logs
+
+        transmission.objects.filter.return_value = mock_audit_record
+
+        enterprise_enrollment_id = 123
+
+        # note: detect_grade_updated=True by default
+        assert utils.is_already_transmitted(
+            transmission,
+            enterprise_enrollment_id,
+            matching_grade,
+            subsection_id=None,
+        ) is expected_is_already_transmitted
+
+    @ddt.data((True,), (False,))
+    @ddt.unpack
+    def test_is_already_transmitted_grade_not_considered(
+        self,
+        grade_should_match_audit,
+    ):
+        """
+        When detect_grade_updated is False, the grade difference between database record and passed grade
+        should not matter
+        """
+        transmission = MagicMock()
+        transmission.objects.filter = MagicMock()
+        mock_audit_record = MagicMock()
+        mock_audit_record.latest = MagicMock()
+        matching_grade = 'A+'
+
+        mock_audit_record_from_audit_logs = MagicMock()
+        grade_match = PropertyMock(return_value=matching_grade)
+        grade_non_matched = PropertyMock(return_value='B+')
+        if grade_should_match_audit:
+            type(mock_audit_record_from_audit_logs).grade = grade_match
+        else:
+            type(mock_audit_record_from_audit_logs).grade = grade_non_matched
+
+        mock_audit_record.latest.return_value = mock_audit_record_from_audit_logs
+
+        transmission.objects.filter.return_value = mock_audit_record
+
+        enterprise_enrollment_id = 1234
+
+        assert utils.is_already_transmitted(
+            transmission,
+            enterprise_enrollment_id,
+            matching_grade,
+            subsection_id=None,
+            detect_grade_updated=False,
+        ) is True

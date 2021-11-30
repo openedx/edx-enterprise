@@ -289,6 +289,14 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether to allow access to the saml configuration screen in the admin portal")
     )
 
+    enable_universal_link = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether universal link generation is enabled for customer. "
+            "Managed via admin portal settings UI."
+        )
+    )
+
     enable_learner_portal = models.BooleanField(
         default=False,
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
