@@ -1486,7 +1486,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
 
 class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
     """
-    View for 
+    View for
     /enterprise/api/enterprise_user_link/{enterprise_customer_key}
 
     Given a enterprise_customer_key, link user to the appropriate enterprise.
@@ -1498,18 +1498,27 @@ class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
 
     @action(methods=['post'], detail=False)
     def link_user(self, request, enterprise_customer_key):
+        """
+        Post
+        Links user using enterprise_customer_key
+        """
         try:
             enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(pk=enterprise_customer_key)
 
             if not enterprise_customer_key_match.is_valid:
-                return Response({"detail": "Enterprise customer invite key is not valid"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+                return Response(
+                    {"detail": "Enterprise customer invite key is not valid"},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                )
 
-            enterprise_customer = models.EnterpriseCustomer.objects.get(pk=enterprise_customer_key_match.enterprise_customer.uuid)
+            enterprise_customer = models.EnterpriseCustomer.objects.get(
+                pk=enterprise_customer_key_match.enterprise_customer.uuid
+            )
             models.EnterpriseCustomerUser.objects.get_or_create(
                 user_id=request.user.pk,
                 enterprise_customer=enterprise_customer,
             )
             return Response({"enterprise_customer_slug": enterprise_customer.slug}, status=HTTP_201_CREATED)
-            
+
         except models.EnterpriseCustomerInviteKey.DoesNotExist:
             return Response({"error": "Could not find Enterprise Customer Invite Key"}, status=HTTP_400_BAD_REQUEST)
