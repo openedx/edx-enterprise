@@ -17,6 +17,9 @@ Unreleased
 ----------
 * Nothing
 
+[3.35.2]
+--------
+feat: added view to link learners from a enterprise customer key
 
 [3.35.1]
 --------
