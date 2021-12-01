@@ -1075,6 +1075,17 @@ def track_enrollment(pathway, user_id, course_run_id, url_path=None):
     })
 
 
+def track_enterprise_user_linked(user_id, enterprise_customer_key, enterprise_customer_id):
+    """
+    Emit a track event when user is linked to an enterprise
+    """
+    track_event(user_id, 'edx.bi.user.enterprise.onboarding', {
+        'pathway': 'enterprise-user-linked',
+        'enterprise_customer_key': enterprise_customer_key,
+        'enterprise_customer_id': enterprise_customer_id,
+    })
+
+
 def parse_datetime_handle_invalid(datetime_value):
     """
     Return the parsed version of a datetime string. If the string is invalid, return None.

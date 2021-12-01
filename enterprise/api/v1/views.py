@@ -57,7 +57,7 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
+from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, ENTERPRISE_LEARNER_ROLE
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -67,6 +67,7 @@ from enterprise.utils import (
     get_request_value,
     track_enrollment,
     validate_email_to_link,
+    track_enterprise_user_linked,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
 
@@ -1484,6 +1485,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+
 class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
     """
     View for
@@ -1503,22 +1505,32 @@ class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
         Links user using enterprise_customer_key
         """
         try:
-            enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(pk=enterprise_customer_key)
+            enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key)
 
             if not enterprise_customer_key_match.is_valid:
                 return Response(
                     {"detail": "Enterprise customer invite key is not valid"},
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
 
-            enterprise_customer = models.EnterpriseCustomer.objects.get(
-                pk=enterprise_customer_key_match.enterprise_customer.uuid
-            )
-            models.EnterpriseCustomerUser.objects.get_or_create(
-                user_id=request.user.pk,
+            enterprise_customer = enterprise_customer_key_match.enterprise_customer
+
+            _, created = models.EnterpriseCustomerUser.objects.get_or_create(
+                user_id=request.user.id,
                 enterprise_customer=enterprise_customer,
             )
-            return Response({"enterprise_customer_slug": enterprise_customer.slug}, status=HTTP_201_CREATED)
+
+            if created:
+                track_enterprise_user_linked(
+                    request.user.id,
+                    enterprise_customer_key,
+                    enterprise_customer.uuid,
+                )
+
+            return Response(
+                {"enterprise_customer_slug": enterprise_customer.slug},
+                status=HTTP_201_CREATED
+            )
 
         except models.EnterpriseCustomerInviteKey.DoesNotExist:
             return Response({"error": "Could not find Enterprise Customer Invite Key"}, status=HTTP_400_BAD_REQUEST)

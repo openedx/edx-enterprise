@@ -4977,3 +4977,90 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         self.assertEqual(response.status_code, 405)
         response = response.json()
         self.assertEqual(response['detail'], 'Method "PUT" not allowed.')
+
+
+class TestEnterpriseUserLinkView(BaseTestEnterpriseAPIViews):
+    """
+    Test `EnterpriseUserLinkView`
+    """
+    ENTERPRISE_USER_LINK_ENDPOINT = 'enterprise-user-link'
+    USERNAME = "unlinkedtestuser"
+
+    def setUp(self):
+        super().setUp()
+        # unlinked_user = factories.UserFactory(
+        #     username=TEST_USERNAME,
+        #     is_active=True,
+        #     is_staff=False,
+        # )
+        # unlinked_user.set_password(TEST_PASSWORD)
+        # unlinked_user.save()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        enterprise_customer_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=enterprise_customer,
+            expiration_date=datetime.utcnow() + timedelta(days=365)
+        )
+        invalid_enterprise_customer_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=enterprise_customer,
+            expiration_date=datetime.utcnow() - timedelta(days=365)
+        )
+
+        self.enterprise_customer = enterprise_customer
+        self.enterprise_customer_invite_key = enterprise_customer_invite_key
+        self.invalid_enterprise_customer_invite_key = invalid_enterprise_customer_invite_key
+
+    def tearDown(self):
+        super().tearDown()
+        EnterpriseCustomer.objects.all().delete()
+        EnterpriseCustomerInviteKey.objects.all().delete()
+
+    def test_successful_link(self):
+        """
+        Test that `TestEnterpriseUserLinkView` does not require an admin user
+        """
+        unlinked_user = factories.UserFactory(
+            username=self.USERNAME,
+            is_active=True,
+            is_staff=False,
+        )
+        unlinked_user.set_password(TEST_PASSWORD)
+        unlinked_user.save()
+
+        client = APIClient()
+        client.login(username=self.USERNAME, password=TEST_PASSWORD)
+        response = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_USER_LINK_ENDPOINT,
+                kwargs={'enterprise_customer_key': self.enterprise_customer_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 201)
+        assert EnterpriseCustomerUser.objects.get(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer
+        )
+
+    def test_invalid_link(self):
+        """
+        Test that when an invalid link is used 422 is returned
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_USER_LINK_ENDPOINT,
+                kwargs={'enterprise_customer_key': self.invalid_enterprise_customer_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_no_link_found(self):
+        """
+        Test that if `enterprise_customer_key` does not exist, 400 is returned
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_USER_LINK_ENDPOINT,
+                kwargs={'enterprise_customer_key': str(uuid.uuid4())}
+            )
+        )
+        self.assertEqual(response.status_code, 400)
