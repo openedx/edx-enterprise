@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.35.2]
+--------
+feat: reformat integrated channels logging to be more splunk friendly
+
 [3.35.1]
 --------
 docs: Updating help_text for universal_link field on EnterpriseCustomer model
