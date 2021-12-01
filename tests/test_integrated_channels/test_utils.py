@@ -224,3 +224,10 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             subsection_id=None,
             detect_grade_updated=False,
         ) is True
+
+    def test_generate_formatted_log(self):
+        log_str = generate_formatted_log(1, 2, 3, 4, 5)
+        assert log_str == 'integrated_channel=1, '\
+            'integrated_channel_enterprise_customer_uuid=2, '\
+            'integrated_channel_lms_user=3, '\
+            'integrated_channel_course_key=4, 5'

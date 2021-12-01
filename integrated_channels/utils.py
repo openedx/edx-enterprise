@@ -283,16 +283,10 @@ def generate_formatted_log(
     - message (str): The string to be formatted and logged
 
     """
-    return '[integrated_channel:{channel_name}]'\
-        '[integrated_channel_enterprise_customer_uuid:{enterprise_customer_uuid}]' \
-        '[integrated_channel_lms_user:{lms_user_id}]'\
-        '[integrated_channel_course_key:{course_or_course_run_key}] {message}'.format(
-            enterprise_customer_uuid=enterprise_customer_uuid,
-            channel_name=channel_name,
-            message=message,
-            lms_user_id=lms_user_id,
-            course_or_course_run_key=course_or_course_run_key
-        )
+    return f'integrated_channel={channel_name}, '\
+        f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '\
+        f'integrated_channel_lms_user={lms_user_id}, '\
+        f'integrated_channel_course_key={course_or_course_run_key}, {message}'
 
 
 def refresh_session_if_expired(oauth_access_token_function, session=None, expires_at=None):
