@@ -226,7 +226,7 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         ) is True
 
     def test_generate_formatted_log(self):
-        log_str = generate_formatted_log(1, 2, 3, 4, 5)
+        log_str = utils.generate_formatted_log(1, 2, 3, 4, 5)
         assert log_str == 'integrated_channel=1, '\
             'integrated_channel_enterprise_customer_uuid=2, '\
             'integrated_channel_lms_user=3, '\
