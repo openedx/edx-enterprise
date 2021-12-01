@@ -4988,27 +4988,15 @@ class TestEnterpriseUserLinkView(BaseTestEnterpriseAPIViews):
 
     def setUp(self):
         super().setUp()
-        # unlinked_user = factories.UserFactory(
-        #     username=TEST_USERNAME,
-        #     is_active=True,
-        #     is_staff=False,
-        # )
-        # unlinked_user.set_password(TEST_PASSWORD)
-        # unlinked_user.save()
-
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-        enterprise_customer_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
-            enterprise_customer=enterprise_customer,
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=self.enterprise_customer,
             expiration_date=datetime.utcnow() + timedelta(days=365)
         )
-        invalid_enterprise_customer_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
-            enterprise_customer=enterprise_customer,
+        self.invalid_enterprise_customer_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=self.enterprise_customer,
             expiration_date=datetime.utcnow() - timedelta(days=365)
         )
-
-        self.enterprise_customer = enterprise_customer
-        self.enterprise_customer_invite_key = enterprise_customer_invite_key
-        self.invalid_enterprise_customer_invite_key = invalid_enterprise_customer_invite_key
 
     def tearDown(self):
         super().tearDown()

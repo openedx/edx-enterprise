@@ -57,7 +57,7 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, ENTERPRISE_LEARNER_ROLE
+from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -1518,6 +1518,7 @@ class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
             _, created = models.EnterpriseCustomerUser.objects.get_or_create(
                 user_id=request.user.id,
                 enterprise_customer=enterprise_customer,
+                invite_key=enterprise_customer_key_match
             )
 
             if created:
