@@ -1500,35 +1500,35 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         try:
             enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(uuid=pk)
 
-            if not enterprise_customer_key_match.is_valid:
-                return Response(
-                    {"detail": "Enterprise customer invite key is not valid"},
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                )
-
-            enterprise_customer = enterprise_customer_key_match.enterprise_customer
-
-            user, created = models.EnterpriseCustomerUser.objects.get_or_create(
-                user_id=request.user.id,
-                enterprise_customer=enterprise_customer,
-            )
-
-            if created:
-                user.invite_key = enterprise_customer_key_match
-                user.save()
-                track_enterprise_user_linked(
-                    request.user.id,
-                    pk,
-                    enterprise_customer.uuid,
-                )
-            elif not user.active:
-                user.active = True
-                user.save()
-
-            return Response(
-                {"enterprise_customer_slug": enterprise_customer.slug},
-                status=HTTP_201_CREATED
-            )
-
         except models.EnterpriseCustomerInviteKey.DoesNotExist:
             return Response({"error": "Could not find Enterprise Customer Invite Key"}, status=HTTP_400_BAD_REQUEST)
+
+        if not enterprise_customer_key_match.is_valid:
+            return Response(
+                {"detail": "Enterprise customer invite key is not valid"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        enterprise_customer = enterprise_customer_key_match.enterprise_customer
+
+        user, created = models.EnterpriseCustomerUser.objects.get_or_create(
+            user_id=request.user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        if created:
+            user.invite_key = enterprise_customer_key_match
+            user.save()
+            track_enterprise_user_linked(
+                request.user.id,
+                pk,
+                enterprise_customer.uuid,
+            )
+        elif not user.active:
+            user.active = True
+            user.save()
+
+        return Response(
+            {"enterprise_customer_slug": enterprise_customer.slug},
+            status=HTTP_201_CREATED
+        )
