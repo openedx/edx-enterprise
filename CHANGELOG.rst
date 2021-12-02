@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.35.3]
+--------
+fix: require expiry date on ``EnterpriseCustomerInviteKey`` model
+
 [3.35.2]
 --------
 feat: reformat integrated channels logging to be more splunk friendly

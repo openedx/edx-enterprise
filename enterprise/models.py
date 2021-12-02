@@ -3085,8 +3085,8 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
     )
 
     expiration_date = models.DateTimeField(
-        blank=True,
-        null=True,
+        blank=False,
+        null=False,
         help_text=_(
             "The key will no longer be valid after this date."
         )
@@ -3100,8 +3100,7 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
         Returns whether the key is still valid (non-expired and usage limit has not been reached).
         """
         now = localized_utcnow()
-        # key isn't expired if there is no expiration date (it's optional) or if the expiration date is in the future.
-        is_not_expired = not self.expiration_date or now < self.expiration_date
+        is_not_expired = now < self.expiration_date
         usage_count = self.linked_enterprise_customer_users.count()
         is_usage_under_limit = usage_count < self.usage_limit
         return is_not_expired and is_usage_under_limit
