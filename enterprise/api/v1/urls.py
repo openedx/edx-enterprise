@@ -67,11 +67,6 @@ urlpatterns = [
         views.EnterpriseCustomerReportTypesView.as_view(),
         name='enterprise-report-types'
     ),
-    url(
-        r'enterprise_user_link/(?P<enterprise_customer_key>[A-Za-z0-9-]+)/?$',
-        views.EnterpriseUserLinkView.as_view({'post': 'link_user'}),
-        name='enterprise-user-link'
-    ),
 ]
 
 urlpatterns += router.urls

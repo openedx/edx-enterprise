@@ -1485,27 +1485,20 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-
-class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
-    """
-    View for
-    /enterprise/api/enterprise_user_link/{enterprise_customer_key}
-
-    Given a enterprise_customer_key, link user to the appropriate enterprise.
-
-    If the key is not found, returns 400
-    If the ket is not valid, return 422
-    """
-    permission_classes = (permissions.IsAuthenticated,)
-
-    @action(methods=['post'], detail=False)
-    def link_user(self, request, enterprise_customer_key):
+    @action(methods=['post'], detail=True, url_path='link-user')
+    def link_user(self, request, pk=None):
         """
         Post
         Links user using enterprise_customer_key
+        /enterprise/api/enterprise_user_link/{enterprise_customer_key}/link-user
+
+        Given a enterprise_customer_key, link user to the appropriate enterprise.
+
+        If the key is not found, returns 400
+        If the ket is not valid, return 422
         """
         try:
-            enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key)
+            enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(uuid=pk)
 
             if not enterprise_customer_key_match.is_valid:
                 return Response(
@@ -1515,18 +1508,22 @@ class EnterpriseUserLinkView(EnterpriseReadWriteModelViewSet):
 
             enterprise_customer = enterprise_customer_key_match.enterprise_customer
 
-            _, created = models.EnterpriseCustomerUser.objects.get_or_create(
+            user, created = models.EnterpriseCustomerUser.objects.get_or_create(
                 user_id=request.user.id,
                 enterprise_customer=enterprise_customer,
-                invite_key=enterprise_customer_key_match
             )
 
             if created:
+                user.invite_key = enterprise_customer_key_match
+                user.save()
                 track_enterprise_user_linked(
                     request.user.id,
-                    enterprise_customer_key,
+                    pk,
                     enterprise_customer.uuid,
                 )
+            elif not user.active:
+                user.active = True
+                user.save()
 
             return Response(
                 {"enterprise_customer_slug": enterprise_customer.slug},
