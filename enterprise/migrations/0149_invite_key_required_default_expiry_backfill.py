@@ -6,8 +6,8 @@ def backfill_null_expiry_date_for_invite_keys(apps, schema_editor):
     """
     Finds all EnterpriseCustomerInviteKey objects with null expiration_date and applies a default
     expiration_date of 1-year from when the EnterpriseCustomerInviteKey object was created as a
-    reasonable such that there are no objects with expiration_date as null so a future migration
-    can require this field at the Django admin and database levels.
+    reasonable fallback such that there are no objects with expiration_date as null so a future
+    migration can require this field at the Django admin and database levels.
     """
     EnterpriseCustomerInviteKey = apps.get_model('enterprise', 'EnterpriseCustomerInviteKey')
     queryset = EnterpriseCustomerInviteKey.objects.filter(expiration_date__isnull=True)
