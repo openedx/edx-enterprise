@@ -1511,22 +1511,22 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
 
         enterprise_customer = enterprise_customer_key_match.enterprise_customer
 
-        user, created = models.EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_user, created = models.EnterpriseCustomerUser.objects.get_or_create(
             user_id=request.user.id,
             enterprise_customer=enterprise_customer,
         )
 
         if created:
-            user.invite_key = enterprise_customer_key_match
-            user.save()
+            enterprise_user.invite_key = enterprise_customer_key_match
+            enterprise_user.save()
             track_enterprise_user_linked(
                 request.user.id,
                 pk,
                 enterprise_customer.uuid,
             )
-        elif not user.active:
-            user.active = True
-            user.save()
+        elif not enterprise_user.active:
+            enterprise_user.active = True
+            enterprise_user.save()
 
         return Response(
             {"enterprise_customer_slug": enterprise_customer.slug},

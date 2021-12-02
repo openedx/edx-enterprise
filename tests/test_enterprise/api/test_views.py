@@ -4990,12 +4990,11 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         response = response.json()
         self.assertEqual(response['detail'], 'Method "PUT" not allowed.')
 
-    def test_successful_link(self):
+    def test_link_user_successful_link(self):
         """
         Test `{enterprise_customer_invite_key}/link-user` creates an `EnterpriseCustomerUser`
         """
         unlinked_user = factories.UserFactory(
-            username=self.USERNAME,
             is_active=True,
             is_staff=False,
         )
@@ -5003,7 +5002,7 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         unlinked_user.save()
 
         client = APIClient()
-        client.login(username=self.USERNAME, password=TEST_PASSWORD)
+        client.login(username=unlinked_user.username, password=TEST_PASSWORD)
 
         response = client.post(
             settings.TEST_SERVER + reverse(
@@ -5014,7 +5013,42 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         self.assertEqual(response.status_code, 201)
         assert EnterpriseCustomerUser.objects.get(
             user_id=unlinked_user.id,
-            enterprise_customer=self.enterprise_customer_3
+            enterprise_customer=self.enterprise_customer_3,
+            invite_key=self.enterprise_customer_3_invite_key,
+        )
+
+    def test_enterprise_user_exists(self):
+        """
+        Test `{enterprise_customer_invite_key}/link-user` if one does not create `EnterpriseCustomerUser`
+        If one already exists
+        """
+        unlinked_user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        unlinked_user.set_password(TEST_PASSWORD)
+        unlinked_user.save()
+
+        factories.EnterpriseCustomerUserFactory(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer_3,
+            active=False
+        )
+
+        client = APIClient()
+        client.login(username=unlinked_user.username, password=TEST_PASSWORD)
+
+        response = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 201)
+        assert EnterpriseCustomerUser.objects.get(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer_3,
+            active=True,
         )
 
     def test_invalid_link(self):
