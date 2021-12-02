@@ -5016,6 +5016,9 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
             enterprise_customer=self.enterprise_customer_3,
             invite_key=self.enterprise_customer_3_invite_key,
         )
+        response = self.load_json(response.content)
+        assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
 
     def test_enterprise_user_exists(self):
         """
@@ -5032,7 +5035,8 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         factories.EnterpriseCustomerUserFactory(
             user_id=unlinked_user.id,
             enterprise_customer=self.enterprise_customer_3,
-            active=False
+            active=False,
+            linked=False,
         )
 
         client = APIClient()
@@ -5049,7 +5053,11 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
             user_id=unlinked_user.id,
             enterprise_customer=self.enterprise_customer_3,
             active=True,
+            linked=True,
         )
+        response = self.load_json(response.content)
+        assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
 
     def test_invalid_link(self):
         """

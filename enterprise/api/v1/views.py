@@ -1490,7 +1490,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         """
         Post
         Links user using enterprise_customer_key
-        /enterprise/api/enterprise_user_link/{enterprise_customer_key}/link-user
+        /enterprise/api/enterprise-customer-invite-key/{enterprise_customer_key}/link-user
 
         Given a enterprise_customer_key, link user to the appropriate enterprise.
 
@@ -1499,7 +1499,6 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         """
         try:
             enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(uuid=pk)
-
         except models.EnterpriseCustomerInviteKey.DoesNotExist:
             return Response({"error": "Could not find Enterprise Customer Invite Key"}, status=HTTP_400_BAD_REQUEST)
 
@@ -1524,11 +1523,17 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
                 pk,
                 enterprise_customer.uuid,
             )
-        elif not enterprise_user.active:
-            enterprise_user.active = True
+        elif not enterprise_user.active or not enterprise_user.linked:
+            if not enterprise_user.active:
+                enterprise_user.active = True
+            if not enterprise_user.linked:
+                enterprise_user.linked = True
             enterprise_user.save()
 
         return Response(
-            {"enterprise_customer_slug": enterprise_customer.slug},
+            {
+                "enterprise_customer_slug": enterprise_customer.slug,
+                "enterprise_customer_uuid": enterprise_customer.uuid,
+            },
             status=HTTP_201_CREATED
         )
