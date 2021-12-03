@@ -57,16 +57,15 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
             if sys_msg and 'user account is inactive' in sys_msg:
                 ecu.active = False
                 ecu.save()
-                message = f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '\
-                    f'former employee of {ecu.enterprise_customer} '\
-                    'and has been marked inactive in SAPSF. Now marking inactive internally.'
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         ecu.enterprise_customer.uuid,
                         ecu.user_id,
                         None,
-                        message
+                        f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '\
+                        f'former employee of {ecu.enterprise_customer} '\
+                        'and has been marked inactive in SAPSF. Now marking inactive internally.'
                     )
                 )
                 return
