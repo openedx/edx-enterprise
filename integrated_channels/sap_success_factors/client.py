@@ -79,12 +79,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
         except (KeyError, TypeError, ValueError) as error:
             LOGGER.error(
-                'SAP SF OAuth2 POST response is of invalid format. User: [%s], Company: [%s],'
-                ' Error: [%s], Response: [%s]',
-                str(user_id),
-                str(company_id),
-                str(error),
-                str(response)
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, '\
+                    f'Company: {str(company_id)}, Error: {str(error)}, Response: {str(response)}'
+                )
+
             )
             raise ClientError(response, response.status_code) from error
 
@@ -372,32 +375,30 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
         if 'error' in sap_inactive_learners:
             try:
-                message = f'SAP searchStudent API for customer '\
-                    f'{self.enterprise_configuration.enterprise_customer.name} '\
-                    f'and base url {self.enterprise_configuration.sapsf_base_url} '\
-                    f'returned response with {sap_inactive_learners['error'].get('message')} '\
-                    f'{sap_inactive_learners['error'].get('code')}'
                 LOGGER.error(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        message
+                        f'SAP searchStudent API for customer '\
+                        f'{self.enterprise_configuration.enterprise_customer.name} '\
+                        f'and base url {self.enterprise_configuration.sapsf_base_url} '\
+                        f'returned response with {sap_inactive_learners['error'].get('message')} '\
+                        f'{sap_inactive_learners['error'].get('code')}'
                     )
                 )
             except AttributeError:
-                message = f'SAP searchStudent API for customer '\
-                    f'{self.enterprise_configuration.enterprise_customer.name} '\
-                    f'and base url {self.enterprise_configuration.sapsf_base_url} returned response with '\
-                    f'{sap_inactive_learners['error']} {response.status_code}'
                 LOGGER.error(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        message
+                        f'SAP searchStudent API for customer '\
+                        f'{self.enterprise_configuration.enterprise_customer.name} '\
+                        f'and base url {self.enterprise_configuration.sapsf_base_url} returned response with '\
+                        f'{sap_inactive_learners['error']} {response.status_code}'
                     )
                 )
             return None
@@ -405,16 +406,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         new_page_start_at = page_size + start_at
         total_inactive_learners = sap_inactive_learners['@odata.count']
         inactive_learners_on_page = sap_inactive_learners['value']
-        message = f'SAP SF searchStudent API returned {len(inactive_learners_on_page)} '\
-            f'inactive learners of total {total_inactive_learners} starting from {start_at} for '\
-            f'enterprise customer {self.enterprise_configuration.enterprise_customer.name}'
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
                 None,
-                message
+                f'SAP SF searchStudent API returned {len(inactive_learners_on_page)} '\
+                f'inactive learners of total {total_inactive_learners} starting from {start_at} for '\
+                f'enterprise customer {self.enterprise_configuration.enterprise_customer.name}'
             )
         )
 
