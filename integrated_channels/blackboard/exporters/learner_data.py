@@ -33,7 +33,7 @@ class BlackboardLearnerExporter(LearnerExporter):
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
             LOGGER.debug(generate_formatted_log(
-                'blackboard',
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_customer_user.user_id,
                 None,
@@ -84,7 +84,7 @@ class BlackboardLearnerExporter(LearnerExporter):
         if enterprise_enrollment.enterprise_customer_user.user_email is None:
             # We need an email to find the user on blackboard.
             LOGGER.debug(generate_formatted_log(
-                'blackboard',
+                self.enterprise_configuration.channel_code(),
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 None,

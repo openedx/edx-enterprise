@@ -73,7 +73,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata['course_metadata']['courseId'] = course_id_generated
 
         LOGGER.info(generate_formatted_log(
-            self.config.brief_channel_name.upper(),
+            self.enterprise_configuration.channel_code(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             external_id,
@@ -89,7 +89,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 msg_body = (f"Course already exists with course_id {external_id},"
                             f" and generated course_id: {course_id_generated}, not attempting creation")
                 LOGGER.warning(generate_formatted_log(
-                    self.config.brief_channel_name.upper(),
+                    self.enterprise_configuration.channel_code(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     external_id,
@@ -108,7 +108,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             )
 
         LOGGER.info(generate_formatted_log(
-            self.config.brief_channel_name.upper(),
+            self.enterprise_configuration.channel_code(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             external_id,
@@ -135,7 +135,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         course_id = self._resolve_blackboard_course_id(external_id)
         BlackboardAPIClient._validate_course_id(course_id, external_id)
 
-        LOGGER.info('Updating course with courseId: {}'.format(course_id))
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                course_id,
+                f'Updating course with courseId: {course_id}'
+            )
+        )
         update_url = self.generate_course_update_url(course_id)
         response = self._patch(update_url, channel_metadata_item.get('course_metadata'))
 
@@ -158,7 +166,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 bb_content_id = content.get('id')
 
         if not bb_content_id:
-            LOGGER.info('Blackboard integrated course content not found. Generating content.')
+            LOGGER.info(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    course_id,
+                    'Blackboard integrated course content not found. Generating content.'
+                )
+            )
         else:
             course_content_delete_url = self.generate_course_content_delete_url(bb_course_id, bb_content_id)
             self._delete(course_content_delete_url)
@@ -182,7 +198,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         if not course_id:
             return HTTPStatus.OK.value, 'Course:{} already removed.'.format(external_id)
 
-        LOGGER.info("Deleting course with courseId: %s", course_id)
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                course_id,
+                f'Deleting course with courseId: {course_id}'
+            )
+        )
         update_url = self.generate_course_update_url(course_id)
         response = self._delete(update_url)
         return response.status_code, response.text
@@ -313,7 +337,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
     def _formatted_message(self, msg):
         return generate_formatted_log(
-            self.config.brief_channel_name.upper(),
+            self.enterprise_configuration.channel_code(),
             self.enterprise_configuration.enterprise_customer.uuid,
             None,
             None,
@@ -707,7 +731,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 more_pages_present = False
 
         if current_page_count == PAGE_TRAVERSAL_LIMIT:
-            LOGGER.warning('Max page limit hit while traversing blackboard API for course={}'.format(external_id))
+            LOGGER.warning(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'Max page limit hit while traversing blackboard API for course={external_id}'
+                )
+            )
 
         if not grade_column_id:
             grade_column_data = self.generate_blackboard_gradebook_column_data(
@@ -894,4 +926,12 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error("Blackboard integrated channel does not yet support assignment deduplication.")
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                "Blackboard integrated channel does not yet support assignment deduplication."
+            )
+        )
