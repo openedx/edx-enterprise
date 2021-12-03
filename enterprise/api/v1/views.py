@@ -13,7 +13,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthenticat
 from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
-from rest_framework.exceptions import MethodNotAllowed, NotFound, ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -24,6 +24,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
+    HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from rest_framework.views import APIView
@@ -1445,6 +1446,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend, EnterpriseCustomerInviteKeyFilterBackend)
+    http_method_names = ['get', 'post', 'patch']
 
     def get_serializer_class(self):
         """
@@ -1452,6 +1454,9 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         """
         if self.request.method in ('POST', 'DELETE'):
             return serializers.EnterpriseCustomerInviteKeyWriteSerializer
+
+        if self.request.method == 'PATCH':
+            return serializers.EnterpriseCustomerInviteKeyPartialUpdateSerializer
 
         return serializers.EnterpriseCustomerInviteKeyReadOnlySerializer
 
@@ -1475,8 +1480,11 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         'enterprise.can_access_admin_dashboard',
         fn=lambda request, pk: get_ent_cust_from_enterprise_customer_key(pk)
     )
-    def update(self, request, *args, **kwargs):
-        raise MethodNotAllowed(request.method)
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            return super().partial_update(request, *args, **kwargs)
+        except ValueError as ex:
+            return Response({'detail': str(ex)}, status=HTTP_422_UNPROCESSABLE_ENTITY)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',

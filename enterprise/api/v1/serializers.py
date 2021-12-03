@@ -1162,9 +1162,9 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
         return data
 
 
-class EnterpriseCustomerInviteKeyWriteSerializer(serializers.ModelSerializer):
+class BaseEnterpriseCustomerInviteKeySerializer(serializers.ModelSerializer):
     """
-    Serializer for writing to the EnterpriseCustomerInviteKey model.
+    Base serializer for writing to the EnterpriseCustomerInviteKey model.
     """
 
     class Meta:
@@ -1173,16 +1173,21 @@ class EnterpriseCustomerInviteKeyWriteSerializer(serializers.ModelSerializer):
             'uuid',
             'enterprise_customer_uuid',
             'usage_limit',
-            'expiration_date'
+            'expiration_date',
+            'is_active',
         )
+
+
+class EnterpriseCustomerInviteKeyWriteSerializer(BaseEnterpriseCustomerInviteKeySerializer):
+    """
+    Serializer for writing to the EnterpriseCustomerInviteKey model.
+    """
 
     uuid = serializers.UUIDField(read_only=True)
     enterprise_customer_uuid = serializers.UUIDField()
     usage_limit = serializers.IntegerField(required=False)
     expiration_date = serializers.DateTimeField()
-
-    def create(self, validated_data):
-        return validated_data
+    is_active = serializers.BooleanField(read_only=True)
 
     def validate_enterprise_customer_uuid(self, value):
         """
@@ -1208,19 +1213,29 @@ class EnterpriseCustomerInviteKeyWriteSerializer(serializers.ModelSerializer):
         self.validated_data['uuid'] = obj.uuid
 
 
-class EnterpriseCustomerInviteKeyReadOnlySerializer(serializers.ModelSerializer):
+class EnterpriseCustomerInviteKeyPartialUpdateSerializer(serializers.ModelSerializer):
     """
-    Serializer for reading the EnterpriseCustomerInviteKey model.
+    Serializer for updating the EnterpriseCustomerInviteKey model.
     """
+
+    expiration_date = serializers.DateTimeField(required=False)
+    is_active = serializers.BooleanField(required=False)
 
     class Meta:
         model = models.EnterpriseCustomerInviteKey
         fields = (
-            'uuid',
-            'enterprise_customer_uuid',
-            'enterprise_customer_name',
-            'is_valid'
+            'expiration_date',
+            'is_active',
         )
+
+
+class EnterpriseCustomerInviteKeyReadOnlySerializer(BaseEnterpriseCustomerInviteKeySerializer):
+    """
+    Serializer for reading the EnterpriseCustomerInviteKey model.
+    """
+
+    class Meta(BaseEnterpriseCustomerInviteKeySerializer.Meta):
+        fields = BaseEnterpriseCustomerInviteKeySerializer.Meta.fields + ('enterprise_customer_name',)
 
     enterprise_customer_uuid = serializers.SerializerMethodField()
     enterprise_customer_name = serializers.SerializerMethodField()

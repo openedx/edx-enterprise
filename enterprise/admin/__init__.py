@@ -1004,13 +1004,33 @@ class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
         'enterprise_customer',
         'usage_limit',
         'expiration_date',
+        'is_active',
     )
 
-    readonly_fields = (
+    readonly_fields = ('uuid',)
+
+    list_display = (
         'uuid',
+        'enterprise_customer_id',
+        'usage_limit',
+        'expiration_date',
+        'is_active',
     )
 
-    list_display = ('uuid', 'enterprise_customer', 'usage_limit', 'expiration_date')
+    list_filter = ('is_active',)
+
+    search_fields = (
+        'uuid__startswith',
+        'enterprise_customer__name__startswith',
+    )
 
     class Meta:
         model = EnterpriseCustomerInviteKey
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = super().get_readonly_fields(request, obj=obj)
+
+        if not obj or not obj.is_active:
+            return readonly_fields + ('is_active',)
+
+        return readonly_fields
