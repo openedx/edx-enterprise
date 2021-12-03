@@ -4990,6 +4990,25 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         response = response.json()
         self.assertEqual(response['detail'], 'Method "PUT" not allowed.')
 
+    def test_patch_422_error(self):
+        """
+        Test that `EnterpriseCustomerInviteKeyViewSet` returns a 422 when trying to set is_active to True from False.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer_1.uuid))
+        self.enterprise_customer_1_invite_key.is_active = False
+        self.enterprise_customer_1_invite_key.save()
+        response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT,
+                kwargs={'pk': str(self.enterprise_customer_1_invite_key.uuid)}
+            ),
+            data=json.dumps({'is_active': 'True'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 422)
+        response = response.json()
+        self.assertEqual(response['detail'], 'Cannot reactivate an inactive invite key.')
+
     def test_link_user_successful_link(self):
         """
         Test `{enterprise_customer_invite_key}/link-user` creates an `EnterpriseCustomerUser`

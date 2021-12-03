@@ -3092,6 +3092,15 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
         )
     )
 
+    is_active = models.BooleanField(
+        blank=False,
+        null=False,
+        default=True,
+        help_text=_(
+            "Specifies if the key is active. Once deactivated, the key is no longer valid and cannot be reactivated."
+        )
+    )
+
     history = HistoricalRecords()
 
     @property
@@ -3099,6 +3108,9 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
         """
         Returns whether the key is still valid (non-expired and usage limit has not been reached).
         """
+        if not self.is_active:
+            return False
+
         now = localized_utcnow()
         is_not_expired = now < self.expiration_date
         usage_count = self.linked_enterprise_customer_users.count()
@@ -3110,3 +3122,23 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
         Return human-readable string representation.
         """
         return str(self.uuid)
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # https://docs.djangoproject.com/en/3.1/ref/models/instances/#customizing-model-loading
+        instance._loaded_values = dict(zip(field_names, values))  # pylint: disable=protected-access
+        return instance
+
+    def save(self, *args, **kwargs):
+        """
+        Saves this ``EnterpriseCustomerInviteKey``.
+
+        Prevents is_active from being updated once it's set to False.
+        """
+
+        if not self._state.adding:
+            if self.is_active and not self._loaded_values['is_active']:  # pylint: disable=no-member
+                raise ValueError("Cannot reactivate an inactive invite key.")
+
+        super().save(*args, **kwargs)

@@ -895,3 +895,4 @@ class EnterpriseCustomerInviteKeyFactory(factory.django.DjangoModelFactory):
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     usage_limit = 10
     expiration_date = localized_utcnow()
+    is_active = True

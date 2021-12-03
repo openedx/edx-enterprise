@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.2]
+--------
+feat: add is_active on enterprise customer invite key
+
 [3.36.1]
 --------
 feat: improved integrated channel log consistency

@@ -40,6 +40,7 @@ from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
+    EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     LicensedEnterpriseCourseEnrollment,
@@ -2361,20 +2362,52 @@ class TestEnterpriseCustomerInviteKey(unittest.TestCase):
     EXPIRED_DATE = NOW - timedelta(seconds=1)
 
     @ddt.data(
-        {'expiration_date': EXPIRED_DATE, 'usage_limit': 1, 'usage_count': 1, 'expected_is_valid': False},
-        {'expiration_date': EXPIRED_DATE, 'usage_limit': 1, 'usage_count': 0, 'expected_is_valid': False},
-        {'expiration_date': VALID_EXPIRATION_DATE, 'usage_limit': 1, 'usage_count': 1, 'expected_is_valid': False},
-        {'expiration_date': VALID_EXPIRATION_DATE, 'usage_limit': 1, 'usage_count': 0, 'expected_is_valid': True},
+        {
+            'expiration_date': EXPIRED_DATE,
+            'usage_limit': 1,
+            'usage_count': 1,
+            'is_active': True,
+            'expected_is_valid': False
+        },
+        {
+            'expiration_date': EXPIRED_DATE,
+            'usage_limit': 1,
+            'usage_count': 0,
+            'is_active': True,
+            'expected_is_valid': False
+        },
+        {
+            'expiration_date': VALID_EXPIRATION_DATE,
+            'usage_limit': 1,
+            'usage_count': 1,
+            'is_active': True,
+            'expected_is_valid': False
+        },
+        {
+            'expiration_date': VALID_EXPIRATION_DATE,
+            'usage_limit': 1,
+            'usage_count': 0,
+            'is_active': False,
+            'expected_is_valid': False
+        },
+        {
+            'expiration_date': VALID_EXPIRATION_DATE,
+            'usage_limit': 1,
+            'usage_count': 0,
+            'is_active': True,
+            'expected_is_valid': True
+        },
     )
     @ddt.unpack
     @freeze_time(NOW)
-    def test_is_valid(self, expiration_date, usage_limit, usage_count, expected_is_valid):
+    def test_is_valid(self, expiration_date, usage_limit, usage_count, is_active, expected_is_valid):
         """
         Test ``EnterpriseCustomerInviteKey`` is_valid property.
         """
         enterprise_customer_key = factories.EnterpriseCustomerInviteKeyFactory(
             usage_limit=usage_limit,
             expiration_date=expiration_date,
+            is_active=is_active
         )
 
         for _ in range(usage_count):
@@ -2384,3 +2417,18 @@ class TestEnterpriseCustomerInviteKey(unittest.TestCase):
             )
 
         self.assertEqual(enterprise_customer_key.is_valid, expected_is_valid)
+
+    def test_reactivating_key_fails(self):
+        """
+        Test that a key cannot be reactivated once deactivated.
+        """
+
+        enterprise_customer_key = factories.EnterpriseCustomerInviteKeyFactory()
+        enterprise_customer_key.is_active = False
+        enterprise_customer_key.save()
+
+        with self.assertRaises(ValueError):
+            # reload the key from the database
+            enterprise_customer_key = EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key.uuid)
+            enterprise_customer_key.is_active = True
+            enterprise_customer_key.save()
