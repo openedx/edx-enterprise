@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='historicalenterprisecustomerinvitekey',
             name='expiration_date',
-            # due to previously null values in the history table, `null` must remain `True`.
-            field=models.DateTimeField(null=True, help_text='The key will no longer be valid after this date.'),
+            field=models.DateTimeField(help_text='The key will no longer be valid after this date.'),
         ),
     ]
