@@ -21,7 +21,6 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
-    HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
@@ -34,7 +33,7 @@ from six.moves.urllib.parse import quote_plus, unquote
 from django.apps import apps
 from django.conf import settings
 from django.core import exceptions, mail
-from django.http import Http404, response
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.utils.decorators import method_decorator
