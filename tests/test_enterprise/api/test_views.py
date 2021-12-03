@@ -5032,44 +5032,43 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         unlinked_user.set_password(TEST_PASSWORD)
         unlinked_user.save()
 
-        ecu = EnterpriseCustomerUser.objects.create(
+        EnterpriseCustomerUser.objects.create(
             user_id=unlinked_user.id,
             enterprise_customer=self.enterprise_customer_3,
             active=False,
             linked=False,
         )
-        ecu.save()
 
         client = APIClient()
         client.login(username=unlinked_user.username, password=TEST_PASSWORD)
 
-        response = client.post(
+        response_0 = client.post(
             settings.TEST_SERVER + reverse(
                 self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
                 kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
             )
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_0.status_code, 200)
         assert EnterpriseCustomerUser.objects.get(
             user_id=unlinked_user.id,
             enterprise_customer=self.enterprise_customer_3,
             active=True,
             linked=True,
         )
-        response = self.load_json(response.content)
-        assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
-        assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+        json_0 = self.load_json(response_0.content)
+        assert json_0['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert json_0['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
 
-        response = client.post(
+        response_1 = client.post(
             settings.TEST_SERVER + reverse(
                 self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
                 kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
             )
         )
-        self.assertEqual(response.status_code, 204)
-        response = self.load_json(response.content)
-        assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
-        assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+        self.assertEqual(response_1.status_code, 200)
+        json_1 = self.load_json(response_1.content)
+        assert json_1['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert json_1['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
 
     def test_invalid_link(self):
         """

@@ -1498,8 +1498,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         If the key is not found, returns 404
         If the ket is not valid, return 422
         If we create an `EnterpriseCustomerUser` return 201
-        If an `EnterpriseCustomerUser` is found that is not `active` or not `linked` return 200
-        If an `EnterpriseCustomerUser` is found and its already linked and active return 204
+        If an `EnterpriseCustomerUser` if found return 200
         """
         enterprise_customer_key = get_object_or_404(
             models.EnterpriseCustomerInviteKey,
@@ -1514,9 +1513,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
 
         enterprise_customer = enterprise_customer_key.enterprise_customer
 
-        import pdb; pdb.set_trace()
-
-        enterprise_user, created = models.EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_user, created = models.EnterpriseCustomerUser.all_objects.get_or_create(
             user_id=request.user.id,
             enterprise_customer=enterprise_customer,
         )
@@ -1525,6 +1522,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
             "enterprise_customer_slug": enterprise_customer.slug,
             "enterprise_customer_uuid": enterprise_customer.uuid,
         }
+        headers = self.get_success_headers(response_body)
 
         if created:
             enterprise_user.invite_key = enterprise_customer_key
@@ -1534,15 +1532,16 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
                 pk,
                 enterprise_customer.uuid,
             )
-            return Response(response_body, status=HTTP_201_CREATED)
+            return Response(response_body, status=HTTP_201_CREATED, headers=headers)
 
         elif not enterprise_user.active or not enterprise_user.linked:
             if not enterprise_user.active:
                 enterprise_user.active = True
             if not enterprise_user.linked:
                 enterprise_user.linked = True
+                models.EnterpriseCustomerUser.all_objects.link_user(
+                    enterprise_customer,
+                    request.user.email
+                )
             enterprise_user.save()
-            return Response(response_body, status=HTTP_200_OK)
-
-        else:
-            return Response(response_body, status=HTTP_204_NO_CONTENT)
+        return Response(response_body, status=HTTP_200_OK, headers=headers)
