@@ -90,7 +90,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.course_id,
-                f'[Integrated Channel] No learner data was sent for user '\
+                '[Integrated Channel] No learner data was sent for user '\
                 f'{enterprise_enrollment.enterprise_customer_user.username} because an SAP SuccessFactors user ID '\
                 ' could not be found.'
             )
