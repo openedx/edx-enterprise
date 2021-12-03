@@ -14,6 +14,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -377,8 +378,13 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
             LOGGER.info(
-                "No course found while attempting to delete edX course: {} from moodle.".format(
-                    serialized_data['courses[0][idnumber]']
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    'No course found while attempting to delete edX course: '\
+                    f'{serialized_data['courses[0][idnumber]']} from moodle.'
                 )
             )
             # Hacky way of getting around the request wrapper validation
@@ -401,7 +407,15 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error("Moodle integrated channel does not yet support assignment deduplication.")
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                "Moodle integrated channel does not yet support assignment deduplication."
+            )
+        )
 
     def create_course_completion(self, user_id, payload):
         """Send course completion data to Moodle"""
