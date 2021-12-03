@@ -21,6 +21,7 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
+    HTTP_204_NO_CONTENT,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
@@ -33,7 +34,7 @@ from six.moves.urllib.parse import quote_plus, unquote
 from django.apps import apps
 from django.conf import settings
 from django.core import exceptions, mail
-from django.http import Http404
+from django.http import Http404, response
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.utils.decorators import method_decorator
@@ -1494,46 +1495,54 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
 
         Given a enterprise_customer_key, link user to the appropriate enterprise.
 
-        If the key is not found, returns 400
+        If the key is not found, returns 404
         If the ket is not valid, return 422
+        If we create an `EnterpriseCustomerUser` return 201
+        If an `EnterpriseCustomerUser` is found that is not `active` or not `linked` return 200
+        If an `EnterpriseCustomerUser` is found and its already linked and active return 204
         """
-        try:
-            enterprise_customer_key_match = models.EnterpriseCustomerInviteKey.objects.get(uuid=pk)
-        except models.EnterpriseCustomerInviteKey.DoesNotExist:
-            return Response({"error": "Could not find Enterprise Customer Invite Key"}, status=HTTP_400_BAD_REQUEST)
+        enterprise_customer_key = get_object_or_404(
+            models.EnterpriseCustomerInviteKey,
+            uuid=pk
+        )
 
-        if not enterprise_customer_key_match.is_valid:
+        if not enterprise_customer_key.is_valid:
             return Response(
                 {"detail": "Enterprise customer invite key is not valid"},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        enterprise_customer = enterprise_customer_key_match.enterprise_customer
+        enterprise_customer = enterprise_customer_key.enterprise_customer
+
+        import pdb; pdb.set_trace()
 
         enterprise_user, created = models.EnterpriseCustomerUser.objects.get_or_create(
             user_id=request.user.id,
             enterprise_customer=enterprise_customer,
         )
 
+        response_body = {
+            "enterprise_customer_slug": enterprise_customer.slug,
+            "enterprise_customer_uuid": enterprise_customer.uuid,
+        }
+
         if created:
-            enterprise_user.invite_key = enterprise_customer_key_match
+            enterprise_user.invite_key = enterprise_customer_key
             enterprise_user.save()
             track_enterprise_user_linked(
                 request.user.id,
                 pk,
                 enterprise_customer.uuid,
             )
+            return Response(response_body, status=HTTP_201_CREATED)
+
         elif not enterprise_user.active or not enterprise_user.linked:
             if not enterprise_user.active:
                 enterprise_user.active = True
             if not enterprise_user.linked:
                 enterprise_user.linked = True
             enterprise_user.save()
+            return Response(response_body, status=HTTP_200_OK)
 
-        return Response(
-            {
-                "enterprise_customer_slug": enterprise_customer.slug,
-                "enterprise_customer_uuid": enterprise_customer.uuid,
-            },
-            status=HTTP_201_CREATED
-        )
+        else:
+            return Response(response_body, status=HTTP_204_NO_CONTENT)

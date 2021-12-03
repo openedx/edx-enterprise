@@ -5032,12 +5032,13 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         unlinked_user.set_password(TEST_PASSWORD)
         unlinked_user.save()
 
-        factories.EnterpriseCustomerUserFactory(
+        ecu = EnterpriseCustomerUser.objects.create(
             user_id=unlinked_user.id,
             enterprise_customer=self.enterprise_customer_3,
             active=False,
             linked=False,
         )
+        ecu.save()
 
         client = APIClient()
         client.login(username=unlinked_user.username, password=TEST_PASSWORD)
@@ -5048,13 +5049,24 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
                 kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
             )
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         assert EnterpriseCustomerUser.objects.get(
             user_id=unlinked_user.id,
             enterprise_customer=self.enterprise_customer_3,
             active=True,
             linked=True,
         )
+        response = self.load_json(response.content)
+        assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+
+        response = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 204)
         response = self.load_json(response.content)
         assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
         assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
@@ -5081,4 +5093,4 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
                 kwargs={'pk': str(uuid.uuid4())}
             )
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
