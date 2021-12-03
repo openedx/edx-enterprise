@@ -384,7 +384,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                     None,
                     None,
                     'No course found while attempting to delete edX course: '\
-                    f'{serialized_data['courses[0][idnumber]']} from moodle.'
+                    f'{serialized_data["courses[0][idnumber]"]} from moodle.'
                 )
             )
             # Hacky way of getting around the request wrapper validation
