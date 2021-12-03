@@ -55,7 +55,7 @@ class CornerstoneLearnerExporter(LearnerExporter):
             ]
         except CornerstoneLearnerDataTransmissionAudit.DoesNotExist:
             LOGGER.info(generate_formatted_log(
-                'cornerstone',
+                self.enterprise_configuration.channel_code(),
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 None,
