@@ -15,6 +15,7 @@ from django.db.models import Q
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = getLogger(__name__)
 
@@ -69,6 +70,28 @@ class ContentMetadataExporter(Exporter):
         """
         super().__init__(user, enterprise_configuration)
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
+
+    def _log_info(msg):
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                msg
+            )
+        )
+
+    def _log_exception(msg):
+        LOGGER.exception(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                msg
+            )
+        )
 
     def _get_catalog_content_keys(self, enterprise_customer_catalog):
         """
@@ -181,8 +204,8 @@ class ContentMetadataExporter(Exporter):
         enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
-        LOGGER.info(
-            f'Beginning export for customer: {self.enterprise_customer.uuid} with catalogs: '
+        self._log_info(
+            f'Beginning export for customer: {self.enterprise_customer.uuid} with catalogs: '\
             f'{enterprise_customer_catalogs}'
         )
 
@@ -193,8 +216,8 @@ class ContentMetadataExporter(Exporter):
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             content_keys = self._get_catalog_content_keys(enterprise_customer_catalog)
 
-            LOGGER.info(
-                f'Retrieved content keys: {content_keys} for past transmissions to customer: '
+            self._log_info(
+                f'Retrieved content keys: {content_keys} for past transmissions to customer: '\
                 f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
             )
 
@@ -205,10 +228,12 @@ class ContentMetadataExporter(Exporter):
                 kwargs.get('force_retrieve_all_catalogs', False)
             )
 
-            LOGGER.info(
-                f'Buckets returned by the enterprise-catalog service for catalog {enterprise_customer_catalog.uuid} - '
-                f'items_to_create: {items_to_create},  items_to_update: {items_to_update}, items_to_delete: '
-                f'{items_to_delete}'
+            self._log_info(
+                f'Buckets returned by the enterprise-catalog service for '\
+                f'catalog {enterprise_customer_catalog.uuid} - '\
+                f'items_to_create: {items_to_create}, '\
+                f'items_to_update: {items_to_update}, '\
+                f'items_to_delete: {items_to_delete}'
             )
 
             # We only need to fetch content metadata if there are items to update or create
@@ -247,8 +272,8 @@ class ContentMetadataExporter(Exporter):
             for content in items_to_delete:
                 delete_payload[content.content_id] = content
 
-        LOGGER.info(
-            f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '
+        self._log_info(
+            f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '\
             f'{create_payload}, update_payload: {update_payload}, delete_payload: {delete_payload}'
         )
 
@@ -292,11 +317,9 @@ class ContentMetadataExporter(Exporter):
                     # There may be a problem with the DATA_TRANSFORM_MAPPING on
                     # the concrete subclass or the concrete subclass does not implement
                     # the appropriate field transformer function.
-                    LOGGER.exception(
-                        'Failed to transform content metadata item field [%s] for [%s]: [%s]',
-                        edx_data_schema_key,
-                        self.enterprise_customer.name,
-                        content_metadata_item,
+                    self._log_exception(
+                        f'Failed to transform content metadata item field {edx_data_schema_key} '\
+                        f'for {self.enterprise_customer.name}: {content_metadata_item}'
                     )
                     continue
 
@@ -329,9 +352,9 @@ class ContentMetadataExporter(Exporter):
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 content_id__in=content_ids
             )
-            LOGGER.info(
-                f'Found {len(transmission_items)} past content transmissions that need to be updated with their'
-                f' respective catalog (catalog: {enterprise_customer_catalog.uuid}) UUIDs'
+            self._log_info(
+                f'Found {len(transmission_items)} past content transmissions that need to be updated with their '\
+                f'respective catalog (catalog: {enterprise_customer_catalog.uuid}) UUIDs'
             )
             for item in transmission_items:
                 item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid

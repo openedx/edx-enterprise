@@ -65,7 +65,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
         if self.enterprise_configuration.disable_learner_data_transmissions:
             LOGGER.info(generate_formatted_log(
-                app_label,
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
                 lms_user_id,
                 None,
@@ -77,7 +77,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         # Even though we're transmitting a learner, they can have records per assessment (multiple per course).
         for learner_data in exporter.single_assessment_level_export(**kwargs):
             LOGGER.info(generate_formatted_log(
-                app_label,
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
                 lms_user_id,
                 learner_data.course_id,
@@ -141,7 +141,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
         if self.enterprise_configuration.disable_learner_data_transmissions:
             LOGGER.info(generate_formatted_log(
-                app_label,
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
                 None,
                 None,
@@ -170,7 +170,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             ):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
-                    app_label,
+                    self.enterprise_configuration.channel_code(),
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
@@ -184,7 +184,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     serialized_payload
                 )
                 LOGGER.info(generate_formatted_log(
-                    app_label,
+                    self.enterprise_configuration.channel_code(),
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
@@ -241,7 +241,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
         if self.enterprise_configuration.disable_learner_data_transmissions:
             LOGGER.info(generate_formatted_log(
-                app_label,
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
                 None,
                 None,
@@ -268,7 +268,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             if not learner_data.course_completed:
                 # The user has not completed the course, so we shouldn't send a completion status call
                 LOGGER.info(generate_formatted_log(
-                    app_label,
+                    self.enterprise_configuration.channel_code(),
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
@@ -286,7 +286,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             ):
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
-                    app_label,
+                    self.enterprise_configuration.channel_code(),
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
@@ -303,7 +303,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     raise ClientError(f'Client create_course_completion failed: {body}', code)
 
                 LOGGER.info(generate_formatted_log(
-                    app_label,
+                    self.enterprise_configuration.channel_code(),
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
@@ -354,7 +354,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
         if code >= 400:
             LOGGER.exception(generate_formatted_log(
-                app_label,
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
                 None,
                 None,
@@ -362,7 +362,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             ))
         else:
             LOGGER.info(generate_formatted_log(
-                app_label,
+                self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
                 None,
                 None,
@@ -373,7 +373,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                                          integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
         """ Logs extra payload and parameter data to help debug which learner data caused an exception. """
         LOGGER.exception(generate_formatted_log(
-            integrated_channel_name, enterprise_customer_uuid, learner_id, course_id,
+            self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
             '{operation_name} failed with Exception for '
             'enterprise enrollment {enrollment_id} with payload {payload}'.format(
                 operation_name=operation_name,
@@ -406,7 +406,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             client_exception,
         )
         LOGGER.exception(generate_formatted_log(
-            integrated_channel_name, enterprise_customer_uuid, learner_id, course_id,
+            self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
             'Failed to send completion status call for enterprise enrollment {}'
             'with payload {}'
             '\nError message: {}'
