@@ -4,7 +4,7 @@ from datetime import timedelta
 
 def _bulk_update_expiration_date(cls, queryset):
     for invite_key in queryset:
-        invite_key.expiration_date = invite_key.created + timedelta(years=1)
+        invite_key.expiration_date = invite_key.created + timedelta(days=365)
     cls.objects.bulk_update(queryset, ['expiration_date'])
 
 
@@ -16,11 +16,11 @@ def backfill_null_expiry_date_for_invite_keys(apps, schema_editor):
     migration can require this field at the Django admin and database levels.
     """
     EnterpriseCustomerInviteKey = apps.get_model('enterprise', 'EnterpriseCustomerInviteKey')
-    print(dir(EnterpriseCustomerInviteKey))
+    HistoricalEnterpriseCustomerInviteKey = apps.get_model('enterprise', 'HistoricalEnterpriseCustomerInviteKey')
     queryset = EnterpriseCustomerInviteKey.objects.filter(expiration_date__isnull=True)
-    history_queryset = EnterpriseCustomerInviteKey.history.filter(expiration_date__isnull=True)
+    history_queryset = HistoricalEnterpriseCustomerInviteKey.objects.filter(expiration_date__isnull=True)
     _bulk_update_expiration_date(cls=EnterpriseCustomerInviteKey, queryset=queryset)
-    _bulk_update_expiration_date(cls=EnterpriseCustomerInviteKey, queryset=history_queryset)
+    _bulk_update_expiration_date(cls=HistoricalEnterpriseCustomerInviteKey, queryset=history_queryset)
 
 class Migration(migrations.Migration):
 
