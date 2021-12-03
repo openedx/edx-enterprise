@@ -56,11 +56,17 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             try:
                 self.client.update_content_metadata(self._serialize_items(chunked_items))
             except ClientError as exc:
+                message = f'Failed to update {len(chunked_items)} content metadata items for '\
+                    f'integrated channel {self.enterprise_configuration.enterprise_customer.name} '\
+                    f'{self.enterprise_configuration.channel_code()}'
                 LOGGER.error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
-                    len(chunked_items),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        message
+                    )
                 )
                 LOGGER.exception(exc)
 

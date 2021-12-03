@@ -10,6 +10,7 @@ import six
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,9 +57,16 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
             if sys_msg and 'user account is inactive' in sys_msg:
                 ecu.active = False
                 ecu.save()
+                message = f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '\
+                    f'former employee of {ecu.enterprise_customer} '\
+                    'and has been marked inactive in SAPSF. Now marking inactive internally.'
                 LOGGER.warning(
-                    'User with LMS ID %s, ECU ID %s is a former employee of %s '
-                    'and has been marked inactive in SAPSF. Now marking inactive internally.',
-                    ecu.user_id, ecu.id, ecu.enterprise_customer
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        ecu.enterprise_customer.uuid,
+                        ecu.user_id,
+                        None,
+                        message
+                    )
                 )
                 return
