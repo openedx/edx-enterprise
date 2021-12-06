@@ -177,8 +177,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             LOGGER.info(generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
-                enterprise_enrollment.enterprise_customer_user.user_id,
-                enterprise_enrollment.course_id,
+                lms_user_for_filter,
+                course_run_id,
                 f'Either qualifying enrollments not found for learner, or, '
                 f'enterprise_customer_user record is inactive. Skipping transmit assessment grades.'
             ))
