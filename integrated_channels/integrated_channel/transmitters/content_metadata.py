@@ -111,13 +111,10 @@ class ContentMetadataTransmitter(Transmitter):
                 self.client.create_content_metadata(serialized_chunk)
             except ClientError as exc:
                 self._log_error(
-                    'Failed to create [%s] content metadata items for integrated channel [%s] [%s]. '
-                    'Task failed with message [%s] and status code [%s]',
-                    len(chunk),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
-                    exc.message,
-                    exc.status_code
+                    f"Failed to create [{len(chunk)}] content metadata items for integrated channel "\
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "\
+                    f"[{self.enterprise_configuration.channel_code()}]. "\
+                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
                 )
                 LOGGER.exception(exc)
             else:
@@ -138,13 +135,10 @@ class ContentMetadataTransmitter(Transmitter):
                 self.client.update_content_metadata(serialized_chunk)
             except ClientError as exc:
                 self._log_error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]. '
-                    'Task failed with message [%s] and status code [%s]',
-                    len(chunk),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
-                    exc.message,
-                    exc.status_code
+                    f"Failed to update [{len(chunk)}] content metadata items for integrated channel "\
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "\
+                    f"[{self.enterprise_configuration.channel_code()}]. "\
+                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
                 )
                 LOGGER.exception(exc)
             else:
@@ -165,13 +159,10 @@ class ContentMetadataTransmitter(Transmitter):
                 self.client.delete_content_metadata(serialized_chunk)
             except ClientError as exc:
                 self._log_error(
-                    'Failed to delete [%s] content metadata items for integrated channel [%s] [%s]. '
-                    'Task failed with message [%s] and status code [%s]',
-                    len(chunk),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
-                    exc.message,
-                    exc.status_code
+                    f"Failed to delete [{len(chunk)}] content metadata items for integrated channel "\
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "\
+                    f"[{self.enterprise_configuration.channel_code()}]. "\
+                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
                 )
                 LOGGER.exception(exc)
             else:

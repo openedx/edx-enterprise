@@ -63,7 +63,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'Failed to update {len(chunked_items)} content metadata items for '\
+                        f'Failed to update [{len(chunked_items)}] content metadata items for '\
                         f'integrated channel {self.enterprise_configuration.enterprise_customer.name} '\
                         f'{self.enterprise_configuration.channel_code()}'
                     )

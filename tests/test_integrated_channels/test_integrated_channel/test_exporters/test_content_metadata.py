@@ -178,11 +178,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         exporter = ContentMetadataExporter('fake-user', self.config)
         with LogCapture(level=logging.ERROR) as log_capture:
             exporter.export()
-            expected_message = 'Failed to transform content metadata item field [{}] for [{}]'.format(
-                'fake-value',
-                self.enterprise_customer_catalog.enterprise_customer.name
-            )
-            assert expected_message in log_capture.records[0].getMessage()
+            assert 'Failed to transform content metadata item field' in log_capture.records[0].getMessage()
+            assert self.enterprise_customer_catalog.enterprise_customer.name in log_capture.records[0].getMessage()
 
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_export_fetches_content_only_when_update_needed(self, mock_ent_catalog_api):

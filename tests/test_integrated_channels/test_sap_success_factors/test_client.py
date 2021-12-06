@@ -106,7 +106,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             self.client_secret,
             self.company_id,
             self.user_id,
-            self.user_type
+            self.user_type,
+            self.enterprise_config.enterprise_customer.uuid
         )
         assert actual_response == expected_response
         assert len(responses.calls) == 1
@@ -127,7 +128,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
                 self.client_secret,
                 self.company_id,
                 self.user_id,
-                self.user_type
+                self.user_type,
+                self.enterprise_config.enterprise_customer.uuid
             )
 
     @responses.activate
@@ -144,7 +146,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
                 self.client_secret,
                 self.company_id,
                 self.user_id,
-                self.user_type
+                self.user_type,
+                self.enterprise_config.enterprise_customer.uuid
             )
 
     @responses.activate

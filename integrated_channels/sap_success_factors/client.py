@@ -35,7 +35,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
     GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
 
     @staticmethod
-    def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type):
+    def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type, customer_uuid):
         """ Retrieves OAuth 2.0 access token using the client credentials grant.
 
         Args:
@@ -80,8 +80,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         except (KeyError, TypeError, ValueError) as error:
             LOGGER.error(
                 generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
+                    'SAP',
+                    customer_uuid,
                     None,
                     None,
                     f'SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, '\
@@ -120,7 +120,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 self.enterprise_configuration.secret,
                 self.enterprise_configuration.sapsf_company_id,
                 self.enterprise_configuration.sapsf_user_id,
-                self.enterprise_configuration.user_type
+                self.enterprise_configuration.user_type,
+                self.enterprise_configuration.enterprise_customer.uuid
             )
             session = requests.Session()
             session.timeout = self.SESSION_TIMEOUT
@@ -255,7 +256,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             self.enterprise_configuration.secret,
             self.enterprise_configuration.sapsf_company_id,
             sap_user_id,
-            SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER
+            SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER,
+            self.enterprise_configuration.enterprise_customer.uuid
         )
 
         response = requests.post(
