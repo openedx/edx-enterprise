@@ -66,8 +66,8 @@ from enterprise.utils import (
     get_enterprise_customer,
     get_request_value,
     track_enrollment,
-    validate_email_to_link,
     track_enterprise_user_linked,
+    validate_email_to_link,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
 
