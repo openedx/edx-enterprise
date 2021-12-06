@@ -1495,9 +1495,9 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         Given a enterprise_customer_key, link user to the appropriate enterprise.
 
         If the key is not found, returns 404
-        If the ket is not valid, return 422
-        If we create an `EnterpriseCustomerUser` return 201
-        If an `EnterpriseCustomerUser` if found return 200
+        If the key is not valid, returns 422
+        If we create an `EnterpriseCustomerUser` returns 201
+        If an `EnterpriseCustomerUser` if found returns 200
         """
         enterprise_customer_key = get_object_or_404(
             models.EnterpriseCustomerInviteKey,
@@ -1530,6 +1530,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
                 request.user.id,
                 pk,
                 enterprise_customer.uuid,
+                created,
             )
             return Response(response_body, status=HTTP_201_CREATED, headers=headers)
 
@@ -1543,4 +1544,10 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
                     request.user.email
                 )
             enterprise_user.save()
+            track_enterprise_user_linked(
+                request.user.id,
+                pk,
+                enterprise_customer.uuid,
+                created,
+            )
         return Response(response_body, status=HTTP_200_OK, headers=headers)
