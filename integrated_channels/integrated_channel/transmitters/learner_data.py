@@ -383,6 +383,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             '{operation_name} {integrated_channel_name} failed with Exception for '
             'enterprise enrollment {enrollment_id} with payload {payload}'.format(
                 operation_name=operation_name,
+                integrated_channel_name=integrated_channel_name,
                 enrollment_id=learner_data.enterprise_course_enrollment_id,
                 payload=learner_data
             )), exc_info=True)
