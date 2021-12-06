@@ -15,10 +15,7 @@ from integrated_channels.catalog_service_utils import get_course_id_for_enrollme
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-from integrated_channels.utils import (
-    parse_datetime_to_epoch_millis,
-    generate_formatted_log,
-)
+from integrated_channels.utils import generate_formatted_log, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 

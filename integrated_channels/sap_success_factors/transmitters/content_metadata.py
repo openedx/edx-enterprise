@@ -11,8 +11,7 @@ from django.conf import settings
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-from integrated_channels.utils import chunks
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import chunks, generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 

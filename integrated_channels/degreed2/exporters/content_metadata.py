@@ -7,7 +7,7 @@ from logging import getLogger
 
 from enterprise.utils import get_closest_course_run, get_course_run_duration_info, parse_datetime_handle_invalid
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.utils import get_image_url, strip_html_tags, generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, get_image_url, strip_html_tags
 
 LOGGER = getLogger(__name__)
 

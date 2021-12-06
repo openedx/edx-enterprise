@@ -14,8 +14,7 @@ from django.conf import settings
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
-from integrated_channels.utils import chunks
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import chunks, generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
