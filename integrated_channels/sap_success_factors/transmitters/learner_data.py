@@ -63,8 +63,8 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                         ecu.enterprise_customer.uuid,
                         ecu.user_id,
                         None,
-                        f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '\
-                        f'former employee of {ecu.enterprise_customer} '\
+                        f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '
+                        f'former employee of {ecu.enterprise_customer} '
                         'and has been marked inactive in SAPSF. Now marking inactive internally.'
                     )
                 )

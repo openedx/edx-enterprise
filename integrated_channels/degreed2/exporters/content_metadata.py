@@ -57,7 +57,7 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                             self.enterprise_configuration.enterprise_customer.uuid,
                             None,
                             None,
-                            'Cannot find a courserun, so duration being returned 0. '\
+                            'Cannot find a courserun, so duration being returned 0. '
                             f'Course item was {content_metadata_item} '
                         )
                     )
@@ -69,7 +69,7 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        'Cannot find even a single courserun, so duration being returned 0. '\
+                        'Cannot find even a single courserun, so duration being returned 0. '
                         f'Course item was {content_metadata_item} '
                     )
                 )

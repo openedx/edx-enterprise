@@ -383,7 +383,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     None,
-                    'No course found while attempting to delete edX course: '\
+                    'No course found while attempting to delete edX course: '
                     f'{serialized_data["courses[0][idnumber]"]} from moodle.'
                 )
             )

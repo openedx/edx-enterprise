@@ -359,7 +359,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     enterprise_customer_uuid,
                     None,
                     None,
-                    f'{app_label} Deduping assignments transmission experienced a failure, '\
+                    f'{app_label} Deduping assignments transmission experienced a failure, '
                     f'received the error message: {body}'
                 )
             )
@@ -370,7 +370,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     enterprise_customer_uuid,
                     None,
                     None,
-                    f'{app_label} Deduping assignments transmission finished successfully, '\
+                    f'{app_label} Deduping assignments transmission finished successfully, '
                     f'received message: {body}'
                 )
             )
@@ -415,10 +415,10 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         LOGGER.exception(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
-                f"Failed to send completion status call for {integrated_channel_name} "\
-                f"enterprise enrollment {learner_data.enterprise_course_enrollment_id} "\
-                f"with payload {learner_data} "\
-                f"Error message: {client_exception.message}"\
+                f"Failed to send completion status call for {integrated_channel_name} "
+                f"enterprise enrollment {learner_data.enterprise_course_enrollment_id} "
+                f"with payload {learner_data} "
+                f"Error message: {client_exception.message}"
                 f"Error status code: {client_exception.status_code}"
             )
         )

@@ -84,8 +84,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                     customer_uuid,
                     None,
                     None,
-                    f'SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, '\
-                    f'Company: {str(company_id)}, Error: {str(error)}, Response: {str(response)}'
+                    f"SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, "
+                    f"Company: {str(company_id)}, Error: {str(error)}, Response: {str(response)}"
                 )
 
             )
@@ -295,8 +295,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     None,
-                    f'Error status_code {response.status_code} and response: {response.text} '\
-                    f'while posting to URL {url} with payload {payload}'
+                    f"Error status_code {response.status_code} and response: {response.text} "
+                    f"while posting to URL {url} with payload {payload}"
                 )
             )
         return response.status_code, response.text
@@ -369,7 +369,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     None,
-                    f'Unable to fetch inactive learners from SAP searchStudent API with url '\
+                    f'Unable to fetch inactive learners from SAP searchStudent API with url '
                     f'{search_student_paginated_url}.'
                 )
             )
@@ -383,10 +383,10 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "SAP searchStudent API for customer "\
-                        f"{self.enterprise_configuration.enterprise_customer.name} "\
-                        f"and base url {self.enterprise_configuration.sapsf_base_url} "\
-                        f"returned response with {sap_inactive_learners['error'].get('message')} "\
+                        "SAP searchStudent API for customer "
+                        f"{self.enterprise_configuration.enterprise_customer.name} "
+                        f"and base url {self.enterprise_configuration.sapsf_base_url} "
+                        f"returned response with {sap_inactive_learners['error'].get('message')} "
                         f"{sap_inactive_learners['error'].get('code')}"
                     )
                 )
@@ -397,9 +397,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "SAP searchStudent API for customer "\
-                        f"{self.enterprise_configuration.enterprise_customer.name} "\
-                        f"and base url {self.enterprise_configuration.sapsf_base_url} returned response with "\
+                        "SAP searchStudent API for customer "
+                        f"{self.enterprise_configuration.enterprise_customer.name} "
+                        f"and base url {self.enterprise_configuration.sapsf_base_url} returned response with "
                         f"{sap_inactive_learners['error']} {response.status_code}"
                     )
                 )
@@ -414,8 +414,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
                 None,
-                f"SAP SF searchStudent API returned {len(inactive_learners_on_page)} "\
-                f"inactive learners of total {total_inactive_learners} starting from {start_at} for "\
+                f"SAP SF searchStudent API returned {len(inactive_learners_on_page)} "
+                f"inactive learners of total {total_inactive_learners} starting from {start_at} for "
                 f"enterprise customer {self.enterprise_configuration.enterprise_customer.name}"
             )
         )

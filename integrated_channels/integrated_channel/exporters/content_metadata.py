@@ -205,7 +205,7 @@ class ContentMetadataExporter(Exporter):
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
         self._log_info(
-            f'Beginning export for customer: {self.enterprise_customer.uuid} with catalogs: '\
+            f'Beginning export for customer: {self.enterprise_customer.uuid} with catalogs: '
             f'{enterprise_customer_catalogs}'
         )
 
@@ -217,7 +217,7 @@ class ContentMetadataExporter(Exporter):
             content_keys = self._get_catalog_content_keys(enterprise_customer_catalog)
 
             self._log_info(
-                f'Retrieved content keys: {content_keys} for past transmissions to customer: '\
+                f'Retrieved content keys: {content_keys} for past transmissions to customer: '
                 f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
             )
 
@@ -229,10 +229,10 @@ class ContentMetadataExporter(Exporter):
             )
 
             self._log_info(
-                f'Buckets returned by the enterprise-catalog service for '\
-                f'catalog {enterprise_customer_catalog.uuid} - '\
-                f'items_to_create: {items_to_create}, '\
-                f'items_to_update: {items_to_update}, '\
+                f'Buckets returned by the enterprise-catalog service for '
+                f'catalog {enterprise_customer_catalog.uuid} - '
+                f'items_to_create: {items_to_create}, '
+                f'items_to_update: {items_to_update}, '
                 f'items_to_delete: {items_to_delete}'
             )
 
@@ -273,7 +273,7 @@ class ContentMetadataExporter(Exporter):
                 delete_payload[content.content_id] = content
 
         self._log_info(
-            f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '\
+            f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '
             f'{create_payload}, update_payload: {update_payload}, delete_payload: {delete_payload}'
         )
 
@@ -318,7 +318,7 @@ class ContentMetadataExporter(Exporter):
                     # the concrete subclass or the concrete subclass does not implement
                     # the appropriate field transformer function.
                     self._log_exception(
-                        f'Failed to transform content metadata item field {edx_data_schema_key} '\
+                        f'Failed to transform content metadata item field {edx_data_schema_key} '
                         f'for {self.enterprise_customer.name}: {content_metadata_item}'
                     )
                     continue
@@ -353,7 +353,7 @@ class ContentMetadataExporter(Exporter):
                 content_id__in=content_ids
             )
             self._log_info(
-                f'Found {len(transmission_items)} past content transmissions that need to be updated with their '\
+                f'Found {len(transmission_items)} past content transmissions that need to be updated with their '
                 f'respective catalog (catalog: {enterprise_customer_catalog.uuid}) UUIDs'
             )
             for item in transmission_items:

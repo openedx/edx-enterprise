@@ -90,8 +90,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.course_id,
-                '[Integrated Channel] No learner data was sent for user '\
-                f'{enterprise_enrollment.enterprise_customer_user.username} because an SAP SuccessFactors user ID '\
+                '[Integrated Channel] No learner data was sent for user '
+                f'{enterprise_enrollment.enterprise_customer_user.username} because an SAP SuccessFactors user ID '
                 ' could not be found.'
             )
         )
@@ -162,7 +162,7 @@ class SapSuccessFactorsLearnerManger:
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
                 None,
-                f'Found {total_sap_inactive_learners} SAP inactive learners for '\
+                f'Found {total_sap_inactive_learners} SAP inactive learners for '
                 f'enterprise customer {enterprise_customer.name}'
             )
         )
@@ -183,8 +183,8 @@ class SapSuccessFactorsLearnerManger:
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f"No social auth data found for inactive user with SAP student id {sap_student_id} "\
-                        f"of enterprise customer {enterprise_customer.name} with identity providers "\
+                        f"No social auth data found for inactive user with SAP student id {sap_student_id} "
+                        f"of enterprise customer {enterprise_customer.name} with identity providers "
                         f"{', '.join(map(lambda provider: provider.provider_id, providers))}"
                     )
                 )
@@ -203,7 +203,7 @@ class SapSuccessFactorsLearnerManger:
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'Learner with email {social_auth_user.email} and SAP student id {sap_student_id} '\
+                        f'Learner with email {social_auth_user.email} and SAP student id {sap_student_id} '
                         f'is not linked with enterprise {enterprise_customer.name}'
                     )
                 )
