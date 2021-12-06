@@ -66,6 +66,7 @@ from enterprise.utils import (
     get_enterprise_customer,
     get_request_value,
     track_enrollment,
+    track_enterprise_user_linked,
     validate_email_to_link,
 )
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
@@ -1483,3 +1484,67 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @action(methods=['post'], detail=True, url_path='link-user')
+    def link_user(self, request, pk=None):
+        """
+        Post
+        Links user using enterprise_customer_key
+        /enterprise/api/enterprise-customer-invite-key/{enterprise_customer_key}/link-user
+
+        Given a enterprise_customer_key, link user to the appropriate enterprise.
+
+        If the key is not found, returns 404
+        If the key is not valid, returns 422
+        If we create an `EnterpriseCustomerUser` returns 201
+        If an `EnterpriseCustomerUser` if found returns 200
+        """
+        enterprise_customer_key = get_object_or_404(
+            models.EnterpriseCustomerInviteKey,
+            uuid=pk
+        )
+
+        if not enterprise_customer_key.is_valid:
+            return Response(
+                {"detail": "Enterprise customer invite key is not valid"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        enterprise_customer = enterprise_customer_key.enterprise_customer
+
+        enterprise_user, created = models.EnterpriseCustomerUser.all_objects.get_or_create(
+            user_id=request.user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response_body = {
+            "enterprise_customer_slug": enterprise_customer.slug,
+            "enterprise_customer_uuid": enterprise_customer.uuid,
+        }
+        headers = self.get_success_headers(response_body)
+
+        track_enterprise_user_linked(
+            request.user.id,
+            pk,
+            enterprise_customer.uuid,
+            created,
+        )
+
+        if created:
+            enterprise_user.invite_key = enterprise_customer_key
+            enterprise_user.save()
+            return Response(response_body, status=HTTP_201_CREATED, headers=headers)
+
+        elif not enterprise_user.active or not enterprise_user.linked:
+            enterprise_user.invite_key = enterprise_customer_key
+            if not enterprise_user.active:
+                enterprise_user.active = True
+            if not enterprise_user.linked:
+                enterprise_user.linked = True
+                models.EnterpriseCustomerUser.all_objects.link_user(
+                    enterprise_customer,
+                    request.user.email
+                )
+            enterprise_user.save()
+
+        return Response(response_body, status=HTTP_200_OK, headers=headers)

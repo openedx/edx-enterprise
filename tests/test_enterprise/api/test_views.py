@@ -4909,6 +4909,8 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
 
     ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT = 'enterprise-customer-invite-key-detail'
     ENTERPRISE_CUSTOMER_INVITE_KEY_LIST_ENDPOINT = 'enterprise-customer-invite-key-list'
+    ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER = 'enterprise-customer-invite-key-link-user'
+    USERNAME = "unlinkedtestuser"
 
     def setUp(self):
         super().setUp()
@@ -4920,6 +4922,16 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         self.enterprise_customer_1 = enterprise_customer_1
         self.enterprise_customer_2 = enterprise_customer_2
         self.enterprise_customer_1_invite_key = enterprise_customer_1_invite_key
+
+        self.enterprise_customer_3 = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_3_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=self.enterprise_customer_3,
+            expiration_date=datetime.utcnow() + timedelta(days=365)
+        )
+        self.invalid_enterprise_customer_3_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=self.enterprise_customer_3,
+            expiration_date=datetime.utcnow() - timedelta(days=365)
+        )
 
     def tearDown(self):
         super().tearDown()
@@ -4977,3 +4989,107 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         self.assertEqual(response.status_code, 405)
         response = response.json()
         self.assertEqual(response['detail'], 'Method "PUT" not allowed.')
+
+    def test_link_user_successful_link(self):
+        """
+        Test `{enterprise_customer_invite_key}/link-user` creates an `EnterpriseCustomerUser`
+        """
+        unlinked_user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        unlinked_user.set_password(TEST_PASSWORD)
+        unlinked_user.save()
+
+        client = APIClient()
+        client.login(username=unlinked_user.username, password=TEST_PASSWORD)
+
+        response = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 201)
+        assert EnterpriseCustomerUser.objects.get(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer_3,
+            invite_key=self.enterprise_customer_3_invite_key,
+        )
+        response = self.load_json(response.content)
+        assert response['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert response['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+
+    def test_enterprise_user_exists(self):
+        """
+        Test `{enterprise_customer_invite_key}/link-user` if one does not create `EnterpriseCustomerUser`
+        If one already exists
+        """
+        unlinked_user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        unlinked_user.set_password(TEST_PASSWORD)
+        unlinked_user.save()
+
+        EnterpriseCustomerUser.objects.create(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer_3,
+            active=False,
+            linked=False,
+        )
+
+        client = APIClient()
+        client.login(username=unlinked_user.username, password=TEST_PASSWORD)
+
+        response_0 = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response_0.status_code, 200)
+        assert EnterpriseCustomerUser.objects.get(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer_3,
+            active=True,
+            linked=True,
+        )
+        json_0 = self.load_json(response_0.content)
+        assert json_0['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert json_0['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+
+        response_1 = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response_1.status_code, 200)
+        json_1 = self.load_json(response_1.content)
+        assert json_1['enterprise_customer_slug'] == self.enterprise_customer_3.slug
+        assert json_1['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+
+    def test_invalid_link(self):
+        """
+        Test that when an invalid link is used 422 is returned
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.invalid_enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_no_link_found(self):
+        """
+        Test if `{enterprise_customer_invite_key}` does not exist, 400 is returned
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': str(uuid.uuid4())}
+            )
+        )
+        self.assertEqual(response.status_code, 404)

@@ -17,6 +17,13 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.0]
+--------
+feat: added view to link learners from a enterprise customer key
+
+[3.35.3]
+--------
+fix: require expiry date on ``EnterpriseCustomerInviteKey`` model
 
 [3.35.2]
 --------
