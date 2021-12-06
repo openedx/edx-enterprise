@@ -7,7 +7,6 @@ grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 
-from http import HTTPStatus
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
@@ -158,7 +157,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         * ``learner_to_transmit``: REQUIRED User object, representing the learner whose data is being exported.
 
         """
-        channel = kwargs.get('channel_name', '<channel>')
         lms_user_for_filter = kwargs.get('learner_to_transmit')
         TransmissionAudit = kwargs.get('TransmissionAudit', None)
         course_run_id = kwargs.get('course_run_id', None)
@@ -176,13 +174,15 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         enterprise_enrollment = enrollment_queryset.first()
 
         if not enterprise_enrollment:
-            raise ClientError(generate_formatted_log(
-                channel,
-                self.enterprise_customer.uuid,
-                lms_user_for_filter.id,
-                course_run_id,
-                f'No enterprise_enrollment found, cannot transmit this grade data for subsection {subsection_id}',
-            ), HTTPStatus.NOT_FOUND.value)
+            LOGGER.info(generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                enterprise_enrollment.enterprise_customer_user.user_id,
+                enterprise_enrollment.course_id,
+                f'Either qualifying enrollments not found for learner, or, '
+                f'enterprise_customer_user record is inactive. Skipping transmit assessment grades.'
+            ))
+            return
 
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
