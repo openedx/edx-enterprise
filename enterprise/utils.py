@@ -898,6 +898,7 @@ def get_enterprise_customer_by_slug_or_404(slug):
         slug=slug,
     )
 
+
 def get_enterprise_customer_by_invite_key_or_404(invite_key_uuid):
     """
     Given an EnterpriseCustomerInviteKey UUID, return the corresponding EnterpriseCustomer or raise a 404.

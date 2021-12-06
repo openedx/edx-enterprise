@@ -25,7 +25,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import IntegrityError, transaction
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -1012,10 +1012,7 @@ class EnterpriseProxyLoginView(View):
         enterprise_slug = query_params.get('enterprise_slug')
         enterprise_invite_key = query_params.get('enterprise_customer_invite_key')
         if not enterprise_slug and not enterprise_invite_key:
-            return HttpResponse(
-                'Either an enterprise_slug or enterprise_customer_invite_key must be provided',
-                status=400,
-            )
+            raise Http404
 
         if enterprise_slug:
             enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
@@ -1030,7 +1027,7 @@ class EnterpriseProxyLoginView(View):
             # Default redirect is to the Learner Portal for the given Enterprise
             learner_portal_base_url = get_configuration_value(
                 'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL,
             )
             query_dict['next'] = f"{learner_portal_base_url}/{enterprise_slug}"
 
