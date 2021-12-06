@@ -183,9 +183,9 @@ class SapSuccessFactorsLearnerManger:
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'No social auth data found for inactive user with SAP student id {sap_student_id} '\
-                        f'of enterprise customer {enterprise_customer.name} with identity providers '\
-                        f'{', '.join(provider.provider_id for provider in providers)}'
+                        f"No social auth data found for inactive user with SAP student id {sap_student_id} "\
+                        f"of enterprise customer {enterprise_customer.name} with identity providers "\
+                        f"{', '.join(map(lambda provider: provider.provider_id, providers))}"
                     )
                 )
                 continue

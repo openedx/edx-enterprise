@@ -381,11 +381,11 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'SAP searchStudent API for customer '\
-                        f'{self.enterprise_configuration.enterprise_customer.name} '\
-                        f'and base url {self.enterprise_configuration.sapsf_base_url} '\
-                        f'returned response with {sap_inactive_learners['error'].get('message')} '\
-                        f'{sap_inactive_learners['error'].get('code')}'
+                        "SAP searchStudent API for customer "\
+                        f"{self.enterprise_configuration.enterprise_customer.name} "\
+                        f"and base url {self.enterprise_configuration.sapsf_base_url} "\
+                        f"returned response with {sap_inactive_learners['error'].get('message')} "\
+                        f"{sap_inactive_learners['error'].get('code')}"
                     )
                 )
             except AttributeError:
@@ -395,10 +395,10 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'SAP searchStudent API for customer '\
-                        f'{self.enterprise_configuration.enterprise_customer.name} '\
-                        f'and base url {self.enterprise_configuration.sapsf_base_url} returned response with '\
-                        f'{sap_inactive_learners['error']} {response.status_code}'
+                        "SAP searchStudent API for customer "\
+                        f"{self.enterprise_configuration.enterprise_customer.name} "\
+                        f"and base url {self.enterprise_configuration.sapsf_base_url} returned response with "\
+                        f"{sap_inactive_learners['error']} {response.status_code}"
                     )
                 )
             return None
@@ -412,9 +412,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
                 None,
-                f'SAP SF searchStudent API returned {len(inactive_learners_on_page)} '\
-                f'inactive learners of total {total_inactive_learners} starting from {start_at} for '\
-                f'enterprise customer {self.enterprise_configuration.enterprise_customer.name}'
+                f"SAP SF searchStudent API returned {len(inactive_learners_on_page)} "\
+                f"inactive learners of total {total_inactive_learners} starting from {start_at} for "\
+                f"enterprise customer {self.enterprise_configuration.enterprise_customer.name}"
             )
         )
 
