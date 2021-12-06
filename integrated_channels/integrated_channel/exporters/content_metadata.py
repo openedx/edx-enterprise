@@ -71,7 +71,7 @@ class ContentMetadataExporter(Exporter):
         super().__init__(user, enterprise_configuration)
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
-    def _log_info(msg):
+    def _log_info(self, msg):
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
@@ -82,7 +82,7 @@ class ContentMetadataExporter(Exporter):
             )
         )
 
-    def _log_exception(msg):
+    def _log_exception(self, msg):
         LOGGER.exception(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),

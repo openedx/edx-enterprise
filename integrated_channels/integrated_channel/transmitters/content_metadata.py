@@ -34,7 +34,7 @@ class ContentMetadataTransmitter(Transmitter):
             client=client
         )
 
-    def _log_info(msg, content_id=None):
+    def _log_info(self, msg, content_id=None):
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
@@ -45,7 +45,7 @@ class ContentMetadataTransmitter(Transmitter):
             )
         )
 
-    def _log_error(msg):
+    def _log_error(self, msg):
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
