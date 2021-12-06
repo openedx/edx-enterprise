@@ -102,7 +102,8 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 obj.secret,
                 obj.sapsf_company_id,
                 obj.sapsf_user_id,
-                obj.user_type
+                obj.user_type,
+                obj.enterprise_customer.uuid
             )
         except (RequestException, ClientError):
             return False
