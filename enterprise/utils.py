@@ -909,7 +909,6 @@ def get_enterprise_customer_by_invite_key_or_404(invite_key_uuid):
     Returns:
         (EnterpriseCustomer): The EnterpriseCustomer given the EnterpriseCustomerInviteKey UUID.
     """
-    print('get_enterprise_customer_by_invite_key_or_404!!!', invite_key_uuid)
     customer_invite_key = get_object_or_404(
         enterprise_customer_invite_key_model(),
         uuid=invite_key_uuid,

@@ -70,8 +70,8 @@ from enterprise.utils import (
     get_configuration_value,
     get_create_ent_enrollment,
     get_current_course_run,
-    get_enterprise_customer_by_slug_or_404,
     get_enterprise_customer_by_invite_key_or_404,
+    get_enterprise_customer_by_slug_or_404,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_platform_logo_url,
@@ -1029,7 +1029,7 @@ class EnterpriseProxyLoginView(View):
                 'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
                 settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL,
             )
-            query_dict['next'] = f"{learner_portal_base_url}/{enterprise_slug}"
+            query_dict['next'] = f"{learner_portal_base_url}/{enterprise_customer.slug}"
 
         tpa_hint_param = query_params.get('tpa_hint')
         tpa_hint = enterprise_customer.get_tpa_hint(tpa_hint_param)
