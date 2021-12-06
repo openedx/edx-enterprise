@@ -1523,15 +1523,16 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
         }
         headers = self.get_success_headers(response_body)
 
+        track_enterprise_user_linked(
+            request.user.id,
+            pk,
+            enterprise_customer.uuid,
+            created,
+        )
+
         if created:
             enterprise_user.invite_key = enterprise_customer_key
             enterprise_user.save()
-            track_enterprise_user_linked(
-                request.user.id,
-                pk,
-                enterprise_customer.uuid,
-                created,
-            )
             return Response(response_body, status=HTTP_201_CREATED, headers=headers)
 
         elif not enterprise_user.active or not enterprise_user.linked:
@@ -1544,10 +1545,5 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
                     request.user.email
                 )
             enterprise_user.save()
-            track_enterprise_user_linked(
-                request.user.id,
-                pk,
-                enterprise_customer.uuid,
-                created,
-            )
+
         return Response(response_body, status=HTTP_200_OK, headers=headers)
