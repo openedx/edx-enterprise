@@ -14,7 +14,7 @@ from django.conf import settings
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
-from integrated_channels.utils import chunks
+from integrated_channels.utils import chunks, generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,24 +33,46 @@ class ContentMetadataTransmitter(Transmitter):
             client=client
         )
 
+    def _log_info(self, msg, content_id=None):
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                content_id,
+                msg
+            )
+        )
+
+    def _log_error(self, msg):
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                msg
+            )
+        )
+
     def transmit(self, create_payload, update_payload, delete_payload, content_updated_mapping, **kwargs):
         """
         Transmit content metadata items to the integrated channel. Save or update content metadata records according to
         the type of transmission.
         """
-        LOGGER.info(
+        self._log_info(
             f'Transmitting delete payload: {delete_payload} for customer: '
             f'{self.enterprise_configuration.enterprise_customer.uuid}'
         )
         self._transmit_delete(delete_payload)
 
-        LOGGER.info(
+        self._log_info(
             f'Transmitting create payload: {create_payload} for customer: '
             f'{self.enterprise_configuration.enterprise_customer.uuid}'
         )
         self._transmit_create(create_payload, content_updated_mapping)
 
-        LOGGER.info(
+        self._log_info(
             f'Transmitting update payload: {update_payload} for customer: '
             f'{self.enterprise_configuration.enterprise_customer.uuid}'
         )
@@ -87,14 +109,11 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 self.client.create_content_metadata(serialized_chunk)
             except ClientError as exc:
-                LOGGER.error(
-                    'Failed to create [%s] content metadata items for integrated channel [%s] [%s]. '
-                    'Task failed with message [%s] and status code [%s]',
-                    len(chunk),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
-                    exc.message,
-                    exc.status_code
+                self._log_error(
+                    f"Failed to create [{len(chunk)}] content metadata items for integrated channel "
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "
+                    f"[{self.enterprise_configuration.channel_code()}]. "
+                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
                 )
                 LOGGER.exception(exc)
             else:
@@ -114,14 +133,11 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 self.client.update_content_metadata(serialized_chunk)
             except ClientError as exc:
-                LOGGER.error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]. '
-                    'Task failed with message [%s] and status code [%s]',
-                    len(chunk),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
-                    exc.message,
-                    exc.status_code
+                self._log_error(
+                    f"Failed to update [{len(chunk)}] content metadata items for integrated channel "
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "
+                    f"[{self.enterprise_configuration.channel_code()}]. "
+                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
                 )
                 LOGGER.exception(exc)
             else:
@@ -141,14 +157,11 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 self.client.delete_content_metadata(serialized_chunk)
             except ClientError as exc:
-                LOGGER.error(
-                    'Failed to delete [%s] content metadata items for integrated channel [%s] [%s]. '
-                    'Task failed with message [%s] and status code [%s]',
-                    len(chunk),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
-                    exc.message,
-                    exc.status_code
+                self._log_error(
+                    f"Failed to delete [{len(chunk)}] content metadata items for integrated channel "
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "
+                    f"[{self.enterprise_configuration.channel_code()}]. "
+                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
                 )
                 LOGGER.exception(exc)
             else:
@@ -169,9 +182,10 @@ class ContentMetadataTransmitter(Transmitter):
         for content_id, channel_metadata in content_metadata_item_map.items():
             catalog_uuid = content_updated_mapping.get(content_id).get('catalog_uuid')
             content_last_changed = content_updated_mapping.get(content_id).get('modified')
-            LOGGER.info(
+            self._log_info(
                 f'Creating content transmission record for course: {content_id} under enterprise customer: '
-                f'{self.enterprise_configuration.enterprise_customer.uuid}.'
+                f'{self.enterprise_configuration.enterprise_customer.uuid}.',
+                content_id=content_id
             )
             past_deleted_transmission = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
@@ -181,10 +195,11 @@ class ContentMetadataTransmitter(Transmitter):
             ).first()
 
             if past_deleted_transmission:
-                LOGGER.info(
+                self._log_info(
                     f'Found previously deleted content record while creating record for course: {content_id}'
                     f'under customer: {self.enterprise_configuration.enterprise_customer.uuid}. Marking record as '
-                    f'active.'
+                    f'active.',
+                    content_id=content_id
                 )
                 past_deleted_transmission.deleted_at = None
                 past_deleted_transmission.channel_metadata = channel_metadata
@@ -200,10 +215,11 @@ class ContentMetadataTransmitter(Transmitter):
                     deleted_at__isnull=True,
                 ).first()
                 if past_transmission:
-                    LOGGER.info(
+                    self._log_info(
                         f'Found past content record under another catalog while creating record for course: '
                         f'{content_id} under customer: {self.enterprise_configuration.enterprise_customer.uuid}. '
-                        f'Updating records customer catalog uuid to {catalog_uuid}.'
+                        f'Updating records customer catalog uuid to {catalog_uuid}.',
+                        content_id=content_id
                     )
                     past_transmission.channel_metadata = channel_metadata
                     past_transmission.content_last_changed = content_last_changed
@@ -229,9 +245,10 @@ class ContentMetadataTransmitter(Transmitter):
         for content_id in content_metadata_item_map.keys():
             transmission = update_payload.get(content_id)
             if transmission:
-                LOGGER.info(
+                self._log_info(
                     f'Updating content transmission record for course: {content_id} under enterprise customer: '
-                    f'{self.enterprise_configuration.enterprise_customer.uuid}.'
+                    f'{self.enterprise_configuration.enterprise_customer.uuid}.',
+                    content_id=content_id
                 )
                 transmission.save()
 
@@ -243,7 +260,7 @@ class ContentMetadataTransmitter(Transmitter):
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
-        LOGGER.info(
+        self._log_info(
             f'Marking content transmission record for courses: {content_metadata_item_ids} as deleted for customer: '
             f'{self.enterprise_configuration.enterprise_customer.uuid}'
         )

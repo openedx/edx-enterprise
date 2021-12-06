@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.1]
+--------
+feat: improved integrated channel log consistency
+
 [3.36.0]
 --------
 feat: added view to link learners from a enterprise customer key

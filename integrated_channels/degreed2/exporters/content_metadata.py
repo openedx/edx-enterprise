@@ -7,7 +7,7 @@ from logging import getLogger
 
 from enterprise.utils import get_closest_course_run, get_course_run_duration_info, parse_datetime_handle_invalid
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.utils import get_image_url, strip_html_tags
+from integrated_channels.utils import generate_formatted_log, get_image_url, strip_html_tags
 
 LOGGER = getLogger(__name__)
 
@@ -52,14 +52,26 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                     end = course_run.get('end')
                 else:
                     LOGGER.error(
-                        f'Cannot find a courserun, so duration being returned 0. '
-                        f'Course item was {content_metadata_item} '
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            'Cannot find a courserun, so duration being returned 0. '
+                            f'Course item was {content_metadata_item} '
+                        )
                     )
                     return 0
             else:
                 LOGGER.error(
-                    f'Cannot find even a single courserun, so duration being returned 0. '
-                    f'Course item was {content_metadata_item} '
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        'Cannot find even a single courserun, so duration being returned 0. '
+                        f'Course item was {content_metadata_item} '
+                    )
                 )
                 return 0
         else:

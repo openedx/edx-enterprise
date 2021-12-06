@@ -11,7 +11,7 @@ from django.conf import settings
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-from integrated_channels.utils import chunks
+from integrated_channels.utils import chunks, generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,10 +57,15 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                 self.client.update_content_metadata(self._serialize_items(chunked_items))
             except ClientError as exc:
                 LOGGER.error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
-                    len(chunked_items),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code(),
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f'Failed to update [{len(chunked_items)}] content metadata items for '
+                        f'integrated channel {self.enterprise_configuration.enterprise_customer.name} '
+                        f'{self.enterprise_configuration.channel_code()}'
+                    )
                 )
                 LOGGER.exception(exc)
 

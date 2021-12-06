@@ -35,7 +35,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
     GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
 
     @staticmethod
-    def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type):
+    def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type, customer_uuid):
         """ Retrieves OAuth 2.0 access token using the client credentials grant.
 
         Args:
@@ -79,12 +79,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
         except (KeyError, TypeError, ValueError) as error:
             LOGGER.error(
-                'SAP SF OAuth2 POST response is of invalid format. User: [%s], Company: [%s],'
-                ' Error: [%s], Response: [%s]',
-                str(user_id),
-                str(company_id),
-                str(error),
-                str(response)
+                generate_formatted_log(
+                    'SAP',
+                    customer_uuid,
+                    None,
+                    None,
+                    f"SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, "
+                    f"Company: {str(company_id)}, Error: {str(error)}, Response: {str(response)}"
+                )
+
             )
             raise ClientError(response, response.status_code) from error
 
@@ -117,7 +120,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 self.enterprise_configuration.secret,
                 self.enterprise_configuration.sapsf_company_id,
                 self.enterprise_configuration.sapsf_user_id,
-                self.enterprise_configuration.user_type
+                self.enterprise_configuration.user_type,
+                self.enterprise_configuration.enterprise_customer.uuid
             )
             session = requests.Session()
             session.timeout = self.SESSION_TIMEOUT
@@ -252,7 +256,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             self.enterprise_configuration.secret,
             self.enterprise_configuration.sapsf_company_id,
             sap_user_id,
-            SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER
+            SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER,
+            self.enterprise_configuration.enterprise_customer.uuid
         )
 
         response = requests.post(
@@ -284,14 +289,16 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         self._create_session()
         response = self.session.post(url, data=payload)
         if response.status_code >= 400:
-            LOGGER.error(generate_formatted_log(
-                'SAPSF',
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                f'Error status_code {response.status_code} and response: {response.text}'
-                f' while posting to URL {url} with payload {payload}'
-            ))
+            LOGGER.error(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f"Error status_code {response.status_code} and response: {response.text} "
+                    f"while posting to URL {url} with payload {payload}"
+                )
+            )
         return response.status_code, response.text
 
     def get_inactive_sap_learners(self):
@@ -357,29 +364,44 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         except (ConnectionError, Timeout) as exc:
             LOGGER.error(exc)
             LOGGER.error(
-                'Unable to fetch inactive learners from SAP searchStudent API with url '
-                '"{%s}".', search_student_paginated_url,
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'Unable to fetch inactive learners from SAP searchStudent API with url '
+                    f'{search_student_paginated_url}.'
+                )
             )
             return None
 
         if 'error' in sap_inactive_learners:
             try:
                 LOGGER.error(
-                    'SAP searchStudent API for customer %s and base url %s returned response with '
-                    'error message "%s" and with error code "%s".',
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.sapsf_base_url,
-                    sap_inactive_learners['error'].get('message'),
-                    sap_inactive_learners['error'].get('code'),
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "SAP searchStudent API for customer "
+                        f"{self.enterprise_configuration.enterprise_customer.name} "
+                        f"and base url {self.enterprise_configuration.sapsf_base_url} "
+                        f"returned response with {sap_inactive_learners['error'].get('message')} "
+                        f"{sap_inactive_learners['error'].get('code')}"
+                    )
                 )
             except AttributeError:
                 LOGGER.error(
-                    'SAP searchStudent API for customer %s and base url %s returned response with '
-                    'error message "%s" and with error code "%s".',
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.sapsf_base_url,
-                    sap_inactive_learners['error'],
-                    response.status_code,
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "SAP searchStudent API for customer "
+                        f"{self.enterprise_configuration.enterprise_customer.name} "
+                        f"and base url {self.enterprise_configuration.sapsf_base_url} returned response with "
+                        f"{sap_inactive_learners['error']} {response.status_code}"
+                    )
                 )
             return None
 
@@ -387,10 +409,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         total_inactive_learners = sap_inactive_learners['@odata.count']
         inactive_learners_on_page = sap_inactive_learners['value']
         LOGGER.info(
-            'SAP SF searchStudent API returned [%d] inactive learners of total [%d] starting from [%d] for '
-            'enterprise customer [%s]',
-            len(inactive_learners_on_page), total_inactive_learners, start_at,
-            self.enterprise_configuration.enterprise_customer.name
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f"SAP SF searchStudent API returned {len(inactive_learners_on_page)} "
+                f"inactive learners of total {total_inactive_learners} starting from {start_at} for "
+                f"enterprise customer {self.enterprise_configuration.enterprise_customer.name}"
+            )
         )
 
         all_inactive_learners += inactive_learners_on_page

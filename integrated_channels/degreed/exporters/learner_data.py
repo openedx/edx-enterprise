@@ -60,7 +60,7 @@ class DegreedLearnerExporter(LearnerExporter):
                 )
             ]
         LOGGER.info(generate_formatted_log(
-            'degreed',
+            self.enterprise_configuration.channel_code(),
             enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
             enterprise_enrollment.enterprise_customer_user.user_id,
             None,

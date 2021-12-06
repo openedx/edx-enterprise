@@ -13,6 +13,7 @@ from django.apps import apps
 
 from integrated_channels.cornerstone.utils import get_or_create_key_pair
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +67,15 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error("Cornerstone integrated channel does not yet support assignment deduplication.")
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                "Cornerstone integrated channel does not yet support assignment deduplication."
+            )
+        )
 
     def create_course_completion(self, user_id, payload):
         """

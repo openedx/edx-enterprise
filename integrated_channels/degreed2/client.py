@@ -48,7 +48,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         self.completions_api_path = app_config.completions_api_path
         # to log without having to pass channel_name, ent_customer_uuid each time
         self.make_log_msg = lambda course_key, message, lms_user_id=None: generate_formatted_log(
-            'degreed2',
+            self.enterprise_configuration.channel_code(),
             self.enterprise_configuration.enterprise_customer.uuid,
             lms_user_id,
             course_key,
@@ -70,13 +70,29 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error("Degreed2 integrated channel does not yet support assessment reporting.")
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                "Degreed2 integrated channel does not yet support assessment reporting."
+            )
+        )
 
     def cleanup_duplicate_assignment_records(self, courses):
         """
         Not implemented yet.
         """
-        LOGGER.error("Degreed2 integrated channel does not yet support assignment deduplication.")
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                "Degreed2 integrated channel does not yet support assignment deduplication."
+            )
+        )
 
     def create_course_completion(self, user_id, payload):
         """
@@ -122,7 +138,15 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         So we may need to store id on our side to be able to do this.
         https://api.degreed.com/docs/#delete-a-specific-completion
         """
-        LOGGER.error("Degreed2 integrated channel does not yet support deleting course completions.")
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                "Degreed2 integrated channel does not yet support deleting course completions."
+            )
+        )
 
     def fetch_degreed_course_id(self, external_id):
         """
