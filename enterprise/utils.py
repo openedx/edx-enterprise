@@ -703,6 +703,13 @@ def licensed_enterprise_course_enrollment_model():
     return apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')
 
 
+def enterprise_customer_invite_key_model():
+    """
+    Returns the ``EnterpriseCustomerInviteKey`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomerInviteKey')
+
+
 def get_enterprise_customer(uuid):
     """
     Get the ``EnterpriseCustomer`` instance associated with ``uuid``.
@@ -890,6 +897,23 @@ def get_enterprise_customer_by_slug_or_404(slug):
         enterprise_customer_model(),
         slug=slug,
     )
+
+def get_enterprise_customer_by_invite_key_or_404(invite_key_uuid):
+    """
+    Given an EnterpriseCustomerInviteKey UUID, return the corresponding EnterpriseCustomer or raise a 404.
+
+    Arguments:
+        invite_key_uuid (str): The UUID identifying an EnterpriseCustomerInviteKey.
+
+    Returns:
+        (EnterpriseCustomer): The EnterpriseCustomer given the EnterpriseCustomerInviteKey UUID.
+    """
+    print('get_enterprise_customer_by_invite_key_or_404!!!', invite_key_uuid)
+    customer_invite_key = get_object_or_404(
+        enterprise_customer_invite_key_model(),
+        uuid=invite_key_uuid,
+    )
+    return customer_invite_key.enterprise_customer
 
 
 def clean_html_for_template_rendering(text):
