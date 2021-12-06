@@ -1536,6 +1536,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
             return Response(response_body, status=HTTP_201_CREATED, headers=headers)
 
         elif not enterprise_user.active or not enterprise_user.linked:
+            enterprise_user.invite_key = enterprise_customer_key
             if not enterprise_user.active:
                 enterprise_user.active = True
             if not enterprise_user.linked:
