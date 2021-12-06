@@ -353,28 +353,34 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         code, body = self.client.cleanup_duplicate_assignment_records(courses)
 
         if code >= 400:
-            LOGGER.exception(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                None,
-                None,
-                'Deduping assignments transmission experienced a failure, received the error message: {}'.format(body)
-            ))
+            LOGGER.exception(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    enterprise_customer_uuid,
+                    None,
+                    None,
+                    f'{app_label} Deduping assignments transmission experienced a failure, '\
+                    f'received the error message: {body}'
+                )
+            )
         else:
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                None,
-                None,
-                'Deduping assignments transmission finished successfully, received message: {}'.format(body)
-            ))
+            LOGGER.info(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    enterprise_customer_uuid,
+                    None,
+                    None,
+                    f'{app_label} Deduping assignments transmission finished successfully, '\
+                    f'received message: {body}'
+                )
+            )
 
     def _log_exception_supplemental_data(self, learner_data, operation_name,
                                          integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
         """ Logs extra payload and parameter data to help debug which learner data caused an exception. """
         LOGGER.exception(generate_formatted_log(
             self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
-            '{operation_name} failed with Exception for '
+            '{operation_name} {integrated_channel_name} failed with Exception for '
             'enterprise enrollment {enrollment_id} with payload {payload}'.format(
                 operation_name=operation_name,
                 enrollment_id=learner_data.enterprise_course_enrollment_id,
@@ -405,14 +411,13 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             learner_data,
             client_exception,
         )
-        LOGGER.exception(generate_formatted_log(
-            self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
-            'Failed to send completion status call for enterprise enrollment {}'
-            'with payload {}'
-            '\nError message: {}'
-            '\nError status code: {}'.format(
-                learner_data.enterprise_course_enrollment_id,
-                learner_data,
-                client_exception.message,
-                client_exception.status_code
-            )))
+        LOGGER.exception(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
+                f"Failed to send completion status call for {integrated_channel_name} "\
+                f"enterprise enrollment {learner_data.enterprise_course_enrollment_id} "\
+                f"with payload {learner_data} "\
+                f"Error message: {client_exception.message}"\
+                f"Error status code: {client_exception.status_code}"
+            )
+        )
