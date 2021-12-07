@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.3]
+--------
+feat: Integrated channels, grade send logic only logs instead of raising when enterprise_customer_user record is inactive
+
 [3.36.2]
 --------
 feat: add is_active on enterprise customer invite key
