@@ -13,6 +13,7 @@ from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerCo
 
 LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/blackboard/oauth-complete')
 
+
 @admin.register(BlackboardEnterpriseCustomerConfiguration)
 class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     """
