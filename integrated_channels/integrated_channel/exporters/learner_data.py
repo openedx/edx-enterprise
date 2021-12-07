@@ -179,8 +179,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 self.enterprise_configuration.enterprise_customer.uuid,
                 lms_user_for_filter,
                 course_run_id,
-                f'Either qualifying enrollments not found for learner, or, '
-                f'enterprise_customer_user record is inactive. Skipping transmit assessment grades.'
+                'Either qualifying enrollments not found for learner, or, '
+                'enterprise_customer_user record is inactive. Skipping transmit assessment grades.'
             ))
             return
 
