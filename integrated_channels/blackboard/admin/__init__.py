@@ -3,6 +3,7 @@ Admin integration for configuring Blackboard app to communicate with Blackboard 
 """
 
 from django.contrib import admin
+from django.utils.html import format_html
 
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 
@@ -49,9 +50,9 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         if obj.blackboard_base_url and obj.client_id:
-            return (f"{obj.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode"
-                    f"?redirect_uri=https://courses.edx.org/blackboard/oauth-complete&"
-                    f"scope=read%20write%20delete%20offline&response_type=code&"
-                    f"client_id={obj.client_id}&state={obj.enterprise_customer.uuid}")
+            return format_html((f'<a href="{obj.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode'
+                                f'?redirect_uri=https://courses.edx.org/blackboard/oauth-complete&'
+                                f'scope=read%20write%20delete%20offline&response_type=code&'
+                                f'client_id={obj.client_id}&state={obj.enterprise_customer.uuid}">Authorize Link</a>'))
         else:
             return None
