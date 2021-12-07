@@ -22,6 +22,7 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     readonly_fields = (
         "enterprise_customer_name",
         "refresh_token",
+        "oauth_authorization_url",
     )
 
     search_fields = ("enterprise_customer_name",)
@@ -38,3 +39,19 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         return obj.enterprise_customer.name
+
+    def oauth_authorization_url(self, obj):
+        """
+        Returns: the oauth authorization url when the blackboard_base_url and client_id are available.
+
+        Args:
+            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        if obj.blackboard_base_url and obj.client_id:
+            return f"{obj.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode"\
+            f"?redirect_uri=https://courses.edx.org/blackboard/oauth-complete&"\
+            f"scope=read%20write%20delete%20offline&response_type=code&"\
+            f"client_id={obj.client_id}&state={obj.enterprise_customer.uuid}"
+        else:
+            return None
