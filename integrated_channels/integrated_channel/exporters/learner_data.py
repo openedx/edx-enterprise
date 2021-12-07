@@ -17,7 +17,6 @@ from django.contrib import auth
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
 
 try:
