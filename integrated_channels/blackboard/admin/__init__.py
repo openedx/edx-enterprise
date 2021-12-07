@@ -49,9 +49,9 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         if obj.blackboard_base_url and obj.client_id:
-            return f"{obj.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode"\
-            f"?redirect_uri=https://courses.edx.org/blackboard/oauth-complete&"\
-            f"scope=read%20write%20delete%20offline&response_type=code&"\
-            f"client_id={obj.client_id}&state={obj.enterprise_customer.uuid}"
+            return (f"{obj.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode"
+                f"?redirect_uri=https://courses.edx.org/blackboard/oauth-complete&"
+                f"scope=read%20write%20delete%20offline&response_type=code&"
+                f"client_id={obj.client_id}&state={obj.enterprise_customer.uuid}")
         else:
             return None
