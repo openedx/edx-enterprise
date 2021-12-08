@@ -1016,7 +1016,7 @@ class EnterpriseProxyLoginView(View):
 
         if enterprise_slug:
             enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
-        elif enterprise_invite_key:
+        else:
             enterprise_customer = get_enterprise_customer_by_invite_key_or_404(enterprise_invite_key)
 
         # Add the next param to the redirect's query parameters
