@@ -7,7 +7,9 @@ import json
 from logging import getLogger
 
 from simple_history.models import HistoricalRecords
+from six.moves.urllib.parse import urljoin
 
+from django.conf import settings
 from django.db import models
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
@@ -15,11 +17,6 @@ from integrated_channels.blackboard.exporters.learner_data import BlackboardLear
 from integrated_channels.blackboard.transmitters.content_metadata import BlackboardContentMetadataTransmitter
 from integrated_channels.blackboard.transmitters.learner_data import BlackboardLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-
-from six.moves.urllib.parse import urljoin
-
-from django.conf import settings
-from django.contrib import admin
 
 LOGGER = getLogger(__name__)
 LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/blackboard/oauth-complete')
