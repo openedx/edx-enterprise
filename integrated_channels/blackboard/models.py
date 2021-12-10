@@ -16,7 +16,13 @@ from integrated_channels.blackboard.transmitters.content_metadata import Blackbo
 from integrated_channels.blackboard.transmitters.learner_data import BlackboardLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
+from six.moves.urllib.parse import urljoin
+
+from django.conf import settings
+from django.contrib import admin
+
 LOGGER = getLogger(__name__)
+LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/blackboard/oauth-complete')
 
 
 class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
@@ -74,6 +80,23 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
 
     class Meta:
         app_label = 'blackboard'
+
+    @property
+    def oauth_authorization_url(self):
+        """
+        Returns: the oauth authorization url when the blackboard_base_url and client_id are available.
+
+        Args:
+            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        if self.blackboard_base_url and self.client_id:
+            return (f'{self.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode'
+                    f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
+                    f'scope=read%20write%20delete%20offline&response_type=code&'
+                    f'client_id={self.client_id}&state={self.enterprise_customer.uuid}')
+        else:
+            return None
 
     def __str__(self):
         """

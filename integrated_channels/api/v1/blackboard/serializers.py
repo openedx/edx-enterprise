@@ -7,6 +7,7 @@ from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerCo
 
 
 class BlackboardConfigSerializer(serializers.ModelSerializer):
+    oauth_authorization_url = serializers.ReadOnlyField()
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration
         fields = '__all__'
