@@ -48,7 +48,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX, localized_utcnow
 from enterprise_learner_portal.utils import CourseRunProgressStatuses
 from test_utils import (
     FAKE_UUIDS,
@@ -4926,11 +4926,11 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         self.enterprise_customer_3 = factories.EnterpriseCustomerFactory()
         self.enterprise_customer_3_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
             enterprise_customer=self.enterprise_customer_3,
-            expiration_date=datetime.utcnow() + timedelta(days=365)
+            expiration_date=localized_utcnow() + timedelta(days=365),
         )
         self.invalid_enterprise_customer_3_invite_key = factories.EnterpriseCustomerInviteKeyFactory(
             enterprise_customer=self.enterprise_customer_3,
-            expiration_date=datetime.utcnow() - timedelta(days=365)
+            expiration_date=localized_utcnow() - timedelta(days=365),
         )
 
     def tearDown(self):
