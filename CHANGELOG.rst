@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.5]
+--------
+fix: add support for an ``enterprise_customer_invite_key`` UUID query parameter to be passed and handled by the ``EnterpriseProxyLoginView``
+
 [3.36.4]
 --------
 feat: OAuth Auth link for Blackboard Admin

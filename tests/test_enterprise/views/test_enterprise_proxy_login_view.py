@@ -2,6 +2,8 @@
 Tests for the ``EnterpriseProxyLoginView`` view of the Enterprise app.
 """
 
+import uuid
+
 import ddt
 
 from django.conf import settings
@@ -10,7 +12,11 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from enterprise.views import LMS_LOGIN_URL
-from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerInviteKeyFactory,
+)
 
 
 @ddt.ddt
@@ -26,16 +32,23 @@ class TestEnterpriseProxyLoginView(TestCase):
         super().setUpTestData()
         cls.client = Client()
         cls.enterprise_customer = EnterpriseCustomerFactory()
+        cls.enterprise_customer_invite_key = EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=cls.enterprise_customer,
+        )
         cls.identity_provider = EnterpriseCustomerIdentityProviderFactory(enterprise_customer=cls.enterprise_customer)
 
     def _get_url_with_params(self, use_enterprise_slug=True, use_next=True, enterprise_slug_override=None,
-                             next_override=None, tpa_hint=None):
+                             next_override=None, use_invite_key=False, invite_key_override=None, tpa_hint=None):
         """
         Helper to add the appropriate query parameters if specified and assert the correct response status.
         """
         query_params = QueryDict(mutable=True)
         if use_enterprise_slug:
             query_params['enterprise_slug'] = enterprise_slug_override or self.enterprise_customer.slug
+        if use_invite_key:
+            query_params['enterprise_customer_invite_key'] = (
+                invite_key_override or str(self.enterprise_customer_invite_key.uuid)
+            )
         if use_next:
             query_params['next'] = next_override or self.next_url
         if tpa_hint:
@@ -50,7 +63,8 @@ class TestEnterpriseProxyLoginView(TestCase):
     @ddt.unpack
     def test_missing_slug(self, use_enterprise_slug, enterprise_slug):
         """
-        Verify the view 404s if no slug or a slug not associated with an enterprise customer is used.
+        Verify the view 404s if no slug or a slug not associated with an enterprise
+        customer is used.
         """
         url = self._get_url_with_params(
             use_enterprise_slug=use_enterprise_slug,
@@ -60,16 +74,61 @@ class TestEnterpriseProxyLoginView(TestCase):
         assert response.status_code == 404
 
     @ddt.data(
-        {'use_next': True},   # 'next' query param is passed in URL
-        {'use_next': False},  # 'next' query param not passed, default to LP URL with slug
+        {'use_invite_key': True, 'invite_key_uuid': uuid.uuid4()},
+        {'use_invite_key': False, 'invite_key_uuid': None},
     )
     @ddt.unpack
-    def test_redirect_no_tpa(self, use_next):
+    def test_missing_invite_key(self, use_invite_key, invite_key_uuid):
+        """
+        Verify the view 404s if no invite key or a invite key not associated with an enterprise
+        customer is used.
+        """
+        url = self._get_url_with_params(
+            use_enterprise_slug=False,
+            use_invite_key=use_invite_key,
+            invite_key_override=str(invite_key_uuid),
+        )
+        response = self.client.get(url)
+        assert response.status_code == 404
+
+    @ddt.data(
+        {
+            'use_next': True,  # 'next' query param is passed in URL
+            'use_slug': True,
+            'use_invite_key': False,
+        },
+        {
+            'use_next': False,  # 'next' query param not passed, default to LP URL with slug
+            'use_slug': True,
+            'use_invite_key': False,
+        },
+        {
+            'use_next': True,  # 'next' query param is passed in URL
+            'use_slug': False,
+            'use_invite_key': True,
+        },
+        {
+            'use_next': False,  # 'next' query param not passed, default to LP URL with slug
+            'use_slug': False,
+            'use_invite_key': True,
+        },
+    )
+    @ddt.unpack
+    def test_slug_redirect_no_tpa(self, use_next, use_slug, use_invite_key):
         """
         Verify the view redirects without tpa_hint if the enterprise has no identity provider.
         """
         customer_without_tpa = EnterpriseCustomerFactory()
-        url = self._get_url_with_params(enterprise_slug_override=customer_without_tpa.slug, use_next=use_next)
+        customer_invite_key = EnterpriseCustomerInviteKeyFactory(
+            enterprise_customer=customer_without_tpa,
+        )
+        url = self._get_url_with_params(
+            use_enterprise_slug=use_slug,
+            enterprise_slug_override=customer_without_tpa.slug,
+            use_invite_key=use_invite_key,
+            invite_key_override=str(customer_invite_key.uuid),
+            use_next=use_next,
+        )
         response = self.client.get(url)
         query_params = QueryDict(mutable=True)
         query_params['enterprise_customer'] = str(customer_without_tpa.uuid)
@@ -83,15 +142,37 @@ class TestEnterpriseProxyLoginView(TestCase):
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
     @ddt.data(
-        {'use_next': True},  # 'next' query param is passed in URL
-        {'use_next': False},  # 'next' query param not passed, default to LP URL with slug
+        {
+            'use_next': True,  # 'next' query param is passed in URL
+            'use_slug': True,
+            'use_invite_key': False,
+        },
+        {
+            'use_next': False,  # 'next' query param not passed, default to LP URL with slug
+            'use_slug': True,
+            'use_invite_key': False,
+        },
+        {
+            'use_next': True,  # 'next' query param is passed in URL
+            'use_slug': False,
+            'use_invite_key': True,
+        },
+        {
+            'use_next': False,  # 'next' query param not passed, default to LP URL with slug
+            'use_slug': False,
+            'use_invite_key': True,
+        },
     )
     @ddt.unpack
-    def test_tpa_redirect(self, use_next):
+    def test_slug_tpa_redirect(self, use_next, use_slug, use_invite_key):
         """
         Verify the view adds the next param and the tpa_hint to the redirect if the enterprise has an identity provider.
         """
-        url = self._get_url_with_params(use_next=use_next)
+        url = self._get_url_with_params(
+            use_enterprise_slug=use_slug,
+            use_invite_key=use_invite_key,
+            use_next=use_next,
+        )
         response = self.client.get(url)
         query_params = QueryDict(mutable=True)
         if use_next:

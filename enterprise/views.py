@@ -70,6 +70,7 @@ from enterprise.utils import (
     get_configuration_value,
     get_create_ent_enrollment,
     get_current_course_run,
+    get_enterprise_customer_by_invite_key_or_404,
     get_enterprise_customer_by_slug_or_404,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
@@ -1009,7 +1010,14 @@ class EnterpriseProxyLoginView(View):
 
         # Return 404 response if enterprise_slug not present or invalid
         enterprise_slug = query_params.get('enterprise_slug')
-        enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
+        enterprise_invite_key = query_params.get('enterprise_customer_invite_key')
+        if not enterprise_slug and not enterprise_invite_key:
+            raise Http404
+
+        if enterprise_slug:
+            enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
+        else:
+            enterprise_customer = get_enterprise_customer_by_invite_key_or_404(enterprise_invite_key)
 
         # Add the next param to the redirect's query parameters
         next_param = query_params.get('next')
@@ -1019,9 +1027,9 @@ class EnterpriseProxyLoginView(View):
             # Default redirect is to the Learner Portal for the given Enterprise
             learner_portal_base_url = get_configuration_value(
                 'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL,
             )
-            query_dict['next'] = learner_portal_base_url + '/' + enterprise_slug
+            query_dict['next'] = f"{learner_portal_base_url}/{enterprise_customer.slug}"
 
         tpa_hint_param = query_params.get('tpa_hint')
         tpa_hint = enterprise_customer.get_tpa_hint(tpa_hint_param)
