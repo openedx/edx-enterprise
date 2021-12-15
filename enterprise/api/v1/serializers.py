@@ -1235,7 +1235,7 @@ class EnterpriseCustomerInviteKeyReadOnlySerializer(BaseEnterpriseCustomerInvite
     """
 
     class Meta(BaseEnterpriseCustomerInviteKeySerializer.Meta):
-        fields = BaseEnterpriseCustomerInviteKeySerializer.Meta.fields + ('enterprise_customer_name',)
+        fields = BaseEnterpriseCustomerInviteKeySerializer.Meta.fields + ('enterprise_customer_name', 'usage_count')
 
     enterprise_customer_uuid = serializers.SerializerMethodField()
     enterprise_customer_name = serializers.SerializerMethodField()

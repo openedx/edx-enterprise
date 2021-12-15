@@ -1002,12 +1002,13 @@ class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
 
     fields = (
         'enterprise_customer',
+        'usage_count',
         'usage_limit',
         'expiration_date',
         'is_active',
     )
 
-    readonly_fields = ('uuid',)
+    readonly_fields = ('uuid', 'usage_count')
 
     list_display = (
         'uuid',

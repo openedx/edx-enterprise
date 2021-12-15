@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.7]
+--------
+feat: update `enterprise_customer_invite_key` filter and serializer
+
 [3.36.6]
 --------
 feat: Show OAuth Auth link for Blackboard Admin
