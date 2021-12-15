@@ -3104,6 +3104,10 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
     history = HistoricalRecords()
 
     @property
+    def usage_count(self):
+        return self.linked_enterprise_customer_users.count()
+
+    @property
     def is_valid(self):
         """
         Returns whether the key is still valid (non-expired and usage limit has not been reached).
@@ -3113,8 +3117,7 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
 
         now = localized_utcnow()
         is_not_expired = now < self.expiration_date
-        usage_count = self.linked_enterprise_customer_users.count()
-        is_usage_under_limit = usage_count < self.usage_limit
+        is_usage_under_limit = self.usage_count < self.usage_limit
         return is_not_expired and is_usage_under_limit
 
     def __str__(self):

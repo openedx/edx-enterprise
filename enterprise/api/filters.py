@@ -8,8 +8,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.contrib import auth
 
-from enterprise.api.utils import get_enterprise_customer_from_user_id
-from enterprise.models import SystemWideEnterpriseUserRoleAssignment
+from enterprise.models import EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
 
 User = auth.get_user_model()
 
@@ -128,17 +127,23 @@ class EnterpriseLinkedUserFilterBackend(filters.BaseFilterBackend):
 
 class EnterpriseCustomerInviteKeyFilterBackend(filters.BaseFilterBackend):
     """
-    Filter backend to return invite keys under the user's enterprise only.
+    Filter backend to return invite keys under the user's enterprise(s) only.
+    Supports filtering by enterprise_customer_uuid.
 
     * Staff users will bypass this filter.
     """
 
     def filter_queryset(self, request, queryset, view):
-        """
-        Filter out keys that are not part of the user's enterprise.
-        """
-        if not request.user.is_staff:
-            enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
-            queryset = queryset.filter(enterprise_customer_id=enterprise_customer_uuid)
+        query_params = {}
 
-        return queryset
+        if not request.user.is_staff:
+            user_enterprise_customer_uuids = [
+                ec.enterprise_customer_id for ec in EnterpriseCustomerUser.objects.filter(user_id=request.user.id)
+            ]
+            query_params.update(enterprise_customer_id__in=user_enterprise_customer_uuids)
+
+        enterprise_customer_uuid = request.query_params.get('enterprise_customer_uuid', None)
+        if enterprise_customer_uuid:
+            query_params.update(enterprise_customer_id=enterprise_customer_uuid)
+
+        return queryset.filter(**query_params)

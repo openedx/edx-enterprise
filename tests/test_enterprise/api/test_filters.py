@@ -213,30 +213,27 @@ class TestEnterpriseCustomerInviteKeyFilterBackend(APITest):
         super().setUp()
         self.url = settings.TEST_SERVER + ENTERPRISE_CUSTOMER_KEY_LIST_ENDPOINT
 
-        enterprise_customer_1 = factories.EnterpriseCustomerFactory()
-        enterprise_customer_2 = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_1 = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_2 = factories.EnterpriseCustomerFactory()
+
         factories.EnterpriseCustomerUserFactory(
-            enterprise_customer=enterprise_customer_1,
+            enterprise_customer=self.enterprise_customer_1,
             user_id=self.user.id
         )
 
         for _ in range(2):
             factories.EnterpriseCustomerInviteKeyFactory(
-                enterprise_customer=enterprise_customer_1
+                enterprise_customer=self.enterprise_customer_1
             )
             factories.EnterpriseCustomerInviteKeyFactory(
-                enterprise_customer=enterprise_customer_2
+                enterprise_customer=self.enterprise_customer_2
             )
 
-    @ddt.data(
-        (True, 4),
-        (False, 2)
-    )
-    @ddt.unpack
+    @ddt.data(True, False)
     @mock.patch('enterprise.rules.crum.get_current_request')
-    def test_filter(self, is_staff, expected_data_length, request_mock):
+    def test_filter_by_user_enterprises(self, is_staff, request_mock):
         """
-        Filter for keys that belong to the enterprise the user is admin of.
+        Filter for keys that belong to the enterprise(s) the user is admin of.
         """
 
         self.user.is_staff = is_staff
@@ -245,5 +242,28 @@ class TestEnterpriseCustomerInviteKeyFilterBackend(APITest):
         response = self.client.get(self.url)
 
         assert response.status_code == status.HTTP_200_OK
-        data = self.load_json(response.content)
-        assert len(data['results']) == expected_data_length
+        results = self.load_json(response.content)['results']
+
+        if not is_staff:
+            assert all((key['enterprise_customer_uuid'] == str(self.enterprise_customer_1.uuid) for key in results))
+            assert len(results) == 2
+        else:
+            assert any((key['enterprise_customer_uuid'] == str(self.enterprise_customer_2.uuid) for key in results))
+            assert len(results) == 4
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_filter_by_enterprise_customer_uuid(self, request_mock):
+        """
+        Filter for keys using the enterprise_customer_uuid param.
+        """
+
+        self.user.is_staff = True
+        self.user.save()
+        request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+        enterprise_customer_1_uuid = str(self.enterprise_customer_1.uuid)
+        response = self.client.get(self.url + "?enterprise_customer_uuid=" + enterprise_customer_1_uuid)
+
+        assert response.status_code == status.HTTP_200_OK
+        results = self.load_json(response.content)['results']
+        assert len(results) == 2
+        assert all((key['enterprise_customer_uuid'] == enterprise_customer_1_uuid for key in results))
