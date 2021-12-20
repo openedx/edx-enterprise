@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.8]
+--------
+feat: allow more than 1 lms configuration per lms-kind
+
 [3.36.7]
 --------
 feat: update `enterprise_customer_invite_key` filter and serializer

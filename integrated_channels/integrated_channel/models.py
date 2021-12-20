@@ -37,7 +37,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     overridden, where ``x`` and ``y`` are (learner, course) and (exporter, transmitter) respectively.
     """
 
-    enterprise_customer = models.OneToOneField(
+    enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
         blank=False,
         null=False,
