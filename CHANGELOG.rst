@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.9]
+--------
+feat: new oauth state for multi-lms-configuration
+
 [3.36.8]
 --------
 feat: allow more than 1 lms configuration per lms-kind
