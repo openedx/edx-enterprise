@@ -102,7 +102,7 @@ class TestBlackboardAPIViews(APITestCase):
         )
         response = self.client.get(oauth_complete_url_without_id)
         assert response.status_code == 400
-        expected_string = "Enterprise ID (as 'state' url param) needed to obtain refresh token"
+        expected_string = "Blackboard Configuration uuid (as 'state' url param) needed to obtain refresh token"
         assert response.json()['detail'] == expected_string
 
         query_kwargs_2 = {
@@ -128,7 +128,7 @@ class TestBlackboardAPIViews(APITestCase):
         response = self.client.get(oauth_complete_url)
 
         assert response.status_code == 404
-        assert response.json()['detail'] == 'No enterprise data found for given uuid: {}.'.format(
+        assert response.json()['detail'] == 'No state data found for given uuid: {}.'.format(
             BAD_ENTERPRISE_ID
         )
 
@@ -148,4 +148,4 @@ class TestBlackboardAPIViews(APITestCase):
 
         assert response.status_code == 404
         assert response.json()['detail'] == \
-            'No Blackboard configuration found for enterprise: {}'.format(ENTERPRISE_ID)
+            'No Blackboard configuration found for state: {}'.format(ENTERPRISE_ID)

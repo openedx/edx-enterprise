@@ -4,10 +4,13 @@ Database models for Enterprise Integrated Channel Canvas.
 """
 
 import json
+import uuid
 from logging import getLogger
 
 from simple_history.models import HistoricalRecords
+from six.moves.urllib.parse import urljoin
 
+from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -18,6 +21,7 @@ from integrated_channels.canvas.transmitters.learner_data import CanvasLearnerTr
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
+LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/canvas/oauth-complete')
 
 
 class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
@@ -78,10 +82,36 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
                     "with each request.")
     )
 
+    uuid = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text=(
+            "A UUID for use in public-facing urls such as oauth state variables."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:
         app_label = 'canvas'
+
+    @property
+    def oauth_authorization_url(self):
+        """
+        Returns: the oauth authorization url when the canvas_base_url and client_id are available.
+
+        Args:
+            obj: The instance of CanvasEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        if self.canvas_base_url and self.client_id:
+            return (f'{self.canvas_base_url}/learn/api/public/v1/oauth2/authorizationcode'
+                    f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
+                    f'response_type=code&'
+                    f'client_id={self.client_id}&state={self.uuid}')
+        else:
+            return None
 
     def __str__(self):
         """

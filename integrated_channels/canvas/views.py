@@ -10,6 +10,7 @@ from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
@@ -63,27 +64,34 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
 
         # Retrieve the newly generated code and state (Enterprise user's ID)
         client_code = request.GET.get('code')
-        enterprise_customer_uuid = request.GET.get('state')
-        if not enterprise_customer_uuid:
-            raise ParseError("Enterprise ID required to integrate with Canvas.")
+        state_uuid = request.GET.get('state')
+
+        if not state_uuid:
+            raise ParseError("Canvas Configuration uuid required to integrate with Canvas.")
 
         if not client_code:
             raise ParseError("Client code required to integrate with Canvas.")
 
-        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
-        if not enterprise_customer:
-            raise NotFound("No enterprise data found for given uuid: {}.".format(enterprise_customer_uuid))
-
         try:
-            enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(
-                enterprise_customer=enterprise_customer
-            )
-        except CanvasEnterpriseCustomerConfiguration.DoesNotExist as no_config_exception:
-            raise NotFound(
-                "No enterprise canvas configuration found associated with enterprise customer: {}".format(
-                    enterprise_customer_uuid
+            enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(uuid=state_uuid)
+        except (CanvasEnterpriseCustomerConfiguration.DoesNotExist, ValidationError):
+            enterprise_config = None
+
+        # old urls may use the enterprise customer uuid in place of the config uuid, so lets fallback
+        if not enterprise_config:
+            enterprise_customer = get_enterprise_customer(state_uuid)
+
+            if not enterprise_customer:
+                raise NotFound(f"No state data found for given uuid: {state_uuid}.")
+
+            try:
+                enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(
+                    enterprise_customer=enterprise_customer
                 )
-            ) from no_config_exception
+            except CanvasEnterpriseCustomerConfiguration.DoesNotExist as error:
+                raise NotFound(
+                    f"No Canvas configuration found for state: {state_uuid}"
+                ) from error
 
         access_token_request_params = {
             'grant_type': 'authorization_code',
