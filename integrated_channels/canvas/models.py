@@ -8,6 +8,7 @@ import uuid
 from logging import getLogger
 
 from simple_history.models import HistoricalRecords
+from six.moves.urllib.parse import urljoin
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
