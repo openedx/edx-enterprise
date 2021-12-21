@@ -4,6 +4,7 @@ Database models for Enterprise Integrated Channel Blackboard.
 """
 
 import json
+import uuid
 from logging import getLogger
 
 from simple_history.models import HistoricalRecords
@@ -73,6 +74,15 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
         )
     )
 
+    uuid = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text=(
+            "A UUID for use in public-facing urls such as oauth state variables."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -91,7 +101,7 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
             return (f'{self.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode'
                     f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
                     f'scope=read%20write%20delete%20offline&response_type=code&'
-                    f'client_id={self.client_id}&state={self.enterprise_customer.uuid}')
+                    f'client_id={self.client_id}&state={self.uuid}')
         else:
             return None
 

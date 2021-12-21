@@ -28,6 +28,7 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         "enterprise_customer_name",
         "refresh_token",
         "customer_oauth_authorization_url",
+        "uuid",
     )
 
     search_fields = ("enterprise_customer_name",)

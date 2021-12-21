@@ -48,7 +48,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             Ref: https://developer.blackboard.com/portal/displayApi/Learn
             e.g. https://blackboard.edx.us.org/learn/api/public/v1/oauth2/
                  authorizationcode?redirect_uri={{this_endpoint}}&response_type=code
-                 &client_id={{app id}}&state={{enterprise_uuid}}
+                 &client_id={{app id}}&state={{blackboard_enterprise_customer_configuration.uuid}}
 
         **Example Requests**
 
@@ -89,26 +89,34 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
 
         # Retrieve the newly generated code and state (Enterprise user's ID)
         client_code = request.GET.get('code')
-        enterprise_customer_uuid = request.GET.get('state')
-        if not enterprise_customer_uuid:
-            raise ParseError("Enterprise ID (as 'state' url param) needed to obtain refresh token")
+        state_uuid = request.GET.get('state')
+
+        if not state_uuid:
+            raise ParseError("Blackboard Configuration uuid (as 'state' url param) needed to obtain refresh token")
 
         if not client_code:
             raise ParseError("'code' url param was not provided, needed to obtain refresh token")
 
-        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
-        if not enterprise_customer:
-            raise NotFound("No enterprise data found for given uuid: {}."
-                           .format(enterprise_customer_uuid))
-
         try:
-            enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(
-                enterprise_customer=enterprise_customer
-            )
-        except BlackboardEnterpriseCustomerConfiguration.DoesNotExist as error:
-            raise NotFound(
-                "No Blackboard configuration found for enterprise: {}".format(enterprise_customer_uuid)
-            ) from error
+            enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(uuid=state_uuid)
+        except (BlackboardEnterpriseCustomerConfiguration.DoesNotExist, ValidationError):
+            enterprise_config = None
+
+        # old urls may use the enterprise customer uuid in place of the config uuid, so lets fallback
+        if not enterprise_config:
+            enterprise_customer = get_enterprise_customer(state_uuid)
+
+            if not enterprise_customer:
+                raise NotFound(f"No state data found for given uuid: {state_uuid}.")
+
+            try:
+                enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(
+                    enterprise_customer=enterprise_customer
+                )
+            except BlackboardEnterpriseCustomerConfiguration.DoesNotExist as error:
+                raise NotFound(
+                    f"No Blackboard configuration found for enterprise: {enterprise_customer_uuid}"
+                ) from error
 
         auth_header = self._create_auth_header(enterprise_config)
 

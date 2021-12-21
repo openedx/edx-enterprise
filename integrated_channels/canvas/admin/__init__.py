@@ -23,6 +23,8 @@ class CanvasEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     readonly_fields = (
         "enterprise_customer_name",
         "refresh_token",
+        "oauth_authorization_url",
+        "uuid",
     )
 
     search_fields = ("enterprise_customer_name",)
@@ -39,3 +41,16 @@ class CanvasEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         return obj.enterprise_customer.name
+
+    def customer_oauth_authorization_url(self, obj):
+        """
+        Returns: an html formatted oauth authorization link when the canvas_base_url and client_id are available.
+
+        Args:
+            obj: The instance of CanvasEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        if obj.oauth_authorization_url:
+            return format_html((f'<a href="{obj.oauth_authorization_url}">Authorize Link</a>'))
+        else:
+            return None
