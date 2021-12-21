@@ -3,11 +3,13 @@
 from django.db import migrations, models
 import uuid
 
+
 def create_uuid(apps, schema_editor):
     BlackboardEnterpriseCustomerConfiguration = apps.get_model('blackboard', 'BlackboardEnterpriseCustomerConfiguration')
     for config in BlackboardEnterpriseCustomerConfiguration.objects.all():
         config.uuid = uuid.uuid4()
         config.save()
+
 
 class Migration(migrations.Migration):
 

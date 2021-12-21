@@ -23,6 +23,7 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 LOGGER = getLogger(__name__)
 LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/canvas/oauth-complete')
 
+
 class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Canvas.

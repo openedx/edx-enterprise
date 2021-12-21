@@ -3,11 +3,13 @@
 from django.db import migrations, models
 import uuid
 
+
 def create_uuid(apps, schema_editor):
     CanvasEnterpriseCustomerConfiguration = apps.get_model('canvas', 'CanvasEnterpriseCustomerConfiguration')
     for config in CanvasEnterpriseCustomerConfiguration.objects.all():
         config.uuid = uuid.uuid4()
         config.save()
+
 
 class Migration(migrations.Migration):
 
