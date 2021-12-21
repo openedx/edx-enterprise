@@ -102,7 +102,7 @@ class TestCanvasAPIViews(APITestCase):
         )
         response = self.client.get(oauth_complete_url_without_id)
         assert response.status_code == 400
-        assert response.json()['detail'] == 'Enterprise ID required to integrate with Canvas.'
+        assert response.json()['detail'] == 'Canvas Configuration uuid required to integrate with Canvas.'
 
         query_kwargs_2 = {
             'state': ENTERPRISE_ID,
@@ -126,7 +126,7 @@ class TestCanvasAPIViews(APITestCase):
         response = self.client.get(oauth_complete_url)
 
         assert response.status_code == 404
-        assert response.json()['detail'] == 'No enterprise data found for given uuid: {}.'.format(BAD_ENTERPRISE_ID)
+        assert response.json()['detail'] == 'No state data found for given uuid: {}.'.format(BAD_ENTERPRISE_ID)
 
     def test_refresh_token_request_without_canvas_config(self):
         """
@@ -144,4 +144,4 @@ class TestCanvasAPIViews(APITestCase):
 
         assert response.status_code == 404
         assert response.json()['detail'] == \
-               'No enterprise canvas configuration found associated with enterprise customer: {}'.format(ENTERPRISE_ID)
+               'No Canvas configuration found for state: {}'.format(ENTERPRISE_ID)
