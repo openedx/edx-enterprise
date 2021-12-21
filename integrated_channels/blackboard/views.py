@@ -13,6 +13,7 @@ from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
@@ -115,7 +116,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                 )
             except BlackboardEnterpriseCustomerConfiguration.DoesNotExist as error:
                 raise NotFound(
-                    f"No Blackboard configuration found for enterprise: {enterprise_customer_uuid}"
+                    f"No Blackboard configuration found for state: {state_uuid}"
                 ) from error
 
         auth_header = self._create_auth_header(enterprise_config)

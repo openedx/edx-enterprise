@@ -3,6 +3,7 @@ Admin integration for configuring Canvas app to communicate with Canvas systems.
 """
 
 from django.contrib import admin
+from django.utils.html import format_html
 
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 

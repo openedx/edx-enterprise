@@ -10,6 +10,7 @@ from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
@@ -89,7 +90,7 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
                 )
             except CanvasEnterpriseCustomerConfiguration.DoesNotExist as error:
                 raise NotFound(
-                    f"No Canvas configuration found for enterprise: {enterprise_customer_uuid}"
+                    f"No Canvas configuration found for state: {state_uuid}"
                 ) from error
 
         access_token_request_params = {
