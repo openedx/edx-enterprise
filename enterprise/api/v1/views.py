@@ -1468,7 +1468,7 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
     @permission_required('enterprise.can_access_admin_dashboard')
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
+
     @permission_required('enterprise.can_access_admin_dashboard')
     @action(methods=['get'], detail=False, url_path='basic-list')
     def basic_list(self, request, *args, **kwargs):
