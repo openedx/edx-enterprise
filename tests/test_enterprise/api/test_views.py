@@ -4909,6 +4909,7 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
 
     ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT = 'enterprise-customer-invite-key-detail'
     ENTERPRISE_CUSTOMER_INVITE_KEY_LIST_ENDPOINT = 'enterprise-customer-invite-key-list'
+    ENTERPRISE_CUSTOMER_INVITE_KEY_BASIC_LIST_ENDPOINT = 'enterprise-customer-invite-key-basic-list'
     ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER = 'enterprise-customer-invite-key-link-user'
     USERNAME = "unlinkedtestuser"
 
@@ -5112,3 +5113,15 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
             )
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_basic_list_no_pagination_200(self):
+        """
+        Test that basic-list endpoint returns unpaginated response.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer_1.uuid))
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_BASIC_LIST_ENDPOINT,
+            )
+        )
+        self.assertEqual(response.status_code, 200)

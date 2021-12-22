@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.10]
+---------
+fix: add `basic_list` action to ``EnterpriseCustomerInviteKeyViewSet`` to return unpaginated set of invite keys.
+
 [3.36.9]
 --------
 feat: new oauth state for multi-lms-configuration
