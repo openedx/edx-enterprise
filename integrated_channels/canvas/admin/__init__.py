@@ -24,7 +24,7 @@ class CanvasEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     readonly_fields = (
         "enterprise_customer_name",
         "refresh_token",
-        "oauth_authorization_url",
+        "customer_oauth_authorization_url",
         "uuid",
     )
 
