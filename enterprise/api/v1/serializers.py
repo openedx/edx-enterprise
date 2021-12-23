@@ -1175,6 +1175,7 @@ class BaseEnterpriseCustomerInviteKeySerializer(serializers.ModelSerializer):
             'usage_limit',
             'expiration_date',
             'is_active',
+            'is_valid',
         )
 
 
