@@ -1175,6 +1175,7 @@ class BaseEnterpriseCustomerInviteKeySerializer(serializers.ModelSerializer):
             'usage_limit',
             'expiration_date',
             'is_active',
+            'is_valid',
         )
 
 
@@ -1235,7 +1236,8 @@ class EnterpriseCustomerInviteKeyReadOnlySerializer(BaseEnterpriseCustomerInvite
     """
 
     class Meta(BaseEnterpriseCustomerInviteKeySerializer.Meta):
-        fields = BaseEnterpriseCustomerInviteKeySerializer.Meta.fields + ('enterprise_customer_name', 'usage_count')
+        additional_fields = ('enterprise_customer_name', 'usage_count', 'created')
+        fields = BaseEnterpriseCustomerInviteKeySerializer.Meta.fields + additional_fields
 
     enterprise_customer_uuid = serializers.SerializerMethodField()
     enterprise_customer_name = serializers.SerializerMethodField()
