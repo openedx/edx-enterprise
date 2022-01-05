@@ -1155,7 +1155,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'id': 1, 'user_id': 0, 'user': None, 'active': True, 'created': '2021-10-20T19:01:31Z',
-                'invite_key': None, 'data_sharing_consent_records': [], 'groups': [],
+                'invite_key': None, 'role_assignments': [], 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'active': True, 'enable_data_sharing_consent': True,

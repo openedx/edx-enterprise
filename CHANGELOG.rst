@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.12]
+---------
+feat: add enterprise role assignments to ``EnterpriseCustomerUserReadOnlySerializer``
+
 [3.36.11]
 ---------
 fix: Integrated channels Degreed2 exporter now handles invalid start/end date in content metadata item
