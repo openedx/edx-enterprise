@@ -10,6 +10,7 @@ from logging import getLogger
 import pytz
 from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
+from rest_framework.fields import empty
 from rest_framework.settings import api_settings
 
 from django.contrib import auth
@@ -441,13 +442,44 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
             'data_sharing_consent_records',
             'groups',
             'created',
-            'invite_key'
+            'invite_key',
+            'role_assignments'
         )
 
     user = UserSerializer()
     enterprise_customer = EnterpriseCustomerSerializer()
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
+    role_assignments = serializers.SerializerMethodField()
+
+    def _get_role_assignments_by_ecu_id(self, enterprise_customer_users):
+        """
+        Get enterprise role assignments for each enterprise customer user.
+        """
+
+        user_ids = [ecu.user_id for ecu in enterprise_customer_users]
+        role_assignments = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user_id__in=user_ids
+        ).select_related('role')
+
+        role_assignments_by_ecu_id = {
+            ecu.id: [
+                role_assignment.role.name for role_assignment in role_assignments if
+                role_assignment.user_id == ecu.user_id and
+                role_assignment.enterprise_customer_id == ecu.enterprise_customer_id
+            ] for ecu in enterprise_customer_users
+        }
+
+        return role_assignments_by_ecu_id
+
+    def __init__(self, instance=None, data=empty, **kwargs):
+        super().__init__(instance=instance, data=data, **kwargs)
+
+        if instance:
+            role_assignments_by_ecu_id = self._get_role_assignments_by_ecu_id(
+                instance if isinstance(instance, list) else [instance]
+            )
+            self.role_assignments_by_ecu_id = role_assignments_by_ecu_id
 
     def get_data_sharing_consent_records(self, obj):
         """
@@ -468,6 +500,12 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         if obj.user:
             return [group.name for group in obj.user.groups.filter(name__in=ENTERPRISE_PERMISSION_GROUPS)]
         return []
+
+    def get_role_assignments(self, obj):
+        """
+        Return the enterprise role assignments for this enterprise customer user.
+        """
+        return self.role_assignments_by_ecu_id.get(obj.id, [])
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
