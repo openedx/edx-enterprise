@@ -76,8 +76,22 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                 return 0
         else:
             return 0
+
         start_date = parse_datetime_handle_invalid(start)
         end_date = parse_datetime_handle_invalid(end)
+        if not start_date or not end_date:
+            LOGGER.error(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    'Failed to find valid start/end dates, so duration is going to be set to 0. '
+                    f'Course item was {content_metadata_item} '
+                    f'Parsed Start was: {start_date}, End was: {end_date}'
+                )
+            )
+            return 0
         return (end_date - start_date).days
 
     def transform_description(self, content_metadata_item):
