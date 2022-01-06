@@ -37,7 +37,6 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
 
     def transform_duration(self, content_metadata_item):
         """
-        TODO
         Returns: duration in days
         """
         if content_metadata_item.get('content_type') == 'courserun':
