@@ -172,3 +172,35 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
         }
         assert exporter.transform_duration(content_metadata_item) == 92
+
+    def test_transform_duration_with_invalid_dates(self):
+        """
+        want to return 0 instead of fail with invalid dates
+        """
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        content_metadata_item = {
+            "content_type": "courserun",
+            "key": "course-v1:edX+0089786+3T2021",
+            "start": "2021-10-01T16:00:00Z",
+            "end": None,
+            "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+        }
+        assert exporter.transform_duration(content_metadata_item) == 0
+
+        content_metadata_item = {
+            "content_type": "courserun",
+            "key": "course-v1:edX+0089786+3T2021",
+            "start": "00:00Z",
+            "end": None,
+            "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+        }
+        assert exporter.transform_duration(content_metadata_item) == 0
+
+        content_metadata_item = {
+            "content_type": "courserun",
+            "key": "course-v1:edX+0089786+3T2021",
+            "start": None,
+            "end": "2021-10-01T16:00:00Z",
+            "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+        }
+        assert exporter.transform_duration(content_metadata_item) == 0

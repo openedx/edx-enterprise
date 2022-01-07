@@ -1115,9 +1115,13 @@ def parse_datetime_handle_invalid(datetime_value):
     """
     Return the parsed version of a datetime string. If the string is invalid, return None.
     """
+    if not datetime_value:
+        return None
     try:
         if not isinstance(datetime_value, datetime.datetime):
             datetime_value = parse_datetime(datetime_value)
+        if not datetime_value:
+            return None
         return datetime_value.replace(tzinfo=pytz.UTC)
     except TypeError:
         return None
