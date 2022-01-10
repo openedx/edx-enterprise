@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.36.13]
+---------
+fix: check if instance is an iterable rather than a list in ``EnterpriseCustomerUserReadOnlySerializer``
+
 [3.36.12]
 ---------
 feat: add enterprise role assignments to ``EnterpriseCustomerUserReadOnlySerializer``

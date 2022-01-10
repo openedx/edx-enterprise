@@ -5,6 +5,7 @@ Serializers for enterprise api version 1.
 
 import copy
 import datetime
+from collections.abc import Iterable
 from logging import getLogger
 
 import pytz
@@ -477,7 +478,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
 
         if instance:
             role_assignments_by_ecu_id = self._get_role_assignments_by_ecu_id(
-                instance if isinstance(instance, list) else [instance]
+                instance if isinstance(instance, Iterable) else [instance]
             )
             self.role_assignments_by_ecu_id = role_assignments_by_ecu_id
 
