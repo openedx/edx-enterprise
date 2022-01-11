@@ -1247,3 +1247,12 @@ class EnterpriseCustomerInviteKeyReadOnlySerializer(BaseEnterpriseCustomerInvite
 
     def get_enterprise_customer_name(self, obj):
         return obj.enterprise_customer.name
+
+
+class EnterpriseCustomerToggleUniversalLinkSerializer(serializers.Serializer):
+    """
+    Serializer for toggling an EnterpriseCustomer enable_universal_link field
+    """
+
+    enable_universal_link = serializers.BooleanField(required=True)
+    expiration_date = serializers.DateTimeField(required=False)
