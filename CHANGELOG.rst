@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.37.00]
+---------
+feat: Adds toggle_universal_link endpoint
+
 [3.36.11]
 ---------
 fix: Integrated channels Degreed2 exporter now handles invalid start/end date in content metadata item
