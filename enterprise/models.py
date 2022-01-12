@@ -721,8 +721,8 @@ class EnterpriseCustomer(TimeStampedModel):
             link_expiration_date: if passed when enable_universal_link is true new link will be created
         If there is no change to be made, return
         When enable_universal_link changes to;
-            True: a new link is created
-            False: all links are deactivate
+            True: a new EnterpriseCustomerInviteKey is created
+            False: all EnterpriseCustomerInviteKey are deactivate
         """
         if self.enable_universal_link == enable_universal_link:
             return
@@ -738,7 +738,7 @@ class EnterpriseCustomer(TimeStampedModel):
                 is_active=True,
             ).update(is_active=False)
         # If universal link is being enabled and a date is passed
-        elif bool(link_expiration_date):
+        elif link_expiration_date:
             # Create a new link
             EnterpriseCustomerInviteKey.objects.create(
                 enterprise_customer=self,

@@ -17,7 +17,7 @@ Unreleased
 ----------
 * Nothing
 
-[3.37.00]
+[3.37.0]
 ---------
 feat: Adds toggle_universal_link endpoint
 
