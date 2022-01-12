@@ -406,7 +406,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             self.queryset = self.queryset.filter(name__icontains=enterprise_name)
         return self.list(request, *args, **kwargs)
 
-    @action(methods=['patch'], detail=True, url_path='toggle-universal-link', permission_classes=[permissions.IsAuthenticated])
+    @action(methods=['patch'], detail=True, permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_access_admin_dashboard')
     def toggle_universal_link(self, request, pk=None):
         """
