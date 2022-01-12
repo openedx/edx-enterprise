@@ -17,9 +17,13 @@ Unreleased
 ----------
 * Nothing
 
-[3.37.0]
+[3.38.0]
 ---------
 feat: Adds toggle_universal_link endpoint
+
+[3.37.0]
+---------
+feat: Dependency upgrades
 
 [3.36.13]
 ---------
