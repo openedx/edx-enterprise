@@ -739,7 +739,7 @@ class EnterpriseCustomer(TimeStampedModel):
             ).update(is_active=False)
         # If universal link is being enabled and a date is passed
         elif link_expiration_date:
-            # Create a new link
+            # Create a new EnterpriseCustomerInviteKey
             EnterpriseCustomerInviteKey.objects.create(
                 enterprise_customer=self,
                 expiration_date=link_expiration_date
