@@ -21,6 +21,14 @@ Unreleased
 ---------
 feat: Adds toggle_universal_link endpoint
 
+[3.36.13]
+---------
+fix: check if instance is an iterable rather than a list in ``EnterpriseCustomerUserReadOnlySerializer``
+
+[3.36.12]
+---------
+feat: add enterprise role assignments to ``EnterpriseCustomerUserReadOnlySerializer``
+
 [3.36.11]
 ---------
 fix: Integrated channels Degreed2 exporter now handles invalid start/end date in content metadata item
