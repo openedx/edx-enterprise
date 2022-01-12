@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Transmits consenting enterprise learner data to the integrated channels.
 """

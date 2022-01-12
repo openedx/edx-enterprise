@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Generic learner data transmitter for integrated channels.
 """

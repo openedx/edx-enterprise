@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Test utilities.
 """
@@ -13,14 +12,13 @@ import logging
 import os
 import tempfile
 import uuid
+from unittest import mock
+from urllib.parse import parse_qs, urljoin, urlparse, urlsplit
 
-import mock
-import six
 from edx_rest_framework_extensions.auth.jwt.cookies import jwt_cookie_name
 from edx_rest_framework_extensions.auth.jwt.tests.utils import generate_jwt_token, generate_unversioned_payload
 from pytest import mark
 from rest_framework.test import APIClient, APITestCase
-from six.moves.urllib.parse import parse_qs, urljoin, urlparse, urlsplit
 
 from django.conf import settings
 from django.core.cache import caches
@@ -55,7 +53,7 @@ def get_magic_name(value):
     Returns:
         str or unicode
     """
-    return str(value) if six.PY2 else value
+    return value
 
 
 def mock_view_function():
@@ -63,7 +61,7 @@ def mock_view_function():
     Return mock function for views that are decorated.
     """
     view_function = mock.Mock()
-    view_function.__name__ = str('view_function') if six.PY2 else 'view_function'
+    view_function.__name__ = 'view_function'
     return view_function
 
 
@@ -248,7 +246,7 @@ def assert_url_contains_query_parameters(url, query_params):
     """
     query_string = urlparse(url).query
     query_string_dict = parse_qs(query_string)
-    for key, value in six.iteritems(query_params):
+    for key, value in query_params.items():
         assert key in query_string_dict and value in query_string_dict.get(key)
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Test the Enterprise management commands and related functions.
 """
@@ -7,11 +6,10 @@ import logging
 import unittest
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from unittest import skip
+from unittest import mock, skip
 
 import ddt
 import factory
-import mock
 import responses
 from faker import Factory as FakerFactory
 from freezegun import freeze_time
@@ -871,7 +869,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " Duration: 0.0"
         ]
     else:
-        if expected_completion.get('timestamp') != u'null':
+        if expected_completion.get('timestamp') != 'null':
             timestamp = expected_completion.get('timestamp') / 1000
             completed_date = str(datetime.utcfromtimestamp(timestamp)) + '+00:00'
         else:
@@ -1072,8 +1070,10 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
          dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass', total_hours=0.0)),
     )
     @ddt.unpack
-    @skip(("This test is hard coding log order and OC team needs more comprehensive logs for staging. "
-           "Will be restore after completed staging testing."))
+    @skip(
+        "This test is hard coding log order and OC team needs more comprehensive logs for staging. "
+        "Will be restore after completed staging testing."
+    )
     def test_transmit_learner_data(
             self,
             command_kwargs,
@@ -1250,9 +1250,9 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
                 )
             )
             sapsf_search_student_response = {
-                u'@odata.metadataEtag': u'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
-                u"@odata.count": 500 * len(inactive_sap_learners),
-                u'value': [{'studentID': inactive_learner}]
+                '@odata.metadataEtag': 'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
+                "@odata.count": 500 * len(inactive_sap_learners),
+                'value': [{'studentID': inactive_learner}]
             }
             responses.add(
                 responses.GET,
@@ -1343,9 +1343,9 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             responses.GET,
             url=self.search_student_paginated_url,
             json={
-                u'@odata.metadataEtag': u'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
-                u"@odata.count": 1,
-                u'value': [{'studentID': self.user.username}]
+                '@odata.metadataEtag': 'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
+                "@odata.count": 1,
+                'value': [{'studentID': self.user.username}]
             },
             status=200,
             content_type='application/json',
@@ -1406,10 +1406,12 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             responses.GET,
             url=self.search_student_paginated_url,
             json={
-                u'error': {
-                    u'message': u"The property 'InvalidProperty', used in a query expression, "
-                                u"is not defined in type 'com.sap.lms.odata.Student'.",
-                    u'code': None
+                'error': {
+                    'message': (
+                        "The property 'InvalidProperty', used in a query expression, "
+                        "is not defined in type 'com.sap.lms.odata.Student'."
+                    ),
+                    'code': None
                 }
             },
             status=400,

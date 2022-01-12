@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` admin forms module.
 """
 
 import json
 from math import ceil
+from unittest import mock
 from unittest.mock import ANY
+from urllib.parse import urlencode
 
 import ddt
-import mock
-import six
 from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
 
@@ -183,7 +182,7 @@ class BaseEnterpriseCustomerView(TestCase):
         expected_context.update(self.default_context)
         expected_context.update(context_overrides or {})
 
-        for context_key, expected_value in six.iteritems(expected_context):
+        for context_key, expected_value in expected_context.items():
             assert actual_context[context_key] == expected_value
 
     def _login(self):
@@ -412,9 +411,9 @@ class BaseTestEnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         """
         self.assertRedirects(post_response, self.view_url, fetch_redirect_response=False)
         get_response = self.client.get(self.view_url)
-        response_messages = set(
+        response_messages = {
             (m.level, m.message) for m in get_response.context['messages']
-        )
+        }
         assert response_messages == expected_messages
 
     def add_required_data(self, data):
@@ -831,7 +830,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         self._login()
 
-        if isinstance(user, six.string_types):
+        if isinstance(user, str):
             email_or_username = user
         else:
             # Allow us to send forms involving pending users
@@ -909,9 +908,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             track_enrollment.assert_not_called()
         else:
             track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
-        ]))
+        })
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
         num_enterprise_enrollments = len(all_enterprise_enrollments)
         assert num_enterprise_enrollments == 1
@@ -979,9 +978,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                     enterprise_uuid=str(self.enterprise_customer.uuid)
                 )
                 track_enrollment.assert_called_with('admin-enrollment', user.id, course_id)
-                self._assert_django_messages(response, set([
+                self._assert_django_messages(response, {
                     (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
-                ]))
+                })
             else:
                 response = self._enroll_user_request(user_email, mode, course_id=course_id, notify=True)
 
@@ -1075,9 +1074,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             enterprise_uuid=str(self.enterprise_customer.uuid)
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
-        ]))
+        })
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
         num_enterprise_enrollments = len(all_enterprise_enrollments)
         assert num_enterprise_enrollments == 1
@@ -1260,9 +1259,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             enterprise_uuid=str(self.enterprise_customer.uuid)
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
-        ]))
+        })
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
         num_enterprise_enrollments = len(all_enterprise_enrollments)
         assert num_enterprise_enrollments == 1
@@ -1303,9 +1302,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
-        ]))
+        })
 
     @mock.patch('enterprise.admin.views.logging.error')
     @mock.patch("enterprise.utils.reverse")
@@ -1328,7 +1327,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         }
         enrollment_instance = enrollment_client.return_value
         enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
-            "Client Error", content='This is not JSON'.encode()
+            "Client Error", content=b'This is not JSON'
         )
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
@@ -1342,9 +1341,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             'Error while enrolling user %(user)s: %(message)s',
             {'user': user.username, 'message': 'No error message provided'}
         )
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
-        ]))
+        })
 
 
 @ddt.ddt
@@ -1623,7 +1622,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
         assert PendingEnterpriseCustomerUser.objects.count() == 1, "One pending linked users should be created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=new_email).exists()
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "3 new learners were added to {}.".format(self.enterprise_customer.name)),
             (
                 messages.WARNING,
@@ -1631,7 +1630,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 "Enterprise Customer: {}".format(linked_user.email)
             ),
             (messages.WARNING, "The following duplicate email addresses were not added: {}".format(user.email)),
-        ]))
+        })
 
     def test_post_successful_test(self):
         """
@@ -1657,9 +1656,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "it should create EnterpriseCustomerRecord by email"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=previously_not_seen_email).exists(), \
             "it should create EnterpriseCustomerRecord by email"
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
-        ]))
+        })
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
@@ -1713,11 +1712,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "They have not been enrolled in {}. When these learners create an "
             "account, they will be enrolled automatically: {}"
         )
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
-        ]))
+        })
         pending_enrollment = PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0]
         assert pending_enrollment.course_id == course_id
         assert pending_enrollment.discount_percentage == discount_percentage
@@ -1769,11 +1768,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "They have not been enrolled in {}. When these learners create an "
             "account, they will be enrolled automatically: {}"
         )
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
-        ]))
+        })
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         num_messages = len(mail.outbox)
         assert num_messages == 0
@@ -1817,11 +1816,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "The following learners do not have an account on Test platform. They have not been enrolled in {}. "
             "When these learners create an account, they will be enrolled automatically: {}"
         )
-        self._assert_django_messages(response, set([
+        self._assert_django_messages(response, {
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
-        ]))
+        })
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         num_messages = len(mail.outbox)
         assert num_messages == 0
@@ -1844,7 +1843,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
     def test_delete_not_linked(self):
         self._login()
         email = FAKER.email()  # pylint: disable=no-member
-        query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
+        query_string = urlencode({"unlink_email": email})
 
         response = self.client.delete(self.view_url + "?" + query_string)
 
@@ -1860,7 +1859,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         email = FAKER.email()  # pylint: disable=no-member
         user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
-        query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
+        query_string = urlencode({"unlink_email": email})
 
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
 
@@ -1874,7 +1873,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         self._login()
 
         email = FAKER.email()  # pylint: disable=no-member
-        query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
+        query_string = urlencode({"unlink_email": email})
 
         PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_email=email)
 

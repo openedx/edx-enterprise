@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utilities common to different integrated channels.
 """
@@ -13,7 +12,6 @@ from string import Formatter
 
 import pytz
 import requests
-from six.moves import range
 
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -169,7 +167,7 @@ def convert_comma_separated_string_to_list(comma_separated_string):
     """
     Convert the comma separated string to a valid list.
     """
-    return list(set(item.strip() for item in comma_separated_string.split(",") if item.strip()))
+    return list({item.strip() for item in comma_separated_string.split(",") if item.strip()})
 
 
 def get_image_url(content_metadata_item):

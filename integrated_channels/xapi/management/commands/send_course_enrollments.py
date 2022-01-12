@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Send xAPI statements to the LRS configured via admin.
 """
 
 import datetime
 from logging import getLogger
-
-import six
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -120,7 +117,7 @@ class Command(BaseCommand):
         for course_enrollment in course_enrollments:
 
             course_overview = course_enrollment.course
-            courserun_id = six.text_type(course_overview.id)
+            courserun_id = str(course_overview.id)
             course_run_identifiers = course_catalog_client.get_course_run_identifiers(courserun_id)
             course_overview.course_key = course_run_identifiers['course_key']
             course_overview.course_uuid = course_run_identifiers['course_uuid']
@@ -164,7 +161,7 @@ class Command(BaseCommand):
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
-            courserun_id = six.text_type(course_overview.id)
+            courserun_id = str(course_overview.id)
             enterprise_course_enrollment_id = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
                 user,
                 courserun_id,
@@ -189,7 +186,7 @@ class Command(BaseCommand):
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
-            courserun_id = six.text_type(course_overview.id)
+            courserun_id = str(course_overview.id)
             enterprise_course_enrollment_id = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
                 user,
                 courserun_id,

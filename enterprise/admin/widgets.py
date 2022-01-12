@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Widgets to be used in the enterprise djangoapp.
 """

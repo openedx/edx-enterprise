@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django management command to unlink the learners, Delete the enrollments and remove the DSC.
 """

@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the djagno management command `create_enterprise_course_enrollments`.
 """
 
 import logging
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark
 from slumber.exceptions import SlumberBaseException
 from testfixtures import LogCapture

@@ -2,8 +2,7 @@
 Tests for the `integrated_channels` canvas configuration api.
 """
 import json
-
-import mock
+from unittest import mock
 
 from django.urls import reverse
 

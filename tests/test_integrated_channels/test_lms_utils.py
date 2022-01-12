@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the lms_utils used by integration channels.
 """
 
 import unittest
+from unittest import mock
 
-import mock
 import pytest
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey

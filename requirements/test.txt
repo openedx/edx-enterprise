@@ -11,27 +11,31 @@ aniso8601==9.0.1
     # via
     #   -r requirements/test-master.txt
     #   edx-tincan-py35
-attrs==21.2.0
+asgiref==3.4.1
+    # via
+    #   -r requirements/test-master.txt
+    #   django
+attrs==21.4.0
     # via pytest
     # via
     #   -r requirements/test-master.txt
     #   celery
-bleach==3.3.1
+bleach==4.1.0
     # via -r requirements/test-master.txt
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   -r requirements/test-master.txt
     #   requests
-cffi==1.14.6
+cffi==1.15.0
     # via
     #   -r requirements/test-master.txt
     #   cryptography
 chardet==4.0.0
     # via diff-cover
-charset-normalizer==2.0.4
+charset-normalizer==2.0.10
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -54,9 +58,9 @@ click-plugins==1.1.1
     #   celery
 code-annotations==1.2.0
     # via -r requirements/test-master.txt
-coverage==5.5
+coverage[toml]==6.2
     # via pytest-cov
-cryptography==3.4.7
+cryptography==36.0.1
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields
@@ -67,10 +71,10 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==6.2.1
+diff-cover==6.4.4
     # via -r requirements/test.in
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
     #   django-config-models
     #   django-crum
@@ -83,11 +87,10 @@ diff-cover==6.2.1
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-rbac
-    #   jsonfield2
-    #   rest-condition
+    #   jsonfield
 django-cache-memoize==0.1.10
     # via -r requirements/test-master.txt
-django-config-models==2.2.0
+django-config-models==2.2.2
     # via -r requirements/test-master.txt
 django-countries==7.2.1
     # via -r requirements/test-master.txt
@@ -98,22 +101,22 @@ django-crum==0.7.9
     #   edx-rbac
 django-fernet-fields==0.6
     # via -r requirements/test-master.txt
-django-filter==2.4.0
+django-filter==21.1
     # via -r requirements/test-master.txt
-django-ipware==3.0.7
+django-ipware==4.0.2
     # via -r requirements/test-master.txt
-django-model-utils==4.1.1
+django-model-utils==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
     #   edx-rbac
 django-multi-email-field==0.6.2
     # via -r requirements/test-master.txt
-django-object-actions==3.0.2
+django-object-actions==3.1.0
     # via -r requirements/test-master.txt
 django-simple-history==3.0.0
     # via -r requirements/test-master.txt
-django-waffle==2.2.1
+django-waffle==2.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -124,21 +127,19 @@ djangorestframework==3.12.4
     #   django-config-models
     #   drf-jwt
     #   edx-drf-extensions
-    #   rest-condition
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
-drf-jwt==1.19.0
+drf-jwt==1.19.2
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==4.2.0
+edx-django-utils==4.4.1
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.6.0
+edx-drf-extensions==8.0.1
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -146,17 +147,17 @@ edx-opaque-keys[django]==2.2.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-rbac==1.5.0
+edx-rbac==1.5.1
     # via -r requirements/test-master.txt
-edx-rest-api-client==5.4.0
+edx-rest-api-client==5.4.1
     # via -r requirements/test-master.txt
 edx-tincan-py35==1.0.0
     # via -r requirements/test-master.txt
-factory-boy==3.2.0
+factory-boy==3.2.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==8.10.3
+faker==11.3.0
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -166,26 +167,17 @@ future==0.18.2
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-idna==3.2
+idna==3.3
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==4.6.3
-    # via inflect
-inflect==3.0.2
-    # via
-    #   -c requirements/constraints.txt
-    #   jinja2-pluralize
 iniconfig==1.1.1
     # via pytest
-jinja2==3.0.1
+jinja2==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
     #   diff-cover
-    #   jinja2-pluralize
-jinja2-pluralize==0.3.0
-    # via diff-cover
 jsondiff==1.3.0
     # via -r requirements/test-master.txt
 jsonfield==3.1.0
@@ -201,83 +193,76 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-more-itertools==8.8.0
-    # via zipp
-newrelic==6.6.0.162
+newrelic==7.2.4.171
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-packaging==21.0
+packaging==21.3
     # via
     #   -r requirements/test-master.txt
     #   bleach
     #   pytest
-path==16.2.0
+path==16.3.0
     # via
     #   -r requirements/test-master.txt
     #   path.py
 path.py==12.5.0
     # via -r requirements/test-master.txt
-pbr==5.6.0
+pbr==5.8.0
     # via
     #   -r requirements/test-master.txt
     #   stevedore
-pillow==8.3.1
+pillow==9.0.0
     # via -r requirements/test-master.txt
-pluggy==0.13.1
+pluggy==1.0.0
     # via
     #   diff-cover
     #   pytest
     # via
     #   -r requirements/test-master.txt
     #   click-repl
-psutil==5.8.0
+psutil==5.9.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-py==1.10.0
-    # via
-    #   pytest
-    #   pytest-catchlog
-pycparser==2.20
+py==1.11.0
+    # via pytest
+pycparser==2.21
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.10.1
+pycryptodomex==3.12.0
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.9.0
+pygments==2.11.2
     # via diff-cover
 pyjwkest==1.4.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-pyjwt[crypto]==1.7.1
+pyjwt[crypto]==2.3.0
     # via
-    #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
     #   drf-jwt
+    #   edx-drf-extensions
     #   edx-rest-api-client
 pymongo==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   edx-opaque-keys
-pyparsing==2.4.7
+pyparsing==3.0.6
     # via
     #   -r requirements/test-master.txt
     #   packaging
-pytest==6.2.4
+pytest==6.2.5
     # via
     #   -c requirements/constraints.txt
-    #   pytest-catchlog
     #   pytest-cov
     #   pytest-django
-pytest-catchlog==1.2.2
+pytest-cov==3.0.0
     # via -r requirements/test.in
-pytest-cov==2.12.1
-    # via -r requirements/test.in
-pytest-django==4.4.0
+pytest-django==4.5.2
     # via -r requirements/test.in
 python-dateutil==2.4.0
     # via
@@ -289,17 +274,17 @@ python-slugify==4.0.1
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
-pytz==2021.1
+pytz==2021.3
     # via
     #   -r requirements/test-master.txt
     #   celery
     #   django
     #   edx-tincan-py35
-pyyaml==5.4.1
+pyyaml==6.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
-requests==2.26.0
+requests==2.27.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -312,11 +297,7 @@ responses==0.10.15
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-rest-condition==1.0.3
-    # via
-    #   -r requirements/test-master.txt
-    #   edx-drf-extensions
-rules==3.0
+rules==3.1
     # via -r requirements/test-master.txt
 semantic-version==2.8.5
     # via
@@ -338,19 +319,19 @@ slumber==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   edx-rest-api-client
-sqlparse==0.4.1
+sqlparse==0.4.2
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==3.3.0
+stevedore==3.5.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.16.0
+tableauserverclient==0.17.0
     # via -r requirements/test-master.txt
-testfixtures==6.18.0
+testfixtures==6.18.3
     # via
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
@@ -360,12 +341,12 @@ text-unidecode==1.3
     #   faker
     #   python-slugify
 toml==0.10.2
-    # via
-    #   pytest
-    #   pytest-cov
+    # via pytest
+tomli==2.0.0
+    # via coverage
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
-urllib3==1.26.6
+urllib3==1.26.8
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -382,7 +363,3 @@ webencodings==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   bleach
-zipp==1.0.0
-    # via
-    #   -c requirements/constraints.txt
-    #   importlib-metadata

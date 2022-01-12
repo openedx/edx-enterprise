@@ -2,11 +2,12 @@
 Views containing APIs for Canvas integrated channel
 """
 
+from urllib.parse import urljoin
+
 import requests
 from rest_framework import generics
 from rest_framework.exceptions import APIException, NotFound, ParseError
 from rest_framework.response import Response
-from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings

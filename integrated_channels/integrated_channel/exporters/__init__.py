@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Package for generic data exporters which serialize data to be transmitted to integrated channels.
 """

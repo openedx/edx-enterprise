@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Class for transmitting learner data to Canvas.
 """

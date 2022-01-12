@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Test for xAPI Learner Course Completion Statements.
 """
 
 import json
 import unittest
+from unittest.mock import Mock
 
 from faker import Factory as FakerFactory
-from mock import Mock
 from pytest import mark
 
 from integrated_channels.xapi.constants import X_API_ACTIVITY_COURSE, X_API_VERB_COMPLETED

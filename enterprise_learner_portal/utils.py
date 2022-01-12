@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 enterprise_learner_portal utils.
 """

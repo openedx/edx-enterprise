@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` models module.
 """
 
 import unittest
 from collections import OrderedDict
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark
 
 from django.db import transaction
@@ -147,7 +146,7 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         pending_link.enterprise_customer.enable_autocohorting = True
         pending_link.enterprise_customer.save()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        PendingEnrollmentFactory(user=pending_link, course_id=course_id, cohort_name=u'test_cohort')
+        PendingEnrollmentFactory(user=pending_link, course_id=course_id, cohort_name='test_cohort')
 
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
@@ -174,7 +173,7 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
             user.username,
             course_id,
             'audit',
-            cohort=u'test_cohort',
+            cohort='test_cohort',
             enterprise_uuid=str(pending_link.enterprise_customer.uuid)
         )
         mock_track_enrollment.assert_called_once_with('pending-admin-enrollment', user.id, course_id)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django admin integration for configuring cornerstone ondemand app to communicate with CSOD systems.
 """

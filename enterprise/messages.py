@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utility functions for interfacing with the Django messages framework.
 """

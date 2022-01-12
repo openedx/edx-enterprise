@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Statements base for xAPI.
 """
@@ -37,7 +35,7 @@ class EnterpriseStatement(Statement):
         name = self._get_actor_name(user, user_social_auth)
         return Agent(
             name=name,
-            mbox=u'mailto:{email}'.format(email=user.email),
+            mbox='mailto:{email}'.format(email=user.email),
         )
 
     def get_object(self, domain, course_overview, object_type):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django admin integration for configuring sap_success_factors app to communicate with SAP SuccessFactors systems.
 """

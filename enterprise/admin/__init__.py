@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 Django admin integration for enterprise app.
 """
 
 import json
 import logging
+from urllib.parse import urlencode
 
 from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
 from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
-from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.conf.urls import url
@@ -255,7 +254,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return instance.enable_data_sharing_consent
 
     enable_dsc.boolean = True
-    enable_dsc.short_description = u'Enable DSC'
+    enable_dsc.short_description = 'Enable DSC'
 
     def has_logo(self, instance):
         """
@@ -271,7 +270,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return has_logo
 
     has_logo.boolean = True
-    has_logo.short_description = u'Logo'
+    has_logo.short_description = 'Logo'
 
     def has_identity_provider(self, instance):
         """
@@ -283,7 +282,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return hasattr(instance, 'enterprise_customer_identity_providers')
 
     has_identity_provider.boolean = True
-    has_identity_provider.short_description = u'Identity provider'
+    has_identity_provider.short_description = 'Identity provider'
 
     def manage_learners_data_sharing_consent(self, request, obj):
         """

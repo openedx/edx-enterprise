@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Factoryboy factories.
 """
@@ -249,7 +248,7 @@ class GroupFactory(factory.django.DjangoModelFactory):
         model = auth.models.Group
         django_get_or_create = ('name', )
 
-    name = factory.Sequence(u'group{0}'.format)
+    name = factory.Sequence('group{}'.format)
 
 
 class UserFactory(factory.django.DjangoModelFactory):

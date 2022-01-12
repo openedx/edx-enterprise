@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for helper functions in the Consent application.
 """
 
+from unittest import mock
+
 import ddt
-import mock
 from pytest import mark
 
 from django.test import testcases

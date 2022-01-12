@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for SAPSF content metadata exporters.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 import responses
 from pytest import mark
 

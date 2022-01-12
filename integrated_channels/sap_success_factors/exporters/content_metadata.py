@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Content metadata exporter for SAP SuccessFactors.
 """

@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` models module.
 """
 
+from unittest import mock
+
 import ddt
-import mock
 from pytest import mark
 
 from enterprise.constants import (

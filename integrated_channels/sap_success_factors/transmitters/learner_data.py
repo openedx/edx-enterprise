@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Class for transmitting learner data to SuccessFactors.
 """
 
 import logging
-
-import six
 
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
@@ -47,7 +44,7 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
     def handle_transmission_error(self, learner_data, client_exception):
         """Handle the case where the employee on SAPSF's side is marked as inactive."""
         try:
-            sys_msg = six.text_type(client_exception.message)
+            sys_msg = str(client_exception.message)
             ecu = EnterpriseCustomerUser.objects.get(
                 enterprise_enrollments__id=learner_data.enterprise_course_enrollment_id)
 

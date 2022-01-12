@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Mixins for edX Enterprise's Consent application.
 """
@@ -39,7 +38,7 @@ class ConsentModelMixin:
         """
         children = getattr(self, '_child_consents', [])
         if children:
-            return any((child.consent_required() for child in children))
+            return any(child.consent_required() for child in children)
 
         if self.granted:
             return False

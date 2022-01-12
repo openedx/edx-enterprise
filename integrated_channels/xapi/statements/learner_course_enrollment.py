@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 xAPI statement for learner course enrollment.
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Client for connecting to Cornerstone.
 """
@@ -123,7 +122,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Authorization header for authenticating requests to cornerstone progress API.
         """
         return 'Basic {}'.format(
-            base64.b64encode(u'{key}:{secret}'.format(
+            base64.b64encode('{key}:{secret}'.format(
                 key=self.global_cornerstone_config.key, secret=self.global_cornerstone_config.secret
             ).encode('utf-8')).decode()
         )

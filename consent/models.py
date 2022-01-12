@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Models for edX Enterprise's Consent application.
 """
 
 import logging
 
-import six
 from simple_history.models import HistoricalRecords
 
 from django.core.exceptions import ImproperlyConfigured
@@ -21,7 +19,7 @@ from consent.mixins import ConsentModelMixin
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomer
 
-mark_safe_lazy = lazy(mark_safe, six.text_type)
+mark_safe_lazy = lazy(mark_safe, str)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -132,10 +130,10 @@ class ProxyDataSharingConsent(ConsentModelMixin):
         """
         if not children or any(child is None for child in children):
             return None
-        granted = all((child.granted for child in children))
-        exists = any((child.exists for child in children))
-        usernames = set(child.username for child in children)
-        enterprises = set(child.enterprise_customer for child in children)
+        granted = all(child.granted for child in children)
+        exists = any(child.exists for child in children)
+        usernames = {child.username for child in children}
+        enterprises = {child.enterprise_customer for child in children}
         if not len(usernames) == len(enterprises) == 1:
             raise InvalidProxyConsent(
                 'Children used to create a bulk proxy consent object must '

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Custom migration to transfer consent data from the ``enterprise`` application to the ``consent`` application's
 ``DataSharingConsent`` model.

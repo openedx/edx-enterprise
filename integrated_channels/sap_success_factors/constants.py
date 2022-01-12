@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Constants used by the SAPSuccessFactors integrated channel.
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Forms to be used in the enterprise djangoapp.
 """

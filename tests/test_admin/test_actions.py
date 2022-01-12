@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` admin actions module.
 """
 
 import unittest
+from io import BytesIO
+from unittest import mock
 
 import factory
-import mock
 import unicodecsv
 from pytest import mark
-from six import BytesIO
 
 from enterprise.admin import EnterpriseCustomerAdmin
 from enterprise.admin.actions import export_as_csv_action

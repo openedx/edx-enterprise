@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` course catalogs api module.
 """
@@ -6,11 +5,11 @@ Tests for the `edx-enterprise` course catalogs api module.
 import json
 import logging
 import unittest
+from unittest import mock
+from urllib.parse import urljoin
 
 import ddt
-import mock
 import responses
-from six.moves.urllib.parse import urljoin
 from slumber.exceptions import HttpClientError
 
 from django.contrib import auth
@@ -466,11 +465,11 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         with self.assertRaises(HttpClientError):
             self.api.get_catalog_results(
                 content_filter_query='query',
-                query_params={u'page': 2}
+                query_params={'page': 2}
             )
         expected_message = ('Attempted to call course-discovery search/all/ endpoint with the following parameters: '
                             'content_filter_query: query, query_params: {}, traverse_pagination: False. '
-                            'Failed to retrieve data from the catalog API. content -- [boom]').format({u'page': 2})
+                            'Failed to retrieve data from the catalog API. content -- [boom]').format({'page': 2})
         assert handler.messages['error'][0] == expected_message
 
 

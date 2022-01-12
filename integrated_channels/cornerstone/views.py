@@ -94,7 +94,7 @@ class CornerstoneCoursesUpdates(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={
                     "message": (
-                        u"Cornerstone course list API expects ciid parameter."
+                        "Cornerstone course list API expects ciid parameter."
                     )
                 })
 
@@ -104,7 +104,7 @@ class CornerstoneCoursesUpdates(BaseViewSet):
                 status=status.HTTP_404_NOT_FOUND,
                 data={
                     "message": (
-                        u"No enterprise data found for given ciid."
+                        "No enterprise data found for given ciid."
                     )
                 })
 
@@ -185,7 +185,7 @@ class CornerstoneCoursesListView(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
                 data={
                     "message": (
-                        u"Cornerstone course list API expects ciid parameter."
+                        "Cornerstone course list API expects ciid parameter."
                     )
                 })
 
@@ -195,7 +195,7 @@ class CornerstoneCoursesListView(BaseViewSet):
                 status=status.HTTP_404_NOT_FOUND,
                 data={
                     "message": (
-                        u"No enterprise data found for given ciid."
+                        "No enterprise data found for given ciid."
                     )
                 })
 

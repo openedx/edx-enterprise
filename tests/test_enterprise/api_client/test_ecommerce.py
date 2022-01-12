@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` course catalogs api module.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark, raises
 
 from django.contrib import auth

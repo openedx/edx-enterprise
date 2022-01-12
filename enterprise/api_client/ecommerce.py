@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Client for communicating with the E-Commerce API.
 """

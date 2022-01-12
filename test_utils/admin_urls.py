@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 URLConf for admin tests.
 """

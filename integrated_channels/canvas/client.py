@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Client for connecting to Canvas.
 """
 import json
 import logging
 from http import HTTPStatus
+from urllib.parse import quote_plus, urljoin
 
 import requests
 from dateutil.parser import parse
-from six.moves.urllib.parse import quote_plus, urljoin
 
 from django.apps import apps
 

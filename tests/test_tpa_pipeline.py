@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` tpa-pipeline module.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark
 
 from django.contrib.messages.storage import fallback

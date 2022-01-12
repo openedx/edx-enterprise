@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Degreed Learner Data exporters.
 """
 
 import datetime
 import unittest
+from unittest import mock
+from unittest.mock import MagicMock
 
 import ddt
-import mock
 from freezegun import freeze_time
-from mock.mock import MagicMock
 from pytest import mark
 
 from django.utils import timezone

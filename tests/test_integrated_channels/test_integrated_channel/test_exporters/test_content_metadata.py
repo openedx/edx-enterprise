@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the base content metadata exporter.
 """
@@ -7,8 +6,8 @@ import datetime
 import logging
 import unittest
 from collections import OrderedDict
+from unittest import mock
 
-import mock
 from pytest import mark
 from testfixtures import LogCapture
 
@@ -74,7 +73,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
-            assert key in content_updated_mapping.keys()
+            assert key in content_updated_mapping
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')

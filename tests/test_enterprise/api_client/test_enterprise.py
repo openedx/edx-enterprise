@@ -3,9 +3,9 @@ Test the Enterprise API client functionality.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 import responses
 from pytest import mark
 

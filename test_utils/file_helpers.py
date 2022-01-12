@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Utility functions for dealing with files in tests.
 """
 
-import six
+from io import BytesIO
+
 import unicodecsv
 
 
@@ -30,7 +30,7 @@ class MakeCsvStreamContextManager:
         """
         Enter context setting up context variables.
         """
-        self._csv_stream = six.BytesIO()
+        self._csv_stream = BytesIO()
 
         writer = unicodecsv.writer(self._csv_stream, encoding=self._encoding)
         writer.writerow(self._header)

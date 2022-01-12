@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django management command for creating EnterpriseCourseEnrollment records.
 """

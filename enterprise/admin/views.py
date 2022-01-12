@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Custom Django Admin views used in enterprise app.
 """
@@ -114,7 +113,7 @@ class BaseEnterpriseCustomerView(View):
         """
         opts = customer._meta
         codename = get_permission_codename('change', opts)
-        has_change_permission = request.user.has_perm('%s.%s' % (opts.app_label, codename))
+        has_change_permission = request.user.has_perm('{}.{}'.format(opts.app_label, codename))
         return {
             'has_change_permission': has_change_permission,
             'opts': opts

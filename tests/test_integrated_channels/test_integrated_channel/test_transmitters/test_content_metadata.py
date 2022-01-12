@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the base content metadata transmitter.
 """
@@ -6,9 +5,9 @@ Tests for the base content metadata transmitter.
 import unittest
 import uuid
 from datetime import datetime
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark
 
 from integrated_channels.exceptions import ClientError

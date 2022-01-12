@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Base API client for integrated channels.
 """

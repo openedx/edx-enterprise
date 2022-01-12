@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django management command for bulk updating EnterpriseCustomerCatalog record's EnterpriseCatalogQuery's.
 """

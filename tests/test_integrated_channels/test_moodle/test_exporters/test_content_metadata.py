@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for Moodle content metadata exporters.
 """
 
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 import responses
 from pytest import mark
 
@@ -57,7 +56,7 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
         for key in create_payload:
             assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
-            assert key in content_updated_mapping.keys()
+            assert key in content_updated_mapping
         assert not update_payload
         assert not delete_payload
 

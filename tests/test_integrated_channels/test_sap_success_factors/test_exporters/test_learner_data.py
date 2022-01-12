@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Tests for SAPSF learner data exporters.
 """
 
 import unittest
+from unittest import mock
+from unittest.mock import MagicMock
 
 import ddt
-import mock
-from mock.mock import MagicMock
 from pytest import mark
 
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerExporter

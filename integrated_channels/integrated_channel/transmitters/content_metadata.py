@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Generic content metadata transmitter for integrated channels.
 """

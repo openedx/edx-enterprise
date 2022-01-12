@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Mock Enterprise API for testing.
 """
 
 from hashlib import md5
+from urllib.parse import urlencode, urljoin
 
 import responses
 from faker import Factory as FakerFactory
 from rest_framework.reverse import reverse
-from six import text_type
-from six.moves.urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.core.cache import cache
@@ -48,7 +46,7 @@ class EnterpriseMockMixin:
         """
         course_detail = {
             'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
-            'key': text_type(course_run_key),
+            'key': str(course_run_key),
             'aggregation_key': 'courserun:{org}+{course}'.format(
                 org=course_run_key.org, course=course_run_key.course
             ),
@@ -79,7 +77,7 @@ class EnterpriseMockMixin:
                 settings.LMS_ROOT_URL,
                 reverse(
                     'enterprise_course_run_enrollment_page',
-                    args=[enterprise_uuid, text_type(course_run_key)],
+                    args=[enterprise_uuid, str(course_run_key)],
                 )
             ),
             'content_language': None,
@@ -106,7 +104,7 @@ class EnterpriseMockMixin:
         """
         DRY method to generate dummy course product SKU.
         """
-        md5_hash = md5(text_type(course_run_key).encode('utf-8'))
+        md5_hash = md5(str(course_run_key).encode('utf-8'))
         digest = md5_hash.hexdigest()[-7:]
         sku = digest.upper()
         return sku
@@ -152,7 +150,7 @@ class EnterpriseMockMixin:
 
 
 # pylint: disable=dangerous-default-value
-def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], title=u'All Content',
+def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], title='All Content',
                                          enterprise_customer_uuid=FAKE_UUIDS[0], previous_url=None, next_url=None,
                                          paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                                          include_enterprise_context=False, add_utm_info=True,

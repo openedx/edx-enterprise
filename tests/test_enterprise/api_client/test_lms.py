@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for enterprise.api_client.lms.py
 """
 
 import json
 import time
+from unittest import mock
 
-import mock
 import requests
 import responses
 from pytest import raises

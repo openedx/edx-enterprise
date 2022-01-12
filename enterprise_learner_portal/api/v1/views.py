@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Views for enterprise_learner_portal app.
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for migrations, especially potentially risky data migrations.
 """

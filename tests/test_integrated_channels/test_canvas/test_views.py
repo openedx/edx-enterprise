@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Tests for views in Canvas integrated channels.
 """
+from urllib.parse import urljoin
 from uuid import uuid4
 
 import pytest
 import responses
 from rest_framework.test import APITestCase
-from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.contrib.sites.models import Site

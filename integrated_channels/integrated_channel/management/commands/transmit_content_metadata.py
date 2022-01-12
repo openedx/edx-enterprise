@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Transmits information about an enterprise's course catalog to connected IntegratedChannels
 """

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal app.
 """
 
 from collections import OrderedDict
+from unittest import mock
 
-import mock
 from pytest import mark
 
 from django.test import RequestFactory, TestCase

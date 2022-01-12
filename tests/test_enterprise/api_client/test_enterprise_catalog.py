@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for enterprise.api_client.enterprise_catalog.py
 """
 
 import json
+from unittest import mock
 
-import mock
 import requests
 import responses
 from pytest import mark

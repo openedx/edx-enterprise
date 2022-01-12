@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Tests for SAPSF learner data transmissions.
 """
 
 import datetime
 import unittest
+from unittest import mock
 
 import ddt
-import mock
 from pytest import mark
 
 from integrated_channels.exceptions import ClientError

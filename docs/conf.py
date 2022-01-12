@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Open edX Enterprise Service documentation build configuration file.
 
@@ -21,7 +20,6 @@ sys.path.append(REPO_ROOT)
 
 import django
 from django.conf import settings
-from django.utils import six
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -33,7 +31,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.ifconfig',
     'sphinx.ext.autodoc',
-    'sphinxcontrib.napoleon',
+    'sphinx.ext.napoleon',
 ]
 
 import edx_theme
@@ -265,7 +263,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = '{project}doc'.format(project=project)
+htmlhelp_basename = f'{project}doc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -290,7 +288,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_target = '{project}.tex'.format(project=project)
+latex_target = f'{project}.tex'
 latex_documents = [
     (master_doc, latex_target, title,
      author, 'manual'),
@@ -484,5 +482,5 @@ def on_init(app):
 
 def setup(app):
     """Sphinx extension: run sphinx-apidoc."""
-    event = 'builder-inited' if six.PY3 else b'builder-inited'
+    event = 'builder-inited'
     app.connect(event, on_init)

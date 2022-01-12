@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django admin integration for configuring moodle app to communicate with Moodle systems.
 """

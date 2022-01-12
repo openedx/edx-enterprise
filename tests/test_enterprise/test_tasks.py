@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` tasks module.
 """
 
 import copy
 import unittest
+from unittest import mock
 
-import mock
 from pytest import mark
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource

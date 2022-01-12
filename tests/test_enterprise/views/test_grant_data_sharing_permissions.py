@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``GrantDataSharingPermissions`` view of the Enterprise app.
 """
 
 import json
 import uuid
+from unittest import mock
 
 import ddt
-import mock
 from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark

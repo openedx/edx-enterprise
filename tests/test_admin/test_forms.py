@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the `edx-enterprise` admin forms module.
 """
@@ -6,9 +5,9 @@ Tests for the `edx-enterprise` admin forms module.
 import json
 import unittest
 from datetime import date, timedelta
+from unittest import mock
 
 import ddt
-import mock
 from faker import Factory as FakerFactory
 from pytest import mark
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Decorators for enterprise app.
 """
@@ -6,9 +5,9 @@ Decorators for enterprise app.
 import inspect
 import warnings
 from functools import wraps
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from requests.utils import quote
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from django.http import Http404
 from django.shortcuts import redirect

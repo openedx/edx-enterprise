@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the Consent application's` API permissions.
 """
 
+from unittest import mock
+
 import ddt
-import mock
 from rest_framework import status
 from rest_framework.reverse import reverse
 

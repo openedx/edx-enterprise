@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Client for connecting to Blackboard.
 """
@@ -7,9 +6,9 @@ import copy
 import json
 import logging
 from http import HTTPStatus
+from urllib.parse import urljoin
 
 import requests
-from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.db import transaction
@@ -456,7 +455,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
         return 'Basic {}'.format(
-            base64.b64encode(u'{key}:{secret}'.format(
+            base64.b64encode('{key}:{secret}'.format(
                 key=self.enterprise_configuration.client_id,
                 secret=self.enterprise_configuration.client_secret
             ).encode('utf-8')).decode()

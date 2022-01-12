@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 User-facing views for the Enterprise app.
 """
@@ -8,6 +7,7 @@ import json
 import re
 from collections import namedtuple
 from logging import getLogger
+from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 from uuid import UUID
 
 import pytz
@@ -18,7 +18,6 @@ from edx_rest_api_client.exceptions import HttpClientError
 from ipware.ip import get_client_ip
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
-from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 from django.apps import apps
 from django.conf import settings
@@ -962,7 +961,7 @@ class EnterpriseLoginView(FormView):
         context_data = super().get_context_data(**kwargs)
         context_data.update(get_global_context(self.request))
         context_data.update({
-            'page_title': _(u'Enterprise Slug Login'),
+            'page_title': _('Enterprise Slug Login'),
             'enterprise_login_title_message': ENTERPRISE_LOGIN_TITLE,
             'enterprise_login_subtitle_message': ENTERPRISE_LOGIN_SUBTITLE,
         })
@@ -1086,8 +1085,8 @@ class EnterpriseSelectionView(FormView):
         context_data = super().get_context_data(**kwargs)
         context_data.update(get_global_context(self.request))
         context_data.update({
-            'page_title': _(u'Select Organization'),
-            'select_enterprise_message_title': _(u'Select an organization'),
+            'page_title': _('Select Organization'),
+            'select_enterprise_message_title': _('Select an organization'),
             'select_enterprise_message_subtitle': ENTERPRISE_SELECT_SUBTITLE,
         })
         return context_data

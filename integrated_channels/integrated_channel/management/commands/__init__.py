@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Enterprise Integrated Channel management commands.
 """
@@ -109,8 +108,7 @@ class IntegratedChannelCommandMixin:
             filter_kwargs['enterprise_customer'] = enterprise_customer
 
         for channel_class in channel_classes:
-            for integrated_channel in channel_class.objects.filter(**filter_kwargs):
-                yield integrated_channel
+            yield from channel_class.objects.filter(**filter_kwargs)
 
     @staticmethod
     def get_enterprise_customer(uuid):

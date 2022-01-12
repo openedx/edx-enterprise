@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the utils of the enterprise_learner_portal app.
 """

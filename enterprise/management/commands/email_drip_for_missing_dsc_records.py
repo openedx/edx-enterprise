@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django management command for sending an email to learners with missing DataSharingConsent records.
 """

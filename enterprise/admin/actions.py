@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Custom `Django Admin actions`_ used in enterprise app.
 
@@ -6,7 +5,6 @@ Custom `Django Admin actions`_ used in enterprise app.
 """
 
 import unicodecsv
-from six import string_types
 
 from django.contrib import messages
 from django.http import HttpResponse
@@ -54,7 +52,7 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
                     value = field
                 if value is None:
                     row.append("[Not Set]")
-                elif not value and isinstance(value, string_types):
+                elif not value and isinstance(value, str):
                     row.append("[Empty]")
                 else:
                     row.append(value)

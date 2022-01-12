@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # pylint: disable=C0111,W6005,W6100
 
 
@@ -54,11 +53,7 @@ def get_requirements(requirements_file):
 
             if package:
                 dependency_links.append(
-                    '{package_link}#egg={package}-{package_version}'.format(
-                        package_link=package_link,
-                        package=package,
-                        package_version=package_version,
-                    )
+                    f'{package_link}#egg={package}-{package_version}'
                 )
         else:
             # Ignore any trailing comment
@@ -75,7 +70,7 @@ VERSION = get_version("enterprise", "__init__.py")
 
 if sys.argv[-1] == "tag":
     print("Tagging the version on github:")
-    os.system("git tag -a %s -m 'version %s'" % (VERSION, VERSION))
+    os.system(f"git tag -a {VERSION} -m 'version {VERSION}'")
     os.system("git push --tags")
     sys.exit()
 
@@ -89,7 +84,7 @@ setup(
     name="edx-enterprise",
     version=VERSION,
     description="""Your project description goes here""",
-    long_description=README + "\n\n" + CHANGELOG,
+    long_description=f"{README}\n\n{CHANGELOG}",
     author="edX",
     author_email="oscm@edx.org",
     url="https://github.com/edx/edx-enterprise",

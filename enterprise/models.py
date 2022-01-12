@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Database models for enterprise.
 """
@@ -8,9 +7,9 @@ import json
 import os
 from decimal import Decimal
 from logging import getLogger
+from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
-import six
 from config_models.models import ConfigurationModel
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
@@ -20,7 +19,6 @@ from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
-from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
@@ -83,7 +81,7 @@ except ImportError:
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
-mark_safe_lazy = lazy(mark_safe, six.text_type)
+mark_safe_lazy = lazy(mark_safe, str)
 
 
 class EnterpriseCustomerManager(models.Manager):
@@ -1426,7 +1424,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
     )
     logo = models.ImageField(
         upload_to=logo_path,
-        help_text=_(u"Logo images must be in .png format."),
+        help_text=_("Logo images must be in .png format."),
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
     )

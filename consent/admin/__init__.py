@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Django admin integration for the Consent application.
 """

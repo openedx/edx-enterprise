@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
@@ -60,6 +57,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='datasharingconsent',
-            unique_together=set([('enterprise_customer', 'username', 'course_id')]),
+            unique_together={('enterprise_customer', 'username', 'course_id')},
         ),
     ]

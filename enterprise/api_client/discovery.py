@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utilities to get details from the course catalog API.
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 URL definitions for version 1 of the Consent API.
 

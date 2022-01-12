@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 User-facing forms for the Enterprise app.
 """
@@ -13,12 +12,12 @@ from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 LOGGER = logging.getLogger(__name__)
 
 ENTERPRISE_SELECT_SUBTITLE = _(
-    u'You have access to multiple organizations. Select the organization that you will use '
+    'You have access to multiple organizations. Select the organization that you will use '
     'to sign up for courses. If you want to change organizations, sign out and sign back in.'
 )
-ENTERPRISE_LOGIN_TITLE = _(u'Enter the organization name')
+ENTERPRISE_LOGIN_TITLE = _('Enter the organization name')
 ENTERPRISE_LOGIN_SUBTITLE = _(
-    u'Have an account through your company, school, or organization? Enter your organization’s name below to sign in.'
+    'Have an account through your company, school, or organization? Enter your organization’s name below to sign in.'
 )
 ERROR_MESSAGE_FOR_SLUG_LOGIN = _(
     "The attempt to login with this organization name was not successful. Please try again, or contact our support."

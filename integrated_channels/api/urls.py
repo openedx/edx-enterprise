@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 URL definitions for integrated_channels API endpoint.
 """

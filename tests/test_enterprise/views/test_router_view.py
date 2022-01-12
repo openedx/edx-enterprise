@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Tests for the ``RouterView`` view of the Enterprise app.
 """
 
+from unittest import mock
+
 import ddt
-import mock
 from pytest import mark
 
 from django.core.exceptions import ImproperlyConfigured

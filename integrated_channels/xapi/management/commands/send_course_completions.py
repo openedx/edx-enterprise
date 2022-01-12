@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Send xAPI statements to the LRS configured via admin.
 """
 
 from logging import getLogger
-
-import six
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
@@ -143,7 +140,7 @@ class Command(BaseCommand):
                 continue
 
             user = users.get(course_grade.user_id)
-            courserun_id = six.text_type(course_grade.course_id)
+            courserun_id = str(course_grade.course_id)
             course_overview = course_overviews.get(course_grade.course_id)
             course_run_identifiers = course_catalog_client.get_course_run_identifiers(courserun_id)
             course_overview.course_key = course_run_identifiers['course_key']
