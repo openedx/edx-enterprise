@@ -713,12 +713,13 @@ class EnterpriseCustomer(TimeStampedModel):
         )
         send_enterprise_email_notification.delay(self.uuid, admin_enrollment, email_items)
 
-    def toggle_universal_link(self, enable_universal_link, link_expiration_date):
+    def toggle_universal_link(self, enable_universal_link, link_expiration_date=None):
         """
         Sets enable_universal_link
-
+        Args: 
+            enable_universal_link: new value
+            link_expiration_date: if passed when enable_universal_link is true new link will be created
         If there is no change to be made, return
-
         When enable_universal_link changes to;
             True: a new link is created
             False: all links are deactivate

@@ -413,7 +413,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Enables/Disables universal link config.
         """
 
-        enterprise_customer = self.get_object()
+        enterprise_customer = get_object_or_404(models.EnterpriseCustomer, uuid=pk)
         serializer = serializers.EnterpriseCustomerToggleUniversalLinkSerializer(
             data=request.data,
             context={
