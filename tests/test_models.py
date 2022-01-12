@@ -332,6 +332,32 @@ class TestEnterpriseCustomer(unittest.TestCase):
         enterprise_customer.save()
         assert user_preference_mock.objects.filter.call_count == 2
 
+    def test_enterprise_customer_user_toggle_universal_link(self):
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        # Toggle to True creates with no date, does not create a new link
+        enterprise_customer.toggle_universal_link(True)
+        assert enterprise_customer.enable_universal_link
+        # No links should have been made since a date was not passed
+        assert EnterpriseCustomerInviteKey.objects.filter(
+            enterprise_customer=enterprise_customer,
+            is_active=True,
+        ).count() == 0
+        # Toggle to False
+        enterprise_customer.toggle_universal_link(False)
+        assert not enterprise_customer.enable_universal_link
+        # Toggle to True, with date passed, link should be generated
+        enterprise_customer.toggle_universal_link(True, localized_utcnow() + timedelta(seconds=1))
+        assert EnterpriseCustomerInviteKey.objects.filter(
+            enterprise_customer=enterprise_customer,
+            is_active=True,
+        ).count() == 1
+        # Toggle to False, links should be disabled
+        enterprise_customer.toggle_universal_link(False)
+        assert EnterpriseCustomerInviteKey.objects.filter(
+            enterprise_customer=enterprise_customer,
+            is_active=True,
+        ).count() == 0
+
 
 @mark.django_db
 @ddt.ddt

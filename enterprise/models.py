@@ -711,6 +711,38 @@ class EnterpriseCustomer(TimeStampedModel):
         )
         send_enterprise_email_notification.delay(self.uuid, admin_enrollment, email_items)
 
+    def toggle_universal_link(self, enable_universal_link, link_expiration_date=None):
+        """
+        Sets enable_universal_link
+        Args:
+            enable_universal_link: new value
+            link_expiration_date: if passed when enable_universal_link is true new link will be created
+        If there is no change to be made, return
+        When enable_universal_link changes to;
+            True: a new EnterpriseCustomerInviteKey is created
+            False: all EnterpriseCustomerInviteKey are deactivate
+        """
+        if self.enable_universal_link == enable_universal_link:
+            return
+
+        self.enable_universal_link = enable_universal_link
+        self.save()
+
+        # If universal link is being disabled
+        if not enable_universal_link:
+            # Deactivate all EnterpriseCustomerInviteKey
+            EnterpriseCustomerInviteKey.objects.filter(
+                enterprise_customer=self,
+                is_active=True,
+            ).update(is_active=False)
+        # If universal link is being enabled and a date is passed
+        elif link_expiration_date:
+            # Create a new EnterpriseCustomerInviteKey
+            EnterpriseCustomerInviteKey.objects.create(
+                enterprise_customer=self,
+                expiration_date=link_expiration_date
+            )
+
 
 class EnterpriseCustomerUserManager(models.Manager):
     """

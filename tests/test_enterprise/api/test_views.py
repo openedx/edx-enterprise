@@ -5124,3 +5124,162 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
             )
         )
         self.assertEqual(response.status_code, 200)
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerToggleUniversalLinkView(BaseTestEnterpriseAPIViews):
+    """
+    Test toggle_universal_link in EnterpriseCustomerViewSet
+    """
+    TOGGLE_UNIVERSAL_LINK_ENDPOINT = 'enterprise-customer-toggle-universal-link'
+    REQUEST_BODY_TRUE = json.dumps({'enable_universal_link': 'true'})
+    REQUEST_BODY_FALSE = json.dumps({'enable_universal_link': 'false'})
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name="test_enterprise")
+        self.user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        self.user.set_password(TEST_PASSWORD)
+        self.user.save()
+
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(name=ENTERPRISE_DASHBOARD_ADMIN_ROLE)
+        EnterpriseFeatureUserRoleAssignment.objects.create(user=self.user, role=feature_role_object)
+        self.client = APIClient()
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+    def tearDown(self):
+        super().tearDown()
+        EnterpriseCustomer.objects.all().delete()
+        EnterpriseCustomerInviteKey.objects.all().delete()
+
+    def test_permissions(self):
+        """
+        Tests permissions work as expected
+        """
+
+        non_admin_user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        non_admin_user.set_password(TEST_PASSWORD)
+        non_admin_user.save()
+
+        non_admin_client = APIClient()
+        non_admin_client.login(username=non_admin_user.username, password=TEST_PASSWORD)
+
+        forbidden_response = non_admin_client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                kwargs={'pk': self.enterprise_customer.uuid}
+            )
+        )
+        self.assertEqual(forbidden_response.status_code, 403)
+
+        allowed_response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                kwargs={'pk': self.enterprise_customer.uuid}
+            ),
+            data=self.REQUEST_BODY_TRUE,
+            content_type='application/json',
+        )
+        self.assertEqual(allowed_response.status_code, 200)
+
+    def test_toggle(self):
+        # Toggle to True with date should create a link
+        response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                kwargs={'pk': self.enterprise_customer.uuid}
+            ),
+            data=json.dumps({
+                'enable_universal_link': 'true',
+                'expiration_date': str(datetime.utcnow())
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        assert EnterpriseCustomer.objects.get(
+            uuid=self.enterprise_customer.uuid
+        ).enable_universal_link
+
+        assert EnterpriseCustomerInviteKey.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            is_active=True,
+        ).count() == 1
+
+        # Toggle to False should disable link
+        response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                kwargs={'pk': self.enterprise_customer.uuid}
+            ),
+            data=json.dumps({'enable_universal_link': 'false'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+
+        assert not EnterpriseCustomer.objects.get(
+            uuid=self.enterprise_customer.uuid
+        ).enable_universal_link
+
+        assert EnterpriseCustomerInviteKey.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            is_active=True,
+        ).count() == 0
+
+    def test_enterprise_user_not_found(self):
+        """
+        Test invalid uuid
+        """
+        response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                (str(uuid.uuid4()),),
+            ),
+            data=json.dumps({'enable_universal_link': 'true'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 404)
+
+    @ddt.data(
+        {'enable_universal_link': 'foo'},
+        {'expiration_date': 'bar'},
+        {'enable_universal_link': 'foo', 'expiration_date': 'bar'},
+        {'enable_universal_link': 'foo', 'expiration_date': str(datetime.utcnow())},
+        {'enable_universal_link': 'true', 'expiration_date': 'bar'},
+    )
+    def test_invalid_data(self, data):
+        """
+        Test invalid json data
+        """
+        response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                kwargs={'pk': self.enterprise_customer.uuid}
+            ),
+            data=json.dumps(data),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_same_enable_universal_link(self):
+        """
+        Test toggling to same value returns "No Changes" message
+        """
+        response = self.client.patch(
+            settings.TEST_SERVER + reverse(
+                self.TOGGLE_UNIVERSAL_LINK_ENDPOINT,
+                kwargs={'pk': self.enterprise_customer.uuid}
+            ),
+            data=self.REQUEST_BODY_FALSE,
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        response = response.json()
+        self.assertEqual(response['detail'], 'No changes')

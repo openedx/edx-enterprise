@@ -405,6 +405,40 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             self.queryset = self.queryset.filter(name__icontains=enterprise_name)
         return self.list(request, *args, **kwargs)
 
+    @action(methods=['patch'], detail=True, permission_classes=[permissions.IsAuthenticated])
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def toggle_universal_link(self, request, pk=None):
+        """
+        Enables/Disables universal link config.
+        """
+
+        enterprise_customer = get_object_or_404(models.EnterpriseCustomer, uuid=pk)
+        serializer = serializers.EnterpriseCustomerToggleUniversalLinkSerializer(
+            data=request.data,
+            context={
+                'enterprise_customer': enterprise_customer,
+                'request_user': request.user,
+            }
+        )
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+        enable_universal_link = serializer.data.get('enable_universal_link')
+        link_expiration_date = serializer.data.get('expiration_date')
+
+        if enterprise_customer.enable_universal_link == enable_universal_link:
+            return Response({"detail": "No changes"}, status=HTTP_200_OK)
+
+        enterprise_customer.toggle_universal_link(
+            enable_universal_link,
+            link_expiration_date,
+        )
+
+        response_body = {"enable_universal_link": enable_universal_link}
+        headers = self.get_success_headers(response_body)
+        return Response(response_body, status=HTTP_200_OK, headers=headers)
+
 
 class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
     """

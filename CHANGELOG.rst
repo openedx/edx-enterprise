@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.37.0]
+---------
+feat: Adds toggle_universal_link endpoint
+
 [3.36.13]
 ---------
 fix: check if instance is an iterable rather than a list in ``EnterpriseCustomerUserReadOnlySerializer``
