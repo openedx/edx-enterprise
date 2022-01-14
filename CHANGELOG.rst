@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.38.1]
+---------
+feat: New crud viewset for IC degreed2 configurations
+
 [3.38.0]
 ---------
 feat: Adds toggle_universal_link endpoint

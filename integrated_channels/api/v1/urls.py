@@ -11,5 +11,6 @@ urlpatterns = [
     url(r'^blackboard/', include('integrated_channels.api.v1.blackboard.urls')),
     url(r'^sap_success_factors/', include('integrated_channels.api.v1.sap_success_factors.urls')),
     url(r'^degreed/', include('integrated_channels.api.v1.degreed.urls')),
+    url(r'^degreed2/', include('integrated_channels.api.v1.degreed2.urls')),
     url(r'^cornerstone/', include('integrated_channels.api.v1.cornerstone.urls'))
 ]
