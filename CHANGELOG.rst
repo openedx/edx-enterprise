@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.38.2]
+---------
+fix: Django Admin bugfix
+
 [3.38.1]
 ---------
 feat: New crud viewset for IC degreed2 configurations
