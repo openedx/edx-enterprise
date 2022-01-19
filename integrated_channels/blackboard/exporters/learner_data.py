@@ -86,7 +86,7 @@ class BlackboardLearnerExporter(LearnerExporter):
                 self.enterprise_configuration.channel_code(),
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
-                None,
+                enterprise_enrollment.course_id,
                 ('get_learner_assessment_data_records finished. No learner data was sent for this LMS User Id because'
                  ' Blackboard User ID not found for [{name}]'.format(
                      name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
