@@ -424,7 +424,10 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             )
 
             LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_run_id,
+                channel_name,
+                enterprise_customer_uuid,
+                lms_user_id,
+                enterprise_enrollment.course_id,
                 f'kwargs completed_date: '
                 f' {completed_date} '
                 f'api completed_date: '
