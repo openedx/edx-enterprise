@@ -34,12 +34,12 @@ def root(*args):
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": "default.db",
-        "USER": "",
-        "PASSWORD": "",
-        "HOST": "",
-        "PORT": "",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "enterprise",
+        "USER": "root",
+        "PASSWORD": "root",
+        "HOST": "db",
+        "PORT": "3306",
     }
 }
 
@@ -321,3 +321,5 @@ INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = {
 }
 
 LANGUAGE_COOKIE = 'openedx-language-preference'
+allowed_hosts='*'
+DEBUG = False
