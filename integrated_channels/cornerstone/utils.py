@@ -2,13 +2,10 @@
 Utilities for Cornerstone integrated channels.
 """
 
-import re
 from logging import getLogger
 from uuid import uuid4
 
 from django.apps import apps
-
-from integrated_channels.utils import encode_course_key_into_base64
 
 
 def cornerstone_learner_data_transmission_audit():
