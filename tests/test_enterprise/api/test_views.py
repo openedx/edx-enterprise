@@ -945,6 +945,25 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         )
         assert response.status_code == 403
 
+    def test_post_pending_enterprise_customer_empty_bulk_payload(self):
+        # create user making the request
+        self.setup_admin_user()
+
+        # Create fake enterprise
+        ent_uuid = fake.uuid4()
+        factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        # Fake enterprise admin permissions
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
+
+        route = reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid})
+        response = self.client.post(
+            settings.TEST_SERVER + route,
+            data=[],
+            format='json',
+        )
+        assert response.status_code == 400
+        assert response.json() == 'At least one user email is required.'
+
     def test_post_pending_enterprise_customer_user_authorized_for_different_enterprise(self):
         # create user making the request
         self.setup_admin_user()

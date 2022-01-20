@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.38.5]
+---------
+fix: update link_learners action to respond with error when payload is empty.
+
 [3.38.4]
 ---------
 fix: bugfix for Cornerstone missing completion records
