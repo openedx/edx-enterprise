@@ -847,7 +847,8 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         email_to_unlink = request.GET["unlink_email"]
         try:
             EnterpriseCustomerUser.objects.unlink_user(
-                enterprise_customer=enterprise_customer, user_email=email_to_unlink
+                enterprise_customer=enterprise_customer,
+                user_email=email_to_unlink,
             )
         except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
             message = _("Email {email} is not associated with Enterprise "

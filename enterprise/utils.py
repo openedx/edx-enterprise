@@ -722,7 +722,7 @@ def get_enterprise_customer(uuid):
         return None
 
 
-def get_enterprise_uuids_for_user_and_course(auth_user, course_run_id, active=None):
+def get_enterprise_uuids_for_user_and_course(auth_user, course_run_id, is_customer_active=None):
     """
     Get the ``EnterpriseCustomer`` UUID(s) associated with a user and a course id``.
 
@@ -743,7 +743,8 @@ def get_enterprise_uuids_for_user_and_course(auth_user, course_run_id, active=No
     return enterprise_course_enrollment_model().get_enterprise_uuids_with_user_and_course(
         auth_user.id,
         course_run_id,
-        active)
+        is_customer_active=is_customer_active,
+    )
 
 
 def get_enterprise_customer_for_user(auth_user):

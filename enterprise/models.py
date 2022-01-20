@@ -843,6 +843,7 @@ class EnterpriseCustomerUserManager(models.Manager):
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             link_record = self.get(enterprise_customer=enterprise_customer, user_id=existing_user.id)
             link_record.linked = False
+            link_record.active = False
             link_record.save()
 
         except User.DoesNotExist:
@@ -914,7 +915,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 existing = EnterpriseCustomerUser.all_objects.get(
                     enterprise_customer=self.enterprise_customer,
                     user_id=self.user_id,
-                    linked=False
+                    linked=False,
                 )
                 self.linked = True
                 # An existing record has been found so update auto primary key with primay key of existing record
@@ -1242,7 +1243,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     def link_pending_enterprise_user(self, user, is_user_created):
         """
         Link a PendingEnterpriseCustomerUser to the appropriate EnterpriseCustomer by
-        creating a EnterpriseCustomerUser record.
+        creating or updating an EnterpriseCustomerUser record.
 
         Arguments:
             is_user_created: a boolean whether the User instance was created or updated
@@ -1267,13 +1268,23 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                     user=user,
                     enterprise_customer=enterprise_customer_user.enterprise_customer,
                 ))
+
+                enterprise_customer_user.active = True
+                enterprise_customer_user.save()
+                enterprise_customer_user.inactivate_other_customers(
+                    user_id=enterprise_customer_user.user_id,
+                    enterprise_customer=self.enterprise_customer,
+                )
+
                 return enterprise_customer_user
             except EnterpriseCustomerUser.DoesNotExist:
                 pass  # nothing to do here
 
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+        defaults = {'active': True}
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
             enterprise_customer=self.enterprise_customer,
             user_id=user.id,
+            defaults=defaults,
         )
         return enterprise_customer_user
 
@@ -1774,7 +1785,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         return enterprise_course_enrollment_id
 
     @classmethod
-    def get_enterprise_uuids_with_user_and_course(cls, user_id, course_run_id, active=None):
+    def get_enterprise_uuids_with_user_and_course(cls, user_id, course_run_id, is_customer_active=None):
         """
         Returns a list of UUID(s) for EnterpriseCustomer(s) that this enrollment
         links together with the user_id and course_run_id
@@ -1782,11 +1793,11 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         try:
             queryset = cls.objects.filter(
                 course_id=course_run_id,
-                enterprise_customer_user__user_id=user_id
+                enterprise_customer_user__user_id=user_id,
             )
-            if active is not None:
+            if is_customer_active is not None:
                 queryset = queryset.filter(
-                    enterprise_customer_user__enterprise_customer__active=active
+                    enterprise_customer_user__enterprise_customer__active=is_customer_active,
                 )
 
             linked_enrollments = queryset.select_related(
@@ -1800,7 +1811,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
                 'EnterpriseCustomerUser entries not found for user id: {username}, course: {course_run_id}.'
                 .format(
                     username=user_id,
-                    course_run_id=course_run_id
+                    course_run_id=course_run_id,
                 )
             )
             return []
@@ -1811,7 +1822,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         return '<EnterpriseCourseEnrollment for user {} in course with ID {}>'.format(
             self.enterprise_customer_user.user.username,
-            self.course_id
+            self.course_id,
         )
 
     def __repr__(self):
