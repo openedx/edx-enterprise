@@ -39,11 +39,14 @@ class CornerstoneLearnerExporter(LearnerExporter):
         )
 
         try:
+            # get the proper internal representation of the course key
             course_id = get_course_id_for_enrollment(enterprise_enrollment)
-            key_mapping = get_or_create_key_pair(course_id)
+            # because CornerstoneLearnerDataTransmissionAudit records are created with a click-through
+            # the internal edX course_id is always used on the CornerstoneLearnerDataTransmissionAudit records
+            # rather than the external_course_id mapped via CornerstoneCourseKey
             csod_learner_data_transmission = CornerstoneLearnerDataTransmissionAudit.objects.get(
                 user_id=enterprise_enrollment.enterprise_customer_user.user.id,
-                course_id=key_mapping.external_course_id,
+                course_id=course_id,
             )
             csod_learner_data_transmission.enterprise_course_enrollment_id = enterprise_enrollment.id
             csod_learner_data_transmission.grade = grade
