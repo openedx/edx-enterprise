@@ -15,7 +15,6 @@ from pytest import mark
 
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
-from integrated_channels.utils import encode_course_key_into_base64
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import (
     FAKE_COURSE,
