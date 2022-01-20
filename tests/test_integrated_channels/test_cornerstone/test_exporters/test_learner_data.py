@@ -20,7 +20,7 @@ from enterprise.api_client import lms as lms_api
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
 from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
-from test_utils import factories
+from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
 from test_utils.integrated_channels_utils import mock_course_overview
 
@@ -191,6 +191,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.cornerstone.utils.uuid4')
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
@@ -200,7 +201,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         mock_is_course_completed,
         mock_get_course_details,
         mock_get_course_certificate,
-        mock_post_request
+        mock_post_request,
+        mock_uuid
     ):
         """
         Test sending of course completion data to cornerstone progress API
@@ -210,6 +212,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             pacing="instructor",
             end="2022-06-21T12:58:17.428373Z",
         )
+
+        mock_uuid.return_value = FAKE_UUIDS[4]
 
         # Enrollment API
         responses.add(
@@ -241,7 +245,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         expected_payload = {
             "status": "Completed",
             "completionDate": "2019-06-21T12:58:17+00:00",
-            "courseId": self.course_key,
+            "courseId": str(FAKE_UUIDS[4]),
             "successStatus": "Pass",
             "userGuid": self.user_guid,
         }
