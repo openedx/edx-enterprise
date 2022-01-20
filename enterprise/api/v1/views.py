@@ -911,6 +911,12 @@ class PendingEnterpriseCustomerUserEnterpriseAdminViewSet(PendingEnterpriseCusto
 
         Returns 201 if any users were created, 204 if no users were created.
         """
+        if not request.data:
+            LOGGER.error('Empty user email payload in link_learners for enterprise: %s', enterprise_uuid)
+            return Response(
+                'At least one user email is required.',
+                status=HTTP_400_BAD_REQUEST,
+            )
         context = {'enterprise_customer__uuid': enterprise_uuid}
         serializer = self.get_serializer(
             data=request.data,
