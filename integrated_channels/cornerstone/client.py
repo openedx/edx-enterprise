@@ -93,7 +93,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         # set them to uuids to comply with Cornerstone standards
         course_id = json_payload['data'].get('courseId')
         key_mapping = get_or_create_key_pair(course_id)
-        json_payload['data']['courseId'] = key_mapping.internal_course_id
+        json_payload['data']['courseId'] = key_mapping.external_course_id
         url = '{base_url}{callback_url}{completion_path}?sessionToken={session_token}'.format(
             base_url=self.enterprise_configuration.cornerstone_base_url,
             callback_url=callback_url,
