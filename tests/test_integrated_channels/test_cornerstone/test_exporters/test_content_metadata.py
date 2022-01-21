@@ -15,7 +15,6 @@ from pytest import mark
 
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
-from integrated_channels.utils import encode_course_key_into_base64
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import (
     FAKE_COURSE,
@@ -206,51 +205,53 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     @ddt.data(
         (
             {'key': 'edx+181'},
-            'edx+181',
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+.'},
-            encode_course_key_into_base64('edx+.'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+ '},
-            encode_course_key_into_base64('edx+ '),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+<>'},
-            encode_course_key_into_base64('edx+<>'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+&'},
-            encode_course_key_into_base64('edx+&'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+%'},
-            encode_course_key_into_base64('edx+%'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+|'},
-            encode_course_key_into_base64('edx+|'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'edx+/'},
-            encode_course_key_into_base64('edx+/'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': '..edx+'},
-            encode_course_key_into_base64('..edx+'),
+            FAKE_UUIDS[4],
         ),
         (
             {'key': 'ed%%x+'},
-            encode_course_key_into_base64('ed%%x+'),
+            FAKE_UUIDS[4],
         ),
     )
     @responses.activate
     @ddt.unpack
-    def test_encode_course_key(self, item_key, expected_id):
+    @mock.patch('integrated_channels.cornerstone.utils.uuid4')
+    def test_encode_course_key(self, item_key, expected_id, mock_uuid):
         """
         Transforming a course key encodes the string if and only if invalid chars are present, otherwise it's a noop
         """
+        mock_uuid.return_value = FAKE_UUIDS[4]
         item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_key)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_course_key(item_content_metadata) == expected_id
