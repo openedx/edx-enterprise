@@ -17,6 +17,9 @@ Unreleased
 ----------
 * Nothing
 
+[3.38.6]
+feat: add created to enterprise course enrollment serializer fields
+
 [3.38.5]
 ---------
 fix: update link_learners action to respond with error when payload is empty.

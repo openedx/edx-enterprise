@@ -84,6 +84,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('emails_enabled', True),
             ('course_run_id', course_run_id),
             ('course_run_status', 'completed'),
+            ('created', enterprise_enrollment.created.isoformat()),
             ('start_date', 'a datetime object'),
             ('end_date', 'a datetime object'),
             ('display_name', 'a default name'),
@@ -93,7 +94,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('org_name', 'my university'),
             ('is_revoked', False),
             ('is_enrollment_active', True),
-            ('mode', 'verified')
+            ('mode', 'verified'),
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)
