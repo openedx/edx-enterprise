@@ -58,6 +58,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
             certificate_info,
             instance
         )
+        representation['created'] = instance.created.isoformat()
         representation['start_date'] = course_overview['start']
         representation['end_date'] = course_overview['end']
         representation['display_name'] = course_overview['display_name_with_default']
