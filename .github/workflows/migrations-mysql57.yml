@@ -73,8 +73,8 @@ jobs:
         EOF
     - name: Run Tests
       run: |
-        echo "CREATE DATABASE IF NOT EXISTS edxtest;" | sudo mysql -u root
-        echo "CREATE DATABASE IF NOT EXISTS student_module_history_test;" | sudo mysql -u root
+        echo "CREATE DATABASE IF NOT EXISTS enterprise;" | sudo mysql -u root
         echo "Running the LMS migrations."
-        ./manage.py  migrate
+        ./manage.py  migrate --settings=enterprise.settings.test
+
 
