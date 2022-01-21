@@ -24,7 +24,7 @@ def create_uuid(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    replaces = [('blackboard', '0001_initial'), ('blackboard', '0002_auto_20200930_1723'), ('blackboard', '0003_blackboardlearnerdatatransmissionaudit'), ('blackboard', '0004_blackboard_tx_chunk_size_default_1'), ('blackboard', '0005_blackboardlearnerassessmentdatatransmissionaudit'), ('blackboard', '0006_auto_20210708_1446'), ('blackboard', '0007_auto_20210909_1536'), ('blackboard', '0008_auto_20210923_1727'), ('blackboard', '0009_alter_blackboardenterprisecustomerconfiguration_enterprise_customer'), ('blackboard', '0010_auto_20211221_1532')]
+    replaces = [('blackboard', '0001_initial'), ('blackboard', '0002_auto_20200930_1723'), ('blackboard', '0003_blackboardlearnerdatatransmissionaudit'), ('blackboard', '0004_blackboard_tx_chunk_size_default_1'), ('blackboard', '0005_bblearnerassessmentdatatransmissionaudit'), ('blackboard', '0006_auto_20210708_1446'), ('blackboard', '0007_auto_20210909_1536'), ('blackboard', '0008_auto_20210923_1727'), ('blackboard', '0009_alter_blackboardenterprisecustomerconfiguration_enterprise_customer'), ('blackboard', '0010_auto_20211221_1532')]
 
     dependencies = [
         ('enterprise', '0113_auto_20200914_2054'),
