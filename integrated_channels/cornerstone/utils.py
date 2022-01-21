@@ -10,14 +10,14 @@ from django.apps import apps
 
 def cornerstone_learner_data_transmission_audit():
     """
-    Returns the ``CornerstoneLearnerDataTransmissionAudit`` class.
+        Returns the ``CornerstoneLearnerDataTransmissionAudit`` class.
     """
     return apps.get_model('cornerstone', 'CornerstoneLearnerDataTransmissionAudit')
 
 
 def cornerstone_course_key_model():
     """
-    Returns the ``CornerstoneCourseKey`` class.
+        Returns the ``CornerstoneCourseKey`` class.
     """
     return apps.get_model('cornerstone', 'CornerstoneCourseKey')
 
