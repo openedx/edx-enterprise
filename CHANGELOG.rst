@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.38.4]
+---------
+fix: bugfix for Cornerstone missing completion records
+
 [3.38.3]
 ---------
 fix: more logging to debug missing completion records
