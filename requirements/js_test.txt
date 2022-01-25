@@ -26,7 +26,7 @@ cryptography==36.0.1
     #   urllib3
 glob2==0.7
     # via jasmine-core
-h11==0.12.0
+h11==0.13.0
     # via wsproto
 idna==3.3
     # via
@@ -42,13 +42,15 @@ jaraco.collections==3.5.1
     # via
     #   -r requirements/js_test.in
     #   cherrypy
+jaraco.context==4.1.1
+    # via jaraco.text
 jaraco.functools==3.5.0
     # via
     #   -r requirements/js_test.in
     #   cheroot
     #   jaraco.text
     #   tempora
-jaraco.text==3.6.0
+jaraco.text==3.7.0
     # via jaraco.collections
 jasmine==3.99.0
     # via -r requirements/js_test.in

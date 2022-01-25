@@ -393,7 +393,7 @@ edx-celeryutils==1.1.1
     #   super-csv
 edx-completion==4.1.0
     # via -r requirements/edx/base.in
-edx-django-release-util==1.1.0
+edx-django-release-util==1.1.1
     # via -r requirements/edx/base.in
 edx-django-sites-extensions==3.1.0
     # via -r requirements/edx/base.in
@@ -421,7 +421,7 @@ edx-drf-extensions==8.0.1
     #   edx-rbac
     #   edx-when
     #   edxval
-edx-enterprise==3.36.13
+edx-enterprise==3.38.5
     # via
     #   -c requirements/edx/../constraints.txt
     #   -r requirements/edx/base.in
@@ -429,7 +429,7 @@ edx-i18n-tools==0.8.1
     # via ora2
 edx-milestones==0.3.3
     # via -r requirements/edx/base.in
-edx-name-affirmation==2.0.3
+edx-name-affirmation==2.1.0
     # via -r requirements/edx/base.in
 edx-opaque-keys[django]==2.2.2
     # via
@@ -450,7 +450,7 @@ edx-opaque-keys[django]==2.2.2
     #   xmodule
 edx-organizations==6.10.1
     # via -r requirements/edx/base.in
-edx-proctoring==4.8.2
+edx-proctoring==4.8.4
     # via
     #   -r requirements/edx/base.in
     #   edx-proctoring-proctortrack
@@ -521,7 +521,6 @@ future==0.18.2
     # via
     #   django-ses
     #   edx-celeryutils
-    #   edx-enterprise
     #   pyjwkest
 geoip2==4.5.0
     # via -r requirements/edx/base.in
@@ -542,7 +541,7 @@ idna==3.3
     #   -r requirements/edx/paver.txt
     #   requests
     #   yarl
-importlib-metadata==4.10.0
+importlib-metadata==4.10.1
     # via markdown
 inflection==0.5.1
     # via drf-yasg
@@ -591,7 +590,7 @@ libsass==0.10.0
     #   ora2
 loremipsum==1.0.5
     # via ora2
-lti-consumer-xblock==3.1.2
+lti-consumer-xblock==3.2.0
     # via -r requirements/edx/base.in
 lxml==4.5.0
     # via
@@ -661,7 +660,7 @@ nltk==3.6.7
     #   chem
 nodeenv==1.6.0
     # via -r requirements/edx/base.in
-numpy==1.22.0
+numpy==1.22.1
     # via
     #   chem
     #   openedx-calc
@@ -676,7 +675,7 @@ oauthlib==3.0.1
     #   social-auth-core
 openedx-calc==2.0.1
     # via -r requirements/edx/base.in
-openedx-events==0.7.0
+openedx-events==0.7.1
     # via -r requirements/edx/base.in
 ora2==3.7.8
     # via -r requirements/edx/base.in
@@ -841,7 +840,7 @@ random2==1.0.1
     # via -r requirements/edx/base.in
 recommender-xblock==2.0.1
     # via -r requirements/edx/base.in
-redis==4.1.0
+redis==4.1.1
     # via -r requirements/edx/base.in
 regex==2021.11.10
     # via nltk
@@ -911,7 +910,6 @@ six==1.16.0
     #   edx-ccx-keys
     #   edx-django-release-util
     #   edx-drf-extensions
-    #   edx-enterprise
     #   edx-milestones
     #   edx-rbac
     #   event-tracking
@@ -937,7 +935,7 @@ social-auth-app-django==5.0.0
     # via
     #   -r requirements/edx/base.in
     #   edx-auth-backends
-social-auth-core==4.1.0
+social-auth-core==4.2.0
     # via
     #   -r requirements/edx/base.in
     #   edx-auth-backends
