@@ -217,7 +217,7 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
     )
     grade = models.CharField(max_length=255, default='', blank=True)
     # Request-related information.
-    status = models.CharField(max_length=100, default='',blank=True)
+    status = models.CharField(max_length=100, default='', blank=True)
     error_message = models.TextField(blank=True, default='',)
 
     class Meta:
