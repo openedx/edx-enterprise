@@ -330,7 +330,7 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     contact_email = models.EmailField(
-        null=True,
+        default='',
         blank=True,
         help_text=_("Email to be displayed as public point of contact for enterprise.")
     )
@@ -348,7 +348,6 @@ class EnterpriseCustomer(TimeStampedModel):
     )
     default_language = models.CharField(
         max_length=25,
-        null=True,
         blank=True,
         choices=AVAILABLE_LANGUAGES,
         default=None,
@@ -359,7 +358,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     sender_alias = models.CharField(
         max_length=255,
-        null=True,
+        default='',
         blank=True,
         help_text=_(
             "Specifies enterprise customized sender alias."
@@ -367,7 +366,7 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     reply_to = models.EmailField(
-        null=True,
+        default='',
         blank=True,
         help_text=_("The email address where learner's reply to enterprise emails will be delivered.")
     )
@@ -1391,12 +1390,12 @@ class PendingEnrollment(TimeStampedModel):
     user = models.ForeignKey(PendingEnterpriseCustomerUser, null=False, on_delete=models.deletion.CASCADE)
     course_id = models.CharField(max_length=255, blank=False,)
     course_mode = models.CharField(max_length=25, blank=False)
-    cohort_name = models.CharField(max_length=255, blank=True, null=True)
+    cohort_name = models.CharField(max_length=255, blank=True, default='')
     discount_percentage = models.DecimalField(default=0.0, max_digits=8, decimal_places=5)
-    sales_force_id = models.CharField(max_length=255, blank=True, null=True)
+    sales_force_id = models.CharField(max_length=255, blank=True, default='')
     history = HistoricalRecords()
     source = models.ForeignKey(EnterpriseEnrollmentSource, blank=False, null=True, on_delete=models.SET_NULL)
-    license_uuid = models.UUIDField(primary_key=False, editable=False, null=True, blank=True)
+    license_uuid = models.UUIDField(primary_key=False, editable=False, default='', blank=True)
 
     class Meta:
         app_label = 'enterprise'
@@ -1457,23 +1456,23 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
     logo = models.ImageField(
         upload_to=logo_path,
         help_text=_("Logo images must be in .png format."),
-        null=True, blank=True, max_length=255,
+        default='', blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
     )
     primary_color = models.CharField(
-        null=True,
+        default='',
         blank=True,
         max_length=7,
         validators=[validate_hex_color],
     )
     secondary_color = models.CharField(
-        null=True,
+        default='',
         blank=True,
         max_length=7,
         validators=[validate_hex_color],
     )
     tertiary_color = models.CharField(
-        null=True,
+        default='',
         blank=True,
         max_length=7,
         validators=[validate_hex_color],
@@ -2475,7 +2474,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         )
     )
     pgp_encryption_key = models.TextField(
-        null=True,
+        default='',
         blank=True,
         verbose_name=_("PGP Encryption Key"),
         help_text=_('The key for encryption, if PGP encrypted file is required.')
@@ -2541,7 +2540,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     sftp_hostname = models.CharField(
         max_length=256,
         blank=True,
-        null=True,
+        default='',
         verbose_name=_("SFTP Host name"),
         help_text=_("If the delivery method is sftp, the host to deliver the report to.")
     )
@@ -2555,7 +2554,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     sftp_username = models.CharField(
         max_length=256,
         blank=True,
-        null=True,
+        default='',
         verbose_name=_("SFTP username"),
         help_text=_("If the delivery method is sftp, the username to use to securely access the host.")
     )
@@ -2569,7 +2568,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     sftp_file_path = models.CharField(
         max_length=256,
         blank=True,
-        null=True,
+        default='',
         verbose_name=_("SFTP file path"),
         help_text=_("If the delivery method is sftp, the path on the host to deliver the report to.")
     )

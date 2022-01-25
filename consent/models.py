@@ -326,17 +326,17 @@ class DataSharingConsentTextOverrides(TimeStampedModel):
         help_text=_('Title of page')
     )
     left_sidebar_text = models.TextField(
-        null=True,
+        default='',
         blank=True,
         help_text=SIDEBAR_PARAGRAPH_HELP_TEXT
     )
     top_paragraph = models.TextField(
-        null=True,
+        default='',
         blank=True,
         help_text=TOP_PARAGRAPH_HELP_TEXT
     )
     agreement_text = models.TextField(
-        null=True,
+        default='',
         blank=True,
         help_text=_('Text next to agreement check mark')
     )
@@ -350,12 +350,12 @@ class DataSharingConsentTextOverrides(TimeStampedModel):
     )
     policy_dropdown_header = models.CharField(
         max_length=255,
-        null=True,
+        default='',
         blank=True,
         help_text=_('Text of policy drop down')
     )
     policy_paragraph = models.TextField(
-        null=True,
+        default='',
         blank=True,
         help_text=POLICY_PARAGRAPH_HELP_TEXT
     )

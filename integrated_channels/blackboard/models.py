@@ -31,7 +31,8 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
 
     client_id = models.CharField(
         max_length=255,
-        null=True,
+        blank=True,
+        default='',
         verbose_name="API Client ID or Blackboard Application Key",
         help_text=(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
@@ -41,7 +42,8 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
 
     client_secret = models.CharField(
         max_length=255,
-        null=True,
+        blank=True,
+        default='',
         verbose_name="API Client Secret or Application Secret",
         help_text=(
             "The API Client Secret provided to edX by the enterprise customer to be used to make "
@@ -51,7 +53,8 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
 
     blackboard_base_url = models.CharField(
         max_length=255,
-        null=True,
+        blank=True,
+        default='',
         verbose_name="Base URL",
         help_text="The base URL used for API requests to Blackboard, i.e. https://blackboard.com."
     )

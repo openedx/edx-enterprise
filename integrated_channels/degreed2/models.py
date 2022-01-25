@@ -27,6 +27,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
 
     client_id = models.CharField(
         max_length=255,
+        blank=True,
         verbose_name="API Client ID",
         help_text=(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
@@ -36,6 +37,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
 
     client_secret = models.CharField(
         max_length=255,
+        blank=True,
         verbose_name="API Client Secret",
         help_text=(
             "The API Client Secret provided to edX by the enterprise customer to be used to make API "
@@ -45,13 +47,14 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
 
     degreed_base_url = models.CharField(
         max_length=255,
+        blank=True,
         verbose_name="Degreed Base URL",
         help_text="The base URL used for API requests to Degreed, i.e. https://degreed.com."
     )
 
     degreed_token_fetch_base_url = models.CharField(
         max_length=255,
-        null=True,
+        default='',
         blank=True,
         verbose_name="Degreed token fetch base url",
         help_text="If provided, will be used as base url instead of degreed_base_url to fetch tokens"

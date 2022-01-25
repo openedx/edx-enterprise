@@ -215,10 +215,10 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
             'Date time when user completed course'
         )
     )
-    grade = models.CharField(max_length=255, null=True, blank=True)
+    grade = models.CharField(max_length=255, default='', blank=True)
     # Request-related information.
-    status = models.CharField(max_length=100, blank=True, null=True)
-    error_message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=100, default='',blank=True)
+    error_message = models.TextField(blank=True, default='',)
 
     class Meta:
         app_label = 'cornerstone'

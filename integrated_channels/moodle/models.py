@@ -28,12 +28,14 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
 
     moodle_base_url = models.CharField(
         max_length=255,
+        blank=True,
         verbose_name="Moodle Base URL",
         help_text=_("The base URL used for API requests to Moodle")
     )
 
     service_short_name = models.CharField(
         max_length=255,
+        blank=True,
         verbose_name="Webservice Short Name",
         help_text=_(
             "The short name for the Moodle webservice."
@@ -53,7 +55,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         max_length=255,
         verbose_name="Webservice Username",
         blank=True,
-        null=True,
+        default='',
         help_text=_(
             "The API user's username used to obtain new tokens."
         )
@@ -62,7 +64,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     password = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
+        default='',
         verbose_name="Webservice Password",
         help_text=_(
             "The API user's password used to obtain new tokens."
@@ -72,7 +74,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     token = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
+        default='',
         verbose_name="Webservice User Token",
         help_text=_(
             "The user's token for the Moodle webservice."

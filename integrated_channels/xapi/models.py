@@ -84,9 +84,9 @@ class XAPILearnerDataTransmissionAudit(TimeStampedModel):
     course_id = models.CharField(max_length=255, blank=False, null=False, db_index=True)
     course_completed = models.BooleanField(default=False)
     completed_timestamp = models.DateTimeField(null=True, blank=True)
-    grade = models.CharField(max_length=255, null=True, blank=True)
+    grade = models.CharField(max_length=255, default='', blank=True)
     status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True, null=True)
+    error_message = models.TextField(blank=True, default='')
 
     class Meta:
         app_label = 'xapi'
