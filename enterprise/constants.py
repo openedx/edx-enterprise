@@ -1,8 +1,7 @@
 """
 Enterprise Django application constants.
 """
-
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 # We listen to the User post_save signal in order to associate new users
 # with an EnterpriseCustomer when applicable. This it the unique identifier

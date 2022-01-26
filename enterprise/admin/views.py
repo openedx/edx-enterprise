@@ -14,8 +14,8 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ungettext
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.generic import View
 
 from enterprise.admin.forms import (
@@ -421,7 +421,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         Returns: List of processable email addresses.
         """
         count = len(emails)
-        messages.success(request, ungettext(
+        messages.success(request, ngettext(
             "{count} new learner was added to {enterprise_customer_name}.",
             "{count} new learners were added to {enterprise_customer_name}.",
             count
@@ -570,7 +570,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         enrolled_count = len(users)
         return (
             'success',
-            ungettext(
+            ngettext(
                 '{enrolled_count} learner was enrolled in {enrolled_in}.',
                 '{enrolled_count} learners were enrolled in {enrolled_in}.',
                 enrolled_count,

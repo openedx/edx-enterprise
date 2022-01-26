@@ -5,7 +5,7 @@ import datetime
 import json
 import logging
 import re
-from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlsplit, urlunsplit
+from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID
 
 import bleach
@@ -31,10 +31,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
-from django.utils.http import urlquote
 from django.utils.text import slugify
-from django.utils.translation import ugettext as _
-from django.utils.translation import ungettext
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from enterprise.constants import (
     ALLOWED_TAGS,
@@ -525,7 +524,7 @@ def serialize_notification_content(
         params = {'tpa_hint': enterprise_customer.identity_providers.first().provider_id}
     elif enterprise_customer.has_multiple_idps and enterprise_customer.default_provider_idp:
         params = {'tpa_hint': enterprise_customer.default_provider_idp.provider_id}
-    course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+    course_path = quote("{}?{}".format(course_path, urlencode(params)))
 
     lms_root_url = get_configuration_value_for_site(
         enterprise_customer.site,
@@ -991,7 +990,7 @@ def ungettext_min_max(singular, plural, range_text, min_val, max_val):
         return None
     if min_val == max_val or min_val is None or max_val is None:
         # pylint: disable=translation-of-non-string
-        return ungettext(singular, plural, min_val or max_val).format(min_val or max_val)
+        return ngettext(singular, plural, min_val or max_val).format(min_val or max_val)
     return range_text.format(min_val, max_val)
 
 

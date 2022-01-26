@@ -37,7 +37,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise import models
 from enterprise.api.filters import (

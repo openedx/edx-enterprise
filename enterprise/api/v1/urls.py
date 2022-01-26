@@ -4,7 +4,7 @@ URL definitions for enterprise api version 1 endpoint.
 
 from rest_framework.routers import DefaultRouter
 
-from django.conf.urls import url
+from django.urls import re_path
 
 from enterprise.api.v1 import views
 
@@ -36,32 +36,28 @@ router.register(
 )
 
 urlpatterns = [
-    url(
-        r'^read_notification$',
-        views.NotificationReadView.as_view(),
-        name='read-notification'
-    ),
-    url(
+    re_path(r'^read_notification$', views.NotificationReadView.as_view(),
+            name='read-notification'
+            ),
+    re_path(
         r'link_pending_enterprise_users/(?P<enterprise_uuid>[A-Za-z0-9-]+)/?$',
         views.PendingEnterpriseCustomerUserEnterpriseAdminViewSet.as_view({'post': 'link_learners'}),
         name='link-pending-enterprise-learner'
     ),
-    url(
+    re_path(
         r'^enterprise_catalog_query/(?P<catalog_query_id>[\d]+)/$',
         views.CatalogQueryView.as_view(),
         name='enterprise-catalog-query'
     ),
-    url(
-        r'^request_codes$',
-        views.CouponCodesView.as_view(),
-        name='request-codes'
-    ),
-    url(
+    re_path(r'^request_codes$', views.CouponCodesView.as_view(),
+            name='request-codes'
+            ),
+    re_path(
         r'^tableau_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         views.TableauAuthView.as_view(),
         name='tableau-token'
     ),
-    url(
+    re_path(
         r'^enterprise_report_types/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         views.EnterpriseCustomerReportTypesView.as_view(),
         name='enterprise-report-types'

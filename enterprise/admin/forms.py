@@ -16,7 +16,7 @@ from django.db.models import Q
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise import utils
 from enterprise.admin.utils import email_or_username__to__email, split_usernames_and_emails

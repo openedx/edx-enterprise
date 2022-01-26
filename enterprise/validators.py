@@ -7,7 +7,7 @@ import re
 
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from enterprise.constants import CONTENT_FILTER_FIELD_TYPES as cftypes
 

@@ -12,17 +12,16 @@ from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin, auth
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.urls import path, re_path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise import constants
 from enterprise.admin.actions import export_as_csv_action, refresh_catalog
@@ -321,17 +320,17 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Returns the additional urls used by the custom object tools.
         """
         customer_urls = [
-            url(
+            re_path(
                 r"^([^/]+)/manage_learners$",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
                 name=UrlNames.MANAGE_LEARNERS
             ),
-            url(
+            re_path(
                 r"^([^/]+)/clear_learners_data_sharing_consent",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnerDataSharingConsentView.as_view()),
                 name=UrlNames.MANAGE_LEARNERS_DSC
             ),
-            url(
+            re_path(
                 r"^([^/]+)/transmit_courses_metadata",
                 self.admin_site.admin_view(EnterpriseCustomerTransmitCoursesView.as_view()),
                 name=UrlNames.TRANSMIT_COURSES_METADATA
@@ -563,7 +562,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         Returns the additional urls used by the custom object tools.
         """
         preview_urls = [
-            url(
+            re_path(
                 r"^([^/]+)/preview/([a-z]+)/$",
                 self.admin_site.admin_view(TemplatePreviewView.as_view()),
                 name=UrlNames.PREVIEW_EMAIL_TEMPLATE
@@ -661,11 +660,9 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         custom_urls = []
         if EnrollmentAttributeOverrideView:
             custom_urls = [
-                url(
-                    r'^override_attributes/$',
-                    self.admin_site.admin_view(EnrollmentAttributeOverrideView.as_view()),
-                    name='enterprise_override_attributes'
-                ),
+                path('override_attributes/', self.admin_site.admin_view(EnrollmentAttributeOverrideView.as_view()),
+                     name='enterprise_override_attributes'
+                     ),
             ]
 
         return custom_urls + super().get_urls()
