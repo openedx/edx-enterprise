@@ -5,7 +5,7 @@ Reset SAPSF learner transmissions between two dates.
 from django.apps import apps
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 
 class Command(BaseCommand):
