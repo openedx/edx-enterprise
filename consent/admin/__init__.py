@@ -9,7 +9,7 @@ from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 

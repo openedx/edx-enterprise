@@ -2,12 +2,10 @@
 URL definitions for edX Enterprise's Consent API endpoint.
 """
 
-from django.conf.urls import include, url
+from django.urls import include, path
 
 urlpatterns = [
-    url(
-        r'^v1/',
-        include('consent.api.v1.urls'),
-        name='consent_api_v1'
-    ),
+    path('v1/', include('consent.api.v1.urls'),
+         name='consent_api_v1'
+         ),
 ]

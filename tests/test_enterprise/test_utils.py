@@ -3,14 +3,13 @@ Tests for the `edx-enterprise` utils module.
 """
 import unittest
 from unittest import mock
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import ddt
 from pytest import mark
 
 from django.conf import settings
 from django.forms.models import model_to_dict
-from django.utils.http import urlquote
 
 from enterprise.models import EnterpriseCourseEnrollment
 from enterprise.utils import (
@@ -308,7 +307,7 @@ class TestUtils(unittest.TestCase):
             else:
                 raise TypeError(('`user` must have one of either `email` or `user_email`.'))
             course_path = '/courses/{course_id}/course'.format(course_id=course_id)
-            course_path = urlquote("{}?{}".format(course_path, urlencode([])))
+            course_path = quote("{}?{}".format(course_path, urlencode([])))
             login_or_register = 'register' if is_pending_user(user) else 'login'
             if activation_links is not None and activation_links.get(user_email) is not None:
                 enrolled_url = activation_links.get(user_email)
