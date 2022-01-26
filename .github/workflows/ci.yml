@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8']
-        toxenv: [quality, docs, pii-annotations, django22, django30, django31, django32]
+        toxenv: [quality, docs, pii-annotations, django22, django30, django31, django32, check_keywords]
     env:
       RUNJSHINT: true
     steps:

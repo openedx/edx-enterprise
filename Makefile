@@ -171,6 +171,9 @@ pii_clean:
 isort: ## call isort on packages/files that are checked in quality tests
 	isort --skip migrations --recursive tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
 
+check_keywords: ## Scan the Django models in all installed apps in this project for restricted field names
+	python manage.py check_reserved_keywords --override_file db_keyword_overrides.yml
+
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements test test-all upgrade validate isort \
-	static static.dev static.watch
+	static static.dev static.watch check_keywords
