@@ -34,7 +34,8 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
 
     client_id = models.CharField(
         max_length=255,
-        null=True,
+        blank=True,
+        default='',
         verbose_name="API Client ID",
         help_text=_(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
@@ -44,7 +45,8 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
 
     client_secret = models.CharField(
         max_length=255,
-        null=True,
+        blank=True,
+        default='',
         verbose_name="API Client Secret",
         help_text=_(
             "The API Client Secret provided to edX by the enterprise customer to be used to make "
@@ -61,7 +63,8 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
 
     canvas_base_url = models.CharField(
         max_length=255,
-        null=True,
+        blank=True,
+        default='',
         verbose_name="Canvas Base URL",
         help_text=_("The base URL used for API requests to Canvas, i.e. https://instructure.com.")
     )
