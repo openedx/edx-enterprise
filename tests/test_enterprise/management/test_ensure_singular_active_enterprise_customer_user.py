@@ -27,14 +27,14 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         self.enterprise_customer_1 = EnterpriseCustomerFactory()
         self.enterprise_customer_2 = EnterpriseCustomerFactory()
         self.ecu_1 = EnterpriseCustomerUserFactory(
-          user_id=self.lms_user_id,
-          enterprise_customer=self.enterprise_customer_1,
-          active=True,
+            user_id=self.lms_user_id,
+            enterprise_customer=self.enterprise_customer_1,
+            active=True,
         )
         self.ecu_2 = EnterpriseCustomerUserFactory(
-          user_id=self.lms_user_id,
-          enterprise_customer=self.enterprise_customer_2,
-          active=True,
+            user_id=self.lms_user_id,
+            enterprise_customer=self.enterprise_customer_2,
+            active=True,
         )
         super().setUp()
 
@@ -46,12 +46,12 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         assert EnterpriseCustomerUser.objects.filter(user_id=self.lms_user_id, active=True).count() == 2
         call_command(self.command)
         assert EnterpriseCustomerUser.objects.filter(
-          user_id=self.lms_user_id,
-          enterprise_customer=self.enterprise_customer_1,
-          active=False,
+            user_id=self.lms_user_id,
+            enterprise_customer=self.enterprise_customer_1,
+            active=False,
         ).count() == 1
         assert EnterpriseCustomerUser.objects.filter(
-          user_id=self.lms_user_id,
-          enterprise_customer=self.enterprise_customer_2,
-          active=True,
+            user_id=self.lms_user_id,
+            enterprise_customer=self.enterprise_customer_2,
+            active=True,
         ).count() == 1
