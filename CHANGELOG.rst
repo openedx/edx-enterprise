@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing
 
+[3.39.0]
+---------
+fix: ensure `active` field on EnterpriseCustomerUser objects are set to `False` appropriately
+feat: add management command to clean up `active` fields on EnterpriseCustomerUser objects
+
 [3.38.7]
 ---------
 feat: customer configs draft saving that makes all variables optional
