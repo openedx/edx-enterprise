@@ -72,6 +72,8 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
 
     key = models.CharField(
         max_length=255,
+        blank=True,
+        default='',
         verbose_name="API Client ID",
         help_text=(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
@@ -81,6 +83,8 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
 
     secret = models.CharField(
         max_length=255,
+        blank=True,
+        default='',
         verbose_name="API Client Secret",
         help_text=(
             "The API Client Secret provided to edX by the enterprise customer to be used to make API "
@@ -90,18 +94,24 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
 
     degreed_company_id = models.CharField(
         max_length=255,
+        blank=True,
+        default='',
         verbose_name="Degreed Organization Code",
         help_text="The organization code provided to the enterprise customer by Degreed."
     )
 
     degreed_base_url = models.CharField(
         max_length=255,
+        blank=True,
+        default='',
         verbose_name="Degreed Base URL",
         help_text="The base URL used for API requests to Degreed, i.e. https://degreed.com."
     )
 
     degreed_user_id = models.CharField(
         max_length=255,
+        blank=True,
+        default='',
         verbose_name="Degreed User ID",
         help_text=(
             "The Degreed User ID provided to the content provider by Degreed. "
@@ -111,6 +121,8 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
 
     degreed_user_password = models.CharField(
         max_length=255,
+        blank=True,
+        default='',
         verbose_name="Degreed User Password",
         help_text=(
             "The Degreed User Password provided to the content provider by Degreed. "

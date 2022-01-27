@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-* Nothing
+* feat: customer configs draft saving that makes all variables optional
 
 [3.38.6]
 feat: add created to enterprise course enrollment serializer fields

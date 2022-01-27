@@ -47,7 +47,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     idp_id = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
+        default='',
         help_text=_("If provided, will be used as IDP slug to locate remote id for learners")
     )
 
@@ -65,12 +65,12 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     channel_worker_username = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
+        default='',
         help_text=_("Enterprise channel worker username to get JWT tokens for authenticating LMS APIs."),
     )
     catalogs_to_transmit = models.TextField(
         blank=True,
-        null=True,
+        default='',
         help_text=_(
             "A comma-separated list of catalog UUIDs to transmit. If blank, all customer catalogs will be transmitted. "
             "If there are overlapping courses in the customer catalogs, the overlapping course metadata will be "
