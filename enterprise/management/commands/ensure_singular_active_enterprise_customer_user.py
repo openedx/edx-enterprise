@@ -13,6 +13,7 @@ from enterprise.utils import batch
 
 log = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     """
     Django management command to ensure there is at most a single EnterpriseCustomerUser
@@ -72,21 +73,17 @@ class Command(BaseCommand):
         lms_user_id = user['user_id']
         current_active_ecu_count = user['ecu_count']
         log.info('Processing LMS User ID %s', lms_user_id)
-        most_recent_active_ecu = (HistoricalEnterpriseCustomerUser.objects
-            .filter(user_id=lms_user_id, active=True)
-            .order_by('-history_date')
-            .first()
-        )
-        ecus_for_user = (EnterpriseCustomerUser.objects
-            .filter(user_id=lms_user_id)
-            .exclude(id=most_recent_active_ecu.id)
-        )
+        active_historical_ecus = HistoricalEnterpriseCustomerUser.objects.filter(user_id=lms_user_id, active=True)
+        most_recent_active_ecu = active_historical_ecus.order_by('-history_date').first()
+        ecus_for_user = EnterpriseCustomerUser.objects.filter(user_id=lms_user_id).exclude(id=most_recent_active_ecu.id)
         for ecu in ecus_for_user:
             ecu.active = False
         EnterpriseCustomerUser.objects.bulk_update(ecus_for_user, ['active'])
         log.info(
             'Successfully updated %s of %s EnterpriseCustomerUser objects for LMS User ID %s',
-            len(ecus_for_user), current_active_ecu_count, lms_user_id,
+            len(ecus_for_user),
+            current_active_ecu_count,
+            lms_user_id,
         )
 
     def handle(self, *args, **options):
@@ -94,20 +91,17 @@ class Command(BaseCommand):
         batch_sleep = options['batch_sleep']
 
         EnterpriseCustomerUser = self._enterprise_customer_user_model()
-        user_ids_by_active_ecu_count = (EnterpriseCustomerUser.objects
-            .filter(active=True)
-            .values('user_id')
-            .annotate(ecu_count=Count('user_id'))
-            .order_by('-ecu_count')
-            .filter(ecu_count__gt=1)
-        )
+        active_ecus = EnterpriseCustomerUser.objects.filter(active=True)
+        user_ids_by_active_ecu_count = active_ecus.values('user_id').annotate(ecu_count=Count('user_id'))
+        ordered_user_ids_by_active_ecu_count = user_ids_by_active_ecu_count.order_by('-ecu_count')
+        user_ids_with_multiple_active_ecus = ordered_user_ids_by_active_ecu_count.filter(ecu_count__gt=1)
 
         log.info(
             'Found %s enterprise users with mulitple active EnterpriseCustomerUser objects',
-            len(user_ids_by_active_ecu_count),
+            len(user_ids_with_multiple_active_ecus),
         )
 
-        for user_batch in batch(user_ids_by_active_ecu_count, batch_size=batch_limit):
+        for user_batch in batch(user_ids_with_multiple_active_ecus, batch_size=batch_limit):
             for user in user_batch:
                 self._process_user(user)
             sleep(batch_sleep)
