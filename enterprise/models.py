@@ -1286,6 +1286,10 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
             user_id=user.id,
             defaults=defaults,
         )
+        enterprise_customer_user.inactivate_other_customers(
+            user_id=enterprise_customer_user.user_id,
+            enterprise_customer=self.enterprise_customer,
+        )
         return enterprise_customer_user
 
     def fulfill_pending_course_enrollments(self, enterprise_customer_user):

@@ -17,7 +17,13 @@ Unreleased
 ----------
 * Nothing
 
+[3.39.0]
+---------
+fix: ensure `active` field on EnterpriseCustomerUser objects are set to `False` appropriately
+feat: add management command to clean up `active` fields on EnterpriseCustomerUser objects
+
 [3.38.6]
+---------
 feat: add created to enterprise course enrollment serializer fields
 
 [3.38.5]
