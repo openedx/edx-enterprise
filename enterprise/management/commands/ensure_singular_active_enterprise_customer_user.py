@@ -49,7 +49,7 @@ class Command(BaseCommand):
         """ Returns `EnterpriseCustomerUser model """
         EnterpriseCustomerUser = apps.get_model(
             'enterprise',
-            'EnterpriseCustomerUser'
+            'EnterpriseCustomerUser',
         )
         return EnterpriseCustomerUser
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
         """ Returns `HistoricalEnterpriseCustomerUser model """
         HistoricalEnterpriseCustomerUser = apps.get_model(
             'enterprise',
-            'HistoricalEnterpriseCustomerUser'
+            'HistoricalEnterpriseCustomerUser',
         )
         return HistoricalEnterpriseCustomerUser
 

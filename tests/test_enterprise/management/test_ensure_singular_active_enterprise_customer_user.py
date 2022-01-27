@@ -11,12 +11,10 @@ from django.test import TestCase
 from enterprise.models import EnterpriseCustomerUser
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory
 
-EXCEPTION = "DUMMY_TRACE_BACK"
-
 
 @mark.django_db
 @ddt.ddt
-class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
+class EnsureSingularActiveEnterpriseCustomerUserCommandTests(TestCase):
     """
     Test command `ensure_singular_active_enterprise_customer_user`.
     """
