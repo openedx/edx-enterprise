@@ -893,6 +893,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     history = HistoricalRecords()
 
     __original_active = None
+
     class Meta:
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Learner")
