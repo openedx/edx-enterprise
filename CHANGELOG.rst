@@ -15,9 +15,15 @@ Change Log
 
 Unreleased
 ----------
-* feat: customer configs draft saving that makes all variables optional
+* nothing
+
+[3.38.7]
+---------
+feat: customer configs draft saving that makes all variables optional
+feat: feat: Add field for Display name for LMS configs
 
 [3.38.6]
+---------
 feat: add created to enterprise course enrollment serializer fields
 
 [3.38.5]
