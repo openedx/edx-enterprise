@@ -893,12 +893,17 @@ class EnterpriseCustomerUser(TimeStampedModel):
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
     history = HistoricalRecords()
 
+    __original_active = None
     class Meta:
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Learner")
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_active = self.active
 
     def save(self, *args, **kwargs):
         """
@@ -926,6 +931,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 # No existing record found so do nothing and proceed with normal operation
                 pass
 
+        if self.active and self.active != self.__original_active:
+            # Inactivate other customers only when `active` explicitly changes to True
+            EnterpriseCustomerUser.inactivate_other_customers(
+                user_id=self.user_id,
+                enterprise_customer=self.enterprise_customer,
+            )
+
+        self.__original_active = self.active
         return super().save(*args, **kwargs)
 
     @property
@@ -1268,14 +1281,8 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                     user=user,
                     enterprise_customer=enterprise_customer_user.enterprise_customer,
                 ))
-
                 enterprise_customer_user.active = True
                 enterprise_customer_user.save()
-                enterprise_customer_user.inactivate_other_customers(
-                    user_id=enterprise_customer_user.user_id,
-                    enterprise_customer=self.enterprise_customer,
-                )
-
                 return enterprise_customer_user
             except EnterpriseCustomerUser.DoesNotExist:
                 pass  # nothing to do here
@@ -1285,10 +1292,6 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
             enterprise_customer=self.enterprise_customer,
             user_id=user.id,
             defaults=defaults,
-        )
-        enterprise_customer_user.inactivate_other_customers(
-            user_id=enterprise_customer_user.user_id,
-            enterprise_customer=self.enterprise_customer,
         )
         return enterprise_customer_user
 
