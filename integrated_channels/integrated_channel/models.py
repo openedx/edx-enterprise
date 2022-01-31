@@ -25,6 +25,17 @@ LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
 
 
+def set_default_display_name(*args, **kw):
+    """
+    post_save signal reciever to set default display name
+    wired up in EnterpriseCustomerPluginConfiguration.__init_subclass__
+    """
+    this_display_name = kw['instance'].display_name
+    # check if display_name is None, empty, or just spaces
+    if not (this_display_name and this_display_name.strip()):
+        kw['instance'].display_name = kw['instance'].generate_default_display_name()
+        kw['instance'].save()
+
 class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     """
     Abstract base class for information related to integrating with external systems for an enterprise customer.
@@ -35,6 +46,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     The configuration provides default exporters and transmitters if the ``get_x_data_y`` methods aren't
     overridden, where ``x`` and ``y`` are (learner, course) and (exporter, transmitter) respectively.
     """
+
+    display_name = models.CharField(
+        max_length=30,
+        blank=True,
+        default='',
+        help_text=_("A configuration nickname.")
+    )
 
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
@@ -87,6 +105,14 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     class Meta:
         abstract = True
 
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        """
+        Finds every subclass and wires up the signal reciever to set default display name when blank
+        """
+        super().__init_subclass__(**kwargs)
+        models.signals.post_save.connect(set_default_display_name, sender=cls)
+
     def clean(self):
         invalid_uuids = []
         for uuid in convert_comma_separated_string_to_list(self.catalogs_to_transmit):
@@ -129,6 +155,12 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """
         raise NotImplementedError('Implemented in concrete subclass.')
+
+    def generate_default_display_name(self):
+        """
+        Returns a default display namem which can be overriden by a subclass.
+        """
+        return f'{self.channel_code()} {self.id}'
 
     def get_learner_data_exporter(self, user):
         """
