@@ -546,7 +546,7 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         active = self.validated_data.get('active', True)
         defaults = {'active': active}
 
-        __, created = models.EnterpriseCustomerUser.objects.update_or_create(
+        models.EnterpriseCustomerUser.objects.update_or_create(
             user_id=self.user.pk,
             enterprise_customer=enterprise_customer,
             defaults=defaults,
