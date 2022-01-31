@@ -2,12 +2,10 @@
 URLs for edX Enterprise's Consent application.
 """
 
-from django.conf.urls import include, url
+from django.urls import include, path
 
 urlpatterns = [
-    url(
-        r'^consent/api/',
-        include('consent.api.urls'),
-        name='consent_api'
-    ),
+    path('consent/api/', include('consent.api.urls'),
+         name='consent_api'
+         ),
 ]
