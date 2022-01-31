@@ -36,6 +36,7 @@ def set_default_display_name(*args, **kw):
         kw['instance'].display_name = kw['instance'].generate_default_display_name()
         kw['instance'].save()
 
+
 class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     """
     Abstract base class for information related to integrating with external systems for an enterprise customer.
