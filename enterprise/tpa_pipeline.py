@@ -80,11 +80,10 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         return
 
     # proceed with the creation of a link between the user and the enterprise customer, then exit.
-    defaults = {'active': True}
     enterprise_customer_user, _ = EnterpriseCustomerUser.objects.update_or_create(
         enterprise_customer=enterprise_customer,
         user_id=user.id,
-        defaults=defaults,
+        defaults={'active': True},
     )
     # if learner has activated enterprise we need to de-activate other enterprises learner is linked to
     EnterpriseCustomerUser.objects.filter(

@@ -211,9 +211,10 @@ class Command(BaseCommand):
         Gets or creates an EnterpriseCustomerUser associated with an EnterpriseCustomer
         """
         user, __ = User.objects.get_or_create(username=username)
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
             user_id=user.pk,
             enterprise_customer=enterprise_customer,
+            defaults={'active': True},
         )
         return enterprise_customer_user
 

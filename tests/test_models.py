@@ -551,7 +551,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         )
         assert learner_with_ent1.active is True
 
-        # this should deactive learner's other enterprises
+        # this should deactivate learner's other enterprises
         EnterpriseCustomerUser.objects.link_user(enterprise_customer2, user_email)
         learner_with_ent2 = EnterpriseCustomerUser.objects.get(
             enterprise_customer=enterprise_customer2, user_id=user.id

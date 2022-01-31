@@ -342,8 +342,9 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
         if len(active_ecus_for_user) > 1:
             logger.warning(
                 'User %s has more than 1 active EnterpriseCustomerUser object. Continuing with course enrollment'
-                ' but the enrollment may end up associated with an incorrect EnterpriseCustomerUser',
+                'for course %s but the enrollment may end up associated with an incorrect EnterpriseCustomerUser',
                 user_id,
+                instance.course_id,
             )
         logger.info((
             "User %s is an EnterpriseCustomerUser. "

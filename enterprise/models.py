@@ -818,11 +818,16 @@ class EnterpriseCustomerUserManager(models.Manager):
         try:
             existing_user = User.objects.get(email=user_email)
             user_id = existing_user.id
-            self.get_or_create(enterprise_customer=enterprise_customer, user_id=user_id)
-            EnterpriseCustomerUser.inactivate_other_customers(user_id, enterprise_customer)
+            self.update_or_create(
+                enterprise_customer=enterprise_customer,
+                user_id=user_id,
+                defaults={'active': True},
+            )
         except User.DoesNotExist:
-            PendingEnterpriseCustomerUser.objects.get_or_create(enterprise_customer=enterprise_customer,
-                                                                user_email=user_email)
+            PendingEnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer=enterprise_customer,
+                user_email=user_email,
+            )
 
     def unlink_user(self, enterprise_customer, user_email):
         """
@@ -906,6 +911,11 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
         This is needed because of soft deletion of EnterpriseCustomerUser records.
         This will handle all of get_or_create/update_or_create/create methods.
+
+        By default, when an EnterpriseCustomerUser record is created/updated with `active=True`,
+        all other linked records for the user will be marked as `active=False`. To disable this
+        side effect, update set `should_inactivate_other_customers=False` on an EnterpriseCustomerUser
+        instance.
         """
         LOGGER.info(f'Saving EnterpriseCustomerUser for LMS user id {self.user_id}')
         if self.pk is None:
@@ -925,6 +935,21 @@ class EnterpriseCustomerUser(TimeStampedModel):
             except EnterpriseCustomerUser.DoesNotExist:
                 # No existing record found so do nothing and proceed with normal operation
                 pass
+
+        if self.active and self.should_inactivate_other_customers is not False:
+            # Inactivate other customers only when `active` is True and this side effect is
+            # not explicitly disabled.
+            LOGGER.info(
+                'EnterpriseCustomerUser %s saved with `active=True` for EnterpriseCustomer %s and User %s.'
+                ' Inactivating any other active, linked enterprise customers.',
+                self.id,
+                self.enterprise_customer,
+                self.user,
+            )
+            EnterpriseCustomerUser.inactivate_other_customers(
+                user_id=self.user_id,
+                enterprise_customer=self.enterprise_customer,
+            )
 
         return super().save(*args, **kwargs)
 
@@ -1268,27 +1293,16 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                     user=user,
                     enterprise_customer=enterprise_customer_user.enterprise_customer,
                 ))
-
                 enterprise_customer_user.active = True
                 enterprise_customer_user.save()
-                enterprise_customer_user.inactivate_other_customers(
-                    user_id=enterprise_customer_user.user_id,
-                    enterprise_customer=self.enterprise_customer,
-                )
-
                 return enterprise_customer_user
             except EnterpriseCustomerUser.DoesNotExist:
                 pass  # nothing to do here
 
-        defaults = {'active': True}
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
             enterprise_customer=self.enterprise_customer,
             user_id=user.id,
-            defaults=defaults,
-        )
-        enterprise_customer_user.inactivate_other_customers(
-            user_id=enterprise_customer_user.user_id,
-            enterprise_customer=self.enterprise_customer,
+            defaults={'active': True},
         )
         return enterprise_customer_user
 
