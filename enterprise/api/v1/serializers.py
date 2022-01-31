@@ -551,9 +551,6 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
             enterprise_customer=enterprise_customer,
             defaults=defaults,
         )
-        if not created and active:
-            # if learner has activated enterprise we need to de-activate other enterprises learner is linked to
-            models.EnterpriseCustomerUser.inactivate_other_customers(self.user.pk, enterprise_customer)
 
 
 class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):

@@ -100,7 +100,6 @@ class Command(BaseCommand):
                         # active this record and inactive all the other records.
                         enterprise_customer_user.active = True
                         enterprise_customer_user.save()
-                        EnterpriseCustomerUser.inactivate_other_customers(user_id, enterprise_customer)
 
                         records_created += 1
                         LOGGER.info(
