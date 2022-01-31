@@ -892,12 +892,17 @@ class EnterpriseCustomerUser(TimeStampedModel):
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
     history = HistoricalRecords()
 
+    __original_active = None
     class Meta:
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Learner")
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_active = self.active
 
     def save(self, *args, **kwargs):
         """
@@ -914,7 +919,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 existing = EnterpriseCustomerUser.all_objects.get(
                     enterprise_customer=self.enterprise_customer,
                     user_id=self.user_id,
-                    linked=False
+                    linked=False,
                 )
                 self.linked = True
                 # An existing record has been found so update auto primary key with primay key of existing record
@@ -925,6 +930,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 # No existing record found so do nothing and proceed with normal operation
                 pass
 
+        if self.active and self.active != self.__original_active:
+            # Inactivate other customers only when `active` explicitly changes to True
+            EnterpriseCustomerUser.inactivate_other_customers(
+                user_id=self.user_id,
+                enterprise_customer=self.enterprise_customer,
+            )
+
+        self.__original_active = self.active
         return super().save(*args, **kwargs)
 
     @property
