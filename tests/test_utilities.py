@@ -159,7 +159,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "user_id",
                 "active",
                 "linked",
-                "invite_key"
+                "invite_key",
+                "should_inactivate_other_customers",
             ]
         ),
         (
@@ -183,7 +184,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "modified",
                 "enterprise_customer",
                 "provider_id",
-                "default_provider"
+                "default_provider",
             ]
         ),
     )

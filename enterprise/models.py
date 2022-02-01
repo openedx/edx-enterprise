@@ -898,6 +898,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
     history = HistoricalRecords()
 
+    should_inactivate_other_customers = models.BooleanField(
+        default=True,
+        help_text=_(
+            'When enabled along with `active`, all other linked enterprise customers for this user'
+            ' will be marked as inactive upon save.',
+        )
+    )
+
     class Meta:
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Learner")
@@ -936,7 +944,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 # No existing record found so do nothing and proceed with normal operation
                 pass
 
-        if self.active and self.should_inactivate_other_customers is not False:
+        if self.active and self.should_inactivate_other_customers:
             # Inactivate other customers only when `active` is True and this side effect is
             # not explicitly disabled.
             LOGGER.info(

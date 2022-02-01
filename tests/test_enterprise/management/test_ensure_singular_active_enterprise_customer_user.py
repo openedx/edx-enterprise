@@ -41,13 +41,17 @@ class EnsureSingularActiveEnterpriseCustomerUserCommandTests(TestCase):
         Test that the `ensure_singular_active_enterprise_customer_user` command will
         ensure only one ECU object is active for a given LMS user id.
         """
-        # creating the initial objects will already enforce at most 1 `active=True` object, so we
-        # need to bypass the inactivate_other_customers logic to get the objects in the correct
-        # "bad" state.
-        assert EnterpriseCustomerUser.objects.filter(user_id=self.lms_user_id, active=True).count() == 1
-        inactive_ecus = EnterpriseCustomerUser.objects.filter(user_id=self.lms_user_id, active=False)
-        assert inactive_ecus.count() == 1
-        inactive_ecu = inactive_ecus.first()
+        # creating the initial objects enforces at most 1 `active=True` object
+        assert EnterpriseCustomerUser.objects.filter(
+            user_id=self.lms_user_id,
+            active=True,
+            enterprise_customer=self.enterprise_customer_2,
+        ).count() == 1
+        inactive_ecu = EnterpriseCustomerUser.objects.get(
+            user_id=self.lms_user_id,
+            active=False,
+            enterprise_customer=self.enterprise_customer_1,
+        )
         inactive_ecu.active = True
         # temporarily disable side effect of inactivating other customers
         inactive_ecu.should_inactivate_other_customers = False
@@ -58,10 +62,10 @@ class EnsureSingularActiveEnterpriseCustomerUserCommandTests(TestCase):
         assert EnterpriseCustomerUser.objects.filter(
             user_id=self.lms_user_id,
             enterprise_customer=self.enterprise_customer_1,
-            active=False,
+            active=True,
         ).count() == 1
         assert EnterpriseCustomerUser.objects.filter(
             user_id=self.lms_user_id,
             enterprise_customer=self.enterprise_customer_2,
-            active=True,
+            active=False,
         ).count() == 1
