@@ -75,7 +75,12 @@ class Command(BaseCommand):
         log.info('Processing LMS User ID %s', lms_user_id)
         active_historical_ecus = HistoricalEnterpriseCustomerUser.objects.filter(user_id=lms_user_id, active=True)
         most_recent_active_ecu = active_historical_ecus.order_by('-history_date').first()
-        ecus_for_user = EnterpriseCustomerUser.objects.filter(user_id=lms_user_id).exclude(id=most_recent_active_ecu.id)
+        ecus_for_user = EnterpriseCustomerUser.objects.filter(
+            user_id=lms_user_id,
+            active=True,
+        ).exclude(
+            id=most_recent_active_ecu.id,
+        )
         for ecu in ecus_for_user:
             ecu.active = False
         EnterpriseCustomerUser.objects.bulk_update(ecus_for_user, ['active'])
