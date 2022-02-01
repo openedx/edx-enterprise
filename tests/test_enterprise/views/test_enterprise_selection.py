@@ -84,9 +84,8 @@ class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
         self._login()
         user_id = self.user.pk
 
-        # before selection all enterprises are active for learner
-        for obj in EnterpriseCustomerUser.objects.filter(user_id=user_id):
-            assert obj.active
+        # before selection, only 1 EnterpriseCustomerUser is active
+        assert EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True).count() == 1
 
         new_enterprise = self.enterprise_choices[2][0]
         post_data = {
@@ -109,8 +108,12 @@ class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
         # selected enterprise is set correctly in the session
         self.assertEqual(self.client.session['enterprise_customer']['uuid'], new_enterprise)
         # all other enterprises for learner should be non-active
-        for obj in EnterpriseCustomerUser.objects.filter(user_id=user_id).exclude(enterprise_customer=new_enterprise):
-            assert not obj.active
+        active_ecu_count = EnterpriseCustomerUser.objects.filter(
+            user_id=user_id, active=True,
+        ).exclude(
+            enterprise_customer=new_enterprise,
+        ).count()
+        assert active_ecu_count == 0
 
     def test_post_errors(self):
         """

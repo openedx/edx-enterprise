@@ -159,7 +159,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "user_id",
                 "active",
                 "linked",
-                "invite_key"
+                "invite_key",
+                "should_inactivate_other_customers",
             ]
         ),
         (
@@ -183,7 +184,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "modified",
                 "enterprise_customer",
                 "provider_id",
-                "default_provider"
+                "default_provider",
             ]
         ),
     )
@@ -776,13 +777,14 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.assertNotIn(expected_uuid4, utils.get_enterprise_uuids_for_user_and_course(
             user,
             course_run_id,
-            active=True))
+            is_customer_active=True))
         self.assertIn(expected_uuid4, utils.get_enterprise_uuids_for_user_and_course(
             user,
             course_run_id))
         self.assertIn(expected_uuid4, utils.get_enterprise_uuids_for_user_and_course(
             user,
-            course_run_id, active=False))
+            course_run_id,
+            is_customer_active=False))
 
     @ddt.data(
         (

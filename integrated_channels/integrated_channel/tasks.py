@@ -180,7 +180,7 @@ def transmit_single_learner_data(username, course_run_id):
         course_run_id (str): The course run id of the course it should send data for.
     """
     user = User.objects.get(username=username)
-    enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, active=True)
+    enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, is_customer_active=True)
 
     # Transmit the learner data to each integrated channel for each related customer.
     # Starting Export. N customer is usually 1 but multiple are supported in codebase.
@@ -233,7 +233,7 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
     """
 
     user = User.objects.get(username=username)
-    enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, active=True)
+    enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, is_customer_active=True)
     channel_utils = IntegratedChannelCommandUtils()
 
     # Transmit the learner data to each integrated channel for each related customer.

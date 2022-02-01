@@ -140,7 +140,7 @@ def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # p
 @receiver(post_save, sender=EnterpriseCustomerUser)
 def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
-    Assign or delete enterprise_learner role for EnterpriseCustomerUser when updated.
+    Assign or delete enterprise_learner role for EnterpriseCustomerUser when created or updated.
 
     The enterprise_learner role is assigned when a new EnterpriseCustomerUser record is
     initially created and removed when a EnterpriseCustomerUser record is updated and
@@ -333,9 +333,19 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
     """
     if kwargs.get('created') and instance.user:
         user_id = instance.user.id
-        ecu = EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True).first()
+        # NOTE: there should be _at most_ 1 EnterpriseCustomerUser record  with `active=True`
+        active_ecus_for_user = EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True)
+        ecu = active_ecus_for_user.first()
         if not ecu:
+            # nothing to do here
             return
+        if len(active_ecus_for_user) > 1:
+            logger.warning(
+                'User %s has more than 1 active EnterpriseCustomerUser object. Continuing with course enrollment'
+                'for course %s but the enrollment may end up associated with an incorrect EnterpriseCustomerUser',
+                user_id,
+                instance.course_id,
+            )
         logger.info((
             "User %s is an EnterpriseCustomerUser. "
             "Spinning off task to check if course is within User's "

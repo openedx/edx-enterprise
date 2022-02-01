@@ -626,12 +626,13 @@ class GrantDataSharingPermissions(View):
     @staticmethod
     def create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid=None):
         """Create EnterpriseCustomerUser and EnterpriseCourseEnrollment record if not already exists."""
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
             enterprise_customer=enterprise_customer,
-            user_id=request.user.id
+            user_id=request.user.id,
+            defaults={'active': True},
         )
         enterprise_enrollment_source = EnterpriseEnrollmentSource.get_source(
-            EnterpriseEnrollmentSource.ENROLLMENT_URL
+            EnterpriseEnrollmentSource.ENROLLMENT_URL,
         )
         enterprise_customer_user.update_session(request)
         __, created = get_create_ent_enrollment(
@@ -1608,9 +1609,10 @@ class CourseEnrollmentView(NonAtomicView):
         )
 
         # Create a link between the user and the enterprise customer if it does not already exist.
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
             enterprise_customer=enterprise_customer,
-            user_id=request.user.id
+            user_id=request.user.id,
+            defaults={'active': True},
         )
         enterprise_customer_user.update_session(request)
 
@@ -2179,9 +2181,10 @@ class ProgramEnrollmentView(NonAtomicView):
         # Create a link between the user and the enterprise customer if it does not already exist.
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
         with transaction.atomic():
-            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
                 enterprise_customer=enterprise_customer,
-                user_id=request.user.id
+                user_id=request.user.id,
+                defaults={'active': True},
             )
             enterprise_customer_user.update_session(request)
 
@@ -2367,9 +2370,10 @@ class RouterView(NonAtomicView):
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
         with transaction.atomic():
-            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.update_or_create(
                 enterprise_customer=enterprise_customer,
-                user_id=request.user.id
+                user_id=request.user.id,
+                defaults={'active': True},
             )
             enterprise_customer_user.update_session(request)
 

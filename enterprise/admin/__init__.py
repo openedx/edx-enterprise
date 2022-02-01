@@ -357,7 +357,9 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'created',
         'enterprise_enrollments',
         'other_enrollments',
-        'invite_key'
+        'invite_key',
+        'active',
+        'should_inactivate_other_customers',
     )
 
     # Only include fields that are not database-backed; DB-backed fields
