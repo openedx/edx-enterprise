@@ -30,8 +30,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.utils.translation import get_language_from_request
-from django.utils.translation import ugettext as _
-from django.utils.translation import ungettext
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.generic import View
 from django.views.generic.edit import FormView
 
@@ -1492,7 +1492,7 @@ class CourseEnrollmentView(NonAtomicView):
                 course_end_date = parse(course_run['end']).strftime('%B %d, %Y')
                 weeks_to_complete = course_run['weeks_to_complete']
                 course_duration = _('{num_weeks}, starting on {start_date} and ending at {end_date}').format(
-                    num_weeks=ungettext(
+                    num_weeks=ngettext(
                         '{} week',
                         '{} weeks',
                         weeks_to_complete
@@ -1908,7 +1908,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 course_run_details['min_effort'] or None,
                 course_run_details['max_effort'] or None,
             ) or '',
-            'weeks_to_complete': ungettext(
+            'weeks_to_complete': ngettext(
                 '{} week',
                 '{} weeks',
                 weeks_to_complete
@@ -2025,7 +2025,7 @@ class ProgramEnrollmentView(NonAtomicView):
         # Make any modifications for singular/plural-dependent text.
         program_courses = program_details['courses']
         course_count = len(program_courses)
-        course_count_text = ungettext(
+        course_count_text = ngettext(
             '{count} Course',
             '{count} Courses',
             course_count,

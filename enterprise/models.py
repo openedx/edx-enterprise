@@ -31,11 +31,11 @@ from django.db import IntegrityError, models, transaction
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_bytes, force_str
 from django.utils.functional import cached_property, lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
@@ -697,8 +697,8 @@ class EnterpriseCustomer(TimeStampedModel):
         course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
         if not course_details:
             LOGGER.warning(
-                ugettext("Course details were not found for course key {} - Course Catalog API returned nothing. "
-                         "Proceeding with enrollment, but notifications won't be sent").format(course_id)
+                gettext("Course details were not found for course key {} - Course Catalog API returned nothing. "
+                        "Proceeding with enrollment, but notifications won't be sent").format(course_id)
             )
             return
         email_items = serialize_notification_content(
@@ -2628,7 +2628,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         decrypted_password field. This method will encrypt the password again before sending.
         """
         if self.decrypted_password:
-            return force_text(
+            return force_str(
                 self._meta.get_field('decrypted_password').fernet.encrypt(
                     force_bytes(self.decrypted_password)
                 )
@@ -2651,7 +2651,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         decrypted_password field. This method will encrypt the password again before sending.
         """
         if self.decrypted_sftp_password:
-            return force_text(
+            return force_str(
                 self._meta.get_field('decrypted_sftp_password').fernet.encrypt(
                     force_bytes(self.decrypted_sftp_password)
                 )

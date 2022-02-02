@@ -6,7 +6,7 @@ import logging
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerCatalog

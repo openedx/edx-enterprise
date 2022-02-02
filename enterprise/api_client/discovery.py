@@ -13,7 +13,7 @@ from requests.exceptions import ConnectionError, Timeout  # pylint: disable=rede
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from enterprise import utils
 from enterprise.utils import NotConnectedToOpenEdX, get_configuration_value_for_site
