@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.39.1]
+---------
+fix: switching blackboard integrated channels from client based auth credentials to global creds
+
 [3.39.0]
 ---------
 fix: ensure `active` field on EnterpriseCustomerUser objects are set to `False` appropriately

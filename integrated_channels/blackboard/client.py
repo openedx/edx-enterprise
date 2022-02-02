@@ -50,6 +50,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             configuration model for connecting with Blackboard
         """
         super().__init__(enterprise_configuration)
+        BlackboardGlobalConfiguration = apps.get_model(
+            'blackboard',
+            'BlackboardGlobalConfiguration'
+        )
+        self.global_blackboard_config = BlackboardGlobalConfiguration.current()
         self.config = apps.get_app_config('blackboard')
         self.session = None
         self.expires_at = None
@@ -444,22 +449,23 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         auth header in oauth2 token format as required by blackboard doc
         """
-        if not self.enterprise_configuration.client_id:
-            raise ClientError(
-                "Failed to generate oauth access token: Client ID required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR.value
-            )
-        if not self.enterprise_configuration.client_secret:
-            raise ClientError(
-                "Failed to generate oauth access token: Client secret required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR.value
-            )
-        return 'Basic {}'.format(
-            base64.b64encode('{key}:{secret}'.format(
-                key=self.enterprise_configuration.client_id,
-                secret=self.enterprise_configuration.client_secret
-            ).encode('utf-8')).decode()
-        )
+        app_key = self.enterprise_configuration.client_id
+        if not app_key:
+            if not self.global_blackboard_config.app_key:
+                raise ClientError(
+                    "Failed to generate oauth access token: Client ID required.",
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
+                )
+            app_key = self.global_blackboard_config.app_key
+        app_secret = self.enterprise_configuration.client_secret
+        if not app_secret:
+            if not self.global_blackboard_config.app_secret:
+                raise ClientError(
+                    "Failed to generate oauth access token: Client secret required.",
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
+                )
+            app_secret = self.global_blackboard_config.app_secret
+        return f"Basic {base64.b64encode(f'{app_key}:{app_secret}'.encode('utf-8')).decode()}"
 
     def generate_blackboard_course_id(self, external_id):
         """

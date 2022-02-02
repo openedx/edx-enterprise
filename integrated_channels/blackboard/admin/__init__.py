@@ -1,15 +1,29 @@
 """
 Admin integration for configuring Blackboard app to communicate with Blackboard systems.
 """
+from config_models.admin import ConfigurationModelAdmin
 
-from six.moves.urllib.parse import urljoin
-
-from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
 
-from enterprise.utils import get_configuration_value
-from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.blackboard.models import (
+    BlackboardEnterpriseCustomerConfiguration,
+    BlackboardGlobalConfiguration,
+)
+
+
+@admin.register(BlackboardGlobalConfiguration)
+class BlackboardGlobalConfigurationAdmin(ConfigurationModelAdmin):
+    """
+    Django admin model for BlackboardGlobalConfiguration.
+    """
+    list_display = (
+        "app_key",
+        "app_secret",
+    )
+
+    class Meta:
+        model = BlackboardGlobalConfiguration
 
 
 @admin.register(BlackboardEnterpriseCustomerConfiguration)
@@ -19,8 +33,6 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     """
     list_display = (
         "enterprise_customer_name",
-        "client_id",
-        "client_secret",
         "blackboard_base_url",
     )
 

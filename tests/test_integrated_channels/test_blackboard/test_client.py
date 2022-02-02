@@ -1,7 +1,7 @@
 """
 Tests for clients in integrated_channels.blackboard.
 """
-
+import base64
 import json
 import random
 import unittest
@@ -14,7 +14,7 @@ from requests.models import Response
 from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
 from integrated_channels.blackboard.client import BlackboardAPIClient
 from integrated_channels.exceptions import ClientError
-from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory
+from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory, BlackboardGlobalConfigurationFactory
 
 COURSE_NOT_FOUND_RESPONSE = unittest.mock.Mock(spec=Response)
 COURSE_NOT_FOUND_RESPONSE.text = 'NOT FOUND'
@@ -35,6 +35,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.token = 'token'
+        self.global_config = BlackboardGlobalConfigurationFactory()
         self.enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
             client_id='id',
             client_secret='secret',
@@ -63,6 +64,17 @@ class TestBlackboardApiClient(unittest.TestCase):
             return_value=(self.token, 10000)
         )
         return client
+
+    def test_client_pulls_auth_creds_from_global_if_not_found(self):
+        enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
+            client_id='',
+            client_secret='',
+        )
+        client = BlackboardAPIClient(enterprise_config)
+        auth_header = client._create_auth_header()
+        global_secret = self.global_config.app_secret
+        global_key = self.global_config.app_key
+        assert auth_header == f"Basic {base64.b64encode(f'{global_key}:{global_secret}'.encode('utf-8')).decode()}"
 
     def test_oauth_absent_refresh_token_fails(self):
         enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
