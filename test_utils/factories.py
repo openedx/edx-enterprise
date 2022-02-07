@@ -32,7 +32,10 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import SELF_ENROLL_EMAIL_TEMPLATE_TYPE, localized_utcnow
-from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.blackboard.models import (
+    BlackboardEnterpriseCustomerConfiguration,
+    BlackboardGlobalConfiguration,
+)
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
@@ -766,6 +769,24 @@ class XAPILearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory)
 
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class BlackboardGlobalConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``BlackboardGlobalConfiguration`` factory.
+
+    Creates an instance of ``BlackboardGlobalConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``BlackboardGlobalConfiguration``.
+        """
+
+        model = BlackboardGlobalConfiguration
+
+    app_key = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    app_secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
 
 
 class BlackboardEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):

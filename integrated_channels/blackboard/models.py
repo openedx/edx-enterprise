@@ -6,6 +6,7 @@ import json
 import uuid
 from logging import getLogger
 
+from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 from six.moves.urllib.parse import urljoin
 
@@ -20,6 +21,50 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 
 LOGGER = getLogger(__name__)
 LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/blackboard/oauth-complete')
+
+
+class BlackboardGlobalConfiguration(ConfigurationModel):
+    """
+    The global configuration for integrating with Blackboard.
+
+    .. no_pii:
+    """
+
+    app_key = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Blackboard Application Key",
+        help_text=(
+            "The application API key identifying the edX integration application to be used in the API oauth handshake."
+        )
+    )
+
+    app_secret = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="API Client Secret or Application Secret",
+        help_text=(
+            "The application API secret used to make to identify ourselves as the edX integration app to customer "
+            "instances. Called Application Secret in Blackboard"
+        )
+    )
+
+    class Meta:
+        app_label = 'blackboard'
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return "<BlackboardGlobalConfiguration with id {id}>".format(id=self.id)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
 
 
 class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):

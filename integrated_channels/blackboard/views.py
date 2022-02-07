@@ -4,6 +4,7 @@ Views containing APIs for Blackboard integrated channel
 
 import base64
 import logging
+from http import HTTPStatus
 from urllib.parse import urljoin
 
 import requests
@@ -119,7 +120,15 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                     f"No Blackboard configuration found for state: {state_uuid}"
                 ) from error
 
-        auth_header = self._create_auth_header(enterprise_config)
+        BlackboardGlobalConfiguration = apps.get_model(
+            'blackboard',
+            'BlackboardGlobalConfiguration'
+        )
+        blackboard_global_config = BlackboardGlobalConfiguration.current()
+        if not blackboard_global_config:
+            raise NotFound("No global Blackboard configuration found")
+
+        auth_header = self._create_auth_header(enterprise_config, blackboard_global_config)
 
         access_token_request_params = {
             'grant_type': 'authorization_code',
@@ -170,12 +179,24 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
 
         return Response()
 
-    def _create_auth_header(self, enterprise_config):
+    def _create_auth_header(self, enterprise_config, blackboard_global_config):
         """
         Auth header in oauth2 token format as per Blackboard doc
         """
-        return 'Basic {}'.format(
-            base64.b64encode('{key}:{secret}'.format(
-                key=enterprise_config.client_id, secret=enterprise_config.client_secret
-            ).encode('utf-8')).decode()
-        )
+        app_key = enterprise_config.client_id
+        if not app_key:
+            if not blackboard_global_config.app_key:
+                raise NotFound(
+                    "Failed to generate oauth access token: Client ID required.",
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
+                )
+            app_key = blackboard_global_config.app_key
+        app_secret = enterprise_config.client_secret
+        if not app_secret:
+            if not blackboard_global_config.app_secret:
+                raise NotFound(
+                    "Failed to generate oauth access token: Client secret required.",
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
+                )
+            app_secret = blackboard_global_config.app_secret
+        return f"Basic {base64.b64encode(f'{app_key}:{app_secret}'.encode('utf-8')).decode()}"
