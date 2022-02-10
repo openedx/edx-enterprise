@@ -36,7 +36,8 @@ RUN apt-get update && apt-get -qy install --no-install-recommends \
  python3-dev \
  gcc \
  build-essential \
- git
+ git \
+ curl
 
 
 RUN pip install --upgrade pip setuptools
