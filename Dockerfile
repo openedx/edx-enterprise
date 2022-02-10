@@ -30,6 +30,7 @@ RUN apt-get update && apt-get -qy install --no-install-recommends \
  locales \
  python3.8 \
  python3-pip \
+ python3.8-venv \
  libmysqlclient-dev \
  libssl-dev \
  python3-dev \
@@ -61,12 +62,15 @@ RUN useradd -m --shell /bin/false app
 
 WORKDIR /edx/app/edx-enterprise
 
+RUN python3.8 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
 # Copy the requirements explicitly even though we copy everything below
 # this prevents the image cache from busting unless the dependencies have changed.
 COPY requirements/ /edx/app/edx-enterprise/requirements/
 
 # Dependencies are installed as root so they cannot be modified by the application user.
-RUN pip install -r requirements/dev.in
+RUN pip install -r requirements/dev.txt
 
 # Set up a Node environment and install Node requirements.
 # Must be done after Python requirements, since nodeenv is installed
