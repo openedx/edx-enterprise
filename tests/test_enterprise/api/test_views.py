@@ -250,6 +250,46 @@ class BaseTestEnterpriseAPIViews(APITest):
 
 @ddt.ddt
 @mark.django_db
+class TestEnterpriseHasIdpConfigurationView(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerViewSet's `has_idp_configuration` view functionality
+    """
+    ENTERPRISE_CUSTOMER_SSO_CONFIG_PAGE_ENABLED_ENDPOINT = 'enterprise-customer-sso-config-page-enabled'
+
+    @ddt.data((True, [True, False]), (False, [False, False]))
+    @ddt.unpack
+    def test_endpoint_validates_while_portal_saml_page_enabled(self, saml_portal_enabled, expected_results):
+        """
+        Test that the endpoint will validate the existence of a idp configuration or lack thereof if the admin portal
+        SAML configuration page is enabled
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enterprise_customer.enable_portal_saml_configuration_screen = saml_portal_enabled
+        enterprise_customer.save()
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                'enterprise-customer-needs-an-idp-configuration',
+                kwargs={'pk': FAKE_UUIDS[0]}
+            )
+        )
+        assert response.data == {'needs_idp_config': expected_results[0]}
+        factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=enterprise_customer)
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                'enterprise-customer-needs-an-idp-configuration',
+                kwargs={'pk': FAKE_UUIDS[0]}
+            )
+        )
+        assert response.data == {'needs_idp_config': expected_results[1]}
+
+
+@ddt.ddt
+@mark.django_db
 class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
     """
     Test EnterpriseCourseEnrollmentViewSet

@@ -173,6 +173,19 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=True)
+    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, pk: pk)
+    # pylint: disable=unused-argument
+    def needs_an_idp_configuration(self, request, pk, *arg, **kwargs):
+        """
+        Return whether or not the customer has the SSO config page enabled per the customer's agreement
+        """
+        enterprise_customer = self.get_object()
+        if enterprise_customer.enable_portal_saml_configuration_screen and not \
+                enterprise_customer.has_identity_providers:
+            return Response({'needs_idp_config': True})
+        return Response({'needs_idp_config': False})
+
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @action(detail=True)
     @permission_required('enterprise.can_view_catalog', fn=lambda request, pk, course_run_ids, program_uuids: pk)
