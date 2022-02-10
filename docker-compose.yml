@@ -1,0 +1,23 @@
+version: "2.1"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: enterprise.test.app
+    hostname: app.test.enterprise
+    volumes:
+      - .:/edx/app/enterprise_catalog/enterprise_catalog
+      - ../src:/edx/src:cached
+
+    networks:
+      - devstack_default
+    # Allows attachment to this container using 'docker attach <containerID>'.
+    stdin_open: true
+    tty: true
+    environment:
+      DJANGO_SETTINGS_MODULE: enterprise.settings.test
+
+networks:
+  devstack_default:
+    external: true

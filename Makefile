@@ -171,6 +171,9 @@ pii_clean:
 isort: ## call isort on packages/files that are checked in quality tests
 	isort --skip migrations --recursive tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
 
+%-shell: ## Run a shell, as root, on the specified service container
+	docker-compose run -u 0 $* env TERM=$(TERM) /bin/bash
+
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements test test-all upgrade validate isort \
 	static static.dev static.watch
