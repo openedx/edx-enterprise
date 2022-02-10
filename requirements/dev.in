@@ -9,6 +9,7 @@ futures; python_version == "2.7" # Used by caniusepython3, only needed for Pytho
 edx-lint                  # edX pylint rules and plugins
 edx-i18n-tools            # For i18n_tool dummy
 isort                     # to standardize order of imports
+nodeenv
 pip-tools                 # Requirements file management
 pycodestyle               # PEP 8 compliance validation
 pydocstyle                # PEP 257 compliance validation

@@ -11,6 +11,8 @@
 # Common constraints for edx repos
 -c common_constraints.txt
 
+# asgiref==3.4.1
+# charset-normalizer==2.0.10
 
 # mock has dropped support for python 3.5 after 3.0.5
 mock==3.0.5

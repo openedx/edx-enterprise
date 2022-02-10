@@ -2,6 +2,9 @@
 # This file contains the dependencies explicitly needed for this library.
 #
 # Packages directly used by this library that we do not need pinned to a specific version.
+
+-c constraints.txt
+
 bleach
 celery
 code-annotations
