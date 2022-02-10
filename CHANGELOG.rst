@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing
 
+[3.40.0]
+---------
+fix: Alter `enterprise_course_enrollment_id` field from `PositiveIntegerField` to `IntegerField` in `BlackboardLearnerAssessmentDataTransmissionAudit` and `SapSuccessFactorsLearnerDataTransmissionAudit`. This change
+require to run migrations on mysql8.
+
 [3.39.1]
 ---------
 fix: switching blackboard integrated channels from client based auth credentials to global creds

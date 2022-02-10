@@ -247,7 +247,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     """
 
     sapsf_user_id = models.CharField(max_length=255, blank=False, null=False)
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
+    enterprise_course_enrollment_id = models.IntegerField(blank=False, null=False, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     course_completed = models.BooleanField(default=True)
     instructor_name = models.CharField(max_length=255, blank=True)
