@@ -19,6 +19,11 @@ Unreleased
 
 [3.40.0]
 ---------
+chore: squash migrations for blackboard and sap_success_factor apps.
+
+
+[3.40.0]
+---------
 fix: Alter `enterprise_course_enrollment_id` field from `PositiveIntegerField` to `IntegerField` in `BlackboardLearnerAssessmentDataTransmissionAudit` and `SapSuccessFactorsLearnerDataTransmissionAudit`. This change
 require to run migrations on mysql8.
 
