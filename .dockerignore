@@ -1,0 +1,52 @@
+lms_mongo_dump/
+
+### Python artifacts
+**/*.pyc
+
+### artifacts
+**/*.bak
+
+### Logging artifacts
+**/log/
+**/logs
+**/*.log
+
+### Installation artifacts
+**/*.egg-info
+**/.prereqs_cache
+**/node_modules
+**/bin/
+
+**/dist/
+**/build
+**/eggs
+**/parts
+**/bin
+**/var
+**/sdist
+**/develop-eggs
+**/.installed.cfg
+**/lib
+**/lib64
+**/__pycache__
+
+
+### Internationalization artifacts
+**/*.mo
+**/*.po
+**/*.prob
+**/*.dup
+!**/django.po
+!**/django.mo
+!**/djangojs.po
+!**/djangojs.mo
+conf/locale/en/LC_MESSAGES/*.mo
+conf/locale/fake*/LC_MESSAGES/*.po
+conf/locale/fake*/LC_MESSAGES/*.mo
+
+# Unit test / coverage reports
+**/.coverage
+**/htmlcov
+**/.tox
+**/nosetests.xml
+**/unittests.xml
