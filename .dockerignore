@@ -2,6 +2,16 @@ lms_mongo_dump/
 
 ### Python artifacts
 **/*.pyc
+.pytest_cache
+
+# Unit test / coverage reports
+.cache/
+.coverage
+.coverage.*
+.tox
+coverage.xml
+htmlcov/
+pii_report/
 
 ### artifacts
 **/*.bak

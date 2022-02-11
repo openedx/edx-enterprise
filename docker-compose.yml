@@ -10,7 +10,6 @@ services:
     hostname: app.test.enterprise
     volumes:
       - .:/edx/app/edx-enterprise
-      - ../src:/edx/src:cached
 
     networks:
       - devstack_default

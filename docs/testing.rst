@@ -8,7 +8,15 @@ checks to catch potential problems during development.
 
 Running all of the python tests
 -------------------------------
-To run all unit tests and quality checks in the version of Python you chose for your virtualenv:
+To run all unit tests and quality checks in the version of Python you chose for your virtualenv.
+
+Alternatively, `docker`_ can be used to provide a containerized shell to run the commands below inside.
+
+.. _docker: https://www.docker.com/
+
+.. code-block:: bash
+
+    $ make test-shell
 
 .. code-block:: bash
 
