@@ -171,6 +171,8 @@ pii_clean:
 isort: ## call isort on packages/files that are checked in quality tests
 	isort --skip migrations --recursive tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
 
+## Docker in this repo is only supported for running tests locally
+## as an alternative to virtualenv natively - johnnagro 2022-02-11
 %-shell: ## Run a shell, as root, on the specified service container
 	docker-compose run -u 0 $* env TERM=$(TERM) /bin/bash
 

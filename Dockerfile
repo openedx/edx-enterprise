@@ -1,3 +1,5 @@
+# Docker in this repo is only supported for running tests locally
+# as an alternative to virtualenv natively - johnnagro 2022-02-11
 FROM ubuntu:focal as app
 MAINTAINER sre@edx.org
 
