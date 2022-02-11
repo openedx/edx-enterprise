@@ -55,6 +55,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'transmission_chunk_size',
         'additional_locales',
         'catalogs_to_transmit',
+        'display_name',
     )
 
     list_display = (

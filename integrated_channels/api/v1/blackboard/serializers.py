@@ -8,6 +8,8 @@ from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerCo
 
 class BlackboardConfigSerializer(serializers.ModelSerializer):
     oauth_authorization_url = serializers.ReadOnlyField()
+    is_valid = serializers.ReadOnlyField()
+    channel_code = serializers.ReadOnlyField()
 
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration

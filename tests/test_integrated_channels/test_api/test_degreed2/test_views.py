@@ -101,3 +101,29 @@ class Degreed2ConfigurationViewSetTests(APITest):
         configs = Degreed2EnterpriseCustomerConfiguration.objects.filter()
         self.assertEqual(response.status_code, 204)
         self.assertEqual(len(configs), 0)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_is_valid_field(self, mock_current_request):
+        self.user.is_superuser = True
+        self.user.save()
+
+        self.degreed2_config.client_id = ''
+        self.degreed2_config.save()
+
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:degreed2:configuration-list')
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+
+        # Assert that `is_valid` says a refresh token is missing
+        assert data[0].get('is_valid').get('missing') == ['client_id']
+
+        # Add a refresh token and assert that is_valid now passes
+        self.degreed2_config.client_id = 'ayylmao'
+        self.degreed2_config.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        assert not data[0].get('is_valid').get('missing')

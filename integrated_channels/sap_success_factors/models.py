@@ -165,6 +165,28 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
     class Meta:
         app_label = 'sap_success_factors'
 
+    @property
+    def is_valid(self):
+        """
+        Returns whether or not the configuration is valid and ready to be activated
+
+        Args:
+            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        missing_items = {'missing': []}
+        if not self.key:
+            missing_items.get('missing').append('key')
+        if not self.sapsf_base_url:
+            missing_items.get('missing').append('sapsf_base_url')
+        if not self.sapsf_company_id:
+            missing_items.get('missing').append('sapsf_company_id')
+        if not self.sapsf_user_id:
+            missing_items.get('missing').append('sapsf_user_id')
+        if not self.secret:
+            missing_items.get('missing').append('secret')
+        return missing_items
+
     def __str__(self):
         """
         Return human-readable string representation.

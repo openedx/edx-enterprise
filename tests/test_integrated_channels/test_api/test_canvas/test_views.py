@@ -29,6 +29,8 @@ class CanvasConfigurationViewSetTests(APITest):
 
         self.enterprise_customer_conf = factories.CanvasEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
+            client_id='ayy',
+            client_secret='lmao',
         )
 
     @mock.patch('enterprise.rules.crum.get_current_request')
@@ -123,3 +125,22 @@ class CanvasConfigurationViewSetTests(APITest):
         configs = CanvasEnterpriseCustomerConfiguration.objects.filter()
         self.assertEqual(response.status_code, 204)
         self.assertEqual(len(configs), 0)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_is_valid_field(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:canvas:configuration-list')
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        # Assert that `is_valid` says a refresh token is missing
+        assert data[0].get('is_valid').get('missing') == ['refresh_token']
+
+        # Add a refresh token and assert that is_valid now passes
+        self.enterprise_customer_conf.refresh_token = 'ayylmao'
+        self.enterprise_customer_conf.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        assert not data[0].get('is_valid').get('missing')
