@@ -17,7 +17,7 @@ Unreleased
 ----------
 * nothing
 
-[3.40.0]
+[3.40.1]
 ---------
 chore: squash migrations for blackboard and sap_success_factor apps.
 
