@@ -43,6 +43,15 @@ below is executed within the virtualenv.
 
 .. _virtualenv: https://virtualenvwrapper.readthedocs.org/en/latest/
 
+Alternatively, `docker`_ can be used to provide a containerized shell to run the commands below inside.
+
+.. _docker: https://www.docker.com/
+
+.. code-block:: bash
+
+    $ make test-shell
+
+
 Install dependencies
 ^^^^^^^^^^^^^^^^^^^^
 
