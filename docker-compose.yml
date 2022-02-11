@@ -2,7 +2,7 @@
 # as an alternative to virtualenv natively - johnnagro 2022-02-11
 version: "2.1"
 services:
-  app:
+  test-shell:
     build:
       context: .
       dockerfile: Dockerfile

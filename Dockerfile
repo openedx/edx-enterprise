@@ -55,11 +55,11 @@ ENV LC_ALL en_US.UTF-8
 ENV DJANGO_SETTINGS_MODULE enterprise.settings.test
 
 # Env vars: path
-ENV VIRTUAL_ENV='/edx/app/edx-enterprise/venvs/edxapp'
+ENV VIRTUAL_ENV='/edx/app/venvs/edx-enterprise'
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PATH="/edx/app/edx-enterprise/node_modules/.bin:${PATH}"
 ENV PATH="/edx/app/edx-enterprise/bin:${PATH}"
-ENV PATH="/edx/app/edx-enterprise/nodeenv/bin:${PATH}"
+ENV PATH="/edx/app/nodeenv/bin:${PATH}"
 
 RUN useradd -m --shell /bin/false app
 
@@ -80,7 +80,7 @@ RUN pip install nodeenv
 # Must be done after Python requirements, since nodeenv is installed
 # via pip.
 # The node environment is already 'activated' because its .../bin was put on $PATH.
-RUN nodeenv /edx/app/edx-enterprise/nodeenv --node=12.11.1 --prebuilt
+RUN nodeenv /edx/app/nodeenv --node=12.11.1 --prebuilt
 
 RUN mkdir -p /edx/var/log
 

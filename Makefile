@@ -173,8 +173,8 @@ isort: ## call isort on packages/files that are checked in quality tests
 
 ## Docker in this repo is only supported for running tests locally
 ## as an alternative to virtualenv natively - johnnagro 2022-02-11
-%-shell: ## Run a shell, as root, on the specified service container
-	docker-compose run -u 0 $* env TERM=$(TERM) /bin/bash
+test-shell: ## Run a shell, as root, on the specified service container
+	docker-compose run -u 0 test-shell env TERM=$(TERM) /bin/bash
 
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements test test-all upgrade validate isort \
