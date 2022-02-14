@@ -17,10 +17,13 @@ Unreleased
 ----------
 * nothing
 
+[3.40.2]
+---------
+feat: override chunk size default to match channel capability
+
 [3.40.1]
 ---------
 chore: squash migrations for blackboard and sap_success_factor apps.
-
 
 [3.40.0]
 ---------
