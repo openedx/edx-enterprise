@@ -26,6 +26,7 @@ class CanvasEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         "refresh_token",
         "customer_oauth_authorization_url",
         "uuid",
+        "transmission_chunk_size",
     )
 
     search_fields = ("enterprise_customer_name",)
