@@ -66,6 +66,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         'has_access_token',
+        'transmission_chunk_size',
     )
 
     list_filter = ('active',)

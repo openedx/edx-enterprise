@@ -25,6 +25,7 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "enterprise_customer_name",
+        "transmission_chunk_size",
     )
 
     list_filter = ("active",)

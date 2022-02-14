@@ -63,6 +63,12 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         help_text="If provided, will be used as base url instead of degreed_base_url to fetch tokens"
     )
 
+    # overriding base model field, to use chunk size 1 default
+    transmission_chunk_size = models.IntegerField(
+        default=1,
+        help_text="The maximum number of data items to transmit to the integrated channel with each request."
+    )
+
     history = HistoricalRecords()
 
     class Meta:
