@@ -113,6 +113,10 @@ defusedxml==0.7.1
     #   djangorestframework-xml
 diff-cover==6.4.4
     # via -r requirements/test.txt
+distlib==0.3.4
+    # via
+    #   -r requirements/test.txt
+    #   virtualenv
 django==3.2.12
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
@@ -243,6 +247,11 @@ faker==12.3.3
     # via
     #   -r requirements/test.txt
     #   factory-boy
+filelock==3.4.2
+    # via
+    #   -r requirements/test.txt
+    #   tox
+    #   virtualenv
 freezegun==0.3.14
     # via
     #   -c requirements/constraints.txt
@@ -318,6 +327,7 @@ packaging==21.3
     #   -r requirements/test.txt
     #   bleach
     #   pytest
+    #   tox
 path==16.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -339,12 +349,16 @@ pillow==9.0.1
 pkginfo==1.8.2
     # via twine
 platformdirs==2.5.0
-    # via pylint
+    # via
+    #   -r requirements/test.txt
+    #   pylint
+    #   virtualenv
 pluggy==1.0.0
     # via
     #   -r requirements/test.txt
     #   diff-cover
     #   pytest
+    #   tox
 prompt-toolkit==3.0.28
     # via
     #   -r requirements/test.txt
@@ -358,6 +372,7 @@ py==1.11.0
     # via
     #   -r requirements/test.txt
     #   pytest
+    #   tox
 pycodestyle==2.8.0
     # via -r requirements/quality.in
 pycparser==2.21
@@ -494,6 +509,8 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   responses
+    #   tox
+    #   virtualenv
 slumber==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -531,10 +548,13 @@ toml==0.10.2
     #   -r requirements/test.txt
     #   pylint
     #   pytest
+    #   tox
 tomli==2.0.1
     # via
     #   -r requirements/test.txt
     #   coverage
+tox==3.24.5
+    # via -r requirements/test.txt
 tqdm==4.62.3
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -561,6 +581,10 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
+virtualenv==20.13.1
+    # via
+    #   -r requirements/test.txt
+    #   tox
 wcwidth==0.2.5
     # via
     #   -r requirements/test.txt

@@ -119,7 +119,7 @@ clean_pycrypto: ## temporary (?) hack to deal with the pycrypto dep that's insta
 requirements.js: ## install JS requirements for local development
 	npm install
 
-requirements: requirements.js clean_pycrypto piptools dev_requirements doc_requirements ## sync to default requirements
+requirements: requirements.js clean_pycrypto piptools dev_requirements doc_requirements ci_requirements ## sync to default requirements
 
 ci_requirements: validation_requirements ## sync to requirements needed for CI checks
 
