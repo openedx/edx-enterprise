@@ -75,15 +75,8 @@ docs: ## generate Sphinx HTML documentation, including API docs
 PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
 LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
 PLATFORM_BASE_REQS = https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt
-COMMON_CONSTRAINTS_TXT=requirements/common_constraints.txt
-.PHONY: $(COMMON_CONSTRAINTS_TXT)
-$(COMMON_CONSTRAINTS_TXT):
-	wget -O "$(@)" https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt || touch "$(@)"
-	echo "$(COMMON_CONSTRAINTS_TEMP_COMMENT)" | cat - $(@) > temp && mv temp $(@)
 
-check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platform pins is accurate
-	sed 's/Django<2.3//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
-	mv requirements/common_constraints.tmp requirements/common_constraints.txt
+check_pins: ## check that our local copy of edx-platform pins is accurate
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
 	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
 	# These requirement pins are removed because this is causing a deadlock in upgrading celery in both

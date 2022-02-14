@@ -1,20 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # A central location for most common version constraints
 # (across edx repos) for pip-installation.
 #
@@ -27,7 +10,6 @@
 #
 # Note: Changes to this file will automatically be used by other repos, referencing
 #  this file from Github directly. It does not require packaging in edx-lint.
-
 
 # using LTS django version
 Django<3.3
