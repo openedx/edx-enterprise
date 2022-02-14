@@ -98,45 +98,46 @@ check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platfo
 	sed -i.tmp '/^click==/d' $(LOCAL_EDX_PINS)
 	sed -i.tmp '/^prompt-toolkit==/d' $(LOCAL_EDX_PINS)
 	sed -i.tmp '/^vine==/d' $(LOCAL_EDX_PINS)
-
-
-
 	rm requirements/*.txt.tmp
-	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
+	python requirements/check_pins.py requirements/test.txt $(LOCAL_EDX_PINS)
 
-upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: check_pins  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	pip install -q pip-tools
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/doc.txt requirements/doc.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test.txt requirements/test.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/dev.txt requirements/dev.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/ci.txt requirements/ci.in
-	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/js_test.txt requirements/js_test.in
-	# This section removes django from test.txt to
-	# let tox control the Django version for tests
-	grep -e "^django==" requirements/test.txt > requirements/django.txt
-	grep -e "^amqp==\|^anyjson==\|^billiard==\|^celery==\|^kombu==\|^click-didyoumean==\|^click-repl==\|^click==\|^prompt-toolkit==\|^vine==" requirements/dev.txt > requirements/celery50.txt
-	sed -i.tmp '/^[d|D]jango==/d' requirements/test.txt
-	sed -i.tmp '/^amqp==/d' requirements/test.txt
-	sed -i.tmp '/^anyjson==/d' requirements/test.txt
-	sed -i.tmp '/^billiard==/d' requirements/test.txt
-	sed -i.tmp '/^celery==/d' requirements/test.txt
-	sed -i.tmp '/^kombu==/d' requirements/test.txt
-	sed -i.tmp '/^click-didyoumean==/d' requirements/test.txt
-	sed -i.tmp '/^click-repl==/d' requirements/test.txt
-	sed -i.tmp '/^click==/d' requirements/test.txt
-	sed -i.tmp '/^click==/d' requirements/test.txt
-	sed -i.tmp '/^prompt-toolkit==/d' requirements/test.txt
-	sed -i.tmp '/^vine==/d' requirements/test.txt
-	rm requirements/test.txt.tmp
+pgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
+upgrade: piptools check_pins ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+	# Make sure to compile files after any other files they include!
+	pip-compile --upgrade -o requirements/pip-tools.txt requirements/pip-tools.in
+	pip-compile --upgrade -o requirements/base.txt requirements/base.in
+	pip-compile --upgrade -o requirements/test.txt requirements/test.in
+	pip-compile --upgrade -o requirements/doc.txt requirements/doc.in
+	pip-compile --upgrade -o requirements/quality.txt requirements/quality.in
+	pip-compile --upgrade -o requirements/validation.txt requirements/validation.in
+	pip-compile --upgrade -o requirements/dev.txt requirements/dev.in
+	pip-compile --upgrade -o requirements/production.txt requirements/production.in
+	# Let tox control the Django version for tests
+	grep -e "^django==" requirements/base.txt > requirements/django.txt
+	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
+	mv requirements/test.tmp requirements/test.txt
+
+piptools: ## install pinned version of pip-compile and pip-sync
+	pip install -r requirements/pip-tools.txt
+
+clean_pycrypto: ## temporary (?) hack to deal with the pycrypto dep that's installed via setup-tools
+	ls -d /usr/lib/python3/dist-packages/* | grep 'pycrypto\|pygobject\|pyxdg' | xargs rm -f
 
 requirements.js: ## install JS requirements for local development
 	npm install
 
-requirements: requirements.js ## install development environment requirements
-	pip install -qr requirements/dev.txt --exists-action w
-	pip-sync requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
+requirements: requirements.js clean_pycrypto piptools dev_requirements ## sync to default requirements
+
+ci_requirements: validation_requirements ## sync to requirements needed for CI checks
+
+dev_requirements: ## sync to requirements for local development
+	pip-sync -q requirements/dev.txt
+
+validation_requirements: ## sync to requirements for testing & code quality checking
+	pip-sync -q requirements/validation.txt
+
+doc_requirements:
+	pip-sync -q requirements/doc.txt
 
 jshint: ## run Javascript linting
 	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint --save-dev

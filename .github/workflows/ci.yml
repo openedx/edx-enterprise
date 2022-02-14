@@ -21,7 +21,8 @@ jobs:
         with:
           python-version: '3.8'
           architecture: x64
-      - run: pip install -r requirements/ci.txt
+      - name: Install requirements
+        run: make requirements
       - name: Run tox
         env:
           TOXENV: ${{ matrix.toxenv }}

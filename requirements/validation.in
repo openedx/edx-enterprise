@@ -1,0 +1,4 @@
+# Requirements for validation (testing, code quality).
+
+-r quality.txt
+-r test.txt
