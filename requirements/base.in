@@ -32,7 +32,7 @@ edx-tincan-py35
 edx-rbac
 jsondiff
 jsonfield
-path.py
+path-py
 pillow
 python-dateutil
 pytz
