@@ -21,6 +21,10 @@ jobs:
         with:
           python-version: '3.8'
           architecture: x64
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12
       - name: Install requirements
         run: make requirements
       - name: Run tox
