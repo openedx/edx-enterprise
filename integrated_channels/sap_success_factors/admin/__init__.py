@@ -49,6 +49,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'user_type',
         'has_access_token',
         'prevent_self_submit_grades',
+        'show_course_price',
         'disable_learner_data_transmissions',
         'transmit_total_hours',
         'transmission_chunk_size',
