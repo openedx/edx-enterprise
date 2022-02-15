@@ -27,6 +27,9 @@ feat: add management command to clean up `active` fields on EnterpriseCustomerUs
 feat: customer configs draft saving that makes all variables optional
 feat: feat: Add field for Display name for LMS configs
 
+[3.39.0]
+chore: dropped Django22, 30 and 31 support
+
 [3.38.6]
 ---------
 feat: add created to enterprise course enrollment serializer fields
