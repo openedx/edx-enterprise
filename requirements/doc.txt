@@ -14,7 +14,7 @@ aniso8601==9.0.1
     # via
     #   -r requirements/test-master.txt
     #   edx-tincan-py35
-asgiref==3.4.1
+asgiref==3.5.0
     # via
     #   -r requirements/test-master.txt
     #   django
@@ -40,7 +40,7 @@ cffi==1.15.0
     # via
     #   -r requirements/test-master.txt
     #   cryptography
-charset-normalizer==2.0.10
+charset-normalizer==2.0.11
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -64,7 +64,7 @@ click-repl==0.2.0
     # via
     #   -r requirements/test-master.txt
     #   celery
-code-annotations==1.2.0
+code-annotations==1.3.0
     # via -r requirements/test-master.txt
 cryptography==36.0.1
     # via
@@ -75,7 +75,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-django==3.2.11
+django==3.2.12
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -93,7 +93,7 @@ django==3.2.11
     #   jsonfield
 django-cache-memoize==0.1.10
     # via -r requirements/test-master.txt
-django-config-models==2.2.2
+django-config-models==2.3.0
     # via -r requirements/test-master.txt
 django-countries==7.2.1
     # via -r requirements/test-master.txt
@@ -144,7 +144,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==4.4.1
+edx-django-utils==4.5.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -154,13 +154,13 @@ edx-drf-extensions==8.0.1
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.2.2
+edx-opaque-keys[django]==2.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-rbac==1.5.1
+edx-rbac==1.6.0
     # via -r requirements/test-master.txt
-edx-rest-api-client==5.4.1
+edx-rest-api-client==5.5.0
     # via -r requirements/test-master.txt
 edx-sphinx-theme==3.0.0
     # via -r requirements/doc.in
@@ -176,12 +176,14 @@ idna==3.3
     #   requests
 imagesize==1.3.0
     # via sphinx
+importlib-metadata==4.11.0
+    # via sphinx
 jinja2==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
     #   sphinx
-jsondiff==1.3.0
+jsondiff==1.3.1
     # via -r requirements/test-master.txt
 jsonfield==3.1.0
     # via -r requirements/test-master.txt
@@ -193,7 +195,7 @@ markupsafe==2.0.1
     # via
     #   -r requirements/test-master.txt
     #   jinja2
-newrelic==7.2.4.171
+newrelic==7.4.0.172
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -205,16 +207,16 @@ packaging==21.3
 path==16.3.0
     # via
     #   -r requirements/test-master.txt
-    #   path.py
-path.py==12.5.0
+    #   path-py
+path-py==12.5.0
     # via -r requirements/test-master.txt
-pbr==5.8.0
+pbr==5.8.1
     # via
     #   -r requirements/test-master.txt
     #   stevedore
-pillow==9.0.0
+pillow==9.0.1
     # via -r requirements/test-master.txt
-prompt-toolkit==3.0.24
+prompt-toolkit==3.0.28
     # via
     #   -r requirements/test-master.txt
     #   click-repl
@@ -226,7 +228,7 @@ pycparser==2.21
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.12.0
+pycryptodomex==3.14.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
@@ -249,7 +251,7 @@ pymongo==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   edx-opaque-keys
-pyparsing==3.0.6
+pyparsing==3.0.7
     # via
     #   -r requirements/test-master.txt
     #   packaging
@@ -287,7 +289,7 @@ restructuredtext-lint==1.3.2
     # via doc8
 rules==3.1
     # via -r requirements/test-master.txt
-semantic-version==2.8.5
+semantic-version==2.9.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -307,7 +309,7 @@ slumber==0.7.1
     #   edx-rest-api-client
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==4.3.2
+sphinx==4.4.0
     # via
     #   -r requirements/doc.in
     #   edx-sphinx-theme
@@ -362,6 +364,5 @@ webencodings==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   bleach
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
+zipp==3.7.0
+    # via importlib-metadata

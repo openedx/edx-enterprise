@@ -26,30 +26,32 @@ cryptography==36.0.1
     #   urllib3
 glob2==0.7
     # via jasmine-core
-h11==0.12.0
+h11==0.13.0
     # via wsproto
 idna==3.3
     # via
     #   trio
     #   urllib3
 importlib-resources==5.4.0
-    # via jaraco.text
-jaraco.classes==3.2.1
+    # via jaraco-text
+jaraco-classes==3.2.1
     # via
     #   -r requirements/js_test.in
-    #   jaraco.collections
-jaraco.collections==3.5.1
+    #   jaraco-collections
+jaraco-collections==3.5.1
     # via
     #   -r requirements/js_test.in
     #   cherrypy
-jaraco.functools==3.5.0
+jaraco-context==4.1.1
+    # via jaraco-text
+jaraco-functools==3.5.0
     # via
     #   -r requirements/js_test.in
     #   cheroot
-    #   jaraco.text
+    #   jaraco-text
     #   tempora
-jaraco.text==3.6.0
-    # via jaraco.collections
+jaraco-text==3.7.0
+    # via jaraco-collections
 jasmine==3.99.0
     # via -r requirements/js_test.in
 jasmine-core==3.99.0
@@ -62,8 +64,8 @@ more-itertools==8.12.0
     # via
     #   cheroot
     #   cherrypy
-    #   jaraco.classes
-    #   jaraco.functools
+    #   jaraco-classes
+    #   jaraco-functools
 ordereddict==1.1
     # via jasmine-core
 outcome==1.1.0
@@ -72,7 +74,7 @@ portend==3.1.0
     # via cherrypy
 pycparser==2.21
     # via cffi
-pyopenssl==21.0.0
+pyopenssl==22.0.0
     # via urllib3
 pytz==2021.3
     # via tempora
@@ -81,14 +83,12 @@ pyyaml==6.0
 selenium==4.1.0
     # via jasmine
 six==1.16.0
-    # via
-    #   cheroot
-    #   pyopenssl
+    # via cheroot
 sniffio==1.2.0
     # via trio
 sortedcontainers==2.4.0
     # via trio
-tempora==5.0.0
+tempora==5.0.1
     # via
     #   -r requirements/js_test.in
     #   portend
@@ -102,7 +102,7 @@ urllib3[secure]==1.26.8
     # via selenium
 wsproto==1.0.0
     # via trio-websocket
-zc.lockfile==2.0
+zc-lockfile==2.0
     # via cherrypy
 zipp==3.7.0
     # via importlib-resources
