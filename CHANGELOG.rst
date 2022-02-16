@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.3]
+---------
+feat: show field show_course_price in SAPSF Django admin form
+
 [3.40.2]
 ---------
 feat: override chunk size default to match channel capability
