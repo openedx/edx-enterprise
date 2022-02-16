@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.4]
+---------
+feat: support filtering by a list of user ids for `EnterpriseCustomerUserViewSet`
+
 [3.40.3]
 ---------
 feat: show field show_course_price in SAPSF Django admin form

@@ -89,8 +89,11 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
 
     def setUp(self):
         super().setUp()
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
-        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=self.user.id)
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id
+        )
         self.url = settings.TEST_SERVER + reverse('enterprise-learner-list')
 
     @ddt.data(
@@ -148,6 +151,28 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
             assert response.status_code == status.HTTP_200_OK
             data = self.load_json(response.content)
             assert len(data['results']) == expected_data_length
+
+    @ddt.data(
+        ('', 2),  # empty values are interpreted as a skipped filter
+        ('1', 1),
+        (',1,', 1),
+        ('1,2', 2),
+        ('3', 0),
+    )
+    @ddt.unpack
+    def test_filter_by_user_ids(self, user_ids, expected_data_length):
+        """
+        Filter user through a comma-delimited list of user ids if requesting user is staff.
+        """
+        for i in range(1, 3):
+            factories.EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=i)
+
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.get(f'{self.url}?user_ids={user_ids}')
+        assert response.status_code == status.HTTP_200_OK
+        data = self.load_json(response.content)
+        assert len(data['results']) == expected_data_length
 
 
 @ddt.ddt
