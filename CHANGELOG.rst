@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing
 
+[3.40.5]
+---------
+feat: adding CornerstoneLearnerDataTransmissionAudit admin view
+feat: log if-modified-since + content metadata for CSOD
+
 [3.40.4]
 ---------
 feat: support filtering by a list of user ids for `EnterpriseCustomerUserViewSet`
