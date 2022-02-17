@@ -118,6 +118,9 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
             obj: The instance of CornerstoneEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
+
+        # a direct foreign key relationship is missing
+        # multiple queries here so, avoid adding it to list_display fields
         EnterpriseCourseEnrollment = enterprise_course_enrollment_model()
         EnterpriseCustomerUser = enterprise_customer_user_model()
         EnterpriseCustomer = enterprise_customer_model()
