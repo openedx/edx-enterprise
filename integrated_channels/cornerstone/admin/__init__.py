@@ -14,11 +14,13 @@ from integrated_channels.cornerstone.models import (
     CornerstoneLearnerDataTransmissionAudit,
 )
 
+
 def enterprise_course_enrollment_model():
     """
     Returns the ``EnterpriseCourseEnrollment`` class.
     """
     return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
+
 
 def enterprise_customer_user_model():
     """
@@ -26,11 +28,13 @@ def enterprise_customer_user_model():
     """
     return apps.get_model('enterprise', 'EnterpriseCustomerUser')
 
+
 def enterprise_customer_model():
     """
     Returns the ``EnterpriseCustomer`` class.
     """
     return apps.get_model('enterprise', 'EnterpriseCustomer')
+
 
 @admin.register(CornerstoneGlobalConfiguration)
 class CornerstoneGlobalConfigurationAdmin(ConfigurationModelAdmin):
@@ -65,7 +69,9 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("active",)
+    
     search_fields = ("enterprise_customer_name",)
+    
     class Meta:
         model = CornerstoneEnterpriseCustomerConfiguration
 
