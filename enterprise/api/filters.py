@@ -38,6 +38,18 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
     Allow filtering on the enterprise customer user api endpoint.
     """
 
+    def _filter_by_user_ids(self, request, queryset):
+        """
+        Filter queryset by a comma-delimited list of user ids.
+        """
+
+        user_ids = request.query_params.get('user_ids', None)
+        if user_ids:
+            user_ids = user_ids.strip(',').split(',')
+            return queryset.filter(user_id__in=user_ids)
+
+        return queryset
+
     def _filter_by_user_attributes(self, request, queryset):
         """
         Filter queryset by email or username.
@@ -96,6 +108,7 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
         if request.user.is_staff:
             queryset = self._filter_by_user_attributes(request, queryset)
             queryset = self._filter_by_enterprise_attributes(request, queryset)
+            queryset = self._filter_by_user_ids(request, queryset)
         else:
             queryset = queryset.filter(user_id=request.user.id)
 
