@@ -69,9 +69,9 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("active",)
-    
+
     search_fields = ("enterprise_customer_name",)
-    
+
     class Meta:
         model = CornerstoneEnterpriseCustomerConfiguration
 
