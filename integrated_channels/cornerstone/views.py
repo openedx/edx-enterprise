@@ -212,17 +212,17 @@ class CornerstoneCoursesListView(BaseViewSet):
         data = transmitter.transmit(*exporter.export_force_all_catalogs())
 
         logger.info(f'integrated_channel=CSOD, '
-            f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
-            f'transmitting {len(data)} items.')
+                    f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
+                    f'transmitting {len(data)} items.')
 
         if len(data > 0):
-            minLastModifiedContent = min(data, key=lambda x:x['LastModifiedUTC'])
-            maxLastModifiedContent = max(data, key=lambda x:x['LastModifiedUTC'])
+            minLastModifiedContent = min(data, key=lambda x: x['LastModifiedUTC'])
+            maxLastModifiedContent = max(data, key=lambda x: x['LastModifiedUTC'])
             # If-Modified-Since compared to content logging
             logger.info(f'integrated_channel=CSOD, '
-                f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
-                f'If-Modified-Since={request.headers.get("If-Modified-Since")}, '
-                f'minLastModifiedUTC={minLastModifiedContent.get("LastModifiedUTC")}, '
-                f'maxLastModifiedUTC={maxLastModifiedContent.get("LastModifiedUTC")}')
+                        f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
+                        f'If-Modified-Since={request.headers.get("If-Modified-Since")}, '
+                        f'minLastModifiedUTC={minLastModifiedContent.get("LastModifiedUTC")}, '
+                        f'maxLastModifiedUTC={maxLastModifiedContent.get("LastModifiedUTC")}')
 
         return Response(data)
