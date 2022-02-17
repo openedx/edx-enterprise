@@ -1141,6 +1141,35 @@ def get_course_run_duration_info(course_run):
         )
     return duration_info
 
+def get_duration_of_course_or_courserun(content_metadata_item):
+    """
+    Returns duration start, end dates given a piece of content_metadata item
+    If course item, extracts start, end dates of closest course run based on current timestamp
+    Returns:
+        duration: in days or 0
+        start: start field of closest course run item, or None
+        end: end field of closest course run item, or None
+    """
+    start = None
+    end = None
+    if content_metadata_item.get('content_type') == 'courserun':
+        start = content_metadata_item.get('start')
+        end = content_metadata_item.get('end')
+    elif content_metadata_item.get('content_type') == 'course':
+        course_runs = content_metadata_item.get('course_runs')
+        if course_runs:
+            course_run = get_closest_course_run(course_runs)
+            if course_run:
+                start = course_run.get('start')
+                end = course_run.get('end')
+    if not start:
+        return 0, None, None
+    start_date = parse_datetime_handle_invalid(start)
+    end_date = parse_datetime_handle_invalid(end)
+    if not start_date or not end_date:
+        return 0, None, None
+    return (end_date - start_date).days, start, end
+
 
 def is_course_run_enrollable(course_run):
     """
