@@ -215,7 +215,7 @@ class CornerstoneCoursesListView(BaseViewSet):
                     f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
                     f'transmitting {len(data)} items.')
 
-        if len(data > 0):
+        if len(data) > 0:
             minLastModifiedContent = min(data, key=lambda x: x['LastModifiedUTC'])
             maxLastModifiedContent = max(data, key=lambda x: x['LastModifiedUTC'])
             # If-Modified-Since compared to content logging
