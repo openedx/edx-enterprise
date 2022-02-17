@@ -4,8 +4,8 @@ Django admin integration for configuring cornerstone ondemand app to communicate
 
 from config_models.admin import ConfigurationModelAdmin
 
-from django.contrib import admin
 from django.apps import apps
+from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
 
 from integrated_channels.cornerstone.models import (
