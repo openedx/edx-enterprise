@@ -2,6 +2,8 @@
 Views containing APIs for cornerstone integrated channel
 """
 
+from logging import getLogger
+
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
@@ -10,6 +12,8 @@ from rest_framework.response import Response
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user, get_oauth2authentication_class
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
+
+logger = getLogger(__name__)
 
 
 class BaseViewSet(generics.ListAPIView):
@@ -206,4 +210,19 @@ class CornerstoneCoursesListView(BaseViewSet):
         exporter = enterprise_config.get_content_metadata_exporter(worker_user)
         transmitter = enterprise_config.get_content_metadata_transmitter()
         data = transmitter.transmit(*exporter.export_force_all_catalogs())
+
+        logger.info(f'integrated_channel=CSOD, '
+            f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
+            f'transmitting {len(data)} items.')
+
+        if len(data > 0):
+            minLastModifiedContent = min(data, key=lambda x:x['LastModifiedUTC'])
+            maxLastModifiedContent = max(data, key=lambda x:x['LastModifiedUTC'])
+            # If-Modified-Since compared to content logging
+            logger.info(f'integrated_channel=CSOD, '
+                f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
+                f'If-Modified-Since={request.headers.get("If-Modified-Since")}, '
+                f'minLastModifiedUTC={minLastModifiedContent.get("LastModifiedUTC")}, '
+                f'maxLastModifiedUTC={maxLastModifiedContent.get("LastModifiedUTC")}')
+
         return Response(data)
