@@ -295,6 +295,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_browse_and_request = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether browse and request is enabled for this customer. "
+            "Managed via admin portal settings UI."
+        )
+    )
+
     enable_learner_portal = models.BooleanField(
         default=False,
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.8]
+---------
+feat: add enable_browse_and_request field to `EntepriseCustomerUser`
+
 [3.40.7]
 ---------
 fix: Broken Canvas oauth authorization url
