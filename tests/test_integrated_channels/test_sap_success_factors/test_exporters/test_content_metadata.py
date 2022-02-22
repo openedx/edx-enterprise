@@ -223,7 +223,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         ),
         (
             {},
-            [{'startDate': '', 'endDate': '', 'active': False, 'duration': 0}]
+            [{'startDate': '', 'endDate': '', 'active': False, 'duration': '0 days'}]
         )
     )
     @ddt.unpack
