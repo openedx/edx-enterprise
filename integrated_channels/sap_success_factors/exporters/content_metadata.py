@@ -6,7 +6,12 @@ from logging import getLogger
 
 from django.utils.translation import gettext_lazy as _
 
-from enterprise.utils import get_closest_course_run, is_course_run_available_for_enrollment, parse_lms_api_datetime
+from enterprise.utils import (
+    get_closest_course_run,
+    get_duration_of_course_or_courserun,
+    is_course_run_available_for_enrollment,
+    parse_lms_api_datetime,
+)
 from enterprise.views import CourseEnrollmentView
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.sap_success_factors.exporters.utils import transform_language_code
@@ -133,11 +138,17 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         """
         return 1
 
-    def transform_schedule(self, content_metadata_item):  # pylint: disable=unused-argument
+    def transform_schedule(self, content_metadata_item):
         """
         Return the schedule of the content item.
         """
-        return []
+        duration, start, end = get_duration_of_course_or_courserun(content_metadata_item)
+        return [{
+            'startDate': parse_datetime_to_epoch_millis(start) if start else '',
+            'endDate': parse_datetime_to_epoch_millis(end) if end else '',
+            'active': current_time_is_in_interval(start, end) if start else False,
+            'duration': f"{duration} days",
+        }]
 
     def transform_price(self, content_metadata_item):
         """

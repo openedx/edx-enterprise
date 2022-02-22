@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.6]
+---------
+feat: SAPSF content metadata transmission now also sends course schedule
+
 [3.40.5]
 ---------
 feat: adding CornerstoneLearnerDataTransmissionAudit admin view

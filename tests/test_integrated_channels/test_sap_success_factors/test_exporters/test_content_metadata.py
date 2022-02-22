@@ -11,6 +11,7 @@ from pytest import mark
 
 from enterprise.utils import parse_lms_api_datetime
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
+from integrated_channels.utils import parse_datetime_to_epoch_millis
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
@@ -180,6 +181,59 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'locale': 'English',
                 'value': course_run['title']
             }]
+
+    @ddt.data(
+        (
+            {
+                'content_type': 'courserun',
+                'start': '2013-02-05T05:00:00Z',
+                'end': '2013-05-05T05:00:00Z',
+            },
+            [{
+                'startDate': parse_datetime_to_epoch_millis('2013-02-05T05:00:00Z'),
+                'endDate': parse_datetime_to_epoch_millis('2013-05-05T05:00:00Z'),
+                'active': False,
+                'duration': '89 days',
+            }]
+        ),
+        (
+            {
+                "content_type": "course",
+                "key": "CatalystX+IL-BSL.S1x",
+                "title": "Cómo Convertirse en un Líder Exitoso (Entrenamiento de Liderazgo Inclusivo)",
+                "course_runs": [
+                    {
+                        "key": "course-v1:CatalystX+IL-BSL.S1x+2T2017",
+                        "start": "2017-05-16T16:00:00Z",
+                        "end": "2017-06-30T23:59:00Z",
+                    },
+                    {
+                        "key": "course-v1:CatalystX+IL-BSL.S1x+2T2018",
+                        "start": "2018-05-16T16:00:00Z",
+                        "end": "2018-06-30T23:59:00Z",
+                    }
+                ],
+            },
+            [{
+                'startDate': parse_datetime_to_epoch_millis('2018-05-16T16:00:00Z'),
+                'endDate': parse_datetime_to_epoch_millis('2018-06-30T23:59:00Z'),
+                'active': False,
+                'duration': '45 days',
+            }]
+        ),
+        (
+            {},
+            [{'startDate': '', 'endDate': '', 'active': False, 'duration': '0 days'}]
+        )
+    )
+    @ddt.unpack
+    def test_transform_schedule_course_run(self, metadata, expected_schedules):
+        """
+        Transforming a course run returns an array with one courserun element, for schedule
+        or the most recent courserun, if procesing a course
+        """
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_schedule(metadata) == expected_schedules
 
     @ddt.data(
         {
