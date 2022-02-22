@@ -109,7 +109,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
                 being rendered with this admin form.
         """
         if self.canvas_base_url and self.client_id:
-            return (f'{self.canvas_base_url}/learn/api/public/v1/oauth2/authorizationcode'
+            return (f'{self.canvas_base_url}/login/oauth2/auth'
                     f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
                     f'response_type=code&'
                     f'client_id={self.client_id}&state={self.uuid}')

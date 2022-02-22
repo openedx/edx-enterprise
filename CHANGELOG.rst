@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.7]
+---------
+fix: Broken Canvas oauth authorization url
+
 [3.40.6]
 ---------
 feat: SAPSF content metadata transmission now also sends course schedule
