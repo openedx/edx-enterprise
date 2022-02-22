@@ -152,7 +152,6 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
             'duration': f"{duration} days",
         }]
 
-
     def transform_price(self, content_metadata_item):
         """
         Return the current course run's price.

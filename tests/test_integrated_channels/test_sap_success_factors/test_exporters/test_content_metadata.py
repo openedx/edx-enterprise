@@ -185,9 +185,9 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
     @ddt.data(
         (
             {
-            'content_type': 'courserun',
-            'start': '2013-02-05T05:00:00Z',
-            'end': '2013-05-05T05:00:00Z',
+                'content_type': 'courserun',
+                'start': '2013-02-05T05:00:00Z',
+                'end': '2013-05-05T05:00:00Z',
             },
             [{
                 'startDate': parse_datetime_to_epoch_millis('2013-02-05T05:00:00Z'),
@@ -220,6 +220,10 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'active': False,
                 'duration': '45 days',
             }]
+        ),
+        (
+            {},
+            [{'startDate': '', 'endDate': '', 'active': False, 'duration': 0}]
         )
     )
     @ddt.unpack

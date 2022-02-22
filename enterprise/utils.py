@@ -1141,6 +1141,7 @@ def get_course_run_duration_info(course_run):
         )
     return duration_info
 
+
 def get_duration_of_course_or_courserun(content_metadata_item):
     """
     Returns duration start, end dates given a piece of content_metadata item
