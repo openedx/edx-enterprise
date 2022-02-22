@@ -19,7 +19,7 @@ Unreleased
 
 [3.40.8]
 ---------
-feat: add enable_browse_and_request field to `EntepriseCustomerUser`
+feat: add enable_browse_and_request field to `EnterpriseCustomer`
 
 [3.40.7]
 ---------
