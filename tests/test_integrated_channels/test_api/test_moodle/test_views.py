@@ -97,3 +97,33 @@ class MoodleConfigurationViewSetTests(APITest):
         configs = MoodleEnterpriseCustomerConfiguration.objects.filter()
         self.assertEqual(response.status_code, 204)
         self.assertEqual(len(configs), 0)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_is_valid_field(self, mock_current_request):
+        self.user.is_superuser = True
+        self.user.save()
+
+        # The moodle config needs either a token or a username/password
+        self.moodle_config.token = ''
+        self.moodle_config.username = ''
+        self.moodle_config.password = ''
+        self.moodle_config.save()
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:moodle:configuration-list')
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+
+        # Assert that `is_valid` says a refresh token is missing
+        assert data[0].get('is_valid').get('missing') == ['token OR username and password']
+
+        # Add a refresh token and assert that is_valid now passes
+        self.moodle_config.category_id = 10
+        self.moodle_config.username = 'lmao'
+        self.moodle_config.password = 'foobar'
+        self.moodle_config.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        assert not data[0].get('is_valid').get('missing')

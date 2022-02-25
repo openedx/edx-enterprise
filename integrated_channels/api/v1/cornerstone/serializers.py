@@ -7,6 +7,9 @@ from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomer
 
 
 class CornerstoneConfigSerializer(serializers.ModelSerializer):
+    is_valid = serializers.ReadOnlyField()
+    channel_code = serializers.ReadOnlyField()
+
     class Meta:
         model = CornerstoneEnterpriseCustomerConfiguration
         fields = '__all__'

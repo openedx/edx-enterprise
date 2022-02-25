@@ -121,6 +121,20 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
     class Meta:
         app_label = 'cornerstone'
 
+    @property
+    def is_valid(self):
+        """
+        Returns whether or not the configuration is valid and ready to be activated
+
+        Args:
+            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        missing = {'missing': []}
+        if not self.cornerstone_base_url:
+            missing['missing'] = ['cornerstone_base_url']
+        return missing
+
     def __str__(self):
         """
         Return human-readable string representation.

@@ -7,6 +7,9 @@ from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfigur
 
 
 class DegreedConfigSerializer(serializers.ModelSerializer):
+    is_valid = serializers.ReadOnlyField()
+    channel_code = serializers.ReadOnlyField()
+
     class Meta:
         model = DegreedEnterpriseCustomerConfiguration
         fields = '__all__'

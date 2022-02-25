@@ -88,6 +88,24 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     class Meta:
         app_label = 'moodle'
 
+    @property
+    def is_valid(self):
+        """
+        Returns whether or not the configuration is valid and ready to be activated
+
+        Args:
+            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        missing_items = {'missing': []}
+        if not self.moodle_base_url:
+            missing_items.get('missing').append('moodle_base_url')
+        if not self.token and not (self.username and self.password):
+            missing_items.get('missing').append('token OR username and password')
+        if not self.service_short_name:
+            missing_items.get('missing').append('service_short_name')
+        return missing_items
+
     def __str__(self):
         """
         Return human-readable string representation.

@@ -7,6 +7,9 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 
 
 class SAPSuccessFactorsConfigSerializer(serializers.ModelSerializer):
+    is_valid = serializers.ReadOnlyField()
+    channel_code = serializers.ReadOnlyField()
+
     class Meta:
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
         fields = '__all__'

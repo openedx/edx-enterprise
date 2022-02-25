@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.9]
+---------
+feat: new integrated channels customer configs list view, new integrated channels config serializer `is_valid` field
+
 [3.40.8]
 ---------
 feat: add enable_browse_and_request field to `EnterpriseCustomer`

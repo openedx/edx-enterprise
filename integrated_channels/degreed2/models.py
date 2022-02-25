@@ -74,6 +74,26 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
     class Meta:
         app_label = 'degreed2'
 
+    @property
+    def is_valid(self):
+        """
+        Returns whether or not the configuration is valid and ready to be activated
+
+        Args:
+            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        missing_items = {'missing': []}
+        if not self.client_id:
+            missing_items.get('missing').append('client_id')
+        if not self.client_secret:
+            missing_items.get('missing').append('client_secret')
+        if not self.degreed_base_url:
+            missing_items.get('missing').append('degreed_base_url')
+        if not self.degreed_token_fetch_base_url:
+            missing_items.get('missing').append('degreed_token_fetch_base_url')
+        return missing_items
+
     def __str__(self):
         """
         Return human-readable string representation.
