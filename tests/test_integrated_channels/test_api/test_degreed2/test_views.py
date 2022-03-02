@@ -108,6 +108,7 @@ class Degreed2ConfigurationViewSetTests(APITest):
         self.user.save()
 
         self.degreed2_config.client_id = ''
+        self.degreed2_config.degreed_base_url = 'eww'
         self.degreed2_config.save()
 
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
@@ -118,12 +119,16 @@ class Degreed2ConfigurationViewSetTests(APITest):
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
 
-        # Assert that `is_valid` says a refresh token is missing
-        assert data[0].get('is_valid').get('missing') == ['client_id']
+        # Assert that `is_valid` says a client id is missing and url is incorrect
+        missing, incorrect = data[0].get('is_valid')
+        assert missing.get('missing') == ['client_id']
+        assert incorrect.get('incorrect') == ['degreed_base_url']
 
-        # Add a refresh token and assert that is_valid now passes
+        # Add a client id and proper url and assert that is_valid now passes
         self.degreed2_config.client_id = 'ayylmao'
+        self.degreed2_config.degreed_base_url = 'http://nice.com'
         self.degreed2_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
-        assert not data[0].get('is_valid').get('missing')
+        missing, incorrect = data[0].get('is_valid')
+        assert not missing.get('missing') and not incorrect.get('incorrect')

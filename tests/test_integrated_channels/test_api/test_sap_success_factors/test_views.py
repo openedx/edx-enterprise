@@ -122,15 +122,21 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:sap_success_factors:configuration-list')
-        response = self.client.get(url)
-        data = json.loads(response.content.decode('utf-8')).get('results')
-        # Assert that `is_valid` says a refresh token is missing
-        assert data[0].get('is_valid').get('missing') == ['key', 'secret']
-
-        # Add a refresh token and assert that is_valid now passes
-        self.sap_config.key = 'ayy'
-        self.sap_config.secret = 'lmao'
+        self.sap_config.sapsf_base_url = 'sad'
         self.sap_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
-        assert not data[0].get('is_valid').get('missing')
+
+        missing, incorrect = data[0].get('is_valid')
+        assert missing.get('missing') == ['key', 'secret']
+        assert incorrect.get('incorrect') == ['sapsf_base_url']
+
+        # Add a key, secret, and good url and assert that is_valid now passes
+        self.sap_config.key = 'ayy'
+        self.sap_config.secret = 'lmao'
+        self.sap_config.sapsf_base_url = 'http://happy.com'
+        self.sap_config.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        missing, incorrect = data[0].get('is_valid')
+        assert not missing.get('missing') and not incorrect.get('incorrect')

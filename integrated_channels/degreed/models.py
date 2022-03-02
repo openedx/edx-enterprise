@@ -15,6 +15,7 @@ from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExp
 from integrated_channels.degreed.transmitters.content_metadata import DegreedContentMetadataTransmitter
 from integrated_channels.degreed.transmitters.learner_data import DegreedLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
 
@@ -148,10 +149,11 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         Returns whether or not the configuration is valid and ready to be activated
 
         Args:
-            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+            obj: The instance of DegreedEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
         missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
         if not self.key:
             missing_items.get('missing').append('key')
         if not self.secret:
@@ -159,14 +161,18 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         if not self.degreed_company_id:
             missing_items.get('missing').append('degreed_company_id')
         if not self.degreed_base_url:
-            missing_items.get('missing').append('degreed_company_id')
+            missing_items.get('missing').append('degreed_base_url')
         if not self.degreed_user_id:
             missing_items.get('missing').append('degreed_user_id')
         if not self.degreed_user_password:
             missing_items.get('missing').append('degreed_user_password')
         if not self.provider_id:
             missing_items.get('missing').append('provider_id')
-        return missing_items
+        if not is_valid_url(self.degreed_base_url):
+            incorrect_items.get('incorrect').append('degreed_base_url')
+        if len(self.display_name) > 20:
+            incorrect_items.get('incorrect').append('display_name')
+        return missing_items, incorrect_items
 
     def __str__(self):
         """

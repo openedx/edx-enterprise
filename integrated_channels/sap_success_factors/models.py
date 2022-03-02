@@ -21,7 +21,7 @@ from integrated_channels.sap_success_factors.transmitters.content_metadata impor
     SapSuccessFactorsContentMetadataTransmitter,
 )
 from integrated_channels.sap_success_factors.transmitters.learner_data import SapSuccessFactorsLearnerTransmitter
-from integrated_channels.utils import convert_comma_separated_string_to_list
+from integrated_channels.utils import convert_comma_separated_string_to_list, is_valid_url
 
 LOGGER = getLogger(__name__)
 
@@ -171,10 +171,11 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         Returns whether or not the configuration is valid and ready to be activated
 
         Args:
-            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+            obj: The instance of SAPSuccessFactorsEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
         missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
         if not self.key:
             missing_items.get('missing').append('key')
         if not self.sapsf_base_url:
@@ -185,7 +186,11 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             missing_items.get('missing').append('sapsf_user_id')
         if not self.secret:
             missing_items.get('missing').append('secret')
-        return missing_items
+        if not is_valid_url(self.sapsf_base_url):
+            incorrect_items.get('incorrect').append('sapsf_base_url')
+        if len(self.display_name) > 20:
+            incorrect_items.get('incorrect').append('display_name')
+        return missing_items, incorrect_items
 
     def __str__(self):
         """

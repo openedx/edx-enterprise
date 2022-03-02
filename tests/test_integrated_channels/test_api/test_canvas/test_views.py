@@ -133,14 +133,20 @@ class CanvasConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-list')
-        response = self.client.get(url)
-        data = json.loads(response.content.decode('utf-8')).get('results')
-        # Assert that `is_valid` says a refresh token is missing
-        assert data[0].get('is_valid').get('missing') == ['refresh_token']
-
-        # Add a refresh token and assert that is_valid now passes
-        self.enterprise_customer_conf.refresh_token = 'ayylmao'
+        self.enterprise_customer_conf.canvas_base_url = 'icky'
         self.enterprise_customer_conf.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
-        assert not data[0].get('is_valid').get('missing')
+
+        missing, incorrect = data[0].get('is_valid')
+        assert missing.get('missing') == ['refresh_token']
+        assert incorrect.get('incorrect') == ['canvas_base_url']
+
+        # Add a refresh token and assert that is_valid now passes
+        self.enterprise_customer_conf.refresh_token = 'ayylmao'
+        self.enterprise_customer_conf.canvas_base_url = 'http://lovely.com'
+        self.enterprise_customer_conf.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        missing, incorrect = data[0].get('is_valid')
+        assert not missing.get('missing') and not incorrect.get('incorrect')

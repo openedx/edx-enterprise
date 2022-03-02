@@ -18,6 +18,7 @@ from integrated_channels.blackboard.exporters.learner_data import BlackboardLear
 from integrated_channels.blackboard.transmitters.content_metadata import BlackboardContentMetadataTransmitter
 from integrated_channels.blackboard.transmitters.learner_data import BlackboardLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
 LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/blackboard/oauth-complete')
@@ -162,6 +163,7 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
                 being rendered with this admin form.
         """
         missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
         if not self.client_id:
             missing_items.get('missing').append('client_id')
         if not self.client_secret:
@@ -170,7 +172,11 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
             missing_items.get('missing').append('blackboard_base_url')
         if not self.refresh_token:
             missing_items.get('missing').append('refresh_token')
-        return missing_items
+        if not is_valid_url(self.blackboard_base_url):
+            incorrect_items.get('incorrect').append('blackboard_base_url')
+        if len(self.display_name) > 30:
+            incorrect_items.get('incorrect').append('display_name')
+        return missing_items, incorrect_items
 
     def __str__(self):
         """

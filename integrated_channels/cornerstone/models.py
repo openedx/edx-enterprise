@@ -20,6 +20,7 @@ from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLe
 from integrated_channels.cornerstone.transmitters.content_metadata import CornerstoneContentMetadataTransmitter
 from integrated_channels.cornerstone.transmitters.learner_data import CornerstoneLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
@@ -127,13 +128,18 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         Returns whether or not the configuration is valid and ready to be activated
 
         Args:
-            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+            obj: The instance of CornerstoneEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
-        missing = {'missing': []}
+        missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
         if not self.cornerstone_base_url:
-            missing['missing'] = ['cornerstone_base_url']
-        return missing
+            missing_items.get('missing').append('refresh_token')
+        if not is_valid_url(self.cornerstone_base_url):
+            incorrect_items.get('incorrect').append('cornerstone_base_url')
+        if len(self.display_name) > 20:
+            incorrect_items.get('incorrect').append('display_name')
+        return missing_items, incorrect_items
 
     def __str__(self):
         """

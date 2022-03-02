@@ -15,6 +15,7 @@ from integrated_channels.moodle.exporters.content_metadata import MoodleContentM
 from integrated_channels.moodle.exporters.learner_data import MoodleLearnerExporter
 from integrated_channels.moodle.transmitters.content_metadata import MoodleContentMetadataTransmitter
 from integrated_channels.moodle.transmitters.learner_data import MoodleLearnerTransmitter
+from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
 
@@ -94,17 +95,22 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Returns whether or not the configuration is valid and ready to be activated
 
         Args:
-            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+            obj: The instance of MoodleEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
         missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
         if not self.moodle_base_url:
             missing_items.get('missing').append('moodle_base_url')
         if not self.token and not (self.username and self.password):
             missing_items.get('missing').append('token OR username and password')
         if not self.service_short_name:
             missing_items.get('missing').append('service_short_name')
-        return missing_items
+        if not is_valid_url(self.moodle_base_url):
+            incorrect_items.get('incorrect').append('moodle_base_url')
+        if len(self.display_name) > 20:
+            incorrect_items.get('incorrect').append('display_name')
+        return missing_items, incorrect_items
 
     def __str__(self):
         """

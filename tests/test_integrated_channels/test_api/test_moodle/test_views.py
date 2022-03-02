@@ -107,6 +107,7 @@ class MoodleConfigurationViewSetTests(APITest):
         self.moodle_config.token = ''
         self.moodle_config.username = ''
         self.moodle_config.password = ''
+        self.moodle_config.moodle_base_url = 'gross'
         self.moodle_config.save()
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
@@ -116,14 +117,18 @@ class MoodleConfigurationViewSetTests(APITest):
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
 
-        # Assert that `is_valid` says a refresh token is missing
-        assert data[0].get('is_valid').get('missing') == ['token OR username and password']
+        # Assert that `is_valid` says a token is missing
+        missing, incorrect = data[0].get('is_valid')
+        assert missing.get('missing') == ['token OR username and password']
+        assert incorrect.get('incorrect') == ['moodle_base_url']
 
         # Add a refresh token and assert that is_valid now passes
         self.moodle_config.category_id = 10
         self.moodle_config.username = 'lmao'
         self.moodle_config.password = 'foobar'
+        self.moodle_config.moodle_base_url = 'http://lovely.com'
         self.moodle_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
-        assert not data[0].get('is_valid').get('missing')
+        missing, incorrect = data[0].get('is_valid')
+        assert not missing.get('missing') and not incorrect.get('incorrect')
