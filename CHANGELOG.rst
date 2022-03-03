@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing
 
+[3.40.10]
+---------
+feat: Add drafting functionality to save incorrect fields
+
+
 [3.40.9]
 ---------
 feat: new integrated channels customer configs list view, new integrated channels config serializer `is_valid` field

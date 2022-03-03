@@ -81,7 +81,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         Returns whether or not the configuration is valid and ready to be activated
 
         Args:
-            obj: The instance of DegreedEnterpriseCustomerConfiguration
+            obj: The instance of Degreed2EnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
         missing_items = {'missing': []}
