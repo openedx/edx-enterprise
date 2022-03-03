@@ -105,15 +105,28 @@ class CornerstoneConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:cornerstone:configuration-list')
-        response = self.client.get(url)
-        data = json.loads(response.content.decode('utf-8')).get('results')
-
-        # Assert that `is_valid` says a refresh token is missing
-        assert data[0].get('is_valid').get('missing') == ['cornerstone_base_url']
-
-        # Add a refresh token and assert that is_valid now passes
-        self.cornerstone_config.cornerstone_base_url = 'ayylmao'
+        self.cornerstone_config.cornerstone_base_url = ''
         self.cornerstone_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
-        assert not data[0].get('is_valid').get('missing')
+
+        missing, _ = data[0].get('is_valid')
+        assert missing.get('missing') == ['cornerstone_base_url']
+
+        self.cornerstone_config.cornerstone_base_url = 'boo'
+        self.cornerstone_config.display_name = 'oooogabooogaooogabooga'
+        self.cornerstone_config.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+
+        _, incorrect = data[0].get('is_valid')
+        assert incorrect.get('incorrect') == ['cornerstone_base_url', 'display_name']
+
+        # Add a url and assert that is_valid now passes
+        self.cornerstone_config.cornerstone_base_url = 'http://ayylmao.com'
+        self.cornerstone_config.display_name = 'hello'
+        self.cornerstone_config.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        missing, incorrect = data[0].get('is_valid')
+        assert not missing.get('missing') and not incorrect.get('incorrect')

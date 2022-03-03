@@ -14,6 +14,7 @@ from integrated_channels.degreed2.exporters.learner_data import Degreed2LearnerE
 from integrated_channels.degreed2.transmitters.content_metadata import Degreed2ContentMetadataTransmitter
 from integrated_channels.degreed2.transmitters.learner_data import Degreed2LearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
 
@@ -80,10 +81,12 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         Returns whether or not the configuration is valid and ready to be activated
 
         Args:
-            obj: The instance of BlackboardEnterpriseCustomerConfiguration
+            obj: The instance of Degreed2EnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
         missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
+
         if not self.client_id:
             missing_items.get('missing').append('client_id')
         if not self.client_secret:
@@ -92,7 +95,11 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
             missing_items.get('missing').append('degreed_base_url')
         if not self.degreed_token_fetch_base_url:
             missing_items.get('missing').append('degreed_token_fetch_base_url')
-        return missing_items
+        if not is_valid_url(self.degreed_base_url):
+            incorrect_items.get('incorrect').append('degreed_base_url')
+        if len(self.display_name) > 20:
+            incorrect_items.get('incorrect').append('display_name')
+        return missing_items, incorrect_items
 
     def __str__(self):
         """

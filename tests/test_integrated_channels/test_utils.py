@@ -230,3 +230,11 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             'integrated_channel_enterprise_customer_uuid=2, '\
             'integrated_channel_lms_user=3, '\
             'integrated_channel_course_key=4, 5'
+
+    def test_is_url_valid(self):
+        assert utils.is_valid_url('https://test.com/a-really-really-really-really-long-url/')
+        assert utils.is_valid_url('http://test.com/')
+        assert utils.is_valid_url('http://file.localdomain.tld')
+
+        assert utils.is_valid_url('badurl.com') is False
+        assert utils.is_valid_url('https://') is False

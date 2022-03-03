@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
+from urllib.parse import urlparse
 
 import pytz
 import requests
@@ -356,3 +357,14 @@ def is_course_completed(enterprise_enrollment, completed_date, is_passing, incom
             now = datetime.now(pytz.UTC)
             return incomplete_count == 0 and upgrade_deadline < now
     return completed_date is not None and is_passing
+
+
+def is_valid_url(url):
+    """
+    Return where the specified URL is a valid absolute url.
+    """
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False

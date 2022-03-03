@@ -613,7 +613,7 @@ class DegreedEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFa
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     active = True
     degreed_company_id = factory.LazyAttribute(lambda x: FAKER.company())
-    degreed_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
+    degreed_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     degreed_user_id = factory.LazyAttribute(lambda x: FAKER.user_name())
     degreed_user_password = factory.LazyAttribute(lambda x: FAKER.word())
     provider_id = 'DEGREED'
