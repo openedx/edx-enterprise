@@ -122,7 +122,8 @@ class Degreed2ConfigurationViewSetTests(APITest):
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, _ = data[0].get('is_valid')
-        assert missing.get('missing') == ['client_id', 'client_secret', 'degreed_base_url', 'degreed_token_fetch_base_url']
+        assert missing.get('missing') == ['client_id', 'client_secret',
+                                          'degreed_base_url', 'degreed_token_fetch_base_url']
 
         self.degreed2_config.degreed_base_url = 'eww'
         self.degreed2_config.display_name = 'thisisagrosslongdisplayname'

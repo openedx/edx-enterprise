@@ -134,7 +134,8 @@ class DegreedConfigurationViewSetTests(APITest):
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')
-        assert missing.get('missing') == ['key', 'secret', 'degreed_company_id', 'degreed_user_id', 'degreed_user_password', 'provider_id']
+        assert missing.get('missing') == ['key', 'secret', 'degreed_company_id', 'degreed_user_id',
+                                          'degreed_user_password', 'provider_id']
         assert incorrect.get('incorrect') == ['degreed_base_url', 'display_name']
 
         self.degreed_config.key = 'ayy'
