@@ -133,19 +133,37 @@ class CanvasConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-list')
+
         self.enterprise_customer_conf.canvas_base_url = 'icky'
+        self.enterprise_customer_conf.display_name = 'ickyickyickyickyickyickyickyicky'
         self.enterprise_customer_conf.save()
+        
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
-
         missing, incorrect = data[0].get('is_valid')
         assert missing.get('missing') == ['refresh_token']
-        assert incorrect.get('incorrect') == ['canvas_base_url']
+        assert incorrect.get('incorrect') == ['canvas_base_url', 'display_name']
+
+        self.enterprise_customer_conf.client_id = ''
+        self.enterprise_customer_conf.client_secret = ''
+        self.enterprise_customer_conf.canvas_base_url = ''
+        self.enterprise_customer_conf.canvas_account_id = None
+        self.enterprise_customer_conf.save()
+        
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        missing, _ = data[0].get('is_valid')
+        assert missing.get('missing') == ['client_id', 'client_secret', 'canvas_base_url', 'canvas_account_id', 'refresh_token']
 
         # Add a refresh token and assert that is_valid now passes
         self.enterprise_customer_conf.refresh_token = 'ayylmao'
         self.enterprise_customer_conf.canvas_base_url = 'http://lovely.com'
+        self.enterprise_customer_conf.client_id = '1'
+        self.enterprise_customer_conf.client_secret = '1'
+        self.enterprise_customer_conf.canvas_account_id = 1
+        self.enterprise_customer_conf.display_name = 'nice<3'
         self.enterprise_customer_conf.save()
+
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')

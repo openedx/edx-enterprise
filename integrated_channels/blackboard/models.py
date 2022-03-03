@@ -174,7 +174,7 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
             missing_items.get('missing').append('refresh_token')
         if not is_valid_url(self.blackboard_base_url):
             incorrect_items.get('incorrect').append('blackboard_base_url')
-        if len(self.display_name) > 30:
+        if len(self.display_name) > 20:
             incorrect_items.get('incorrect').append('display_name')
         return missing_items, incorrect_items
 

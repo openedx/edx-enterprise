@@ -115,21 +115,38 @@ class DegreedConfigurationViewSetTests(APITest):
         )
         url = reverse('api:v1:degreed:configuration-list')
 
-        self.degreed_config.degreed_base_url = 'badlink'
+        self.degreed_config.degreed_base_url = ''
         self.degreed_config.save()
 
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
+        missing, _ = data[0].get('is_valid')
+        assert missing.get('missing') == ['key', 'secret', 'degreed_base_url']
 
+        self.degreed_config.degreed_company_id = ''
+        self.degreed_config.degreed_user_id = ''
+        self.degreed_config.degreed_user_password = ''
+        self.degreed_config.provider_id = ''
+        self.degreed_config.degreed_base_url = 'badlink'
+        self.degreed_config.display_name = 'helloihopeyourehavingagoodday'
+        self.degreed_config.save()
+
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')
-        assert missing.get('missing') == ['key', 'secret']
-        assert incorrect.get('incorrect') == ['degreed_base_url']
+        assert missing.get('missing') == ['key', 'secret', 'degreed_company_id', 'degreed_user_id', 'degreed_user_password', 'provider_id']
+        assert incorrect.get('incorrect') == ['degreed_base_url', 'display_name']
 
-        # Add a key, secret, and correct url and assert that is_valid now passes
         self.degreed_config.key = 'ayy'
         self.degreed_config.secret = 'lmao'
         self.degreed_config.degreed_base_url = 'http://goodlink.com'
+        self.degreed_config.provider_id = '1'
+        self.degreed_config.degreed_company_id = '1'
+        self.degreed_config.degreed_user_id = '1'
+        self.degreed_config.degreed_user_password = '1'
+        self.degreed_config.display_name = 'hithere'
         self.degreed_config.save()
+
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')

@@ -122,19 +122,33 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:sap_success_factors:configuration-list')
+
         self.sap_config.sapsf_base_url = 'sad'
+        self.sap_config.display_name = 'suchalongdisplaynamelikewowww'
         self.sap_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
 
         missing, incorrect = data[0].get('is_valid')
         assert missing.get('missing') == ['key', 'secret']
-        assert incorrect.get('incorrect') == ['sapsf_base_url']
+        assert incorrect.get('incorrect') == ['sapsf_base_url', 'display_name']
 
-        # Add a key, secret, and good url and assert that is_valid now passes
+        self.sap_config.sapsf_base_url = ''
+        self.sap_config.sapsf_company_id = ''
+        self.sap_config.sapsf_user_id = ''
+        self.sap_config.save()
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+
+        missing, _ = data[0].get('is_valid')
+        assert missing.get('missing') == ['key', 'sapsf_base_url', 'sapsf_company_id', 'sapsf_user_id', 'secret']
+
         self.sap_config.key = 'ayy'
         self.sap_config.secret = 'lmao'
+        self.sap_config.sapsf_company_id = '1'
+        self.sap_config.sapsf_user_id = '1'
         self.sap_config.sapsf_base_url = 'http://happy.com'
+        self.sap_config.display_name = 'better'
         self.sap_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')

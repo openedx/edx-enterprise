@@ -135,7 +135,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         if not self.canvas_base_url:
             missing_items.get('missing').append('canvas_base_url')
         if not self.canvas_account_id:
-            missing_items.get('missing').append('refresh_token')
+            missing_items.get('missing').append('canvas_account_id')
         if not self.refresh_token:
             missing_items.get('missing').append('refresh_token')
         if not is_valid_url(self.canvas_base_url):

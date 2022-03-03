@@ -107,26 +107,38 @@ class Degreed2ConfigurationViewSetTests(APITest):
         self.user.is_superuser = True
         self.user.save()
 
-        self.degreed2_config.client_id = ''
-        self.degreed2_config.degreed_base_url = 'eww'
-        self.degreed2_config.save()
-
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:degreed2:configuration-list')
+
+        self.degreed2_config.client_id = ''
+        self.degreed2_config.client_secret = ''
+        self.degreed2_config.degreed_base_url = ''
+        self.degreed2_config.degreed_token_fetch_base_url = ''
+        self.degreed2_config.save()
+
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
+        missing, _ = data[0].get('is_valid')
+        assert missing.get('missing') == ['client_id', 'client_secret', 'degreed_base_url', 'degreed_token_fetch_base_url']
 
-        # Assert that `is_valid` says a client id is missing and url is incorrect
-        missing, incorrect = data[0].get('is_valid')
-        assert missing.get('missing') == ['client_id']
-        assert incorrect.get('incorrect') == ['degreed_base_url']
+        self.degreed2_config.degreed_base_url = 'eww'
+        self.degreed2_config.display_name = 'thisisagrosslongdisplayname'
+        self.degreed2_config.save()
+
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+        _, incorrect = data[0].get('is_valid')
+        assert incorrect.get('incorrect') == ['degreed_base_url', 'display_name']
 
         # Add a client id and proper url and assert that is_valid now passes
         self.degreed2_config.client_id = 'ayylmao'
+        self.degreed2_config.client_secret = 'whatsup'
         self.degreed2_config.degreed_base_url = 'http://nice.com'
+        self.degreed2_config.display_name = 'lovely'
+        self.degreed2_config.degreed_token_fetch_base_url = 'hey'
         self.degreed2_config.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')

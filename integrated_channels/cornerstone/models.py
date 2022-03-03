@@ -134,7 +134,7 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         missing_items = {'missing': []}
         incorrect_items = {'incorrect': []}
         if not self.cornerstone_base_url:
-            missing_items.get('missing').append('refresh_token')
+            missing_items.get('missing').append('cornerstone_base_url')
         if not is_valid_url(self.cornerstone_base_url):
             incorrect_items.get('incorrect').append('cornerstone_base_url')
         if len(self.display_name) > 20:
