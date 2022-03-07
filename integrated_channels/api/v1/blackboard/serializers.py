@@ -3,7 +3,10 @@
 """
 from rest_framework import serializers
 
-from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.blackboard.models import (
+    BlackboardEnterpriseCustomerConfiguration,
+    BlackboardGlobalConfiguration,
+)
 
 
 class BlackboardConfigSerializer(serializers.ModelSerializer):
@@ -14,3 +17,10 @@ class BlackboardConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration
         fields = '__all__'
+
+
+class BlackboardGlobalConfigSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BlackboardGlobalConfiguration
+        fields = ('app_key',)
