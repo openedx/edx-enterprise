@@ -24,6 +24,25 @@ LOGGER = getLogger(__name__)
 LMS_OAUTH_REDIRECT_URL = urljoin(settings.LMS_ROOT_URL, '/blackboard/oauth-complete')
 
 
+class GlobalConfigurationManager(models.Manager):
+    """
+    Model manager for :class:`.BlackboardGlobalConfiguration` model.
+
+    Filters out inactive global configurations.
+    """
+
+    # This manager filters out some records, hence according to the Django docs it must not be used
+    # for related field access. Although False is default value, it still makes sense to set it explicitly
+    # https://docs.djangoproject.com/en/1.10/topics/db/managers/#base-managers
+    use_for_related_fields = False
+
+    def get_queryset(self):
+        """
+        Return a new QuerySet object. Filters out inactive Enterprise Customers.
+        """
+        return super().get_queryset().filter(enabled=True)
+
+
 class BlackboardGlobalConfiguration(ConfigurationModel):
     """
     The global configuration for integrating with Blackboard.
@@ -54,6 +73,9 @@ class BlackboardGlobalConfiguration(ConfigurationModel):
 
     class Meta:
         app_label = 'blackboard'
+
+    objects = models.Manager()
+    active_config = GlobalConfigurationManager()
 
     def __str__(self):
         """
@@ -164,10 +186,6 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
         """
         missing_items = {'missing': []}
         incorrect_items = {'incorrect': []}
-        if not self.client_id:
-            missing_items.get('missing').append('client_id')
-        if not self.client_secret:
-            missing_items.get('missing').append('client_secret')
         if not self.blackboard_base_url:
             missing_items.get('missing').append('blackboard_base_url')
         if not self.refresh_token:

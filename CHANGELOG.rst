@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.11]
+---------
+feat: New integrated channels Blackboard api endpoint to fetch global config creds
+
 [3.40.10]
 ---------
 feat: Add drafting functionality to save incorrect fields

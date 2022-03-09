@@ -32,6 +32,12 @@ class BlackboardConfigurationViewSetTests(APITest):
             refresh_token='',
         )
 
+        self.global_config = factories.BlackboardGlobalConfigurationFactory(
+            app_key='test_app_key',
+            app_secret='test_app_secret',
+            enabled=True,
+        )
+
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_list(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
@@ -151,15 +157,13 @@ class BlackboardConfigurationViewSetTests(APITest):
         missing, _ = data[0].get('is_valid')
         assert missing.get('missing') == ['blackboard_base_url', 'refresh_token']
 
-        self.enterprise_customer_conf.client_id = ''
-        self.enterprise_customer_conf.client_secret = ''
         self.enterprise_customer_conf.blackboard_base_url = 'bleh'
         self.enterprise_customer_conf.display_name = 'loooooooooooooooooooongname'
         self.enterprise_customer_conf.save()
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')
-        assert missing.get('missing') == ['client_id', 'client_secret', 'refresh_token']
+        assert missing.get('missing') == ['refresh_token']
         assert incorrect.get('incorrect') == ['blackboard_base_url', 'display_name']
 
         self.enterprise_customer_conf.refresh_token = 'ayylmao'
@@ -172,3 +176,18 @@ class BlackboardConfigurationViewSetTests(APITest):
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')
         assert not missing.get('missing') and not incorrect.get('incorrect')
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_global_config_get(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:blackboard:global-configuration-list')
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data.get('count'), 1)
+        self.assertEqual(data.get('results')[0].get('app_key'), str(self.global_config.app_key))
+        assert not data.get('results')[0].get('app_secret')
