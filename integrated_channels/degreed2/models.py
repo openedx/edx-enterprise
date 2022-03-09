@@ -209,3 +209,26 @@ class Degreed2LearnerDataTransmissionAudit(models.Model):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    def serialize(self, *args, **kwargs):
+        """
+        Return a JSON-serialized representation.
+
+        Sort the keys so the result is consistent and testable.
+
+        Can take the following keyword arguments:
+            - `enterprise_configuration`
+        """
+        json_payload = {
+            "data": {
+                "attributes": {
+                    "user-id": self.degreed_user_email,
+                    "user-identifier-type": "Email",
+                    "content-id": self.course_id,
+                    "content-id-type": "externalId",
+                    "content-type": "course",
+                    "completed-at": self.completed_timestamp,
+                }
+            }
+        }
+        return json.dumps(json_payload, sort_keys=True)
