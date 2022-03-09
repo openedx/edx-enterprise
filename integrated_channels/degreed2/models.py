@@ -3,6 +3,7 @@
 Database models for Enterprise Integrated Channel Degreed.
 """
 
+import json
 from logging import getLogger
 
 from simple_history.models import HistoricalRecords
