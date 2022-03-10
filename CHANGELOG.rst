@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.13]
+---------
+fix: Degreed2 Missing Learner Data Audit Records
+
 [3.40.12]
 ---------
 fix: Degreed2 Missing Learner Data Audit Records

@@ -310,14 +310,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'_collect_grades_data finished with: CourseMode: {enterprise_enrollment.mode}, '
-                f' CompletedDate: {completed_date_from_api},'
-                f' Grade: {grade_from_api},'
-                f' IsPassing: {is_passing_from_api},'
-                f' Audit Mode?: {is_audit_enrollment}'
-            ))
 
         # there is a case for audit enrollment, we are reporting completion based on
         # content count cmopleted, so we may not get a completed_date_from_api
@@ -371,6 +363,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         * ``completed_date``: datetime instance containing the course/enrollment completion date; None if not complete.
           "Course completion" occurs for instructor-paced courses when course certificates are issued, and
           for self-paced courses, when the course end date is passed, or when the learner achieves a passing grade.
+          Currently unused as it gets overridden from the grader data.
         * ``grade``: string grade recorded for the learner in the course.
         * ``learner_to_transmit``: OPTIONAL User, filters exported data
         * ``course_run_id``: OPTIONAL Course key string, filters exported data
@@ -379,7 +372,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         channel_name = kwargs.get('app_label')
         lms_user_for_filter = kwargs.get('learner_to_transmit', None)
         course_run_id = kwargs.get('course_run_id', None)
-        completed_date = kwargs.get('completed_date', None)
         grade = kwargs.get('grade', None)
         skip_transmitted = kwargs.get('skip_transmitted', True)
         TransmissionAudit = kwargs.get('TransmissionAudit', None)
@@ -422,17 +414,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 channel_name,
                 incomplete_count,
             )
-
-            LOGGER.info(generate_formatted_log(
-                channel_name,
-                enterprise_customer_uuid,
-                lms_user_id,
-                enterprise_enrollment.course_id,
-                f'kwargs completed_date: '
-                f' {completed_date} '
-                f'api completed_date: '
-                f' {completed_date_from_api} '
-            ))
 
             # Apply the Source of Truth for Grades
             records = self.get_learner_data_records(
