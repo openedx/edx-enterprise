@@ -178,6 +178,11 @@ class Degreed2LearnerDataTransmissionAudit(models.Model):
         help_text="Used as content-id field when creating a completion"
     )
 
+    course_completed = models.BooleanField(
+        default=True,
+        help_text="The learner's course completion status transmitted to Degreed2."
+    )
+
     completed_timestamp = models.CharField(
         max_length=19,
         help_text='yyyy-mm-ddTHH:MM:SS format',

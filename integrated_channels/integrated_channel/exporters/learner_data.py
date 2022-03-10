@@ -310,14 +310,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'_collect_grades_data finished with: CourseMode: {enterprise_enrollment.mode}, '
-                f' CompletedDate: {completed_date_from_api},'
-                f' Grade: {grade_from_api},'
-                f' IsPassing: {is_passing_from_api},'
-                f' Audit Mode?: {is_audit_enrollment}'
-            ))
 
         # there is a case for audit enrollment, we are reporting completion based on
         # content count cmopleted, so we may not get a completed_date_from_api
@@ -422,17 +414,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 channel_name,
                 incomplete_count,
             )
-
-            LOGGER.info(generate_formatted_log(
-                channel_name,
-                enterprise_customer_uuid,
-                lms_user_id,
-                enterprise_enrollment.course_id,
-                f'kwargs completed_date: '
-                f' {completed_date} '
-                f'api completed_date: '
-                f' {completed_date_from_api} '
-            ))
 
             # Apply the Source of Truth for Grades
             records = self.get_learner_data_records(
