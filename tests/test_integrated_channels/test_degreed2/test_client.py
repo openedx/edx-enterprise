@@ -103,13 +103,18 @@ class TestDegreed2ApiClient(unittest.TestCase):
         )
 
         payload = {
-            'completions': [{
-                'employeeId': 'abc123',
-                'id': "course-v1:ColumbiaX+DS101X+1T2016",
-                'completionDate': NOW_TIMESTAMP_FORMATTED,
-            }]
+            "data": {
+                "attributes": {
+                    "user-id": 'test-learner@example.com',
+                    "user-identifier-type": "Email",
+                    "content-id": 'DemoX',
+                    "content-id-type": "externalId",
+                    "content-type": "course",
+                    "completed-at": NOW_TIMESTAMP_FORMATTED,
+                }
+            }
         }
-        output = degreed_api_client.create_course_completion('fake-user', json.dumps(payload))
+        output = degreed_api_client.create_course_completion('test-learner@example.com', json.dumps(payload))
 
         assert output == (200, '"{}"')
         assert len(responses.calls) == 2

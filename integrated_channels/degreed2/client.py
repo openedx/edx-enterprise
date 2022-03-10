@@ -109,22 +109,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                  }
         Returns: status_code, response_text
         """
-        completion_audit_item = json.loads(payload)
-        json_payload = {
-            "data": {
-                "attributes": {
-                    "user-id": user_id,
-                    "user-identifier-type": "Email",
-                    "content-id": completion_audit_item.get('course_id'),
-                    "content-id-type": "externalId",
-                    "content-type": "course",
-                    "completed-at": completion_audit_item.get('completed_timestamp'),
-                }
-            }
-        }
+        json_payload = json.loads(payload)
         LOGGER.info(self.make_log_msg(
-            completion_audit_item.get('course_id'),
-            f'Attempting find course via url: {self.get_completions_url()}')
+            json_payload.get('data').get('attributes').get('content-id'),
+            f'Attempting find course via url: {self.get_completions_url()}'),
+            user_id
         )
         return self._post(
             self.get_completions_url(),
