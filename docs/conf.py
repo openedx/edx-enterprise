@@ -38,7 +38,6 @@ import edx_theme
 import enterprise
 
 # Configure Django for autodoc usage
-#settings.configure()
 os.environ["DJANGO_SETTINGS_MODULE"] = "enterprise.settings.test"
 django.setup()
 
@@ -82,6 +81,11 @@ project = 'edx-enterprise'
 copyright = edx_theme.COPYRIGHT  # pylint: disable=redefined-builtin
 author = edx_theme.AUTHOR
 title = 'Open edX Enterprise Service Documentation'
+
+napoleon_custom_sections = [
+    ("Fields", "params_style"),
+    ("Keys", "params_style"),
+]
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

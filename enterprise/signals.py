@@ -45,15 +45,21 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     Handle User model changes. Context: This signal runs any time a user logs in, including b2c users.
 
     Steps:
-    1. Check for existing PendingEnterpriseCustomerUser(s) for user's email. If one or more
-        exists, create an EnterpriseCustomerUser record for each which will ensure the user
-        has the "enterprise_learner" role.
-    2. When we get a new EnterpriseCustomerUser record (or an existing record if one existed), check if the
-        PendingEnterpriseCustomerUser has any pending course enrollments. If so, enroll the user in these courses.
+
+    1. Check for existing PendingEnterpriseCustomerUser(s) for user's email. If one
+       or more exists, create an EnterpriseCustomerUser record for each which will
+       ensure the user has the "enterprise_learner" role.
+
+    2. When we get a new EnterpriseCustomerUser record (or an existing record if
+       one existed), check if the PendingEnterpriseCustomerUser has any pending
+       course enrollments. If so, enroll the user in these courses.
+
     3. Delete the PendingEnterpriseCustomerUser record as its no longer needed.
-    4. Using the newly created EnterpriseCustomerUser (or an existing record if one existed), check if there
-        is a PendingEnterpriseCustomerAdminUser. If so, ensure the user has the "enterprise_admin" role and
-        a Tableau user is created for the user.
+
+    4. Using the newly created EnterpriseCustomerUser (or an existing record if one
+       existed), check if there is a PendingEnterpriseCustomerAdminUser. If so,
+       ensure the user has the "enterprise_admin" role and a Tableau user is
+       created for the user.
     """
     created = kwargs.get("created", False)
     user_instance = kwargs.get("instance", None)

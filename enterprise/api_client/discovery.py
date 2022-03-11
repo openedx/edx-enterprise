@@ -134,12 +134,13 @@ class CourseCatalogApiClient:
 
     def get_catalog_results(self, content_filter_query, query_params=None, traverse_pagination=False):
         """
-            Return results from the cache or discovery service's search/all endpoint.
+        Return results from the cache or discovery service's search/all endpoint.
+
         Arguments:
             content_filter_query (dict): query parameters used to filter catalog results.
             query_params (dict): query parameters used to paginate results.
             traverse_pagination (bool): True to return all results, False to return the paginated response.
-                                        Defaults to False.
+                Defaults to False.
 
         Returns:
             dict: Paginated response or all the records.

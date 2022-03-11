@@ -24,8 +24,8 @@ class ServiceUserThrottle(UserRateThrottle):
         Updated throttling rate comes from `DEFAULT_THROTTLE_RATES` key in `REST_FRAMEWORK`
         setting. service user throttling is specified in `DEFAULT_THROTTLE_RATES` by `service_user` key
 
-        Example Setting:
-            ```
+        Example Setting::
+
             REST_FRAMEWORK = {
                 ...
                 'DEFAULT_THROTTLE_RATES': {
@@ -33,7 +33,6 @@ class ServiceUserThrottle(UserRateThrottle):
                     'service_user': '50/day'
                 }
             }
-            ```
         """
         service_users = get_service_usernames()
 

@@ -1007,7 +1007,7 @@ class TestEnterpriseUtils(unittest.TestCase):
     @mock.patch('enterprise.utils.segment')
     def test_track_event(self, analytics_mock):
         """
-        ```track_event`` fires a track event to segment.
+        ``track_event`` fires a track event to segment.
         """
         utils.track_event('user_id', 'event_name', 'properties')
         analytics_mock.track.assert_called_once()
