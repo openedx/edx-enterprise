@@ -38,7 +38,8 @@ import edx_theme
 import enterprise
 
 # Configure Django for autodoc usage
-settings.configure()
+#settings.configure()
+os.environ["DJANGO_SETTINGS_MODULE"] = "enterprise.settings.test"
 django.setup()
 
 # If extensions (or modules to document with autodoc) are in another directory,
