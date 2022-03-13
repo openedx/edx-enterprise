@@ -487,14 +487,15 @@ def serialize_notification_content(
     Prepare serializable contents to send emails with (if using tasks to send emails)
 
     Arguments:
-    * enterprise_customer (enterprise.models.EnterpriseCustomer)
-    * course_details (dict): With at least 'title', 'start' and 'course' keys
-       (usually obtained via CourseCatalogApiClient)
-    * course_id (str)
-    * users (list): list of users to enroll (each user should be a User or PendingEnterpriseCustomerUser)
-    * activation_links (dict): a dictionary map of unactivated license user emails to license activation links
+        enterprise_customer (enterprise.models.EnterpriseCustomer)
+        course_details (dict): With at least 'title', 'start' and 'course' keys
+           (usually obtained via CourseCatalogApiClient)
+        course_id (str)
+        users (list): list of users to enroll (each user should be a User or PendingEnterpriseCustomerUser)
+        activation_links (dict): a dictionary map of unactivated license user emails to license activation links
 
-    Returns: A list of dictionary objects that are of the form:
+    Returns: A list of dictionary objects that are of the form::
+
       {
         "user": user
         "enrolled_in": {
@@ -507,9 +508,10 @@ def serialize_notification_content(
         "enterprise_customer_uuid": self.uuid,
         "admin_enrollment": admin_enrollment,
       }
-      where user is one of
-          - 1: { 'first_name': name, 'username': user_name, 'email': email } (dict of User object)
-          - 2: { 'user_email' : user_email } (dict of PendingEnterpriseCustomerUser object)
+
+    where user is one of
+      - 1: { 'first_name': name, 'username': user_name, 'email': email } (dict of User object)
+      - 2: { 'user_email' : user_email } (dict of PendingEnterpriseCustomerUser object)
     """
     dashboard_url = None
     course_name = course_details.get('title')
@@ -591,18 +593,27 @@ def send_email_notification_message(
         user: a dict with either of the following forms:
               - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
               - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
+
         enrolled_in (dict): The dictionary contains details of the enrollable object
             (either course or program) that the user enrolled in. This MUST contain
-            a `name` key, and MAY contain the other following keys:
+            a `name` key, and MAY contain the other following keys::
+
                 - url: A human-friendly link to the enrollable's home page
+
                 - type: Either `course` or `program` at present
+
                 - branding: A special name for what the enrollable "is"; for example,
                     "MicroMasters" would be the branding for a "MicroMasters Program"
+
                 - start: A datetime object indicating when the enrollable will be available.
+
         dashboard_url: link to enterprise customer's unique homepage for user
+
         enterprise_customer_uuid: The EnterpriseCustomer uuid that the enrollment was created using.
+
         email_connection: An existing Django email connection that can be used without
             creating a new connection for each individual message
+
         admin_enrollment: If true, uses admin enrollment template instead of default ones.
     """
     if 'first_name' in user and 'username' in user:
@@ -1029,8 +1040,9 @@ def get_configuration_value(val_name, default=None, **kwargs):
     """
     Get a configuration value, or fall back to ``default`` if it doesn't exist.
 
-    Also takes a `type` argument to guide which particular upstream method to use when trying to retrieve a value.
-    Current types include:
+    Also takes a `type` argument to guide which particular upstream method to
+    use when trying to retrieve a value.  Current types include:
+
         - `url` to specifically get a URL.
     """
     if kwargs.get('type') == 'url':
@@ -1146,6 +1158,7 @@ def get_duration_of_course_or_courserun(content_metadata_item):
     """
     Returns duration start, end dates given a piece of content_metadata item
     If course item, extracts start, end dates of closest course run based on current timestamp
+
     Returns:
         duration: in days or 0
         start: start field of closest course run item, or None
@@ -1177,10 +1190,13 @@ def is_course_run_enrollable(course_run):
     Return true if the course run is enrollable, false otherwise.
 
     We look for the following criteria:
-    1. end date is greater than a reasonably-defined enrollment window, or undefined
-       * reasonably-defined enrollment window is 1 day before course run end date
-    2. enrollment_start is less than now, or undefined
-    3. enrollment_end is greater than now, or undefined
+
+    1. end date is greater than a reasonably-defined enrollment window, or undefined.
+        A reasonably-defined enrollment window is 1 day before course run end date.
+
+    2. enrollment_start is less than now, or undefined.
+
+    3. enrollment_end is greater than now, or undefined.
     """
     # Check if the course run is unpublished (sometimes these sneak through)
     if not is_course_run_published(course_run):
@@ -1215,8 +1231,11 @@ def has_course_run_available_for_enrollment(course_runs):
     """
         Iterates over all course runs to check if there any course run that is available for enrollment.
 
-    :param course_runs: list of course runs
-    :returns True if found else false
+    Argument:
+        course_runs: list of course runs
+
+    Returns:
+        True if found else false
     """
     for course_run in course_runs:
         if is_course_run_available_for_enrollment(course_run):
@@ -1311,15 +1330,20 @@ def is_course_run_about_to_end(current_course_run):
 
 def get_current_course_run(course, users_active_course_runs):
     """
-    Return the current course run on the following conditions.
+    Return the current course run on the following conditions:
 
     - If user has active course runs (already enrolled) then return course run with closest start date
+
     Otherwise it will check the following logic:
+
     - Course run is enrollable (see is_course_run_enrollable)
+
     - Course run has a verified seat and the upgrade deadline has not expired.
+
     - If no enrollable/upgradeable course runs, then select all the course runs.
+
     - After filtering the course runs checks whether the filtered course run is about to close or not
-    if yes then return the next course run or the current one.
+      if yes then return the next course run or the current one.
     """
     current_course_run = None
     filtered_course_runs = []
@@ -1843,10 +1867,11 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
     Takes a list of licensed learner data and enrolls each learner in the requested courses.
 
     Args:
-        - enterprise_customer: The EnterpriseCustomer (object) which is sponsoring the enrollment
-        - licensed_users_info: (list) An array of dictionaries, each containing information necessary to create a
+        enterprise_customer: The EnterpriseCustomer (object) which is sponsoring the enrollment
+        licensed_users_info: (list) An array of dictionaries, each containing information necessary to create a
             licensed enterprise enrollment for a specific learner in a specified course run.
-            Example:
+            Example::
+
                 licensed_users_info: [
                     {
                         'email': 'newuser@test.com',
@@ -1855,10 +1880,11 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                         'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
                     }
                 ]
-        - discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
+        discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
             default to 100
 
-    Expected Return Values:
+    Expected Return Values::
+
         Results: {
             successes: [{ 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
             pending: [{ 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
@@ -1945,10 +1971,12 @@ def enroll_users_in_course(
         sales_force_id (str): Salesforce opportunity id.
 
     Returns:
-        successes: A list of users who were successfully enrolled in the course
-        pending: A list of PendingEnterpriseCustomerUsers who were successfully linked and had
-            pending enrollments created for them in the database
-        failures: A list of users who could not be enrolled in the course
+        successes: A list of users who were successfully enrolled in the course.
+
+        pending: A list of PendingEnterpriseCustomerUsers who were successfully
+            linked and had pending enrollments created for them in the database.
+
+        failures: A list of users who could not be enrolled in the course.
     """
     existing_users, unregistered_emails = get_users_by_email(emails)
 

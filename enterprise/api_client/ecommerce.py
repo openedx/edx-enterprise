@@ -69,15 +69,18 @@ class EcommerceApiClient:
         """
         Calls ecommerce to create orders for the manual enrollments passed in.
 
-        `enrollments` should be a list of enrollments with the following format:
-        {
-            "lms_user_id": <int>,
-            "username": <str>,
-            "email": <str>,
-            "course_run_key": <str>
-        }
+        `enrollments` should be a list of enrollments with the following format::
 
-        Since `student.CourseEnrollment` lives in LMS, we're just passing around dicts of the relevant information.
+            {
+                "lms_user_id": <int>,
+                "username": <str>,
+                "email": <str>,
+                "course_run_key": <str>
+            }
+
+        Since `student.CourseEnrollment` lives in LMS, we're just passing
+        around dicts of the relevant information.
+
         """
         try:
             order_response = self.client.manual_course_enrollment_order.post(

@@ -231,24 +231,25 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         not transactional, in that any one or more failures will not affect other successful enrollments made within
         the same request.
 
-        Expected params:
-            - licenses_info (list of dicts): an array of dictionaries, each containing the necessary information to
-            create a licenced enrollment for a user in a specified course. Each dictionary must contain a user email, a
-            course run key, and a UUID of the license that the learner is using to enroll with.
-            Example:
-                licenses_info: [
-                    {
-                        'email': 'newuser@test.com',
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                    },
-                    ...
-                ]
+        Parameters:
+            licenses_info (list of dicts): an array of dictionaries, each containing the necessary information to
+                create a licenced enrollment for a user in a specified course. Each dictionary must contain a user email, a
+                course run key, and a UUID of the license that the learner is using to enroll with.
+            
+                Example::
 
-        Optional params:
-            - discount (int): the percent discount to be applied to all enrollments. Defaults to 100.
+                    licenses_info: [
+                        {
+                            'email': 'newuser@test.com',
+                            'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+                        },
+                        ...
+                    ]
 
-        Expected Return Values:
+            discount (int): the percent discount to be applied to all enrollments. Defaults to 100.
+
+        Returns:
             Success cases:
                 - All users exist and are enrolled -
                     {'successes': [], 'pending': [], 'failures': []}, 201
@@ -656,15 +657,15 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
         or unenroll the user if no audit mode exists for a given course.
 
         Will return a response with status 200 if no errors were encountered while modifying the course enrollment,
-        or a 422 if any errors were encountered.  The content of the response is of the form:
+        or a 422 if any errors were encountered.  The content of the response is of the form::
 
-        {
-            'course-v1:puppies': {'success': true, 'message': 'unenrolled'},
-            'course-v1:birds': {'success': true, 'message': 'moved to audit'},
-            'course-v1:kittens': {'success': true, 'message': 'course already completed'},
-            'course-v1:snakes': {'success': false, 'message': 'unenroll_user_from_course returned false'},
-            'course-v1:lizards': {'success': false, 'message': 'Some other exception'},
-        }
+            {
+                'course-v1:puppies': {'success': true, 'message': 'unenrolled'},
+                'course-v1:birds': {'success': true, 'message': 'moved to audit'},
+                'course-v1:kittens': {'success': true, 'message': 'course already completed'},
+                'course-v1:snakes': {'success': false, 'message': 'unenroll_user_from_course returned false'},
+                'course-v1:lizards': {'success': false, 'message': 'Some other exception'},
+            }
 
         The first four messages are the values of constants that a client may expect to receive and parse accordingly.
         """
@@ -1215,23 +1216,20 @@ class CouponCodesView(APIView):
         """
         POST /enterprise/api/v1/request_codes
 
-        Requires a JSON object of the following format:
-        >>> {
-        >>>     "email": "bob@alice.com",
-        >>>     "enterprise_name": "IBM",
-        >>>     "number_of_codes": "50",
-        >>>     "notes": "Help notes for codes request",
-        >>> }
+        Requires a JSON object of the following format::
+
+            {
+                "email": "bob@alice.com",
+                "enterprise_name": "IBM",
+                "number_of_codes": "50",
+                "notes": "Help notes for codes request",
+            }
 
         Keys:
-        *email*
-            Email of the customer who has requested more codes.
-        *enterprise_name*
-            The name of the enterprise requesting more codes.
-        *number_of_codes*
-            The number of codes requested.
-        *notes*
-            Help notes related to codes request.
+            email: Email of the customer who has requested more codes.
+            enterprise_name: The name of the enterprise requesting more codes.
+            number_of_codes: The number of codes requested.
+            notes: Help notes related to codes request.
         """
         try:
             email, enterprise_name, number_of_codes, notes = self.get_required_query_params(request)
@@ -1358,17 +1356,16 @@ class NotificationReadView(APIView):
         """
         POST /enterprise/api/v1/read_notification
 
-        Requires a JSON object of the following format:
-        >>> {
-        >>>     'notification_id': 1,
-        >>>     'enterprise_slug': 'enterprise_slug',
-        >>> }
+        Requires a JSON object of the following format::
+
+            {
+                'notification_id': 1,
+                'enterprise_slug': 'enterprise_slug',
+            }
 
         Keys:
-        *notification_id*
-            Notification ID which is read by Current User.
-        *enterprise_slug*
-            The slug of the enterprise.
+            notification_id: Notification ID which is read by Current User.
+            enterprise_slug: The slug of the enterprise.
         """
         try:
             notification_id, enterprise_slug = self.get_required_query_params(request)

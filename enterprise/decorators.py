@@ -103,6 +103,7 @@ def enterprise_login_required(view):
     enterprise-linked SSO login page.
 
     Usage::
+
         @enterprise_login_required()
         def my_view(request, enterprise_uuid):
             # Some functionality ...
@@ -172,6 +173,7 @@ def force_fresh_session(view):
     enterprise_login_required decorator.
 
     Usage::
+
         @enterprise_login_required
         @force_fresh_session()
         def my_view(request, enterprise_uuid):

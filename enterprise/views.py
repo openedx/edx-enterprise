@@ -2331,8 +2331,10 @@ class RouterView(NonAtomicView):
         Run some custom GET logic for Enterprise workflows before routing the user through existing views.
 
         In particular, before routing to existing views:
+
         - If the requested resource is a course, find the current course run for that course,
           and make that course run the requested resource instead.
+
         - Look to see whether a request is eligible for direct audit enrollment, and if so, directly enroll the user.
         """
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)

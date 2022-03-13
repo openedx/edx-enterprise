@@ -17,6 +17,7 @@ def require_at_least_one_query_parameter(*query_parameter_names):
     ValidationError is raised.
 
     Usage::
+
         @require_at_least_one_query_parameter('program_uuids', 'course_run_ids')
         def my_view(request, program_uuids, course_run_ids):
             # Some functionality ...

@@ -557,7 +557,7 @@ class CertificatesApiClient(JwtLmsApiClient):
         * ``username``: A string representation of an user's username passed in the request.
         * ``course_id``: A string representation of a Course ID.
         * ``certificate_type``: A string representation of the certificate type.
-        * ``created_date`: Datetime the certificate was created (tz-aware).
+        * ``created_date``: Datetime the certificate was created (tz-aware).
         * ``status``: A string representation of the certificate status.
         * ``is_passing``: True if the certificate has a passing status, False if not.
         * ``download_url``: A string representation of the certificate url.

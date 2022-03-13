@@ -722,13 +722,17 @@ class EnterpriseCustomer(TimeStampedModel):
     def toggle_universal_link(self, enable_universal_link, link_expiration_date=None):
         """
         Sets enable_universal_link
+
+        If there is no change to be made, return.
+
+        When enable_universal_link changes to:
+            - True: a new EnterpriseCustomerInviteKey is created
+            - False: all EnterpriseCustomerInviteKey are deactivated
+
         Args:
             enable_universal_link: new value
             link_expiration_date: if passed when enable_universal_link is true new link will be created
-        If there is no change to be made, return
-        When enable_universal_link changes to;
-            True: a new EnterpriseCustomerInviteKey is created
-            False: all EnterpriseCustomerInviteKey are deactivate
+
         """
         if self.enable_universal_link == enable_universal_link:
             return
@@ -1036,8 +1040,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         In absence of idp_id, returns id from default idp
 
         Arguments:
-        * idp_id (str) (optional): If provided, idp resolutoin skipped and specified idp used
-          to locate remote id
+            idp_id (str) (optional): If provided, idp resolution skipped and specified idp used
+                to locate remote id.
 
         Returns None if:
         * the user doesn't exist, or
@@ -1573,7 +1577,8 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     EnterpriseCustomerIdentityProvider is a One to Many relationship between Enterprise Customer and Identity Provider.
 
     There should be a link between an enterprise customer and its Identity Provider. This relationship has
-    following constraints
+    following constraints:
+
         1. An enterprise customer may or may not have an identity provider.
         2. An enterprise customer can have more than one identity providers.
         3. Enterprise customer site should match with identity provider's site. (i.e. same domain names)
@@ -2907,8 +2912,8 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     Model for pending enterprise admin users.
 
     .. pii: The user_email field contains PII, but locally deleted via
-    enterprise.signals.assign_or_delete_enterprise_admin_role when the
-    admin registers a new account.
+        enterprise.signals.assign_or_delete_enterprise_admin_role when the
+        admin registers a new account.
     .. pii_types: email_address
     .. pii_retirement: local_api, consumer_api
     """
