@@ -14,4 +14,4 @@ class Degreed2Config(AppConfig):
     verbose_name = "Enterprise Degreed2 Integration"
     oauth_api_path = "/oauth/token"
     courses_api_path = "/api/v2/content/courses"
-    completions_api_path = "/completions"
+    completions_api_path = "/api/v2/completions"
