@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.16]
+---------
+fix: CSOD Learner Audit Django Admin Timeouts
+
 [3.40.15]
 ---------
 fix: Use correct completions URL for Degreed2
