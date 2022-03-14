@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.40.15]
+---------
+fix: Use correct completions URL for Degreed2
+
 [3.40.14]
 ---------
 fix: CornerstoneLearnerDataTransmissionAudit admin view timeout
