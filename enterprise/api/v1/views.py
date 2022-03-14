@@ -233,9 +233,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         Parameters:
             licenses_info (list of dicts): an array of dictionaries, each containing the necessary information to
-                create a licenced enrollment for a user in a specified course. Each dictionary must contain a user email, a
-                course run key, and a UUID of the license that the learner is using to enroll with.
-            
+                create a licenced enrollment for a user in a specified course. Each dictionary must contain a user
+                email, a course run key, and a UUID of the license that the learner is using to enroll with.
+
                 Example::
 
                     licenses_info: [
