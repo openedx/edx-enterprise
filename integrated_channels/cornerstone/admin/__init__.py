@@ -76,6 +76,9 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
         "course_id",
         "status",
     )
+    raw_id_fields = (
+        'user',
+    )
 
     class Meta:
         model = CornerstoneLearnerDataTransmissionAudit
