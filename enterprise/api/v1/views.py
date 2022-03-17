@@ -155,6 +155,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     filterset_fields = FIELDS
     ordering_fields = FIELDS
 
+    def get_permissions(self):
+        if self.action == 'partial_update':
+            return [permissions.IsAuthenticated()]
+        else:
+            return [permission() for permission in self.permission_classes]
+
     def get_serializer_class(self):
         if self.action == 'basic_list':
             return serializers.EnterpriseCustomerBasicSerializer
@@ -172,6 +178,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             queryset = queryset.filter(name__istartswith=startswith)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, pk: pk)
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @action(detail=True)

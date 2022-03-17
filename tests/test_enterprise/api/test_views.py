@@ -96,6 +96,10 @@ ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollme
 ENTERPRISE_CUSTOMER_BRANDING_LIST_ENDPOINT = reverse('enterprise-customer-branding-list')
 ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT = reverse('enterprise-customer-branding-detail', (TEST_SLUG,))
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
+ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT = reverse(
+    'enterprise-customer-detail',
+    kwargs={'pk': FAKE_UUIDS[0]}
+)
 ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT = reverse('enterprise-customer-basic-list')
 ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-customer-contains-content-items',
@@ -1104,9 +1108,9 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
     """
-    Test enterprise customer list endpoint
+    Test enterprise customer view set.
     """
     @ddt.data(
         (
@@ -1570,6 +1574,31 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
         response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT)
         response = self.load_json(response.content)
         assert expected_item == response
+
+    @ddt.data(
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], 200),
+        (ENTERPRISE_LEARNER_ROLE, FAKE_UUIDS[0], 403),
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[1], 403)
+    )
+    @ddt.unpack
+    def test_partial_update(self, enterprise_role, enterprise_uuid_for_role, expected_status_code):
+        """
+        Test that ``EnterpriseCustomer`` can be updated by admins of the enterprise.
+        """
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+
+        self.set_jwt_cookie(enterprise_role, str(enterprise_uuid_for_role))
+
+        response = self.client.patch(ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT, {
+            "slug": 'new-slug'
+        })
+
+        assert response.status_code == expected_status_code
+
+        if expected_status_code == 200:
+            enterprise_customer.refresh_from_db()
+            assert enterprise_customer.slug == 'new-slug'
 
 
 @ddt.ddt
