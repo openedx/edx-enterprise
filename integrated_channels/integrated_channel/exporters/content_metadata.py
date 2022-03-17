@@ -6,6 +6,7 @@ metadata for content contained in the catalogs associated with a particular
 enterprise customer.
 """
 
+import sys
 from logging import getLogger
 
 from django.apps import apps
@@ -157,7 +158,7 @@ class ContentMetadataExporter(Exporter):
                 items_to_update[matched_item.get('content_key')] = item
         return items_to_update
 
-    def _get_catalog_diff(self, enterprise_catalog, content_keys, force_retrieve_all_catalogs):
+    def _get_catalog_diff(self, enterprise_catalog, content_keys, force_retrieve_all_catalogs, max_item_count):
         """
         From the enterprise catalog API, request a catalog diff based off of a list of content keys. Using the diff,
         retrieve past content metadata transmission records for update and delete payloads.
@@ -166,6 +167,20 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             content_keys
         )
+
+        # if we have more to work with than the allowed space, slice it up
+        if len(items_to_create) + len(items_to_delete) + len(matched_items) > max_item_count:
+            # prioritize creates, then updates, then deletes
+            items_to_create = items_to_create[0:max_item_count]
+            count_left = max_item_count - len(items_to_create)
+            matched_items = matched_items[0:count_left]
+            count_left = count_left - len(matched_items)
+            # in testing, this is sometimes a list, sometimes a dict
+            # we need it to be a list for our purposes
+            if isinstance(items_to_delete, dict):
+                items_to_delete = list(items_to_delete.values())
+            items_to_delete = items_to_delete[0:count_left]
+
         content_to_update = self._check_matched_content_updated_at(
             enterprise_catalog,
             matched_items,
@@ -208,11 +223,20 @@ class ContentMetadataExporter(Exporter):
             f'{enterprise_customer_catalogs}'
         )
 
+        # a maximum number of changes/payloads to export at once
+        # default to something huge to simplifly logic, the max system int size
+        max_payload_count = kwargs.get('max_payload_count', sys.maxsize)
+
         create_payload = {}
         update_payload = {}
         delete_payload = {}
         content_updated_mapping = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
+
+            # if we're already at the max in a multi-catalog situation, break out
+            if len(create_payload) + len(update_payload) + len(delete_payload) >= max_payload_count:
+                break
+
             content_keys = self._get_catalog_content_keys(enterprise_customer_catalog)
 
             self._log_info(
@@ -224,7 +248,8 @@ class ContentMetadataExporter(Exporter):
             items_to_create, items_to_update, items_to_delete = self._get_catalog_diff(
                 enterprise_customer_catalog,
                 content_keys,
-                kwargs.get('force_retrieve_all_catalogs', False)
+                kwargs.get('force_retrieve_all_catalogs', False),
+                max_payload_count
             )
 
             self._log_info(
