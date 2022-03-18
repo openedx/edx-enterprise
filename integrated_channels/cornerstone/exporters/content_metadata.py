@@ -47,7 +47,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
         'Subjects': 'subjects',
     }
     SKIP_KEY_IF_NONE = True
-    MAX_PAYLOAD_COUNT = getattr(settings, "CORNERSTONE_MAX_CONTENT_PAYLOAD_COUNT", 1000)
+    MAX_PAYLOAD_COUNT = getattr(settings, "ENTERPRISE_CORNERSTONE_MAX_CONTENT_PAYLOAD_COUNT", 1000)
 
     def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT):
         """
