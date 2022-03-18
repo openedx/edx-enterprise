@@ -111,25 +111,10 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             content_keys (list): List of string content keys
             should_raise_exception (Bool): Optional param for whether or not api response exceptions should be raised.
 
-        Response:
-            items_to_create: [{
-               "course_key": <content key>>
-            }, {
-            ..
-            }]
-
-            items_to_delete: [{
-               "course_key": <content key>>
-            }, {
-            ..
-            }]
-
-            items_found: [{
-                "course_key": <content key>>,
-                "date_updated": <content last modified datetime>
-            }, {
-                ...
-            }]
+        Returns:
+            items_to_create (list): dictionaries of content_keys to create
+            items_to_delete (list): dictionaries of content_keys to delete
+            items_found (list): dictionaries of content_keys and date_updated datetimes of content to update
         """
         catalog_uuid = enterprise_customer_catalog.uuid
         endpoint = getattr(self.client, self.CATALOG_DIFF_ENDPOINT.format(catalog_uuid))
