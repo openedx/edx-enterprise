@@ -114,7 +114,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         Returns:
             items_to_create (list): dictionaries of content_keys to create
             items_to_delete (list): dictionaries of content_keys to delete
-            items_found (list): dictionaries of content_keys and updated_at datetimes of content to update
+            items_found (list): dictionaries of content_keys and date_updated datetimes of content to update
         """
         catalog_uuid = enterprise_customer_catalog.uuid
         endpoint = getattr(self.client, self.CATALOG_DIFF_ENDPOINT.format(catalog_uuid))
