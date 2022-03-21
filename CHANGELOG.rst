@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.1]
+---------
+fix: chunk cornerstone content updates
+
 [3.41.0]
 ---------
 feat: Allow partial_update on `EnterpriseCustomerViewSet`

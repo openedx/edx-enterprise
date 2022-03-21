@@ -8,6 +8,7 @@ from logging import getLogger
 import pytz
 
 from django.apps import apps
+from django.conf import settings
 
 from enterprise.utils import get_closest_course_run, get_language_code
 from integrated_channels.cornerstone.utils import convert_invalid_course_id
@@ -46,6 +47,13 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
         'Subjects': 'subjects',
     }
     SKIP_KEY_IF_NONE = True
+    MAX_PAYLOAD_COUNT = getattr(settings, "ENTERPRISE_CORNERSTONE_MAX_CONTENT_PAYLOAD_COUNT", 1000)
+
+    def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT):
+        """
+        Return the exported and transformed content metadata as a dictionary for CSDO web pull.
+        """
+        return self.export(max_payload_count=max_payload_count)
 
     def export_force_all_catalogs(self):
         """
