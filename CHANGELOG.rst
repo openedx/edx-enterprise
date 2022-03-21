@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.0]
+---------
+feat: Allow partial_update on `EnterpriseCustomerViewSet`
+
 [3.40.16]
 ---------
 fix: CSOD Learner Audit Django Admin Timeouts
