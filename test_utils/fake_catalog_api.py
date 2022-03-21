@@ -1348,7 +1348,6 @@ def get_fake_catalog_diff_w_one_each():
     Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses and a program are
     returned, one in each change-type bucket
     """
-    # items_to_create, items_to_delete, matched_items
     items_to_create = [{'content_key': FAKE_COURSE_RUN['key']}]
     items_to_delete = [{'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']}]
     matched_items = [{'content_key': FAKE_COURSE['key'], 'date_updated': datetime.datetime.now()}]

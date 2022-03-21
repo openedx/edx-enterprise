@@ -51,7 +51,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
 
     def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT):
         """
-        Return the exported and transformed content metadata as a dictionary regardless if there is an update needed.
+        Return the exported and transformed content metadata as a dictionary for CSDO web pull.
         """
         return self.export(max_payload_count=max_payload_count)
 
