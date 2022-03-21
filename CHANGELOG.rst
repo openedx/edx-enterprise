@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.2]
+---------
+feat: setting customer identity provider config is_valid on first SSO login
+
 [3.41.1]
 ---------
 fix: chunk cornerstone content updates
