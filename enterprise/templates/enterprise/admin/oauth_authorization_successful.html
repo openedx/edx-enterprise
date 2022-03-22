@@ -1,0 +1,29 @@
+{% load i18n static enterprise %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LMS Authorization</title>
+  <link rel="stylesheet" type="text/css" href="{% static 'enterprise/bundles/main.style.css' %}"/>
+</head>
+<body>
+  <div class="mt-3 ml-3" style="text-align: left">
+    <img src="https://raw.githubusercontent.com/edx/brand-edx.org/master/logo.svg" alt="edx logo" height="60">
+  </div>
+
+  <div style="text-align: center">
+    <h1 class="mx-5"><span style="color: red;">Almost done! </span>Your LMS has been authorized.</p>
+    <p class="lead">Please close this window to complete configuration.</p>
+  </div>
+  <div style="text-align: center">
+    <h1 class="mx-5"><span style="color: red;">We're sorry. </span>Something went wrong.</p>
+    <p class="lead">We were unable to confirm your LMS authorization. Please close this window and try again.</p>
+    <div class="d-flex justify-content-center">
+      <p class="my-3 py-4 text-monospace small" style="line-height: 8px"> Helpful link:</p>
+      <button class="px-1 py-2 my-4 btn btn-tertiary" style="height: fit-content; font-size: 1rem">Enterprise Help Center</button>
+    </div>
+  </div>
+
+</body>
