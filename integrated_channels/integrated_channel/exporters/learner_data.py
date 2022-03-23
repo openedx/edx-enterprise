@@ -310,6 +310,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                f'_collect_grades_data finished with CompletedDate: {completed_date_from_api},'
+                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+            ))
 
         # there is a case for audit enrollment, we are reporting completion based on
         # content count cmopleted, so we may not get a completed_date_from_api
@@ -416,18 +421,23 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             )
 
             # Apply the Source of Truth for Grades
-            records = self.get_learner_data_records(
-                enterprise_enrollment=enterprise_enrollment,
-                completed_date=completed_date_from_api,
-                grade=grade_from_api,
-                course_completed=is_course_completed(
+            course_completed = is_course_completed(
                     enterprise_enrollment,
                     completed_date_from_api,
                     is_passing_from_api,
                     incomplete_count,
                 ),
-                grade_percent=grade_percent,
-            )
+
+            records = []
+            # let's not add learner records if course is not even considered complete
+            if course_completed:
+                records = self.get_learner_data_records(
+                    enterprise_enrollment=enterprise_enrollment,
+                    completed_date=completed_date_from_api,
+                    grade=grade_from_api,
+                    course_completed=course_completed,
+                    grade_percent=grade_percent,
+                )
 
             if records:
                 # There are some cases where we won't receive a record from the above
