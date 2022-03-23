@@ -422,11 +422,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
             # Apply the Source of Truth for Grades
             course_completed = is_course_completed(
-                    enterprise_enrollment,
-                    completed_date_from_api,
-                    is_passing_from_api,
-                    incomplete_count,
-                ),
+                enterprise_enrollment,
+                completed_date_from_api,
+                is_passing_from_api,
+                incomplete_count,
+            )
 
             records = []
             # let's not add learner records if course is not even considered complete
