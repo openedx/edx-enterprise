@@ -348,10 +348,12 @@ class BlackboardLearnerDataTransmissionAudit(models.Model):
                   ' order for both learner and content metadata integrations.'
     )
     completed_timestamp = models.CharField(
+        null=True,
+        blank=True,
         max_length=10,
         help_text=(
             'Represents the Blackboard representation of a timestamp: yyyy-mm-dd, '
-            'which is always 10 characters.'
+            'which is always 10 characters. Can be left unset for audit transmissions.'
         )
     )
     course_id = models.CharField(max_length=255, blank=False, null=False)
