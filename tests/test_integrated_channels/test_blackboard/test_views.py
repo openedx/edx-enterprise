@@ -3,6 +3,7 @@ Tests for views in Blackboard integrated channel.
 """
 from urllib.parse import urljoin
 from uuid import uuid4
+import logging
 
 import pytest
 import responses
@@ -12,6 +13,7 @@ from django.apps import apps
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils.http import urlencode
+from testfixtures import LogCapture
 
 from enterprise.models import EnterpriseCustomer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
@@ -99,10 +101,10 @@ class TestBlackboardAPIViews(APITestCase):
         oauth_complete_url_without_id = '{}?{}'.format(
             self.urlbase, urlencode(query_kwargs_1)
         )
-        response = self.client.get(oauth_complete_url_without_id)
-        assert response.status_code == 400
-        expected_string = "Blackboard Configuration uuid (as 'state' url param) needed to obtain refresh token"
-        assert response.json()['detail'] == expected_string
+        with LogCapture(level=logging.ERROR) as log_capture:
+            self.client.get(oauth_complete_url_without_id)
+            expected_string = "Blackboard Configuration uuid (as 'state' url param) needed to obtain refresh token"
+            assert expected_string in log_capture.records[0].getMessage()
 
         query_kwargs_2 = {
             'state': ENTERPRISE_ID,
@@ -110,10 +112,10 @@ class TestBlackboardAPIViews(APITestCase):
         oauth_complete_url_without_code = '{}?{}'.format(
             self.urlbase, urlencode(query_kwargs_2)
         )
-        response = self.client.get(oauth_complete_url_without_code)
-        assert response.status_code == 400
-        expected_string = "'code' url param was not provided, needed to obtain refresh token"
-        assert response.json()['detail'] == expected_string
+        with LogCapture(level=logging.ERROR) as log_capture:
+            self.client.get(oauth_complete_url_without_code)
+            expected_string = "'code' url param was not provided, needed to obtain refresh token"
+            assert expected_string in log_capture.records[0].getMessage()
 
     def test_refresh_token_request_with_bad_enterprise_id(self):
         """
@@ -124,12 +126,9 @@ class TestBlackboardAPIViews(APITestCase):
             'code': 'test-code'
         }
         oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
-        response = self.client.get(oauth_complete_url)
-
-        assert response.status_code == 404
-        assert response.json()['detail'] == 'No state data found for given uuid: {}.'.format(
-            BAD_ENTERPRISE_ID
-        )
+        with LogCapture(level=logging.ERROR) as log_capture:
+            self.client.get(oauth_complete_url)
+            assert 'No state data found for given uuid' in log_capture.records[0].getMessage()
 
     def test_refresh_token_request_without_blackboard_config(self):
         """
@@ -142,9 +141,7 @@ class TestBlackboardAPIViews(APITestCase):
             'state': ENTERPRISE_ID,
             'code': 'test-code'
         }
-        oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
-        response = self.client.get(oauth_complete_url)
-
-        assert response.status_code == 404
-        assert response.json()['detail'] == \
-            'No Blackboard configuration found for state: {}'.format(ENTERPRISE_ID)
+        with LogCapture(level=logging.ERROR) as log_capture:
+            oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
+            self.client.get(oauth_complete_url)
+            assert 'No Blackboard configuration found for state' in log_capture.records[0].getMessage()

@@ -9,12 +9,14 @@ from urllib.parse import urljoin
 
 import requests
 from rest_framework import generics
-from rest_framework.exceptions import APIException, NotFound, ParseError
-from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
+from rest_framework.renderers import JSONRenderer
+
 
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.shortcuts import render
 
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
@@ -73,6 +75,17 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             HTTP 404 if state is not valid or contained in the set of registered enterprises
 
     """
+    renderer_classes = [JSONRenderer, ]
+
+    def render_page(self, request, status_code):
+        """
+        Return a success or failure page based on Blackboard OAuth response
+        """
+        success_template = 'enterprise/admin/oauth_authorization_successful.html'
+        error_template = 'enterprise/admin/oauth_authorization_successful.html'
+        template = success_template if status_code == 200 else error_template
+
+        return render(request, template, context={})
 
     def get(self, request, *args, **kwargs):
         app_config = apps.get_app_config('blackboard')
@@ -81,23 +94,26 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         # Check if encountered an error when generating the oauth code.
         request_error = request.GET.get('error')
         if request_error:
-            raise APIException(
+            LOGGER.exception(
                 "Blackboard OAuth API encountered an error when generating client code - "
                 "error: {} description: {}".format(
                     request_error,
                     request.GET.get('error_description')
                 )
             )
+            return self.render_page(request, 'error')
 
         # Retrieve the newly generated code and state (Enterprise user's ID)
         client_code = request.GET.get('code')
         state_uuid = request.GET.get('state')
 
         if not state_uuid:
-            raise ParseError("Blackboard Configuration uuid (as 'state' url param) needed to obtain refresh token")
+            LOGGER.exception("Blackboard Configuration uuid (as 'state' url param) needed to obtain refresh token")
+            return self.render_page(request, 'error')
 
         if not client_code:
-            raise ParseError("'code' url param was not provided, needed to obtain refresh token")
+            LOGGER.exception("'code' url param was not provided, needed to obtain refresh token")
+            return self.render_page(request, 'error')
 
         try:
             enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(uuid=state_uuid)
@@ -109,16 +125,16 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             enterprise_customer = get_enterprise_customer(state_uuid)
 
             if not enterprise_customer:
-                raise NotFound(f"No state data found for given uuid: {state_uuid}.")
+                LOGGER.exception(f"No state data found for given uuid: {state_uuid}.")
+                return self.render_page(request, 'error')
 
             try:
                 enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(
                     enterprise_customer=enterprise_customer
                 )
-            except BlackboardEnterpriseCustomerConfiguration.DoesNotExist as error:
-                raise NotFound(
-                    f"No Blackboard configuration found for state: {state_uuid}"
-                ) from error
+            except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
+                LOGGER.exception(f"No Blackboard configuration found for state: {state_uuid}")
+                return self.render_page(request, 'error')
 
         BlackboardGlobalConfiguration = apps.get_model(
             'blackboard',
@@ -126,7 +142,8 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         )
         blackboard_global_config = BlackboardGlobalConfiguration.current()
         if not blackboard_global_config:
-            raise NotFound("No global Blackboard configuration found")
+            LOGGER.exception("No global Blackboard configuration found")
+            return self.render_page(request, 'error')
 
         auth_header = self._create_auth_header(enterprise_config, blackboard_global_config)
 
@@ -149,12 +166,13 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         try:
             data = auth_response.json()
             if 'refresh_token' not in data:
-                raise ValueError("BLACKBOARD: failed to find refresh_token in auth response. "
+                LOGGER.exception("BLACKBOARD: failed to find refresh_token in auth response. "
                                  "Auth response text: {}, Response code: {}, JSON response: {}".format(
                                      auth_response.text,
                                      auth_response.status_code,
                                      data,
                                  ))
+                return self.render_page(request, 'error')
 
             log_auth_response(auth_token_url, data)
             refresh_token = data['refresh_token']
@@ -163,21 +181,20 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                 enterprise_config.save()
             else:
                 LOGGER.error("BLACKBOARD: Invalid/empty refresh_token! Cannot use it.")
-        except KeyError as exception:
-            raise ParseError(
-                "BLACKBOARD: failed to find required data in auth response. "
+                return self.render_page(request, 'error')
+        except KeyError:
+            LOGGER.exception("BLACKBOARD: failed to find required data in auth response. "
                 "Auth response text: {}, Response code: {}, JSON response: {}".format(
                     auth_response.text,
                     auth_response.status_code,
                     data,
-                )
-            ) from exception
-        except ValueError as exception:
-            raise ParseError(
-                "BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response)
-            ) from exception
+                ))
+            return self.render_page(request, 'error')
+        except ValueError:
+            LOGGER.exception("BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response))
+            return self.render_page(request, 'error')
 
-        return Response()
+        return self.render_page(request, auth_response.status_code)
 
     def _create_auth_header(self, enterprise_config, blackboard_global_config):
         """
