@@ -255,6 +255,8 @@ class DegreedLearnerDataTransmissionAudit(models.Model):
 
     completed_timestamp = models.CharField(
         max_length=10,
+        blank=True,
+        null=True,
         help_text=(
             'Represents the Degreed representation of a timestamp: yyyy-mm-dd, '
             'which is always 10 characters.'
