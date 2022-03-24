@@ -2,8 +2,8 @@
 Views containing APIs for Canvas integrated channel
 """
 
-from urllib.parse import urljoin
 from logging import getLogger
+from urllib.parse import urljoin
 
 import requests
 from rest_framework import generics
@@ -100,7 +100,7 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             enterprise_customer = get_enterprise_customer(state_uuid)
 
             if not enterprise_customer:
-                LOGGER.exception(f"No state data found for given uuid: {state_uuid}.")
+                LOGGER.error(f"No state data found for given uuid: {state_uuid}.")
                 return self.render_page(request, 'error')
 
             try:
@@ -108,7 +108,7 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
                     enterprise_customer=enterprise_customer
                 )
             except CanvasEnterpriseCustomerConfiguration.DoesNotExist:
-                LOGGER.exception(f"No Canvas configuration found for state: {state_uuid}")
+                LOGGER.error(f"No Canvas configuration found for state: {state_uuid}")
                 return self.render_page(request, 'error')
 
         access_token_request_params = {
@@ -130,7 +130,7 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             data = auth_response.json()
             refresh_token = data['refresh_token']
         except (KeyError, ValueError) as error:
-            LOGGER.exception(error)
+            LOGGER.exception(message=str(error))
             return self.render_page(request, 'error')
 
         enterprise_config.refresh_token = refresh_token

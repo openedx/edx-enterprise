@@ -1,19 +1,19 @@
 """
 Tests for views in Canvas integrated channels.
 """
+import logging
 from urllib.parse import urljoin
 from uuid import uuid4
-import logging
 
 import pytest
 import responses
 from rest_framework.test import APITestCase
+from testfixtures import LogCapture
 
 from django.apps import apps
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.utils.http import urlencode
-from testfixtures import LogCapture
 
 from enterprise.models import EnterpriseCustomer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration

@@ -12,7 +12,6 @@ from rest_framework import generics
 from rest_framework.exceptions import NotFound
 from rest_framework.renderers import JSONRenderer
 
-
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -125,7 +124,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             enterprise_customer = get_enterprise_customer(state_uuid)
 
             if not enterprise_customer:
-                LOGGER.exception(f"No state data found for given uuid: {state_uuid}.")
+                LOGGER.error(f"No state data found for given uuid: {state_uuid}.")
                 return self.render_page(request, 'error')
 
             try:
@@ -133,7 +132,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                     enterprise_customer=enterprise_customer
                 )
             except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
-                LOGGER.exception(f"No Blackboard configuration found for state: {state_uuid}")
+                LOGGER.error(f"No Blackboard configuration found for state: {state_uuid}")
                 return self.render_page(request, 'error')
 
         BlackboardGlobalConfiguration = apps.get_model(
@@ -142,7 +141,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         )
         blackboard_global_config = BlackboardGlobalConfiguration.current()
         if not blackboard_global_config:
-            LOGGER.exception("No global Blackboard configuration found")
+            LOGGER.error("No global Blackboard configuration found")
             return self.render_page(request, 'error')
 
         auth_header = self._create_auth_header(enterprise_config, blackboard_global_config)
@@ -166,12 +165,10 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         try:
             data = auth_response.json()
             if 'refresh_token' not in data:
-                LOGGER.exception("BLACKBOARD: failed to find refresh_token in auth response. "
-                                 "Auth response text: {}, Response code: {}, JSON response: {}".format(
-                                     auth_response.text,
-                                     auth_response.status_code,
-                                     data,
-                                 ))
+                LOGGER.error(
+                    "BLACKBOARD: failed to find refresh_token in auth response. "
+                    "Auth response text: {}, Response code: {}, JSON response: {}".format(
+                        auth_response.text, auth_response.status_code, data))
                 return self.render_page(request, 'error')
 
             log_auth_response(auth_token_url, data)
@@ -183,15 +180,10 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                 LOGGER.error("BLACKBOARD: Invalid/empty refresh_token! Cannot use it.")
                 return self.render_page(request, 'error')
         except KeyError:
-            LOGGER.exception("BLACKBOARD: failed to find required data in auth response. "
-                             "Auth response text: {}, Response code: {}, JSON response: {}".format(
-                                auth_response.text,
-                                auth_response.status_code,
-                                data,
-                ))
-            return self.render_page(request, 'error')
-        except ValueError:
-            LOGGER.exception("BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response))
+            LOGGER.error(
+                "BLACKBOARD: failed to find required data in auth response. "
+                "Auth response text: {}, Response code: {}, JSON response: {}".format(
+                    auth_response.text, auth_response.status_code, data))
             return self.render_page(request, 'error')
 
         status = '' if auth_response.status_code == 200 else 'error'
