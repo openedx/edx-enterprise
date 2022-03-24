@@ -51,6 +51,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 instructor_name='Professor Professorson',
                 grade='Passing even more',
                 error_message='',
+                status=200,
                 enterprise_customer_uuid=self.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_config.id
             )

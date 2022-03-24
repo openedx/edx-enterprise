@@ -202,6 +202,9 @@ class CornerstoneLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         on_delete=models.CASCADE,
     )
 
+    # XXX this model has an opposite default from the base
+    course_completed = models.BooleanField(default=False)
+
     user_guid = models.CharField(
         max_length=255,
         blank=False,

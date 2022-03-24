@@ -487,29 +487,6 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
 
-class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
-    """
-    ``LearnerDataTransmissionAudit`` factory.
-
-    Creates an instance of ``LearnerDataTransmissionAudit`` with minimal boilerplate.
-    """
-
-    class Meta:
-        """
-        Meta for ``LearnerDataTransmissionAuditFactory``.
-        """
-
-        model = LearnerDataTransmissionAudit
-
-    enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
-    course_completed = True
-    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
-    grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
-    status = factory.LazyAttribute(lambda x: FAKER.word())
-
-
 class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):
     """
     ``SAPSuccessFactorsGlobalConfiguration`` factory.
