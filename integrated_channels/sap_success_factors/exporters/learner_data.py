@@ -68,6 +68,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     grade=grade,
                     total_hours=total_hours,
                     credit_hours=total_hours,
+                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                    plugin_configuration_id=enterprise_enrollment.enterprise_configuration.id
                 ),
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
@@ -78,6 +80,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     grade=grade,
                     total_hours=total_hours,
                     credit_hours=total_hours,
+                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                    plugin_configuration_id=enterprise_enrollment.enterprise_configuration.id
                 ),
             ]
         LOGGER.info(

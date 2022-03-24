@@ -51,6 +51,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 instructor_name='Professor Professorson',
                 grade='Passing even more',
                 error_message='',
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_config.id
             )
         ]
         self.exporter = lambda payloads=self.payloads: mock.MagicMock(
@@ -109,6 +111,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             completed_timestamp=1486755998,
             instructor_name='Professor Professorson',
             grade='Pass',
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.enterprise_config.id,
         )
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
         transmitter.transmit(self.exporter([payload]))
@@ -129,6 +133,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             completed_timestamp=1486755998,
             instructor_name='Professor Professorson',
             grade='Pass',
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.enterprise_config.id,
         )
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
         transmitter.transmit(self.exporter([payload]))
@@ -153,6 +159,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             completed_timestamp=1486755998,
             instructor_name='Professor Professorson',
             grade='Pass',
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.enterprise_config.id,
         )
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
         transmitter.transmit(self.exporter([payload]))
@@ -177,6 +185,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 completed_timestamp=1486755998,
                 instructor_name='Professor Professorson',
                 grade='Pass',
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_config.id,
             ),
             SapSuccessFactorsLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
@@ -186,6 +196,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 completed_timestamp=1486755998,
                 instructor_name='Professor Professorson',
                 grade='Pass',
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_config.id,
             )
         ]
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
@@ -215,6 +227,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 completed_timestamp=1486755998,
                 instructor_name='Professor Professorson',
                 grade='Pass',
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_config.id,
             ),
             SapSuccessFactorsLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
@@ -224,6 +238,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 completed_timestamp=1486755998,
                 instructor_name='Professor Professorson',
                 grade='Pass',
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_config.id,
             )
         ]
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
