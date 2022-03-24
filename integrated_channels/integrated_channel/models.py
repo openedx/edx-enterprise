@@ -244,26 +244,30 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         exporter.update_content_transmissions_catalog_uuids()
 
 
-class LearnerDataTransmissionAudit(models.Model):
+class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
 
     .. no_pii:
     """
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
+    # TODO: index customer uuid + plugin coinfig id together, with enrollment id?
+    enterprise_customer_uuid = models.UUIDField(blank=True, null=True)
+    plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
+    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=True, null=True, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     course_completed = models.BooleanField(default=True)
-    completed_timestamp = models.BigIntegerField()
+    completed_timestamp = models.DateTimeField(blank=True, null=True)
     instructor_name = models.CharField(max_length=255, blank=True)
-    grade = models.CharField(max_length=100, blank=False, null=False)
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
-
-    subsection_id = models.CharField(max_length=255, blank=True, null=True)
+    grade = models.FloatField(blank=True, null=True)
+    total_hours = models.FloatField(null=True, blank=True)
+    # subsection_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    # subsection_name = models.CharField(max_length=255, blank=False, null=True)
+    status = models.CharField(max_length=100, blank=True, null=True)
+    error_message = models.TextField(blank=True, null=True)
 
     class Meta:
+        abstract = True
         app_label = 'integrated_channel'
 
     def __str__(self):

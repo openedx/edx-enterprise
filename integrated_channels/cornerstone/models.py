@@ -19,7 +19,7 @@ from integrated_channels.cornerstone.exporters.content_metadata import Cornersto
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
 from integrated_channels.cornerstone.transmitters.content_metadata import CornerstoneContentMetadataTransmitter
 from integrated_channels.cornerstone.transmitters.learner_data import CornerstoneLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
@@ -187,11 +187,13 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         return CornerstoneLearnerExporter(user, self)
 
 
-class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
+class CornerstoneLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we sent to Cornerstone at a given point in time for an enterprise course enrollment.
 
     """
+
+    # TODO how is this set/used? should it be on the abstract class?
     user = models.ForeignKey(
         User,
         blank=False,
@@ -206,39 +208,12 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
         null=False
     )
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(
-        blank=True,
-        null=True,
-        db_index=True,
-    )
-
-    course_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        help_text=_("The course run's key which is used to uniquely identify the course for Cornerstone.")
-    )
-
     session_token = models.CharField(max_length=255, null=False, blank=False)
     callback_url = models.CharField(max_length=255, null=False, blank=False)
     subdomain = models.CharField(max_length=255, null=False, blank=False)
 
-    course_completed = models.BooleanField(
-        default=False,
-        help_text=_("The learner's course completion status transmitted to Cornerstone.")
-    )
-
-    completed_timestamp = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text=_(
-            'Date time when user completed course'
-        )
-    )
+    # XXX non-standard
     grade = models.CharField(max_length=255, null=True, blank=True)
-    # Request-related information.
-    status = models.CharField(max_length=100, blank=True, null=True)
-    error_message = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'cornerstone'

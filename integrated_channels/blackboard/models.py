@@ -17,7 +17,7 @@ from integrated_channels.blackboard.exporters.content_metadata import Blackboard
 from integrated_channels.blackboard.exporters.learner_data import BlackboardLearnerExporter
 from integrated_channels.blackboard.transmitters.content_metadata import BlackboardContentMetadataTransmitter
 from integrated_channels.blackboard.transmitters.learner_data import BlackboardLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
@@ -335,7 +335,7 @@ class BlackboardLearnerAssessmentDataTransmissionAudit(models.Model):
         )
 
 
-class BlackboardLearnerDataTransmissionAudit(models.Model):
+class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we send to Blackboard at a given point in time for an enterprise course enrollment.
 
@@ -347,6 +347,8 @@ class BlackboardLearnerDataTransmissionAudit(models.Model):
         help_text='The learner`s Blackboard email. This must match the email on edX in'
                   ' order for both learner and content metadata integrations.'
     )
+
+    # XXX non-standard, should store datetime and export the format
     completed_timestamp = models.CharField(
         null=True,
         blank=True,
@@ -356,19 +358,6 @@ class BlackboardLearnerDataTransmissionAudit(models.Model):
             'which is always 10 characters. Can be left unset for audit transmissions.'
         )
     )
-    course_id = models.CharField(max_length=255, blank=False, null=False)
-    course_completed = models.BooleanField(
-        default=True,
-        help_text="The learner's course completion status transmitted to Blackboard."
-    )
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
-    grade = models.DecimalField(blank=True, null=True, max_digits=3, decimal_places=2)
-    total_hours = models.FloatField(null=True, blank=True)
-
-    # Request-related information.
-    created = models.DateTimeField(auto_now_add=True)
-    error_message = models.TextField(blank=True)
-    status = models.CharField(max_length=100, blank=False, null=False)
 
     class Meta:
         app_label = 'blackboard'

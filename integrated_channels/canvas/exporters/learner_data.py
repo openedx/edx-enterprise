@@ -60,6 +60,8 @@ class CanvasLearnerExporter(LearnerExporter):
                 course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
+                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_configuration.id,
             ),
         ]
 

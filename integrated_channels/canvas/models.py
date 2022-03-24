@@ -17,7 +17,7 @@ from integrated_channels.canvas.exporters.content_metadata import CanvasContentM
 from integrated_channels.canvas.exporters.learner_data import CanvasLearnerExporter
 from integrated_channels.canvas.transmitters.content_metadata import CanvasContentMetadataTransmitter
 from integrated_channels.canvas.transmitters.learner_data import CanvasLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
@@ -285,7 +285,7 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         )
 
 
-class CanvasLearnerDataTransmissionAudit(models.Model):
+class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we send to canvas at a given point in time for an enterprise course enrollment.
 
@@ -297,24 +297,7 @@ class CanvasLearnerDataTransmissionAudit(models.Model):
         null=False
     )
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(
-        blank=False,
-        null=False,
-        db_index=True
-    )
-
-    course_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        help_text=_("The course run's key which is used to uniquely identify the course for Canvas.")
-    )
-
-    course_completed = models.BooleanField(
-        default=False,
-        help_text=_("The learner's course completion status transmitted to Canvas.")
-    )
-
+    # XXX non-standard, should store datetime and export the format
     completed_timestamp = models.CharField(
         null=True,
         blank=True,
@@ -325,10 +308,7 @@ class CanvasLearnerDataTransmissionAudit(models.Model):
         )
     )
 
-    # Request-related information.
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
+    # XXX non-standard
     grade = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:

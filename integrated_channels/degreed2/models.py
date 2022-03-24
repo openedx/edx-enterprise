@@ -14,7 +14,7 @@ from integrated_channels.degreed2.exporters.content_metadata import Degreed2Cont
 from integrated_channels.degreed2.exporters.learner_data import Degreed2LearnerExporter
 from integrated_channels.degreed2.transmitters.content_metadata import Degreed2ContentMetadataTransmitter
 from integrated_channels.degreed2.transmitters.learner_data import Degreed2LearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
@@ -148,7 +148,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         return Degreed2ContentMetadataExporter(user, self)
 
 
-class Degreed2LearnerDataTransmissionAudit(models.Model):
+class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we sent to Degreed2 at a given point in time for an enterprise course enrollment.
     Ref: https://api.degreed.com/docs/#create-a-new-completion
@@ -165,35 +165,13 @@ class Degreed2LearnerDataTransmissionAudit(models.Model):
         help_text='Used as the user-id field when creating a completion',
     )
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(
-        blank=False,
-        null=False,
-        db_index=True
-    )
-
-    course_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        help_text="Used as content-id field when creating a completion"
-    )
-
-    course_completed = models.BooleanField(
-        default=True,
-        help_text="The learner's course completion status transmitted to Degreed2."
-    )
-
+    # XXX non-standard, should store datetime and export the format
     completed_timestamp = models.CharField(
         null=True,
         blank=True,
         max_length=19,
         help_text='yyyy-mm-ddTHH:MM:SS format. Can be left unset for audit records.',
     )
-
-    # Request-related information.
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'degreed2'
