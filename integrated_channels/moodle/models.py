@@ -168,10 +168,12 @@ class MoodleLearnerDataTransmissionAudit(models.Model):
         help_text="The learner's course completion status transmitted to Moodle."
     )
     completed_timestamp = models.CharField(
+        null=True,
+        blank=True,
         max_length=10,
         help_text=(
             'Represents the Moodle representation of a timestamp: yyyy-mm-dd, '
-            'which is always 10 characters.'
+            'which is always 10 characters. Can be left unset for audit transmissions.'
         )
     )
 

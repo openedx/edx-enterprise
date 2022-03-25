@@ -283,7 +283,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     credit_hours = models.FloatField(null=True, blank=True)
 
     # We send a UNIX timestamp to SAPSF.
-    completed_timestamp = models.BigIntegerField()
+    completed_timestamp = models.BigIntegerField(null=True, blank=True)
 
     # Request-related information.
     status = models.CharField(max_length=100, blank=False, null=False)

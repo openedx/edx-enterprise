@@ -184,8 +184,10 @@ class Degreed2LearnerDataTransmissionAudit(models.Model):
     )
 
     completed_timestamp = models.CharField(
+        null=True,
+        blank=True,
         max_length=19,
-        help_text='yyyy-mm-ddTHH:MM:SS format',
+        help_text='yyyy-mm-ddTHH:MM:SS format. Can be left unset for audit records.',
     )
 
     # Request-related information.

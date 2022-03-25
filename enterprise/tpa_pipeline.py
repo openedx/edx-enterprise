@@ -3,6 +3,7 @@ Module provides elements to be used in third-party auth pipeline.
 """
 
 import re
+from datetime import datetime
 from logging import getLogger
 
 from django.urls import reverse
@@ -28,14 +29,21 @@ except ImportError:
 LOGGER = getLogger(__name__)
 
 
-def get_enterprise_customer_for_running_pipeline(request, pipeline):
+def get_sso_provider(request, pipeline):
     """
-    Get the EnterpriseCustomer associated with a running pipeline.
+    Helper method to retrieve the sso provider ID from either a user's SSO login request
     """
     sso_provider_id = request.GET.get('tpa_hint')
     if pipeline:
         sso_provider_id = Registry.get_from_pipeline(pipeline).provider_id
-    return get_enterprise_customer_for_sso(sso_provider_id)
+    return sso_provider_id
+
+
+def get_enterprise_customer_for_running_pipeline(request, pipeline):
+    """
+    Get the EnterpriseCustomer associated with a running pipeline.
+    """
+    return get_enterprise_customer_for_sso(get_sso_provider(request, pipeline))
 
 
 def get_enterprise_customer_for_sso(sso_provider_id):
@@ -48,6 +56,17 @@ def get_enterprise_customer_for_sso(sso_provider_id):
         )
     except EnterpriseCustomer.DoesNotExist:
         return None
+
+
+def validate_provider_config(enterprise_customer, sso_provider_id):
+    """
+    Helper method to ensure that a customer's provider config is validated
+    """
+    # With a successful SSO login, validate the enterprise customer's IDP config if it hasn't already been validated
+    enterprise_provider_config = enterprise_customer.identity_providers.filter(provider_id=sso_provider_id).first()
+    if not enterprise_provider_config.identity_provider.was_valid_at:
+        enterprise_provider_config.identity_provider.was_valid_at = datetime.now()
+        enterprise_provider_config.identity_provider.save()
 
 
 @partial
@@ -63,13 +82,11 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     """
     LOGGER.info(f'Beginning enterprise logistration for LMS user {user.id}')
     request = backend.strategy.request
-    enterprise_customer = get_enterprise_customer_for_running_pipeline(
-        request,
-        {
-            'backend': backend.name,
-            'kwargs': kwargs
-        }
-    )
+    pipeline = {'backend': backend.name, 'kwargs': kwargs}
+    enterprise_customer = get_enterprise_customer_for_running_pipeline(request, pipeline)
+
+    sso_provider_id = get_sso_provider(request, pipeline)
+
     if enterprise_customer is None:
         # This pipeline element is not being activated as a part of an Enterprise logistration
 
@@ -78,6 +95,8 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         if not new_association:
             handle_redirect_after_social_auth_login(backend, user)
         return
+
+    validate_provider_config(enterprise_customer, sso_provider_id)
 
     # proceed with the creation of a link between the user and the enterprise customer, then exit.
     enterprise_customer_user, _ = EnterpriseCustomerUser.objects.update_or_create(

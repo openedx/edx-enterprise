@@ -2,19 +2,25 @@
 Tests for Cornerstone views.
 """
 
+import datetime
 from unittest import mock
 
 import responses
+from dateutil import parser
 from pytest import mark
 from rest_framework import status
 from rest_framework.reverse import reverse
 
 from django.conf import settings
-from django.utils import dateparse
+from django.utils.http import http_date
 
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import APITest, factories
-from test_utils.fake_catalog_api import get_fake_catalog_diff_create_w_program, get_fake_content_metadata
+from test_utils.fake_catalog_api import (
+    get_fake_catalog_diff_create_w_program,
+    get_fake_catalog_diff_w_one_each,
+    get_fake_content_metadata,
+)
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -25,9 +31,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
     """
     def setUp(self):
         courses_list_endpoint = reverse('cornerstone-course-list')
-        courses_updates_endpoint = reverse('cornerstone-course-updates')
         self.course_list_url = settings.TEST_SERVER + courses_list_endpoint
-        self.course_updates_url = settings.TEST_SERVER + courses_updates_endpoint
         with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
             self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
@@ -45,14 +49,6 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         self.client.logout()
         response = self.client.get(self.course_list_url)
-        self.assertEqual(response.status_code, 401)
-
-    def test_course_update_unauthorized_non_customer(self):
-        """
-        Verify the contains_content_items endpoint rejects users that are not catalog learners
-        """
-        self.client.logout()
-        response = self.client.get(self.course_updates_url)
         self.assertEqual(response.status_code, 401)
 
     @responses.activate
@@ -139,39 +135,65 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
-    def test_course_updates(self, mock_get_catalog_diff, mock_get_content_metadata):
+    def test_course_list_last_modified(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
-        Test courses updates view produces desired json and saves transmission items
+        Test courses list view produces desired json
         """
-        fake_content_metadata = get_fake_content_metadata()
-        mock_get_content_metadata.return_value = fake_content_metadata
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
-        transmission_changed = {
-            dateparse.parse_datetime(content['content_last_modified']) for content in fake_content_metadata
-        }
         url = '{path}?ciid={customer_uuid}'.format(
-            path=self.course_updates_url,
+            path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
         )
-        response = self.client.get(url)
+        if_modified_since = http_date(int(round(datetime.datetime.now().timestamp() - 300)))
+        response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
-        keys = {key for item in response.data for key in item.keys()}
-        expected_keys = [
-            "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
-            "Thumbnail", "Partners", "Languages", "Subjects",
-        ]
-        for key in expected_keys:
-            self.assertIn(key, keys)
 
-        # required fields should not be empty
-        required_keys = ["Partners", "Languages", "Subjects"]
         for item in response.data:
-            for key in required_keys:
-                self.assertTrue(item[key])
+            assert parser.parse(item['LastModifiedUTC']) >= parser.parse(if_modified_since)
+
         created_transmissions = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
         assert len(created_transmissions) == len(get_fake_content_metadata())
-        for transmission_item in created_transmissions:
-            assert transmission_item.content_last_changed in transmission_changed
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_course_list_restricted_count(self, mock_get_catalog_diff, mock_get_content_metadata):
+        """
+        Test courses list view produces desired json
+        """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
+        url = '{path}?ciid={customer_uuid}'.format(
+            path=self.course_list_url,
+            customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
+        )
+        # not testing if-modified specifically but want to make sure counts work with this header
+        if_modified_since = http_date(int(round(datetime.datetime.now().timestamp() - 300)))
+        response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # 3 creates, no count restriction, so expect 3
+        self.assertEqual(len(response.data), 3)
+        created_transmissions = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+        )
+        assert len(created_transmissions) == len(get_fake_content_metadata())
+        created_transmissions.update(content_last_changed=None)
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_w_one_each()
+        response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # 1 create, 1 update, 1 delete, no deletes sent, no count restriction, so expect 2
+        self.assertEqual(len(response.data), 2)
+        url = '{path}?ciid={customer_uuid}&count={count}'.format(
+            path=self.course_list_url,
+            customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid,
+            count=1
+        )
+        created_transmissions.update(content_last_changed=None)
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_w_one_each()
+        response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # 1 create, 1 update, 1 delete, no deletes sent, count set to 1, so expect 1
+        self.assertEqual(len(response.data), 1)

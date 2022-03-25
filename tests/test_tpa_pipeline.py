@@ -58,16 +58,21 @@ class TestTpaPipeline(unittest.TestCase):
         backend = self.get_mocked_sso_backend()
         self.user = UserFactory(is_active=user_is_active)
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            enterprise_customer = EnterpriseCustomerFactory(
-                enable_data_sharing_consent=False
-            )
-            fake_get_ec.return_value = enterprise_customer
-            assert handle_enterprise_logistration(backend, self.user) is None
-            assert EnterpriseCustomerUser.objects.filter(
-                enterprise_customer=enterprise_customer,
-                user_id=self.user.id,
-                active=True
-            ).count() == 1
+            with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                with mock.patch('enterprise.tpa_pipeline.validate_provider_config'):
+                    enterprise_customer = EnterpriseCustomerFactory(
+                        enable_data_sharing_consent=False
+                    )
+                    provider_config = EnterpriseCustomerIdentityProviderFactory(enterprise_customer=enterprise_customer)
+                    fake_get_sso_provider.return_value = provider_config.provider_id
+
+                    fake_get_ec.return_value = enterprise_customer
+                    assert handle_enterprise_logistration(backend, self.user) is None
+                    assert EnterpriseCustomerUser.objects.filter(
+                        enterprise_customer=enterprise_customer,
+                        user_id=self.user.id,
+                        active=True
+                    ).count() == 1
 
     def test_handle_enterprise_logistration_not_user_linking(self):
         """
@@ -76,16 +81,18 @@ class TestTpaPipeline(unittest.TestCase):
         backend = self.get_mocked_sso_backend()
         self.user = UserFactory()
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            enterprise_customer = EnterpriseCustomerFactory(
-                enable_data_sharing_consent=False
-            )
-            fake_get_ec.return_value = None
-            assert handle_enterprise_logistration(backend, self.user) is None
-            assert EnterpriseCustomerUser.objects.filter(
-                enterprise_customer=enterprise_customer,
-                user_id=self.user.id,
-                active=True
-            ).count() == 0
+            with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                enterprise_customer = EnterpriseCustomerFactory(
+                    enable_data_sharing_consent=False
+                )
+                fake_get_ec.return_value = None
+                fake_get_sso_provider.return_value = None
+                assert handle_enterprise_logistration(backend, self.user) is None
+                assert EnterpriseCustomerUser.objects.filter(
+                    enterprise_customer=enterprise_customer,
+                    user_id=self.user.id,
+                    active=True
+                ).count() == 0
 
     def test_handle_enterprise_logistration_user_multiple_enterprises_linking(self):
         """
@@ -96,29 +103,32 @@ class TestTpaPipeline(unittest.TestCase):
         backend = self.get_mocked_sso_backend()
         self.user = UserFactory(is_active=True)
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            enterprise_customer = EnterpriseCustomerFactory(
-                enable_data_sharing_consent=False
-            )
-            enterprise_customer_old = EnterpriseCustomerFactory(
-                enable_data_sharing_consent=False
-            )
-            EnterpriseCustomerUser.objects.create(
-                enterprise_customer=enterprise_customer_old,
-                user_id=self.user.id,
-                active=True
-            )
-            fake_get_ec.return_value = enterprise_customer
-            assert handle_enterprise_logistration(backend, self.user) is None
-            assert EnterpriseCustomerUser.objects.filter(
-                enterprise_customer=enterprise_customer,
-                user_id=self.user.id,
-                active=True
-            ).count() == 1
-            assert EnterpriseCustomerUser.objects.filter(
-                enterprise_customer=enterprise_customer_old,
-                user_id=self.user.id,
-                active=False
-            ).count() == 1
+            with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                with mock.patch('enterprise.tpa_pipeline.validate_provider_config'):
+                    enterprise_customer = EnterpriseCustomerFactory(
+                        enable_data_sharing_consent=False
+                    )
+                    enterprise_customer_old = EnterpriseCustomerFactory(
+                        enable_data_sharing_consent=False
+                    )
+                    EnterpriseCustomerUser.objects.create(
+                        enterprise_customer=enterprise_customer_old,
+                        user_id=self.user.id,
+                        active=True
+                    )
+                    fake_get_ec.return_value = enterprise_customer
+                    fake_get_sso_provider.return_value = 'test-sso-provider-id'
+                    assert handle_enterprise_logistration(backend, self.user) is None
+                    assert EnterpriseCustomerUser.objects.filter(
+                        enterprise_customer=enterprise_customer,
+                        user_id=self.user.id,
+                        active=True
+                    ).count() == 1
+                    assert EnterpriseCustomerUser.objects.filter(
+                        enterprise_customer=enterprise_customer_old,
+                        user_id=self.user.id,
+                        active=False
+                    ).count() == 1
 
     @ddt.data(
         (False, 'facebook'),
@@ -157,12 +167,14 @@ class TestTpaPipeline(unittest.TestCase):
         )
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:
-                fake_get_ec.return_value = None
-                handle_enterprise_logistration(backend, self.user, **kwargs)
-                if new_association:
-                    ent_page_redirect.assert_not_called()
-                else:
-                    ent_page_redirect.called_once()
+                with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                    fake_get_sso_provider.return_value = None
+                    fake_get_ec.return_value = None
+                    handle_enterprise_logistration(backend, self.user, **kwargs)
+                    if new_association:
+                        ent_page_redirect.assert_not_called()
+                    else:
+                        ent_page_redirect.called_once()
 
     @ddt.data(
         (False, 'facebook'),
@@ -190,9 +202,11 @@ class TestTpaPipeline(unittest.TestCase):
         )
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:
-                fake_get_ec.return_value = None
-                handle_enterprise_logistration(backend, self.user, **kwargs)
-                ent_page_redirect.assert_not_called()
+                with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                    fake_get_sso_provider.return_value = None
+                    fake_get_ec.return_value = None
+                    handle_enterprise_logistration(backend, self.user, **kwargs)
+                    ent_page_redirect.assert_not_called()
 
     @ddt.data(
         (True, False, 'facebook'),
@@ -240,12 +254,14 @@ class TestTpaPipeline(unittest.TestCase):
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             with mock.patch(
                     'enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:
-                fake_get_ec.return_value = None
-                handle_enterprise_logistration(backend, self.user, **kwargs)
-                if new_association or using_enrollment_url:
-                    ent_page_redirect.assert_not_called()
-                else:
-                    ent_page_redirect.called_once()
+                with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                    fake_get_sso_provider.return_value = None
+                    fake_get_ec.return_value = None
+                    handle_enterprise_logistration(backend, self.user, **kwargs)
+                    if new_association or using_enrollment_url:
+                        ent_page_redirect.assert_not_called()
+                    else:
+                        ent_page_redirect.called_once()
 
     def test_get_ec_for_pipeline(self):
         """
