@@ -261,8 +261,8 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     instructor_name = models.CharField(max_length=255, blank=True)
     grade = models.FloatField(blank=True, null=True)
     total_hours = models.FloatField(null=True, blank=True)
-    # subsection_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
-    # subsection_name = models.CharField(max_length=255, blank=False, null=True)
+    subsection_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    subsection_name = models.CharField(max_length=255, blank=False, null=True)
     status = models.CharField(max_length=100, blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
 
@@ -317,6 +317,31 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
             completedTimestamp=self.completed_timestamp,
             grade=self.grade,
         )
+
+
+class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
+
+    class Meta:
+        app_label = 'integrated_channel'
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return (
+            '<GenericLearnerDataTransmissionAudit {transmission_id} for enterprise enrollment {enrollment}, '
+            'and course {course_id}>'.format(
+                transmission_id=self.id,
+                enrollment=self.enterprise_course_enrollment_id,
+                course_id=self.course_id
+            )
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
 
 
 class ContentMetadataItemTransmission(TimeStampedModel):

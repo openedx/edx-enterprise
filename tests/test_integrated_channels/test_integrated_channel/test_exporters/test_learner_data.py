@@ -13,7 +13,7 @@ from pytest import mark
 from django.utils import timezone
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import GenericLearnerDataTransmissionAudit
 from test_utils import factories
 from test_utils.integrated_channels_utils import mock_course_overview, mock_single_learner_grade
 
@@ -106,7 +106,7 @@ class TestLearnerExporter(unittest.TestCase):
     @freeze_time(NOW)
     def test_get_learner_data_record(self, completed_date):
         """
-        The base ``get_learner_data_record`` method returns a ``LearnerDataTransmissionAudit`` with appropriate values.
+        The base ``get_learner_data_record`` method returns a ``GenericLearnerDataTransmissionAudit`` with appropriate values.
         """
         enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -706,18 +706,18 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
-        transmission_audit = LearnerDataTransmissionAudit(
+        transmission_audit = GenericLearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=enterprise_course_enrollment.id,
             course_id=self.course_id,
             course_completed=True,
-            completed_timestamp=1568877047181,
-            grade='Pass',
+            completed_timestamp=datetime.datetime.fromtimestamp(1568877047),
+            grade=1,
         )
         transmission_audit.save()
         learner_data = list(
             self.exporter.export(
-                grade='Pass',
-                TransmissionAudit=LearnerDataTransmissionAudit
+                grade=1,
+                TransmissionAudit=GenericLearnerDataTransmissionAudit
             )
         )
 

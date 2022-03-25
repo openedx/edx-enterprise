@@ -55,7 +55,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         app_label, enterprise_customer_uuid, lms_user_id = self._generate_common_params(**kwargs)
         TransmissionAudit = apps.get_model(
             app_label=app_label,
-            model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
+            model_name=kwargs.get('model_name', 'GenericLearnerDataTransmissionAudit'),
         )
         kwargs.update(
             TransmissionAudit=TransmissionAudit,
@@ -132,7 +132,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         app_label, enterprise_customer_uuid, _ = self._generate_common_params(**kwargs)
         TransmissionAudit = apps.get_model(
             app_label=app_label,
-            model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
+            model_name=kwargs.get('model_name', 'GenericLearnerDataTransmissionAudit'),
         )
         kwargs.update(
             TransmissionAudit=TransmissionAudit,
@@ -232,7 +232,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         app_label, enterprise_customer_uuid, _ = self._generate_common_params(**kwargs)
         TransmissionAudit = apps.get_model(
             app_label=app_label,
-            model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
+            model_name=kwargs.get('model_name', 'GenericLearnerDataTransmissionAudit'),
         )
         kwargs.update(
             TransmissionAudit=TransmissionAudit,
