@@ -13,7 +13,6 @@
   <link rel="icon" type="image/x-icon" href="{% favicon_path %}" />
     {% block styles %}
       {% stylesheet 'style-vendor' %}
-      {% stylesheet 'style-main-v2' %}
       <link rel="stylesheet" type="text/css" href="{% static 'css/vendor/font-awesome.css' %}"/>
       {# TODO: When we move to be a service, use the webpack loader's `render_bundle`. #}
       <link rel="stylesheet" type="text/css" href="{% static 'enterprise/bundles/main.style.css' %}"/>

@@ -2,19 +2,22 @@
 Views containing APIs for Canvas integrated channel
 """
 
+from logging import getLogger
 from urllib.parse import urljoin
 
 import requests
 from rest_framework import generics
-from rest_framework.exceptions import APIException, NotFound, ParseError
-from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
 
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.shortcuts import render
 
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
+
+LOGGER = getLogger(__name__)
 
 
 class CanvasCompleteOAuthView(generics.ListAPIView):
@@ -49,6 +52,18 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             a 404 error is returned.
 
     """
+    renderer_classes = [JSONRenderer, ]
+
+    def render_page(self, request, error):
+        """
+        Return a success or failure page based on Canvas OAuth response
+        """
+        success_template = 'enterprise/admin/oauth_authorization_successful.html'
+        error_template = 'enterprise/admin/oauth_authorization_failed.html'
+        template = error_template if error else success_template
+
+        return render(request, template, context={})
+
     def get(self, request, *args, **kwargs):
         app_config = apps.get_app_config('canvas')
         canvas_oauth_token_path = app_config.oauth_token_auth_path
@@ -56,22 +71,24 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
         # Check if Canvas encountered an error when generating the oauth code.
         canvas_request_error = request.GET.get('error')
         if canvas_request_error:
-            raise APIException(
+            LOGGER.error(
                 'Canvas OAuth API encountered an error when generating client code- error: {} description: {}'.format(
                     canvas_request_error,
-                    request.GET.get('error_description')
-                )
+                    request.GET.get('error_description'))
             )
+            return self.render_page(request, 'error')
 
         # Retrieve the newly generated code and state (Enterprise user's ID)
         client_code = request.GET.get('code')
         state_uuid = request.GET.get('state')
 
         if not state_uuid:
-            raise ParseError("Canvas Configuration uuid required to integrate with Canvas.")
+            LOGGER.error("Canvas Configuration uuid required to integrate with Canvas.")
+            return self.render_page(request, 'error')
 
         if not client_code:
-            raise ParseError("Client code required to integrate with Canvas.")
+            LOGGER.error("Client code required to integrate with Canvas.")
+            return self.render_page(request, 'error')
 
         try:
             enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(uuid=state_uuid)
@@ -83,16 +100,16 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             enterprise_customer = get_enterprise_customer(state_uuid)
 
             if not enterprise_customer:
-                raise NotFound(f"No state data found for given uuid: {state_uuid}.")
+                LOGGER.error(f"No state data found for given uuid: {state_uuid}.")
+                return self.render_page(request, 'error')
 
             try:
                 enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(
                     enterprise_customer=enterprise_customer
                 )
-            except CanvasEnterpriseCustomerConfiguration.DoesNotExist as error:
-                raise NotFound(
-                    f"No Canvas configuration found for state: {state_uuid}"
-                ) from error
+            except CanvasEnterpriseCustomerConfiguration.DoesNotExist:
+                LOGGER.error(f"No Canvas configuration found for state: {state_uuid}")
+                return self.render_page(request, 'error')
 
         access_token_request_params = {
             'grant_type': 'authorization_code',
@@ -113,9 +130,12 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             data = auth_response.json()
             refresh_token = data['refresh_token']
         except (KeyError, ValueError) as error:
-            raise requests.RequestException(response=auth_response) from error
+            LOGGER.exception(message=str(error))
+            return self.render_page(request, 'error')
 
         enterprise_config.refresh_token = refresh_token
         enterprise_config.save()
 
-        return Response()
+        status = '' if auth_response.status_code == 200 else 'error'
+
+        return self.render_page(request, status)
