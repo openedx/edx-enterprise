@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.5]
+---------
+fix: making making degreed token base url optional
+
 [3.41.4]
 ---------
 feat: added html pages for oauth authorization success/failure
