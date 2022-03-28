@@ -48,7 +48,11 @@ from integrated_channels.degreed.models import (
     DegreedGlobalConfiguration,
     DegreedLearnerDataTransmissionAudit,
 )
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    ContentMetadataItemTransmission,
+    LearnerDataTransmissionAudit,
+    GenericEnterpriseCustomerPluginConfiguration,
+)
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
@@ -485,6 +489,23 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
     day_of_month = 1
     hour_of_day = 1
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+class GenericEnterpriseCustomerPluginConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``GenericEnterpriseCustomerPluginConfiguration`` factory.
+
+    Creates an instance of ``GenericEnterpriseCustomerPluginConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``GenericEnterpriseCustomerPluginConfigurationFactgory``.
+        """
+
+        model = GenericEnterpriseCustomerPluginConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
 
 
 class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):

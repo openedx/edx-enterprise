@@ -69,12 +69,8 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
             granted=True,
         )
-        self.config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+        self.config = factories.GenericEnterpriseCustomerPluginConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            sapsf_base_url='enterprise.successfactors.com',
-            key='key',
-            secret='secret',
-            active=True,
         )
         self.idp = factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=self.enterprise_customer
@@ -696,8 +692,10 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_exporter_with_skip_transmitted(
         self,
+        mock_course_catalog_api,
         mock_get_course_details,
         mock_get_single_user_grade,
         mock_course_enrollment_class
@@ -706,12 +704,19 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='self'
+        )
         transmission_audit = GenericLearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=enterprise_course_enrollment.id,
             course_id=self.course_id,
             course_completed=True,
             completed_timestamp=datetime.datetime.fromtimestamp(1568877047),
-            grade=1,
+            grade=1.0,
+            status='200',
+            error_message='',
+            created=datetime.datetime.fromtimestamp(1568877047),
+            modified=datetime.datetime.fromtimestamp(1568877047),
         )
         transmission_audit.save()
         learner_data = list(

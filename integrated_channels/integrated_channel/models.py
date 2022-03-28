@@ -244,6 +244,22 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         exporter.update_content_transmissions_catalog_uuids()
 
 
+class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfiguration):
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<GenericEnterpriseCustomerPluginConfiguration for Enterprise {enterprise_name}>".format(
+            enterprise_name=self.enterprise_customer.name
+        )
+    @staticmethod
+    def channel_code():
+        """
+        Returns an capitalized identifier for this channel class, unique among subclasses.
+        """
+        return 'GENERIC'
+
+
 class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
