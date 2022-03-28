@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.5]
+---------
+feat: add missing logging for grades api results in integrated channels exporter
+
 [3.41.4]
 ---------
 feat: added html pages for oauth authorization success/failure
