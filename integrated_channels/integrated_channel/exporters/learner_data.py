@@ -18,7 +18,6 @@ from django.utils.dateparse import parse_datetime
 
 from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
 
-
 try:
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 except ImportError:
