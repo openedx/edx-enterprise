@@ -94,8 +94,8 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
             missing_items.get('missing').append('client_secret')
         if not self.degreed_base_url:
             missing_items.get('missing').append('degreed_base_url')
-        if not self.degreed_token_fetch_base_url:
-            missing_items.get('missing').append('degreed_token_fetch_base_url')
+        if not is_valid_url(self.degreed_token_fetch_base_url):
+            incorrect_items.get('incorrect').append('degreed_token_fetch_base_url')
         if not is_valid_url(self.degreed_base_url):
             incorrect_items.get('incorrect').append('degreed_base_url')
         if len(self.display_name) > 20:
