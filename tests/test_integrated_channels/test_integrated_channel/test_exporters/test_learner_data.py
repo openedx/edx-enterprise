@@ -264,7 +264,7 @@ class TestLearnerExporter(unittest.TestCase):
             active=True,
         )
         self.exporter = self.config.get_learner_data_exporter('dummy-user')
-        
+
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
