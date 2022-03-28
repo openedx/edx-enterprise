@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing
 
-[3.41.5]
+[3.41.6]
 ---------
 fix: making making degreed token base url optional
+
+[3.41.5]
+---------
+feat: add missing logging for grades api results in integrated channels exporter
 
 [3.41.4]
 ---------
