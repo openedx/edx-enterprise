@@ -11,7 +11,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from integrated_channels.sap_success_factors.exporters.learner_data import (
     SapSuccessFactorsLearnerExporter,

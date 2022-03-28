@@ -50,7 +50,6 @@ from integrated_channels.degreed.models import (
 )
 from integrated_channels.integrated_channel.models import (
     ContentMetadataItemTransmission,
-    LearnerDataTransmissionAudit,
     GenericEnterpriseCustomerPluginConfiguration,
 )
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration

@@ -14,7 +14,10 @@ from integrated_channels.degreed2.exporters.content_metadata import Degreed2Cont
 from integrated_channels.degreed2.exporters.learner_data import Degreed2LearnerExporter
 from integrated_channels.degreed2.transmitters.content_metadata import Degreed2ContentMetadataTransmitter
 from integrated_channels.degreed2.transmitters.learner_data import Degreed2LearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)

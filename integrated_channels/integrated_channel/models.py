@@ -245,6 +245,9 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
 
 
 class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfiguration):
+    """
+    A generic implementation of EnterpriseCustomerPluginConfiguration which can be instantiated
+    """
     def __str__(self):
         """
         Return human-readable string representation.
@@ -336,7 +339,9 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
 
 
 class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
-
+    """
+    A generic implementation of LearnerDataTransmissionAudit which can be instantiated
+    """
     class Meta:
         app_label = 'integrated_channel'
 

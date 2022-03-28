@@ -10,7 +10,10 @@ from simple_history.models import HistoricalRecords
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.moodle.exporters.content_metadata import MoodleContentMetadataExporter
 from integrated_channels.moodle.exporters.learner_data import MoodleLearnerExporter
 from integrated_channels.moodle.transmitters.content_metadata import MoodleContentMetadataTransmitter

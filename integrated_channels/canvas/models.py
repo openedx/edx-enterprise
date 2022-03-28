@@ -17,7 +17,10 @@ from integrated_channels.canvas.exporters.content_metadata import CanvasContentM
 from integrated_channels.canvas.exporters.learner_data import CanvasLearnerExporter
 from integrated_channels.canvas.transmitters.content_metadata import CanvasContentMetadataTransmitter
 from integrated_channels.canvas.transmitters.learner_data import CanvasLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)

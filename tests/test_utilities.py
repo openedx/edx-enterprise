@@ -101,6 +101,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "pendingenterprisecustomeradminuser",
                 "enterprise_customer_consent",
                 "data_sharing_consent_page",
+                "genericenterprisecustomerpluginconfiguration",
                 "contentmetadataitemtransmission",
                 "cornerstoneenterprisecustomerconfiguration",
                 "degreed2enterprisecustomerconfiguration",

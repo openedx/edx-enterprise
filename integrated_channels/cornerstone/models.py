@@ -13,13 +13,14 @@ from django.contrib import auth
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from model_utils.models import TimeStampedModel
-
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
 from integrated_channels.cornerstone.transmitters.content_metadata import CornerstoneContentMetadataTransmitter
 from integrated_channels.cornerstone.transmitters.learner_data import CornerstoneLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)

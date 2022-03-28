@@ -17,7 +17,10 @@ from integrated_channels.blackboard.exporters.content_metadata import Blackboard
 from integrated_channels.blackboard.exporters.learner_data import BlackboardLearnerExporter
 from integrated_channels.blackboard.transmitters.content_metadata import BlackboardContentMetadataTransmitter
 from integrated_channels.blackboard.transmitters.learner_data import BlackboardLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
