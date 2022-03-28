@@ -489,6 +489,7 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
     hour_of_day = 1
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
+
 class GenericEnterpriseCustomerPluginConfigurationFactory(factory.django.DjangoModelFactory):
     """
     ``GenericEnterpriseCustomerPluginConfiguration`` factory.

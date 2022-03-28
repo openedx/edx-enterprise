@@ -255,6 +255,7 @@ class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfi
         return "<GenericEnterpriseCustomerPluginConfiguration for Enterprise {enterprise_name}>".format(
             enterprise_name=self.enterprise_customer.name
         )
+
     @staticmethod
     def channel_code():
         """
