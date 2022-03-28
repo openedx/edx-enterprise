@@ -310,6 +310,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                f'collect_grades_data finished with CompletedDate: {completed_date_from_api},'
+                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+            ))
 
         # there is a case for audit enrollment, we are reporting completion based on
         # content count cmopleted, so we may not get a completed_date_from_api
