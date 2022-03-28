@@ -287,13 +287,7 @@ class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         enterprise_configuration = kwargs.get('enterprise_configuration')
         degreed_company_id = enterprise_configuration.degreed_company_id \
             if hasattr(enterprise_configuration, 'degreed_company_id') else ''
-        return json.dumps(self._payload_data(degreed_company_id), sort_keys=True)
-
-    def _payload_data(self, degreed_company_id):
-        """
-        Convert the audit record's fields into Degreed key/value pairs.
-        """
-        return {
+        json_payload = {
             'orgCode': degreed_company_id,
             'completions': [{
                 'email': self.degreed_user_email,
@@ -301,3 +295,4 @@ class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
                 'completionDate': self.completed_timestamp,
             }]
         }
+        return json.dumps(json_payload, sort_keys=True)

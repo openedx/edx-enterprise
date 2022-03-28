@@ -17,7 +17,6 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
-from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment
 
 
 try:
