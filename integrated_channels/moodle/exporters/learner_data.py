@@ -29,20 +29,20 @@ class MoodleLearnerExporter(LearnerExporter):
         Return a MoodleLearnerDataTransmissionAudit with the given enrollment and course completion data.
         If no remote ID can be found, return None.
         """
-        enterprise_learner = enterprise_enrollment.enterprise_customer_user
+        enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         completed_timestamp = None
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        if enterprise_learner.user_email is None:
+        if enterprise_customer_user.user_email is None:
             LOGGER.debug(generate_formatted_log(
                 'moodle',
-                enterprise_learner.enterprise_customer.uuid,
-                enterprise_learner.user_id,
+                enterprise_customer_user.enterprise_customer.uuid,
+                enterprise_customer_user.user_id,
                 None,
                 ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
                  'Moodle User ID not found for [{name}]'.format(
-                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+                     name=enterprise_customer_user.enterprise_customer.name
                  ))))
             return None
 
@@ -56,18 +56,22 @@ class MoodleLearnerExporter(LearnerExporter):
         return [
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                moodle_user_email=enterprise_learner.user_email,
+                moodle_user_email=enterprise_customer_user.user_email,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
+                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_configuration.id,
             ),
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                moodle_user_email=enterprise_learner.user_email,
+                moodle_user_email=enterprise_customer_user.user_email,
                 course_id=enterprise_enrollment.course_id,
                 course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
+                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
+                plugin_configuration_id=self.enterprise_configuration.id,
             )
         ]

@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise.models import EnterpriseCustomer
+from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 
 User = auth.get_user_model()
 
@@ -66,7 +67,7 @@ class XAPILRSConfiguration(TimeStampedModel):
         )
 
 
-class XAPILearnerDataTransmissionAudit(TimeStampedModel):
+class XAPILearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we sent to XAPI at a given point in time for an enterprise course enrollment.
 
@@ -80,13 +81,6 @@ class XAPILearnerDataTransmissionAudit(TimeStampedModel):
         related_name='xapi_transmission_audit',
         on_delete=models.CASCADE,
     )
-    enterprise_course_enrollment_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
-    course_id = models.CharField(max_length=255, blank=False, null=False, db_index=True)
-    course_completed = models.BooleanField(default=False)
-    completed_timestamp = models.DateTimeField(null=True, blank=True)
-    grade = models.CharField(max_length=255, null=True, blank=True)
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'xapi'

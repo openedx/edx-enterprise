@@ -14,7 +14,10 @@ from integrated_channels.degreed.exporters.content_metadata import DegreedConten
 from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
 from integrated_channels.degreed.transmitters.content_metadata import DegreedContentMetadataTransmitter
 from integrated_channels.degreed.transmitters.learner_data import DegreedLearnerTransmitter
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.utils import is_valid_url
 
 LOGGER = getLogger(__name__)
@@ -220,7 +223,7 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         return DegreedContentMetadataExporter(user, self)
 
 
-class DegreedLearnerDataTransmissionAudit(models.Model):
+class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we sent to Degreed at a given point in time for an enterprise course enrollment.
 
@@ -235,24 +238,7 @@ class DegreedLearnerDataTransmissionAudit(models.Model):
         null=False
     )
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(
-        blank=False,
-        null=False,
-        db_index=True
-    )
-
-    course_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        help_text="The course run's key which is used to uniquely identify the course for Degreed."
-    )
-
-    course_completed = models.BooleanField(
-        default=True,
-        help_text="The learner's course completion status transmitted to Degreed."
-    )
-
+    # XXX non-standard, should store datetime and export the format
     completed_timestamp = models.CharField(
         max_length=10,
         blank=True,
@@ -262,11 +248,6 @@ class DegreedLearnerDataTransmissionAudit(models.Model):
             'which is always 10 characters.'
         )
     )
-
-    # Request-related information.
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'degreed'
@@ -306,13 +287,7 @@ class DegreedLearnerDataTransmissionAudit(models.Model):
         enterprise_configuration = kwargs.get('enterprise_configuration')
         degreed_company_id = enterprise_configuration.degreed_company_id \
             if hasattr(enterprise_configuration, 'degreed_company_id') else ''
-        return json.dumps(self._payload_data(degreed_company_id), sort_keys=True)
-
-    def _payload_data(self, degreed_company_id):
-        """
-        Convert the audit record's fields into Degreed key/value pairs.
-        """
-        return {
+        json_payload = {
             'orgCode': degreed_company_id,
             'completions': [{
                 'email': self.degreed_user_email,
@@ -320,3 +295,4 @@ class DegreedLearnerDataTransmissionAudit(models.Model):
                 'completionDate': self.completed_timestamp,
             }]
         }
+        return json.dumps(json_payload, sort_keys=True)

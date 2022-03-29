@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.7]
+---------
+fix: add foreign keys to integrated channels audit models
+
 [3.41.6]
 ---------
 fix: making making degreed token base url optional

@@ -244,26 +244,50 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         exporter.update_content_transmissions_catalog_uuids()
 
 
-class LearnerDataTransmissionAudit(models.Model):
+class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfiguration):
+    """
+    A generic implementation of EnterpriseCustomerPluginConfiguration which can be instantiated
+    """
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<GenericEnterpriseCustomerPluginConfiguration for Enterprise {enterprise_name}>".format(
+            enterprise_name=self.enterprise_customer.name
+        )
+
+    @staticmethod
+    def channel_code():
+        """
+        Returns an capitalized identifier for this channel class, unique among subclasses.
+        """
+        return 'GENERIC'
+
+
+class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
 
     .. no_pii:
     """
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
+    # TODO: index customer uuid + plugin coinfig id together, with enrollment id?
+    enterprise_customer_uuid = models.UUIDField(blank=True, null=True)
+    plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
+    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=True, null=True, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     course_completed = models.BooleanField(default=True)
-    completed_timestamp = models.BigIntegerField()
+    completed_timestamp = models.DateTimeField(blank=True, null=True)
     instructor_name = models.CharField(max_length=255, blank=True)
-    grade = models.CharField(max_length=100, blank=False, null=False)
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
-
-    subsection_id = models.CharField(max_length=255, blank=True, null=True)
+    grade = models.FloatField(blank=True, null=True)
+    total_hours = models.FloatField(null=True, blank=True)
+    subsection_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    subsection_name = models.CharField(max_length=255, blank=False, null=True)
+    status = models.CharField(max_length=100, blank=True, null=True)
+    error_message = models.TextField(blank=True, null=True)
 
     class Meta:
+        abstract = True
         app_label = 'integrated_channel'
 
     def __str__(self):
@@ -315,6 +339,33 @@ class LearnerDataTransmissionAudit(models.Model):
         )
 
 
+class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
+    """
+    A generic implementation of LearnerDataTransmissionAudit which can be instantiated
+    """
+    class Meta:
+        app_label = 'integrated_channel'
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return (
+            '<GenericLearnerDataTransmissionAudit {transmission_id} for enterprise enrollment {enrollment}, '
+            'and course {course_id}>'.format(
+                transmission_id=self.id,
+                enrollment=self.enterprise_course_enrollment_id,
+                course_id=self.course_id
+            )
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
 class ContentMetadataItemTransmission(TimeStampedModel):
     """
     A content metadata item that has been transmitted to an integrated channel.
@@ -328,6 +379,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
     integrated_channel_code = models.CharField(max_length=30)
+    plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
     content_id = models.CharField(max_length=255)
     channel_metadata = JSONField()
     content_last_changed = models.DateTimeField(
@@ -347,6 +399,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     )
 
     class Meta:
+        # TODO: once we're ready to cut over, this should include plugin id rather than channel code
         unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')
 
     def __str__(self):

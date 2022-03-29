@@ -11,7 +11,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from integrated_channels.sap_success_factors.exporters.learner_data import (
     SapSuccessFactorsLearnerExporter,
@@ -266,7 +269,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             )
 
 
-class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
+class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we sent to SuccessFactors at a given point in time for an enterprise course enrollment.
 
@@ -274,21 +277,14 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     """
 
     sapsf_user_id = models.CharField(max_length=255, blank=False, null=False)
-    enterprise_course_enrollment_id = models.IntegerField(blank=False, null=False, db_index=True)
-    course_id = models.CharField(max_length=255, blank=False, null=False)
-    course_completed = models.BooleanField(default=True)
-    instructor_name = models.CharField(max_length=255, blank=True)
+
+    # XXX non-standard
     grade = models.CharField(max_length=100, blank=False, null=False)
-    total_hours = models.FloatField(null=True, blank=True)
     credit_hours = models.FloatField(null=True, blank=True)
 
+    # XXX non-standard, should store datetime and export the format
     # We send a UNIX timestamp to SAPSF.
     completed_timestamp = models.BigIntegerField(null=True, blank=True)
-
-    # Request-related information.
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'sap_success_factors'

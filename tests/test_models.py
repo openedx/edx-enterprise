@@ -1797,52 +1797,6 @@ class TestDataSharingConsent(unittest.TestCase):
 
 @mark.django_db
 @ddt.ddt
-class TestLearnerDataTransmissionAudit(unittest.TestCase):
-    """
-    Tests of the LearnerDataTransmissionAudit model.
-    """
-
-    @ddt.data(str, repr)
-    def test_string_conversion(self, method):
-        """
-        Test ``LearnerDataTransmissionAudit`` conversion to string
-        """
-        learner_data_audit = factories.LearnerDataTransmissionAuditFactory(
-            id=1,
-            enterprise_course_enrollment_id=1,
-            course_id='course-id',
-        )
-        expected_to_str = '<LearnerDataTransmissionAudit 1 for enterprise enrollment 1, and course course-id>'
-        assert expected_to_str == method(learner_data_audit)
-
-    def test_provider_id(self):
-        """
-        The ``provier_id`` property is always ``None`` for the generic learner data transmission audit.
-        """
-        assert factories.LearnerDataTransmissionAuditFactory().provider_id is None
-
-    def test_serialize(self):
-        """
-        The ``serialize`` method returns a generic JSON dump.
-        """
-        learner_data_audit = factories.LearnerDataTransmissionAuditFactory(
-            course_id='course-id',
-            completed_timestamp=999,
-            grade='A+',
-        )
-        payload = (
-            '{'
-            '"completedTimestamp": 999, '
-            '"courseCompleted": "true", '
-            '"courseID": "course-id", '
-            '"grade": "A+"'
-            '}'
-        )
-        assert learner_data_audit.serialize() == payload
-
-
-@mark.django_db
-@ddt.ddt
 class TestSapSuccessFactorsLearnerDataTransmissionAudit(unittest.TestCase):
     """
     Tests of the ``SapSuccessFactorsLearnerDataTransmissionAudit`` model.

@@ -10,7 +10,10 @@ from simple_history.models import HistoricalRecords
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    LearnerDataTransmissionAudit,
+)
 from integrated_channels.moodle.exporters.content_metadata import MoodleContentMetadataExporter
 from integrated_channels.moodle.exporters.learner_data import MoodleLearnerExporter
 from integrated_channels.moodle.transmitters.content_metadata import MoodleContentMetadataTransmitter
@@ -146,7 +149,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         return MoodleContentMetadataTransmitter(self)
 
 
-class MoodleLearnerDataTransmissionAudit(models.Model):
+class MoodleLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we send to Moodle at a given point in time for an enterprise course enrollment.
 
@@ -158,15 +161,7 @@ class MoodleLearnerDataTransmissionAudit(models.Model):
         help_text='The learner`s Moodle email. This must match the email on edX'
     )
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
-    course_id = models.CharField(max_length=255, blank=False, null=False)
-    course_completed = models.BooleanField(default=False)
-    grade = models.DecimalField(blank=True, null=True, max_digits=3, decimal_places=2)
-    total_hours = models.FloatField(null=True, blank=True)
-    course_completed = models.BooleanField(
-        default=True,
-        help_text="The learner's course completion status transmitted to Moodle."
-    )
+    # XXX non-standard, should store datetime and export the format
     completed_timestamp = models.CharField(
         null=True,
         blank=True,
@@ -176,11 +171,6 @@ class MoodleLearnerDataTransmissionAudit(models.Model):
             'which is always 10 characters. Can be left unset for audit transmissions.'
         )
     )
-
-    # Request-related information.
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'moodle'

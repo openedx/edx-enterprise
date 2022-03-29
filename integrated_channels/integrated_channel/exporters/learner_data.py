@@ -526,7 +526,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         assessment_grade_data: A dict with keys corresponding to different edX course subsections.
         See _collect_assessment_grades_data for the formatted data returned as the value for a given key.
         """
-        LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
+        TransmissionAudit = apps.get_model('integrated_channel', 'GenericLearnerDataTransmissionAudit')
         user_subsection_audits = []
         # Create an audit for each of the subsections in the course data.
         for subsection_data in assessment_grade_data.values():
@@ -536,7 +536,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             if not subsection_percent_grade or not subsection_id:
                 continue
 
-            user_subsection_audits.append(LearnerDataTransmissionAudit(
+            user_subsection_audits.append(TransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=enterprise_enrollment.course_id,
                 subsection_id=subsection_id,
@@ -556,13 +556,21 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         """
         Generate a learner data transmission audit with fields properly filled in.
         """
-        LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
+        TransmissionAudit = apps.get_model('integrated_channel', 'GenericLearnerDataTransmissionAudit')
         completed_timestamp = None
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
-
+        # We return two records here, one with the course key and one with the course run id, to account for
+        # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
         return [
-            LearnerDataTransmissionAudit(
+            TransmissionAudit(
+                enterprise_course_enrollment_id=enterprise_enrollment.id,
+                course_id=get_course_id_for_enrollment(enterprise_enrollment),
+                course_completed=course_completed,
+                completed_timestamp=completed_timestamp,
+                grade=grade,
+            ),
+            TransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=enterprise_enrollment.course_id,
                 course_completed=course_completed,

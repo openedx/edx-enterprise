@@ -13,7 +13,7 @@ from pytest import mark
 from django.utils import timezone
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import GenericLearnerDataTransmissionAudit
 from test_utils import factories
 from test_utils.integrated_channels_utils import mock_course_overview, mock_single_learner_grade
 
@@ -69,12 +69,8 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
             granted=True,
         )
-        self.config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+        self.config = factories.GenericEnterpriseCustomerPluginConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            sapsf_base_url='enterprise.successfactors.com',
-            key='key',
-            secret='secret',
-            active=True,
         )
         self.idp = factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=self.enterprise_customer
@@ -104,14 +100,16 @@ class TestLearnerExporter(unittest.TestCase):
     )
     @ddt.unpack
     @freeze_time(NOW)
-    def test_get_learner_data_record(self, completed_date):
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_get_learner_data_record(self, completed_date, mock_course_catalog_api):
         """
-        The base ``get_learner_data_record`` method returns a ``LearnerDataTransmissionAudit`` with appropriate values.
+        The base ``get_learner_data_record`` method returns a ``GenericLearnerDataTransmissionAudit``
         """
         enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         expected_course_completed = True
         exporter = LearnerExporter('fake-user', self.config)
         learner_data_records = exporter.get_learner_data_records(
@@ -121,7 +119,7 @@ class TestLearnerExporter(unittest.TestCase):
             course_completed=expected_course_completed,
         )
 
-        learner_data_record = learner_data_records[0]
+        learner_data_record = learner_data_records[1]
         assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
         assert learner_data_record.course_id == enterprise_course_enrollment.course_id
         assert learner_data_record.course_completed == expected_course_completed
@@ -252,12 +250,26 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate_null_sso_id(
-            self, mock_get_course_certificate, mock_get_course_details, mock_enrollment_api
+            self,
+            mock_get_course_certificate,
+            mock_get_course_details,
+            mock_enrollment_api
     ):
+        # SSO/SAP-specific behaviour and the Generic config doesnt depend on it
+        self.config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret',
+            active=True,
+        )
+        self.exporter = self.config.get_learner_data_exporter('dummy-user')
+
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+
         # No SSO user attached
         self.tpa_client.get_remote_id.return_value = None
 
@@ -271,7 +283,7 @@ class TestLearnerExporter(unittest.TestCase):
 
         # Return enrollment mode data
         mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
+            mode="audit"
         )
 
         learner_data = list(self.exporter.export())
@@ -696,6 +708,8 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    # @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    # mock_course_catalog_api,
     def test_learner_exporter_with_skip_transmitted(
         self,
         mock_get_course_details,
@@ -706,18 +720,25 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
-        transmission_audit = LearnerDataTransmissionAudit(
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='self'
+        )
+        transmission_audit = GenericLearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=enterprise_course_enrollment.id,
             course_id=self.course_id,
             course_completed=True,
-            completed_timestamp=1568877047181,
-            grade='Pass',
+            completed_timestamp=datetime.datetime.fromtimestamp(1568877047),
+            grade=1.0,
+            status='200',
+            error_message='',
+            created=datetime.datetime.fromtimestamp(1568877047),
+            modified=datetime.datetime.fromtimestamp(1568877047),
         )
         transmission_audit.save()
         learner_data = list(
             self.exporter.export(
-                grade='Pass',
-                TransmissionAudit=LearnerDataTransmissionAudit
+                grade=1,
+                TransmissionAudit=GenericLearnerDataTransmissionAudit
             )
         )
 

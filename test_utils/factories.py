@@ -48,7 +48,10 @@ from integrated_channels.degreed.models import (
     DegreedGlobalConfiguration,
     DegreedLearnerDataTransmissionAudit,
 )
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import (
+    ContentMetadataItemTransmission,
+    GenericEnterpriseCustomerPluginConfiguration,
+)
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
@@ -487,27 +490,22 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
 
-class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+class GenericEnterpriseCustomerPluginConfigurationFactory(factory.django.DjangoModelFactory):
     """
-    ``LearnerDataTransmissionAudit`` factory.
+    ``GenericEnterpriseCustomerPluginConfiguration`` factory.
 
-    Creates an instance of ``LearnerDataTransmissionAudit`` with minimal boilerplate.
+    Creates an instance of ``GenericEnterpriseCustomerPluginConfiguration`` with minimal boilerplate.
     """
 
     class Meta:
         """
-        Meta for ``LearnerDataTransmissionAuditFactory``.
+        Meta for ``GenericEnterpriseCustomerPluginConfigurationFactgory``.
         """
 
-        model = LearnerDataTransmissionAudit
+        model = GenericEnterpriseCustomerPluginConfiguration
 
-    enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
-    course_completed = True
-    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
-    grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
-    status = factory.LazyAttribute(lambda x: FAKER.word())
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
 
 
 class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):
