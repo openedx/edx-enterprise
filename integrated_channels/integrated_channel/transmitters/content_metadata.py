@@ -232,7 +232,8 @@ class ContentMetadataTransmitter(Transmitter):
                             content_id=content_id,
                             channel_metadata=channel_metadata,
                             content_last_changed=content_last_changed,
-                            enterprise_customer_catalog_uuid=catalog_uuid
+                            enterprise_customer_catalog_uuid=catalog_uuid,
+                            plugin_configuration_id=self.enterprise_configuration.id
                         )
                     )
         ContentMetadataItemTransmission.objects.bulk_create(create_transmissions, batch_size=50, ignore_conflicts=True)

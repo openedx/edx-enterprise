@@ -379,6 +379,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
     integrated_channel_code = models.CharField(max_length=30)
+    plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
     content_id = models.CharField(max_length=255)
     channel_metadata = JSONField()
     content_last_changed = models.DateTimeField(
@@ -398,6 +399,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     )
 
     class Meta:
+        # TODO: once we're ready to cut over, this should include plugin id rather than channel code
         unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')
 
     def __str__(self):
