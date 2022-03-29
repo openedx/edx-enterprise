@@ -363,6 +363,8 @@ def is_valid_url(url):
     """
     Return where the specified URL is a valid absolute url.
     """
+    if len(url) == 0:
+        return True
     try:
         result = urlparse(url)
         return all([result.scheme, result.netloc])

@@ -1,12 +1,14 @@
 """
 Tests for views in Canvas integrated channels.
 """
+import logging
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import pytest
 import responses
 from rest_framework.test import APITestCase
+from testfixtures import LogCapture
 
 from django.apps import apps
 from django.contrib.sites.models import Site
@@ -99,9 +101,10 @@ class TestCanvasAPIViews(APITestCase):
         oauth_complete_url_without_id = '{}?{}'.format(
             self.urlbase, urlencode(query_kwargs_1)
         )
-        response = self.client.get(oauth_complete_url_without_id)
-        assert response.status_code == 400
-        assert response.json()['detail'] == 'Canvas Configuration uuid required to integrate with Canvas.'
+        with LogCapture(level=logging.ERROR) as log_capture:
+            self.client.get(oauth_complete_url_without_id)
+            expected_string = "Canvas Configuration uuid required to integrate with Canvas."
+            assert expected_string in log_capture.records[0].getMessage()
 
         query_kwargs_2 = {
             'state': ENTERPRISE_ID,
@@ -109,9 +112,10 @@ class TestCanvasAPIViews(APITestCase):
         oauth_complete_url_without_code = '{}?{}'.format(
             self.urlbase, urlencode(query_kwargs_2)
         )
-        response = self.client.get(oauth_complete_url_without_code)
-        assert response.status_code == 400
-        assert response.json()['detail'] == 'Client code required to integrate with Canvas.'
+        with LogCapture(level=logging.ERROR) as log_capture:
+            self.client.get(oauth_complete_url_without_code)
+            expected_string = "Client code required to integrate with Canvas."
+            assert expected_string in log_capture.records[0].getMessage()
 
     def test_refresh_token_request_with_bad_enterprise_id(self):
         """
@@ -122,10 +126,9 @@ class TestCanvasAPIViews(APITestCase):
             'code': 'test-code'
         }
         oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
-        response = self.client.get(oauth_complete_url)
-
-        assert response.status_code == 404
-        assert response.json()['detail'] == 'No state data found for given uuid: {}.'.format(BAD_ENTERPRISE_ID)
+        with LogCapture(level=logging.ERROR) as log_capture:
+            self.client.get(oauth_complete_url)
+            assert 'No state data found for given uuid' in log_capture.records[0].getMessage()
 
     def test_refresh_token_request_without_canvas_config(self):
         """
@@ -139,8 +142,7 @@ class TestCanvasAPIViews(APITestCase):
             'code': 'test-code'
         }
         oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
-        response = self.client.get(oauth_complete_url)
-
-        assert response.status_code == 404
-        assert response.json()['detail'] == \
-               'No Canvas configuration found for state: {}'.format(ENTERPRISE_ID)
+        with LogCapture(level=logging.ERROR) as log_capture:
+            oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
+            self.client.get(oauth_complete_url)
+            assert 'No Canvas configuration found for state' in log_capture.records[0].getMessage()

@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing
 
+[3.41.6]
+---------
+fix: making making degreed token base url optional
+
+[3.41.5]
+---------
+feat: add missing logging for grades api results in integrated channels exporter
+
+[3.41.4]
+---------
+feat: added html pages for oauth authorization success/failure
+
 [3.41.3]
 ---------
 fix: allow null completed_timestamp field for integrated channels learner audit models
@@ -24,10 +36,6 @@ fix: allow null completed_timestamp field for integrated channels learner audit 
 [3.41.2]
 ---------
 feat: setting customer identity provider config is_valid on first SSO login
-
-[3.41.1]
----------
-fix: chunk cornerstone content updates
 
 [3.41.0]
 ---------
