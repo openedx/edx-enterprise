@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.9]
+---------
+fix: Squash SAP Success Factors migrations
+
 [3.41.8]
 ---------
 fix: Alter `enterprise_course_enrollment_id` field from `PositiveIntegerField` to `IntegerField` in `BlackboardLearnerAssessmentDataTransmissionAudit` and `SapSuccessFactorsLearnerDataTransmissionAudit`. This change
