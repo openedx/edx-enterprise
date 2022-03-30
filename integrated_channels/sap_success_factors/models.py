@@ -287,7 +287,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
     completed_timestamp = models.BigIntegerField(null=True, blank=True)
 
     # override fields here otherwise multiple migrations created.
-    enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True, db_index=True)
+    plugin_configuration_id = models.IntegerField(blank=True, null=True)
     enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True, db_index=True)
 
     class Meta:

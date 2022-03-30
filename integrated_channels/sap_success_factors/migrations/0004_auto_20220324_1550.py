@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sapsuccessfactorslearnerdatatransmissionaudit',
             name='plugin_configuration_id',
-            field=models.IntegerField(blank=True, null=True),
+            field=models.PositiveIntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
             model_name='sapsuccessfactorslearnerdatatransmissionaudit',
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sapsuccessfactorslearnerdatatransmissionaudit',
             name='enterprise_course_enrollment_id',
-            field=models.IntegerField(blank=True, db_index=True, null=True),
+            field=models.PositiveIntegerField(blank=True, db_index=True, null=True),
         ),
         migrations.AlterField(
             model_name='sapsuccessfactorslearnerdatatransmissionaudit',

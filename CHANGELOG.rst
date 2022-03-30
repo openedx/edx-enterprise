@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing
 
+[3.41.8]
+---------
+fix: Alter `enterprise_course_enrollment_id` field from `PositiveIntegerField` to `IntegerField` in `BlackboardLearnerAssessmentDataTransmissionAudit` and `SapSuccessFactorsLearnerDataTransmissionAudit`. This change
+require to run migrations on mysql8.
+
 [3.41.7]
 ---------
 fix: add foreign keys to integrated channels audit models
