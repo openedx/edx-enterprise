@@ -73,5 +73,5 @@ jobs:
       run: |
         echo "CREATE DATABASE IF NOT EXISTS discovery;" | sudo mysql -u root
         echo "Running the migrations."
-        python manage.py migrate --settings=enterprise.settings.mysql8_tests
+        python manage.py migrate --settings=enterprise.settings.test
         echo "use mysql; select * from user;" | sudo mysql -u root
