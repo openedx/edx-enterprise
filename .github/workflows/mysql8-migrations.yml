@@ -65,13 +65,13 @@ jobs:
     - name: Run Tests
       env:
         DB_ENGINE: django.db.backends.mysql
-        DB_NAME: discovery
+        DB_NAME: enterprise
         DB_USER: root
         DB_PASSWORD:
         DB_HOST: localhost
         DB_PORT: 3306
       run: |
-        echo "CREATE DATABASE IF NOT EXISTS discovery;" | sudo mysql -u root
+        echo "CREATE DATABASE IF NOT EXISTS enterprise;" | sudo mysql -u root
         echo "Running the migrations."
         python manage.py migrate --settings=enterprise.settings.test
         echo "use mysql; select * from user;" | sudo mysql -u root
