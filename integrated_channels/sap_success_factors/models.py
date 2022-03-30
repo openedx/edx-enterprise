@@ -286,6 +286,10 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
     # We send a UNIX timestamp to SAPSF.
     completed_timestamp = models.BigIntegerField(null=True, blank=True)
 
+    # override fields here otherwise multiple migrations created.
+    plugin_configuration_id = models.IntegerField(blank=True, null=True)
+    enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True, db_index=True)
+
     class Meta:
         app_label = 'sap_success_factors'
 
