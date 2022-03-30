@@ -152,6 +152,9 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         LOGGER.info(f'{LearnerAuditModel.__name__} <{audit_record.pk}> '
                                     f'enterprise_customer_uuid={enterprise_customer.uuid}, '
                                     f'plugin_configuration_id={config.id}')
+                        audit_record.enterprise_customer_uuid = enterprise_customer.uuid
+                        audit_record.plugin_configuration_id = config.id
+                        audit_record.save()
             for audit_record_batch in batch_by_pk(ContentMetadataItemTransmission):
                 for audit_record in audit_record_batch:
                     LOGGER.info(f'ContentMetadataItemTransmission <{audit_record.pk}>')
@@ -164,7 +167,9 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         continue
                     config = ConfigModel.objects.filter(enterprise_customer=audit_record.enterprise_customer).first()
                     LOGGER.info(f'ContentMetadataItemTransmission <{audit_record.pk}> '
-                                f'plugin_configuration_id={config.id}')            
+                                f'plugin_configuration_id={config.id}')
+                    audit_record.plugin_configuration_id = config.id
+                    audit_record.save()
         except:
             LOGGER.exception()
 
