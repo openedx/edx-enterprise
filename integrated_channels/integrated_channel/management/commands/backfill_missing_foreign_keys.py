@@ -53,6 +53,7 @@ LOGGER = logging.getLogger(__name__)
 
 User = auth.get_user_model()
 
+
 class Command(IntegratedChannelCommandMixin, BaseCommand):
     """
     Management command which backfills missing audit record foreign keys.
@@ -75,7 +76,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         )
         super().add_arguments(parser)
 
-
     def batch_by_pk(self, ModelClass, batch_size=100):
         """
         using limit/offset does a lot of table scanning to reach higher offsets
@@ -91,7 +91,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             for item in qs:
                 start_pk = item.pk
             qs = ModelClass.objects.filter(pk__gt=start_pk).order_by('pk')[:batch_size]
-
 
     def find_ent_cust(self, enrollment_id):
         """
@@ -147,7 +146,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                                 f'plugin_configuration_id={config.id}')
                     audit_record.plugin_configuration_id = config.id
                     audit_record.save()
-        except Exception: # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             LOGGER.exception()
 
     def handle(self, *args, **options):
