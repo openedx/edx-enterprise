@@ -19,7 +19,7 @@ Unreleased
 
 [3.41.9]
 ---------
-fix: Squash SAP Success Factors migrations
+fix: Squash SAP Success Factors migrations to remove reference to ``PositiveIntegerField``.
 
 [3.41.8]
 ---------
