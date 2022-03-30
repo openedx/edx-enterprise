@@ -7,8 +7,6 @@ from django.apps import apps
 from django.contrib import auth
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
-from django.db import migrations
-from django.db.models import Max, Min
 from django.utils.translation import gettext as _
 
 from integrated_channels.blackboard.models import (
@@ -77,28 +75,8 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         )
         super().add_arguments(parser)
 
-    def enterprise_course_enrollment_model():
-        """
-        Returns the ``EnterpriseCourseEnrollment`` class.
-        """
-        return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
 
-
-    def enterprise_customer_user_model():
-        """
-        Returns the ``EnterpriseCustomerUser`` class.
-        """
-        return apps.get_model('enterprise', 'EnterpriseCustomerUser')
-
-
-    def enterprise_customer_model():
-        """
-        Returns the ``EnterpriseCustomer`` class.
-        """
-        return apps.get_model('enterprise', 'EnterpriseCustomer')
-
-
-    def batch_by_pk(ModelClass, batch_size=100):
+    def batch_by_pk(self, ModelClass, batch_size=100):
         """
         using limit/offset does a lot of table scanning to reach higher offsets
         this scanning can be slow on very large tables
@@ -115,10 +93,13 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             qs = ModelClass.objects.filter(pk__gt=start_pk).order_by('pk')[:batch_size]
 
 
-    def lookup_enterprise_customer(enrollment_id):
-        EnterpriseCourseEnrollment = enterprise_course_enrollment_model()
-        EnterpriseCustomerUser = enterprise_customer_user_model()
-        EnterpriseCustomer = enterprise_customer_model()
+    def find_ent_cust(self, enrollment_id):
+        """
+        Given an enterprise_course_enrollment id, walk the joins to EnterpriseCustomer
+        """
+        EnterpriseCourseEnrollment = apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
+        EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')
+        EnterpriseCustomer = apps.get_model('enterprise', 'EnterpriseCustomer')
         try:
             ece = EnterpriseCourseEnrollment.objects.get(pk=enrollment_id)
             ecu = EnterpriseCustomerUser.objects.get(pk=ece.enterprise_customer_user_id)
@@ -127,15 +108,19 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         except ObjectDoesNotExist:
             return None
 
-    def backfill_join_keys():
+    def backfill_join_keys(self):
+        """
+        For each audit record kind, find all the records in batch, then lookup the appropriate
+        enterprise_customer_uuid and/or plugin_config_id
+        """
         try:
             for models_pair in MODELS.values():
                 ConfigModel, LearnerAuditModel = models_pair
                 LOGGER.info(f'{LearnerAuditModel.__name__}')
-                for audit_record_batch in batch_by_pk(LearnerAuditModel):
+                for audit_record_batch in self.batch_by_pk(LearnerAuditModel):
                     for audit_record in audit_record_batch:
                         LOGGER.info(f'{LearnerAuditModel.__name__} <{audit_record.pk}>')
-                        enterprise_customer = lookup_enterprise_customer(audit_record.enterprise_course_enrollment_id)
+                        enterprise_customer = self.find_ent_cust(audit_record.enterprise_course_enrollment_id)
                         if enterprise_customer is None:
                             continue
                         config = ConfigModel.objects.filter(enterprise_customer=enterprise_customer).first()
@@ -147,7 +132,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         audit_record.enterprise_customer_uuid = enterprise_customer.uuid
                         audit_record.plugin_configuration_id = config.id
                         audit_record.save()
-            for audit_record_batch in batch_by_pk(ContentMetadataItemTransmission):
+            for audit_record_batch in self.batch_by_pk(ContentMetadataItemTransmission):
                 for audit_record in audit_record_batch:
                     LOGGER.info(f'ContentMetadataItemTransmission <{audit_record.pk}>')
                     # if we cant lookup by code, skip
@@ -162,7 +147,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                                 f'plugin_configuration_id={config.id}')
                     audit_record.plugin_configuration_id = config.id
                     audit_record.save()
-        except:
+        except Exception: # pylint: disable=broad-except
             LOGGER.exception()
 
     def handle(self, *args, **options):
@@ -178,4 +163,4 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 _('A user with the username {username} was not found.').format(username=api_username)
             ) from no_user_error
 
-        backfill_join_keys()
+        self.backfill_join_keys()
