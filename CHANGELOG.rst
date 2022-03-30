@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.10]
+---------
+fix: Add management command to backfill missing audit record foreign keys.
+
 [3.41.9]
 ---------
 fix: Squash SAP Success Factors migrations to remove reference to ``PositiveIntegerField``.
