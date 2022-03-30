@@ -62,7 +62,7 @@ jobs:
           UPDATE mysql.user SET authentication_string = null WHERE user = 'root';
           FLUSH PRIVILEGES;
         EOF
-    - name: Run Tests
+    - name: Run migrations
       env:
         DB_ENGINE: django.db.backends.mysql
         DB_NAME: enterprise
