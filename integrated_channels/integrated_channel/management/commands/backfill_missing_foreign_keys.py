@@ -11,41 +11,33 @@ from django.db import migrations
 from django.db.models import Max, Min
 from django.utils.translation import gettext as _
 
-from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
 from integrated_channels.blackboard.models import (
     BlackboardEnterpriseCustomerConfiguration,
     BlackboardLearnerAssessmentDataTransmissionAudit,
 )
-from integrated_channels.canvas.models import (
-    CanvasEnterpriseCustomerConfiguration,
-    CanvasLearnerDataTransmissionAudit,
-)
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasLearnerDataTransmissionAudit
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
-)
-from integrated_channels.degreed.models import (
-    DegreedEnterpriseCustomerConfiguration,
-    DegreedLearnerDataTransmissionAudit,
 )
 from integrated_channels.degreed2.models import (
     Degreed2EnterpriseCustomerConfiguration,
     Degreed2LearnerDataTransmissionAudit,
 )
-from integrated_channels.moodle.models import (
-    MoodleEnterpriseCustomerConfiguration,
-    MoodleLearnerDataTransmissionAudit,
+from integrated_channels.degreed.models import (
+    DegreedEnterpriseCustomerConfiguration,
+    DegreedLearnerDataTransmissionAudit,
 )
-from integrated_channels.sap_success_factors.models import (
-    SAPSuccessFactorsEnterpriseCustomerConfiguration,
-    SapSuccessFactorsLearnerDataTransmissionAudit,
-)
+from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
 from integrated_channels.integrated_channel.models import (
+    ContentMetadataItemTransmission,
     GenericEnterpriseCustomerPluginConfiguration,
     GenericLearnerDataTransmissionAudit,
 )
-from integrated_channels.integrated_channel.models import (
-    ContentMetadataItemTransmission
+from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration, MoodleLearnerDataTransmissionAudit
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SapSuccessFactorsLearnerDataTransmissionAudit,
 )
 
 MODELS = {
