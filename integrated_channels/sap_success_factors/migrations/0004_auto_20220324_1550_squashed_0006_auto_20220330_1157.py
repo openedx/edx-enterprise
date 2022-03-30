@@ -31,11 +31,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='sapsuccessfactorslearnerdatatransmissionaudit',
-            name='enterprise_course_enrollment_id',
-            field=models.IntegerField(blank=True, db_index=True, null=True),
-        ),
-        migrations.AlterField(
-            model_name='sapsuccessfactorslearnerdatatransmissionaudit',
             name='error_message',
             field=models.TextField(blank=True, null=True),
         ),
