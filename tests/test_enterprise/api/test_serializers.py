@@ -12,7 +12,11 @@ from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 
-from enterprise.api.v1.serializers import EnterpriseCustomerUserReadOnlySerializer, ImmutableStateSerializer
+from enterprise.api.v1.serializers import (
+    EnterpriseCustomerSerializer,
+    EnterpriseCustomerUserReadOnlySerializer,
+    ImmutableStateSerializer,
+)
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
 from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, factories
@@ -55,6 +59,103 @@ class TestImmutableStateSerializer(APITest):
         """
         with self.assertNumQueries(0):
             self.serializer.create(self.validated_data)
+
+
+class BaseSerializerTestWithEnterpriseRoleAssignments(TestCase):
+    """
+    Base test class for serializers that involve enterprise role assignments.
+    """
+
+    def setUp(self):
+        """
+        Perform operations common for all tests.
+
+        """
+
+        super().setUp()
+        self.user_1 = factories.UserFactory()
+        self.user_2 = factories.UserFactory()
+        self.user_3 = factories.UserFactory()
+        self.enterprise_customer_user_1 = factories.EnterpriseCustomerUserFactory(user_id=self.user_1.id)
+        self.enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(user_id=self.user_2.id)
+        self.enterprise_customer_user_3 = factories.EnterpriseCustomerUserFactory(user_id=self.user_3.id)
+        self.enterprise_customer_1 = self.enterprise_customer_user_1.enterprise_customer
+        self.enterprise_customer_2 = self.enterprise_customer_user_2.enterprise_customer
+
+        self.enterprise_admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name=ENTERPRISE_ADMIN_ROLE,
+        )
+        self.enterprise_learner_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name=ENTERPRISE_LEARNER_ROLE,
+        )
+
+        # Clear all current assignments
+        SystemWideEnterpriseUserRoleAssignment.objects.all().delete()
+
+        # user 1 has admin and learner role for enterprise 1, admin role for enterprise 2
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_admin_role,
+            user=self.user_1,
+            enterprise_customer=self.enterprise_customer_1
+        )
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_learner_role,
+            user=self.user_1,
+            enterprise_customer=self.enterprise_customer_1
+        )
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_admin_role,
+            user=self.user_1,
+            enterprise_customer=self.enterprise_customer_2
+        )
+
+        # user 2 has learner role for enterprise 2
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_learner_role,
+            user=self.user_2,
+            enterprise_customer=self.enterprise_customer_2
+        )
+
+        # user 3 has admin role for enterprise 2
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_admin_role,
+            user=self.user_3,
+            enterprise_customer=self.enterprise_customer_2
+        )
+
+
+@mark.django_db
+class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssignments):
+    """
+    Tests for EnterpriseCustomerSerializer.
+    """
+
+    def test_serialize_admin_users(self):
+        serializer = EnterpriseCustomerSerializer(self.enterprise_customer_1)
+        expected_admin_users = [{
+            'email': self.user_1.email
+        }]
+        serialized_admin_users = serializer.data['admin_users']
+        self.assertEqual(serialized_admin_users, expected_admin_users)
+
+    def test_serialize_admin_users_many(self):
+        serializer = EnterpriseCustomerSerializer([self.enterprise_customer_1, self.enterprise_customer_2], many=True)
+
+        expected_enterprise_customer_1_admin_users = [{
+            'email': self.user_1.email
+        }]
+
+        expected_enterprise_customer_2_admin_users = [{
+            'email': self.user_1.email
+        }, {
+            'email': self.user_3.email
+        }]
+
+        enterprise_customer_1_admin_users = serializer.data[0]['admin_users']
+        enterprise_customer_2_admin_users = serializer.data[1]['admin_users']
+
+        self.assertCountEqual(enterprise_customer_1_admin_users, expected_enterprise_customer_1_admin_users)
+        self.assertCountEqual(enterprise_customer_2_admin_users, expected_enterprise_customer_2_admin_users)
 
 
 @ddt.ddt
@@ -153,50 +254,10 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
 
 
 @mark.django_db
-class TestEnterpriseCustomerUserReadOnlySerializer(TestCase):
+class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpriseRoleAssignments):
     """
     Tests for EnterpriseCustomerUserReadOnlySerializer.
     """
-
-    def setUp(self):
-        """
-        Perform operations common for all tests.
-
-        """
-        super().setUp()
-        self.user_1 = factories.UserFactory()
-        self.user_2 = factories.UserFactory()
-        self.enterprise_customer_user_1 = factories.EnterpriseCustomerUserFactory(user_id=self.user_1.id)
-        self.enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(user_id=self.user_2.id)
-
-        self.enterprise_admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
-            name=ENTERPRISE_ADMIN_ROLE,
-        )
-        self.enterprise_learner_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
-            name=ENTERPRISE_LEARNER_ROLE,
-        )
-
-        # Clear all current assignments
-        SystemWideEnterpriseUserRoleAssignment.objects.all().delete()
-
-        # Assign both admin and learner roles to the first user
-        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
-            role=self.enterprise_admin_role,
-            user=self.enterprise_customer_user_1.user,
-            enterprise_customer=self.enterprise_customer_user_1.enterprise_customer
-        )
-        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
-            role=self.enterprise_learner_role,
-            user=self.enterprise_customer_user_1.user,
-            enterprise_customer=self.enterprise_customer_user_1.enterprise_customer
-        )
-
-        # Assign learner role to the second user
-        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
-            role=self.enterprise_learner_role,
-            user=self.enterprise_customer_user_2.user,
-            enterprise_customer=self.enterprise_customer_user_2.enterprise_customer
-        )
 
     def test_serialize_role_assignments(self):
         """
