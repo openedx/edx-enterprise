@@ -4120,6 +4120,57 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             self._assert_config_response(expected_data, response_content)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_post_requires_enterprise_customer_id(self, request_or_stub_mock):
+        """
+        Verify that the POST endpoint requires enterprise_customer_id.
+        """
+        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        post_data = {
+            'active': 'true',
+            'delivery_method': 'email',
+            'email': ['test@test.com', 'foo@test.com'],
+            'encrypted_password': 'testPassword',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'pgp_encryption_key': ''
+        }
+        expected_data = post_data.copy()
+        expected_data.update({
+            'active': True,
+            'encrypted_sftp_password': None,
+        })
+        expected_data.pop('encrypted_password')
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.post(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            ),
+            data=post_data,
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'enterprise_customer_id': ['This field is required.']}
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         (False, status.HTTP_403_FORBIDDEN),
         (True, status.HTTP_201_CREATED),
@@ -4162,6 +4213,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         system_wide_role = ENTERPRISE_ADMIN_ROLE
         request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
 
+        post_data.update({'enterprise_customer_id': enterprise_customer.uuid})
         response = client.post(
             '{server}{reverse_url}'.format(
                 server=settings.TEST_SERVER,
@@ -4349,7 +4401,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         """
         Tests that the POST endpoint raises error for email delivery type reporting config with incorrect email field.
         """
-        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
 
         post_data = {
             'active': 'true',
@@ -4375,6 +4427,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
         request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
 
+        post_data.update({'enterprise_customer_id': enterprise_customer.uuid})
         response = client.post(
             '{server}{reverse_url}'.format(
                 server=settings.TEST_SERVER,
@@ -4395,7 +4448,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         """
         Tests that the POST endpoint works as expected for sftp delivery type reporting config without email field.
         """
-        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
 
         post_data = {
             'active': 'true',
@@ -4419,6 +4472,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
         request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
 
+        post_data.update({'enterprise_customer_id': enterprise_customer.uuid})
         response = client.post(
             '{server}{reverse_url}'.format(
                 server=settings.TEST_SERVER,
@@ -4484,7 +4538,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         """
         Tests that the POST endpoint raises error if enterprise catalogs are not associated with the given enterprise.
         """
-        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
 
         # Create a new enterprise customer catalog that is not associated with above enterprise customer.
         enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
@@ -4512,6 +4566,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
         request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
 
+        post_data.update({'enterprise_customer_id': enterprise_customer.uuid})
         response = client.post(
             '{server}{reverse_url}'.format(
                 server=settings.TEST_SERVER,
@@ -4563,6 +4618,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
         request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
 
+        post_data.update({'enterprise_customer_id': enterprise_customer.uuid})
         response = client.post(
             '{server}{reverse_url}'.format(
                 server=settings.TEST_SERVER,
