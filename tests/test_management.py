@@ -1844,46 +1844,6 @@ class TestBackfillLearnerRoleAssignmentsCommand(unittest.TestCase):
 
         self.addCleanup(self.cleanup_test_objects)
 
-    def test_user_role_assignments_multiple_objects(self):
-        """
-        Verify that multiple objects returned error from the
-        create_or_get does not cause an error.
-        """
-
-        user = User.objects.first()
-
-        # Create some duplicate role assignments
-        for _ in range(2):
-            factories.SystemWideEnterpriseUserRoleAssignment(
-                user=user,
-                role=roles_api.learner_role(),
-                enterprise_customer=self.alpha_customer,
-            ).save()
-
-        role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-            user=user,
-            role=roles_api.learner_role(),
-            enterprise_customer=self.alpha_customer,
-        )
-        assert role_assignments.count() == 2
-
-        # Run the command and check the logs
-        with LogCapture(level=logging.INFO) as log_capture:
-            call_command(
-                'backfill_learner_role_assignments',
-                '--batch-sleep',
-                '0',
-                '--batch-limit',
-                '10',
-            )
-
-            # Make sure we see the skip message
-            log_capture.check_present((
-                'enterprise.management.commands.backfill_learner_role_assignments',
-                'INFO',
-                'Found MultipleObjectsReturned for user user-0. Skipping.'
-            ))
-
     def test_user_role_assignments_created(self):
         """
         Verify that the management command correctly creates User Role Assignments

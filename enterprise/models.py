@@ -2827,6 +2827,9 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
 
     history = HistoricalRecords()
 
+    class Meta:
+        unique_together = (('enterprise_customer', 'role', 'user'),)
+
     def has_access_to_all_contexts(self):
         """
         Returns true if the role for this assignment is ``ENTERPRISE_OPERATOR_ROLE``,

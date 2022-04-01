@@ -2264,6 +2264,28 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
 
         assert expected_context == enterprise_role_assignment.get_context()
 
+    def test_unique_together_constraint(self):
+        """
+        Verify that duplicate combination of records with same user, role and enterprise cannot be created and
+        raises IntegrityError.
+        """
+        user = factories.UserFactory(email='edx@example.com')
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        role = roles_api.learner_role()
+        role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.create(
+            user=user,
+            enterprise_customer=enterprise_customer,
+            role=role,
+            applies_to_all_contexts=False,
+        )
+
+        self.assertNotEqual(role_assignment, None)
+        # Attempt to create a copy should raise Integrity error
+        with self.assertRaises(IntegrityError):
+            SystemWideEnterpriseUserRoleAssignment.objects.create(
+                user=user, enterprise_customer=enterprise_customer, role=role, applies_to_all_contexts=False
+            )
+
 
 @mark.django_db
 @ddt.ddt

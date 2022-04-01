@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.11]
+---------
+fix: Add unique_together constraint in SystemWideEnterpriseUserRoleAssignment
+
 [3.41.10]
 ---------
 fix: Add management command to backfill missing audit record foreign keys.
