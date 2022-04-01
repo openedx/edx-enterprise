@@ -1128,7 +1128,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
@@ -1181,7 +1181,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'invite_key': None, 'role_assignments': [], 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                    'active': True, 'enable_data_sharing_consent': True,
+                    'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                     'enable_audit_enrollment': False, 'identity_provider': None,
@@ -1246,7 +1246,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
@@ -1303,7 +1303,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False,
@@ -1507,7 +1507,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         if has_access_to_enterprise:
             assert response['results'][0] == {
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': False, 'identity_provider': None,

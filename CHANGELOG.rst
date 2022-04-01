@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.42.0]
+---------
+feat: add admin_users to ``EnterpriseCustomerSerializer``
+
 [3.41.13]
 ---------
 fix: remove backfill managment command arguments
