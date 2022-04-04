@@ -19,3 +19,9 @@ class AdminNotificationAPIRequestError(Exception):
     An exception that represents an error when creating admin notification
     read status via the NotificationReadApiClient.
     """
+
+
+class LinkUserToEnterpriseError(Exception):
+    """
+    An error occurred while linking a user to an enterprise.
+    """

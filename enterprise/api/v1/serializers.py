@@ -1289,8 +1289,27 @@ class EnterpriseCustomerInviteKeyReadOnlySerializer(BaseEnterpriseCustomerInvite
 
 class EnterpriseCustomerToggleUniversalLinkSerializer(serializers.Serializer):
     """
-    Serializer for toggling an EnterpriseCustomer enable_universal_link field
+    Serializer for toggling an EnterpriseCustomer enable_universal_link field.
     """
 
     enable_universal_link = serializers.BooleanField(required=True)
     expiration_date = serializers.DateTimeField(required=False)
+
+class EnterpriseCustomerUnlinkUsersSerializer(serializers.Serializer):
+    """
+    Serializer for the ``EnterpriseCustomerViewSet`` unlink_users action.
+    """
+
+    emails = serializers.ListField(
+        child=serializers.EmailField(
+            allow_blank=False,
+        ),
+        allow_empty=False,
+    )
+
+    disable_relinking = serializers.BooleanField(
+        serializers.BooleanField(
+            required=False,
+            default=False,
+        )
+    )

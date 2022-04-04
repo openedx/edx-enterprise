@@ -29,6 +29,7 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
+from django.db import transaction
 
 from django.apps import apps
 from django.conf import settings
@@ -53,12 +54,13 @@ from enterprise.api.utils import (
     get_ent_cust_from_report_config_uuid,
     get_enterprise_customer_from_catalog_id,
     get_enterprise_customer_from_user_id,
+    get_enterprise_customer_from_enterprise_customer_user_id,
 )
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
-from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError
+from enterprise.errors import AdminNotificationAPIRequestError, CodesAPIRequestError, LinkUserToEnterpriseError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
@@ -312,13 +314,16 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             except exceptions.ValidationError:
                 email_errors.append(email)
 
+        for email in emails:
+            try:
+                models.EnterpriseCustomerUser.all_objects.link_user(enterprise_customer, email)
+            except LinkUserToEnterpriseError:
+                email_errors.append(email)
+
         # Remove the bad emails from licenses_info and emails, don't attempt to enroll or link bad emails.
         for errored_user in email_errors:
             licenses_info[:] = [info for info in licenses_info if info['email'] != errored_user]
             emails.remove(errored_user)
-
-        for email in emails:
-            models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
 
         results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
@@ -450,6 +455,38 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         headers = self.get_success_headers(response_body)
         return Response(response_body, status=HTTP_200_OK, headers=headers)
 
+    @action(methods=['post'], detail=True, permission_classes=[permissions.IsAuthenticated])
+    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, pk: pk)
+    def unlink_users(self, request, pk=None):
+        """
+        Unlinks users with the given emails from the enterprise.
+        """
+
+        serializer = serializers.EnterpriseCustomerUnlinkUsersSerializer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+
+        enterprise_customer = self.get_object()
+        emails_to_unlink = request.data.get('emails', [])
+        is_relinkable = request.data.get('is_relinkable', True)
+
+        with transaction.atomic():
+            for email in emails_to_unlink:
+                try:
+                    models.EnterpriseCustomerUser.objects.unlink_user(
+                        enterprise_customer=enterprise_customer,
+                        user_email=email,
+                        is_relinkable=is_relinkable
+                    )
+                except (models.EnterpriseCustomerUser.DoesNotExist, models.PendingEnterpriseCustomerUser.DoesNotExist):
+                    msg = "User with email {} does not exist in enterprise {}.".format(email, enterprise_customer)
+                    LOGGER.warning(msg)
+                except Exception as exc:
+                    LOGGER.exception(exc)
+                    raise
+
+        return Response(status=HTTP_200_OK)
 
 class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
     """
@@ -844,14 +881,30 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     filterset_fields = FIELDS
     ordering_fields = FIELDS
 
+    def get_permissions(self):
+        # permissions.DjangoModelPermissions is incompatible with edx-rbac, overriding permissions as necessary until
+        # clean up
+        if self.action == 'partial_update':
+            return [permissions.IsAuthenticated()]
+        else:
+            return [permission() for permission in self.permission_classes]
+
     def get_serializer_class(self):
         """
         Use a flat serializer for any requests that aren't read-only.
         """
         if self.request.method in ('GET',):
             return serializers.EnterpriseCustomerUserReadOnlySerializer
+        if self.request.method == 'PATCH':
+            return serializers.EnterpriseCustomerUserPartialUpdateSerializer
         return serializers.EnterpriseCustomerUserWriteSerializer
 
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request, pk: get_enterprise_customer_from_enterprise_customer_user_id(pk)
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
 
 class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
@@ -1601,15 +1654,16 @@ class EnterpriseCustomerInviteKeyViewSet(EnterpriseReadWriteModelViewSet):
             return Response(response_body, status=HTTP_201_CREATED, headers=headers)
 
         elif not enterprise_user.active or not enterprise_user.linked:
-            enterprise_user.invite_key = enterprise_customer_key
-            if not enterprise_user.active:
-                enterprise_user.active = True
-            if not enterprise_user.linked:
-                enterprise_user.linked = True
+            try:
                 models.EnterpriseCustomerUser.all_objects.link_user(
                     enterprise_customer,
                     request.user.email
                 )
+            except LinkUserToEnterpriseError:
+                return Response(status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+            enterprise_user.refresh_from_db()
+            enterprise_user.invite_key = enterprise_customer_key
             enterprise_user.save()
 
         return Response(response_body, status=HTTP_200_OK, headers=headers)

@@ -98,3 +98,13 @@ def get_ent_cust_from_enterprise_customer_key(enterprise_customer_key):
         return str(EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key).enterprise_customer_id)
     except EnterpriseCustomerInviteKey.DoesNotExist:
         return None
+
+def get_enterprise_customer_from_enterprise_customer_user_id(enterprise_customer_user_id):
+    """
+    Get the enterprise customer id given an enterprise customer user uuid.
+    """
+
+    try:
+        return str(EnterpriseCustomerUser.objects.get(pk=enterprise_customer_user_id).enterprise_customer_id)
+    except EnterpriseCustomerUser.DoesNotExist:
+        return None

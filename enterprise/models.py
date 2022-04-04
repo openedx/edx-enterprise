@@ -51,6 +51,7 @@ from enterprise.constants import (
     DefaultColors,
     json_serialized_course_modes,
 )
+from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.tasks import send_enterprise_email_notification
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
@@ -829,19 +830,35 @@ class EnterpriseCustomerUserManager(models.Manager):
         """
         try:
             existing_user = User.objects.get(email=user_email)
-            user_id = existing_user.id
-            self.update_or_create(
-                enterprise_customer=enterprise_customer,
-                user_id=user_id,
-                defaults={'active': True},
-            )
         except User.DoesNotExist:
             PendingEnterpriseCustomerUser.objects.get_or_create(
                 enterprise_customer=enterprise_customer,
                 user_email=user_email,
             )
+            return
 
-    def unlink_user(self, enterprise_customer, user_email):
+        user_id = existing_user.id
+
+        try:
+            enterprise_customer_user = self.get(
+                enterprise_customer=enterprise_customer,
+                user_id=user_id,
+            )
+            if not enterprise_customer_user.linked and not enterprise_customer_user.is_relinkable:
+                msg = "User {} cannot be relinked to {}.".format(existing_user, enterprise_customer)
+                LOGGER.error(msg)
+                raise LinkUserToEnterpriseError(msg)
+
+            enterprise_customer_user.active = True
+            enterprise_customer_user.linked = True
+            enterprise_customer_user.save()
+        except ObjectDoesNotExist:
+            self.create(
+                enterprise_customer=enterprise_customer,
+                user_id=user_id
+            )
+
+    def unlink_user(self, enterprise_customer, user_email, is_relinkable=True):
         """
         Unlink user email from Enterprise Customer.
 
@@ -861,8 +878,9 @@ class EnterpriseCustomerUserManager(models.Manager):
             link_record = self.get(enterprise_customer=enterprise_customer, user_id=existing_user.id)
             link_record.linked = False
             link_record.active = False
+            # If is_relinkable = False, user will be permanently be unlinked from the enterprise
+            link_record.is_relinkable = is_relinkable
             link_record.save()
-
         except User.DoesNotExist:
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             pending_link = PendingEnterpriseCustomerUser.objects.get(
@@ -898,6 +916,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
+    is_relinkable = models.BooleanField(
+        default=True,
+        help_text="When set to False, the user cannot be relinked to the enterprise."
+    )
     invite_key = models.ForeignKey(
         'EnterpriseCustomerInviteKey',
         blank=True,
@@ -3228,3 +3250,37 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
                 raise ValueError("Cannot reactivate an inactive invite key.")
 
         super().save(*args, **kwargs)
+
+# class EnterpriseCustomerInviteKeyLink(TimeStampedModel, SoftDeletableModel):
+#     """
+#     Represents an enterprise link created using an ``EnterpriseCustomerInviteKey``.
+
+#     .. no_pii:
+#     """
+
+#     enterprise_customer_user = models.ForeignKey(
+#         EnterpriseCustomerUser,
+#         related_name="enterprise_customer_user",
+#         on_delete=models.CASCADE,
+#         help_text=_(
+#             "The enterprise customer user that was created using the invite key."
+#         )
+#     )
+
+#     invite_key = models.ForeignKey(
+#         EnterpriseCustomerInviteKey,
+#         related_name="invite_key",
+#         on_delete=models.CASCADE,
+#         help_text=_(
+#             "The invite key used to link the user."
+#         )
+#     )
+
+#     revoked_at = models.DateTimeField(
+#         blank=False,
+#         null=False,
+#         help_text=_(
+#             "When."
+#         )
+#     )
+
