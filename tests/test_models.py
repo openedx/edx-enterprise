@@ -32,6 +32,7 @@ from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import roles_api
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -461,8 +462,12 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         assert PendingEnterpriseCustomerUser.objects.count() == 0
         assert EnterpriseCustomerUser.objects.get_link_by_email(email, enterprise_customer) is None
 
-    @ddt.data("email1@example.com", "email2@example.com")
-    def test_unlink_user_existing_user(self, email):
+    @ddt.data(
+        ("email1@example.com", True),
+        ("email2@example.com", False),
+    )
+    @ddt.unpack
+    def test_unlink_user_existing_user(self, email, is_relinkable):
         other_email = "other_email@example.com"
         user1, user2 = factories.UserFactory(email=email, id=1), factories.UserFactory(email=other_email, id=2)
         enterprise_customer1, enterprise_customer2 = (
@@ -479,7 +484,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
         query_method = EnterpriseCustomerUser.objects.filter
 
-        EnterpriseCustomerUser.objects.unlink_user(enterprise_customer1, email)
+        EnterpriseCustomerUser.objects.unlink_user(enterprise_customer1, email, is_relinkable)
         # removes what was asked
         assert query_method(enterprise_customer=enterprise_customer1, user_id=user1.id).count() == 0
         # keeps records of the same user with different EC (though it shouldn't be the case)
@@ -492,6 +497,10 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
             enterprise_customer=enterprise_customer1,
             user_id=user1.id
         )
+
+        assert soft_deleted_ecu.linked is False
+        assert soft_deleted_ecu.is_relinkable == is_relinkable
+
         # Verify that related `EnterpriseCourseEnrollment` records still present in database
         soft_deleted_ecu.linked = True
         soft_deleted_ecu.save()
@@ -535,6 +544,20 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
         with raises(PendingEnterpriseCustomerUser.DoesNotExist):
             EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
+
+    def test_link_unrelinkable_user(self):
+        user_email = "test_multi_ent_user@example.com"
+        user = factories.UserFactory(email=user_email)
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_id=user.id,
+            active=False,
+            linked=False,
+            is_relinkable=False
+        )
+        with raises(LinkUserToEnterpriseError):
+            EnterpriseCustomerUser.all_objects.link_user(enterprise_customer, user_email)
 
     def test_link_user_works_as_expected(self):
         """

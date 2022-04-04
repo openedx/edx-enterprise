@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.43.0]
+---------
+feat: allow admins to remove learners from org
+
 [3.42.5]
 ---------
 fix: improve guards on fk data backfill job

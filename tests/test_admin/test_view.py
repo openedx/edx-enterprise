@@ -1468,6 +1468,37 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         line_error_message = ValidationMessages.INVALID_EMAIL.format(argument=invalid_email)
         self._assert_line_message(bulk_upload_errors[0], 3, line_error_message)
 
+    def test_post_unlinkable_user_error_skips_all(self):
+        self._login()
+        user_email = "abc@example.com"
+        user = UserFactory(email=user_email)
+        EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=user.id,
+            active=False,
+            linked=False,
+            is_relinkable=False
+        )
+
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending linked users"
+
+        columns = [ManageLearnersForm.CsvColumns.EMAIL]
+        data = [
+            (FAKER.email(),),  # valid not previously seen email;  pylint: disable=no-member
+            (user.email,),  # invalid user email
+        ]
+        response = self._perform_request(columns, data)
+
+        assert not EnterpriseCustomerUser.objects.all().exists(), "No linked users should be created"
+        assert not PendingEnterpriseCustomerUser.objects.all().exists(), "No pending linked users should be created"
+
+        manage_learners_form = self._get_form(response)
+        bulk_upload_errors = manage_learners_form.errors[ManageLearnersForm.Fields.BULK_UPLOAD]
+
+        expected_error_message = "User {} cannot be relinked to {}.".format(user, self.enterprise_customer)
+        assert bulk_upload_errors[0] == expected_error_message
+
     @ddt.data(
         {'valid_course_id': False, 'course_in_catalog': False, 'expected_status_code': 200},
         {'valid_course_id': False, 'course_in_catalog': True, 'expected_status_code': 200},
