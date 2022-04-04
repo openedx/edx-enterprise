@@ -298,8 +298,16 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         course_id = enterprise_enrollment.course_id
 
-        # For instructor-paced and non-audit courses, let the certificate determine course completion
-        if course_details.pacing == 'instructor' and not is_audit_enrollment:
+        if is_audit_enrollment:
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+                self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+            if incomplete_count == 0 and completed_date_from_api is None:
+                LOGGER.info(generate_formatted_log(
+                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                    'Setting completed_date to now() for audit course with all non-gated content done.'
+                ))
+                completed_date_from_api = timezone.now()
+        else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                 self._collect_certificate_data(enterprise_enrollment, channel_name)
             LOGGER.info(generate_formatted_log(
@@ -307,20 +315,43 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
                 f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
             ))
-        # For self-paced courses, check the Grades API
-        else:
-            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
-                self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+            if completed_date_from_api is None:
+                # means we cannot find a cert for this learner
+                # we will try getting grades info using the alternative api in this case
+                # if that also does not exist then we have nothing to report
+                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+                  self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+                LOGGER.info(generate_formatted_log(
+                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                    f'No certificate found, obtained grading data from grades api.'
+                    f' CompletedDate: {completed_date_from_api},'
+                    f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+                ))
 
-        # there is a case for audit enrollment, we are reporting completion based on
-        # content count cmopleted, so we may not get a completed_date_from_api
-        # and the model requires a completed_date field
-        if incomplete_count == 0 and enterprise_enrollment.is_audit_enrollment and completed_date_from_api is None:
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'Setting completed_date to now() for audit course with all non-gated content done.'
-            ))
-            completed_date_from_api = timezone.now()
+
+        # For instructor-paced and non-audit courses, let the certificate determine course completion
+        # if course_details.pacing == 'instructor' and not is_audit_enrollment:
+        #     completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+        #         self._collect_certificate_data(enterprise_enrollment, channel_name)
+        #     LOGGER.info(generate_formatted_log(
+        #         channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+        #         f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
+        #         f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+        #     ))
+        # # For self-paced courses, check the Grades API
+        # else:
+        #     completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+        #         self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+
+        # # there is a case for audit enrollment, we are reporting completion based on
+        # # content count cmopleted, so we may not get a completed_date_from_api
+        # # and the model requires a completed_date field
+        # if incomplete_count == 0 and enterprise_enrollment.is_audit_enrollment and completed_date_from_api is None:
+        #     LOGGER.info(generate_formatted_log(
+        #         channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+        #         'Setting completed_date to now() for audit course with all non-gated content done.'
+        #     ))
+        #     completed_date_from_api = timezone.now()
 
         return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent
 
@@ -417,6 +448,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             )
 
             # Apply the Source of Truth for Grades
+            # Note: Only completed records are transmitted by the completion transmitter
+            #       therefore even non complete grading/cert records are exported here.
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
                 completed_date=completed_date_from_api,
