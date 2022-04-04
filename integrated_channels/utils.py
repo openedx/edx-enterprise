@@ -338,9 +338,9 @@ def get_upgrade_deadline(course_run):
     return None
 
 
-def is_course_completed(enterprise_enrollment, completed_date, is_passing, incomplete_count):
+def is_course_completed(enterprise_enrollment, is_passing, incomplete_count, passed_timestamp=None):
     '''
-    For non audit, this requires passing and completed_date
+    For non audit, this requires passing and passed_timestamp
     For audit enrollment, returns True if:
      - for non upgradable course:
         - no more non-gated content is left
@@ -358,7 +358,7 @@ def is_course_completed(enterprise_enrollment, completed_date, is_passing, incom
             # for upgradable course check deadline passed as well
             now = datetime.now(pytz.UTC)
             return incomplete_count == 0 and upgrade_deadline < now
-    return completed_date is not None and is_passing
+    return passed_timestamp is not None and is_passing
 
 
 def is_valid_url(url):
