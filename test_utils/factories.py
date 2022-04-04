@@ -165,6 +165,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     active = True
     linked = True
+    is_relinkable = True
     invite_key = None
 
 

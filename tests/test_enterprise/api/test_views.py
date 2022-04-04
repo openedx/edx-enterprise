@@ -66,7 +66,7 @@ from test_utils import (
     update_program_with_enterprise_context,
 )
 from test_utils.decorators import mock_api_response
-from test_utils.factories import FAKER, PendingEnterpriseCustomerUserFactory
+from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
 from test_utils.fake_enterprise_api import get_default_branding_object
 
 fake = Faker()
@@ -113,6 +113,7 @@ ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT = reverse(
 ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
+ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT = reverse('enterprise-customer-unlink-users', kwargs={'pk': FAKE_UUIDS[0]})
 PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
 LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-license-revoke'
@@ -1599,6 +1600,55 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         if expected_status_code == 200:
             enterprise_customer.refresh_from_db()
             assert enterprise_customer.slug == 'new-slug'
+
+    @ddt.data(
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], False, 200),
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], True, 200),
+        (ENTERPRISE_LEARNER_ROLE, FAKE_UUIDS[0], False, 403),
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[1], False, 403),
+    )
+    @ddt.unpack
+    def test_unlink_users(self, enterprise_role, enterprise_uuid_for_role, is_relinkable, expected_status_code):
+        """
+        Test that enterprise admins can unlink users from enterprise.
+        """
+
+        email_1 = 'abc@test.com'
+        email_2 = 'efg@test.com'
+
+        user_1 = factories.UserFactory(email=email_1)
+        user_2 = factories.UserFactory(email=email_2)
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+
+        enterprise_customer_user_1 = factories.EnterpriseCustomerUserFactory(
+            user_id=user_1.id,
+            enterprise_customer=enterprise_customer
+        )
+        enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        assert enterprise_customer_user_1.linked is True
+        assert enterprise_customer_user_2.linked is True
+
+        self.set_jwt_cookie(enterprise_role, str(enterprise_uuid_for_role))
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT, {
+            "user_emails": [email_1, email_2],
+            "is_relinkable": is_relinkable
+        })
+
+        assert response.status_code == expected_status_code
+
+        if expected_status_code == 200:
+            enterprise_customer_user_1.refresh_from_db()
+            enterprise_customer_user_2.refresh_from_db()
+            assert enterprise_customer_user_1.linked is False
+            assert enterprise_customer_user_2.linked is False
+            assert enterprise_customer_user_2.is_relinkable == is_relinkable
+            assert enterprise_customer_user_2.is_relinkable == is_relinkable
 
 
 @ddt.ddt
@@ -3729,6 +3779,15 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             user_email='abc@test.com'
         )
 
+        permanently_unlinked_user = UserFactory(email='unlinked@email.com')
+        permanently_unlinked_ecu = EnterpriseCustomerUserFactory(
+            enterprise_customer=ent_customer,
+            user_id=permanently_unlinked_user.id,
+            active=False,
+            linked=False,
+            is_relinkable=False
+        )
+
         course = 'course-v1:edX+DemoX+Demo_Course'
         enrollment_response = {
             'pending': [{'email': 'abc@test.com', 'course_run_key': course, 'user': pending_ecu, 'created': True}],
@@ -3750,6 +3809,11 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'course_run_key': course,
                     'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                 },
+                {
+                    'email': permanently_unlinked_ecu.user.email,
+                    'course_run_key': course,
+                    'license_uuid': '3d58acdede7c2ede838f7111b42e18ac'
+                }
             ]
         }
 
@@ -5198,6 +5262,37 @@ class TestEnterpriseCustomerInviteKeyViewSet(BaseTestEnterpriseAPIViews):
         json_1 = self.load_json(response_1.content)
         assert json_1['enterprise_customer_slug'] == self.enterprise_customer_3.slug
         assert json_1['enterprise_customer_uuid'] == str(self.enterprise_customer_3.uuid)
+
+    def test_unlinkable_user_422(self):
+        """
+        Test 422 returned if user is not linked but is not relinkable.
+        """
+        unlinked_user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        unlinked_user.set_password(TEST_PASSWORD)
+
+        unlinked_user.save()
+
+        EnterpriseCustomerUser.objects.create(
+            user_id=unlinked_user.id,
+            enterprise_customer=self.enterprise_customer_3,
+            active=False,
+            linked=False,
+            is_relinkable=False
+        )
+
+        client = APIClient()
+        client.login(username=unlinked_user.username, password=TEST_PASSWORD)
+
+        response = client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_INVITE_KEY_ENDPOINT_LINK_USER,
+                kwargs={'pk': self.enterprise_customer_3_invite_key.uuid}
+            )
+        )
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     def test_invalid_link(self):
         """

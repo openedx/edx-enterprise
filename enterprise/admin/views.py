@@ -10,6 +10,7 @@ from django.contrib import admin, auth, messages
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -32,6 +33,7 @@ from enterprise.admin.utils import (
 )
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.constants import PAGE_SIZE
+from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCustomer,
@@ -379,12 +381,11 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                 ValidationMessages.INVALID_EMAIL_OR_USERNAME,
                 raise_exception=False,
             )
-        except ValidationError as exc:
+            EnterpriseCustomerUser.all_objects.link_user(enterprise_customer, email)
+            return [email]
+        except (ValidationError, LinkUserToEnterpriseError) as exc:
             manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc)
             return None
-        else:
-            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
-            return [email]
 
     def _handle_bulk_upload_errors(self, manage_learners_form, errors):
         """
@@ -520,14 +521,19 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         except ValidationError as exc:
             errors.append(exc)
 
+        # do the actual linking if there are no errors at this point:
+        if not errors:
+            try:
+                with transaction.atomic():
+                    for email in emails:
+                        EnterpriseCustomerUser.all_objects.link_user(enterprise_customer, email)
+            except LinkUserToEnterpriseError as exc:
+                errors.append(exc)
+
         if errors:
             cls._handle_bulk_upload_errors(cls, manage_learners_form=manage_learners_form, errors=errors)
             # There were validation errors, so prevent any further action.
             return [], {}
-
-        # There were no errors. Now do the actual linking:
-        for email in emails:
-            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
 
         # Process the bulk uploaded data:
         processable_emails = cls._process_bulk_upload_data(

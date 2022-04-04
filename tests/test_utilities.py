@@ -161,6 +161,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "user_id",
                 "active",
                 "linked",
+                "is_relinkable",
                 "invite_key",
                 "should_inactivate_other_customers",
             ]
