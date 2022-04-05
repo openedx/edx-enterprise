@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.13]
+---------
+fix: remove backfill managment command arguments
+
 [3.41.12]
 ---------
 fix: Use enterprise customer uuid coming in request data
