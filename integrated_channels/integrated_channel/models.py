@@ -398,10 +398,6 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         null=True
     )
 
-    class Meta:
-        # TODO: once we're ready to cut over, this should include plugin id rather than channel code
-        unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')
-
     def __str__(self):
         """
         Return a human-readable string representation of the object.
