@@ -5,7 +5,7 @@ import logging
 
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.utils.translation import gettext as _
 
 from integrated_channels.blackboard.models import (
