@@ -95,9 +95,9 @@ class BlackboardLearnerExporter(LearnerExporter):
                  ))))
             return None
 
-        blackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(
+        BlackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(
             'blackboard',
-            'blackboardLearnerAssessmentDataTransmissionAudit'
+            'BlackboardLearnerAssessmentDataTransmissionAudit'
         )
 
         user_subsection_audits = []
@@ -109,7 +109,7 @@ class BlackboardLearnerExporter(LearnerExporter):
             if not subsection_percent_grade or not subsection_id:
                 continue
 
-            transmission_audit = blackboardLearnerAssessmentDataTransmissionAudit(
+            transmission_audit = BlackboardLearnerAssessmentDataTransmissionAudit(
                 plugin_configuration_id=self.enterprise_configuration.id,
                 enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,

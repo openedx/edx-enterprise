@@ -184,6 +184,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
             enterprise_enrollment.id,
+            self.enterprise_configuration.id,
             grade,
             subsection_id,
             detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
@@ -472,6 +473,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                     is_already_transmitted(
                         transmission_audit,
                         enterprise_enrollment.id,
+                        self.enterprise_configuration.id,
                         grade,
                         detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
                     ):

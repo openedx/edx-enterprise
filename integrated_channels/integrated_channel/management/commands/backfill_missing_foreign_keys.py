@@ -4,15 +4,21 @@ Backfill missing audit record foreign keys.
 import logging
 
 from django.apps import apps
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from django.utils.translation import gettext as _
 
 from integrated_channels.blackboard.models import (
     BlackboardEnterpriseCustomerConfiguration,
+    BlackboardLearnerDataTransmissionAudit,
     BlackboardLearnerAssessmentDataTransmissionAudit,
 )
-from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasLearnerDataTransmissionAudit
+from integrated_channels.canvas.models import (
+    CanvasEnterpriseCustomerConfiguration,
+    CanvasLearnerDataTransmissionAudit,
+    CanvasLearnerAssessmentDataTransmissionAudit,
+)
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
@@ -38,8 +44,10 @@ from integrated_channels.sap_success_factors.models import (
 )
 
 MODELS = {
-    'BLACKBOARD': [BlackboardEnterpriseCustomerConfiguration, BlackboardLearnerAssessmentDataTransmissionAudit],
+    'BLACKBOARD': [BlackboardEnterpriseCustomerConfiguration, BlackboardLearnerDataTransmissionAudit],
+    'BLACKBOARD_ASMT': [BlackboardEnterpriseCustomerConfiguration, BlackboardLearnerAssessmentDataTransmissionAudit],
     'CANVAS': [CanvasEnterpriseCustomerConfiguration, CanvasLearnerDataTransmissionAudit],
+    'CANVAS_ASMT': [CanvasEnterpriseCustomerConfiguration, CanvasLearnerAssessmentDataTransmissionAudit],
     'CSOD': [CornerstoneEnterpriseCustomerConfiguration, CornerstoneLearnerDataTransmissionAudit],
     'DEGREED': [DegreedEnterpriseCustomerConfiguration, DegreedLearnerDataTransmissionAudit],
     'DEGREED2': [Degreed2EnterpriseCustomerConfiguration, Degreed2LearnerDataTransmissionAudit],
@@ -59,21 +67,21 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     Backfill missing audit record foreign keys.
     ''')
 
-    def batch_by_pk(self, ModelClass, batch_size=100):
+    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=100):
         """
         using limit/offset does a lot of table scanning to reach higher offsets
         this scanning can be slow on very large tables
         if you order by pk, you can use the pk as a pivot rather than offset
         this utilizes the index, which is faster than scanning to reach offset
         """
-        qs = ModelClass.objects.order_by('pk')[:batch_size]
+        qs = ModelClass.objects.filter(extra_filter).order_by('pk')[:batch_size]
         while qs.exists():
             yield qs
             # qs.last() doesn't work here because we've already sliced
             # loop through so we eventually grab the last one
             for item in qs:
                 start_pk = item.pk
-            qs = ModelClass.objects.filter(pk__gt=start_pk).order_by('pk')[:batch_size]
+            qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
 
     def find_ent_cust(self, enrollment_id):
         """
@@ -99,7 +107,9 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             for models_pair in MODELS.values():
                 ConfigModel, LearnerAuditModel = models_pair
                 LOGGER.info(f'{LearnerAuditModel.__name__}')
-                for audit_record_batch in self.batch_by_pk(LearnerAuditModel):
+                # make reentrant ie pickup where we've left off in case the job needs to be restarted
+                only_missing_fks = Q(plugin_configuration_id__isnull=True)
+                for audit_record_batch in self.batch_by_pk(LearnerAuditModel, extra_filter=only_missing_fks):
                     for audit_record in audit_record_batch:
                         LOGGER.info(f'{LearnerAuditModel.__name__} <{audit_record.pk}>')
                         enterprise_customer = self.find_ent_cust(audit_record.enterprise_course_enrollment_id)
@@ -114,7 +124,8 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         audit_record.enterprise_customer_uuid = enterprise_customer.uuid
                         audit_record.plugin_configuration_id = config.id
                         audit_record.save()
-            for audit_record_batch in self.batch_by_pk(ContentMetadataItemTransmission):
+            # make reentrant ie pickup where we've left off in case the job needs to be restarted
+            for audit_record_batch in self.batch_by_pk(ContentMetadataItemTransmission, extra_filter=only_missing_fks):
                 for audit_record in audit_record_batch:
                     LOGGER.info(f'ContentMetadataItemTransmission <{audit_record.pk}>')
                     # if we cant lookup by code, skip

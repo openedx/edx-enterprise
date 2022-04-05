@@ -181,7 +181,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         return CanvasContentMetadataTransmitter(self)
 
 
-class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
+class CanvasLearnerAssessmentDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload correlated to a courses subsection learner data we send to canvas at a given point in time for an
     enterprise course enrollment.
@@ -192,27 +192,6 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         max_length=255,
         blank=False,
         null=False
-    )
-
-    enterprise_course_enrollment_id = models.PositiveIntegerField(
-        blank=False,
-        null=False,
-        db_index=True
-    )
-
-    course_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        help_text=_("The course run's key which is used to uniquely identify the course for Canvas.")
-    )
-
-    subsection_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        db_index=True,
-        help_text=_("The course's subsections's key.")
     )
 
     grade_point_score = models.FloatField(
@@ -226,21 +205,6 @@ class CanvasLearnerAssessmentDataTransmissionAudit(models.Model):
         null=False,
         help_text=_("The total amount of points that the learner could score on the subsection.")
     )
-
-    # Request-related information.
-    grade = models.FloatField(
-        blank=False,
-        null=False,
-        help_text=_("The grade an enterprise learner received on the reported subsection.")
-    )
-    subsection_name = models.CharField(
-        max_length=255,
-        blank=False,
-        help_text=_("The name given to the subsection being reported. Used for displaying on external LMS'.")
-    )
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'canvas'

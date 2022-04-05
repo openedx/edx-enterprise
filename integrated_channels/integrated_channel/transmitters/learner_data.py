@@ -163,6 +163,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             if is_already_transmitted(
                 TransmissionAudit,
                 enterprise_enrollment_id,
+                self.enterprise_configuration.id,
                 learner_data.grade,
                 learner_data.subsection_id,
                 detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
@@ -280,6 +281,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             if is_already_transmitted(
                 TransmissionAudit,
                 enterprise_enrollment_id,
+                self.enterprise_configuration.id,
                 grade,
                 detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
             ):
