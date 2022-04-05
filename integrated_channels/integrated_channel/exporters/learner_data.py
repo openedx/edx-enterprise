@@ -537,6 +537,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 continue
 
             user_subsection_audits.append(TransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=enterprise_enrollment.course_id,
                 subsection_id=subsection_id,
@@ -564,6 +566,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
         return [
             TransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
@@ -571,6 +575,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 grade=grade,
             ),
             TransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=enterprise_enrollment.course_id,
                 course_completed=course_completed,

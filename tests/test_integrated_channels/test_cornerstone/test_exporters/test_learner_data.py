@@ -83,6 +83,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             course_id=course_id,
         )
         factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            plugin_configuration_id=self.config.id,
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
             user_id=user.id,
             session_token=self.session_token,
             callback_url=self.callback_url,

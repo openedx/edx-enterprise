@@ -114,6 +114,8 @@ class CanvasLearnerExporter(LearnerExporter):
                 continue
 
             transmission_audit = CanvasLearnerAssessmentDataTransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_customer_user.user_email,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
