@@ -41,6 +41,7 @@ class TestCornerstoneContentMetadataTransmitter(unittest.TestCase):
         past_transmission_to_update = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_1,
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
@@ -49,6 +50,7 @@ class TestCornerstoneContentMetadataTransmitter(unittest.TestCase):
         past_transmission_to_delete = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_2,
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid

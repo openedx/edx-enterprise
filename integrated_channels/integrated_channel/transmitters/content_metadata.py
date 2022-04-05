@@ -188,6 +188,7 @@ class ContentMetadataTransmitter(Transmitter):
             )
             past_deleted_transmission = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                plugin_configuration_id=self.enterprise_configuration.id,
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 content_id=content_id,
                 deleted_at__isnull=False,
@@ -209,6 +210,7 @@ class ContentMetadataTransmitter(Transmitter):
                 # Does there exist a record under a different catalog uuid?
                 past_transmission = ContentMetadataItemTransmission.objects.filter(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    plugin_configuration_id=self.enterprise_configuration.id,
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     content_id=content_id,
                     deleted_at__isnull=True,
@@ -266,6 +268,7 @@ class ContentMetadataTransmitter(Transmitter):
         )
         ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            plugin_configuration_id=self.enterprise_configuration.id,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             content_id__in=content_metadata_item_ids,
         ).update(deleted_at=datetime.now())

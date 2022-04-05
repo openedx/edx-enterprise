@@ -94,12 +94,14 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             assert 'Failed to update [1] content metadata items' in log_capture.records[0].getMessage()
             assert not ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
                 integrated_channel_code=self.enterprise_config.channel_code(),
                 content_id=content_id,
             ).exists()
 
             assert not ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
                 integrated_channel_code=self.enterprise_config.channel_code(),
                 content_id=content_id_2,
             ).exists()
@@ -142,6 +144,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
 
         assert ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
         ).count() == 1
 
@@ -160,6 +163,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         past_transmission_to_update = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_1,
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
@@ -168,6 +172,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         past_transmission_to_delete = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_2,
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid
@@ -200,16 +205,19 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
         item_updated = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            plugin_configuration_id=self.enterprise_config.id,
             content_id=content_id_1,
         ).first()
         assert item_updated.channel_metadata == new_channel_metadata
         item_deleted = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            plugin_configuration_id=self.enterprise_config.id,
             content_id=content_id_2,
         ).first()
         assert item_deleted.deleted_at
         item_created = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            plugin_configuration_id=self.enterprise_config.id,
             content_id=content_id_3,
         ).first()
         assert item_created.channel_metadata == {'courseID': 'something_new'}
@@ -260,6 +268,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
 
             assert ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
                 integrated_channel_code=self.enterprise_config.channel_code(),
             ).count() == 2
 
