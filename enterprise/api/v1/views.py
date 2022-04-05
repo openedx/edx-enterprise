@@ -1129,10 +1129,9 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id))
+        fn=lambda request, *args, **kwargs: request.data.get('enterprise_customer_id'))
     def create(self, request, *args, **kwargs):
         config_data = request.data.copy()
-        config_data['enterprise_customer_id'] = get_enterprise_customer_from_user_id(request.user.id)
         serializer = self.get_serializer(data=config_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()

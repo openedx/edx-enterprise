@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.41.12]
+---------
+fix: Use enterprise customer uuid coming in request data
+
 [3.41.11]
 ---------
 fix: Add unique_together constraint in SystemWideEnterpriseUserRoleAssignment
