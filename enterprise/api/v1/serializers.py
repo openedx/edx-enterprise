@@ -4,6 +4,7 @@ Serializers for enterprise api version 1.
 
 import copy
 import datetime
+from collections import defaultdict
 from collections.abc import Iterable
 from logging import getLogger
 
@@ -20,12 +21,13 @@ from django.utils.translation import gettext_lazy as _
 from enterprise import models, utils
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
-from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_PERMISSION_GROUPS, DefaultColors
 from enterprise.models import (
     AdminNotification,
     AdminNotificationRead,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -189,7 +191,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_integrated_customer_learner_portal_search',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
-            'modified', 'enable_universal_link', 'enable_browse_and_request'
+            'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users'
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -197,12 +199,50 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     branding_configuration = serializers.SerializerMethodField()
     enterprise_customer_catalogs = serializers.SerializerMethodField()
     enterprise_notification_banner = serializers.SerializerMethodField()
+    admin_users = serializers.SerializerMethodField()
 
     def get_branding_configuration(self, obj):
         """
         Return the serialized branding configuration object OR default object if null
         """
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
+
+    def _get_admin_users_by_enterprise_customer_uuid(self, enterprise_customers):
+        """
+        Get admin users for each enterprise customer.
+        """
+
+        admin_users_by_enterprise_uuid = defaultdict(list)
+        enterprise_customer_uuids = [enterprise_customer.uuid for enterprise_customer in enterprise_customers]
+        admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE,
+            enterprise_customer_id__in=enterprise_customer_uuids
+        ).select_related('user')
+
+        for role_assignment in admin_role_assignments:
+            admin_users_by_enterprise_uuid[role_assignment.enterprise_customer_id].append({
+                'email': role_assignment.user.email
+            })
+
+        return admin_users_by_enterprise_uuid
+
+    def __init__(self, instance=None, data=empty, **kwargs):
+        """
+        Compute admin users for for all EnterpriseCustomer(s) during initialization
+        to prevent making queries for each instance.
+        """
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+        if instance:
+            self.admin_users_by_enterprise_uuid = self._get_admin_users_by_enterprise_customer_uuid(
+                instance if isinstance(instance, Iterable) else [instance]
+            )
+        else:
+            self.admin_users_by_enterprise_uuid = defaultdict(list)
+
+    def get_admin_users(self, obj):
+        return self.admin_users_by_enterprise_uuid[obj.uuid]
 
     def get_enterprise_customer_catalogs(self, obj):
         """
