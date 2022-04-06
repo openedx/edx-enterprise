@@ -299,7 +299,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         course_id = enterprise_enrollment.course_id
 
-        # breakpoint()
         if is_audit_enrollment:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
