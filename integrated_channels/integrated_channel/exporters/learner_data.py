@@ -299,6 +299,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         course_id = enterprise_enrollment.course_id
 
+        # breakpoint()
         if is_audit_enrollment:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
@@ -627,6 +628,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
         enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         user = User.objects.get(pk=lms_user_id)
+        passed_timestamp = None
 
         completed_date = None
         grade = self.grade_incomplete
@@ -644,7 +646,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             ))
 
         if not certificate:
-            return completed_date, grade, is_passing, percent_grade
+            return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
         completed_date = certificate.get('created_date')
         if completed_date:
@@ -654,7 +656,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
         # also get passed_timestamp which is used to line up completion logic with analytics
         persistent_grade = get_persistent_grade(course_id, user)
-        passed_timestamp = persistent_grade.passed_timestamp
+        passed_timestamp = persistent_grade.passed_timestamp if persistent_grade is not None else None
 
         # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
         is_passing = certificate.get('is_passing')
@@ -745,11 +747,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 .format(
                     enterprise_enrollment=enterprise_enrollment,
                 )))
-            return None, None, None, None
+            return None, None, None, None, None
 
         # also get passed_timestamp which is used to line up completion logic with analytics
         persistent_grade = get_persistent_grade(course_id, user)
-        passed_timestamp = persistent_grade.passed_timestamp
+        passed_timestamp = persistent_grade.passed_timestamp if persistent_grade is not None else None
 
         # Prepare to process the course end date and pass/fail grade
         course_end_date = course_details.end

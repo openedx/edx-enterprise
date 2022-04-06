@@ -13,6 +13,7 @@ except ImportError:
     get_certificate_for_user = None
     CourseGradeFactory = None
     CourseOverview = None
+    PersistentCourseGrade = None
 
 try:
     from lms.djangoapps.courseware.courses import get_course_blocks_completion_summary
