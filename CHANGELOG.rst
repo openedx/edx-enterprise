@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.42.1]
+---------
+feat: use new foreign keys on integrated channels audit models
+
 [3.42.0]
 ---------
 feat: add admin_users to ``EnterpriseCustomerSerializer``
