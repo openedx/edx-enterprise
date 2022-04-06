@@ -211,8 +211,10 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     def test_learner_data_instructor_paced_no_certificate(
             self,
+            mock_get_single_user_grade,
             mock_get_persistent_grade,
             mock_get_course_certificate,
             mock_course_catalog_api,
@@ -222,6 +224,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         mock_get_course_certificate.return_value = None
         mock_get_persistent_grade.return_value = None
+        mock_get_single_user_grade.return_value = None
 
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -402,7 +405,7 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.enterprise_course_enrollment_id == enrollment.id
             assert not report.course_completed
             assert report.completed_timestamp is None
-            assert report.grade is None
+            assert report.grade is LearnerExporter.GRADE_INCOMPLETE
 
     @ddt.data(
         # passing grade with no course end date

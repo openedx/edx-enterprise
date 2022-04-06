@@ -295,7 +295,8 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         Return a human-readable string representation of the object.
         """
         return (
-            f'<LearnerDataTransmissionAudit {self.id} for enterprise enrollment {self.enterprise_course_enrollment_id}, '
+            f'<LearnerDataTransmissionAudit {self.id}'
+            f' for enterprise enrollment {self.enterprise_course_enrollment_id}, '
             f', course_id: {self.course_id}>'
             f', grade: {self.grade}'
             f', completed_timestamp: {self.completed_timestamp}'

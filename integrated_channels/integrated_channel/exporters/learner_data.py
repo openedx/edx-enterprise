@@ -740,14 +740,13 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         grades_data = get_single_user_grade(course_id, user)
 
         if grades_data is None:
-            LOGGER.error(generate_formatted_log(
+            LOGGER.warning(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'get_single_user_grade failed. Grades data not found for'
-                '  EnterpriseCourseEnrollment: {enterprise_enrollment}.'
-                .format(
-                    enterprise_enrollment=enterprise_enrollment,
-                )))
-            return None, None, None, None, None
+                f'No grade found for '
+                f'EnterpriseCourseEnrollment: {enterprise_enrollment}.'
+            ))
+            # if enrollment found, but no grades, we can safely mark as incomplete/in progress
+            return None, LearnerExporter.GRADE_INCOMPLETE, None, None, None
 
         # also get passed_timestamp which is used to line up completion logic with analytics
         persistent_grade = get_persistent_grade(course_id, user)
