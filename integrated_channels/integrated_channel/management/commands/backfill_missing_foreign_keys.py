@@ -108,6 +108,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 ConfigModel, LearnerAuditModel = models_pair
                 LOGGER.info(f'{LearnerAuditModel.__name__}')
                 # make reentrant ie pickup where we've left off in case the job needs to be restarted
+                # only need to check plugin config OR enterprise customer uuid
                 only_missing_fks = Q(plugin_configuration_id__isnull=True)
                 for audit_record_batch in self.batch_by_pk(LearnerAuditModel, extra_filter=only_missing_fks):
                     for audit_record in audit_record_batch:
@@ -115,6 +116,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         enterprise_customer = self.find_ent_cust(audit_record.enterprise_course_enrollment_id)
                         if enterprise_customer is None:
                             continue
+                        # nobody currently has more than 1 config across all kinds
                         config = ConfigModel.objects.filter(enterprise_customer=enterprise_customer).first()
                         if config is None:
                             continue
