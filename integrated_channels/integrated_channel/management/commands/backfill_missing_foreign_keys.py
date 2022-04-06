@@ -4,20 +4,20 @@ Backfill missing audit record foreign keys.
 import logging
 
 from django.apps import apps
-from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from integrated_channels.blackboard.models import (
     BlackboardEnterpriseCustomerConfiguration,
-    BlackboardLearnerDataTransmissionAudit,
     BlackboardLearnerAssessmentDataTransmissionAudit,
+    BlackboardLearnerDataTransmissionAudit,
 )
 from integrated_channels.canvas.models import (
     CanvasEnterpriseCustomerConfiguration,
-    CanvasLearnerDataTransmissionAudit,
     CanvasLearnerAssessmentDataTransmissionAudit,
+    CanvasLearnerDataTransmissionAudit,
 )
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
