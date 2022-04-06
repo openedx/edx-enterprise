@@ -105,6 +105,7 @@ class ContentMetadataExporter(Exporter):
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+            plugin_configuration_id=self.enterprise_configuration.id,
             deleted_at__isnull=True,
         ).values('content_id')
         if not past_transmissions:
@@ -141,6 +142,7 @@ class ContentMetadataExporter(Exporter):
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                plugin_configuration_id=self.enterprise_configuration.id,
                 content_id=matched_item.get('content_key'),
                 deleted_at__isnull=True,
             )
@@ -207,6 +209,7 @@ class ContentMetadataExporter(Exporter):
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+            plugin_configuration_id=self.enterprise_configuration.id,
             content_id__in=content_keys
         )
         return past_content_query.all()
@@ -374,6 +377,7 @@ class ContentMetadataExporter(Exporter):
             transmission_items = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
+                plugin_configuration_id=self.enterprise_configuration.id,
                 content_id__in=content_ids
             )
             self._log_info(

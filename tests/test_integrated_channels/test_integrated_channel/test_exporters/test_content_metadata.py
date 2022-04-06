@@ -84,6 +84,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
@@ -119,6 +120,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         }
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
@@ -189,6 +191,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         # Generate a past transmission item that will indicate no updated needed
         past_content_transmission = factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid

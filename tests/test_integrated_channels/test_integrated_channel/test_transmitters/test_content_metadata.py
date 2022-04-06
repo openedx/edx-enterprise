@@ -87,6 +87,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         created_transmission = ContentMetadataItemTransmission.objects.get(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
         )
@@ -115,6 +116,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert not ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
         )
@@ -127,6 +129,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata={}
@@ -151,6 +154,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         updated_transmission = ContentMetadataItemTransmission.objects.get(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
         )
@@ -165,6 +169,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata
@@ -190,6 +195,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata={}
@@ -211,6 +217,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         updated_transmission = ContentMetadataItemTransmission.objects.get(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
         )
@@ -227,6 +234,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata
@@ -249,6 +257,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata
@@ -262,6 +271,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata
@@ -284,6 +294,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert not ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata
@@ -300,6 +311,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata,
@@ -331,6 +343,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         channel_metadata = {'update': True}
         past_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_id=content_id,
             channel_metadata=channel_metadata,

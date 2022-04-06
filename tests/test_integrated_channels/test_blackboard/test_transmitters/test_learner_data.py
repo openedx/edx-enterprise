@@ -38,6 +38,8 @@ class TestBlackboardLearnerDataTransmitter(unittest.TestCase):
             refresh_token='token',
         )
         self.completion_payload = BlackboardLearnerDataTransmissionAudit(
+            plugin_configuration_id=self.enterprise_config.id,
+            enterprise_customer_uuid=self.enterprise_config.enterprise_customer.uuid,
             blackboard_user_email=self.enterprise_customer.contact_email,
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             course_id='course-v1:edX+DemoX+DemoCourse',
@@ -51,6 +53,8 @@ class TestBlackboardLearnerDataTransmitter(unittest.TestCase):
         )
 
         self.assessment_payload = BlackboardLearnerAssessmentDataTransmissionAudit(
+            plugin_configuration_id=self.enterprise_config.id,
+            enterprise_customer_uuid=self.enterprise_config.enterprise_customer.uuid,
             blackboard_user_email=self.enterprise_customer.contact_email,
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             course_id='course-v1:edX+DemoX+DemoCourse',

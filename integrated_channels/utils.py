@@ -187,6 +187,7 @@ def get_image_url(content_metadata_item):
 def is_already_transmitted(
     transmission,
     enterprise_enrollment_id,
+    enterprise_configuration_id,
     grade,
     subsection_id=None,
     detect_grade_updated=True,
@@ -205,6 +206,7 @@ def is_already_transmitted(
     try:
         already_transmitted = transmission.objects.filter(
             enterprise_course_enrollment_id=enterprise_enrollment_id,
+            plugin_configuration_id=enterprise_configuration_id,
             error_message='',
             status__lt=400
         )

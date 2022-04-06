@@ -93,6 +93,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         now = datetime.datetime.now()
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE['key'],
             content_last_changed=now,
@@ -100,6 +101,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         )
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             content_last_changed=now,

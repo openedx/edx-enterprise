@@ -184,6 +184,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
             enterprise_enrollment.id,
+            self.enterprise_configuration.id,
             grade,
             subsection_id,
             detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
@@ -472,6 +473,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                     is_already_transmitted(
                         transmission_audit,
                         enterprise_enrollment.id,
+                        self.enterprise_configuration.id,
                         grade,
                         detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
                     ):
@@ -537,6 +539,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 continue
 
             user_subsection_audits.append(TransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=enterprise_enrollment.course_id,
                 subsection_id=subsection_id,
@@ -564,6 +568,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
         return [
             TransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
@@ -571,6 +577,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 grade=grade,
             ),
             TransmissionAudit(
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 course_id=enterprise_enrollment.course_id,
                 course_completed=course_completed,

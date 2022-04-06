@@ -177,11 +177,13 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         transmission.objects.filter.return_value = mock_audit_record
 
         enterprise_enrollment_id = 123
+        enterprise_configuration_id = 456
 
         # note: detect_grade_updated=True by default
         assert utils.is_already_transmitted(
             transmission,
             enterprise_enrollment_id,
+            enterprise_configuration_id,
             matching_grade,
             subsection_id=None,
         ) is expected_is_already_transmitted
@@ -215,10 +217,12 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         transmission.objects.filter.return_value = mock_audit_record
 
         enterprise_enrollment_id = 1234
+        enterprise_configuration_id = 5678
 
         assert utils.is_already_transmitted(
             transmission,
             enterprise_enrollment_id,
+            enterprise_configuration_id,
             matching_grade,
             subsection_id=None,
             detect_grade_updated=False,

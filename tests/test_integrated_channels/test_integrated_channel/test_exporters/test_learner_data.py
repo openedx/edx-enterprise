@@ -724,6 +724,8 @@ class TestLearnerExporter(unittest.TestCase):
             pacing='self'
         )
         transmission_audit = GenericLearnerDataTransmissionAudit(
+            plugin_configuration_id=self.config.id,
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
             enterprise_course_enrollment_id=enterprise_course_enrollment.id,
             course_id=self.course_id,
             course_completed=True,

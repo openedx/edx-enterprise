@@ -273,8 +273,8 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
 
     # TODO: index customer uuid + plugin coinfig id together, with enrollment id?
     enterprise_customer_uuid = models.UUIDField(blank=True, null=True)
-    plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=True, null=True, db_index=True)
+    plugin_configuration_id = models.IntegerField(blank=True, null=True)
+    enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     course_completed = models.BooleanField(default=True)
     completed_timestamp = models.DateTimeField(blank=True, null=True)
@@ -397,10 +397,6 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True
     )
-
-    class Meta:
-        # TODO: once we're ready to cut over, this should include plugin id rather than channel code
-        unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')
 
     def __str__(self):
         """

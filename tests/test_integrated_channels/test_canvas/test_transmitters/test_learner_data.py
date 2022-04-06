@@ -36,6 +36,8 @@ class TestCanvasLearnerDataTransmitter(unittest.TestCase):
             # canvas_account_id=2,
         )
         self.completion_payload = CanvasLearnerDataTransmissionAudit(
+            plugin_configuration_id=self.enterprise_config.id,
+            enterprise_customer_uuid=self.enterprise_config.enterprise_customer.uuid,
             canvas_user_email=self.enterprise_customer.contact_email,
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             course_id='course-v1:edX+DemoX+DemoCourse',
@@ -48,6 +50,8 @@ class TestCanvasLearnerDataTransmitter(unittest.TestCase):
         )
 
         self.assessment_payload = CanvasLearnerAssessmentDataTransmissionAudit(
+            plugin_configuration_id=self.enterprise_config.id,
+            enterprise_customer_uuid=self.enterprise_config.enterprise_customer.uuid,
             canvas_user_email=self.enterprise_customer.contact_email,
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             course_id='course-v1:edX+DemoX+DemoCourse',

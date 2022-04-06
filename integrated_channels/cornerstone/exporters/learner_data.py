@@ -46,6 +46,8 @@ class CornerstoneLearnerExporter(LearnerExporter):
             csod_learner_data_transmission = CornerstoneLearnerDataTransmissionAudit.objects.get(
                 user_id=enterprise_enrollment.enterprise_customer_user.user.id,
                 course_id=course_id,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
             )
             csod_learner_data_transmission.enterprise_course_enrollment_id = enterprise_enrollment.id
             csod_learner_data_transmission.grade = grade
