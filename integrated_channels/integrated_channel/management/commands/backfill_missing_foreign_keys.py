@@ -142,8 +142,9 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                                 f'plugin_configuration_id={config.id}')
                     audit_record.plugin_configuration_id = config.id
                     audit_record.save()
-        except Exception:  # pylint: disable=broad-except
-            LOGGER.exception()
+        except Exception as exc:  # pylint: disable=broad-except
+            LOGGER.exception('backfill_missing_foreign_keys failed', exc_info=exc)
+            raise exc
 
     def handle(self, *args, **options):
         """
