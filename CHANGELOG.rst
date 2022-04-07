@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.42.2]
+---------
+feat: speed up fk data backfill
+
 [3.42.1]
 ---------
 feat: use new foreign keys on integrated channels audit models
