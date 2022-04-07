@@ -295,12 +295,13 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         Return a human-readable string representation of the object.
         """
         return (
-            '<LearnerDataTransmissionAudit {transmission_id} for enterprise enrollment {enrollment}, '
-            'and course {course_id}>'.format(
-                transmission_id=self.id,
-                enrollment=self.enterprise_course_enrollment_id,
-                course_id=self.course_id
-            )
+            f'<LearnerDataTransmissionAudit {self.id}'
+            f' for enterprise enrollment {self.enterprise_course_enrollment_id}, '
+            f', course_id: {self.course_id}>'
+            f', grade: {self.grade}'
+            f', completed_timestamp: {self.completed_timestamp}'
+            f', enterprise_customer_uuid: {self.enterprise_customer_uuid}'
+            f', course_completed: {self.course_completed}'
         )
 
     def __repr__(self):

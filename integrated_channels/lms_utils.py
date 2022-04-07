@@ -7,11 +7,13 @@ from opaque_keys.edx.keys import CourseKey
 try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
+    from lms.djangoapps.grades.models import PersistentCourseGrade
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 except ImportError:
     get_certificate_for_user = None
     CourseGradeFactory = None
     CourseOverview = None
+    PersistentCourseGrade = None
 
 try:
     from lms.djangoapps.courseware.courses import get_course_blocks_completion_summary
@@ -19,6 +21,17 @@ except ImportError:
     get_course_blocks_completion_summary = None
 
 from enterprise.utils import NotConnectedToOpenEdX
+
+
+def get_persistent_grade(course_key, user):
+    """
+    Get the persistent course grade record for this course and user, or None
+    """
+    try:
+        grade = PersistentCourseGrade.read(user.id, course_key)
+    except PersistentCourseGrade.DoesNotExist:
+        return None
+    return grade
 
 
 def get_course_certificate(course_key, user):
@@ -71,7 +84,7 @@ def get_single_user_grade(course_key, user):
             'installed in an Open edX environment.'
         )
     course_id = CourseKey.from_string(course_key)
-    course_grade = CourseGradeFactory().read(user, course_key=course_id)
+    course_grade = CourseGradeFactory().read(user, course_key=course_id, create_if_needed=False)
     return course_grade
 
 

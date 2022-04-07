@@ -31,6 +31,7 @@ from integrated_channels.lms_utils import (
     get_completion_summary,
     get_course_certificate,
     get_course_details,
+    get_persistent_grade,
     get_single_user_grade,
 )
 from integrated_channels.utils import (
@@ -291,38 +292,46 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         This pacing logic needs cleanup for a more accurate piece of logic since pacing should not be relevant
 
         Returns: tuple with values:
-            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp
         '''
         is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
         enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         course_id = enterprise_enrollment.course_id
 
-        # For instructor-paced and non-audit courses, let the certificate determine course completion
-        if course_details.pacing == 'instructor' and not is_audit_enrollment:
-            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
-                self._collect_certificate_data(enterprise_enrollment, channel_name)
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
-                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
-            ))
-        # For self-paced courses, check the Grades API
-        else:
-            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
+        if is_audit_enrollment:
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
-
-        # there is a case for audit enrollment, we are reporting completion based on
-        # content count cmopleted, so we may not get a completed_date_from_api
-        # and the model requires a completed_date field
-        if incomplete_count == 0 and enterprise_enrollment.is_audit_enrollment and completed_date_from_api is None:
+            if incomplete_count == 0 and completed_date_from_api is None:
+                LOGGER.info(generate_formatted_log(
+                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                    'Setting completed_date to now() for audit course with all non-gated content done.'
+                ))
+                completed_date_from_api = timezone.now()
+        else:
+            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
+                self.collect_certificate_data(enterprise_enrollment, channel_name)
             LOGGER.info(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'Setting completed_date to now() for audit course with all non-gated content done.'
+                f'collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
+                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+                f' Passed timestamp: {passed_timestamp}'
             ))
-            completed_date_from_api = timezone.now()
+            if completed_date_from_api is None:
+                # means we cannot find a cert for this learner
+                # we will try getting grades info using the alternative api in this case
+                # if that also does not exist then we have nothing to report
+                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
+                    self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+                LOGGER.info(generate_formatted_log(
+                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                    f'No certificate found, obtained grading data from grades api.'
+                    f' CompletedDate: {completed_date_from_api},'
+                    f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
+                    f' Passed timestamp: {passed_timestamp}'
+                ))
 
-        return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent
+        return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp
 
     def get_incomplete_content_count(self, enterprise_enrollment, channel_name):
         '''
@@ -409,7 +418,10 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             # which we define as: no non-gated content is remaining
             incomplete_count = self.get_incomplete_content_count(enterprise_enrollment, channel_name)
 
-            completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = self.get_grades_summary(
+            (
+                completed_date_from_api, grade_from_api,
+                is_passing_from_api, grade_percent, passed_timestamp
+            ) = self.get_grades_summary(
                 course_details,
                 enterprise_enrollment,
                 channel_name,
@@ -417,15 +429,17 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             )
 
             # Apply the Source of Truth for Grades
+            # Note: Only completed records are transmitted by the completion transmitter
+            #       therefore even non complete grading/cert records are exported here.
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
                 completed_date=completed_date_from_api,
                 grade=grade_from_api,
                 course_completed=is_course_completed(
                     enterprise_enrollment,
-                    completed_date_from_api,
                     is_passing_from_api,
                     incomplete_count,
+                    passed_timestamp,
                 ),
                 grade_percent=grade_percent,
             )
@@ -587,7 +601,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             )
         ]
 
-    def _collect_certificate_data(self, enterprise_enrollment, channel_name):
+    def collect_certificate_data(self, enterprise_enrollment, channel_name):
         """
         Collect the learner completion data from the course certificate.
 
@@ -606,12 +620,14 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             grade: Current grade in the course.
             percent_grade: The current percent grade in the course.
             is_passing: Boolean indicating if the grade is a passing grade or not.
+            passed_timestamp: Timestamp when learner obtained passing grade.
         """
 
         course_id = enterprise_enrollment.course_id
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
         enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         user = User.objects.get(pk=lms_user_id)
+        passed_timestamp = None
 
         completed_date = None
         grade = self.grade_incomplete
@@ -629,7 +645,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             ))
 
         if not certificate:
-            return completed_date, grade, is_passing, percent_grade
+            return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
         completed_date = certificate.get('created_date')
         if completed_date:
@@ -637,12 +653,16 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date = timezone.now()
 
+        # also get passed_timestamp which is used to line up completion logic with analytics
+        persistent_grade = get_persistent_grade(course_id, user)
+        passed_timestamp = persistent_grade.passed_timestamp if persistent_grade is not None else None
+
         # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
         is_passing = certificate.get('is_passing')
         percent_grade = certificate.get('grade')
         grade = self.grade_passing if is_passing else self.grade_failing
 
-        return completed_date, grade, is_passing, percent_grade
+        return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
     def _collect_assessment_grades_data(self, enterprise_enrollment):
         """
@@ -708,6 +728,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             grade: Current grade in the course.
             is_passing: Boolean indicating if the grade is a passing grade or not.
             percent_grade: a number between 0 and 100
+            passed_timestamp: Timestamp when learner obtained passing grade.
         """
 
         course_id = enterprise_enrollment.course_id
@@ -718,14 +739,17 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         grades_data = get_single_user_grade(course_id, user)
 
         if grades_data is None:
-            LOGGER.error(generate_formatted_log(
+            LOGGER.warning(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'get_single_user_grade failed. Grades data not found for'
-                '  EnterpriseCourseEnrollment: {enterprise_enrollment}.'
-                .format(
-                    enterprise_enrollment=enterprise_enrollment,
-                )))
-            return None, None, None, None
+                f'No grade found for '
+                f'EnterpriseCourseEnrollment: {enterprise_enrollment}.'
+            ))
+            # if enrollment found, but no grades, we can safely mark as incomplete/in progress
+            return None, LearnerExporter.GRADE_INCOMPLETE, None, None, None
+
+        # also get passed_timestamp which is used to line up completion logic with analytics
+        persistent_grade = get_persistent_grade(course_id, user)
+        passed_timestamp = persistent_grade.passed_timestamp if persistent_grade is not None else None
 
         # Prepare to process the course end date and pass/fail grade
         course_end_date = course_details.end
@@ -751,7 +775,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
         percent_grade = grades_data.percent
 
-        return completed_date, grade, is_passing, percent_grade
+        return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
 
 class LearnerExporterUtility:

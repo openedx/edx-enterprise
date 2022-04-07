@@ -15,7 +15,11 @@ from django.utils import timezone
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import GenericLearnerDataTransmissionAudit
 from test_utils import factories
-from test_utils.integrated_channels_utils import mock_course_overview, mock_single_learner_grade
+from test_utils.integrated_channels_utils import (
+    mock_course_overview,
+    mock_persistent_course_grade,
+    mock_single_learner_grade,
+)
 
 
 def create_ent_enrollment_mock(is_audit=True):
@@ -27,7 +31,7 @@ def create_ent_enrollment_mock(is_audit=True):
     enterprise_enrollment.enterprise_customer_user.user_id = 1
     enterprise_enrollment.enterprise_customer_user.enterprise_customer = MagicMock()
     enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid = 'abc'
-    enterprise_enrollment.is_audit_enrollment = MagicMock(return_value=is_audit)
+    enterprise_enrollment.is_audit_enrollment = is_audit
     return enterprise_enrollment
 
 
@@ -210,8 +214,12 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     def test_learner_data_instructor_paced_no_certificate(
             self,
+            mock_get_single_user_grade,
+            mock_get_persistent_grade,
             mock_get_course_certificate,
             mock_course_catalog_api,
             mock_get_course_details,
@@ -219,6 +227,8 @@ class TestLearnerExporter(unittest.TestCase):
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         mock_get_course_certificate.return_value = None
+        mock_get_persistent_grade.return_value = None
+        mock_get_single_user_grade.return_value = None
 
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -247,12 +257,14 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.grade == LearnerExporter.GRADE_INCOMPLETE
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate_null_sso_id(
             self,
             mock_get_course_certificate,
             mock_get_course_details,
+            mock_get_single_user_grade,
             mock_enrollment_api
     ):
         # SSO/SAP-specific behaviour and the Generic config doesnt depend on it
@@ -276,6 +288,9 @@ class TestLearnerExporter(unittest.TestCase):
         # no certificate found
         mock_get_course_certificate.return_value = None
 
+        # no grade found
+        mock_get_single_user_grade.return_value = None
+
         # Return instructor-paced course details
         mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
@@ -291,6 +306,7 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
@@ -301,6 +317,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_is_course_completed,
             mock_get_completion_summary,
             mock_get_course_certificate,
+            mock_get_persistent_grade,
             mock_get_course_details,
             mock_enrollment_api
     ):
@@ -313,6 +330,8 @@ class TestLearnerExporter(unittest.TestCase):
 
         mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
         mock_is_course_completed.return_value = True
+
+        mock_get_persistent_grade.return_value = None
 
         # Return a mock certificate
         certificate = dict(
@@ -348,6 +367,7 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.grade == LearnerExporter.GRADE_PASSING
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -356,6 +376,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_course_catalog_api,
             mock_get_course_details,
             mock_get_single_user_grade,
+            mock_get_course_certificate,
             mock_enrollment_api,
     ):
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
@@ -364,6 +385,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_course_certificate.return_value = None
 
         # Return self-paced course details
         mock_get_course_details.return_value = mock_course_overview(
@@ -387,7 +409,7 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.enterprise_course_enrollment_id == enrollment.id
             assert not report.course_completed
             assert report.completed_timestamp is None
-            assert report.grade is None
+            assert report.grade is LearnerExporter.GRADE_INCOMPLETE
 
     @ddt.data(
         # passing grade with no course end date
@@ -409,7 +431,9 @@ class TestLearnerExporter(unittest.TestCase):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseEnrollment')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
@@ -425,7 +449,9 @@ class TestLearnerExporter(unittest.TestCase):
             mock_is_course_completed,
             mock_get_completion_summary,
             mock_get_course_details,
+            mock_get_persistent_grade,
             mock_get_single_user_grade,
+            mock_get_course_certificate,
             mock_course_enrollment_class
     ):
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
@@ -437,6 +463,12 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
 
         mock_is_course_completed.return_value = True
+        mock_get_course_certificate.return_value = None
+        mock_get_persistent_grade.return_value = mock_persistent_course_grade(
+            user_id='a-user-id',
+            course_id=self.course_id,
+            passed_timestamp=expected_completion,
+        )
 
         # Mock self-paced course details
         mock_get_course_details.return_value = mock_course_overview(
@@ -512,6 +544,7 @@ class TestLearnerExporter(unittest.TestCase):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
@@ -528,11 +561,13 @@ class TestLearnerExporter(unittest.TestCase):
             mock_get_course_details,
             mock_get_single_user_grade,
             mock_get_course_certificate,
+            mock_get_persistent_grade,
             mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
         mock_is_course_completed.return_value = True
+        mock_get_persistent_grade.return_value = None
 
         enrollment1 = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -644,6 +679,8 @@ class TestLearnerExporter(unittest.TestCase):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseEnrollment')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
@@ -660,6 +697,8 @@ class TestLearnerExporter(unittest.TestCase):
             mock_get_completion_summary,
             mock_get_course_details,
             mock_get_single_user_grade,
+            mock_get_course_certificate,
+            mock_get_persistent_grade,
             mock_course_enrollment_class
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
@@ -672,6 +711,7 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
 
         mock_is_course_completed.return_value = True
+        mock_get_course_certificate.return_value = None
 
         # Set the audit track data passback configuration
         self.enterprise_customer.enable_audit_enrollment = enable_audit_enrollment
@@ -690,6 +730,12 @@ class TestLearnerExporter(unittest.TestCase):
 
         # Mock enrollment data, in particular the enrollment mode
         mock_course_enrollment_class.objects.get.return_value.mode = mode
+
+        mock_get_persistent_grade.return_value = mock_persistent_course_grade(
+            user_id='a-user-id',
+            course_id=self.course_key,
+            passed_timestamp=self.YESTERDAY_TIMESTAMP,
+        )
 
         # Collect the learner data
         with freeze_time(self.NOW):
@@ -789,8 +835,8 @@ class TestLearnerExporter(unittest.TestCase):
         enterprise_enrollment = create_ent_enrollment_mock()
         incomplete_count = 0
 
-        exporter.collect_grades_data = MagicMock(return_value=(None, None, None, None, ))
-        completed_date_from_api, _, _, _ = exporter.get_grades_summary(
+        exporter.collect_grades_data = MagicMock(return_value=(None, None, None, None, None))
+        completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
             course_details,
             enterprise_enrollment,
             'test-channel',
@@ -812,8 +858,8 @@ class TestLearnerExporter(unittest.TestCase):
         incomplete_count = 0
 
         a_date = timezone.now()
-        exporter.collect_grades_data = MagicMock(return_value=(a_date, None, None, None, ))
-        completed_date_from_api, _, _, _ = exporter.get_grades_summary(
+        exporter.collect_grades_data = MagicMock(return_value=(a_date, None, None, None, None))
+        completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
             course_details,
             enterprise_enrollment,
             'test-channel',
@@ -821,3 +867,54 @@ class TestLearnerExporter(unittest.TestCase):
         )
         assert completed_date_from_api is a_date
         exporter.collect_grades_data.assert_called_once()
+
+    def test_audit_enrollment_does_not_check_cert(self):
+        '''
+        If cert data available, use it prefentially for reporting learner data
+        Else use grades data if available
+        '''
+        exporter = LearnerExporter('fake-user', self.config)
+        a_date = timezone.now()
+        course_details = mock_course_overview()
+        enterprise_enrollment_audit_track = create_ent_enrollment_mock()
+        incomplete_count = 0
+
+        # audit enrollment should not call cert api
+        exporter.collect_grades_data = MagicMock(return_value=(a_date, None, None, None, None))
+        exporter.collect_certificate_data = MagicMock(return_value=())
+        completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
+            course_details,
+            enterprise_enrollment_audit_track,
+            'test-channel',
+            incomplete_count
+        )
+        assert completed_date_from_api is a_date
+        exporter.collect_grades_data.assert_called_once()
+        exporter.collect_certificate_data.assert_not_called()
+
+        exporter.collect_grades_data.reset_mock()
+        exporter.collect_certificate_data.reset_mock()
+
+    def test_nonnaudit_enrollment_checks_cert(self):
+        '''
+        If cert data available, use it prefentially for reporting learner data
+        Else use grades data if available
+        '''
+        exporter = LearnerExporter('fake-user', self.config)
+        a_date = timezone.now()
+        course_details = mock_course_overview()
+        enterprise_enrollment_verified_track = create_ent_enrollment_mock(False)
+        incomplete_count = 0
+
+        # non audit enrollment should call cert api
+        exporter.collect_grades_data = MagicMock(return_value=('2022-09-09', None, False, None, self.NOW_TIMESTAMP))
+        exporter.collect_certificate_data = MagicMock(return_value=(a_date, None, True, 0.12, self.NOW_TIMESTAMP))
+        completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
+            course_details,
+            enterprise_enrollment_verified_track,
+            'test-channel',
+            incomplete_count
+        )
+        assert completed_date_from_api is a_date
+        exporter.collect_grades_data.assert_not_called()
+        exporter.collect_certificate_data.assert_called_once()

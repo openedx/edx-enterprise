@@ -272,8 +272,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
-                    f'Skipping in-progress enterprise enrollment:: id: {enterprise_enrollment_id}'
-                    f', course_id: {learner_data.course_id}'
+                    f'Skipping in-progress enterprise enrollment record:: {learner_data}'
                 ))
                 continue
 
