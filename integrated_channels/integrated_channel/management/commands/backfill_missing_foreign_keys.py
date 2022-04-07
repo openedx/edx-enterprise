@@ -67,7 +67,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     Backfill missing audit record foreign keys.
     ''')
 
-    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=5000):
+    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=10000):
         """
         using limit/offset does a lot of table scanning to reach higher offsets
         this scanning can be slow on very large tables
@@ -104,13 +104,12 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         enterprise_customer_uuid and/or plugin_config_id
         """
         try:
-            for models_pair in MODELS.values():
-                ConfigModel, LearnerAuditModel = models_pair
+            for channel_code, (ConfigModel, LearnerAuditModel) in MODELS.items():
                 LOGGER.info(f'{LearnerAuditModel.__name__}')
                 # make reentrant ie pickup where we've left off in case the job needs to be restarted
                 # only need to check plugin config OR enterprise customer uuid
-                only_missing_fks = Q(plugin_configuration_id__isnull=True)
-                for audit_record_batch in self.batch_by_pk(LearnerAuditModel, extra_filter=only_missing_fks):
+                only_missing_ld_fks = Q(plugin_configuration_id__isnull=True)
+                for audit_record_batch in self.batch_by_pk(LearnerAuditModel, extra_filter=only_missing_ld_fks):
                     for audit_record in audit_record_batch:
                         enterprise_customer = self.find_ent_cust(audit_record.enterprise_course_enrollment_id)
                         if enterprise_customer is None:
@@ -125,21 +124,18 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         audit_record.enterprise_customer_uuid = enterprise_customer.uuid
                         audit_record.plugin_configuration_id = config.id
                         audit_record.save()
-            # make reentrant ie pickup where we've left off in case the job needs to be restarted
-            for audit_record_batch in self.batch_by_pk(ContentMetadataItemTransmission, extra_filter=only_missing_fks):
-                for audit_record in audit_record_batch:
-                    # if we cant lookup by code, skip
-                    channel_models = MODELS[audit_record.integrated_channel_code]
-                    if channel_models is None:
-                        continue
-                    ConfigModel = channel_models[0]
-                    if audit_record.enterprise_customer is None:
-                        continue
-                    config = ConfigModel.objects.filter(enterprise_customer=audit_record.enterprise_customer).first()
-                    LOGGER.info(f'ContentMetadataItemTransmission <{audit_record.pk}> '
-                                f'plugin_configuration_id={config.id}')
-                    audit_record.plugin_configuration_id = config.id
-                    audit_record.save()
+                # migrate the content_metadata for this channel code, the _AS ones will be empty, effectively a skip
+                only_missing_cm_fks = Q(integrated_channel_code=channel_code, plugin_configuration_id__isnull=True)
+                # make reentrant ie pickup where we've left off in case the job needs to be restarted
+                for audit_record_batch in self.batch_by_pk(ContentMetadataItemTransmission, extra_filter=only_missing_cm_fks):  # pylint: disable=line-too-long
+                    for audit_record in audit_record_batch:
+                        if audit_record.enterprise_customer is None:
+                            continue
+                        config = ConfigModel.objects.filter(enterprise_customer=audit_record.enterprise_customer).first()  # pylint: disable=line-too-long
+                        LOGGER.info(f'ContentMetadataItemTransmission {channel_code} <{audit_record.pk}> '
+                                    f'plugin_configuration_id={config.id}')
+                        audit_record.plugin_configuration_id = config.id
+                        audit_record.save()
         except Exception as exc:
             LOGGER.exception('backfill_missing_foreign_keys failed', exc_info=exc)
             raise exc
