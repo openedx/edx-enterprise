@@ -149,8 +149,8 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
-        client._get_course_id = unittest.mock.MagicMock(name='_get_course_id')
-        client._get_course_id.return_value = self.moodle_course_id
+        client._get_course_id = unittest.mock.MagicMock(name='_get_course_id')  # pylint: disable=protected-access
+        client._get_course_id.return_value = self.moodle_course_id  # pylint: disable=protected-access
         client.update_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
