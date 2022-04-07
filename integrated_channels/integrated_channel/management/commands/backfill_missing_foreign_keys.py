@@ -44,15 +44,15 @@ from integrated_channels.sap_success_factors.models import (
 )
 
 MODELS = {
+    'MOODLE': [MoodleEnterpriseCustomerConfiguration, MoodleLearnerDataTransmissionAudit],
+    'CSOD': [CornerstoneEnterpriseCustomerConfiguration, CornerstoneLearnerDataTransmissionAudit],
     'BLACKBOARD': [BlackboardEnterpriseCustomerConfiguration, BlackboardLearnerDataTransmissionAudit],
     'BLACKBOARD_ASMT': [BlackboardEnterpriseCustomerConfiguration, BlackboardLearnerAssessmentDataTransmissionAudit],
     'CANVAS': [CanvasEnterpriseCustomerConfiguration, CanvasLearnerDataTransmissionAudit],
     'CANVAS_ASMT': [CanvasEnterpriseCustomerConfiguration, CanvasLearnerAssessmentDataTransmissionAudit],
-    'CSOD': [CornerstoneEnterpriseCustomerConfiguration, CornerstoneLearnerDataTransmissionAudit],
     'DEGREED': [DegreedEnterpriseCustomerConfiguration, DegreedLearnerDataTransmissionAudit],
     'DEGREED2': [Degreed2EnterpriseCustomerConfiguration, Degreed2LearnerDataTransmissionAudit],
     'GENERIC': [GenericEnterpriseCustomerPluginConfiguration, GenericLearnerDataTransmissionAudit],
-    'MOODLE': [MoodleEnterpriseCustomerConfiguration, MoodleLearnerDataTransmissionAudit],
     'SAP': [SAPSuccessFactorsEnterpriseCustomerConfiguration, SapSuccessFactorsLearnerDataTransmissionAudit],
 }
 
@@ -67,7 +67,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     Backfill missing audit record foreign keys.
     ''')
 
-    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=100):
+    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=5000):
         """
         using limit/offset does a lot of table scanning to reach higher offsets
         this scanning can be slow on very large tables
@@ -112,7 +112,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 only_missing_fks = Q(plugin_configuration_id__isnull=True)
                 for audit_record_batch in self.batch_by_pk(LearnerAuditModel, extra_filter=only_missing_fks):
                     for audit_record in audit_record_batch:
-                        LOGGER.info(f'{LearnerAuditModel.__name__} <{audit_record.pk}>')
                         enterprise_customer = self.find_ent_cust(audit_record.enterprise_course_enrollment_id)
                         if enterprise_customer is None:
                             continue
@@ -129,7 +128,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             # make reentrant ie pickup where we've left off in case the job needs to be restarted
             for audit_record_batch in self.batch_by_pk(ContentMetadataItemTransmission, extra_filter=only_missing_fks):
                 for audit_record in audit_record_batch:
-                    LOGGER.info(f'ContentMetadataItemTransmission <{audit_record.pk}>')
                     # if we cant lookup by code, skip
                     channel_models = MODELS[audit_record.integrated_channel_code]
                     if channel_models is None:
@@ -142,7 +140,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                                 f'plugin_configuration_id={config.id}')
                     audit_record.plugin_configuration_id = config.id
                     audit_record.save()
-        except Exception as exc:  # pylint: disable=broad-except
+        except Exception as exc:
             LOGGER.exception('backfill_missing_foreign_keys failed', exc_info=exc)
             raise exc
 
