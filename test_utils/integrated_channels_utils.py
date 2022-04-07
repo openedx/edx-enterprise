@@ -40,6 +40,7 @@ def mock_single_learner_grade(percent=0.0, passing=False):
     }
     return namedtuple("CourseGrade", dictionary.keys())(*dictionary.values())
 
+
 def mock_persistent_course_grade(user_id, course_id, passed_timestamp):
     """Generate an object matching the PersistentCourseGrade from edx-platform"""
     dictionary = {

@@ -835,7 +835,7 @@ class TestLearnerExporter(unittest.TestCase):
         enterprise_enrollment = create_ent_enrollment_mock()
         incomplete_count = 0
 
-        exporter.collect_grades_data = MagicMock(return_value=(None, None, None, None, None ))
+        exporter.collect_grades_data = MagicMock(return_value=(None, None, None, None, None))
         completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
             course_details,
             enterprise_enrollment,

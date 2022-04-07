@@ -22,6 +22,7 @@ except ImportError:
 
 from enterprise.utils import NotConnectedToOpenEdX
 
+
 def get_persistent_grade(course_key, user):
     """
     Get the persistent course grade record for this course and user, or None
@@ -31,6 +32,7 @@ def get_persistent_grade(course_key, user):
     except PersistentCourseGrade.DoesNotExist:
         return None
     return grade
+
 
 def get_course_certificate(course_key, user):
     """
