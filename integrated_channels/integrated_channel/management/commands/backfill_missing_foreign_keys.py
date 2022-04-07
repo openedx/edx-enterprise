@@ -132,6 +132,8 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         if audit_record.enterprise_customer is None:
                             continue
                         config = ConfigModel.objects.filter(enterprise_customer=audit_record.enterprise_customer).first()  # pylint: disable=line-too-long
+                        if config is None:
+                            continue
                         LOGGER.info(f'ContentMetadataItemTransmission {channel_code} <{audit_record.pk}> '
                                     f'plugin_configuration_id={config.id}')
                         audit_record.plugin_configuration_id = config.id

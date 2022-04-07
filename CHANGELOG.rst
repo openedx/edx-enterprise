@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.42.5]
+---------
+fix: improve guards on fk data backfill job
+
 [3.42.4]
 ---------
 feat: updated logic for completions in integrated channels
