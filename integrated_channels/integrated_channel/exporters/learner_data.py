@@ -322,7 +322,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 # we will try getting grades info using the alternative api in this case
                 # if that also does not exist then we have nothing to report
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
-                  self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
+                    self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
                     f'No certificate found, obtained grading data from grades api.'
