@@ -310,10 +310,10 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 completed_date_from_api = timezone.now()
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
-                self._collect_certificate_data(enterprise_enrollment, channel_name)
+                self.collect_certificate_data(enterprise_enrollment, channel_name)
             LOGGER.info(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'_collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
+                f'collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
                 f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
                 f' Passed timestamp: {passed_timestamp}'
             ))
@@ -601,7 +601,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             )
         ]
 
-    def _collect_certificate_data(self, enterprise_enrollment, channel_name):
+    def collect_certificate_data(self, enterprise_enrollment, channel_name):
         """
         Collect the learner completion data from the course certificate.
 

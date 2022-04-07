@@ -15,7 +15,11 @@ from django.utils import timezone
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import GenericLearnerDataTransmissionAudit
 from test_utils import factories
-from test_utils.integrated_channels_utils import mock_course_overview, mock_persistent_course_grade, mock_single_learner_grade
+from test_utils.integrated_channels_utils import (
+    mock_course_overview,
+    mock_persistent_course_grade,
+    mock_single_learner_grade,
+)
 
 
 def create_ent_enrollment_mock(is_audit=True):
@@ -27,7 +31,7 @@ def create_ent_enrollment_mock(is_audit=True):
     enterprise_enrollment.enterprise_customer_user.user_id = 1
     enterprise_enrollment.enterprise_customer_user.enterprise_customer = MagicMock()
     enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid = 'abc'
-    enterprise_enrollment.is_audit_enrollment = MagicMock(return_value=is_audit)
+    enterprise_enrollment.is_audit_enrollment = is_audit
     return enterprise_enrollment
 
 
@@ -863,3 +867,54 @@ class TestLearnerExporter(unittest.TestCase):
         )
         assert completed_date_from_api is a_date
         exporter.collect_grades_data.assert_called_once()
+
+    def test_audit_enrollment_does_not_check_cert(self):
+        '''
+        If cert data available, use it prefentially for reporting learner data
+        Else use grades data if available
+        '''
+        exporter = LearnerExporter('fake-user', self.config)
+        a_date = timezone.now()
+        course_details = mock_course_overview()
+        enterprise_enrollment_audit_track = create_ent_enrollment_mock()
+        incomplete_count = 0
+
+        # audit enrollment should not call cert api
+        exporter.collect_grades_data = MagicMock(return_value=(a_date, None, None, None, None))
+        exporter.collect_certificate_data = MagicMock(return_value=())
+        completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
+            course_details,
+            enterprise_enrollment_audit_track,
+            'test-channel',
+            incomplete_count
+        )
+        assert completed_date_from_api is a_date
+        exporter.collect_grades_data.assert_called_once()
+        exporter.collect_certificate_data.assert_not_called()
+
+        exporter.collect_grades_data.reset_mock()
+        exporter.collect_certificate_data.reset_mock()
+
+    def test_nonnaudit_enrollment_checks_cert(self):
+        '''
+        If cert data available, use it prefentially for reporting learner data
+        Else use grades data if available
+        '''
+        exporter = LearnerExporter('fake-user', self.config)
+        a_date = timezone.now()
+        course_details = mock_course_overview()
+        enterprise_enrollment_verified_track = create_ent_enrollment_mock(False)
+        incomplete_count = 0
+
+        # non audit enrollment should call cert api
+        exporter.collect_grades_data = MagicMock(return_value=('2022-09-09', None, False, None, self.NOW_TIMESTAMP))
+        exporter.collect_certificate_data = MagicMock(return_value=(a_date, None, True, 0.12, self.NOW_TIMESTAMP))
+        completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
+            course_details,
+            enterprise_enrollment_verified_track,
+            'test-channel',
+            incomplete_count
+        )
+        assert completed_date_from_api is a_date
+        exporter.collect_grades_data.assert_not_called()
+        exporter.collect_certificate_data.assert_called_once()
