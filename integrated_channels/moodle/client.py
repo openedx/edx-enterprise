@@ -295,19 +295,29 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         )
         return response
 
-    def get_course_id(self, key):
+    def _get_course_id(self, key):
         """
-        Obtain course from Moodle by course key and parse out the id.
+        Obtain course from Moodle by course key and parse out the id. No exception thrown.
         """
         response = self._get_courses(key)
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
+            return None
+        else:
+            return parsed_response['courses'][0]['id']
+
+    def get_course_id(self, key):
+        """
+        Obtain course from Moodle by course key and parse out the id. Raise on not found.
+        """
+        course_id = self._get_course_id(key)
+        if not course_id:
             raise ClientError(
                 'MoodleAPIClient request failed: 404 Course key '
                 '"{}" not found in Moodle.'.format(key),
                 HTTPStatus.NOT_FOUND.value
             )
-        return parsed_response['courses'][0]['id']
+        return course_id
 
     @moodle_request_wrapper
     def _wrapped_create_course_completion(self, user_id, payload):
@@ -366,10 +376,14 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):
-        moodle_course_id = self.get_course_id(serialized_data['courses[0][idnumber]'])
-        serialized_data['courses[0][id]'] = moodle_course_id
-        serialized_data['wsfunction'] = 'core_course_update_courses'
-        return self._post(serialized_data)
+        moodle_course_id = self._get_course_id(serialized_data['courses[0][idnumber]'])
+        # if we cannot find the course, lets create it
+        if moodle_course_id:
+            serialized_data['courses[0][id]'] = moodle_course_id
+            serialized_data['wsfunction'] = 'core_course_update_courses'
+            return self._post(serialized_data)
+        else:
+            return self.create_content_metadata(serialized_data)
 
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
