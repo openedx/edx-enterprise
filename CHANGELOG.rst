@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.42.4]
+---------
+feat: updated logic for completions in integrated channels
+
 [3.42.3]
 ---------
 feat: additional fk data backfill performance improvements
