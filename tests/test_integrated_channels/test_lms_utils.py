@@ -53,7 +53,8 @@ class TestLMSUtils(unittest.TestCase):
         assert single_user_grade == expected_grade
         mock_course_grade_factory.return_value.read.assert_called_with(
             self.user,
-            course_key=CourseKey.from_string(A_GOOD_COURSE_ID)
+            course_key=CourseKey.from_string(A_GOOD_COURSE_ID),
+            create_if_needed=False,
         )
 
     @mock.patch('integrated_channels.lms_utils.CourseGradeFactory')
