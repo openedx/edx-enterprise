@@ -138,8 +138,10 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
     def test_api_client_uses_config_session_tokens(
         self,
+        mock_get_persistent_grade,
         mock_is_course_completed,
         mock_get_course_details,
         mock_get_course_certificate,
@@ -151,6 +153,12 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
 
         self.config.session_token = 'test_value'
         self.config.save()
+
+        mock_get_persistent_grade.return_value = mock_persistent_course_grade(
+            user_id='a-user-id',
+            course_id=self.course_id,
+            passed_timestamp="2018-05-21T12:58:17+00:00",
+        )
 
         mock_is_course_completed.return_value = True
         mock_get_course_details.return_value = mock_course_overview(
@@ -275,8 +283,10 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
     def test_transmit_single_learner_data_performs_only_one_transmission(
         self,
+        mock_get_persistent_grade,
         mock_get_course_details,
         mock_get_course_certificate
     ):
@@ -291,6 +301,12 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         course_details = mock_course_overview(
             pacing="instructor",
             end="2038-06-21T12:58:17.428373Z",
+        )
+
+        mock_get_persistent_grade.return_value = mock_persistent_course_grade(
+            user_id='a-user-id',
+            course_id=self.course_id,
+            passed_timestamp="2018-05-21T12:58:17+00:00",
         )
 
         mock_get_course_details.return_value = course_details
