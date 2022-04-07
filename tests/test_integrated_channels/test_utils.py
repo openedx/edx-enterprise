@@ -115,7 +115,8 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=True)
-        assert utils.is_course_completed(enterprise_enrollment, None, True, 0)
+        assert not utils.is_course_completed(enterprise_enrollment, None, True, 0)
+        assert utils.is_course_completed(enterprise_enrollment, True, 0, None)
 
     @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
     def test_is_course_completed_audit_incomplete(self, mock_get_course_run_for_enrollment):
@@ -125,7 +126,7 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_non_expired
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=True)
-        assert not utils.is_course_completed(enterprise_enrollment, None, True, 0)
+        assert not utils.is_course_completed(enterprise_enrollment, False, 1, None)
 
     @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
     def test_is_course_completed_nonaudit_complete(self, mock_get_course_run_for_enrollment):
@@ -135,7 +136,7 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
-        assert utils.is_course_completed(enterprise_enrollment, '2000-10-13T13:11:04Z', True, 0)
+        assert utils.is_course_completed(enterprise_enrollment, True, 0, '2000-10-13T13:11:04Z')
 
     @mock.patch('integrated_channels.utils.get_course_run_for_enrollment')
     def test_is_course_completed_nonaudit_incomplete(self, mock_get_course_run_for_enrollment):
@@ -145,7 +146,8 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         }]}
         mock_get_course_run_for_enrollment.return_value = course_run_verify_expired
         enterprise_enrollment = ent_enrollment(is_audit_enrollment=False)
-        assert not utils.is_course_completed(enterprise_enrollment, None, False, 0)
+        assert not utils.is_course_completed(enterprise_enrollment, True, 0, None)
+        assert not utils.is_course_completed(enterprise_enrollment, False, 0, '2000-10-13T13:11:04Z')
 
     @ddt.data((True, True,), (False, False,))
     @ddt.unpack
