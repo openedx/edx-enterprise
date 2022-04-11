@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing
 
+[3.44.0]
+--------
+fix: override get_assignments() so that active enterprise uuids come first.
+
+Overrides the SystemWideEnterpriseUserRoleAssignment.get_assignments() method to return
+a list of (role, context) assignments, where the first item in the list corresponds
+to the currently active enterprise for the user.
+
 [3.43.1]
 ---------
 chore: replace enterprise customer drop-downs in django admin
