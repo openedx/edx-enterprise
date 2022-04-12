@@ -18,7 +18,7 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
         'content_id',
         'channel_metadata'
     )
-    
+
     search_fields = (
         'enterprise_customer__name',
         'enterprise_customer__uuid',
