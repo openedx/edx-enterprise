@@ -27,6 +27,11 @@ class XAPILRSConfigurationAdmin(admin.ModelAdmin):
         'endpoint',
         'modified',
     )
+
+    raw_id_fields = (
+        'enterprise_customer',
+    )
+
     ordering = ('enterprise_customer__name', )
     list_filter = ('active', )
     search_fields = ('enterprise_customer__name',)

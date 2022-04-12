@@ -35,4 +35,8 @@ class MoodleEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     Django admin model for MoodleEnterpriseCustomerConfiguration.
     """
 
+    raw_id_fields = (
+        'enterprise_customer',
+    )
+
     form = MoodleEnterpriseCustomerConfigurationForm

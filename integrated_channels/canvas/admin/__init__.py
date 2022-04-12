@@ -29,6 +29,10 @@ class CanvasEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         "transmission_chunk_size",
     )
 
+    raw_id_fields = (
+        "enterprise_customer",
+    )
+
     search_fields = ("enterprise_customer_name",)
 
     class Meta:

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing
 
+[3.43.1]
+---------
+chore: replace enterprise customer drop-downs in django admin
+
 [3.43.0]
 ---------
 feat: allow admins to remove learners from org
