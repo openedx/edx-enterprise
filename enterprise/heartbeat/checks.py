@@ -3,8 +3,12 @@ Perform health checks om the services enterprise is dependant on.
 """
 import traceback
 
-from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
-from slumber.exceptions import HttpServerError, SlumberBaseException
+from requests.exceptions import (  # pylint: disable=redefined-builtin
+    ConnectionError,
+    HTTPError,
+    RequestException,
+    Timeout,
+)
 
 from enterprise.api_client.discovery import NoAuthDiscoveryClient
 from enterprise.api_client.ecommerce import NoAuthEcommerceClient
@@ -31,11 +35,11 @@ def check_lms():
     client = NoAuthLMSClient()
     try:
         client.get_health()
-    except HttpServerError as error:
+    except HTTPError as error:
         raise LMSNotAvailable('Service is down.', traceback.format_exc()) from error
     except (ConnectionError, Timeout) as error:
         raise LMSNotAvailable('Service is not accessible.', traceback.format_exc()) from error
-    except SlumberBaseException as exception:
+    except RequestException as exception:
         raise LMSNotAvailable(
             'An error occurred while checking service status.', traceback.format_exc()
         ) from exception
@@ -56,11 +60,11 @@ def check_ecommerce():
     client = NoAuthEcommerceClient()
     try:
         client.get_health()
-    except HttpServerError as error:
+    except HTTPError as error:
         raise EcommerceNotAvailable('Service is down.', traceback.format_exc()) from error
     except (ConnectionError, Timeout) as error:
         raise EcommerceNotAvailable('Service is not accessible.', traceback.format_exc()) from error
-    except SlumberBaseException as exception:
+    except RequestException as exception:
         raise EcommerceNotAvailable(
             'An error occurred while checking service status.', traceback.format_exc()
         ) from exception
@@ -81,11 +85,11 @@ def check_discovery():
     client = NoAuthDiscoveryClient()
     try:
         client.get_health()
-    except HttpServerError as error:
+    except HTTPError as error:
         raise DiscoveryNotAvailable('Service is down.', traceback.format_exc()) from error
     except (ConnectionError, Timeout) as error:
         raise DiscoveryNotAvailable('Service is not accessible.', traceback.format_exc()) from error
-    except SlumberBaseException as exception:
+    except RequestException as exception:
         raise DiscoveryNotAvailable(
             'An error occurred while checking service status.', traceback.format_exc()
         ) from exception
@@ -106,11 +110,11 @@ def check_enterprise_catalog():
     client = NoAuthEnterpriseCatalogClient()
     try:
         client.get_health()
-    except HttpServerError as error:
+    except HTTPError as error:
         raise EnterpriseCatalogNotAvailable('Service is down.', traceback.format_exc()) from error
     except (ConnectionError, Timeout) as error:
         raise EnterpriseCatalogNotAvailable('Service is not accessible.', traceback.format_exc()) from error
-    except SlumberBaseException as exception:
+    except RequestException as exception:
         raise EnterpriseCatalogNotAvailable(
             'An error occurred while checking service status.', traceback.format_exc()
         ) from exception

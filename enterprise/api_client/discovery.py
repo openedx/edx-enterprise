@@ -4,11 +4,9 @@ Utilities to get details from the course catalog API.
 
 from logging import getLogger
 
-from edx_rest_api_client.client import EdxRestApiClient
-from edx_rest_api_client.exceptions import SlumberBaseException
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
-from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
+from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
 
 from django.conf import settings
 from django.core.cache import cache
@@ -16,17 +14,13 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 
 from enterprise import utils
+from enterprise.api_client.client import NoAuthAPIClient, UserAPIClient
 from enterprise.utils import NotConnectedToOpenEdX, get_configuration_value_for_site
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-
-try:
-    from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder
-except ImportError:
-    JwtBuilder = None
 
 try:
     from openedx.core.djangoapps.catalog.models import CatalogIntegration
@@ -42,24 +36,11 @@ except ImportError:
 LOGGER = getLogger(__name__)
 
 
-def course_discovery_api_client(user, catalog_url):
+class CourseCatalogApiClient(UserAPIClient):
     """
-    Return a Course Discovery API client setup with authentication for the specified user.
+    The API client to make calls to the Catalog API.
     """
-    if JwtBuilder is None:
-        raise NotConnectedToOpenEdX(
-            _("To get a Catalog API client, this package must be "
-              "installed in an Open edX environment.")
-        )
-
-    jwt = JwtBuilder.create_jwt_for_user(user)
-    return EdxRestApiClient(catalog_url, jwt=jwt)
-
-
-class CourseCatalogApiClient:
-    """
-    Object builds an API client to make calls to the Catalog API.
-    """
+    APPEND_SLASH = True
 
     SEARCH_ALL_ENDPOINT = 'search/all/'
     CATALOGS_COURSES_ENDPOINT = 'catalogs/{}/courses/'
@@ -72,11 +53,7 @@ class CourseCatalogApiClient:
 
     def __init__(self, user, site=None):
         """
-        Create an Course Catalog API client setup with authentication for the specified user.
-
-        This method retrieves an authenticated API client that can be used
-        to access the course catalog API. It raises an exception to be caught at
-        a higher level if the package doesn't have OpenEdX resources available.
+        Check required services are up and running, instantiate the client.
         """
         if CatalogIntegration is None:
             raise NotConnectedToOpenEdX(
@@ -89,22 +66,20 @@ class CourseCatalogApiClient:
                   "installed in an Open edX environment.")
             )
 
-        self.user = user
-        self.catalog_url = get_configuration_value_for_site(
+        self.API_BASE_URL = get_configuration_value_for_site(  # pylint: disable=invalid-name
             site,
             'COURSE_CATALOG_API_URL',
             settings.COURSE_CATALOG_API_URL
         )
-        self.client = course_discovery_api_client(user, self.catalog_url)
+        super().__init__(user)
 
-    @staticmethod
-    def traverse_pagination(response, endpoint, content_filter_query, query_params):
+    def traverse_pagination(self, response, api_url, content_filter_query, query_params):
         """
         Traverse a paginated API response and extracts and concatenates "results" returned by API.
 
         Arguments:
             response (dict): API response object.
-            endpoint (Slumber.Resource): API endpoint object.
+            api_url (str): API endpoint path.
             content_filter_query (dict): query parameters used to filter catalog results.
             query_params (dict): query parameters used to paginate results.
 
@@ -116,19 +91,24 @@ class CourseCatalogApiClient:
         page = 1
         while response.get('next'):
             page += 1
-            response = endpoint().post(content_filter_query, **dict(query_params, page=page))
+            response = self.client.post(api_url, data=content_filter_query, params=dict(query_params, page=page))
+            response.raise_for_status()
+            response = response.json()
             results += response.get('results', [])
 
         return results
 
+    @UserAPIClient.refresh_token
     def get_catalog_results_from_discovery(self, content_filter_query, query_params=None, traverse_pagination=False):
         """
-            Return results from the discovery service's search/all endpoint."""
-
-        endpoint = getattr(self.client, self.SEARCH_ALL_ENDPOINT)
-        response = endpoint().post(data=content_filter_query, **query_params)
+        Return results from the discovery service's search/all endpoint.
+        """
+        api_url = self.get_api_url(self.SEARCH_ALL_ENDPOINT)
+        response = self.client.post(api_url, data=content_filter_query, params=query_params)
+        response.raise_for_status()
+        response = response.json()
         if traverse_pagination:
-            response['results'] = self.traverse_pagination(response, endpoint, content_filter_query, query_params)
+            response['results'] = self.traverse_pagination(response, api_url, content_filter_query, query_params)
             response['next'] = response['previous'] = None
         return response
 
@@ -187,11 +167,11 @@ class CourseCatalogApiClient:
             LOGGER.exception(
                 'Attempted to call course-discovery search/all/ endpoint with the following parameters: '
                 'content_filter_query: %s, query_params: %s, traverse_pagination: %s. '
-                'Failed to retrieve data from the catalog API. content -- [%s]',
+                'Failed to retrieve data from the catalog API. Error -- [%s]',
                 content_filter_query,
                 query_params,
                 traverse_pagination,
-                getattr(ex, 'content', '')
+                str(ex)
             )
             # We need to bubble up failures when we encounter them instead of masking them!
             raise ex
@@ -363,6 +343,7 @@ class CourseCatalogApiClient:
             default=None,
         )
 
+    @UserAPIClient.refresh_token
     def _load_data(self, resource, default=DEFAULT_VALUE_SAFEGUARD, **kwargs):
         """
         Load data from API client.
@@ -380,10 +361,11 @@ class CourseCatalogApiClient:
             return get_edx_api_data(
                 api_config=CatalogIntegration.current(),
                 resource=resource,
-                api=self.client,
+                api_client=self.client,
+                base_api_url=self.API_BASE_URL,
                 **kwargs
             ) or default_val
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+        except (RequestException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
                 'Failed to load data from resource [%s] with kwargs [%s] due to: [%s]',
                 resource, kwargs, str(exc)
@@ -432,36 +414,16 @@ class CourseCatalogApiServiceClient(CourseCatalogApiClient):
         else:
             raise ImproperlyConfigured(_("There is no active CatalogIntegration."))
 
-    @classmethod
-    def program_exists(cls, program_uuid):
+    def program_exists(self, program_uuid):
         """
         Get whether the program exists or not.
         """
-        try:
-            return bool(cls().get_program_by_uuid(program_uuid))
-        except ImproperlyConfigured:
-            return False
+        return bool(self.get_program_by_uuid(program_uuid))
 
 
-class NoAuthDiscoveryClient:
+class NoAuthDiscoveryClient(NoAuthAPIClient):
     """
     Class to build a course discovery client to make calls to the discovery service.
     """
-
     API_BASE_URL = settings.COURSE_CATALOG_URL_ROOT
     APPEND_SLASH = False
-
-    def __init__(self):
-        """
-        Create a course discovery client.
-        """
-        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
-
-    def get_health(self):
-        """
-        Retrieve health details for course discovery service.
-
-        Returns:
-            dict: Response containing course discovery service health.
-        """
-        return self.client.health.get()

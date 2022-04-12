@@ -6,21 +6,20 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
-from edx_rest_api_client.client import EdxRestApiClient
-from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
-from slumber.exceptions import HttpNotFoundError, SlumberBaseException
+from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
 
 from django.conf import settings
 
 from enterprise import utils
-from enterprise.api_client.lms import JwtLmsApiClient
+from enterprise.api_client.client import NoAuthAPIClient, UserAPIClient
+
 
 LOGGER = getLogger(__name__)
 
 
-class EnterpriseCatalogApiClient(JwtLmsApiClient):
+class EnterpriseCatalogApiClient(UserAPIClient):
     """
-    Object builds an API client to make calls to the Enterprise Catalog API.
+    The API client to make calls to the Enterprise Catalog API.
     """
 
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
@@ -36,7 +35,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         user = user if user else utils.get_enterprise_worker_user()
         super().__init__(user)
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def create_enterprise_catalog(
             self,
             catalog_uuid,
@@ -48,8 +47,10 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             publish_audit_enrollment_urls,
             catalog_query_uuid,
             query_title=None):
-        """Creates an enterprise catalog."""
-        endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)
+        """
+        Creates an enterprise catalog.
+        """
+        api_url = self.get_api_url(f"{self.ENTERPRISE_CATALOG_ENDPOINT}")
         post_data = {
             'uuid': catalog_uuid,
             'title': title,
@@ -67,15 +68,17 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 catalog_uuid,
                 json.dumps(post_data)
             )
-            return endpoint.post(post_data)
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            response = self.client.post(api_url, json=post_data)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
                 'Failed to create EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
                 catalog_uuid, str(exc)
             )
             return {}
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_enterprise_catalog(self, catalog_uuid, should_raise_exception=True):
         """
         Gets an enterprise catalog.
@@ -88,10 +91,12 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         Returns:
             dict: a dictionary representing an enterprise catalog
         """
-        endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
+        api_url = self.get_api_url(f"{self.ENTERPRISE_CATALOG_ENDPOINT}/{catalog_uuid}")
         try:
-            return endpoint.get()
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            response = self.client.get(api_url)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout) as exc:
             if should_raise_exception:
                 LOGGER.exception(
                     'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
@@ -99,7 +104,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 )
             return {}
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_catalog_diff(self, enterprise_customer_catalog, content_keys, should_raise_exception=True):
         """
         Gets the representational difference between a list of course keys and the current state of content under an
@@ -117,19 +122,21 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             items_found (list): dictionaries of content_keys and date_updated datetimes of content to update
         """
         catalog_uuid = enterprise_customer_catalog.uuid
-        endpoint = getattr(self.client, self.CATALOG_DIFF_ENDPOINT.format(catalog_uuid))
+        api_url = self.get_api_url(self.CATALOG_DIFF_ENDPOINT.format(catalog_uuid))
         body = {'content_keys': content_keys}
 
         items_to_delete = {}
         items_to_create = []
         items_found = []
         try:
-            response = endpoint.post(body)
-            items_to_delete = response.get('items_not_found')
-            items_to_create = response.get('items_not_included')
-            items_found = response.get('items_found')
+            response = self.client.post(api_url, json=body)
+            response.raise_for_status()
+            results = response.json()
+            items_to_delete = results.get('items_not_found')
+            items_to_create = results.get('items_not_included')
+            items_found = results.get('items_found')
 
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+        except (RequestException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
                 'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
                 catalog_uuid, str(exc)
@@ -147,64 +154,70 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         return EnterpriseCatalogApiClient.API_BASE_URL + \
             EnterpriseCatalogApiClient.GET_CONTENT_METADATA_ENDPOINT.format(uuid)
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def update_enterprise_catalog(self, catalog_uuid, **kwargs):
-        """Updates an enterprise catalog."""
-        endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
+        """
+        Updates an enterprise catalog.
+        """
+        api_url = self.get_api_url(f"{self.ENTERPRISE_CATALOG_ENDPOINT}/{catalog_uuid}")
         try:
             LOGGER.info(
                 'Updating Enterprise Catalog %s in the Enterprise Catalog Service with params: %s',
                 catalog_uuid,
                 json.dumps(kwargs)
             )
-            return endpoint.put(kwargs)
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            response = self.client.put(api_url, json=kwargs)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
                 'Failed to update EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
                 catalog_uuid, str(exc)
             )
             return {}
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def delete_enterprise_catalog(self, catalog_uuid):
-        """Deletes an enterprise catalog."""
-        endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
+        """
+        Deletes an enterprise catalog.
+        """
+        api_url = self.get_api_url(f"{self.ENTERPRISE_CATALOG_ENDPOINT}/{catalog_uuid}")
         try:
-            return endpoint.delete()
-        except HttpNotFoundError:
-            LOGGER.warning(
-                'Deleted EnterpriseCustomerCatalog [%s] that was not in enterprise-catalog',
-                catalog_uuid
-            )
-            return {}
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception(
-                'Failed to delete EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
-                catalog_uuid, str(exc)
-            )
+            response = self.client.delete(api_url)
+            response.raise_for_status()
+            return True if 200 <= response.status_code <= 299 else False
+        except (RequestException, ConnectionError, Timeout) as exc:
+            if exc.response and exc.response.status_code == 404:
+                LOGGER.warning(
+                    'Deleted EnterpriseCustomerCatalog [%s] that was not in enterprise-catalog',
+                    catalog_uuid
+                )
+            else:
+                LOGGER.exception(
+                    'Failed to delete EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                    catalog_uuid, str(exc)
+                )
             return {}
 
-    def traverse_get_content_metadata(self, endpoint, query, catalog_uuid):
+    def traverse_get_content_metadata(self, api_url, query, catalog_uuid):
         """
         Helper method to traverse over a paginated response from the enterprise-catalog service's `get_content_metadata`
         endpoint.
         """
         content_metadata = OrderedDict()
         try:
-            response = endpoint.get(**query)
-            for item in utils.traverse_pagination(response, endpoint):
+            response = self.client.get(api_url, params=query)
+            response.raise_for_status()
+            for item in utils.traverse_pagination(response.json(), self.client, api_url):
                 content_id = utils.get_content_metadata_item_id(item)
                 content_metadata[content_id] = item
-        except (SlumberBaseException, ConnectionError, Timeout):
-            LOGGER.exception(
-                f'Failed to get content metadata for Catalog {catalog_uuid} in enterprise-catalog',
-                exc_info=True,
-            )
+        except (RequestException, ConnectionError, Timeout):
+            LOGGER.exception('Failed to get content metadata for Catalog %s in enterprise-catalog', catalog_uuid)
             raise
 
         return content_metadata
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_content_metadata(self, enterprise_customer, enterprise_catalogs=None, content_keys_filter=None):
         """
         Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
@@ -217,12 +230,11 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         Returns:
             list: List of dicts containing content metadata.
         """
-
         content_metadata = OrderedDict()
         enterprise_customer_catalogs = enterprise_catalogs or enterprise_customer.enterprise_customer_catalogs.all()
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
-            endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
+            api_url = self.get_api_url(self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
             # If content keys filter exists then chunk up the keys into reasonable request sizes
             if content_keys_filter:
                 chunked_keys_filter = utils.batch(
@@ -232,15 +244,15 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 # A chunk can be larger than the page size so traverse pagination for each individual chunk
                 for chunk in chunked_keys_filter:
                     query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE, 'content_keys': chunk}
-                    content_metadata.update(self.traverse_get_content_metadata(endpoint, query, catalog_uuid))
+                    content_metadata.update(self.traverse_get_content_metadata(api_url, query, catalog_uuid))
             # Traverse pagination for the get all content response without filters
             else:
                 query = {'page_size': self.GET_CONTENT_METADATA_PAGE_SIZE}
-                content_metadata.update(self.traverse_get_content_metadata(endpoint, query, catalog_uuid))
+                content_metadata.update(self.traverse_get_content_metadata(api_url, query, catalog_uuid))
 
         return list(content_metadata.values())
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def refresh_catalogs(self, enterprise_catalogs):
         """
         Kicks off async tasks to refresh catalogs so recent changes will populate to production without needing to wait
@@ -256,11 +268,12 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         failed_to_refresh_catalogs = []
         for enterprise_customer_catalog in enterprise_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
-            endpoint = getattr(self.client, self.REFRESH_CATALOG_ENDPOINT.format(catalog_uuid))
+            api_url = self.get_api_url(self.REFRESH_CATALOG_ENDPOINT.format(catalog_uuid))
             try:
-                response = endpoint.post()
-                refreshed_catalogs[catalog_uuid] = response['async_task_id']
-            except (SlumberBaseException, ConnectionError, Timeout) as exc:
+                response = self.client.post(api_url)
+                response.raise_for_status()
+                refreshed_catalogs[catalog_uuid] = response.json()['async_task_id']
+            except (RequestException, ConnectionError, Timeout) as exc:
                 LOGGER.exception(
                     'Failed to refresh catalog data for catalog [%s] in enterprise-catalog due to: [%s]',
                     catalog_uuid, str(exc)
@@ -269,19 +282,21 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
 
         return refreshed_catalogs, failed_to_refresh_catalogs
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def contains_content_items(self, catalog_uuid, content_ids):
         """
-        Checks whether an enterprise catalog contains the given content
+        Checks whether an enterprise catalog contains the given content.
 
         The enterprise catalog endpoint does not differentiate between course_run_ids and program_uuids so they can
         be used interchangeably. The two query parameters are left in for backwards compatability with edx-enterprise.
         """
         query_params = {'course_run_ids': content_ids}
-        endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
-        return endpoint.contains_content_items.get(**query_params)['contains_content_items']
+        api_url = self.get_api_url(f"{self.ENTERPRISE_CATALOG_ENDPOINT}/{catalog_uuid}/contains_content_items")
+        response = self.client.get(api_url, params=query_params)
+        response.raise_for_status()
+        return response.json()['contains_content_items']
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def enterprise_contains_content_items(self, enterprise_uuid, content_ids):
         """
         Checks whether an enterprise customer has any catalogs that contain the provided content ids.
@@ -290,29 +305,16 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         interchangeably. The two query parameters are left in for backwards compatability with edx-enterprise.
         """
         query_params = {'course_run_ids': content_ids}
-        endpoint = getattr(self.client, self.ENTERPRISE_CUSTOMER_ENDPOINT)(enterprise_uuid)
-        return endpoint.contains_content_items.get(**query_params)['contains_content_items']
+        api_url = self.get_api_url(f"{self.ENTERPRISE_CUSTOMER_ENDPOINT}/{enterprise_uuid}/contains_content_items")
+        response = self.client.get(api_url, params=query_params)
+        response.raise_for_status()
+        return response.json()['contains_content_items']
 
 
-class NoAuthEnterpriseCatalogClient:
+class NoAuthEnterpriseCatalogClient(NoAuthAPIClient):
     """
-    Class to build a enterprise catalog client to make calls to the discovery service.
+    The enterprise catalog API client to make calls to the discovery service.
     """
 
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL
     APPEND_SLASH = False
-
-    def __init__(self):
-        """
-        Create an enterprise catalog client.
-        """
-        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
-
-    def get_health(self):
-        """
-        Retrieve health details for enterprise catalog service.
-
-        Returns:
-            dict: Response containing enterprise catalog service health.
-        """
-        return self.client.health.get()

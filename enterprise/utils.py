@@ -946,7 +946,7 @@ def get_cache_key(**kwargs):
     return get_django_cache_key(**kwargs)
 
 
-def traverse_pagination(response, endpoint):
+def traverse_pagination(response, client, api_url):
     """
     Traverse a paginated API response.
 
@@ -954,8 +954,9 @@ def traverse_pagination(response, endpoint):
     APIs.
 
     Arguments:
-        response (Dict): Current response dict from service API
-        endpoint (slumber Resource object): slumber Resource object from edx-rest-api-client
+        response (Dict): Current response dict from service API;
+        client (requests.Session): either the OAuthAPIClient (from edx_rest_api_client) or requests.Session object;
+        api_url (str): API endpoint URL to call.
 
     Returns:
         list of dict.
@@ -966,7 +967,7 @@ def traverse_pagination(response, endpoint):
     next_page = response.get('next')
     while next_page:
         querystring = parse_qs(urlparse(next_page).query, keep_blank_values=True)
-        response = endpoint.get(**querystring)
+        response = client.get(api_url, params=querystring).json()
         results += response.get('results', [])
         next_page = response.get('next')
 
