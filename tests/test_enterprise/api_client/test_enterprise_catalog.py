@@ -31,7 +31,7 @@ def _url(path):
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_create_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
@@ -76,7 +76,7 @@ def test_create_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
@@ -98,7 +98,7 @@ def test_get_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_update_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
@@ -125,7 +125,7 @@ def test_update_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_delete_enterprise_catalog():
     responses.add(
         responses.DELETE,
@@ -137,7 +137,7 @@ def test_delete_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_contains_content_items():
     url = _url("enterprise-catalogs/{catalog_uuid}/contains_content_items/?course_run_ids=demoX".format(
         catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID
@@ -156,7 +156,7 @@ def test_contains_content_items():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_enterprise_contains_content_items():
     url = _url("enterprise-customer/{enterprise_uuid}/contains_content_items/?course_run_ids=demoX".format(
         enterprise_uuid=TEST_ENTERPRISE_ID
@@ -176,7 +176,7 @@ def test_enterprise_contains_content_items():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_successful_refresh_catalog():
     catalog = EnterpriseCustomerCatalogFactory()
     task_id = '17812314511'
@@ -193,7 +193,7 @@ def test_successful_refresh_catalog():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_failing_refresh_catalog():
     catalog = EnterpriseCustomerCatalogFactory()
     responses.add(
@@ -209,7 +209,7 @@ def test_failing_refresh_catalog():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_partial_successful_refresh_catalog():
     catalog1 = EnterpriseCustomerCatalogFactory()
     catalog2 = EnterpriseCustomerCatalogFactory()
@@ -233,7 +233,7 @@ def test_partial_successful_refresh_catalog():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_content_metadata_with_content_key_filters():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     client.GET_CONTENT_METADATA_PAGE_SIZE = 1
@@ -289,7 +289,7 @@ def test_get_content_metadata_with_content_key_filters():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_content_metadata_with_enterprise_catalogs():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
@@ -352,7 +352,7 @@ def test_get_content_metadata_with_enterprise_catalogs():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_content_metadata_without_enterprise_catalogs():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE

@@ -837,14 +837,15 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             email_or_username = getattr(user, 'username', getattr(user, 'user_email', None))
 
         with mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client"):
-            response = self.client.post(self.view_url, data={
-                ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email_or_username,
-                ManageLearnersForm.Fields.COURSE_MODE: mode,
-                ManageLearnersForm.Fields.COURSE: course_id,
-                ManageLearnersForm.Fields.NOTIFY: notify,
-                ManageLearnersForm.Fields.REASON: reason,
-                ManageLearnersForm.Fields.DISCOUNT: discount,
-            })
+            with mock.patch('enterprise.api_client.ecommerce.configuration_helpers'):
+                response = self.client.post(self.view_url, data={
+                    ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email_or_username,
+                    ManageLearnersForm.Fields.COURSE_MODE: mode,
+                    ManageLearnersForm.Fields.COURSE: course_id,
+                    ManageLearnersForm.Fields.NOTIFY: notify,
+                    ManageLearnersForm.Fields.REASON: reason,
+                    ManageLearnersForm.Fields.DISCOUNT: discount,
+                })
         return response
 
     @mock.patch("enterprise.admin.views.EcommerceApiClient")
@@ -1388,6 +1389,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert "Error at line {}".format(lineno) in actual_message
         assert expected_message in actual_message
 
+    @mock.patch("enterprise.api_client.ecommerce.configuration_helpers", mock.Mock())
     def _perform_request(self, columns, data, course=None, course_mode=None, notify=True):
         """
         Perform bulk upload request with specified columns and data.

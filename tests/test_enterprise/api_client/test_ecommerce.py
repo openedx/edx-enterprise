@@ -34,34 +34,20 @@ class TestEcommerceApiClient(unittest.TestCase):
     """
     Test course catalog API methods.
     """
-
     def setUp(self):
         super().setUp()
         self.user = factories.UserFactory()
 
-    def _setup_ecommerce_api_client(self, client_mock, method_name, return_value):
-        """
-        Sets up the E-Commerce API client
-        """
-        mocked_attributes = {
-            method_name: mock.MagicMock(return_value=return_value),
-        }
-        api_mock = mock.MagicMock(**mocked_attributes)
-
-        client_mock.return_value = api_mock
-
+    @mock.patch('enterprise.api_client.ecommerce.configuration_helpers')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
-    def test_get_course_final_price(self, ecommerce_api_client_mock):
+    def test_get_course_final_price(self, ecommerce_api_client_mock, *args):
+        """
+        Test get_course_final_price from the EcommerceAPIClient.
+        """
         mode = {
             'sku': 'verified-sku',
             'min_price': 200,
             'original_price': 500,
         }
-        self._setup_ecommerce_api_client(
-            client_mock=ecommerce_api_client_mock,
-            method_name='baskets.calculate.get',
-            return_value={
-                'total_incl_tax': 100,
-            }
-        )
+        ecommerce_api_client_mock.return_value.get.return_value.json.return_value = {'total_incl_tax': 100}
         assert EcommerceApiClient(self.user).get_course_final_price(mode) == '$100'

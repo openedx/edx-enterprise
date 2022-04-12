@@ -61,9 +61,8 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         assert len(responses.calls) == expected_count
 
     @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data', mock.Mock())
-    @mock.patch('enterprise.api_client.discovery.JwtBuilder', mock.Mock())
     def test_no_response_doesnt_get_cached(self):
         """
         Response doesn't get cached when empty.
@@ -96,7 +95,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         cached_api_response = cache.get(cache_key)
         assert not cached_api_response
 
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_skip_request_if_response_cached(self):
         """
         We skip the request portion of the API's logic if the response is already cached.
@@ -114,7 +113,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         assert response == cache_value
 
     @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_get_content_metadata_with_enterprise_catalogs(self):
         """
         Verify that the client method `get_content_metadata` works as expected.
@@ -143,7 +142,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         assert len(course_runs) == 3
 
     @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_get_content_metadata_with_enterprise_catalog_set_to_none(self):
         """
         Verify that the client method `get_content_metadata` returns courses from
@@ -171,7 +170,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         course_runs = client.get_content_metadata(self.enterprise_customer)
         assert len(course_runs) == 3
 
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     @mock.patch('enterprise.api_client.enterprise.EnterpriseApiClient._load_data')
     def test_get_content_metadata_with_catalogs_to_transmit(self, mock_load_data):
         """

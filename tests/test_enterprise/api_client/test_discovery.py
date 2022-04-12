@@ -10,7 +10,7 @@ from urllib.parse import urljoin
 
 import ddt
 import responses
-from slumber.exceptions import HttpClientError
+from requests.exceptions import HTTPError
 
 from django.contrib import auth
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
@@ -31,19 +31,19 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     def test_raise_error_missing_course_discovery_api(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
-            CourseCatalogApiClient(mock.Mock(spec=User))
+            CourseCatalogApiClient(mock.Mock(spec=User)).connect()
 
-    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
+    @mock.patch('enterprise.api_client.client.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     def test_raise_error_missing_catalog_integration(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
-            CourseCatalogApiClient(mock.Mock(spec=User))
+            CourseCatalogApiClient(mock.Mock(spec=User)).connect()
 
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
-    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
+    @mock.patch('enterprise.api_client.client.JwtBuilder')
     def test_raise_error_missing_get_edx_api_data(self, *args):
         with self.assertRaises(NotConnectedToOpenEdX):
-            CourseCatalogApiClient(mock.Mock(spec=User))
+            CourseCatalogApiClient(mock.Mock(spec=User)).connect()
 
 
 @ddt.ddt
@@ -59,7 +59,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         self.user_mock = mock.Mock(spec=User)
         self.get_data_mock = self._make_patch(self._make_catalog_api_location("get_edx_api_data"))
         self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
-        self.jwt_builder_mock = self._make_patch(self._make_catalog_api_location("JwtBuilder"))
+        self.jwt_builder_mock = self._make_patch('enterprise.api_client.client.JwtBuilder')
 
         self.api = CourseCatalogApiClient(self.user_mock)
 
@@ -344,7 +344,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         ``_load_data`` returns a default value given an exception.
         """
-        self.get_data_mock.side_effect = HttpClientError
+        self.get_data_mock.side_effect = HTTPError
         assert self.api._load_data('', default=default) == default  # pylint: disable=protected-access
 
     @responses.activate
@@ -367,7 +367,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         }
         responses.add(
             responses.POST,
-            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
+            url=urljoin(self.api.API_BASE_URL, self.api.SEARCH_ALL_ENDPOINT),
             json=response_dict,
             status=200,
         )
@@ -426,13 +426,13 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
 
         responses.add_callback(
             responses.POST,
-            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
+            url=urljoin(self.api.API_BASE_URL, self.api.SEARCH_ALL_ENDPOINT),
             callback=request_callback,
             content_type='application/json',
         )
         responses.add_callback(
             responses.POST,
-            url='{}?{}'.format(urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT), '?page=2&page_size=100'),
+            url='{}?{}'.format(urljoin(self.api.API_BASE_URL, self.api.SEARCH_ALL_ENDPOINT), '?page=2&page_size=100'),
             callback=request_callback,
             content_type='application/json',
         )
@@ -456,20 +456,22 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         responses.add(
             responses.POST,
-            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
-            body=HttpClientError(content='boom'),
+            url=urljoin(self.api.API_BASE_URL, self.api.SEARCH_ALL_ENDPOINT),
+            body=HTTPError('boom'),
         )
         logger = logging.getLogger('enterprise.api_client.discovery')
         handler = MockLoggingHandler(level="ERROR")
         logger.addHandler(handler)
-        with self.assertRaises(HttpClientError):
+        with self.assertRaises(HTTPError):
             self.api.get_catalog_results(
                 content_filter_query='query',
                 query_params={'page': 2}
             )
-        expected_message = ('Attempted to call course-discovery search/all/ endpoint with the following parameters: '
-                            'content_filter_query: query, query_params: {}, traverse_pagination: False. '
-                            'Failed to retrieve data from the catalog API. content -- [boom]').format({'page': 2})
+        expected_message = (
+            "Attempted to call course-discovery search/all/ endpoint with the following parameters: "
+            "content_filter_query: query, query_params: {'page': 2}, traverse_pagination: False. "
+            "Failed to retrieve data from the catalog API. Error -- [boom]"
+        )
         assert handler.messages['error'][0] == expected_message
 
 
@@ -495,7 +497,7 @@ class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
         with self.assertRaises(ImproperlyConfigured):
             CourseCatalogApiServiceClient()
 
-    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
+    @mock.patch('enterprise.api_client.client.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
     def test_success(self, mock_catalog_integration, *args):
@@ -518,7 +520,7 @@ class TestCourseCatalogApiService(CourseDiscoveryApiTestMixin, unittest.TestCase
         super().setUp()
         self.user_mock = mock.Mock(spec=User)
         self.get_data_mock = self._make_patch(self._make_catalog_api_location("get_edx_api_data"))
-        self.jwt_builder_mock = self._make_patch(self._make_catalog_api_location("JwtBuilder"))
+        self.jwt_builder_mock = self._make_patch("enterprise.api_client.client.JwtBuilder")
         self.integration_config_mock = mock.Mock(enabled=True)
         self.integration_config_mock.get_service_user.return_value = self.user_mock
         self.integration_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
@@ -531,11 +533,12 @@ class TestCourseCatalogApiService(CourseDiscoveryApiTestMixin, unittest.TestCase
         The client should return the appropriate boolean value for program existence depending on the response.
         """
         self.get_data_mock.return_value = response
-        assert CourseCatalogApiServiceClient.program_exists('a-s-d-f') == bool(response)
+        assert self.api.program_exists('a-s-d-f') == bool(response)
 
     def test_program_exists_with_exception(self):
         """
         The client should capture improper configuration for the class method and return False.
         """
         self.integration_mock.current.return_value.enabled = False
-        assert not CourseCatalogApiServiceClient.program_exists('a-s-d-f')
+        with self.assertRaises(ImproperlyConfigured):
+            CourseCatalogApiServiceClient().program_exists('a-s-d-f')
