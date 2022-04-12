@@ -71,6 +71,10 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'transmission_chunk_size',
     )
 
+    raw_id_fields = (
+        'enterprise_customer',
+    )
+
     list_filter = ('active',)
     search_fields = ('enterprise_customer__name',)
 

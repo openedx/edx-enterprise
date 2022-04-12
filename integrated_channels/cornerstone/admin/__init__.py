@@ -68,6 +68,10 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         "enterprise_customer_name",
     )
 
+    raw_id_fields = (
+        "enterprise_customer",
+    )
+
     list_filter = ("active",)
 
     search_fields = ("enterprise_customer_name",)

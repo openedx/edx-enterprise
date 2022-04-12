@@ -12,5 +12,20 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
     """
     Admin for the ContentMetadataItemTransmission audit table
     """
-    list_display = ('enterprise_customer', 'integrated_channel_code', 'content_id', 'channel_metadata')
-    search_fields = ('enterprise_customer__name', 'enterprise_customer__uuid', 'integrated_channel_code', 'content_id')
+    list_display = (
+        'enterprise_customer',
+        'integrated_channel_code',
+        'content_id',
+        'channel_metadata'
+    )
+    
+    search_fields = (
+        'enterprise_customer__name',
+        'enterprise_customer__uuid',
+        'integrated_channel_code',
+        'content_id'
+    )
+
+    raw_id_fields = (
+        'enterprise_customer',
+    )
