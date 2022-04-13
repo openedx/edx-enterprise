@@ -54,6 +54,7 @@ COURSEIDNUMBERTAKEN_RESPONSE.json.return_value = {
 }
 COURSEIDNUMBERTAKEN_RESPONSE.status_code = 200
 
+
 @pytest.mark.django_db
 class TestMoodleApiClient(unittest.TestCase):
     """
