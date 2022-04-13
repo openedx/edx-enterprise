@@ -47,6 +47,12 @@ SHORTNAMETAKEN_RESPONSE.json.return_value = {
 }
 SHORTNAMETAKEN_RESPONSE.status_code = 200
 
+COURSEIDNUMBERTAKEN_RESPONSE = unittest.mock.Mock(spec=Response)
+COURSEIDNUMBERTAKEN_RESPONSE.json.return_value = {
+    'errorcode': 'courseidnumbertaken',
+    'message': 'ID number is already used for another course (edX Demonstration Course (edX+DemoX))',
+}
+COURSEIDNUMBERTAKEN_RESPONSE.status_code = 200
 
 @pytest.mark.django_db
 class TestMoodleApiClient(unittest.TestCase):
@@ -111,7 +117,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
-    def test_duplicate_create_content_metadata(self):
+    def test_duplicate_shortname_create_content_metadata(self):
         """
         Test core logic of create_content_metadata when a duplicate exists
         to ensure we handle it properly when only sending a single (treat as success).
@@ -121,6 +127,19 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SHORTNAMETAKEN_RESPONSE)  # pylint: disable=protected-access
+        client.create_content_metadata(SERIALIZED_DATA)
+        client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
+
+    def test_duplicate_courseidnumber_create_content_metadata(self):
+        """
+        Test core logic of create_content_metadata when a duplicate exists
+        to ensure we handle it properly when only sending a single (treat as success).
+        """
+        expected_data = SERIALIZED_DATA.copy()
+        expected_data['wsfunction'] = 'core_course_create_courses'
+
+        client = MoodleAPIClient(self.enterprise_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=COURSEIDNUMBERTAKEN_RESPONSE)  # pylint: disable=protected-access
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
@@ -134,6 +153,20 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SHORTNAMETAKEN_RESPONSE)  # pylint: disable=protected-access
+        with self.assertRaises(MoodleClientError):
+            client.create_content_metadata(MULTI_SERIALIZED_DATA)
+        client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
+
+    def test_multi_duplicate_courseidnumber_create_content_metadata(self):
+        """
+        Test core logic of create_content_metadata when a duplicate exists
+        to ensure we handle it properly when sending more than one course (throw exception).
+        """
+        expected_data = MULTI_SERIALIZED_DATA.copy()
+        expected_data['wsfunction'] = 'core_course_create_courses'
+
+        client = MoodleAPIClient(self.enterprise_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=COURSEIDNUMBERTAKEN_RESPONSE)  # pylint: disable=protected-access
         with self.assertRaises(MoodleClientError):
             client.create_content_metadata(MULTI_SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access

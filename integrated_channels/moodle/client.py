@@ -370,6 +370,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             # set chunk size settings to 1 if youre seeing a lot of these errors
             if error.moodle_error == 'shortnametaken' and not more_than_one_course:
                 return True
+            elif error.moodle_error == 'courseidnumbertaken' and not more_than_one_course:
+                return True
             else:
                 raise error
         return True
