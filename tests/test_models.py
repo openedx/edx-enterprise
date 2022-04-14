@@ -9,6 +9,7 @@ import shutil
 import unittest
 from datetime import timedelta
 from unittest import mock
+from uuid import UUID
 
 import ddt
 from edx_rest_api_client.exceptions import HttpClientError
@@ -31,7 +32,12 @@ from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import roles_api
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise.constants import (
+    ALL_ACCESS_CONTEXT,
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+)
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -2184,7 +2190,7 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
     Tests SystemWideEnterpriseUserRoleAssignment.
     """
 
-    def _create_and_link_user(self, user_email, *enterprise_customers):
+    def _create_and_link_user(self, user_email, *enterprise_customers, **kwargs):
         """
         Helper that creates a User with the given email, then links that user
         to each of the given EnterpriseCustomers.
@@ -2192,9 +2198,15 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         should also create some role assignments.
         """
         user = factories.UserFactory(email=user_email)
-        for enterprise_customer in enterprise_customers:
-            EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
+        self._link_user(user_email, *enterprise_customers, **kwargs)
         return user
+
+    def _link_user(self, user_email, *enterprise_customers, **kwargs):
+        """
+        Helper to link a given test user to 1 or more enterprises.
+        """
+        for enterprise_customer in enterprise_customers:
+            EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email, **kwargs)
 
     @ddt.data(
         {
@@ -2286,6 +2298,74 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         )
 
         assert expected_context == enterprise_role_assignment.get_context()
+
+    def test_get_assignments_many_assignments(self):
+        """
+        Tests that get_assignments orders context such that active enterprise uuids
+        are listed first for a given role.
+        """
+        alpha_customer = factories.EnterpriseCustomerFactory(uuid=UUID('aaaaaaaa-0000-0000-0000-000000000000'))
+        beta_customer = factories.EnterpriseCustomerFactory(uuid=UUID('bbbbbbbb-0000-0000-0000-000000000000'))
+        delta_customer = factories.EnterpriseCustomerFactory(uuid=UUID('dddddddd-0000-0000-0000-000000000000'))
+
+        test_user = factories.UserFactory(email='test@example.com')
+
+        # The order matters: because delta is most recently linked (and active), all other linked
+        # enterprise users will get active=False, leaving only delta as the active, linked enterprise.
+        # Remember that link_user() creates or updates an ECU record, which will automatically
+        # assign the enterprise_learner role via a Django signal.
+        self._link_user(test_user.email, alpha_customer)
+        self._link_user(test_user.email, beta_customer)
+        self._link_user(test_user.email, delta_customer)
+
+        # Create admin role assignments explicitly.
+        for customer in (alpha_customer, delta_customer):
+            SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+                user=test_user, role=roles_api.admin_role(),
+                enterprise_customer=customer, applies_to_all_contexts=False,
+            )
+
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=test_user,
+            role=roles_api.openedx_operator_role(),
+            applies_to_all_contexts=True,
+        )
+
+        expected_assignments = [
+            (
+                ENTERPRISE_ADMIN_ROLE, [
+                    str(delta_customer.uuid), str(alpha_customer.uuid),
+                ],
+            ),
+            (
+                ENTERPRISE_LEARNER_ROLE, [
+                    str(delta_customer.uuid), str(alpha_customer.uuid), str(beta_customer.uuid)
+                ],
+            ),
+            (ENTERPRISE_OPERATOR_ROLE, [ALL_ACCESS_CONTEXT]),
+        ]
+
+        actual_assignments = list(SystemWideEnterpriseUserRoleAssignment.get_assignments(test_user))
+        self.assertEqual(expected_assignments, actual_assignments)
+
+    def test_get_assignments_no_context_or_link(self):
+        """
+        Test the scenario where a user has an assignment record,
+        but the record has no enterprise_customer_id, applies_to_all_contexts is False,
+        and the user is not linked to any enterprise.
+        """
+        user_with_no_link = factories.UserFactory(email='zelda@example.com')
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user_with_no_link,
+            role=roles_api.learner_role(),
+            enterprise_customer=None,
+            applies_to_all_contexts=False,
+        )
+
+        self.assertEqual(
+            [('enterprise_learner', None)],
+            list(SystemWideEnterpriseUserRoleAssignment.get_assignments(user_with_no_link)),
+        )
 
     def test_unique_together_constraint(self):
         """

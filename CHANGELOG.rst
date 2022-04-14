@@ -22,10 +22,24 @@ None
 - feat: configure django admin for degreed2 audit records
 - fix: Moodle client should accept treat duplicate course id on create as a success
 
+[3.44.2]
+--------
+fix: Undoes revert of 3.44.0, while also ensuring that
+``SystemWideEnterpriseUserRoleAssignment.get_assignments()`` can handle and respect any null values returned
+from ``get_context()``.
+
 [3.44.1]
 --------
 fix: no-op version bump (skipping 3.44.0) to account for a revert:
 https://github.com/openedx/edx-enterprise/pull/1534
+
+[3.44.0]
+--------
+fix: [REVERTED] override get_assignments() so that active enterprise uuids come first.
+
+Overrides the SystemWideEnterpriseUserRoleAssignment.get_assignments() method to return
+a list of (role, context) assignments, where the first item in the list corresponds
+to the currently active enterprise for the user.
 
 [3.43.1]
 ---------

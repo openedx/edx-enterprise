@@ -3,6 +3,7 @@ Database models for enterprise.
 """
 
 import collections
+import itertools
 import json
 import os
 from decimal import Decimal
@@ -1268,11 +1269,27 @@ class EnterpriseCustomerUser(TimeStampedModel):
     @classmethod
     def inactivate_other_customers(cls, user_id, enterprise_customer):
         """
-        Inactive all the enterprise customers of given user except the given enterprise_customer.
+        Mark as inactive all the enterprise customers of given user except the given enterprise_customer.
         """
         EnterpriseCustomerUser.objects.filter(
             user_id=user_id
         ).exclude(enterprise_customer=enterprise_customer).update(active=False)
+
+    @classmethod
+    def get_active_enterprise_users(cls, user_id, enterprise_customer_uuids=None):
+        """
+        Return a queryset of all active enterprise users to which the given user is related.
+        Or, if ``enterprise_customer_uuids`` is non-null, only the enterprise users
+        related to the list of given ``enterprise_customer_uuids``.
+        """
+        kwargs = {
+            'user_id': user_id,
+            'active': True,
+        }
+        if enterprise_customer_uuids:
+            kwargs['enterprise_customer__in'] = enterprise_customer_uuids
+
+        return EnterpriseCustomerUser.objects.filter(**kwargs)
 
 
 class PendingEnterpriseCustomerUser(TimeStampedModel):
@@ -2795,7 +2812,9 @@ class EnterpriseRoleAssignmentContextMixin:
 
     def get_context(self):
         """
-        Return the context for this role assignment class. A list is returned in case of user with multiple contexts.
+        Returns a non-empty list of enterprise customer uuid strings to which
+        ``self.user`` is linked, or ``None`` if the user is not linked
+        to any EnterpriseCustomer.
         """
         return self.enterprise_customer_uuids
 
@@ -2860,7 +2879,8 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
 
     def get_context(self):
         """
-        Return the context for this role assignment class.
+        Return a non-empty list of contexts for which ``self.user`` is assigned ``self.role``,
+        or ``None`` if the user is assigned a role with no corresponding context.
         """
         if self.has_access_to_all_contexts():
             return [ALL_ACCESS_CONTEXT]
@@ -2869,6 +2889,91 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
             return [str(self.enterprise_customer.uuid)]
 
         return super().get_context()
+
+    @classmethod
+    def get_distinct_assignments_by_role_name(cls, user, role_names=None):
+        """
+        Returns a mapping of role names to sets of enterprise customer uuids
+        for which the user is assigned that role.
+        """
+        # super().get_assignments() returns pairs of (role name, contexts), where
+        # contexts is a list of 0 or more enterprise uuids (or the ALL_ACCESS_CONTEXT token)
+        # as returned from super().get_context().
+        # To make matters worse, get_context() could return null, meaning the role
+        # applies to any context.  So we should still include it in the list of "customers"
+        # for a given role.
+        # See https://openedx.atlassian.net/browse/ENT-4346 for outstanding technical debt
+        # related to this issue.
+        assigned_customers_by_role = collections.defaultdict(set)
+        for role_name, customer_uuids in super().get_assignments(user, role_names):
+            if customer_uuids is not None:
+                assigned_customers_by_role[role_name].update(customer_uuids)
+            else:
+                assigned_customers_by_role[role_name].add(None)
+        return assigned_customers_by_role
+
+    @classmethod
+    def get_assignments(cls, user, role_names=None):
+        """
+        Return an iterator of (rolename, [enterprise customer uuids]) for the given
+        user (and maybe role_names).
+
+        Differs from super().get_assignments(...) in that it yields (role name, customer uuid list) pairs
+        such that the first item in the customer uuid list for each role
+        corresponds to the currently *active* EnterpriseCustomerUser for the user.
+
+        The resulting generated pairs are sorted by role name, and within role_name, by (active, customer uuid).
+        For example:
+
+          ('enterprise_admin', ['active-enterprise-uuid', 'inactive-enterprise-uuid', 'other-inactive-enterprise-uuid'])
+          ('enterprise_learner', ['active-enterprise-uuid', 'inactive-enterprise-uuid']),
+          ('enterprise_openedx_operator', ['*'])
+        """
+        customers_by_role = cls.get_distinct_assignments_by_role_name(user, role_names)
+        if not customers_by_role:
+            return
+
+        # Filter for a set of only the *active* enterprise uuids for which the user is assigned a role.
+        # A user should typically only have one active enterprise user at a time, but we'll
+        # use sets to cover edge cases.
+        all_customer_uuids_for_user = set(itertools.chain(*customers_by_role.values()))
+
+        # ALL_ACCESS_CONTEXT is not a value UUID on which to filter enterprise customer uuids.
+        all_customer_uuids_for_user.discard(ALL_ACCESS_CONTEXT)
+
+        active_enterprise_uuids_for_user = set(
+            str(customer_uuid) for customer_uuid in
+            EnterpriseCustomerUser.get_active_enterprise_users(
+                user.id,
+                enterprise_customer_uuids=all_customer_uuids_for_user,
+            ).values_list('enterprise_customer', flat=True)
+        )
+
+        for role_name in sorted(customers_by_role):
+            customer_uuids_for_role = customers_by_role[role_name]
+
+            # Determine the *active* enterprise uuids assigned for this role.
+            active_enterprises_for_role = sorted(
+                customer_uuids_for_role.intersection(active_enterprise_uuids_for_user)
+            )
+            # Determine the *inactive* enterprise uuids assigned for this role,
+            # could include the ALL_ACCESS_CONTEXT token.
+            inactive_enterprises_for_role = sorted(
+                customer_uuids_for_role.difference(active_enterprise_uuids_for_user)
+            )
+            ordered_enterprises = active_enterprises_for_role + inactive_enterprises_for_role
+
+            # Sometimes get_context() returns ``None``, and ``None`` is a meaningful downstream value
+            # to the consumers of get_assignments(), either
+            # when constructing JWT roles or when checking for explicit or implicit access to some context.
+            # So if the only unique thing returned by get_context() for this role was ``None``,
+            # we should unpack it from the list before yielding.
+            # See https://openedx.atlassian.net/browse/ENT-4346 for outstanding technical debt
+            # related to this issue.
+            if ordered_enterprises == [None]:
+                yield (role_name, None)
+            else:
+                yield (role_name, ordered_enterprises)
 
     def __str__(self):
         """
