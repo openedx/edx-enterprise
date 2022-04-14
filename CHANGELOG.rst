@@ -17,13 +17,10 @@ Unreleased
 ----------
 * nothing
 
-[3.44.0]
+[3.44.1]
 --------
-fix: override get_assignments() so that active enterprise uuids come first.
-
-Overrides the SystemWideEnterpriseUserRoleAssignment.get_assignments() method to return
-a list of (role, context) assignments, where the first item in the list corresponds
-to the currently active enterprise for the user.
+fix: no-op version bump (skipping 3.44.0) to account for a revert:
+https://github.com/openedx/edx-enterprise/pull/1534
 
 [3.43.1]
 ---------
