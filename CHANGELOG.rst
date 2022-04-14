@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing
 
+[3.44.1]
+--------
+fix: no-op version bump (skipping 3.44.0) to account for a revert:
+https://github.com/openedx/edx-enterprise/pull/1534
+
 [3.43.1]
 ---------
 chore: replace enterprise customer drop-downs in django admin
