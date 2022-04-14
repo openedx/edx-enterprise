@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-* nothing
+fix: Moodle client should accept treat duplicate course id on create as a success
 
 [3.44.1]
 --------
