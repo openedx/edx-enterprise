@@ -1,17 +1,18 @@
 """
 Tests for enterprise.api_client.enterprise_catalog.py
 """
-
 import json
+import logging
 from unittest import mock
 
 import requests
 import responses
-from pytest import mark
-from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+from pytest import mark, raises
+from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
 
 from enterprise.api_client import enterprise_catalog
 from enterprise.models import EnterpriseCustomerCatalog
+from test_utils import MockLoggingHandler
 from test_utils.factories import EnterpriseCustomerCatalogFactory
 
 TEST_ENTERPRISE_ID = '1840e1dc-59cf-4a78-82c5-c5bbc0b5df0f'
@@ -31,7 +32,7 @@ def _url(path):
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_create_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
@@ -76,7 +77,7 @@ def test_create_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
@@ -98,7 +99,78 @@ def test_get_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+def test_get_catalog_diff():
+    items_to_create, items_to_delete, items_found = (['create me'], ['delete me'], ['look at me'])
+    content_keys = items_to_create + items_to_delete + items_found
+    enterprise_customer_catalog_mock = mock.Mock()
+    enterprise_customer_catalog_mock.uuid = TEST_ENTERPRISE_CATALOG_UUID
+    expected_response = {
+        'items_not_found': items_to_delete,
+        'items_not_included': items_to_create,
+        'items_found': items_found,
+    }
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+
+    responses.add(
+        responses.POST,
+        _url(f"enterprise-catalogs/{TEST_ENTERPRISE_CATALOG_UUID}/generate_diff/"),
+        json=expected_response,
+    )
+    actual_items_to_create, actual_items_to_delete, actual_items_found = client.get_catalog_diff(
+        enterprise_customer_catalog_mock, content_keys
+    )
+    assert actual_items_to_create == items_to_create
+    assert actual_items_to_delete == items_to_delete
+    assert actual_items_found == items_found
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+@mark.parametrize(
+    'exception, should_raise',
+    [
+        (RequestException, True),
+        (ConnectionError, True),
+        (Timeout, True),
+        (RequestException, False),
+        (ConnectionError, False),
+        (Timeout, False)
+    ]
+)
+def test_get_catalog_diff_error(exception, should_raise):
+    """
+    Check error handling for the EnterpriseCatalogApiClient.get_catalog_diff.
+    """
+    enterprise_customer_catalog_mock = mock.Mock()
+    enterprise_customer_catalog_mock.uuid = TEST_ENTERPRISE_CATALOG_UUID
+
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+
+    responses.add_callback(
+        responses.POST,
+        _url(f"enterprise-catalogs/{TEST_ENTERPRISE_CATALOG_UUID}/generate_diff/"),
+        callback=exception,
+        content_type='application/json'
+    )
+    logger = logging.getLogger('enterprise.api_client.enterprise_catalog')
+    handler = MockLoggingHandler(level="ERROR")
+    logger.addHandler(handler)
+    expected_message = (
+        f"Failed to get EnterpriseCustomer Catalog [{TEST_ENTERPRISE_CATALOG_UUID}] in "
+        f"enterprise-catalog due to: ["
+    )
+    if should_raise:
+        with raises(exception):
+            client.get_catalog_diff(enterprise_customer_catalog_mock, ['content_keys'], should_raise)
+    else:
+        client.get_catalog_diff(enterprise_customer_catalog_mock, ['content_keys'], should_raise)
+
+    assert expected_message in handler.messages['error'][0]
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_update_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
@@ -125,7 +197,35 @@ def test_update_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+@mark.parametrize('exception', (RequestException, ConnectionError, Timeout))
+def test_update_enterprise_catalog_error(exception):
+    """
+    Check error handling for the EnterpriseCatalogApiClient.update_enterprise_catalog.
+    """
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+
+    responses.add_callback(
+        responses.PUT,
+        _url(f"enterprise-catalogs/{TEST_ENTERPRISE_CATALOG_UUID}/"),
+        callback=exception,
+        content_type='application/json'
+    )
+    logger = logging.getLogger('enterprise.api_client.enterprise_catalog')
+    handler = MockLoggingHandler(level="ERROR")
+    logger.addHandler(handler)
+    expected_message = (
+        f"Failed to update EnterpriseCustomer Catalog [{TEST_ENTERPRISE_CATALOG_UUID}] in "
+        f"enterprise-catalog due to: ["
+    )
+    result = client.update_enterprise_catalog(TEST_ENTERPRISE_CATALOG_UUID, content_filter={'fake': 'filter'})
+
+    assert expected_message in handler.messages['error'][0]
+    assert result == {}
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_delete_enterprise_catalog():
     responses.add(
         responses.DELETE,
@@ -137,7 +237,79 @@ def test_delete_enterprise_catalog():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+@mark.parametrize('exception', (RequestException, ConnectionError, Timeout))
+def test_delete_enterprise_catalog_error(exception):
+    """
+    Check error handling for the EnterpriseCatalogApiClient.delete_enterprise_catalog.
+    """
+    responses.add_callback(
+        responses.DELETE,
+        _url(f"enterprise-catalogs/{TEST_ENTERPRISE_CATALOG_UUID}/"),
+        callback=exception
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    actual_response = client.delete_enterprise_catalog(TEST_ENTERPRISE_CATALOG_UUID)
+    assert not actual_response
+    assert isinstance(actual_response, dict)
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+def test_delete_enterprise_catalog_404():
+    """
+    Check 404 error handling for the EnterpriseCatalogApiClient.delete_enterprise_catalog.
+    """
+    responses.add(
+        responses.DELETE,
+        _url(f"enterprise-catalogs/{TEST_ENTERPRISE_CATALOG_UUID}/"),
+        status=404
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+
+    logger = logging.getLogger('enterprise.api_client.enterprise_catalog')
+    handler = MockLoggingHandler(level="WARNING")
+    logger.addHandler(handler)
+
+    expected_message = (
+        f"Deleted EnterpriseCustomerCatalog [{TEST_ENTERPRISE_CATALOG_UUID}] that was not in enterprise-catalog"
+    )
+
+    actual_response = client.delete_enterprise_catalog(TEST_ENTERPRISE_CATALOG_UUID)
+
+    assert not actual_response
+    assert isinstance(actual_response, dict)
+
+    assert handler.messages['warning'][0] == expected_message
+
+
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+@mark.parametrize('exception', (RequestException, ConnectionError, Timeout))
+def test_traverse_get_content_metadata_error(exception):
+    """
+    Check error handling for the EnterpriseCatalogApiClient.traverse_get_content_metadata.
+    """
+    mock_client = mock.Mock()
+    mock_client.get.side_effect = exception
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    client.client = mock_client
+
+    logger = logging.getLogger('enterprise.api_client.enterprise_catalog')
+    handler = MockLoggingHandler(level="ERROR")
+    logger.addHandler(handler)
+
+    expected_message = (
+        f"Failed to get content metadata for Catalog {TEST_ENTERPRISE_CATALOG_UUID} in enterprise-catalog"
+    )
+
+    with raises(exception):
+        client.traverse_get_content_metadata('/fake/url/', {'fake': 'query'}, TEST_ENTERPRISE_CATALOG_UUID)
+
+    assert handler.messages['error'][0] == expected_message
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_contains_content_items():
     url = _url("enterprise-catalogs/{catalog_uuid}/contains_content_items/?course_run_ids=demoX".format(
         catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID
@@ -156,7 +328,7 @@ def test_contains_content_items():
 
 
 @responses.activate
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_enterprise_contains_content_items():
     url = _url("enterprise-customer/{enterprise_uuid}/contains_content_items/?course_run_ids=demoX".format(
         enterprise_uuid=TEST_ENTERPRISE_ID
@@ -176,7 +348,7 @@ def test_enterprise_contains_content_items():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_successful_refresh_catalog():
     catalog = EnterpriseCustomerCatalogFactory()
     task_id = '17812314511'
@@ -193,7 +365,7 @@ def test_successful_refresh_catalog():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_failing_refresh_catalog():
     catalog = EnterpriseCustomerCatalogFactory()
     responses.add(
@@ -209,7 +381,7 @@ def test_failing_refresh_catalog():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_partial_successful_refresh_catalog():
     catalog1 = EnterpriseCustomerCatalogFactory()
     catalog2 = EnterpriseCustomerCatalogFactory()
@@ -233,7 +405,7 @@ def test_partial_successful_refresh_catalog():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_content_metadata_with_content_key_filters():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     client.GET_CONTENT_METADATA_PAGE_SIZE = 1
@@ -289,7 +461,7 @@ def test_get_content_metadata_with_content_key_filters():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_content_metadata_with_enterprise_catalogs():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE
@@ -352,7 +524,7 @@ def test_get_content_metadata_with_enterprise_catalogs():
 
 @responses.activate
 @mark.django_db
-@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_get_content_metadata_without_enterprise_catalogs():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     page_size = client.GET_CONTENT_METADATA_PAGE_SIZE

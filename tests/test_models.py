@@ -818,7 +818,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
 
     @mock.patch('enterprise.models.get_ecommerce_worker_user')
-    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
     @mock.patch('enterprise.api_client.ecommerce.EcommerceApiClient.create_manual_enrollment_orders')
     def test_create_order_for_enrollment(self, utils_mock, ecommerce_api_client_init_mock,  # pylint: disable=unused-argument
                                          ecommerce_api_client_call_mock):  # pylint: disable=unused-argument

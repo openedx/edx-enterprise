@@ -41,9 +41,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         # Mocks
         self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
-        jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-        self.jwt_builder = jwt_builder.start()
-        self.addCleanup(jwt_builder.stop)
         self.fake_catalog = get_fake_catalog()
         self.fake_catalog_modified_at = max(
             self.fake_catalog['content_last_modified'], self.fake_catalog['catalog_modified']

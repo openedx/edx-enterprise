@@ -34,9 +34,6 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
 
         # Mocks
         self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
-        jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-        self.jwt_builder = jwt_builder.start()
-        self.addCleanup(jwt_builder.stop)
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')

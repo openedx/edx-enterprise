@@ -3,7 +3,6 @@ Tests for SAPSF content metadata exporters.
 """
 
 import unittest
-from unittest import mock
 
 import ddt
 import responses
@@ -29,10 +28,6 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             enterprise_customer=self.enterprise_customer
         )
 
-        # Mocks
-        jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-        self.jwt_builder = jwt_builder.start()
-        self.addCleanup(jwt_builder.stop)
         super().setUp()
 
     @ddt.data(
