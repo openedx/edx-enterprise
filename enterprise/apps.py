@@ -23,6 +23,16 @@ class EnterpriseConfig(AppConfig):
         'enterprise-integrations@edx.org'
     )
 
+    backend_service_edx_oauth2_key = getattr(
+        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY", "enterprise-backend-service-key"
+    )
+    backend_service_edx_oauth2_secret = getattr(
+        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET", "enterprise-backend-service-secret"
+    )
+    backend_service_edx_oauth2_provider_url = getattr(
+        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL", "http://127.0.0.1:8000/oauth2"
+    )
+
     @property
     def auth_user_model(self):
         """
