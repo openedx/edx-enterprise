@@ -9,7 +9,7 @@ enterprise customer.
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
-from slumber.exceptions import HttpNotFoundError
+from requests.exceptions import HTTPError
 
 from django.apps import apps
 from django.contrib import auth
@@ -693,8 +693,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         username = enterprise_enrollment.enterprise_customer_user.user.username
         try:
             assessment_grades_data = self.grades_api.get_course_assessment_grades(course_id, username)
-        except HttpNotFoundError:
-            return {}
+        except HTTPError as err:
+            if err.response.status_code == 404:
+                return {}
+            else:
+                raise
 
         assessment_grades = {}
         for grade in assessment_grades_data:

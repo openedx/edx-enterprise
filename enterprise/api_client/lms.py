@@ -387,7 +387,7 @@ class GradesApiClient(UserAPIClient):
 
         Raises:
 
-        HttpNotFoundError if no grade found for the given user+course.
+        HTTPError if no grade found for the given user+course.
 
         Returns:
 
@@ -420,7 +420,7 @@ class GradesApiClient(UserAPIClient):
 
         Raises:
 
-        HttpNotFoundError if no grade found for the given user+course.
+        HTTPError if no grade found for the given user+course.
 
         Returns:
 
@@ -463,10 +463,6 @@ class CertificatesApiClient(UserAPIClient):
         Args:
         * ``course_id`` (str): The string value of the course's unique identifier
         * ``username`` (str): The username ID identifying the user for which to retrieve the certificate
-
-        Raises:
-
-        HttpNotFoundError if no certificate found for the given user+course.
 
         Returns:
 
