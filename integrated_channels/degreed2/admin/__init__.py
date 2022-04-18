@@ -87,10 +87,6 @@ class Degreed2LearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
         "status",
     )
 
-    raw_id_fields = (
-        "user",
-    )
-
     readonly_fields = (
         "enterprise_customer_name",
     )
