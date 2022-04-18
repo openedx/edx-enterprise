@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 import ddt
 from freezegun import freeze_time
 from pytest import mark
+from requests.exceptions import HTTPError
 
 from django.utils import timezone
 
@@ -918,3 +919,32 @@ class TestLearnerExporter(unittest.TestCase):
         assert completed_date_from_api is a_date
         exporter.collect_grades_data.assert_not_called()
         exporter.collect_certificate_data.assert_called_once()
+
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
+    def test_collect_assessment_grades_data_404(self, mock_grades_api):
+        """
+        Test _collect_assessment_grades_data returns empty dict if assessment_grades_data not found.
+        """
+        exporter = LearnerExporter('fake-user', self.config)
+        get_course_assessment_grades_mock = mock_grades_api.return_value.get_course_assessment_grades
+        response_mock = mock.Mock()
+        response_mock.status_code = 404
+        get_course_assessment_grades_mock.side_effect = HTTPError(response=response_mock)
+
+        result = exporter._collect_assessment_grades_data(mock.Mock())  # pylint: disable=protected-access
+        assert isinstance(result, dict)
+        assert not result
+
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
+    def test_collect_assessment_grades_data_error(self, mock_grades_api):
+        """
+        Test _collect_assessment_grades_data rises error.
+        """
+        exporter = LearnerExporter('fake-user', self.config)
+        get_course_assessment_grades_mock = mock_grades_api.return_value.get_course_assessment_grades
+        response_mock = mock.Mock()
+        response_mock.status_code = 400
+        get_course_assessment_grades_mock.side_effect = HTTPError(response=response_mock)
+
+        with self.assertRaises(HTTPError):
+            exporter._collect_assessment_grades_data(mock.Mock())  # pylint: disable=protected-access
