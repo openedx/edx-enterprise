@@ -696,8 +696,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         except HTTPError as err:
             if err.response.status_code == 404:
                 return {}
-            else:
-                raise
+            raise
 
         assessment_grades = {}
         for grade in assessment_grades_data:
