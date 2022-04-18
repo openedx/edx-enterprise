@@ -81,8 +81,7 @@ class Degreed2LearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
     Django admin model for Degreed2LearnerDataTransmissionAudit.
     """
     list_display = (
-        "user_email",
-        "user_id",
+        "degreed_user_email",
         "enterprise_course_enrollment_id",
         "course_id",
         "status",
@@ -98,16 +97,6 @@ class Degreed2LearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
 
     class Meta:
         model = Degreed2LearnerDataTransmissionAudit
-
-    def user_email(self, obj):
-        """
-        Returns: the name for the attached EnterpriseCustomer.
-
-        Args:
-            obj: The instance of Degreed2LearnerDataTransmissionAudit
-                being rendered with this admin form.
-        """
-        return obj.user.email
 
     def enterprise_customer_name(self, obj):
         """
