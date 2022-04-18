@@ -15,7 +15,12 @@ Change Log
 
 Unreleased
 ----------
-fix: Moodle client should accept treat duplicate course id on create as a success
+None
+
+[3.44.2]
+--------
+- feat: configure django admin for degreed2 audit records
+- fix: Moodle client should accept treat duplicate course id on create as a success
 
 [3.44.1]
 --------

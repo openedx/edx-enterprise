@@ -119,7 +119,7 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
         Returns: the name for the attached EnterpriseCustomer.
 
         Args:
-            obj: The instance of CornerstoneEnterpriseCustomerConfiguration
+            obj: The instance of CornerstoneLearnerDataTransmissionAudit
                 being rendered with this admin form.
         """
         return obj.user.email
@@ -128,7 +128,7 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
         """
         Returns: the name for the attached EnterpriseCustomer.
         Args:
-            obj: The instance of CornerstoneEnterpriseCustomerConfiguration
+            obj: The instance of CornerstoneLearnerDataTransmissionAudit
                 being rendered with this admin form.
         """
 
