@@ -17,16 +17,16 @@ Unreleased
 ----------
 None
 
-[3.44.2]
---------
-- feat: configure django admin for degreed2 audit records
-- fix: Moodle client should accept treat duplicate course id on create as a success
-
-[3.44.2]
+[3.44.3]
 --------
 fix: Undoes revert of 3.44.0, while also ensuring that
 ``SystemWideEnterpriseUserRoleAssignment.get_assignments()`` can handle and respect any null values returned
 from ``get_context()``.
+
+[3.44.2]
+--------
+- feat: configure django admin for degreed2 audit records
+- fix: Moodle client should accept treat duplicate course id on create as a success
 
 [3.44.1]
 --------
