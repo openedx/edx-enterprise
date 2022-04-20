@@ -41,7 +41,7 @@ class APIClientMixin:
         return urljoin(f"{self.API_BASE_URL}/", f"{path.strip('/')}{'/' if self.APPEND_SLASH else ''}")
 
 
-class BackendServiseAPIClient(APIClientMixin):
+class BackendServiceAPIClient(APIClientMixin):
     """
     API client based on OAuthAPIClient to cummunicate with edx services.
 

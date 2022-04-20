@@ -15,7 +15,7 @@ from requests.exceptions import (  # pylint: disable=redefined-builtin
 
 from django.conf import settings
 
-from enterprise.api_client.client import BackendServiseAPIClient, NoAuthAPIClient, UserAPIClient
+from enterprise.api_client.client import BackendServiceAPIClient, NoAuthAPIClient, UserAPIClient
 from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
 
 try:
@@ -49,7 +49,7 @@ class EmbargoApiClient:
         return None
 
 
-class EnrollmentApiClient(BackendServiseAPIClient):
+class EnrollmentApiClient(BackendServiceAPIClient):
     """
     The API client to make calls to the Enrollment API.
     """
