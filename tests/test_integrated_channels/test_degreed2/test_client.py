@@ -5,7 +5,6 @@ Tests for Degreed2 client for integrated_channels.
 
 import datetime
 import json
-import logging
 import unittest
 
 import mock
@@ -26,8 +25,6 @@ NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 
 app_config = apps.get_app_config("degreed2")
-
-LOGGER = logging.getLogger(__name__)
 
 
 def create_course_payload():
