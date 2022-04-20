@@ -176,11 +176,11 @@ class TestDegreed2ApiClient(unittest.TestCase):
         too_fast_response = {
             "errors": [
                 {
-                  "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
-                  "code": "quota-exceeded",
-                  "status": 429,
-                  "title": "API calls quota exceeded.",
-                  "detail": "Maximum 70 requests allowed per 1m."
+                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                    "code": "quota-exceeded",
+                    "status": 429,
+                    "title": "API calls quota exceeded.",
+                    "detail": "Maximum 70 requests allowed per 1m."
                 }
             ]
         }
@@ -225,11 +225,11 @@ class TestDegreed2ApiClient(unittest.TestCase):
         too_fast_response = {
             "errors": [
                 {
-                  "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
-                  "code": "quota-exceeded",
-                  "status": 429,
-                  "title": "API calls quota exceeded.",
-                  "detail": "Maximum 70 requests allowed per 1m."
+                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                    "code": "quota-exceeded",
+                    "status": 429,
+                    "title": "API calls quota exceeded.",
+                    "detail": "Maximum 70 requests allowed per 1m."
                 }
             ]
         }
