@@ -72,6 +72,17 @@ class TestDegreed2ApiClient(unittest.TestCase):
         self.access_token = "access_token"
         self.expected_token_response_body = {"expires_in": self.expires_in, "access_token": self.access_token}
         self.enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        self.too_fast_response = {
+            "errors": [
+                {
+                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                    "code": "quota-exceeded",
+                    "status": 429,
+                    "title": "API calls quota exceeded.",
+                    "detail": "Maximum 70 requests allowed per 1m."
+                }
+            ]
+        }
 
     @responses.activate
     def test_oauth_with_non_json_response(self):
@@ -173,18 +184,6 @@ class TestDegreed2ApiClient(unittest.TestCase):
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
 
-        too_fast_response = {
-            "errors": [
-                {
-                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
-                    "code": "quota-exceeded",
-                    "status": 429,
-                    "title": "API calls quota exceeded.",
-                    "detail": "Maximum 70 requests allowed per 1m."
-                }
-            ]
-        }
-
         responses.add(
             responses.POST,
             oauth_url,
@@ -194,7 +193,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.POST,
             course_url,
-            json=too_fast_response,
+            json=self.too_fast_response,
             status=429,
         )
         responses.add(
@@ -222,18 +221,6 @@ class TestDegreed2ApiClient(unittest.TestCase):
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
 
-        too_fast_response = {
-            "errors": [
-                {
-                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
-                    "code": "quota-exceeded",
-                    "status": 429,
-                    "title": "API calls quota exceeded.",
-                    "detail": "Maximum 70 requests allowed per 1m."
-                }
-            ]
-        }
-
         responses.add(
             responses.POST,
             oauth_url,
@@ -243,25 +230,25 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.POST,
             course_url,
-            json=too_fast_response,
+            json=self.too_fast_response,
             status=429,
         )
         responses.add(
             responses.POST,
             course_url,
-            json=too_fast_response,
+            json=self.too_fast_response,
             status=429,
         )
         responses.add(
             responses.POST,
             course_url,
-            json=too_fast_response,
+            json=self.too_fast_response,
             status=429,
         )
         responses.add(
             responses.POST,
             course_url,
-            json=too_fast_response,
+            json=self.too_fast_response,
             status=429,
         )
 
@@ -274,7 +261,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
             assert responses.calls[3].request.url == course_url
             assert responses.calls[4].request.url == course_url
             assert status_code == 429
-            assert response_body == too_fast_response
+            assert response_body == self.too_fast_response
 
     @responses.activate
     def test_create_content_metadata_course_exists(self):
@@ -362,6 +349,97 @@ class TestDegreed2ApiClient(unittest.TestCase):
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert status_code == 200
         assert response_body == '"{}"'
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_delete_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
+        """
+        ``delete_content_metadata`` should use the appropriate URLs for transmission.
+        """
+        mock_fetch_degreed_course_id.return_value = 'a_course_id'
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.DELETE,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.DELETE,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json='{}',
+            status=200
+        )
+
+        status_code, response_body = degreed_api_client.delete_content_metadata(create_course_payload())
+        assert len(responses.calls) == 3
+        assert responses.calls[0].request.url == oauth_url
+        assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+        assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+        assert status_code == 200
+        assert response_body == '"{}"'
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_delete_content_metadata_retry_exhaust(self, mock_fetch_degreed_course_id):
+        """
+        ``delete_content_metadata`` should use the appropriate URLs for transmission.
+        """
+        mock_fetch_degreed_course_id.return_value = 'a_course_id'
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.DELETE,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.DELETE,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.DELETE,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.DELETE,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+
+        with pytest.raises(ClientError):
+            status_code, response_body = degreed_api_client.delete_content_metadata(create_course_payload())
+            assert len(responses.calls) == 5
+            assert responses.calls[0].request.url == oauth_url
+            assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert responses.calls[3].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert responses.calls[4].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert status_code == 429
+            assert response_body == self.too_fast_response
 
     @responses.activate
     def test_degreed_api_connection_error(self):
