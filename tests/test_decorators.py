@@ -170,7 +170,10 @@ class TestEnterpriseDecorators(unittest.TestCase):
         # user tries to access enterprise course enrollment page.
         assert response.status_code == 302
         assert 'new_enterprise_login%3Dyes' in response.url
-        assert f'tpa_hint%3D{redirected_tpa_hint}' in response.url
+        if redirected_tpa_hint:
+            assert f'tpa_hint%3D{redirected_tpa_hint}' in response.url
+        else:
+            assert f'tpa_hint%3D{redirected_tpa_hint}' not in response.url
 
     def test_enterprise_login_required_redirects_for_anonymous_users_with_querystring(self):
         """
