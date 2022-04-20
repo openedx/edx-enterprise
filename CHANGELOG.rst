@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-None
+fix: implement back-off and retry for degreed2
 
 [3.44.3]
 --------

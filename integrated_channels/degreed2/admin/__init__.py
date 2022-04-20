@@ -85,6 +85,7 @@ class Degreed2LearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
         "enterprise_course_enrollment_id",
         "course_id",
         "status",
+        "modified",
     )
 
     readonly_fields = (
