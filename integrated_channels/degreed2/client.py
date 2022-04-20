@@ -31,6 +31,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
     CONTENT_WRITE_SCOPE = "content:write"
     ALL_DESIRED_SCOPES = "content:read,content:write,completions:write,completions:read"
     SESSION_TIMEOUT = 60
+    MAX_RETRIES = 3
+    BACKOFF_FACTOR = 1
 
     def __init__(self, enterprise_configuration):
         """
@@ -329,7 +331,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         while True:
             tries = tries + 1
             response = self.session.get(url)
-            if tries <= 3 and response.status_code == 429:
+            if tries <= self.MAX_RETRIES and response.status_code == 429:
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
@@ -339,7 +341,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         "429 detected, backing-off before retrying..."
                     )
                 )
-                time.sleep((2 ^ (tries - 1)))
+                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
             else:
                 break
         return response.status_code, response.text
@@ -360,7 +362,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         while True:
             tries = tries + 1
             response = self.session.post(url, json=data)
-            if tries <= 3 and response.status_code == 429:
+            if tries <= self.MAX_RETRIES and response.status_code == 429:
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
@@ -370,7 +372,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         "429 detected, backing-off before retrying..."
                     )
                 )
-                time.sleep((2 ^ (tries - 1)))
+                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
             else:
                 break
         return response.status_code, response.text
@@ -391,7 +393,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         while True:
             tries = tries + 1
             response = self.session.patch(url, json=data)
-            if tries <= 3 and response.status_code == 429:
+            if tries <= self.MAX_RETRIES and response.status_code == 429:
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
@@ -401,7 +403,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         "429 detected, backing-off before retrying..."
                     )
                 )
-                time.sleep((2 ^ (tries - 1)))
+                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
             else:
                 break
         return response.status_code, response.text
@@ -422,7 +424,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         while True:
             tries = tries + 1
             response = self.session.delete(url, json=data) if data else self.session.delete(url)
-            if tries <= 3 and response.status_code == 429:
+            if tries <= self.MAX_RETRIES and response.status_code == 429:
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
@@ -432,7 +434,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         "429 detected, backing-off before retrying..."
                     )
                 )
-                time.sleep((2 ^ (tries - 1)))
+                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
             else:
                 break
         return response.status_code, response.text
