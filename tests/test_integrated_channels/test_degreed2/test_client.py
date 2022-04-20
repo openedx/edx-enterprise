@@ -318,6 +318,97 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_update_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
+        """
+        ``update_content_metadata`` should use the appropriate URLs for transmission.
+        """
+        mock_fetch_degreed_course_id.return_value = 'a_course_id'
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json='{}',
+            status=200
+        )
+
+        status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
+        assert len(responses.calls) == 3
+        assert responses.calls[0].request.url == oauth_url
+        assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+        assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+        assert status_code == 200
+        assert response_body == '"{}"'
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_update_content_metadata_retry_exhaust(self, mock_fetch_degreed_course_id):
+        """
+        ``update_content_metadata`` should use the appropriate URLs for transmission.
+        """
+        mock_fetch_degreed_course_id.return_value = 'a_course_id'
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_courses_url()}/a_course_id',
+            json=self.too_fast_response,
+            status=429
+        )
+
+        with pytest.raises(ClientError):
+            status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
+            assert len(responses.calls) == 5
+            assert responses.calls[0].request.url == oauth_url
+            assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert responses.calls[3].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert responses.calls[4].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
+            assert status_code == 429
+            assert response_body == self.too_fast_response
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
     def test_delete_content_metadata(self, mock_fetch_degreed_course_id):
         """
         ``delete_content_metadata`` should use the appropriate URLs for transmission.
