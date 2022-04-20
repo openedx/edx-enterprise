@@ -290,7 +290,11 @@ def generate_formatted_log(
         f'integrated_channel_course_key={course_or_course_run_key}, {message}'
 
 
-def refresh_session_if_expired(oauth_access_token_function, session=None, expires_at=None):
+def refresh_session_if_expired(
+    oauth_access_token_function,
+    session=None,
+    expires_at=None,
+):
     """
     Instantiate a new session object for use in connecting with integrated channel.
     Or, return an updated session if provided session has expired.

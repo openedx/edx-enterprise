@@ -5,6 +5,7 @@ Client for connecting to Degreed2.
 
 import json
 import logging
+import time
 
 import requests
 from six.moves.urllib.parse import urljoin
@@ -324,7 +325,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.get(url)
+        tries = 0
+        while True:
+            tries = tries + 1
+            response = self.session.get(url)
+            if tries <= 3 and response.status_code == 429:
+                    LOGGER.warning(
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            "429 detected, backing-off before retrying..."
+                        )
+                    )
+                    time.sleep((2 ^ (tries - 1)))
+            else:
+                break
         return response.status_code, response.text
 
     def _post(self, url, data, scope):
@@ -339,7 +356,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.post(url, json=data)
+        tries = 0
+        while True:
+            tries = tries + 1
+            response = self.session.post(url, json=data)
+            if tries <= 3 and response.status_code == 429:
+                    LOGGER.warning(
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            "429 detected, backing-off before retrying..."
+                        )
+                    )
+                    time.sleep((2 ^ (tries - 1)))
+            else:
+                break
         return response.status_code, response.text
 
     def _patch(self, url, data, scope):
@@ -354,7 +387,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.patch(url, json=data)
+        tries = 0
+        while True:
+            tries = tries + 1
+            response = self.session.patch(url, json=data)
+            if tries <= 3 and response.status_code == 429:
+                    LOGGER.warning(
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            "429 detected, backing-off before retrying..."
+                        )
+                    )
+                    time.sleep((2 ^ (tries - 1)))
+            else:
+                break
         return response.status_code, response.text
 
     def _delete(self, url, data, scope):
@@ -369,7 +418,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `COMPLETION_PROVIDER_SCOPE`
         """
         self._create_session(scope)
-        response = self.session.delete(url, json=data) if data else self.session.delete(url)
+        tries = 0
+        while True:
+            tries = tries + 1
+            response = self.session.delete(url, json=data) if data else self.session.delete(url)
+            if tries <= 3 and response.status_code == 429:
+                    LOGGER.warning(
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            "429 detected, backing-off before retrying..."
+                        )
+                    )
+                    time.sleep((2 ^ (tries - 1)))
+            else:
+                break
         return response.status_code, response.text
 
     def _create_session(self, scope):

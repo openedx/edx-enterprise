@@ -5,6 +5,7 @@ Tests for Degreed2 client for integrated_channels.
 
 import datetime
 import json
+import logging
 import unittest
 
 import mock
@@ -25,6 +26,8 @@ NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 
 app_config = apps.get_app_config("degreed2")
+
+LOGGER = logging.getLogger(__name__)
 
 
 def create_course_payload():
@@ -159,6 +162,119 @@ class TestDegreed2ApiClient(unittest.TestCase):
         assert responses.calls[1].request.url == course_url
         assert status_code == 200
         assert response_body == '"{}"'
+
+    @responses.activate
+    def test_create_content_metadata_retry_success(self):
+        """
+        ``create_content_metadata`` should hit a 429 and retry and receive correct response.
+        """
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+        course_url = degreed_api_client.get_courses_url()
+
+        too_fast_response = {
+          "errors": [
+            {
+              "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+              "code": "quota-exceeded",
+              "status": 429,
+              "title": "API calls quota exceeded.",
+              "detail": "Maximum 70 requests allowed per 1m."
+            }
+          ]
+        }
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200,
+        )
+        responses.add(
+            responses.POST,
+            course_url,
+            json=too_fast_response,
+            status=429,
+        )
+        responses.add(
+            responses.POST,
+            course_url,
+            json='{}',
+            status=200,
+        )
+
+        status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
+        assert len(responses.calls) == 3
+        assert responses.calls[0].request.url == oauth_url
+        assert responses.calls[1].request.url == course_url
+        assert responses.calls[2].request.url == course_url
+        assert status_code == 200
+        assert response_body == '"{}"'
+
+    @responses.activate
+    def test_create_content_metadata_retry_exhaust(self):
+        """
+        ``create_content_metadata`` should hit multiple 429's and eventually fail.
+        """
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+        course_url = degreed_api_client.get_courses_url()
+
+        too_fast_response = {
+          "errors": [
+            {
+              "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+              "code": "quota-exceeded",
+              "status": 429,
+              "title": "API calls quota exceeded.",
+              "detail": "Maximum 70 requests allowed per 1m."
+            }
+          ]
+        }
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200,
+        )
+        responses.add(
+            responses.POST,
+            course_url,
+            json=too_fast_response,
+            status=429,
+        )
+        responses.add(
+            responses.POST,
+            course_url,
+            json=too_fast_response,
+            status=429,
+        )
+        responses.add(
+            responses.POST,
+            course_url,
+            json=too_fast_response,
+            status=429,
+        )
+        responses.add(
+            responses.POST,
+            course_url,
+            json=too_fast_response,
+            status=429,
+        )
+
+        with pytest.raises(ClientError):
+            status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
+            assert len(responses.calls) == 5
+            assert responses.calls[0].request.url == oauth_url
+            assert responses.calls[1].request.url == course_url
+            assert responses.calls[2].request.url == course_url
+            assert responses.calls[3].request.url == course_url
+            assert responses.calls[4].request.url == course_url
+            assert status_code == 429
+            assert response_body == too_fast_response
 
     @responses.activate
     def test_create_content_metadata_course_exists(self):
