@@ -15,7 +15,12 @@ Change Log
 
 Unreleased
 ----------
+None
+
+[3.44.4]
+--------
 fix: implement back-off and retry for degreed2
+fix: drop tpa_hint param in redirects when no SSO
 
 [3.44.3]
 --------
