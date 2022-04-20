@@ -330,16 +330,16 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             tries = tries + 1
             response = self.session.get(url)
             if tries <= 3 and response.status_code == 429:
-                    LOGGER.warning(
-                        generate_formatted_log(
-                            self.enterprise_configuration.channel_code(),
-                            self.enterprise_configuration.enterprise_customer.uuid,
-                            None,
-                            None,
-                            "429 detected, backing-off before retrying..."
-                        )
+                LOGGER.warning(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "429 detected, backing-off before retrying..."
                     )
-                    time.sleep((2 ^ (tries - 1)))
+                )
+                time.sleep((2 ^ (tries - 1)))
             else:
                 break
         return response.status_code, response.text
@@ -361,16 +361,16 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             tries = tries + 1
             response = self.session.post(url, json=data)
             if tries <= 3 and response.status_code == 429:
-                    LOGGER.warning(
-                        generate_formatted_log(
-                            self.enterprise_configuration.channel_code(),
-                            self.enterprise_configuration.enterprise_customer.uuid,
-                            None,
-                            None,
-                            "429 detected, backing-off before retrying..."
-                        )
+                LOGGER.warning(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "429 detected, backing-off before retrying..."
                     )
-                    time.sleep((2 ^ (tries - 1)))
+                )
+                time.sleep((2 ^ (tries - 1)))
             else:
                 break
         return response.status_code, response.text
@@ -392,16 +392,16 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             tries = tries + 1
             response = self.session.patch(url, json=data)
             if tries <= 3 and response.status_code == 429:
-                    LOGGER.warning(
-                        generate_formatted_log(
-                            self.enterprise_configuration.channel_code(),
-                            self.enterprise_configuration.enterprise_customer.uuid,
-                            None,
-                            None,
-                            "429 detected, backing-off before retrying..."
-                        )
+                LOGGER.warning(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        "429 detected, backing-off before retrying..."
                     )
-                    time.sleep((2 ^ (tries - 1)))
+                )
+                time.sleep((2 ^ (tries - 1)))
             else:
                 break
         return response.status_code, response.text

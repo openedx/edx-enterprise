@@ -174,15 +174,15 @@ class TestDegreed2ApiClient(unittest.TestCase):
         course_url = degreed_api_client.get_courses_url()
 
         too_fast_response = {
-          "errors": [
-            {
-              "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
-              "code": "quota-exceeded",
-              "status": 429,
-              "title": "API calls quota exceeded.",
-              "detail": "Maximum 70 requests allowed per 1m."
-            }
-          ]
+            "errors": [
+                {
+                  "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                  "code": "quota-exceeded",
+                  "status": 429,
+                  "title": "API calls quota exceeded.",
+                  "detail": "Maximum 70 requests allowed per 1m."
+                }
+            ]
         }
 
         responses.add(
@@ -223,15 +223,15 @@ class TestDegreed2ApiClient(unittest.TestCase):
         course_url = degreed_api_client.get_courses_url()
 
         too_fast_response = {
-          "errors": [
-            {
-              "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
-              "code": "quota-exceeded",
-              "status": 429,
-              "title": "API calls quota exceeded.",
-              "detail": "Maximum 70 requests allowed per 1m."
-            }
-          ]
+            "errors": [
+                {
+                  "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                  "code": "quota-exceeded",
+                  "status": 429,
+                  "title": "API calls quota exceeded.",
+                  "detail": "Maximum 70 requests allowed per 1m."
+                }
+            ]
         }
 
         responses.add(
