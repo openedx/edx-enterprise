@@ -136,8 +136,12 @@ def enterprise_login_required(view):
         if not request.user.is_authenticated:
             parsed_current_url = urlparse(request.get_full_path())
             parsed_query_string = parse_qs(parsed_current_url.query)
+            tpa_hint = enterprise_customer.get_tpa_hint(tpa_hint_param)
+            if tpa_hint:
+                parsed_query_string.update({
+                    'tpa_hint': tpa_hint,
+                })
             parsed_query_string.update({
-                'tpa_hint': enterprise_customer.get_tpa_hint(tpa_hint_param),
                 FRESH_LOGIN_PARAMETER: 'yes'
             })
             next_url = '{current_path}?{query_string}'.format(
