@@ -1,18 +1,19 @@
 """
 Tests for the `edx-enterprise` course catalogs api module.
 """
-
+import logging
 import unittest
 from unittest import mock
 
 import ddt
 from pytest import mark, raises
+from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
 
 from django.contrib import auth
 
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.utils import NotConnectedToOpenEdX
-from test_utils import factories
+from test_utils import MockLoggingHandler, factories
 
 User = auth.get_user_model()
 
@@ -34,34 +35,44 @@ class TestEcommerceApiClient(unittest.TestCase):
     """
     Test course catalog API methods.
     """
-
     def setUp(self):
         super().setUp()
         self.user = factories.UserFactory()
 
-    def _setup_ecommerce_api_client(self, client_mock, method_name, return_value):
+    @mock.patch('enterprise.api_client.ecommerce.configuration_helpers')
+    @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
+    def test_get_course_final_price(self, ecommerce_api_client_mock, *args):
         """
-        Sets up the E-Commerce API client
+        Test get_course_final_price from the EcommerceAPIClient.
         """
-        mocked_attributes = {
-            method_name: mock.MagicMock(return_value=return_value),
-        }
-        api_mock = mock.MagicMock(**mocked_attributes)
-
-        client_mock.return_value = api_mock
-
-    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
-    def test_get_course_final_price(self, ecommerce_api_client_mock):
         mode = {
             'sku': 'verified-sku',
             'min_price': 200,
             'original_price': 500,
         }
-        self._setup_ecommerce_api_client(
-            client_mock=ecommerce_api_client_mock,
-            method_name='baskets.calculate.get',
-            return_value={
-                'total_incl_tax': 100,
-            }
-        )
+        ecommerce_api_client_mock.return_value.get.return_value.json.return_value = {'total_incl_tax': 100}
         assert EcommerceApiClient(self.user).get_course_final_price(mode) == '$100'
+
+    @mock.patch('enterprise.api_client.ecommerce.configuration_helpers')
+    @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
+    @ddt.data(RequestException, Timeout, ConnectionError)
+    def test_create_manual_enrollment_orders_error(self, exception, ecommerce_api_client_mock, *args):
+        """
+        Test create_manual_enrollment_orders error handling from the EcommerceAPIClient.
+        """
+        client = EcommerceApiClient(self.user)
+        ecommerce_api_client_mock.return_value.post.side_effect = exception
+
+        logger = logging.getLogger('enterprise.api_client.ecommerce')
+        handler = MockLoggingHandler(level="ERROR")
+        logger.addHandler(handler)
+
+        enrollments = {'fake_enrollmetn': 'fake_content'}
+        client.create_manual_enrollment_orders(enrollments)
+
+        expected_message = (
+            "Failed to create order for manual enrollments for the following enrollments: "
+            f"{enrollments}. Reason: {str(exception())}"
+        )
+
+        assert handler.messages['error'][0] == expected_message

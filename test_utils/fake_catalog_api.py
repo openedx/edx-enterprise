@@ -1419,12 +1419,12 @@ class CourseDiscoveryApiTestMixin:
     @staticmethod
     def _get_important_parameters(get_data_mock):
         """
-        Return important (i.e. varying) parameters to get_edx_api_data.
+        Return important (i.e. varying) parameters to get_api_data.
         """
         args, kwargs = get_data_mock.call_args
 
-        # This test is to make sure that all calls to get_edx_api_data are made using kwargs
-        # and there is no positional argument. This is required as changes in get_edx_api_data's
+        # This test is to make sure that all calls to get_api_data are made using kwargs
+        # and there is no positional argument. This is required as changes in get_api_data's
         # signature are breaking edx-enterprise and using kwargs would reduce that.
         assert args == ()
 

@@ -4,22 +4,23 @@ Client for communicating with the Enterprise API.
 
 from collections import OrderedDict
 from logging import getLogger
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.cache import cache
 
 from enterprise import utils
-from enterprise.api_client.lms import JwtLmsApiClient
+from enterprise.api_client.client import UserAPIClient
 
 LOGGER = getLogger(__name__)
 
 
-class EnterpriseApiClient(JwtLmsApiClient):
+class EnterpriseApiClient(UserAPIClient):
     """
-    Object builds an API client to make calls to the Enterprise API.
+    The API client to make calls to the Enterprise API.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/enterprise/api/v1/'
+    API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "enterprise/api/v1/")
     APPEND_SLASH = True
 
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
@@ -54,7 +55,7 @@ class EnterpriseApiClient(JwtLmsApiClient):
 
         return list(content_metadata.values())
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def _load_data(
             self,
             resource,
@@ -87,11 +88,12 @@ class EnterpriseApiClient(JwtLmsApiClient):
         response = cache.get(cache_key)
         if not response:
             # Response is not cached, so make a call.
-            endpoint = getattr(self.client, resource)(resource_id)
-            endpoint = getattr(endpoint, detail_resource) if detail_resource else endpoint
-            response = endpoint.get(**querystring)
+            api_url = self.get_api_url(f"{resource}/{resource_id}/{detail_resource if detail_resource else ''}")
+            response = self.client.get(api_url, params=querystring)
+            response.raise_for_status()
+            response = response.json()
             if traverse_pagination:
-                results = utils.traverse_pagination(response, endpoint)
+                results = utils.traverse_pagination(response, self.client, api_url)
                 response = {
                     'count': len(results),
                     'next': 'None',

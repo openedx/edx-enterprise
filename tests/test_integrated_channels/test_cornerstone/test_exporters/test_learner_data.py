@@ -133,7 +133,6 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         assert exporter.get_learner_data_records(enterprise_course_enrollment) is None
 
     @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
@@ -200,7 +199,6 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self.assertEqual(actual_url, expected_url)
 
     @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.cornerstone.utils.uuid4')
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
@@ -280,7 +278,6 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         assert sorted(expected_headers.items()) == sorted(actual_headers.items())
 
     @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')

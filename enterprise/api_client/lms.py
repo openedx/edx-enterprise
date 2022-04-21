@@ -3,102 +3,28 @@ Utilities to get details from the course catalog API.
 """
 
 import logging
-from functools import wraps
-from time import time
+from urllib.parse import urljoin
 
-from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
-from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
-from slumber.exceptions import HttpNotFoundError, SlumberBaseException
-from slumber.utils import copy_kwargs, url_join
+from requests.exceptions import (  # pylint: disable=redefined-builtin
+    ConnectionError,
+    HTTPError,
+    RequestException,
+    Timeout,
+)
 
 from django.conf import settings
 
+from enterprise.api_client.client import BackendServiceAPIClient, NoAuthAPIClient, UserAPIClient
 from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
-from enterprise.utils import NotConnectedToOpenEdX, get_enterprise_worker_user
 
 try:
     from openedx.core.djangoapps.embargo import api as embargo_api
 except ImportError:
     embargo_api = None
 
-try:
-    from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder
-except ImportError:
-    JwtBuilder = None
-
 
 LOGGER = logging.getLogger(__name__)
-
-
-class NoAuthenticationLmsApiClient:
-    """
-    Object builds an API client to make calls to the edxapp LMS API.
-
-    Authentication is not required.
-    """
-
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
-    APPEND_SLASH = False
-
-    def __init__(self):
-        """
-        Create an LMS API client.
-        """
-        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
-
-
-class JwtLmsApiClient:
-    """
-    LMS client authenticates using a JSON Web Token (JWT) for the given user.
-    """
-
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
-    APPEND_SLASH = False
-
-    def __init__(self, user, expires_in=settings.OAUTH_ID_TOKEN_EXPIRATION):
-        """
-        Connect to the REST API.
-        """
-        self.user = user
-        self.expires_in = expires_in
-        self.expires_at = 0
-        self.client = None
-
-    def connect(self):
-        """
-        Connect to the REST API, authenticating with a JWT for the current user.
-        """
-        if JwtBuilder is None:
-            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
-
-        now = int(time())
-        jwt = JwtBuilder.create_jwt_for_user(self.user)
-        self.client = EdxRestApiClient(
-            self.API_BASE_URL, append_slash=self.APPEND_SLASH, jwt=jwt,
-        )
-        self.expires_at = now + self.expires_in
-
-    def token_expired(self):
-        """
-        Return True if the JWT token has expired, False if not.
-        """
-        return int(time()) > self.expires_at
-
-    @staticmethod
-    def refresh_token(func):
-        """
-        Use this method decorator to ensure the JWT token is refreshed when needed.
-        """
-        @wraps(func)
-        def inner(self, *args, **kwargs):
-            """
-            Before calling the wrapped function, we check if the JWT token is expired, and if so, re-connect.
-            """
-            if self.token_expired():
-                self.connect()
-            return func(self, *args, **kwargs)
-        return inner
 
 
 class EmbargoApiClient:
@@ -123,40 +49,13 @@ class EmbargoApiClient:
         return None
 
 
-class EnrollmentApiClient(JwtLmsApiClient):
+class EnrollmentApiClient(BackendServiceAPIClient):
     """
-    Object builds an API client to make calls to the Enrollment API.
+    The API client to make calls to the Enrollment API.
     """
 
     API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
 
-    def __init__(self, user=None):
-        user = user if user else get_enterprise_worker_user()
-        super().__init__(user)
-
-    def _get_underscore_safe_endpoint(self, username_course_string):
-        """
-        Slumber raises an AttributeError when trying to access a client class
-        attribute that starts with an underscore:
-        https://github.com/samgiles/slumber/blob/af0f9ef7bd8df8bde6b47088630786c737869bce/slumber/__init__.py#L29-L39
-
-        This is problematic for requesting enrollments for usernames that start with an underscore.
-        For example, to request enrollment data for the user '_jane' in the course 'course-v1:A+B+C',
-        we'd be requesting the '_jane,course-v1:A+B+C' resource from the /api/enrollment/v1 endpoint, i.e.
-        GET `/api/enrollment/v1/_jane,course-v1:A+B+C`.
-
-        This helper function should be used to get a Slumber endpoint (Resource object)
-        when the username begins with '_'.
-        """
-        slumber_resource = self.client.enrollment
-
-        # pylint: disable=protected-access
-        kwargs = copy_kwargs(slumber_resource._store)
-        kwargs.update({"base_url": url_join(slumber_resource._store["base_url"], username_course_string)})
-
-        return slumber_resource._get_resource(**kwargs)
-
-    @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
         """
         Query the Enrollment API for the course details of the given course_id.
@@ -167,12 +66,14 @@ class EnrollmentApiClient(JwtLmsApiClient):
         Returns:
             dict: A dictionary containing details about the course, in an enrollment context (allowed modes, etc.)
         """
+        api_url = self.get_api_url(f"course/{course_id}")
         try:
-            return self.client.course(course_id).get()
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            response = self.client.get(api_url)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout):
             LOGGER.exception(
-                'Failed to retrieve course enrollment details for course [%s] due to: [%s]',
-                course_id, str(exc)
+                'Failed to retrieve course enrollment details for course [%s].', course_id
             )
             return {}
 
@@ -198,7 +99,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         # Sort slug weights in descending order
         return sorted(modes, key=slug_weight, reverse=True)
 
-    @JwtLmsApiClient.refresh_token
     def get_course_modes(self, course_id):
         """
         Query the Enrollment API for the specific course modes that are available for the given course_id.
@@ -214,7 +114,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         modes = details.get('course_modes', [])
         return self._sort_course_modes([mode for mode in modes if mode['slug'] not in EXCLUDED_COURSE_MODES])
 
-    @JwtLmsApiClient.refresh_token
     def has_course_mode(self, course_run_id, mode):
         """
         Query the Enrollment API to see whether a course run has a given course mode available.
@@ -229,7 +128,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
-    @JwtLmsApiClient.refresh_token
     def enroll_user_in_course(self, username, course_id, mode, cohort=None, enterprise_uuid=None):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
@@ -245,8 +143,10 @@ class EnrollmentApiClient(JwtLmsApiClient):
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
 
         """
-        return self.client.enrollment.post(
-            {
+        api_url = self.get_api_url("enrollment")
+        response = self.client.post(
+            api_url,
+            json={
                 'user': username,
                 'course_details': {'course_id': course_id},
                 'is_active': True,
@@ -255,8 +155,9 @@ class EnrollmentApiClient(JwtLmsApiClient):
                 'enterprise_uuid': str(enterprise_uuid)
             }
         )
+        response.raise_for_status()
+        return response.json()
 
-    @JwtLmsApiClient.refresh_token
     def unenroll_user_from_course(self, username, course_id):
         """
         Call the enrollment API to unenroll the user in the course specified by course_id.
@@ -268,17 +169,21 @@ class EnrollmentApiClient(JwtLmsApiClient):
         """
         enrollment = self.get_course_enrollment(username, course_id)
         if enrollment and enrollment['is_active']:
-            response = self.client.enrollment.post({
-                'user': username,
-                'course_details': {'course_id': course_id},
-                'is_active': False,
-                'mode': enrollment['mode']
-            })
-            return not response['is_active']
+            api_url = self.get_api_url("enrollment")
+            response = self.client.post(
+                api_url,
+                json={
+                    'user': username,
+                    'course_details': {'course_id': course_id},
+                    'is_active': False,
+                    'mode': enrollment['mode']
+                }
+            )
+            response.raise_for_status()
+            return not response.json()['is_active']
 
         return False
 
-    @JwtLmsApiClient.refresh_token
     def update_course_enrollment_mode_for_user(self, username, course_id, mode):
         """
         Call the enrollment API to update a user's course enrollment to the specified mode, e.g. "audit".
@@ -291,13 +196,18 @@ class EnrollmentApiClient(JwtLmsApiClient):
         Returns:
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
         """
-        return self.client.enrollment.post({
-            'user': username,
-            'course_details': {'course_id': course_id},
-            'mode': mode,
-        })
+        api_url = self.get_api_url("enrollment")
+        response = self.client.post(
+            api_url,
+            json={
+                'user': username,
+                'course_details': {'course_id': course_id},
+                'mode': mode,
+            }
+        )
+        response.raise_for_status()
+        return response.json()
 
-    @JwtLmsApiClient.refresh_token
     def get_course_enrollment(self, username, course_id):
         """
         Query the enrollment API to get information about a single course enrollment.
@@ -311,30 +221,28 @@ class EnrollmentApiClient(JwtLmsApiClient):
 
         """
         username_course_string = '{username},{course_id}'.format(username=username, course_id=course_id)
-        if username.startswith('_'):
-            endpoint = self._get_underscore_safe_endpoint(username_course_string)
-        else:
-            endpoint = getattr(self.client.enrollment, username_course_string)
+        api_url = self.get_api_url(f"enrollment/{username_course_string}")
 
         try:
-            result = endpoint.get()
-        except HttpNotFoundError:
+            response = self.client.get(api_url)
+            response.raise_for_status()
+        except HTTPError as err:
             # This enrollment data endpoint returns a 404 if either the username or course_id specified isn't valid
-            LOGGER.error(
-                'Course enrollment details not found for invalid username or course; username=[%s], course=[%s]',
-                username,
-                course_id
-            )
+            if err.response.status_code == 404:
+                LOGGER.error(
+                    'Course enrollment details not found for invalid username or course; username=[%s], course=[%s]',
+                    username,
+                    course_id
+                )
             return None
         # This enrollment data endpoint returns an empty string if the username and course_id is valid, but there's
         # no matching enrollment found
-        if not result:
+        if not response.content:
             LOGGER.info('Failed to find course enrollment details for user [%s] and course [%s]', username, course_id)
             return None
 
-        return result
+        return response.json()
 
-    @JwtLmsApiClient.refresh_token
     def is_enrolled(self, username, course_run_id):
         """
         Query the enrollment API and determine if a learner is enrolled in a course run.
@@ -350,7 +258,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         enrollment = self.get_course_enrollment(username, course_run_id)
         return enrollment is not None and enrollment.get('is_active', False)
 
-    @JwtLmsApiClient.refresh_token
     def get_enrolled_courses(self, username):
         """
         Query the enrollment API to get a list of the courses a user is enrolled in.
@@ -362,15 +269,18 @@ class EnrollmentApiClient(JwtLmsApiClient):
             list: A list of course objects, along with relevant user-specific enrollment details.
 
         """
-        return self.client.enrollment.get(user=username)
+        api_url = self.get_api_url("enrollment")
+        response = self.client.get(api_url, params={"user": username})
+        response.raise_for_status()
+        return response.json()
 
 
-class CourseApiClient(NoAuthenticationLmsApiClient):
+class CourseApiClient(NoAuthAPIClient):
     """
-    Object builds an API client to make calls to the Course API.
+    The API client to make calls to the Course API.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
+    API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "api/courses/v1/")
     APPEND_SLASH = True
 
     def get_course_details(self, course_id):
@@ -383,21 +293,24 @@ class CourseApiClient(NoAuthenticationLmsApiClient):
         Returns:
             dict: Contains keys identifying those course details available from the courses API (e.g., name).
         """
+        api_url = self.get_api_url(f"courses/{course_id}")
         try:
-            return self.client.courses(course_id).get()
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception('Details not found for course [%s] due to: [%s]', course_id, str(exc))
+            response = self.client.get(api_url)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout):
+            LOGGER.exception('Details not found for course [%s].', course_id)
             return None
 
 
-class ThirdPartyAuthApiClient(JwtLmsApiClient):
+class ThirdPartyAuthApiClient(UserAPIClient):
     """
-    Object builds an API client to make calls to the Third Party Auth API.
+    The API client to make calls to the Third Party Auth API.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/third_party_auth/v0/'
+    API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "api/third_party_auth/v0/")
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_remote_id(self, identity_provider, username):
         """
         Retrieve the remote identifier for the given username.
@@ -411,7 +324,7 @@ class ThirdPartyAuthApiClient(JwtLmsApiClient):
         """
         return self._get_results(identity_provider, 'username', username, 'remote_id')
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_username_from_remote_id(self, identity_provider, remote_id):
         """
         Retrieve the remote identifier for the given username.
@@ -429,19 +342,23 @@ class ThirdPartyAuthApiClient(JwtLmsApiClient):
         """
         Calls the third party auth api endpoint to get the mapping between usernames and remote ids.
         """
+        api_url = self.get_api_url(f"providers/{identity_provider}/users")
         try:
             kwargs = {param_name: param_value}
-            returned = self.client.providers(identity_provider).users.get(**kwargs)
-            results = returned.get('results', [])
-        except HttpNotFoundError:
-            LOGGER.error(
-                'username not found for third party provider={provider}, {querystring_param}={id}'.format(
-                    provider=identity_provider,
-                    querystring_param=param_name,
-                    id=param_value
+            response = self.client.get(api_url, params=kwargs)
+            response.raise_for_status()
+            results = response.json().get('results', [])
+        except HTTPError as err:
+            if err.response.status_code == 404:
+                LOGGER.error(
+                    'Username not found for third party provider={%s}, {%s}={%s}',
+                    identity_provider,
+                    param_name,
+                    param_value
                 )
-            )
-            results = []
+                results = []
+            else:
+                raise
 
         for row in results:
             if row.get(param_name) == param_value:
@@ -449,17 +366,17 @@ class ThirdPartyAuthApiClient(JwtLmsApiClient):
         return None
 
 
-class GradesApiClient(JwtLmsApiClient):
+class GradesApiClient(UserAPIClient):
     """
-    Object builds an API client to make calls to the LMS Grades API.
+    The API client to make calls to the LMS Grades API.
 
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/grades/v1/'
+    API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "api/grades/v1/")
     APPEND_SLASH = True
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_course_grade(self, course_id, username):
         """
         Retrieve the grade for the given username for the given course_id.
@@ -470,7 +387,7 @@ class GradesApiClient(JwtLmsApiClient):
 
         Raises:
 
-        HttpNotFoundError if no grade found for the given user+course.
+        HTTPError if no grade found for the given user+course.
 
         Returns:
 
@@ -483,14 +400,16 @@ class GradesApiClient(JwtLmsApiClient):
         * ``letter_grade``: A letter grade as defined in grading_policy (e.g. 'A' 'B' 'C' for 6.002x) or None
 
         """
-        results = self.client.courses(course_id).get(username=username)
-        for row in results:
+        api_url = self.get_api_url(f"courses/{course_id}")
+        response = self.client.get(api_url, params={"username": username})
+        response.raise_for_status()
+        for row in response.json():
             if row.get('username') == username:
                 return row
 
-        raise HttpNotFoundError('No grade record found for course={}, username={}'.format(course_id, username))
+        raise HTTPError(f'No grade record found for course={course_id}, username={username}')
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_course_assessment_grades(self, course_id, username):
         """
         Retrieve the assessment grades for the given username for the given course_id.
@@ -501,7 +420,7 @@ class GradesApiClient(JwtLmsApiClient):
 
         Raises:
 
-        HttpNotFoundError if no grade found for the given user+course.
+        HTTPError if no grade found for the given user+course.
 
         Returns:
 
@@ -516,28 +435,27 @@ class GradesApiClient(JwtLmsApiClient):
         * ``percent``: A float representing the overall grade for the course.
         * ``module_id``: The ID of the subsection.
         """
-        results = self.client.gradebook(course_id).get(user_contains=username).get('results')
+        api_url = self.get_api_url(f"gradebook/{course_id}")
+        response = self.client.get(api_url, params={"user_contains": username})
+        response.raise_for_status()
+        results = response.json().get('results', [])
         for row in results:
             if row.get('username') == username:
                 return row.get('section_breakdown')
 
-        raise HttpNotFoundError('No assessment grade record found for course={}, username={}'.format(
-            course_id,
-            username
-        ))
+        raise HTTPError(f"No assessment grade record found for course={course_id}, username={username}")
 
 
-class CertificatesApiClient(JwtLmsApiClient):
+class CertificatesApiClient(UserAPIClient):
     """
-    Object builds an API client to make calls to the LMS Certificates API.
+    The API client to make calls to the LMS Certificates API.
 
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
-
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/certificates/v0/'
+    API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "api/certificates/v0/")
     APPEND_SLASH = True
 
-    @JwtLmsApiClient.refresh_token
+    @UserAPIClient.refresh_token
     def get_course_certificate(self, course_id, username):
         """
         Retrieve the certificate for the given username for the given course_id.
@@ -545,10 +463,6 @@ class CertificatesApiClient(JwtLmsApiClient):
         Args:
         * ``course_id`` (str): The string value of the course's unique identifier
         * ``username`` (str): The username ID identifying the user for which to retrieve the certificate
-
-        Raises:
-
-        HttpNotFoundError if no certificate found for the given user+course.
 
         Returns:
 
@@ -564,12 +478,15 @@ class CertificatesApiClient(JwtLmsApiClient):
         * ``grade``: A string representation of a float for the user's course grade.
 
         """
-        return self.client.certificates(username).courses(course_id).get()
+        api_url = self.get_api_url(f"certificates/{username}/courses/{course_id}")
+        response = self.client.get(api_url)
+        response.raise_for_status()
+        return response.json()
 
 
-class NoAuthLMSClient(NoAuthenticationLmsApiClient):
+class NoAuthLMSClient(NoAuthAPIClient):
     """
-    Class to build an LMS client to make calls to the LMS.
+    The LMS API client to make calls to the LMS without authentication.
     """
 
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL
@@ -582,4 +499,7 @@ class NoAuthLMSClient(NoAuthenticationLmsApiClient):
         Returns:
             dict: Response containing LMS service health.
         """
-        return self.client.heartbeat.get()
+        api_url = self.get_api_url("heartbeat")
+        response = self.client.get(api_url)
+        response.raise_for_status()
+        return response.json()

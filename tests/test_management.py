@@ -192,7 +192,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
@@ -264,7 +263,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
@@ -490,12 +488,9 @@ def transmit_learner_data_context(command_kwargs=None, certificate=None, self_pa
         command_kwargs['enterprise_customer_slug'] = testcase.enterprise_customer.slug
     command_kwargs['user1'] = testcase.user1
     command_kwargs['user2'] = testcase.user2
-    # Mock the JWT authentication for LMS API calls
-    with mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock()):
-
-        # Yield to the management command test, freezing time to the known NOW.
-        with freeze_time(NOW):
-            yield (command_args, command_kwargs)
+    # Yield to the management command test, freezing time to the known NOW.
+    with freeze_time(NOW):
+        yield (command_args, command_kwargs)
 
     # Clean up the testcase data
     testcase.tearDown()
@@ -1203,7 +1198,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     )
     @ddt.unpack
     @freeze_time(NOW)
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_user_from_social_auth')
@@ -1288,7 +1282,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     def test_unlink_inactive_sap_learners_task_sapsf_failure(
@@ -1314,7 +1307,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('enterprise.utils.get_identity_provider')
@@ -1383,7 +1375,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     def test_unlink_inactive_sap_learners_task_sapsf_error_response(

@@ -7,7 +7,12 @@ import ddt
 import responses
 from path import Path
 from pytest import raises
-from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
+from requests.exceptions import (  # pylint: disable=redefined-builtin
+    ConnectionError,
+    HTTPError,
+    RequestException,
+    Timeout,
+)
 
 from django.conf import settings
 
@@ -44,18 +49,20 @@ class TestChecks(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        (503, 'Service is down'),
-        (400, 'An error occurred while checking service status.'),
+        (HTTPError, 'Service is down'),
+        (RequestException, 'An error occurred while checking service status.'),
+        (Timeout, 'Service is not accessible.'),
+        (ConnectionError, 'Service is not accessible.'),
     )
-    def test_check_lms_error(self, status_code, expected_error_message):
+    def test_check_lms_error(self, exc, expected_error_message):
         """
         Validate that `check_lms` function works as expected.
         """
-        @mock_api_response(
+        @mock_api_response_with_callback(
             responses.GET,
             Path(settings.LMS_INTERNAL_ROOT_URL) / 'heartbeat',
-            json=fake_lms_heartbeat(all_okay=False),
-            status=status_code
+            callback=exc,
+            content_type='application/json'
         )
         def _test_check_lms_error():
 
@@ -65,26 +72,6 @@ class TestChecks(unittest.TestCase):
 
         # Run the tests
         _test_check_lms_error()
-
-    @ddt.data(Timeout, ConnectionError)
-    def test_check_lms_connection_errors(self, exception):
-        """
-        Validate that `check_lms` function works as expected.
-        """
-        @mock_api_response_with_callback(
-            responses.GET,
-            Path(settings.LMS_INTERNAL_ROOT_URL) / 'heartbeat',
-            callback=exception,
-            content_type='application/json'
-        )
-        def _test_check_lms_connection_errors():
-
-            with raises(LMSNotAvailable) as error:
-                check_lms()
-                assert error.message == 'Service is not accessible.'
-
-        # Run the tests
-        _test_check_lms_connection_errors()
 
     @mock_api_response(
         responses.GET,
@@ -102,30 +89,12 @@ class TestChecks(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        (503, 'Service is down'),
-        (400, 'An error occurred while checking service status.'),
+        (HTTPError, 'Service is down'),
+        (RequestException, 'An error occurred while checking service status.'),
+        (Timeout, 'Service is not accessible.'),
+        (ConnectionError, 'Service is not accessible.'),
     )
-    def test_check_ecommerce_error(self, status_code, expected_error_message):
-        """
-        Validate that `check_ecommerce` function works as expected.
-        """
-        @mock_api_response(
-            responses.GET,
-            Path(settings.ECOMMERCE_PUBLIC_URL_ROOT) / 'health',
-            json=fake_health(all_okay=False),
-            status=status_code
-        )
-        def _test_check_ecommerce_error():
-
-            with raises(EcommerceNotAvailable) as error:
-                check_ecommerce()
-                assert error.message == expected_error_message
-
-        # Run the tests
-        _test_check_ecommerce_error()
-
-    @ddt.data(Timeout, ConnectionError)
-    def test_check_ecommerce_connection_errors(self, exception):
+    def test_check_ecommerce_error(self, exception, expected_error_message):
         """
         Validate that `check_ecommerce` function works as expected.
         """
@@ -135,14 +104,14 @@ class TestChecks(unittest.TestCase):
             callback=exception,
             content_type='application/json'
         )
-        def _test_check_ecommerce_connection_errors():
+        def _test_check_ecommerce_error():
 
             with raises(EcommerceNotAvailable) as error:
                 check_ecommerce()
-                assert error.message == 'Service is not accessible.'
+                assert error.message == expected_error_message
 
         # Run the tests
-        _test_check_ecommerce_connection_errors()
+        _test_check_ecommerce_error()
 
     @mock_api_response(
         responses.GET,
@@ -160,30 +129,12 @@ class TestChecks(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        (503, 'Service is down'),
-        (400, 'An error occurred while checking service status.'),
+        (HTTPError, 'Service is down'),
+        (RequestException, 'An error occurred while checking service status.'),
+        (Timeout, 'Service is not accessible.'),
+        (ConnectionError, 'Service is not accessible.'),
     )
-    def test_check_discovery_error(self, status_code, expected_error_message):
-        """
-        Validate that `check_discovery` function works as expected.
-        """
-        @mock_api_response(
-            responses.GET,
-            Path(settings.COURSE_CATALOG_URL_ROOT) / 'health',
-            json=fake_health(all_okay=False),
-            status=status_code
-        )
-        def _test_check_discovery_error():
-
-            with raises(DiscoveryNotAvailable) as error:
-                check_discovery()
-                assert error.message == expected_error_message
-
-        # Run the tests
-        _test_check_discovery_error()
-
-    @ddt.data(Timeout, ConnectionError)
-    def test_check_discovery_connection_errors(self, exception):
+    def test_check_discovery_error(self, exception, expected_error_message):
         """
         Validate that `check_discovery` function works as expected.
         """
@@ -193,14 +144,14 @@ class TestChecks(unittest.TestCase):
             callback=exception,
             content_type='application/json'
         )
-        def _test_check_discovery_connection_errors():
+        def _test_check_discovery_error():
 
             with raises(DiscoveryNotAvailable) as error:
                 check_discovery()
-                assert error.message == 'Service is not accessible.'
+                assert error.message == expected_error_message
 
         # Run the tests
-        _test_check_discovery_connection_errors()
+        _test_check_discovery_error()
 
     @mock_api_response(
         responses.GET,
@@ -218,30 +169,12 @@ class TestChecks(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        (503, 'Service is down'),
-        (400, 'An error occurred while checking service status.'),
+        (HTTPError, 'Service is down'),
+        (RequestException, 'An error occurred while checking service status.'),
+        (Timeout, 'Service is not accessible.'),
+        (ConnectionError, 'Service is not accessible.'),
     )
-    def test_check_enterprise_catalog_error(self, status_code, expected_error_message):
-        """
-        Validate that `check_enterprise_catalog` function works as expected.
-        """
-        @mock_api_response(
-            responses.GET,
-            Path(settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL) / 'health',
-            json=fake_health(all_okay=False),
-            status=status_code
-        )
-        def _test_check_enterprise_catalog_error():
-
-            with raises(EnterpriseCatalogNotAvailable) as error:
-                check_enterprise_catalog()
-                assert error.message == expected_error_message
-
-        # Run the tests
-        _test_check_enterprise_catalog_error()
-
-    @ddt.data(Timeout, ConnectionError)
-    def test_check_enterprise_catalog_connection_errors(self, exception):
+    def test_check_enterprise_catalog_error(self, exception, expected_error_message):
         """
         Validate that `check_enterprise_catalog` function works as expected.
         """
@@ -251,11 +184,11 @@ class TestChecks(unittest.TestCase):
             callback=exception,
             content_type='application/json'
         )
-        def _test_check_enterprise_catalog_errors():
+        def _test_check_enterprise_catalog_error():
 
             with raises(EnterpriseCatalogNotAvailable) as error:
                 check_enterprise_catalog()
-                assert error.message == 'Service is not accessible.'
+                assert error.message == expected_error_message
 
         # Run the tests
-        _test_check_enterprise_catalog_errors()
+        _test_check_enterprise_catalog_error()
