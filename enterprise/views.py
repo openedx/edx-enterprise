@@ -15,7 +15,6 @@ import waffle  # pylint: disable=invalid-django-waffle-import
 from dateutil.parser import parse
 from edx_django_utils import monitoring
 from edx_rest_api_client.exceptions import HttpClientError
-from ipware.ip import get_client_ip
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 
@@ -1786,7 +1785,10 @@ class CourseEnrollmentView(NonAtomicView):
         """
         # Check to see if access to the course run is restricted for this user.
         embargo_url = EmbargoApiClient.redirect_if_blocked(
-            [course_id], request.user, get_client_ip(request)[0], request.path)
+            request=request,
+            course_run_ids=[course_id],
+            user=request.user,
+        )
         if embargo_url:
             return redirect(embargo_url)
 
@@ -2165,7 +2167,10 @@ class ProgramEnrollmentView(NonAtomicView):
             for course_run in course['course_runs']:
                 course_run_ids.append(course_run['key'])
         embargo_url = EmbargoApiClient.redirect_if_blocked(
-            course_run_ids, request.user, get_client_ip(request)[0], request.path)
+            request=request,
+            course_run_ids=course_run_ids,
+            user=request.user,
+        )
         if embargo_url:
             return redirect(embargo_url)
 

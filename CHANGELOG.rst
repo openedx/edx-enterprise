@@ -17,6 +17,12 @@ Unreleased
 ----------
 None
 
+[3.46.0]
+--------
+fix: modify signature of EmbargoApiClient.redirect_if_blocked
+Make this signature match and use the same signature that
+``openedx.core.djangoapps.embargo.api.redirect_if_blocked()`` now uses.
+
 [3.44.4]
 --------
 fix: implement back-off and retry for degreed2
