@@ -43,10 +43,9 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     list_display = (
         "enterprise_customer_name",
         "active",
-        "client_id",
-        "client_secret",
         "degreed_base_url",
         "degreed_token_fetch_base_url",
+        "modified",
     )
 
     readonly_fields = (
@@ -91,6 +90,8 @@ class Degreed2LearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
     readonly_fields = (
         "enterprise_customer_name",
     )
+
+    list_per_page = 1000
 
     class Meta:
         model = Degreed2LearnerDataTransmissionAudit
