@@ -16,7 +16,7 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
         'enterprise_customer',
         'integrated_channel_code',
         'content_id',
-        'channel_metadata'
+        'modified'
     )
 
     search_fields = (
@@ -29,3 +29,5 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
     raw_id_fields = (
         'enterprise_customer',
     )
+
+    list_per_page = 1000

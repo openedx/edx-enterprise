@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.46.1]
+--------
+feat: admin view improvements
+
 [3.46.0]
 --------
 fix: modify signature of EmbargoApiClient.redirect_if_blocked
