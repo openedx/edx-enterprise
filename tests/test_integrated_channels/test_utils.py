@@ -245,7 +245,6 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         assert utils.is_valid_url('badurl.com') is False
         assert utils.is_valid_url('https://') is False
 
-
     @ddt.data(
         (
             {
