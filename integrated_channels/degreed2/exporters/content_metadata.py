@@ -9,9 +9,9 @@ from enterprise.utils import get_closest_course_run, get_course_run_duration_inf
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
     generate_formatted_log,
+    get_courserun_duration_in_days,
     get_image_url,
     strip_html_tags,
-    get_courserun_duration_in_days,
 )
 
 LOGGER = getLogger(__name__)
