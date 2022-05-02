@@ -149,18 +149,24 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
                     "start": "2021-10-01T16:00:00Z",
                     "end": "2022-01-01T17:00:00Z",
                     "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+                    "min_effort": 2,
+                    "max_effort": 4,
+                    "weeks_to_complete": 10,
                 },
                 {
                     "key": "course-v1:edX+0087786+3T2021",
                     "start": "2019-10-01T16:00:00Z",
                     "end": "2022-01-02T17:00:00Z",
                     "uuid": "7d238cc5-88e4-4931-a28e-4193ae4b2618",
+                    "min_effort": 2,
+                    "max_effort": 4,
+                    "weeks_to_complete": 10,
                 }
             ],
             "uuid": "3580463a-6f9c-48ed-ae8d-b5a012860d75",
             "advertised_course_run_uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
         }
-        assert exporter.transform_duration(content_metadata_item) == 92
+        assert exporter.transform_duration(content_metadata_item) == 4
 
     def test_transform_duration_course_run(self):
         exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
@@ -170,12 +176,15 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "start": "2021-10-01T16:00:00Z",
             "end": "2022-01-01T17:00:00Z",
             "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+            "min_effort": 2,
+            "max_effort": 4,
+            "weeks_to_complete": 10,
         }
-        assert exporter.transform_duration(content_metadata_item) == 92
+        assert exporter.transform_duration(content_metadata_item) == 4
 
     def test_transform_duration_with_invalid_dates(self):
         """
-        want to return 0 instead of fail with invalid dates
+        want to return 0 instead of fail with missing information
         """
         exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
         content_metadata_item = {
@@ -184,6 +193,9 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "start": "2021-10-01T16:00:00Z",
             "end": None,
             "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+            "min_effort": 2,
+            "max_effort": 4,
+            "weeks_to_complete": None,
         }
         assert exporter.transform_duration(content_metadata_item) == 0
 
@@ -202,5 +214,8 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "start": None,
             "end": "2021-10-01T16:00:00Z",
             "uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+            "min_effort": None,
+            "max_effort": 4,
+            "weeks_to_complete": 10,
         }
         assert exporter.transform_duration(content_metadata_item) == 0
