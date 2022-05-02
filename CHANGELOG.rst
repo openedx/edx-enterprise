@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.46.2]
+--------
+fix: Degreed2 estimated time to complete in days
+
 [3.46.1]
 --------
 feat: admin view improvements
