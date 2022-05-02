@@ -5,7 +5,7 @@ Content metadata exporter for Degreed.
 
 from logging import getLogger
 
-from enterprise.utils import get_closest_course_run, get_course_run_duration_info, parse_datetime_handle_invalid
+from enterprise.utils import get_closest_course_run, get_course_run_duration_info
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
     generate_formatted_log,
