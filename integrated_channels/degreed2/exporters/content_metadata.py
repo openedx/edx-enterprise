@@ -5,9 +5,14 @@ Content metadata exporter for Degreed.
 
 from logging import getLogger
 
-from enterprise.utils import get_closest_course_run, get_course_run_duration_info, parse_datetime_handle_invalid
+from enterprise.utils import get_closest_course_run, get_course_run_duration_info
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.utils import generate_formatted_log, get_image_url, strip_html_tags
+from integrated_channels.utils import (
+    generate_formatted_log,
+    get_courserun_duration_in_days,
+    get_image_url,
+    strip_html_tags,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -40,17 +45,15 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         Returns: duration in days
         """
         if content_metadata_item.get('content_type') == 'courserun':
-            start = content_metadata_item.get('start')
-            end = content_metadata_item.get('end')
+            return get_courserun_duration_in_days(content_metadata_item)
         elif content_metadata_item.get('content_type') == 'course':
             course_runs = content_metadata_item.get('course_runs')
             if course_runs:
                 course_run = get_closest_course_run(course_runs)
                 if course_run:
-                    start = course_run.get('start')
-                    end = course_run.get('end')
+                    return get_courserun_duration_in_days(course_run)
                 else:
-                    LOGGER.error(
+                    LOGGER.warning(
                         generate_formatted_log(
                             self.enterprise_configuration.channel_code(),
                             self.enterprise_configuration.enterprise_customer.uuid,
@@ -62,7 +65,7 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                     )
                     return 0
             else:
-                LOGGER.error(
+                LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
@@ -75,23 +78,6 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                 return 0
         else:
             return 0
-
-        start_date = parse_datetime_handle_invalid(start)
-        end_date = parse_datetime_handle_invalid(end)
-        if not start_date or not end_date:
-            LOGGER.error(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    'Failed to find valid start/end dates, so duration is going to be set to 0. '
-                    f'Course item was {content_metadata_item} '
-                    f'Parsed Start was: {start_date}, End was: {end_date}'
-                )
-            )
-            return 0
-        return (end_date - start_date).days
 
     def transform_description(self, content_metadata_item):
         """

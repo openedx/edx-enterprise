@@ -244,3 +244,35 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
 
         assert utils.is_valid_url('badurl.com') is False
         assert utils.is_valid_url('https://') is False
+
+    @ddt.data(
+        (
+            {
+                'start': '2018-02-05T05:00:00Z',
+                'min_effort': 2,
+                'max_effort': 4,
+                'weeks_to_complete': 10
+            },
+            4,
+        ),
+        (
+            {
+                'start': '2018-02-05T05:00:00Z',
+                'min_effort': 1,
+                'max_effort': 8,
+                'weeks_to_complete': 3
+            },
+            2,
+        ),
+        (
+            {
+                'start': '2018-02-05T05:00:00Z',
+                'min_effort': 1,
+                'max_effort': 8,
+            },
+            0,
+        ),
+    )
+    @ddt.unpack
+    def test_get_courserun_duration_in_days(self, course_run, expected_duration_days):
+        assert utils.get_courserun_duration_in_days(course_run) == expected_duration_days
