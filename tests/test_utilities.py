@@ -1044,7 +1044,7 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         (
-            #advertised course run is set and included, return that one
+            # advertised course run is set and included, return that one
             {
                 "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
                 "course_runs": [
@@ -1055,7 +1055,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             fake_catalog_api.create_course_run_dict(uuid='dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f')
         ),
         (
-            #advertised course run is set but not included, return None
+            # advertised course run is set but not included, return None
             {
                 "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
                 "course_runs": [
@@ -1065,7 +1065,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             None
         ),
         (
-            #advertised course run is not set, return None
+            # advertised course run is not set, return None
             {
                 "course_runs": [
                     fake_catalog_api.create_course_run_dict(uuid='28e2d4c2-a020-4959-b461-6f879bbe1391')
@@ -1080,22 +1080,22 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         (
-            #everything true, course is active
+            # everything true, course is active
             fake_catalog_api.create_course_run_dict(status='published', is_enrollable=True, is_marketable=True),
             True
         ),
         (
-            #not published
+            # not published
             fake_catalog_api.create_course_run_dict(status='unpublished', is_enrollable=True, is_marketable=True),
             False
         ),
         (
-            #not enrollable
+            # not enrollable
             fake_catalog_api.create_course_run_dict(status='published', is_enrollable=False, is_marketable=True),
             False
         ),
         (
-            #not marketable
+            # not marketable
             fake_catalog_api.create_course_run_dict(status='published', is_enrollable=True, is_marketable=False),
             False
         )

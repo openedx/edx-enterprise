@@ -32,7 +32,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
 
     @ddt.data(
         (
-            #advertised course run has price, use it
+            # advertised course run has price, use it
             {
                 "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
                 "course_runs": [
@@ -58,7 +58,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True,
         ),
         (
-            #advertised course run has no price, fall back to another active course
+            # advertised course run has no price, fall back to another active course
             {
                 "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
                 "course_runs": [
@@ -83,7 +83,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True,
         ),
         (
-            #no advertised course run, use active course run
+            # no advertised course run, use active course run
             {
                 "course_runs": [
                     {
@@ -100,7 +100,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True
         ),
         (
-            #no advertised course run and no active course run, return 0
+            # no advertised course run and no active course run, return 0
             {
                 'course_runs': [
                     {
@@ -117,7 +117,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True
         ),
         (
-            #show_course_price false, return 0
+            # show_course_price false, return 0
             {
                 'advertised_course_run_uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                 'course_runs': [
@@ -135,7 +135,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             False
         ),
         (
-            #no price data, return 0
+            # no price data, return 0
             {
                 'advertised_course_run_uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                 'course_runs': [
@@ -152,7 +152,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True
         ),
         (
-            #no course run data, return 0
+            # no course run data, return 0
             {'course_runs': []},
             0.0,
             True
