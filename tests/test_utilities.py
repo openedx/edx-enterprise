@@ -1044,6 +1044,68 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         (
+            #advertised course run is set and included, return that one
+            {
+                "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(uuid='dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f'),
+                    fake_catalog_api.create_course_run_dict(uuid='28e2d4c2-a020-4959-b461-6f879bbe1391')
+                ]
+            },
+            fake_catalog_api.create_course_run_dict(uuid='dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f')
+        ),
+        (
+            #advertised course run is set but not included, return None
+            {
+                "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(uuid='28e2d4c2-a020-4959-b461-6f879bbe1391')
+                ]
+            },
+            None
+        ),
+        (
+            #advertised course run is not set, return None
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(uuid='28e2d4c2-a020-4959-b461-6f879bbe1391')
+                ]
+            },
+            None
+        ),
+    )
+    @ddt.unpack
+    def test_get_advertised_course_run(self, course, expected_course_run):
+        assert utils.get_advertised_course_run(course) == expected_course_run
+
+    @ddt.data(
+        (
+            #everything true, course is active
+            fake_catalog_api.create_course_run_dict(status='published', is_enrollable=True, is_marketable=True),
+            True
+        ),
+        (
+            #not published
+            fake_catalog_api.create_course_run_dict(status='unpublished', is_enrollable=True, is_marketable=True),
+            False
+        ),
+        (
+            #not enrollable
+            fake_catalog_api.create_course_run_dict(status='published', is_enrollable=False, is_marketable=True),
+            False
+        ),
+        (
+            #not marketable
+            fake_catalog_api.create_course_run_dict(status='published', is_enrollable=True, is_marketable=False),
+            False
+        )
+    )
+    @ddt.unpack
+    def test_is_course_run_active(self, course_run, expected_result):
+        assert utils.is_course_run_active(course_run) == expected_result
+
+    @ddt.data(
+        (
             {
                 "min_effort": 2,
                 "max_effort": 3,

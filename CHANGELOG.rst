@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.46.3]
+--------
+fix: update logic for parsing course price for SAP
+
 [3.46.2]
 --------
 fix: Degreed2 estimated time to complete in days

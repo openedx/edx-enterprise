@@ -1140,6 +1140,38 @@ def parse_datetime_handle_invalid(datetime_value):
         return None
 
 
+def get_advertised_course_run(course):
+    """
+    Find the advertised course run for a given course
+    Arguments:
+        course (dict): course dict
+    Returns:
+        dict: a course_run or None
+    """
+    advertised_course_run_uuid = course.get('advertised_course_run_uuid')
+    if advertised_course_run_uuid:
+        for course_run in course.get('course_runs', []):
+            if advertised_course_run_uuid == course_run.get('uuid'):
+                return course_run
+    return None
+
+
+def is_course_run_active(course_run):
+    """
+    Checks whether a course run is active. That is, whether the course run is published,
+    enrollable, and marketable.
+    Arguments:
+        course_run (dict): The metadata about a course run.
+    Returns:
+        bool: True if course run is "active"
+    """
+    is_published = is_course_run_published(course_run)
+    is_enrollable = course_run.get('is_enrollable', False)
+    is_marketable = course_run.get('is_marketable', False)
+
+    return is_published and is_enrollable and is_marketable
+
+
 def get_course_run_duration_info(course_run):
     """
     Return course run's duration(str) info.
