@@ -32,29 +32,83 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
 
     @ddt.data(
         (
+            # advertised course run has price, use it
             {
+                "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
                 "course_runs": [
                     {
-                        'availability': 'Current',
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                         'title': 'edX Demonstration Course',
-                        'first_enrollable_paid_seat_price': 100
+                        'first_enrollable_paid_seat_price': 100,
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
                     },
                     {
-                        'availability': 'Archived',
+                        'uuid': '28e2d4c2-a020-4959-b461-6f879bbe1391',
                         'title': 'edX Demonstration Course',
-                        'first_enrollable_paid_seat_price': 50
+                        'first_enrollable_paid_seat_price': 50,
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
                     }
                 ]
             },
-            100.0,
+            100,
             True,
         ),
         (
+            # advertised course run has no price, fall back to another active course
+            {
+                "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
+                "course_runs": [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    },
+                    {
+                        'uuid': '28e2d4c2-a020-4959-b461-6f879bbe1391',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 50,
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    }
+                ]
+            },
+            50,
+            True,
+        ),
+        (
+            # no advertised course run, use active course run
             {
                 "course_runs": [
                     {
-                        'availability': 'Archived',
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                         'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True,
+                        'first_enrollable_paid_seat_price': 100
+                    }
+                ]
+            },
+            100,
+            True
+        ),
+        (
+            # no advertised course run and no active course run, return 0
+            {
+                'course_runs': [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'unpublished',
+                        'is_enrollable': False,
+                        'is_marketable': False,
                         'first_enrollable_paid_seat_price': 100
                     }
                 ]
@@ -63,24 +117,16 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True
         ),
         (
+            # show_course_price false, return 0
             {
+                'advertised_course_run_uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                 'course_runs': [
                     {
-                        'availability': 'Current',
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                         'title': 'edX Demonstration Course',
-                        'first_enrollable_paid_seat_price': 0.0
-                    }
-                ]
-            },
-            0.0,
-            True
-        ),
-        (
-            {
-                'course_runs': [
-                    {
-                        'availability': 'Current',
-                        'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True,
                         'first_enrollable_paid_seat_price': 100
                     }
                 ]
@@ -89,11 +135,16 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             False
         ),
         (
+            # no price data, return 0
             {
+                'advertised_course_run_uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                 'course_runs': [
                     {
-                        'availability': 'Current',
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                         'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
                     }
                 ]
             },
@@ -101,11 +152,11 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             True
         ),
         (
+            # no course run data, return 0
             {'course_runs': []},
             0.0,
-            True,
-        ),
-
+            True
+        )
     )
     @responses.activate
     @ddt.unpack

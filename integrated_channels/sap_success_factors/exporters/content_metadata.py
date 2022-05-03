@@ -7,8 +7,10 @@ from logging import getLogger
 from django.utils.translation import gettext_lazy as _
 
 from enterprise.utils import (
+    get_advertised_course_run,
     get_closest_course_run,
     get_duration_of_course_or_courserun,
+    is_course_run_active,
     is_course_run_available_for_enrollment,
     parse_lms_api_datetime,
 )
@@ -155,10 +157,17 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         Return the current course run's price.
         """
         price = 0.0
+
         if self.enterprise_configuration.show_course_price:
-            for course_run in content_metadata_item.get('course_runs', []):
-                if course_run['availability'] == 'Current':
-                    price = course_run.get('first_enrollable_paid_seat_price', 0.0) or 0.0
+            advertised_course_run = get_advertised_course_run(content_metadata_item)
+            if advertised_course_run and 'first_enrollable_paid_seat_price' in advertised_course_run:
+                price = advertised_course_run.get('first_enrollable_paid_seat_price') or 0.0
+            else:
+                for course_run in content_metadata_item.get('course_runs', []):
+                    if 'first_enrollable_paid_seat_price' in course_run and is_course_run_active(course_run):
+                        price = course_run.get('first_enrollable_paid_seat_price') or 0.0
+                        break
+
         return [
             {
                 "currency": "USD",
