@@ -9,8 +9,8 @@ from django.utils.translation import gettext_lazy as _
 from enterprise.utils import (
     get_closest_course_run,
     get_duration_of_course_or_courserun,
-    is_course_run_available_for_enrollment, 
-    parse_lms_api_datetime, 
+    is_course_run_available_for_enrollment,
+    parse_lms_api_datetime,
     get_advertised_course_run,
     is_course_run_active,
 )
@@ -167,7 +167,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
                     if 'first_enrollable_paid_seat_price' in course_run and is_course_run_active(course_run):
                         price = course_run.get('first_enrollable_paid_seat_price') or 0.0
                         break
-       
+
         return [
             {
                 "currency": "USD",

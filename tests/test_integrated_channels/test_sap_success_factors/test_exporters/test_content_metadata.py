@@ -87,7 +87,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             {
                 "course_runs": [
                     {
-                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',                        
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
                         'title': 'edX Demonstration Course',
                         'status': 'published',
                         'is_enrollable': True,
