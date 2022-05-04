@@ -166,7 +166,8 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "uuid": "3580463a-6f9c-48ed-ae8d-b5a012860d75",
             "advertised_course_run_uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
         }
-        assert exporter.transform_duration(content_metadata_item) == 4
+        assert exporter.transform_duration_type(content_metadata_item) == 'Hours'
+        assert exporter.transform_duration(content_metadata_item) == 30
 
     def test_transform_duration_course_run(self):
         exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
@@ -180,7 +181,8 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "max_effort": 4,
             "weeks_to_complete": 10,
         }
-        assert exporter.transform_duration(content_metadata_item) == 4
+        assert exporter.transform_duration_type(content_metadata_item) == 'Hours'
+        assert exporter.transform_duration(content_metadata_item) == 30
 
     def test_transform_duration_with_invalid_dates(self):
         """

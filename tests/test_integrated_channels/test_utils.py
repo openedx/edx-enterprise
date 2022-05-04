@@ -253,7 +253,7 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
                 'max_effort': 4,
                 'weeks_to_complete': 10
             },
-            4,
+            30,
         ),
         (
             {
@@ -262,7 +262,7 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
                 'max_effort': 8,
                 'weeks_to_complete': 3
             },
-            2,
+            14,
         ),
         (
             {
@@ -274,5 +274,5 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         ),
     )
     @ddt.unpack
-    def test_get_courserun_duration_in_days(self, course_run, expected_duration_days):
-        assert utils.get_courserun_duration_in_days(course_run) == expected_duration_days
+    def test_get_courserun_duration_in_hours(self, course_run, expected_duration_days):
+        assert utils.get_courserun_duration_in_hours(course_run) == expected_duration_days
