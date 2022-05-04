@@ -9,7 +9,7 @@ from enterprise.utils import get_closest_course_run, get_course_run_duration_inf
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
     generate_formatted_log,
-    get_courserun_duration_in_days,
+    get_courserun_duration_in_hours,
     get_image_url,
     strip_html_tags,
 )
@@ -38,20 +38,20 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
     }
 
     def transform_duration_type(self, content_metadata_item):  # pylint: disable=unused-argument
-        return 'Days'
+        return 'Hours'
 
     def transform_duration(self, content_metadata_item):
         """
         Returns: duration in days
         """
         if content_metadata_item.get('content_type') == 'courserun':
-            return get_courserun_duration_in_days(content_metadata_item)
+            return get_courserun_duration_in_hours(content_metadata_item)
         elif content_metadata_item.get('content_type') == 'course':
             course_runs = content_metadata_item.get('course_runs')
             if course_runs:
                 course_run = get_closest_course_run(course_runs)
                 if course_run:
-                    return get_courserun_duration_in_days(course_run)
+                    return get_courserun_duration_in_hours(course_run)
                 else:
                     LOGGER.warning(
                         generate_formatted_log(

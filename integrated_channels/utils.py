@@ -235,18 +235,17 @@ def get_duration_from_estimated_hours(estimated_hours):
     return None
 
 
-def get_courserun_duration_in_days(course_run):
+def get_courserun_duration_in_hours(course_run):
     """
-    Return the duration in number of days corresponding to a course run.
+    Return the approximate number of hours required to complete this course run.
     """
     min_effort = course_run.get('min_effort')
     max_effort = course_run.get('max_effort')
     weeks_to_complete = course_run.get('weeks_to_complete')
     if min_effort and max_effort and weeks_to_complete:
-        hours_per_day = 8.0
         average_hours_per_week = (min_effort + max_effort) / 2.0
-        total_days = (weeks_to_complete * average_hours_per_week) / hours_per_day
-        return math.ceil(total_days)
+        total_hours = (weeks_to_complete * average_hours_per_week)
+        return math.ceil(total_hours)
     else:
         return 0
 
