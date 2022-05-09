@@ -162,7 +162,6 @@ django-crum==0.7.9
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -746,6 +745,7 @@ zipp==3.7.0
     # via
     #   -r requirements/doc.txt
     #   importlib-metadata
+django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
