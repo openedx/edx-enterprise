@@ -24,6 +24,7 @@ class Degreed2LearnerExporter(LearnerExporter):
             self,
             enterprise_enrollment,
             completed_date=None,
+            course_completed=False,
             **kwargs
     ):  # pylint: disable=arguments-differ
         """
@@ -50,6 +51,7 @@ class Degreed2LearnerExporter(LearnerExporter):
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=get_course_id_for_enrollment(enterprise_enrollment),
                     completed_timestamp=completed_timestamp,
+                    course_completed=course_completed,
                     enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
                 ),
@@ -58,6 +60,7 @@ class Degreed2LearnerExporter(LearnerExporter):
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=enterprise_enrollment.course_id,
                     completed_timestamp=completed_timestamp,
+                    course_completed=course_completed,
                     enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
                 )
