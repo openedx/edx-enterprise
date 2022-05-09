@@ -2348,25 +2348,6 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         actual_assignments = list(SystemWideEnterpriseUserRoleAssignment.get_assignments(test_user))
         self.assertEqual(expected_assignments, actual_assignments)
 
-    def test_get_assignments_no_context_or_link(self):
-        """
-        Test the scenario where a user has an assignment record,
-        but the record has no enterprise_customer_id, applies_to_all_contexts is False,
-        and the user is not linked to any enterprise.
-        """
-        user_with_no_link = factories.UserFactory(email='zelda@example.com')
-        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-            user=user_with_no_link,
-            role=roles_api.learner_role(),
-            enterprise_customer=None,
-            applies_to_all_contexts=False,
-        )
-
-        self.assertEqual(
-            [('enterprise_learner', None)],
-            list(SystemWideEnterpriseUserRoleAssignment.get_assignments(user_with_no_link)),
-        )
-
     def test_unique_together_constraint(self):
         """
         Verify that duplicate combination of records with same user, role and enterprise cannot be created and
@@ -2388,6 +2369,39 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
             SystemWideEnterpriseUserRoleAssignment.objects.create(
                 user=user, enterprise_customer=enterprise_customer, role=role, applies_to_all_contexts=False
             )
+
+    def test_role_assignment_validation_error_no_enterprise_customer(self):
+        """
+        Verify that a SystemWideEnterpriseUserRoleAssignment object throws a validation error
+        if an enterprise_customer is not set on the object when applies_to_all_contexts is
+        not set to True.
+        """
+        user = factories.UserFactory(email='edx@example.com')
+
+        with self.assertRaises(ValidationError):
+            SystemWideEnterpriseUserRoleAssignment.objects.create(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=None,
+                applies_to_all_contexts=False,
+            )
+
+    def test_role_assignment_validation_error_no_enterprise_customer_all_contexts(self):
+        """
+        Verify that a SystemWideEnterpriseUserRoleAssignment object does not throw a validation
+        error if an enterprise_customer is not set when applies_to_all_contexts is True.
+        """
+        user = factories.UserFactory(email='edx@example.com')
+
+        try:
+            SystemWideEnterpriseUserRoleAssignment.objects.create(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=None,
+                applies_to_all_contexts=True,
+            )
+        except ValidationError:
+            assert False
 
 
 @mark.django_db
