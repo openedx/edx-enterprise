@@ -17,6 +17,11 @@ Unreleased
 ----------
 None
 
+[3.49.0]
+--------
+fix: Return None for context if a ``SystemWideEnterpriseUserRoleAssignment`` has no enterprise_customer and does not apply to all contexts.
+     We'll no longer fall back on granting context based on enterprise membership when there is no explicit context.
+
 [3.48.0]
 --------
 chore: add migration to remove is_active from role assignment model schema

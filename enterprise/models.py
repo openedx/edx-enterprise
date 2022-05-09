@@ -2792,31 +2792,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 class EnterpriseRoleAssignmentContextMixin:
     """
     Mixin for RoleAssignment models related to enterprises.
+
+    DEPRECATED: Not removing since it's referenced in a migration (0001_squashed_0092_auto_20200312_1650).
+
     """
-
-    @property
-    def enterprise_customer_uuids(self):
-        """Get the enterprise customer uuids linked to the user."""
-        enterprise_users = EnterpriseCustomerUser.objects.filter(user_id=self.user.id)
-        if not enterprise_users:
-            LOGGER.warning(
-                'User {} has a {} of "{}" but is not linked to an enterprise. (ID: {})'.format(
-                    self.user.id,
-                    self.__class__,
-                    self.role.name,
-                    self.id
-                ))
-            return None
-
-        return [str(enterprise_user.enterprise_customer.uuid) for enterprise_user in enterprise_users]
-
-    def get_context(self):
-        """
-        Returns a non-empty list of enterprise customer uuid strings to which
-        ``self.user`` is linked, or ``None`` if the user is not linked
-        to any EnterpriseCustomer.
-        """
-        return self.enterprise_customer_uuids
 
 
 class SystemWideEnterpriseRole(UserRole):
@@ -2839,7 +2818,7 @@ class SystemWideEnterpriseRole(UserRole):
         return self.__str__()
 
 
-class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
+class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
     """
     Model to map users to a SystemWideEnterpriseRole.
 
@@ -2888,7 +2867,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         if self.enterprise_customer:
             return [str(self.enterprise_customer.uuid)]
 
-        return super().get_context()
+        return None
 
     @classmethod
     def get_distinct_assignments_by_role_name(cls, user, role_names=None):
@@ -3011,7 +2990,7 @@ class EnterpriseFeatureRole(UserRole):
         return self.__str__()
 
 
-class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
+class EnterpriseFeatureUserRoleAssignment(UserRoleAssignment):
     """
     Model to map users to an EnterpriseFeatureRole.
 
@@ -3034,6 +3013,29 @@ class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, 
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    @property
+    def enterprise_customer_uuids(self):
+        """Get the enterprise customer uuids linked to the user."""
+        enterprise_users = EnterpriseCustomerUser.objects.filter(user_id=self.user.id)
+        if not enterprise_users:
+            LOGGER.warning(
+                'User {} has a {} of "{}" but is not linked to an enterprise. (ID: {})'.format(
+                    self.user.id,
+                    self.__class__,
+                    self.role.name,
+                    self.id
+                ))
+            return None
+        return [str(enterprise_user.enterprise_customer.uuid) for enterprise_user in enterprise_users]
+
+    def get_context(self):
+        """
+        Returns a non-empty list of enterprise customer uuid strings to which
+        ``self.user`` is linked, or ``None`` if the user is not linked
+        to any EnterpriseCustomer.
+        """
+        return self.enterprise_customer_uuids
 
 
 class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
