@@ -35,6 +35,7 @@ SECOND_CONFIG = {
     'base_url': 'http://betatest2.blackboard.com',
 }
 
+
 @pytest.mark.django_db
 class TestBlackboardAPIViews(APITestCase):
     """

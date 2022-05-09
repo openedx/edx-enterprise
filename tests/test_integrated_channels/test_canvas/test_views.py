@@ -35,6 +35,7 @@ SECOND_CANVAS_CONFIG = {
     'canvas_base_url': 'http://betatest2.instructure.com',
 }
 
+
 @pytest.mark.django_db
 class TestCanvasAPIViews(APITestCase):
     """
