@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.46.5]
+--------
+fix: degreed2 improperly tracking completion status
+
 [3.46.4]
 --------
 fix: Degreed2 estimated time to complete in hours
