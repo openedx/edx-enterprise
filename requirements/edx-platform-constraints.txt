@@ -248,7 +248,6 @@ django-crum==0.7.9
     #   edx-rbac
     #   edx-toggles
     #   super-csv
-django-fernet-fields==0.6
     # via
     #   -r requirements/edx/base.in
     #   edx-enterprise
