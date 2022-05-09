@@ -21,10 +21,18 @@ from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfigurat
 ENTERPRISE_ID = str(uuid4())
 BAD_ENTERPRISE_ID = str(uuid4())
 SINGLE_CANVAS_CONFIG = {
+    'uuid': '123e4567-e89b-12d3-a456-426655440001',
     'client_id': 'id',
     'client_secret': 'secret',
     'canvas_account_id': '10001',
     'canvas_base_url': 'http://betatest.instructure.com',
+}
+SECOND_CANVAS_CONFIG = {
+    'uuid': '123e4567-e89b-12d3-a456-426655440002',
+    'client_id': 'id2',
+    'client_secret': 'secret2',
+    'canvas_account_id': '20002',
+    'canvas_base_url': 'http://betatest2.instructure.com',
 }
 
 
@@ -49,6 +57,7 @@ class TestCanvasAPIViews(APITestCase):
         self.urlbase = reverse('canvas-oauth-complete')
 
         CanvasEnterpriseCustomerConfiguration.objects.get_or_create(
+            uuid=SINGLE_CANVAS_CONFIG['uuid'],
             client_id=SINGLE_CANVAS_CONFIG['client_id'],
             client_secret=SINGLE_CANVAS_CONFIG['client_secret'],
             canvas_account_id=SINGLE_CANVAS_CONFIG['canvas_account_id'],
@@ -58,9 +67,52 @@ class TestCanvasAPIViews(APITestCase):
             enterprise_customer_id=ENTERPRISE_ID,
         )
 
-    def test_successful_refresh_token_request(self):
+        CanvasEnterpriseCustomerConfiguration.objects.get_or_create(
+            uuid=SECOND_CANVAS_CONFIG['uuid'],
+            client_id=SECOND_CANVAS_CONFIG['client_id'],
+            client_secret=SECOND_CANVAS_CONFIG['client_secret'],
+            canvas_account_id=SECOND_CANVAS_CONFIG['canvas_account_id'],
+            canvas_base_url=SECOND_CANVAS_CONFIG['canvas_base_url'],
+            enterprise_customer=self.enterprise_customer,
+            active=True,
+            enterprise_customer_id=ENTERPRISE_ID,
+        )
+
+    def test_successful_refresh_token_by_uuid_request(self):
         """
-        GET canvas/oauth-complete?state=state?code=code
+        GET canvas/oauth-complete?state=config_uuid?code=code
+        w/ 200 Response
+        """
+        query_kwargs = {
+            'state': SINGLE_CANVAS_CONFIG['uuid'],
+            'code': 'test-code'
+        }
+        oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
+
+        auth_token_url = urljoin(
+            SINGLE_CANVAS_CONFIG['canvas_base_url'],
+            self.app_config.oauth_token_auth_path
+        )
+
+        assert CanvasEnterpriseCustomerConfiguration.objects.get(
+            uuid=SINGLE_CANVAS_CONFIG['uuid']
+        ).refresh_token == ''
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                auth_token_url,
+                json={'refresh_token': self.refresh_token},
+                status=200
+            )
+            self.client.get(oauth_complete_url)
+
+        assert CanvasEnterpriseCustomerConfiguration.objects.get(
+            uuid=SINGLE_CANVAS_CONFIG['uuid']
+        ).refresh_token == self.refresh_token
+
+    def test_successful_refresh_token_by_legacy_customer_uuid_request(self):
+        """
+        GET canvas/oauth-complete?state=enterprise_customer_uuid?code=code
         w/ 200 Response
         """
         query_kwargs = {
@@ -74,9 +126,9 @@ class TestCanvasAPIViews(APITestCase):
             self.app_config.oauth_token_auth_path
         )
 
-        assert CanvasEnterpriseCustomerConfiguration.objects.get(
+        assert CanvasEnterpriseCustomerConfiguration.objects.filter(
             enterprise_customer=self.enterprise_customer
-        ).refresh_token == ''
+        ).first().refresh_token == ''
         with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.POST,
@@ -86,9 +138,9 @@ class TestCanvasAPIViews(APITestCase):
             )
             self.client.get(oauth_complete_url)
 
-        assert CanvasEnterpriseCustomerConfiguration.objects.get(
+        assert CanvasEnterpriseCustomerConfiguration.objects.filter(
             enterprise_customer=self.enterprise_customer
-        ).refresh_token == self.refresh_token
+        ).first().refresh_token == self.refresh_token
 
     def test_refresh_token_request_without_required_params(self):
         """
@@ -134,15 +186,12 @@ class TestCanvasAPIViews(APITestCase):
         """
         GET canvas/oauth-complete?state=state?code=code
         """
-        CanvasEnterpriseCustomerConfiguration.objects.get(
-            enterprise_customer=self.enterprise_customer
-        ).delete()
         query_kwargs = {
-            'state': ENTERPRISE_ID,
+            'state': 'BADCODE',
             'code': 'test-code'
         }
         oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
         with LogCapture(level=logging.ERROR) as log_capture:
             oauth_complete_url = '{}?{}'.format(self.urlbase, urlencode(query_kwargs))
             self.client.get(oauth_complete_url)
-            assert 'No Canvas configuration found for state' in log_capture.records[0].getMessage()
+            assert 'No state data found for given uuid' in log_capture.records[0].getMessage()
