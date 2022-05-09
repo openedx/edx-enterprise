@@ -128,11 +128,11 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                 return self.render_page(request, 'error')
 
             try:
-                enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(
+                enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.filter(
                     enterprise_customer=enterprise_customer
-                )
+                ).first()
             except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
-                LOGGER.error(f"No Blackboard configuration found for state: {state_uuid}")
+                LOGGER.error(f"No state data found for given uuid: {state_uuid}")
                 return self.render_page(request, 'error')
 
         BlackboardGlobalConfiguration = apps.get_model(

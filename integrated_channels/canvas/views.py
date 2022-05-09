@@ -104,11 +104,11 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
                 return self.render_page(request, 'error')
 
             try:
-                enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(
+                enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.filter(
                     enterprise_customer=enterprise_customer
-                )
+                ).first()
             except CanvasEnterpriseCustomerConfiguration.DoesNotExist:
-                LOGGER.error(f"No Canvas configuration found for state: {state_uuid}")
+                LOGGER.error(f"No state data found for given uuid: {state_uuid}")
                 return self.render_page(request, 'error')
 
         access_token_request_params = {
