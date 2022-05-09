@@ -182,7 +182,6 @@ django-model-utils==4.2.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
-django-multi-email-field==0.6.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -746,7 +745,7 @@ zipp==3.7.0
     #   -r requirements/doc.txt
     #   importlib-metadata
 django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
-
+django-multi-email-field @ git+https://github.com/openedx/django-multi-email-field.git@494783029152718c1fcafd9bc24d28bf6a65e3c6
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools

@@ -95,7 +95,6 @@ django-model-utils==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-django-multi-email-field==0.6.2
     # via -r requirements/test-master.txt
 django-object-actions==3.1.0
     # via -r requirements/test-master.txt
