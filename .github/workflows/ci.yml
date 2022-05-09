@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.8']
-        toxenv: [quality, docs, django32-celery50, django32-pii-annotations]
+        toxenv: [quality, docs, django32-celery50, django40-celery50, django32-pii-annotations]
     env:
       RUNJSHINT: true
     steps:
