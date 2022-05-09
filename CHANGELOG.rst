@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.46.6]
+--------
+fix: correctly handle multiple canvas and blackboard oauth configs
+
 [3.46.5]
 --------
 fix: degreed2 improperly tracking completion status
