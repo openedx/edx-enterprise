@@ -104,7 +104,7 @@ django-crum==0.7.9
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
+django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
     # via -r requirements/test-master.txt
 django-filter==21.1
     # via -r requirements/test-master.txt
@@ -286,8 +286,10 @@ requests==2.27.1
     #   slumber
     #   sphinx
     #   tableauserverclient
-restructuredtext-lint==1.4.0
-    # via doc8
+restructuredtext-lint==1.3.2
+    # via
+    #   -c requirements/constraints.txt
+    #   doc8
 rules==3.3
     # via -r requirements/test-master.txt
 semantic-version==2.9.0

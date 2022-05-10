@@ -29,3 +29,5 @@ pytest<7.0
 
 # pinning it to latest release.
 celery==5.0.4
+
+restructuredtext-lint==1.3.2
