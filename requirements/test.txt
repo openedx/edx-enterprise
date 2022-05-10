@@ -362,4 +362,4 @@ webencodings==0.5.1
     #   bleach
 
 django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
-django-multi-email-field @ git+https://github.com/openedx/django-multi-email-field.git@494783029152718c1fcafd9bc24d28bf6a65e3c6#egg=django-multi-email-field
+django-multi-email-field @ git+https://github.com/openedx/django-multi-email-field.git@eff18a123dc40f8c23860f4fecb657b9d6dc3476#egg=django-multi-email-field
