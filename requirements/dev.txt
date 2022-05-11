@@ -183,7 +183,6 @@ django-model-utils==4.2.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
-django-multi-email-field==0.6.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -750,3 +749,4 @@ zipp==3.7.0
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
+django-multi-email-field @ git+https://github.com/openedx/django-multi-email-field.git@eff18a123dc40f8c23860f4fecb657b9d6dc3476#egg=django-multi-email-field
