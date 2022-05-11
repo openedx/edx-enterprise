@@ -32,8 +32,7 @@ jobs:
       run: codecov
     - name: Run jshint
       if: matrix.toxenv=='django32-celery50'     # Only run this once as part of tests
-      continue-on-error: true
       run: |
-        npm i
+        npm ci
         make jshint
         
