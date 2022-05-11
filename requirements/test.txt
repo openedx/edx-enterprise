@@ -84,7 +84,7 @@ django-crum==0.7.9
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
+git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
     # via -r requirements/test-master.txt
 django-filter==21.1
     # via -r requirements/test-master.txt
@@ -362,4 +362,4 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   bleach
 
-django-multi-email-field @ git+https://github.com/openedx/django-multi-email-field.git@eff18a123dc40f8c23860f4fecb657b9d6dc3476#egg=django-multi-email-field
+git+https://github.com/openedx/django-multi-email-field.git@eff18a123dc40f8c23860f4fecb657b9d6dc3476#egg=django-multi-email-field
