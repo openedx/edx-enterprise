@@ -102,7 +102,7 @@ django-crum==0.7.9
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
+django-fernet-fields==0.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

@@ -104,7 +104,7 @@ django-crum==0.7.9
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields @ git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
+django-fernet-fields==0.6
     # via -r requirements/test-master.txt
 django-filter==21.1
     # via -r requirements/test-master.txt
@@ -254,7 +254,7 @@ pynacl==1.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-pyparsing==3.0.8
+pyparsing==3.0.9
     # via packaging
 python-dateutil==2.4.0
     # via
