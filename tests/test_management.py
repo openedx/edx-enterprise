@@ -1959,7 +1959,6 @@ class TestMakeAllSystemRoleAssignmentsActiveCommand(unittest.TestCase):
 
         users = User.objects.all()
 
-        # Make a bunch of users for an ENT customer
         for user in users[0:7]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
@@ -1973,7 +1972,6 @@ class TestMakeAllSystemRoleAssignmentsActiveCommand(unittest.TestCase):
                 is_active=True,
             ).save()
 
-        # Now make a bunch of of role assignments without ENT customer
         for user in users[7:15]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
@@ -2021,7 +2019,6 @@ class TestDeleteAllInactiveSystemRoleAssignmentsCommand(unittest.TestCase):
 
         users = User.objects.all()
 
-        # Make a bunch of users for an ENT customer
         for user in users[0:7]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
@@ -2035,7 +2032,6 @@ class TestDeleteAllInactiveSystemRoleAssignmentsCommand(unittest.TestCase):
                 is_active=True,
             ).save()
 
-        # Now make a bunch of of role assignments without ENT customer
         for user in users[7:15]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,

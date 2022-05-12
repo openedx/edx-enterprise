@@ -21,7 +21,7 @@ class Command(BaseCommand):
     Management command to delete all SystemWideEnterpriseUserRoleAssignment where is_active = False
     """
     help = """
-    Set is_active to True for all SystemWideEnterpriseUserRoleAssignment
+    Delete all SystemWideEnterpriseUserRoleAssignment where is_active is False
     Example usage:
       ./manage.py lms delete_all_inactive_system_role_assignments
     """
