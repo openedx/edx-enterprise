@@ -1939,6 +1939,20 @@ class TestMakeSystemRoleAssignmentsInactiveCommand(unittest.TestCase):
             is_active=True
         ).count() == 5
 
+    def test_make_system_role_assignments_inactive_dry_run(self):
+        """
+        Verify command does not change any objects.
+        """
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 15
+
+        call_command('make_system_role_assignments_inactive', '--dry-run')
+
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 15
+
 
 @ddt.ddt
 @mark.django_db
