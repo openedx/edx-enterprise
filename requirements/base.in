@@ -42,7 +42,7 @@ unicodecsv
 
 # custom forks. These packages are no more maintained by owners and missing django40 support.
 
-git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc
-git+https://github.com/openedx/django-multi-email-field.git@eff18a123dc40f8c23860f4fecb657b9d6dc3476#egg=django-multi-email-field
+git+https://github.com/awais786/django-fernet-fields.git@85a7d85facf343c2b553ca86eafdf7b3f5ede3bc#egg=django-fernet-fields==0.7
+git+https://github.com/openedx/django-multi-email-field.git@eff18a123dc40f8c23860f4fecb657b9d6dc3476#egg=django-multi-email-field==0.7.1
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.

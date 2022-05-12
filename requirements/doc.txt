@@ -24,7 +24,7 @@ billiard==3.6.4.0
     # via
     #   -r requirements/test-master.txt
     #   celery
-bleach[css]==5.0.0
+bleach==5.0.0
     # via
     #   -r requirements/test-master.txt
     #   readme-renderer
@@ -118,14 +118,14 @@ django-multi-email-field @ git+https://github.com/openedx/django-multi-email-fie
     # via -r requirements/test-master.txt
 django-object-actions==4.0.0
     # via -r requirements/test-master.txt
-django-simple-history==3.0.0
+django-simple-history==3.1.1
     # via -r requirements/test-master.txt
 django-waffle==2.4.1
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-drf-extensions
-djangorestframework==3.12.4
+djangorestframework==3.13.1
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -246,7 +246,7 @@ pyjwt[crypto]==2.3.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-pymongo==3.10.1
+pymongo==3.12.3
     # via
     #   -r requirements/test-master.txt
     #   edx-opaque-keys
@@ -256,7 +256,7 @@ pynacl==1.5.0
     #   edx-django-utils
 pyparsing==3.0.9
     # via packaging
-python-dateutil==2.4.0
+python-dateutil==2.8.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -270,6 +270,7 @@ pytz==2022.1
     #   babel
     #   celery
     #   django
+    #   djangorestframework
     #   edx-tincan-py35
 pyyaml==6.0
     # via
@@ -347,10 +348,6 @@ text-unidecode==1.3
     # via
     #   -r requirements/test-master.txt
     #   python-slugify
-tinycss2==1.1.1
-    # via
-    #   -r requirements/test-master.txt
-    #   bleach
 typing-extensions==4.2.0
     # via
     #   -r requirements/test-master.txt
@@ -375,6 +372,5 @@ webencodings==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   bleach
-    #   tinycss2
 zipp==3.8.0
     # via importlib-metadata
