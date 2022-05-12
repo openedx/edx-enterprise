@@ -1900,7 +1900,7 @@ class TestMakeSystemRoleAssignmentsInactiveCommand(unittest.TestCase):
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for index, user in enumerate(users[0:5]):
+        for user in users[0:5]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.alpha_customer,
@@ -1913,7 +1913,7 @@ class TestMakeSystemRoleAssignmentsInactiveCommand(unittest.TestCase):
             ).save()
 
         # Now make a bunch of of role assignments without ENT customer
-        for index, user in enumerate(users[5:15]):
+        for user in users[5:15]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.alpha_customer,
@@ -1960,7 +1960,7 @@ class TestMakeAllSystemRoleAssignmentsActiveCommand(unittest.TestCase):
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for index, user in enumerate(users[0:7]):
+        for user in users[0:7]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.alpha_customer,
@@ -1974,7 +1974,7 @@ class TestMakeAllSystemRoleAssignmentsActiveCommand(unittest.TestCase):
             ).save()
 
         # Now make a bunch of of role assignments without ENT customer
-        for index, user in enumerate(users[7:15]):
+        for user in users[7:15]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.alpha_customer,
@@ -2022,7 +2022,7 @@ class TestDeleteAllInactiveSystemRoleAssignmentsCommand(unittest.TestCase):
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for index, user in enumerate(users[0:7]):
+        for user in users[0:7]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.alpha_customer,
@@ -2036,7 +2036,7 @@ class TestDeleteAllInactiveSystemRoleAssignmentsCommand(unittest.TestCase):
             ).save()
 
         # Now make a bunch of of role assignments without ENT customer
-        for index, user in enumerate(users[7:15]):
+        for user in users[7:15]:
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.alpha_customer,
