@@ -1878,3 +1878,189 @@ class TestBackfillLearnerRoleAssignmentsCommand(unittest.TestCase):
         EnterpriseCustomerUser.objects.all().delete()
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
+
+
+@ddt.ddt
+@mark.django_db
+class TestMakeSystemRoleAssignmentsInactiveCommand(unittest.TestCase):
+    """
+    Test the `make_system_role_assignments_inactive`  management command.
+    """
+    @factory.django.mute_signals(signals.post_save)
+    def setUp(self):
+        super().setUp()
+
+        for i in range(15):
+            factories.UserFactory(username=f'user-{i}')
+
+        self.alpha_customer = factories.EnterpriseCustomerFactory(
+            name='alpha',
+        )
+
+        users = User.objects.all()
+
+        # Make a bunch of users for an ENT customer
+        for index, user in enumerate(users[0:5]):
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=self.alpha_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=self.alpha_customer,
+                applies_to_all_contexts=False,
+            ).save()
+
+        # Now make a bunch of of role assignments without ENT customer
+        for index, user in enumerate(users[5:15]):
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=self.alpha_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=None,
+                applies_to_all_contexts=False,
+            ).save()
+
+    def test_make_system_role_assignments_inactive(self):
+        """
+        Verify command sets the correct amount of assignments to inactive.
+        """
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 15
+
+        call_command('make_system_role_assignments_inactive')
+
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 5
+
+
+@ddt.ddt
+@mark.django_db
+class TestMakeAllSystemRoleAssignmentsActiveCommand(unittest.TestCase):
+    """
+    Test the `make_all_system_role_assignments_active`  management command.
+    """
+    @factory.django.mute_signals(signals.post_save)
+    def setUp(self):
+        super().setUp()
+
+        for i in range(15):
+            factories.UserFactory(username=f'user-{i}')
+
+        self.alpha_customer = factories.EnterpriseCustomerFactory(
+            name='alpha',
+        )
+
+        users = User.objects.all()
+
+        # Make a bunch of users for an ENT customer
+        for index, user in enumerate(users[0:7]):
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=self.alpha_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=self.alpha_customer,
+                applies_to_all_contexts=False,
+                is_active=True,
+            ).save()
+
+        # Now make a bunch of of role assignments without ENT customer
+        for index, user in enumerate(users[7:15]):
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=self.alpha_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=self.alpha_customer,
+                applies_to_all_contexts=False,
+                is_active=False,
+            ).save()
+
+    def test_make_all_system_role_assignments_active(self):
+        """
+        Verify command sets the correct amount of assignments to active.
+        """
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 7
+
+        call_command('make_all_system_role_assignments_active')
+
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 15
+
+
+@ddt.ddt
+@mark.django_db
+class TestDeleteAllInactiveSystemRoleAssignmentsCommand(unittest.TestCase):
+    """
+    Test the `delete_all_inactive_system_role_assignments`  management command.
+    """
+    @factory.django.mute_signals(signals.post_save)
+    def setUp(self):
+        super().setUp()
+
+        for i in range(15):
+            factories.UserFactory(username=f'user-{i}')
+
+        self.alpha_customer = factories.EnterpriseCustomerFactory(
+            name='alpha',
+        )
+
+        users = User.objects.all()
+
+        # Make a bunch of users for an ENT customer
+        for index, user in enumerate(users[0:7]):
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=self.alpha_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=self.alpha_customer,
+                applies_to_all_contexts=False,
+                is_active=True,
+            ).save()
+
+        # Now make a bunch of of role assignments without ENT customer
+        for index, user in enumerate(users[7:15]):
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=self.alpha_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=self.alpha_customer,
+                applies_to_all_contexts=False,
+                is_active=False,
+            ).save()
+
+    def test_delete_all_inactive_system_wide_role_assignments(self):
+        """
+        Verify command deletes the correct # of role_assignments
+        """
+        assert SystemWideEnterpriseUserRoleAssignment.objects.count() == 15
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 7
+
+        call_command('delete_all_inactive_system_role_assignments')
+
+        assert SystemWideEnterpriseUserRoleAssignment.objects.count() == 7
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            is_active=True
+        ).count() == 7
