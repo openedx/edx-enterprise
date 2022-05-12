@@ -4,20 +4,11 @@ that have a null enterprise_customer_uuid and False applies_to_all_contexts
 """
 
 import logging
-from collections import defaultdict
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
 
-from enterprise import roles_api
-from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
-from enterprise.constants import (
-    ENTERPRISE_ADMIN_ROLE,
-    ENTERPRISE_LEARNER_ROLE,
-    ENTERPRISE_OPERATOR_ROLE,
-    SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
-)
-from enterprise.models import EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
+from enterprise.models import SystemWideEnterpriseUserRoleAssignment
 from enterprise.utils import batch
 
 log = logging.getLogger(__name__)
