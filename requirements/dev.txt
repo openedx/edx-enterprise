@@ -750,9 +750,9 @@ wheel==0.37.1
     # via
     #   -r requirements/dev.in
     #   pip-tools
-wrapt==1.14.1
+wrapt==1.13.3
     # via astroid
-zipp==3.8.0
+zipp==3.7.0
     # via
     #   -r requirements/doc.txt
     #   importlib-metadata
