@@ -132,14 +132,14 @@ upgrade: check_pins  ## update the requirements/*.txt files with the latest pack
 	rm requirements/test.txt.tmp
 
 requirements.js: ## install JS requirements for local development
-	npm install
+	npm ci
 
 requirements: requirements.js ## install development environment requirements
 	pip install -qr requirements/dev.txt --exists-action w
 	pip-sync requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
 
 jshint: ## run Javascript linting
-	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint --save-dev
+	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint --no-save
 	./node_modules/jshint/bin/jshint enterprise
 	./node_modules/jshint/bin/jshint spec
 

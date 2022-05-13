@@ -22,6 +22,9 @@ jobs:
       with:
         python-version: '3.8'
         architecture: x64
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
     - run: pip install -r requirements/ci.txt
     - name: Run tox
       env:
@@ -32,8 +35,7 @@ jobs:
       run: codecov
     - name: Run jshint
       if: matrix.toxenv=='django32-celery50'     # Only run this once as part of tests
-      continue-on-error: true
       run: |
-        npm i
+        npm ci
         make jshint
         
