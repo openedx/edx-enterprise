@@ -2865,6 +2865,8 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         ),
     )
 
+    is_active = models.BooleanField(default=True)
+
     history = HistoricalRecords()
 
     class Meta:
