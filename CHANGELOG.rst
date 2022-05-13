@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.47.0]
+--------
+temp: adding system wide role assignment field and management commands to clean data
+
 [3.46.6]
 --------
 fix: correctly handle multiple canvas and blackboard oauth configs
