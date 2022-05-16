@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.47.1]
+--------
+chore: remove data-cleaning management commands. prepare for column-removal migration
+
 [3.47.0]
 --------
 temp: adding system wide role assignment field and management commands to clean data
