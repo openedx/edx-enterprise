@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.47.2]
+--------
+chore: remove is_active field from role assignment model
+
 [3.47.1]
 --------
 chore: remove data-cleaning management commands. prepare for column-removal migration
