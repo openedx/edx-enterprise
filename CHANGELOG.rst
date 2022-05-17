@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.48.0]
+--------
+chore: add migration to remove is_active from role assignment model schema
+
 [3.47.2]
 --------
 chore: remove is_active field from role assignment model
