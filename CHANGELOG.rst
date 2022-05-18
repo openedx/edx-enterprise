@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.1]
+--------
+fix: add stricter validation on system wide role assignments
+
 [3.49.0]
 --------
 fix: Return None for context if a ``SystemWideEnterpriseUserRoleAssignment`` has no enterprise_customer and does not apply to all contexts.
