@@ -2849,6 +2849,26 @@ class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
     class Meta:
         unique_together = (('enterprise_customer', 'role', 'user'),)
 
+    def _validate_whether_enterprise_customer_needed(self):
+        """
+        Verify that if enterprise_customer is None, then has_access_to_all_contexts
+        must be true.
+
+        Raises ValidationError
+        """
+
+        if self.enterprise_customer is None and self.has_access_to_all_contexts() is not True:
+            message = (
+                "Enterprise customer must be set on SystemWideEnterpriseUserRoleAssignment "
+                f"instance {self.id} because has_access_to_all_contexts is not True."
+            )
+            LOGGER.error(message)
+            raise ValidationError(message)
+
+    def save(self, *args, **kwargs):
+        self._validate_whether_enterprise_customer_needed()
+        return super().save(*args, **kwargs)
+
     def has_access_to_all_contexts(self):
         """
         Returns true if the role for this assignment is ``ENTERPRISE_OPERATOR_ROLE``,
@@ -2858,16 +2878,11 @@ class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
 
     def get_context(self):
         """
-        Return a non-empty list of contexts for which ``self.user`` is assigned ``self.role``,
-        or ``None`` if the user is assigned a role with no corresponding context.
+        Return a non-empty list of contexts for which ``self.user`` is assigned ``self.role``.
         """
         if self.has_access_to_all_contexts():
             return [ALL_ACCESS_CONTEXT]
-
-        if self.enterprise_customer:
-            return [str(self.enterprise_customer.uuid)]
-
-        return None
+        return [str(self.enterprise_customer.uuid)]
 
     @classmethod
     def get_distinct_assignments_by_role_name(cls, user, role_names=None):
