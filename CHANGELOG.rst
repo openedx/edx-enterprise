@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.2]
+--------
+feat: improved channel logging
+
 [3.49.1]
 --------
 fix: add stricter validation on system wide role assignments
