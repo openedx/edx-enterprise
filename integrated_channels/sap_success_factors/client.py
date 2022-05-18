@@ -219,6 +219,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         try:
             status_code, response_body = self._call_post_with_session(url, serialized_data)
         except requests.exceptions.RequestException as exc:
+            LOGGER.error(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f"SAPSuccessFactorsAPIClient request failed: {exc.__class__.__name__} {str(exc)}"
+                )
+            )
             raise ClientError(
                 'SAPSuccessFactorsAPIClient request failed: {error} {message}'.format(
                     error=exc.__class__.__name__,
@@ -227,6 +236,15 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             ) from exc
 
         if status_code >= 400:
+            LOGGER.error(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f"SAPSuccessFactorsAPIClient request failed with status {status_code}: {response_body}"
+                )
+            )
             raise ClientError(
                 'SAPSuccessFactorsAPIClient request failed with status {status_code}: {message}'.format(
                     status_code=status_code,
