@@ -59,7 +59,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'Preparing to send {chunk.keys()}'
+                        f'Preparing to send {list(chunk.keys())}'
                     )
                 )
                 self.client.update_content_metadata(self._serialize_items(chunked_items))
@@ -70,7 +70,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'Failed to update {chunk.keys()} content metadata items for '
+                        f'Failed to update {list(chunk.keys())} content metadata items for '
                         f'integrated channel {self.enterprise_configuration.enterprise_customer.name} '
                         f'{self.enterprise_configuration.channel_code()}'
                     )
@@ -92,7 +92,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     None,
-                    f'Preparing to _remove_failed_items {chunk.keys()}'
+                    f'Preparing to _remove_failed_items {list(chunk.keys())}'
                 )
             )
             chunked_items = list(chunk.values())

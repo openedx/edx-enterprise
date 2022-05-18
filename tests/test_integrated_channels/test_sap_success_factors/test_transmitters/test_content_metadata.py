@@ -91,7 +91,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             transmitter.transmit(create_payload, update_payload, delete_paylaod, content_updated_mapping)
 
             assert len(log_capture.records) == 2
-            assert 'Failed to update [1] content metadata items' in log_capture.records[0].getMessage()
+            assert "Failed to update ['course:DemoX'] content metadata items" in log_capture.records[0].getMessage()
             assert not ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_config.enterprise_customer,
                 plugin_configuration_id=self.enterprise_config.id,
