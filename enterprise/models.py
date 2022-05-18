@@ -2862,7 +2862,7 @@ class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
                 "Enterprise customer must be set on SystemWideEnterpriseUserRoleAssignment "
                 f"instance {self.id} because has_access_to_all_contexts is not True."
             )
-            LOGGER.error(msg)
+            LOGGER.error(message)
             raise ValidationError(message)
 
     def save(self, *args, **kwargs):
