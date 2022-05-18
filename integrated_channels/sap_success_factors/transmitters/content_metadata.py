@@ -53,6 +53,15 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         for chunk in islice(chunk_items, transmission_limit):
             chunked_items = list(chunk.values())
             try:
+                LOGGER.info(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f'Preparing to send {chunk.keys()}'
+                    )
+                )
                 self.client.update_content_metadata(self._serialize_items(chunked_items))
             except ClientError as exc:
                 LOGGER.error(

@@ -238,6 +238,7 @@ class ContentMetadataExporter(Exporter):
 
             # if we're already at the max in a multi-catalog situation, break out
             if len(create_payload) + len(update_payload) + len(delete_payload) >= max_payload_count:
+                self._log_info(f'Reached max_payload_count of {max_payload_count} breaking.')
                 break
 
             content_keys = self._get_catalog_content_keys(enterprise_customer_catalog)
@@ -255,13 +256,9 @@ class ContentMetadataExporter(Exporter):
                 max_payload_count
             )
 
-            self._log_info(
-                f'Buckets returned by the enterprise-catalog service for '
-                f'catalog {enterprise_customer_catalog.uuid} - '
-                f'items_to_create: {items_to_create}, '
-                f'items_to_update: {items_to_update}, '
-                f'items_to_delete: {items_to_delete}'
-            )
+            self._log_info(f'diff items_to_create: {[n.get('content_key') for n in items_to_create]}')
+            self._log_info(f'diff items_to_update: {[n.get('content_key') for n in items_to_update]}')
+            self._log_info(f'diff items_to_delete: {[n.get('content_key') for n in items_to_delete]}')
 
             # We only need to fetch content metadata if there are items to update or create
             if items_to_create or items_to_update:
