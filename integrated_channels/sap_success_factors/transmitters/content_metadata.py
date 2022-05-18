@@ -86,6 +86,15 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         # Since, chunk_items is a generator and we have already iterated through the items that need to
         # be transmitted. Rest of the items are the ones that need to marked as not transmitted.
         for chunk in chunk_items:
+            LOGGER.info(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'Preparing to _remove_failed_items {chunk.keys()}'
+                )
+            )
             chunked_items = list(chunk.values())
             self._remove_failed_items(chunked_items, create_payload, items_to_update, items_to_delete)
 
