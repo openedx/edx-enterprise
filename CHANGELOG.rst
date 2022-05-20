@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.5]
+--------
+feat: add lms_user_id to serialized admin users
+
 [3.49.4]
 --------
 feat: add dry-run mode to integrated channels

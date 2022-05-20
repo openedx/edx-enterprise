@@ -133,7 +133,8 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
     def test_serialize_admin_users(self):
         serializer = EnterpriseCustomerSerializer(self.enterprise_customer_1)
         expected_admin_users = [{
-            'email': self.user_1.email
+            'email': self.user_1.email,
+            'lms_user_id': self.user_1.id,
         }]
         serialized_admin_users = serializer.data['admin_users']
         self.assertEqual(serialized_admin_users, expected_admin_users)
@@ -142,13 +143,16 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
         serializer = EnterpriseCustomerSerializer([self.enterprise_customer_1, self.enterprise_customer_2], many=True)
 
         expected_enterprise_customer_1_admin_users = [{
-            'email': self.user_1.email
+            'email': self.user_1.email,
+            'lms_user_id': self.user_1.id,
         }]
 
         expected_enterprise_customer_2_admin_users = [{
-            'email': self.user_1.email
+            'email': self.user_1.email,
+            'lms_user_id': self.user_1.id,
         }, {
-            'email': self.user_3.email
+            'email': self.user_3.email,
+            'lms_user_id': self.user_3.id,
         }]
 
         enterprise_customer_1_admin_users = serializer.data[0]['admin_users']
