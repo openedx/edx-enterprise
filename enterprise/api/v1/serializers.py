@@ -221,7 +221,8 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
 
         for role_assignment in admin_role_assignments:
             admin_users_by_enterprise_uuid[role_assignment.enterprise_customer_id].append({
-                'email': role_assignment.user.email
+                'email': role_assignment.user.email,
+                'lms_user_id': role_assignment.user.id,
             })
 
         return admin_users_by_enterprise_uuid
