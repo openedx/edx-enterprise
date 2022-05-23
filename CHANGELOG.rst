@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.3]
+--------
+fix: don't transmit schedule data to SAP if start or end date is empty
+
 [3.49.2]
 --------
 feat: improved channel logging

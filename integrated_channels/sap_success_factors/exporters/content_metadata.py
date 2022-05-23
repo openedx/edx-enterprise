@@ -145,6 +145,11 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         Return the schedule of the content item.
         """
         duration, start, end = get_duration_of_course_or_courserun(content_metadata_item)
+
+        # SAP will throw errors if we try to send an empty start or end date
+        if (not start or not end):
+            return []
+
         return [{
             'startDate': parse_datetime_to_epoch_millis(start) if start else '',
             'endDate': parse_datetime_to_epoch_millis(end) if end else '',

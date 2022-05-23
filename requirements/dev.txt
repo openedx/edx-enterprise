@@ -415,7 +415,7 @@ pillow==9.0.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pip-tools==6.5.1
+pip-tools==6.6.1
     # via -r requirements/dev.in
 pkginfo==1.8.2
     # via twine

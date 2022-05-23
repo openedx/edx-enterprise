@@ -268,8 +268,23 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             }]
         ),
         (
+            {
+                "content_type": "course",
+                "key": "CatalystX+IL-BSL.S1x",
+                "title": "Cómo Convertirse en un Líder Exitoso (Entrenamiento de Liderazgo Inclusivo)",
+                "course_runs": [
+                    {
+                        "key": "course-v1:CatalystX+IL-BSL.S1x+2T2017",
+                        "start": "2017-05-16T16:00:00Z",
+                        "end": "",
+                    }
+                ],
+            },
+            []
+        ),
+        (
             {},
-            [{'startDate': '', 'endDate': '', 'active': False, 'duration': '0 days'}]
+            []
         )
     )
     @ddt.unpack
