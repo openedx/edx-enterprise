@@ -507,6 +507,8 @@ class GenericEnterpriseCustomerPluginConfigurationFactory(factory.django.DjangoM
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     active = True
+    dry_run_mode_enabled = False
+    idp_id = ''
 
 
 class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):
@@ -529,7 +531,7 @@ class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFact
     provider_id = 'SAP'
 
 
-class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(GenericEnterpriseCustomerPluginConfigurationFactory):
     """
     ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` factory.
 
@@ -543,13 +545,10 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(factory.django.Dja
 
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
 
-    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    active = True
     sapsf_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     sapsf_company_id = factory.LazyAttribute(lambda x: FAKER.company())
     sapsf_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     user_type = SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER
-    idp_id = ''
 
 
 class SapSuccessFactorsLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):

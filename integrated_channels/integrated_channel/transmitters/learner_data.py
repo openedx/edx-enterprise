@@ -84,6 +84,21 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             ))
 
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
+
+            if self.enterprise_configuration.dry_run_mode_enabled:
+                remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
+                LOGGER.info(generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'dry-run mode '
+                    f'skipping create_course_completion for enrollment {learner_data.enterprise_course_enrollment_id}, '
+                    f'remote_user_id: {remote_id}, '
+                    f'serialized_payload: {serialized_payload}'
+                ))
+                continue
+
             try:
                 code, body = self.client.create_assessment_reporting(
                     getattr(learner_data, kwargs.get('remote_user_id')),
@@ -175,6 +190,20 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     lms_user_id,
                     learner_data.course_id,
                     f'Skipping previously sent EnterpriseCourseEnrollment {enterprise_enrollment_id}'
+                ))
+                continue
+
+            if self.enterprise_configuration.dry_run_mode_enabled:
+                remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
+                LOGGER.info(generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'dry-run mode '
+                    f'skipping create_course_completion for enrollment {learner_data.enterprise_course_enrollment_id}, '
+                    f'remote_user_id: {remote_id}, '
+                    f'serialized_payload: {serialized_payload}'
                 ))
                 continue
 
@@ -294,6 +323,20 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 ))
                 continue
 
+            if self.enterprise_configuration.dry_run_mode_enabled:
+                remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
+                LOGGER.info(generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    enterprise_customer_uuid,
+                    lms_user_id,
+                    learner_data.course_id,
+                    f'dry-run mode '
+                    f'skipping create_course_completion for enrollment {enterprise_enrollment_id}, '
+                    f'remote_user_id: {remote_id}, '
+                    f'serialized_payload: {serialized_payload}'
+                ))
+                continue
+
             try:
                 code, body = self.client.create_course_completion(
                     getattr(learner_data, kwargs.get('remote_user_id')),
@@ -350,6 +393,18 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         """
         app_label, enterprise_customer_uuid, _ = self._generate_common_params(**kwargs)
         courses = exporter.export_unique_courses()
+
+        if self.enterprise_configuration.dry_run_mode_enabled:
+            LOGGER.info(generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid,
+                lms_user_id,
+                learner_data.course_id,
+                f'dry-run mode '
+                f'skipping deduplicate_assignment_records_transmit'
+            ))
+            return
+
         code, body = self.client.cleanup_duplicate_assignment_records(courses)
 
         if code >= 400:
