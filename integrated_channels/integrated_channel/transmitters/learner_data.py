@@ -92,8 +92,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
-                    f'dry-run mode '
-                    f'skipping create_assessment_reporting for enrollment '
+                    'dry-run mode '
+                    'skipping create_assessment_reporting for enrollment '
                     f'{learner_data.enterprise_course_enrollment_id}, '
                     f'remote_user_id: {remote_id}, '
                     f'serialized_payload: {serialized_payload}'
@@ -201,8 +201,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
-                    f'dry-run mode '
-                    f'skipping create_assessment_reporting for enrollment '
+                    'dry-run mode '
+                    'skipping create_assessment_reporting for enrollment '
                     f'{learner_data.enterprise_course_enrollment_id}, '
                     f'remote_user_id: {remote_id}, '
                     f'serialized_payload: {serialized_payload}'
@@ -332,7 +332,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     enterprise_customer_uuid,
                     lms_user_id,
                     learner_data.course_id,
-                    f'dry-run mode '
+                    'dry-run mode '
                     f'skipping create_course_completion for enrollment {enterprise_enrollment_id}, '
                     f'remote_user_id: {remote_id}, '
                     f'serialized_payload: {serialized_payload}'
@@ -400,10 +400,10 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             LOGGER.info(generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 enterprise_customer_uuid,
-                lms_user_id,
-                learner_data.course_id,
-                f'dry-run mode '
-                f'skipping deduplicate_assignment_records_transmit'
+                None,
+                None,
+                'dry-run mode '
+                'skipping deduplicate_assignment_records_transmit'
             ))
             return
 
