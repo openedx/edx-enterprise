@@ -93,7 +93,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     lms_user_id,
                     learner_data.course_id,
                     f'dry-run mode '
-                    f'skipping create_course_completion for enrollment {learner_data.enterprise_course_enrollment_id}, '
+                    f'skipping create_assessment_reporting for enrollment '
+                    f'{learner_data.enterprise_course_enrollment_id}, '
                     f'remote_user_id: {remote_id}, '
                     f'serialized_payload: {serialized_payload}'
                 ))
@@ -201,7 +202,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     lms_user_id,
                     learner_data.course_id,
                     f'dry-run mode '
-                    f'skipping create_course_completion for enrollment {learner_data.enterprise_course_enrollment_id}, '
+                    f'skipping create_assessment_reporting for enrollment '
+                    f'{learner_data.enterprise_course_enrollment_id}, '
                     f'remote_user_id: {remote_id}, '
                     f'serialized_payload: {serialized_payload}'
                 ))
