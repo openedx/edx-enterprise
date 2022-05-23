@@ -168,7 +168,6 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         LearnerExporterMock.single_assessment_level_export = Mock(return_value=[learner_data_transmission_audit_mock])
         LearnerExporterMock.bulk_assessment_level_export = Mock(return_value=[learner_data_transmission_audit_mock])
 
-
         already_transmitted_mock.return_value = False
 
         self.learner_transmitter.process_transmission_error = Mock()
@@ -188,4 +187,3 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             remote_user_id='user_id'
         )
         assert not self.learner_transmitter.client.create_assessment_reporting.called
-
