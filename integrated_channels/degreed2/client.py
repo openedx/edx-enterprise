@@ -32,7 +32,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
     CONTENT_WRITE_SCOPE = "content:write"
     ALL_DESIRED_SCOPES = "content:read,content:write,completions:write,completions:read"
     SESSION_TIMEOUT = getattr(settings, "ENTERPRISE_DEGREED2_SESSION_TIMEOUT", 60)
-    MAX_RETRIES = getattr(settings, "ENTERPRISE_DEGREED2_MAX_RETRIES", 2)
+    MAX_RETRIES = getattr(settings, "ENTERPRISE_DEGREED2_MAX_RETRIES", 4)
     BACKOFF_FACTOR = getattr(settings, "ENTERPRISE_DEGREED2_BACKOFF_FACTOR", 2)
 
     def __init__(self, enterprise_configuration):
