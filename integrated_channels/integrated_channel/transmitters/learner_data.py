@@ -487,7 +487,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
                 f'Failed to send completion status call for {integrated_channel_name} '
                 f'integrated_channel_enterprise_enrollment_id={learner_data.enterprise_course_enrollment_id}, '
-                f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
+                f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}, '
                 f'Error message: {client_exception.message} '
                 f'Error status code: {client_exception.status_code}'
             )

@@ -47,7 +47,6 @@ def parse_datetime_to_epoch(datestamp, magnitude=1.0):
     time_since_epoch = parsed_datetime - UNIX_EPOCH
     return int(time_since_epoch.total_seconds() * magnitude)
 
-
 def strip_html_tags(text, strip_entities=True):
     """
     Return (str): Text without any html tags and entities.

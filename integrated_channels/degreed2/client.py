@@ -317,13 +317,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ) from exc
         return status_code, response_body
 
-
     def _calculate_backoff(self, attempt_count):
         """
         Calcualte the seconds to sleep based on attempt_count
         """
         return (self.BACKOFF_FACTOR * (2 ** (attempt_count - 1)))
-
 
     def _get(self, url, scope):
         """
