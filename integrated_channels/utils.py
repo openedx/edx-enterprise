@@ -3,6 +3,7 @@ Utilities common to different integrated channels.
 """
 
 import base64
+import json
 import math
 import re
 from datetime import datetime, timedelta
@@ -27,26 +28,14 @@ UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 LOGGER = getLogger(__name__)
 
 
-def encode_course_key_into_base64(edx_course_key):
+def encode_data_for_logging(data):
     """
-    Base64 encodes edx course key (string) into a form safe (string) for use with LMS such as Cornerstone
-    e.g., Cornerstone does not allow some chars
-    For Base64, the urlsafe version is used, since it only uses a pretty limited charset, minus the /
-    edX course keys allow these chars `ALLOWED_ID_CHARS` per: opaque_keys/edx/locator.py
+    Converts input into URL-safe, utf-8 encoded, base64 encoded output
+    If the input is other than a string, it is dumped to json
     """
-    if edx_course_key is None:
-        raise ValueError('Cannot process an undefined edx_course_key')
-    if not edx_course_key.replace(' ', ''):
-        raise ValueError('Cannot process a spaces-only edx_course_key')
-    return base64.urlsafe_b64encode(edx_course_key.encode("utf-8")).decode('utf-8')
-
-
-def decode_course_key_from_base64(lms_course_key):
-    """
-    Decodes the base64 urlsafe encoded lms_course_key, into an edX course key (string)
-    """
-    return base64.urlsafe_b64decode(lms_course_key).decode('utf-8')
-
+    if not isinstance(data, str):
+        data = json.dumps(data)
+    return base64.urlsafe_b64encode(data.encode("utf-8")).decode('utf-8')
 
 def parse_datetime_to_epoch(datestamp, magnitude=1.0):
     """

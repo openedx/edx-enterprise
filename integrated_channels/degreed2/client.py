@@ -11,6 +11,7 @@ import requests
 from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
+from django.conf import settings
 from django.http.request import QueryDict
 
 from integrated_channels.exceptions import ClientError
@@ -30,9 +31,9 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     CONTENT_WRITE_SCOPE = "content:write"
     ALL_DESIRED_SCOPES = "content:read,content:write,completions:write,completions:read"
-    SESSION_TIMEOUT = 60
-    MAX_RETRIES = 3
-    BACKOFF_FACTOR = 1
+    SESSION_TIMEOUT = getattr(settings, "ENTERPRISE_DEGREED2_SESSION_TIMEOUT", 60)
+    MAX_RETRIES = getattr(settings, "ENTERPRISE_DEGREED2_MAX_RETRIES", 2)
+    BACKOFF_FACTOR = getattr(settings, "ENTERPRISE_DEGREED2_BACKOFF_FACTOR", 2)
 
     def __init__(self, enterprise_configuration):
         """
@@ -316,6 +317,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ) from exc
         return status_code, response_body
 
+
+    def _calculate_backoff(self, attempt_count):
+        """
+        Calcualte the seconds to sleep based on attempt_count
+        """
+        return (self.BACKOFF_FACTOR * (2 ** (attempt_count - 1)))
+
+
     def _get(self, url, scope):
         """
         Make a GET request using the session object to a Degreed2 endpoint.
@@ -327,21 +336,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        tries = 0
+        attempts = 0
         while True:
-            tries = tries + 1
+            attempts = attempts + 1
             response = self.session.get(url)
-            if tries <= self.MAX_RETRIES and response.status_code == 429:
+            if attempts <= self.MAX_RETRIES and response.status_code == 429:
+                sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "429 detected, backing-off before retrying..."
+                        f'429 detected from {url}, backing-off before retrying, '
+                        f'sleeping {sleep_seconds} seconds...'
                     )
                 )
-                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
+                time.sleep(sleep_seconds)
             else:
                 break
         return response.status_code, response.text
@@ -358,21 +369,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        tries = 0
+        attempts = 0
         while True:
-            tries = tries + 1
+            attempts = attempts + 1
             response = self.session.post(url, json=data)
-            if tries <= self.MAX_RETRIES and response.status_code == 429:
+            if attempts <= self.MAX_RETRIES and response.status_code == 429:
+                sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "429 detected, backing-off before retrying..."
+                        f'429 detected from {url}, backing-off before retrying, '
+                        f'sleeping {sleep_seconds} seconds...'
                     )
                 )
-                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
+                time.sleep(sleep_seconds)
             else:
                 break
         return response.status_code, response.text
@@ -389,21 +402,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `CONTENT_READ_SCOPE`
         """
         self._create_session(scope)
-        tries = 0
+        attempts = 0
         while True:
-            tries = tries + 1
+            attempts = attempts + 1
             response = self.session.patch(url, json=data)
-            if tries <= self.MAX_RETRIES and response.status_code == 429:
+            if attempts <= self.MAX_RETRIES and response.status_code == 429:
+                sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "429 detected, backing-off before retrying..."
+                        f'429 detected from {url}, backing-off before retrying, '
+                        f'sleeping {sleep_seconds} seconds...'
                     )
                 )
-                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
+                time.sleep(sleep_seconds)
             else:
                 break
         return response.status_code, response.text
@@ -420,21 +435,23 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         - `COMPLETION_PROVIDER_SCOPE`
         """
         self._create_session(scope)
-        tries = 0
+        attempts = 0
         while True:
-            tries = tries + 1
+            attempts = attempts + 1
             response = self.session.delete(url, json=data) if data else self.session.delete(url)
-            if tries <= self.MAX_RETRIES and response.status_code == 429:
+            if attempts <= self.MAX_RETRIES and response.status_code == 429:
+                sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
                     generate_formatted_log(
                         self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        "429 detected, backing-off before retrying..."
+                        f'429 detected from {url}, backing-off before retrying, '
+                        f'sleeping {sleep_seconds} seconds...'
                     )
                 )
-                time.sleep((self.BACKOFF_FACTOR * (2 ^ (tries - 1))))
+                time.sleep(sleep_seconds)
             else:
                 break
         return response.status_code, response.text
