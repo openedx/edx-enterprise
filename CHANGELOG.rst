@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.4]
+--------
+feat: add dry-run mode to integrated channels
+
 [3.49.3]
 --------
 fix: don't transmit schedule data to SAP if start or end date is empty
