@@ -129,16 +129,68 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with disable_learner_data_transmissions = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
 
         self.learner_transmitter.assessment_level_transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with disable_learner_data_transmissions = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
 
         self.learner_transmitter.transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with disable_learner_data_transmissions = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_course_completion.called
+
+    @mock.patch("integrated_channels.integrated_channel.models.LearnerDataTransmissionAudit")
+    @mock.patch("integrated_channels.utils.is_already_transmitted")
+    def test_learner_data_transmission_dry_run_mode(self, already_transmitted_mock, learner_data_transmission_audit_mock):
+        """
+        Test that a customer's configuration can run in dry run mode
+        """
+        # Set feature flag to true
+        self.enterprise_config.dry_run_mode_enabled = True
+
+        self.learner_transmitter.client.create_assessment_reporting = Mock()
+        self.learner_transmitter.client.create_course_completion = Mock()
+
+        LearnerExporterMock = LearnerExporter
+
+        # Serialized payload is used in the client's assessment reporting as well as the transmission audit check.
+        # Both of these are mocked out, so mock out the necessary attributes
+        learner_data_transmission_audit_mock.serialize = Mock(return_value='serialized data')
+        learner_data_transmission_audit_mock.grade = '1.0'
+        learner_data_transmission_audit_mock.subsection_id = 'subsection_id'
+        learner_data_transmission_audit_mock.user_id = 1
+        learner_data_transmission_audit_mock.enterprise_course_enrollment_id = 1
+        LearnerExporterMock.export = Mock(return_value=[learner_data_transmission_audit_mock])
+        LearnerExporterMock.single_assessment_level_export = Mock(return_value=[learner_data_transmission_audit_mock])
+        LearnerExporterMock.bulk_assessment_level_export = Mock(return_value=[learner_data_transmission_audit_mock])
+
+        already_transmitted_mock.return_value = False
+
+        self.learner_transmitter.process_transmission_error = Mock()
+        self.learner_transmitter.transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        # with dry_run_mode_enabled = True we shouldn't be able to call this method
+        assert not self.learner_transmitter.client.create_course_completion.called
+
+        self.learner_transmitter.single_learner_assessment_grade_transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        # with dry_run_mode_enabled = True we shouldn't be able to call this method
+        assert not self.learner_transmitter.client.create_assessment_reporting.called
+
+        self.learner_transmitter.assessment_level_transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        # with dry_run_mode_enabled = True we shouldn't be able to call this method
+        assert not self.learner_transmitter.client.create_assessment_reporting.called

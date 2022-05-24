@@ -76,6 +76,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         help_text=_("Is this configuration active?"),
     )
 
+    dry_run_mode_enabled = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("Is this configuration in dry-run mode? (experimental)"),
+    )
+
     transmission_chunk_size = models.IntegerField(
         default=500,
         help_text=_("The maximum number of data items to transmit to the integrated channel with each request.")

@@ -81,6 +81,16 @@ class TestDegreed2ApiClient(unittest.TestCase):
             ]
         }
 
+    def test_calculate_backoff(self):
+        """
+        Test the default math of the backoff calculator
+        """
+        client = Degreed2APIClient(self.enterprise_config)
+        assert client._calculate_backoff(0) == 1  # pylint: disable=protected-access
+        assert client._calculate_backoff(1) == 2  # pylint: disable=protected-access
+        assert client._calculate_backoff(2) == 4  # pylint: disable=protected-access
+        assert client._calculate_backoff(3) == 8  # pylint: disable=protected-access
+
     @responses.activate
     def test_oauth_with_non_json_response(self):
         """ Test  _get_oauth_access_token with non json type response"""

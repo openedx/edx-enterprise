@@ -27,13 +27,13 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         ('course-v1:edX+808404707+2T2021/', 'Y291cnNlLXYxOmVkWCs4MDg0MDQ3MDcrMlQyMDIxLw=='),
         ('edx+123', 'ZWR4KzEyMw=='),
         ('UTAustinX/UT.7.01x/3T2014', 'VVRBdXN0aW5YL1VULjcuMDF4LzNUMjAxNA=='),
-        ('WellesleyX/ENG_112x/2014_SOND', 'V2VsbGVzbGV5WC9FTkdfMTEyeC8yMDE0X1NPTkQ=')
-
+        ('WellesleyX/ENG_112x/2014_SOND', 'V2VsbGVzbGV5WC9FTkdfMTEyeC8yMDE0X1NPTkQ='),
+        ({'one': 'foo', 2: 'bar'}, 'eyJvbmUiOiAiZm9vIiwgIjIiOiAiYmFyIn0='),
+        (['one', 2, 'three', 4], 'WyJvbmUiLCAyLCAidGhyZWUiLCA0XQ==')
     )
     @ddt.unpack
-    def test_encode_course_key_for_lms(self, edx_key, lms_key):
-        assert utils.encode_course_key_into_base64(edx_key) == lms_key
-        assert utils.decode_course_key_from_base64(lms_key) == edx_key
+    def test_encode_data_for_logging(self, input_data, output_base64_str):
+        assert utils.encode_data_for_logging(input_data) == output_base64_str
 
     @ddt.data(
         ('2011-01-01T00:00:00Z', '2011-01-01T00:00:00Z', False),
