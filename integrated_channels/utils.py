@@ -37,6 +37,7 @@ def encode_data_for_logging(data):
         data = json.dumps(data)
     return base64.urlsafe_b64encode(data.encode("utf-8")).decode('utf-8')
 
+
 def parse_datetime_to_epoch(datestamp, magnitude=1.0):
     """
     Convert an ISO-8601 datetime string to a Unix epoch timestamp in some magnitude.
@@ -46,6 +47,7 @@ def parse_datetime_to_epoch(datestamp, magnitude=1.0):
     parsed_datetime = parse_lms_api_datetime(datestamp)
     time_since_epoch = parsed_datetime - UNIX_EPOCH
     return int(time_since_epoch.total_seconds() * magnitude)
+
 
 def strip_html_tags(text, strip_entities=True):
     """
