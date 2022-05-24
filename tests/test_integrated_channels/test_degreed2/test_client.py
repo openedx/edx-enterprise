@@ -81,6 +81,19 @@ class TestDegreed2ApiClient(unittest.TestCase):
             ]
         }
 
+def test_calculate_backoff(self):
+    """
+    Test the default math of the backoff calculator
+    """
+    client = Degreed2APIClient(self.enterprise_config)
+    assert client._calculate_backoff(0) == 1
+    assert client._calculate_backoff(1) == 2
+    assert client._calculate_backoff(2) == 4
+    assert client._calculate_backoff(3) == 8
+    assert client._calculate_backoff(4) == 16
+    assert client._calculate_backoff(5) == 32
+    assert client._calculate_backoff(6) == 64
+
     @responses.activate
     def test_oauth_with_non_json_response(self):
         """ Test  _get_oauth_access_token with non json type response"""
