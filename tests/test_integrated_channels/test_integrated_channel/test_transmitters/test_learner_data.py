@@ -129,18 +129,21 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with disable_learner_data_transmissions = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
 
         self.learner_transmitter.assessment_level_transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with disable_learner_data_transmissions = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
 
         self.learner_transmitter.transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with disable_learner_data_transmissions = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_course_completion.called
 
     @mock.patch("integrated_channels.integrated_channel.models.LearnerDataTransmissionAudit")
@@ -175,15 +178,19 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with dry_run_mode_enabled = True we shouldn't be able to call this method
+        assert not self.learner_transmitter.client.create_course_completion.called
 
         self.learner_transmitter.single_learner_assessment_grade_transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with dry_run_mode_enabled = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
 
         self.learner_transmitter.assessment_level_transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
+        # with dry_run_mode_enabled = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
