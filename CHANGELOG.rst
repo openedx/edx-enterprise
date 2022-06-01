@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.7]
+--------
+fix: parsing improvements to incorrect learner completion completed-at dates
+
 [3.49.6]
 --------
 fix: incorrect learner completion completed-at dates
