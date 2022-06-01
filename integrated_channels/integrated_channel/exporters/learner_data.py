@@ -656,7 +656,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         if not completed_date:
             completed_date = certificate.get('created_date', None)
         if completed_date:
-            completed_date = parse_datetime(completed_date)
+            completed_date = parse_datetime(str(completed_date))
 
         # also get passed_timestamp which is used to line up completion logic with analytics
         persistent_grade = get_persistent_grade(course_id, user)
