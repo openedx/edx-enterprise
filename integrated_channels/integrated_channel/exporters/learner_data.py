@@ -648,6 +648,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         if not certificate:
             return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
+        LOGGER.info(generate_formatted_log(
+            channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+            f'get_course_certificate certificate={certificate}'
+        ))
+
         # get_certificate_for_user has an optional formatting argument which defaults to True
         # edx-platform/blob/6b9eb122dd5b018cfeffc120a70e503b2c159c0b/lms/djangoapps/certificates/api.py#L128
         # when True, the certifiate's `created_date` is transformed into just `created`
@@ -656,7 +661,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         if not completed_date:
             completed_date = certificate.get('created_date', None)
         if completed_date:
-            completed_date = parse_datetime(completed_date)
+            completed_date = parse_datetime(str(completed_date))
 
         # also get passed_timestamp which is used to line up completion logic with analytics
         persistent_grade = get_persistent_grade(course_id, user)
