@@ -312,7 +312,7 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    def test_learner_data_instructor_paced_with_certificate(
+    def test_learner_data_instructor_paced_with_certificate_created_date(
             self,
             mock_course_catalog_api,
             mock_is_course_completed,
@@ -334,12 +334,74 @@ class TestLearnerExporter(unittest.TestCase):
 
         mock_get_persistent_grade.return_value = None
 
-        # Return a mock certificate
+        # Return a mock certificate a created_date
         certificate = dict(
             username=self.user,
             course_id=self.course_id,
             certificate_type='professional',
             created_date=self.NOW.isoformat(),
+            status="downloadable",
+            is_passing=True,
+            grade='A-',
+        )
+        mock_get_course_certificate.return_value = certificate
+
+        # Return instructor-paced course details
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='instructor',
+        )
+
+        # Mock enrollment data
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
+            mode="verified"
+        )
+
+        learner_data = list(self.exporter.export())
+        assert len(learner_data) == 2
+        assert learner_data[0].course_id == self.course_key
+        assert learner_data[1].course_id == self.course_id
+
+        for report in learner_data:
+            assert report.enterprise_course_enrollment_id == enrollment.id
+            assert report.course_completed
+            assert report.completed_timestamp == self.NOW_TIMESTAMP
+            assert report.grade == LearnerExporter.GRADE_PASSING
+
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_learner_data_instructor_paced_with_certificate_created(
+            self,
+            mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
+            mock_get_course_certificate,
+            mock_get_persistent_grade,
+            mock_get_course_details,
+            mock_enrollment_api
+    ):
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
+        enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+        mock_is_course_completed.return_value = True
+
+        mock_get_persistent_grade.return_value = None
+
+        # Return a mock certificate with a created field (formatted)
+        certificate = dict(
+            username=self.user,
+            course_id=self.course_id,
+            certificate_type='professional',
+            created=self.NOW.isoformat(),
             status="downloadable",
             is_passing=True,
             grade='A-',
@@ -465,6 +527,96 @@ class TestLearnerExporter(unittest.TestCase):
 
         mock_is_course_completed.return_value = True
         mock_get_course_certificate.return_value = None
+        mock_get_persistent_grade.return_value = mock_persistent_course_grade(
+            user_id='a-user-id',
+            course_id=self.course_id,
+            passed_timestamp=expected_completion,
+        )
+
+        # Mock self-paced course details
+        mock_get_course_details.return_value = mock_course_overview(
+            pacing='self',
+            end=end_date if end_date else None,
+        )
+
+        # Mock grades data
+        mock_get_single_user_grade.return_value = mock_single_learner_grade(
+            passing=passing,
+        )
+
+        # Mock enrollment data
+        mock_course_enrollment_class.objects.get.return_value.mode = course_enrollment_mode
+        # Collect the learner data, with time set to NOW
+        with freeze_time(self.NOW):
+            learner_data = list(self.exporter.export())
+
+        assert len(learner_data) == 2
+        assert learner_data[0].course_id == self.course_key
+        assert learner_data[1].course_id == self.course_id
+
+        for report in learner_data:
+            assert report.enterprise_course_enrollment_id == enrollment.id
+            assert report.course_completed
+            assert report.completed_timestamp == expected_completion
+            assert report.grade == expected_grade
+
+    @ddt.data(
+        # passing grade with no course end date
+        (True, None, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        # passing grade with course end date in past
+        (True, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        # passing grade with course end date in future
+        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        # passing grade with course end date in future
+        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'audit'),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseEnrollment')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_learner_data_self_paced_course_with_funky_certificate(
+            self,
+            passing,
+            end_date,
+            expected_completion,
+            expected_grade,
+            course_enrollment_mode,
+            mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
+            mock_get_course_details,
+            mock_get_persistent_grade,
+            mock_get_single_user_grade,
+            mock_get_course_certificate,
+            mock_course_enrollment_class
+    ):
+        enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+
+        mock_is_course_completed.return_value = True
+
+        # Return a mock certificate with a blank created field (funky)
+        # Should use passing timestamp instead
+        certificate = dict(
+            username=self.user,
+            course_id=self.course_id,
+            certificate_type='professional',
+            status="downloadable",
+            is_passing=True,
+            grade='A-',
+        )
+        mock_get_course_certificate.return_value = certificate
+
         mock_get_persistent_grade.return_value = mock_persistent_course_grade(
             user_id='a-user-id',
             course_id=self.course_id,

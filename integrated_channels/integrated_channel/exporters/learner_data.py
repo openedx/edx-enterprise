@@ -6,6 +6,7 @@ grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 
+from datetime import datetime
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
@@ -647,15 +648,35 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         if not certificate:
             return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
-        completed_date = certificate.get('created_date')
+        # get_certificate_for_user has an optional formatting argument which defaults to True
+        # edx-platform/blob/6b9eb122dd5b018cfeffc120a70e503b2c159c0b/lms/djangoapps/certificates/api.py#L128
+        # when True, the certifiate's `created_date` is transformed into just `created`
+        completed_date = certificate.get('created', None)
+        # guard against the default formatting argument changing
+        if not completed_date:
+            completed_date = certificate.get('created_date', None)
         if completed_date:
             completed_date = parse_datetime(completed_date)
-        else:
-            completed_date = timezone.now()
 
         # also get passed_timestamp which is used to line up completion logic with analytics
         persistent_grade = get_persistent_grade(course_id, user)
         passed_timestamp = persistent_grade.passed_timestamp if persistent_grade is not None else None
+
+        if (not completed_date) and passed_timestamp:
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                'get_course_certificate misisng created/created_date, '
+                'but there is a passed_timestamp so using that'
+            ))
+            completed_date = datetime.fromtimestamp((passed_timestamp / 1000), tz=timezone.utc)
+        elif not completed_date and not passed_timestamp:
+            LOGGER.info(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                'get_course_certificate misisng created/created_date, '
+                'no passed_timestamp so defaulting to timezone.now(), '
+                f'certificate={certificate}'
+            ))
+            completed_date = timezone.now()
 
         # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
         is_passing = certificate.get('is_passing')

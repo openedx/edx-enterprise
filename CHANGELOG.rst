@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.6]
+--------
+fix: incorrect learner completion completed-at dates
+
 [3.49.5]
 --------
 feat: add lms_user_id to serialized admin users
