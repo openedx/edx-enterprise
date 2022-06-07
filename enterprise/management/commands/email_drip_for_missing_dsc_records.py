@@ -196,6 +196,17 @@ class Command(BaseCommand):
                     email_sent_records.append(
                         f'User: {username}, Course: {course_id}, Enterprise: {enterprise_customer.uuid}'
                     )
+                else:
+                    LOGGER.info(
+                        f'[Absent DSC Email] User has not accessed the course yet. User: [{username}], Course: '
+                        f'[{course_id}], Enterprise: [{enterprise_customer.uuid}]'
+                    )
+            else:
+                LOGGER.info(
+                    f'[Absent DSC Email] Consent already given. User: [{username}], Course: [{course_id}], '
+                    f'Enterprise: [{enterprise_customer.uuid}]'
+                )
+
         LOGGER.info(
             '[Absent DSC Email] Emails sent for [%s] enrollments out of [%s] enrollments. DSC records sent to: [%s]',
             len(email_sent_records),

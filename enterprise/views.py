@@ -316,7 +316,6 @@ class GrantDataSharingPermissions(View):
     hasn't yet been provided - this view contains a GET view that provides a form for
     consent to be provided, and a POST view that consumes said form.
     """
-
     preview_mode = False
 
     def course_or_program_exist(self, course_id, program_uuid):
@@ -781,6 +780,11 @@ class GrantDataSharingPermissions(View):
         program_uuid = request.GET.get('program_uuid', '')
         license_uuid = request.GET.get('license_uuid')
         self.preview_mode = bool(request.GET.get('preview_mode', False))
+
+        LOGGER.info(
+            f'[ENTERPEISE CONSENT PAGE] Request received. User: [{request.user}], Course: [{course_id}], '
+            f'Enterprise: [{enterprise_customer_uuid}]'
+        )
 
         # Get enterprise_customer to start in case we need to render a custom 404 page
         # Then go through other business logic to determine (and potentially overwrite) the enterprise customer

@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.8]
+--------
+chore: add logs for dsc
+
 [3.49.7]
 --------
 fix: parsing improvements to incorrect learner completion completed-at dates
