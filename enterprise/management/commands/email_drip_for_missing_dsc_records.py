@@ -115,7 +115,8 @@ class Command(BaseCommand):
             'greeting_name': greeting_name,
             'failure_url': failure_url,
             'lms_root_url': settings.LMS_ROOT_URL,
-            'grant_data_sharing_url': grant_data_sharing_url
+            'grant_data_sharing_url': grant_data_sharing_url,
+            'source': 'missing-dsc-email-drip-command',
         })
         LOGGER.info(
             '[Absent DSC Email] Segment event fired for missing data sharing consent. '

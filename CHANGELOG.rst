@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.9]
+--------
+feat: add source query param in data sharing consent url
+
 [3.49.8]
 --------
 chore: add logs for dsc
