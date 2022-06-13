@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.49.10]
+---------
+fix: append backslash to ecommerce url and change `get` to `get_or_create` in `fulfill_pending_course_enrollments`
+
 [3.49.9]
 --------
 feat: add source query param in data sharing consent url
