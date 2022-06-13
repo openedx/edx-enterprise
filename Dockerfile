@@ -80,7 +80,7 @@ RUN pip install nodeenv
 # Must be done after Python requirements, since nodeenv is installed
 # via pip.
 # The node environment is already 'activated' because its .../bin was put on $PATH.
-RUN nodeenv /edx/app/nodeenv --node=12.11.1 --prebuilt
+RUN nodeenv /edx/app/nodeenv --node=16.15.1 --prebuilt
 
 RUN mkdir -p /edx/var/log
 
