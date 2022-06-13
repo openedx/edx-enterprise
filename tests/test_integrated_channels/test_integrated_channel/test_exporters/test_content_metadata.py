@@ -40,7 +40,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         )
 
         # Mocks
-        self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
         self.fake_catalog = get_fake_catalog()
         self.fake_catalog_modified_at = max(
             self.fake_catalog['content_last_modified'], self.fake_catalog['catalog_modified']

@@ -207,28 +207,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         degreed_create_content_metadata_mock.return_value = 200, '{}'
 
-        content_filter = {
-            'key': ['course-v1:edX+DemoX+Demo_Course_1']
-        }
-        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
-            enterprise_customer=self.enterprise_customer,
-            content_filter=content_filter
-        )
-
-        # Mock first integrated channel with failure
-        enterprise_uuid_for_failure = enterprise_catalog.uuid
-        self.mock_enterprise_catalogs_with_error(enterprise_uuid=enterprise_uuid_for_failure)
-
-        # Now create a new integrated channel with a new enterprise and mock
-        # enterprise courses API to send failure response
         dummy_enterprise_customer = factories.EnterpriseCustomerFactory(
             name='Dummy Enterprise',
         )
-        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
-            enterprise_customer=dummy_enterprise_customer,
-            content_filter=content_filter
-        )
-        self.mock_enterprise_customer_catalogs(str(enterprise_catalog.uuid))
         dummy_degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=dummy_enterprise_customer,
             key='key',
@@ -273,10 +254,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         degreed_create_content_metadata_mock.return_value = 200, '{}'
-
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
-        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
         expected_calls = [
             mock.call('C-3PO', 'SAP', 1),
@@ -1215,10 +1192,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
 
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
-        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
-
         def mock_get_user_social_auth(*args):
             """DRY method to raise exception for invalid users."""
             uname = args[1]
@@ -1288,10 +1261,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
 
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
-        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
-
         # Note: because we didn't use 'responses.add' in unit test, ANY request library call
         # made will throw a ConnectionError. See https://github.com/getsentry/responses/blob/master/README.rst
         # What we're verifying here is that our call will still complete because the ConnectionError gets caught:
@@ -1318,9 +1287,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         # Delete the identity providers
         EnterpriseCustomerIdentityProvider.objects.all().delete()
 
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
-        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
         get_identity_provider_mock.return_value = None
 
         # Now mock SAPSF searchStudent for inactive learner
@@ -1380,10 +1346,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
-        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
         # Now mock SAPSF searchStudent for inactive learner
         responses.add(

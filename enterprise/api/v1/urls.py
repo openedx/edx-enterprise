@@ -9,7 +9,6 @@ from django.urls import re_path
 from enterprise.api.v1 import views
 
 router = DefaultRouter()
-router.register("enterprise_catalogs", views.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs')
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register(
     "licensed-enterprise-course-enrollment",

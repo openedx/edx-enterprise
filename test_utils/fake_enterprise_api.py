@@ -28,18 +28,6 @@ class EnterpriseMockMixin:
         super().setUp()
         cache.clear()
 
-    def build_enterprise_api_url(self, resource, *args, **kwargs):
-        """
-        DRY method to make Enterprise API URLs.
-
-        Example URL: 'enterprise/api/v1/enterprise-customer/{enterprise_uuid}/courses'
-        """
-        return '{lms_root_url}{enterprise_api_uri}{params}'.format(
-            lms_root_url=settings.LMS_INTERNAL_ROOT_URL,
-            enterprise_api_uri=reverse(resource, args=args),
-            params=('?' + urlencode(kwargs)) if kwargs else '',
-        )
-
     def build_fake_enterprise_course_detail(self, enterprise_uuid, course_run_key):
         """
         DRY method to create course detail json.
@@ -108,45 +96,6 @@ class EnterpriseMockMixin:
         digest = md5_hash.hexdigest()[-7:]
         sku = digest.upper()
         return sku
-
-    def mock_enterprise_customer_catalogs(self, enterprise_catalog_uuid):
-        """
-        DRY function to register enterprise customer catalog API.
-        """
-        responses.add(
-            responses.GET,
-            url=self.build_enterprise_api_url('enterprise-catalogs-detail', enterprise_catalog_uuid),
-            json=build_fake_enterprise_catalog_detail(
-                enterprise_catalog_uuid=enterprise_catalog_uuid,
-                include_enterprise_context=True,
-            ),
-            status=200,
-            content_type='application/json',
-        )
-
-    def mock_enterprise_catalogs_with_error(self, enterprise_uuid):
-        """
-        DRY function to register enterprise catalogs API to return error response.
-        """
-        responses.add(
-            responses.GET,
-            url=self.build_enterprise_api_url('enterprise-catalogs-detail', enterprise_uuid),
-            json={},
-            status=500,
-            content_type='application/json',
-        )
-
-    def mock_empty_response(self, resource, *args, **kwargs):
-        """
-        DRY function to register an empty response from some Enterprise API endpoint.
-        """
-        responses.add(
-            responses.GET,
-            url=self.build_enterprise_api_url(resource, *args, **kwargs),
-            json={},
-            status=200,
-            content_type='application/json',
-        )
 
 
 # pylint: disable=dangerous-default-value

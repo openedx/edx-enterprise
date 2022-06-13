@@ -9,7 +9,6 @@ from pytest import mark
 
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
-    ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
 )
@@ -27,7 +26,6 @@ class TestEnterpriseRBACPermissions(APITest):
     @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         'enterprise.can_access_admin_dashboard',
-        'enterprise.can_view_catalog',
         'enterprise.can_enroll_learners',
     )
     def test_has_implicit_access(self, permission, get_current_request_mock):
@@ -37,7 +35,6 @@ class TestEnterpriseRBACPermissions(APITest):
     @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         ('enterprise.can_access_admin_dashboard', ENTERPRISE_DASHBOARD_ADMIN_ROLE),
-        ('enterprise.can_view_catalog', ENTERPRISE_CATALOG_ADMIN_ROLE),
         ('enterprise.can_enroll_learners', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE),
     )
     @ddt.unpack
@@ -55,7 +52,6 @@ class TestEnterpriseRBACPermissions(APITest):
     @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         'enterprise.can_access_admin_dashboard',
-        'enterprise.can_view_catalog',
         'enterprise.can_enroll_learners',
     )
     def test_access_denied(self, permission, get_current_request_mock):

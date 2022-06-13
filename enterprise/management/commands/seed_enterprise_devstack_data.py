@@ -14,7 +14,6 @@ from django.utils.text import slugify
 
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
-    ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_DATA_API_ACCESS_GROUP,
     ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP,
@@ -194,7 +193,6 @@ class Command(BaseCommand):
         if role == ENTERPRISE_LEARNER_ROLE:
             return
         feature_roles = [
-            ENTERPRISE_CATALOG_ADMIN_ROLE,
             ENTERPRISE_DASHBOARD_ADMIN_ROLE,
             ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
             ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,

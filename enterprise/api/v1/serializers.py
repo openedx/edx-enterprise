@@ -2,7 +2,6 @@
 Serializers for enterprise api version 1.
 """
 
-import copy
 import datetime
 from collections import defaultdict
 from collections.abc import Iterable
@@ -654,94 +653,6 @@ class LinkLearnersSerializer(PendingEnterpriseCustomerUserSerializer):
         if str(value.uuid) != self.context.get('enterprise_customer__uuid'):
             raise serializers.ValidationError(self.NOT_AUTHORIZED_ERROR)
         return value
-
-
-class CourseDetailSerializer(ImmutableStateSerializer):
-    """
-    Serializer for course data retrieved from the discovery service course detail API endpoint.
-
-    This serializer updates the course and course run data with the EnterpriseCustomer-specific enrollment page URL
-    for the given course and course runs.
-    """
-
-    def to_representation(self, instance):
-        """
-        Return the updated course data dictionary.
-
-        Arguments:
-            instance (dict): The course data.
-
-        Returns:
-            dict: The updated course data.
-        """
-        updated_course = copy.deepcopy(instance)
-        enterprise_customer_catalog = self.context['enterprise_customer_catalog']
-        updated_course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(
-            updated_course['key']
-        )
-        for course_run in updated_course['course_runs']:
-            course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                course_run['key']
-            )
-        return updated_course
-
-
-class CourseRunDetailSerializer(ImmutableStateSerializer):
-    """
-    Serializer for course run data retrieved from the discovery service course_run detail API endpoint.
-
-    This serializer updates the course run data with the EnterpriseCustomer-specific enrollment page URL
-    for the given course run.
-    """
-
-    def to_representation(self, instance):
-        """
-        Return the updated course run data dictionary.
-
-        Arguments:
-            instance (dict): The course run data.
-
-        Returns:
-            dict: The updated course run data.
-        """
-        updated_course_run = copy.deepcopy(instance)
-        enterprise_customer_catalog = self.context['enterprise_customer_catalog']
-        updated_course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-            updated_course_run['key']
-        )
-        return updated_course_run
-
-
-class ProgramDetailSerializer(ImmutableStateSerializer):
-    """
-    Serializer for program data retrieved from the discovery service program detail API endpoint.
-
-    This serializer updates the program data and child course run data with EnterpriseCustomer-specific
-    enrollment page URLs for the given content types.
-    """
-
-    def to_representation(self, instance):
-        """
-        Return the updated program data dictionary.
-
-        Arguments:
-            instance (dict): The program data.
-
-        Returns:
-            dict: The updated program data.
-        """
-        updated_program = copy.deepcopy(instance)
-        enterprise_customer_catalog = self.context['enterprise_customer_catalog']
-        updated_program['enrollment_url'] = enterprise_customer_catalog.get_program_enrollment_url(
-            updated_program['uuid']
-        )
-        for course in updated_program['courses']:
-            course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(course['key'])
-            for course_run in course['course_runs']:
-                course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                    course_run['key']
-                )
-        return updated_program
 
 
 class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerializer):

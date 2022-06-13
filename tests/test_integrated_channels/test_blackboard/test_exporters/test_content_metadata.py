@@ -32,8 +32,6 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
 
-        # Mocks
-        self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
         super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')

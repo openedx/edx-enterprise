@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.50.0]
+--------
+refactor: remove ``/enterprise/api/v1/enterprise_catalogs`` endpoints and EnterpriseApiClient
+
 [3.49.9]
 --------
 feat: add source query param in data sharing consent url

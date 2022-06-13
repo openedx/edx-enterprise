@@ -4,14 +4,6 @@
 #
 # Clients must include an Authorization header with OAuth2 access token in order to communicate:
 #   Authorization: JWT {access_token}
-#
-#
-# Available service endpoints -- note that alternate endpoints may be presented at the API Gateway tier
-#   /enterprise/api/v1/enterprise_catalogs/
-#   /enterprise/api/v1/enterprise_catalogs/{uuid}/
-#   /enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/
-#   /enterprise/api/v1/enterprise_catalogs/{uuid}/courses/{course_key}/
-#   /enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/
 
 apigateway_responses: &apigateway_responses
   default:
@@ -299,83 +291,6 @@ x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course
 
 endpoints:
   v1:
-
-    # /v1/enterprise_catalogs/
-    enterpriseCustomerCatalogs:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_customer_catalogs"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_enterprise_customer_catalog_list
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/"
-
-    # /v1/enterprise_catalogs/{uuid}/
-    enterpriseCustomerCatalogByUuid:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *uuid_parameter
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_customer_catalog_by_uuid"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_enterprise_customer_catalog_detail
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/"
-
-    # /v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/
-    enterpriseCustomerCatalogCourseRunByUuid:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *uuid_parameter
-            - *course_run_id_parameter
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_customer_catalog_course_run_by_id"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_course_run_id_parameters
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/"
-
-    # /v1/enterprise_catalogs/{uuid}/courses/{course_key}/
-    enterpriseCustomerCatalogCourseByKey:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *uuid_parameter
-            - *course_key_parameter
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_customer_catalog_course_by_key"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_course_key_parameters
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/courses/{course_key}/"
-
-    # /v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/
-    enterpriseCustomerCatalogProgramByUuid:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *uuid_parameter
-            - *program_uuid_parameter
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_customer_catalog_program_by_uuid"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_program_uuid_parameters
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/"
 
     # /v1/enterprise-customer/{uuid}/course_enrollments/
     enterpriseCustomerCourseEnrollments:

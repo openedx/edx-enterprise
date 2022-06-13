@@ -39,8 +39,6 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         self.config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
-        # Mocks
-        self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
         super().setUp()
 
     def test_course_list_unauthorized_non_customer(self):

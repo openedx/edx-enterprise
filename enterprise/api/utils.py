@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 from enterprise.models import (
-    EnterpriseCustomerCatalog,
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
@@ -26,16 +25,6 @@ def get_service_usernames():
         return set(settings.ENTERPRISE_ALL_SERVICE_USERNAMES)
 
     return {getattr(settings, username, None) for username in SERVICE_USERNAMES}
-
-
-def get_enterprise_customer_from_catalog_id(catalog_id):
-    """
-    Get the enterprise customer id given an enterprise customer catalog id.
-    """
-    try:
-        return str(EnterpriseCustomerCatalog.objects.get(pk=catalog_id).enterprise_customer.uuid)
-    except EnterpriseCustomerCatalog.DoesNotExist:
-        return None
 
 
 def get_ent_cust_from_report_config_uuid(uuid):

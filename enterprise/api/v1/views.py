@@ -15,7 +15,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK,
@@ -28,13 +27,11 @@ from rest_framework.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from rest_framework.views import APIView
-from rest_framework_xml.renderers import XMLRenderer
 
 from django.apps import apps
 from django.conf import settings
 from django.core import exceptions, mail
 from django.db import transaction
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from django.utils.decorators import method_decorator
@@ -52,13 +49,12 @@ from enterprise.api.utils import (
     create_message_body,
     get_ent_cust_from_enterprise_customer_key,
     get_ent_cust_from_report_config_uuid,
-    get_enterprise_customer_from_catalog_id,
     get_enterprise_customer_from_user_id,
 )
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.constants import COURSE_KEY_URL_PATTERN, PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
+from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
 from enterprise.errors import (
     AdminNotificationAPIRequestError,
     CodesAPIRequestError,
@@ -998,148 +994,6 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
     filterset_fields = FIELDS
     ordering_fields = FIELDS
     lookup_field = 'enterprise_customer__slug'
-
-
-class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
-    """
-    API Views for performing search through course discovery at the ``enterprise_catalogs`` API endpoint.
-    """
-    queryset = models.EnterpriseCustomerCatalog.objects.all()
-
-    USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
-    FIELDS = (
-        'uuid', 'enterprise_customer',
-    )
-    filterset_fields = FIELDS
-    ordering_fields = FIELDS
-    renderer_classes = (JSONRenderer, XMLRenderer,)
-
-    @permission_required('enterprise.can_view_catalog', fn=lambda request, *args, **kwargs: None)
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
-    @permission_required(
-        'enterprise.can_view_catalog',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_catalog_id(kwargs['pk']))
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-
-    def get_serializer_class(self):
-        view_action = getattr(self, 'action', None)
-        if view_action == 'retrieve':
-            return serializers.EnterpriseCustomerCatalogDetailSerializer
-        return serializers.EnterpriseCustomerCatalogSerializer
-
-    @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
-    @action(detail=True)
-    # pylint: disable=unused-argument
-    def contains_content_items(self, request, pk, course_run_ids, program_uuids):
-        """
-        Return whether or not the EnterpriseCustomerCatalog contains the specified content.
-
-        Multiple course_run_ids and/or program_uuids query parameters can be sent to this view to check
-        for their existence in the EnterpriseCustomerCatalog. At least one course run key
-        or program UUID value must be included in the request.
-        """
-        enterprise_customer_catalog = self.get_object()
-
-        # Maintain plus characters in course key.
-        course_run_ids = [unquote(quote_plus(course_run_id)) for course_run_id in course_run_ids]
-
-        contains_content_items = True
-        if course_run_ids:
-            contains_content_items = enterprise_customer_catalog.contains_courses(course_run_ids)
-        if program_uuids:
-            contains_content_items = (
-                contains_content_items and
-                enterprise_customer_catalog.contains_programs(program_uuids)
-            )
-
-        return Response({'contains_content_items': contains_content_items})
-
-    @action(detail=True, url_path='courses/{}'.format(COURSE_KEY_URL_PATTERN))
-    @permission_required(
-        'enterprise.can_view_catalog',
-        fn=lambda request, pk, course_key: get_enterprise_customer_from_catalog_id(pk))
-    def course_detail(self, request, pk, course_key):  # pylint: disable=unused-argument
-        """
-        Return the metadata for the specified course.
-
-        The course needs to be included in the specified EnterpriseCustomerCatalog
-        in order for metadata to be returned from this endpoint.
-        """
-        enterprise_customer_catalog = self.get_object()
-        course = enterprise_customer_catalog.get_course(course_key)
-        if not course:
-            error_message = _(
-                '[Enterprise API] CourseKey not found in the Catalog. Course: {course_key}, Catalog: {catalog_id}'
-            ).format(
-                course_key=course_key,
-                catalog_id=enterprise_customer_catalog.uuid,
-            )
-            LOGGER.warning(error_message)
-            raise Http404
-
-        context = self.get_serializer_context()
-        context['enterprise_customer_catalog'] = enterprise_customer_catalog
-        serializer = serializers.CourseDetailSerializer(course, context=context)
-        return Response(serializer.data)
-
-    @action(detail=True, url_path='course_runs/{}'.format(settings.COURSE_ID_PATTERN))
-    @permission_required(
-        'enterprise.can_view_catalog',
-        fn=lambda request, pk, course_id: get_enterprise_customer_from_catalog_id(pk))
-    def course_run_detail(self, request, pk, course_id):  # pylint: disable=unused-argument
-        """
-        Return the metadata for the specified course run.
-
-        The course run needs to be included in the specified EnterpriseCustomerCatalog
-        in order for metadata to be returned from this endpoint.
-        """
-        enterprise_customer_catalog = self.get_object()
-        course_run = enterprise_customer_catalog.get_course_run(course_id)
-        if not course_run:
-            error_message = _(
-                '[Enterprise API] CourseRun not found in the Catalog. CourseRun: {course_id}, Catalog: {catalog_id}'
-            ).format(
-                course_id=course_id,
-                catalog_id=enterprise_customer_catalog.uuid,
-            )
-            LOGGER.warning(error_message)
-            raise Http404
-
-        context = self.get_serializer_context()
-        context['enterprise_customer_catalog'] = enterprise_customer_catalog
-        serializer = serializers.CourseRunDetailSerializer(course_run, context=context)
-        return Response(serializer.data)
-
-    @action(detail=True, url_path='programs/(?P<program_uuid>[^/]+)')
-    @permission_required(
-        'enterprise.can_view_catalog',
-        fn=lambda request, pk, program_uuid: get_enterprise_customer_from_catalog_id(pk))
-    def program_detail(self, request, pk, program_uuid):  # pylint: disable=unused-argument
-        """
-        Return the metadata for the specified program.
-
-        The program needs to be included in the specified EnterpriseCustomerCatalog
-        in order for metadata to be returned from this endpoint.
-        """
-        enterprise_customer_catalog = self.get_object()
-        program = enterprise_customer_catalog.get_program(program_uuid)
-        if not program:
-            error_message = _(
-                '[Enterprise API] Program not found in the Catalog. Program: {program_uuid}, Catalog: {catalog_id}'
-            ).format(
-                program_uuid=program_uuid,
-                catalog_id=enterprise_customer_catalog.uuid,
-            )
-            LOGGER.warning(error_message)
-            raise Http404
-
-        context = self.get_serializer_context()
-        context['enterprise_customer_catalog'] = enterprise_customer_catalog
-        serializer = serializers.ProgramDetailSerializer(program, context=context)
-        return Response(serializer.data)
 
 
 class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelViewSet):
