@@ -1396,7 +1396,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                     # alongside the enterprise enrollment.
                     if enrollment.license_uuid:
                         source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
-                        enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
+                        enterprise_course_enrollment, _ = EnterpriseCourseEnrollment.objects.get_or_create(
                             enterprise_customer_user=enterprise_customer_user,
                             course_id=enrollment.course_id,
                             defaults={

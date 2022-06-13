@@ -93,7 +93,7 @@ class EcommerceApiClient:
         Since `student.CourseEnrollment` lives in LMS, we're just passing
         around dicts of the relevant information.
         """
-        api_url = urljoin(f"{self.API_BASE_URL}/", "manual_course_enrollment_order")
+        api_url = urljoin(f"{self.API_BASE_URL}/", "manual_course_enrollment_order/")
         try:
             response = self.client.post(api_url, json={"enrollments": enrollments})
             response.raise_for_status()
