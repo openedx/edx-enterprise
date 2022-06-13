@@ -780,10 +780,11 @@ class GrantDataSharingPermissions(View):
         program_uuid = request.GET.get('program_uuid', '')
         license_uuid = request.GET.get('license_uuid')
         self.preview_mode = bool(request.GET.get('preview_mode', False))
+        source = request.GET.get('source', 'unknown')
 
         LOGGER.info(
-            f'[ENTERPEISE CONSENT PAGE] Request received. User: [{request.user}], Course: [{course_id}], '
-            f'Enterprise: [{enterprise_customer_uuid}]'
+            f'[ENTERPRISE CONSENT PAGE] Request received. Source: [{source}], User: [{request.user}], '
+            f'Course: [{course_id}], Enterprise: [{enterprise_customer_uuid}]'
         )
 
         # Get enterprise_customer to start in case we need to render a custom 404 page
