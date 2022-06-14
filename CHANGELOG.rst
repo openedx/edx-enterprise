@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.50.0]
+--------
+feat: add `enable_learner_portal_offers` to `EnterpriseCustomer`
+
 [3.49.10]
 ---------
 fix: append backslash to ecommerce url and change `get` to `get_or_create` in `fulfill_pending_course_enrollments`

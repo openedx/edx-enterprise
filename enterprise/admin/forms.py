@@ -395,6 +395,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_portal_code_management_screen",
             "enable_portal_subscription_management_screen",
             "enable_learner_portal",
+            "enable_learner_portal_offers",
             "hide_labor_market_data",
             "enable_integrated_customer_learner_portal_search",
             "enable_analytics_screen",
