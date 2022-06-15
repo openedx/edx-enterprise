@@ -18,17 +18,17 @@ QUERY = '''
     -- Enrollments [CHECK]
     -- Course Completions [CHECK]
     -- Last Month’s avg hours of learning per learner (and a percentile rank of how that compares with over organizations that month). [CHECK]
-    -- Last Month’s % of linked users who had at least 1 daily session. 
+    -- Last Month’s % of linked users who had at least 1 daily session.
     -- Top 5 skills the learners enrolled in. [CHECK]
-    
+
     WITH dynamic_dates as (
     /*
     Set up a CTE that tracks the start and end date
     of last month and the prior month. Use it to create
     dynamic filtering in the subqueries, and reduce dependency
     on manually set date ranges.
-        */
-    
+    */
+
     SELECT
         CURRENT_DATE as cd,
         dateadd('month', -1, (date_trunc('month', cd))) as last_month_start_range,
@@ -36,631 +36,619 @@ QUERY = '''
         dateadd('month', -1, (date_trunc('month', last_month_start_range))) as two_months_ago_start_range,
         dateadd('day',-1,(date_trunc('month', last_month_start_range))) as two_months_ago_end_range
     ),
-    
-    
+
     TWO_MONTHS_AGO as(
-        
+
     /*
-    Collect all results from the two months ago. This will be used to 
+    Collect all results from the two months ago. This will be used to
     benchmark and context set for the results one month ago.
-        */
-    
+    */
+
     WITH admins as (
-    
+
     /*
     Get a list of admins.
         */
-    
+
     SELECT DISTINCT
-        ec.uuid, 
-        ec.name as enterprise_name, 
-        au.email, 
-        role.name, 
+        ec.uuid,
+        ec.name as enterprise_name,
+        au.email,
+        role.name,
         ecu.created as enterprise_user_role_created,
         assign.created as admin_role_assigned
-    FROM 
-        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMER" ec 
-    JOIN 
-        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMERUSER" ecu 
-    ON 
+    FROM
+        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMER" ec
+    JOIN
+        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMERUSER" ecu
+    ON
         ec.uuid=ecu.ENTERPRISE_CUSTOMER_ID
-    JOIN 
-        "PROD"."LMS_PII"."AUTH_USER" au 
-    ON 
+    JOIN
+        "PROD"."LMS_PII"."AUTH_USER" au
+    ON
         ecu.user_id=au.id
-    JOIN 
-        "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEUSERROLEASSIGNMENT" assign 
-    ON 
-        assign.user_id=au.id 
-      AND 
+    JOIN
+        "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEUSERROLEASSIGNMENT" assign
+    ON
+        assign.user_id=au.id
+      AND
         assign.user_id=ecu.user_id
-    JOIN 
-        "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEROLE" role 
-    ON 
+    JOIN
+        "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEROLE" role
+    ON
         role.id=assign.role_id
-    WHERE 
+    WHERE
         role.name like 'enterprise_admin'
-    ORDER BY 
+    ORDER BY
         au.email),
-        
+
     learning_hours as (
-    
     /*
     Get the sum of learning hours, grouped by enterprise UUID.
-        */
-    
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+    SELECT
+        enterprise_customer_uuid,
         round(sum(learning_time_seconds)/60/60,2) as learning_hrs
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    GROUP BY 
+    GROUP BY
         enterprise_customer_uuid),
-    
+
     new_enrolls as (
-    
+
     /*
     Gets number of new enrollment IDs created, grouped by enterprise UUID.
-        */
-    
-    SELECT 
-        lpr.enterprise_customer_uuid, 
+    */
+
+    SELECT
+        lpr.enterprise_customer_uuid,
         count( distinct enrollment_id) as new_enrolls
-    FROM 
+    FROM
         enterprise.learner_progress_report_external lpr
-    WHERE 
+    WHERE
         enrollment_date >=(SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         enrollment_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    GROUP BY 
-        1), 
-    
+    GROUP BY
+        1),
+
     completions as (
-    
     /*
     Gets number of enrollment IDs that had a completoin event, grouped by enterprise UUID.
-        */
-        
-    SELECT 
-        lpr.enterprise_customer_uuid, 
+    */
+
+    SELECT
+        lpr.enterprise_customer_uuid,
         count( distinct enrollment_id) as new_completes
-    FROM 
+    FROM
         enterprise.learner_progress_report_external lpr
-    WHERE 
+    WHERE
         passed_date >=(SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         passed_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    GROUP BY 
+    GROUP BY
         1),
-        
+
     daily_sessions as (
-    
     /*
     Gets number of daily sessions, grouped by enterprise UUID.
-        */
-    
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         count(*) as sessions
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >=(SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    AND 
+    AND
         is_engaged = 1
     GROUP BY 1),
-    
+
     top_5_enrolled as (
-    
     /*
     Top five skills being enrolled in, grouped by enterprise.
-        */
-        
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         listagg(distinct skill,', ') within group (order by skill) as top_5_skills
     FROM (
-        SELECT DISTINCT 
+        SELECT DISTINCT
             enterprise_customer_uuid,
             s.name as skill,
             COUNT(distinct bee.course_key) as courses_with_skill,
             row_number() over(partition by enterprise_customer_uuid order by courses_with_skill desc) as rownum
-        FROM 
+        FROM
             enterprise.ent_base_enterprise_enrollment bee
-        JOIN 
-            discovery.taxonomy_courseskills cs 
-        on 
+        JOIN
+            discovery.taxonomy_courseskills cs
+        on
             bee.course_key=cs.course_key
-        JOIN 
-            discovery.taxonomy_skill s 
-        on 
+        JOIN
+            discovery.taxonomy_skill s
+        on
             s.id=cs.skill_id
-        WHERE 
+        WHERE
             enterprise_enrollment_created >=(SELECT two_months_ago_start_range FROM dynamic_dates)
-        AND 
+        AND
              enterprise_enrollment_created <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-        GROUP BY 
+        GROUP BY
             1,2
-        ORDER BY 
+        ORDER BY
             1,4 ASC)
-    WHERE 
+    WHERE
         rownum <=5
-    GROUP BY 
+    GROUP BY
         enterprise_customer_uuid),
-    
+
     avg_learning_hrs as (
-        
     /*
     Avg hours learned per learner, grouped by enterprise.
-        */
-    
-    with hours as ( 
-    
+    */
+
+    with hours as (
     /*
     Number of hours (numerator), grouped by enterprise.
-        */
-        
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         round(sum(learning_time_seconds)/60/60,2) as learning_hrs
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    GROUP BY 
-        enterprise_customer_uuid), 
-    
+    GROUP BY
+        enterprise_customer_uuid),
+
     learners as (
-    
     /*
     Number of learners (denominator), grouped by enterprise.
-        */
-    
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         count(distinct email) as learners_who_learned
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    GROUP BY 
+    GROUP BY
         1)
-    
-    SELECT 
-        hours.enterprise_customer_uuid, 
-        learning_hrs, 
-        learners_who_learned, 
+
+    SELECT
+        hours.enterprise_customer_uuid,
+        learning_hrs,
+        learners_who_learned,
         (learning_hrs/learners_who_learned) as avg_hours_per_learner,
         percent_rank() over (order by avg_hours_per_learner) as percent_rank
-    FROM 
-        hours 
-    JOIN 
-        learners 
-    on 
+    FROM
+        hours
+    JOIN
+        learners
+    on
         hours.enterprise_customer_uuid=learners.enterprise_customer_uuid
-    WHERE 
-        learners_who_learned > 0), 
-    
+    WHERE
+        learners_who_learned > 0),
+
     with_sessions as (
-    
     /*
     Calculates the % of learners who had at least
     one daily session in the time period, grouped by
     enterprise.
-        */
-    
+    */
+
     with linked as (
-    
+
     /*
     Number of learners linked to the enterprise, grouped
     by enterprise.
-        */
-    
-    SELECT 
-        enterprise_customer_id, 
+    */
+
+    SELECT
+        enterprise_customer_id,
         count(distinct ecu.id) as linked_learners
-    FROM 
+    FROM
         lms_pii.enterprise_enterprisecustomeruser ecu
-    GROUP BY 
+    GROUP BY
         1),
-    
+
     learners_with_sessions as (
-    
+
     /*
     Number of learners linked to the enterprise
     with at least on session, grouped by enterprise.
-        */
-    
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         count(distinct email) as had_sessions
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >=(SELECT two_months_ago_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT two_months_ago_end_range FROM dynamic_dates)
-    AND 
+    AND
         is_engaged = 1
-    GROUP BY 
+    GROUP BY
         1)
-    
-    SELECT 
-        linked.enterprise_customer_id as uuid, 
-        linked.linked_learners, 
+
+    SELECT
+        linked.enterprise_customer_id as uuid,
+        linked.linked_learners,
         learners_with_sessions.had_sessions,
         (had_sessions/linked_learners) as perc_with_sessions
-    FROM 
-        linked 
-    JOIN 
-        learners_with_sessions 
-    on 
+    FROM
+        linked
+    JOIN
+        learners_with_sessions
+    on
         linked.enterprise_customer_id=learners_with_sessions.enterprise_customer_uuid)
     /*
     Aggregate all the metrics for this month.
-        */
-    SELECT DISTINCT 
-        admins.uuid, 
-        admins.enterprise_name, 
-        admins.email,             
-        COALESCE(learning_hours.learning_hrs,0) as learning_hrs, 
-        COALESCE(new_enrolls.new_enrolls,0) as new_enrolls, 
-        COALESCE(completions.new_completes,0) as new_completes, 
-        COALESCE(daily_sessions.sessions,0) as sessions, 
+    */
+    SELECT DISTINCT
+        admins.uuid,
+        admins.enterprise_name,
+        admins.email,
+        COALESCE(learning_hours.learning_hrs,0) as learning_hrs,
+        COALESCE(new_enrolls.new_enrolls,0) as new_enrolls,
+        COALESCE(completions.new_completes,0) as new_completes,
+        COALESCE(daily_sessions.sessions,0) as sessions,
         top_5_enrolled.top_5_skills,
         avg_learning_hrs.avg_hours_per_learner,
         avg_learning_hrs.percent_rank,
         with_sessions.perc_with_sessions
-    FROM 
+    FROM
         admins
-    LEFT JOIN 
-        learning_hours 
-    on 
+    LEFT JOIN
+        learning_hours
+    on
         learning_hours.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        new_enrolls 
-    on 
+    LEFT JOIN
+        new_enrolls
+    on
         new_enrolls.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        completions 
-    on 
+    LEFT JOIN
+        completions
+    on
         completions.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        daily_sessions 
-    on 
+    LEFT JOIN
+        daily_sessions
+    on
         daily_sessions.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        top_5_enrolled 
-    on 
+    LEFT JOIN
+        top_5_enrolled
+    on
         top_5_enrolled.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        avg_learning_hrs 
-    on 
+    LEFT JOIN
+        avg_learning_hrs
+    on
         avg_learning_hrs.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        with_sessions 
-    on 
+    LEFT JOIN
+        with_sessions
+    on
         with_sessions.uuid=admins.uuid
-    LEFT JOIN 
-        lms_pii.enterprise_enterprisecustomer ec 
-    on 
+    LEFT JOIN
+        lms_pii.enterprise_enterprisecustomer ec
+    on
         ec.uuid=admins.uuid
-    WHERE 
+    WHERE
         ec.enable_analytics_screen --- FILTER FOR ONLY CUSTOMERS WITH AA
-    AND 
+    AND
         ec.customer_type_id != 3
             ),
-    
+
     ONE_MONTH_AGO as(
-        
+
     /*
-    Collect all results from the one months ago. This will be used to 
+    Collect all results from the one months ago. This will be used to
     report the progress report of "here's what happened last month".
-        */
-        
-    
-    with admins as ( 
-    
+    */
+
+    with admins as (
     /*
     Get a list of admins.
-        */
-    
-    SELECT DISTINCT 
-        ec.uuid, 
-        ec.name as enterprise_name, 
-        au.email, 
-        role.name, 
+    */
+
+    SELECT DISTINCT
+        ec.uuid,
+        ec.name as enterprise_name,
+        au.email,
+        role.name,
         ecu.created as enterprise_user_role_created,
         assign.created as admin_role_assigned
-    FROM 
-        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMER" ec 
-    JOIN 
-        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMERUSER" ecu 
-    on 
+    FROM
+        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMER" ec
+    JOIN
+        "PROD"."LMS_PII"."ENTERPRISE_ENTERPRISECUSTOMERUSER" ecu
+    on
         ec.uuid=ecu.ENTERPRISE_CUSTOMER_ID
-    JOIN 
-        "PROD"."LMS_PII"."AUTH_USER" au 
-    on 
+    JOIN
+        "PROD"."LMS_PII"."AUTH_USER" au
+    on
         ecu.user_id=au.id
-    JOIN 
-        "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEUSERROLEASSIGNMENT" assign 
-    on 
-        assign.user_id=au.id 
-    and 
+    JOIN
+        "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEUSERROLEASSIGNMENT" assign
+    on
+        assign.user_id=au.id
+    and
         assign.user_id=ecu.user_id
-    JOIN 
+    JOIN
         "PROD"."LMS_PII"."ENTERPRISE_SYSTEMWIDEENTERPRISEROLE" role on role.id=assign.role_id
-    WHERE 
+    WHERE
         role.name like 'enterprise_admin'
-    ORDER BY 
+    ORDER BY
         au.email),
-    
+
     learning_hours as (
-    
+
     /*
     Get the sum of learning hours, grouped by enterprise UUID.
-        */
-        
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         round(sum(learning_time_seconds)/60/60,2) as learning_hrs
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    GROUP BY 
+    GROUP BY
         enterprise_customer_uuid),
-    
+
     new_enrolls as (
-    
+
     /*
     Gets number of new enrollment IDs created, grouped by enterprise UUID.
-        */    
-        
-    SELECT 
-        lpr.enterprise_customer_uuid, 
+    */
+
+    SELECT
+        lpr.enterprise_customer_uuid,
         count( distinct enrollment_id) as new_enrolls
-    FROM 
+    FROM
         enterprise.learner_progress_report_external lpr
-    WHERE 
+    WHERE
         enrollment_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         enrollment_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    GROUP BY 
-        1), 
-    
+    GROUP BY
+        1),
+
     completions as (
-    
+
     /*
     Gets number of enrollment IDs that had a completoin event, grouped by enterprise UUID.
-        */    
-    
-    SELECT 
-        lpr.enterprise_customer_uuid, 
+    */
+
+    SELECT
+        lpr.enterprise_customer_uuid,
         count( distinct enrollment_id) as new_completes
-    FROM 
+    FROM
         enterprise.learner_progress_report_external lpr
-    WHERE 
+    WHERE
         passed_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         passed_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    GROUP BY 
+    GROUP BY
         1),
-    
+
     daily_sessions as (
-    
+
     /*
     Gets number of daily sessions, grouped by enterprise UUID.
-        */
-        
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         count(*) as sessions
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    AND 
+    AND
         is_engaged = 1
-    GROUP BY 
+    GROUP BY
         1),
-        
+
     top_5_enrolled as (
-    
+
     /*
     Top five skills being enrolled in, grouped by enterprise.
-        */
-    
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         listagg(distinct skill,', ') within group (order by skill) as top_5_skills
     FROM (
-        SELECT DISTINCT 
+        SELECT DISTINCT
             enterprise_customer_uuid,
             s.name as skill,
             COUNT(distinct bee.course_key) as courses_with_skill,
             row_number() over(partition by enterprise_customer_uuid order by courses_with_skill desc) as rownum
-        FROM 
+        FROM
             enterprise.ent_base_enterprise_enrollment bee
-        JOIN 
-            discovery.taxonomy_courseskills cs 
-        on 
+        JOIN
+            discovery.taxonomy_courseskills cs
+        on
             bee.course_key=cs.course_key
-        JOIN 
-            discovery.taxonomy_skill s 
-        on 
+        JOIN
+            discovery.taxonomy_skill s
+        on
             s.id=cs.skill_id
-        WHERE 
+        WHERE
             enterprise_enrollment_created >= (SELECT last_month_start_range FROM dynamic_dates)
-        AND 
+        AND
             enterprise_enrollment_created <= (SELECT last_month_end_range FROM dynamic_dates)
-        GROUP BY 
+        GROUP BY
             1,2
-        ORDER BY 
+        ORDER BY
             1,4 ASC)
-    WHERE 
+    WHERE
         rownum <=5
-    GROUP BY 
+    GROUP BY
         enterprise_customer_uuid ),
-    
+
     avg_learning_hrs as (
-        
+
     /*
     Avg hours learned per learner, grouped by enterprise.
-        */
-    
-    with hours as( 
-    
+    */
+
+    with hours as(
+
     /*
     Number of hours (numerator), grouped by enterprise.
-        */
-        
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         round(sum(learning_time_seconds)/60/60,2) as learning_hrs
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    GROUP BY 
-        enterprise_customer_uuid), 
-    
+    GROUP BY
+        enterprise_customer_uuid),
+
     learners as (
-    
+
     /*
     Number of learners (denominator), grouped by enterprise.
-        */
-    
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         count(distinct email) as learners_who_learned
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    GROUP BY 
+    GROUP BY
         1)
-    
-    SELECT 
-        hours.enterprise_customer_uuid, 
-        learning_hrs, 
-        learners_who_learned, 
+
+    SELECT
+        hours.enterprise_customer_uuid,
+        learning_hrs,
+        learners_who_learned,
         (learning_hrs/learners_who_learned) as avg_hours_per_learner,
         percent_rank() over (order by avg_hours_per_learner) as percent_rank
-    FROM 
-        hours 
-    JOIN 
-        learners 
-    on 
+    FROM
+        hours
+    JOIN
+        learners
+    on
         hours.enterprise_customer_uuid=learners.enterprise_customer_uuid
-    WHERE 
-        learners_who_learned > 0), 
-    
+    WHERE
+        learners_who_learned > 0),
+
     with_sessions as (
-    
+
     /*
     Calculates the % of learners who had at least
     one daily session in the time period, grouped by
     enterprise.
-        */
-    
+    */
+
     with linked as (
-    
+
     /*
     Number of learners linked to the enterprise, grouped
     by enterprise.
-        */
-    
-    SELECT 
-        enterprise_customer_id, 
+    */
+
+    SELECT
+        enterprise_customer_id,
         count(distinct ecu.id) as linked_learners
-    FROM 
+    FROM
         lms_pii.enterprise_enterprisecustomeruser ecu
     GROUP BY 1),
-        
+
     learners_with_sessions as (
-    
+
     /*
     Number of learners linked to the enterprise
     with at least on session, grouped by enterprise.
-        */
-        
-    SELECT 
-        enterprise_customer_uuid, 
+    */
+
+    SELECT
+        enterprise_customer_uuid,
         count(distinct email) as had_sessions
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash
-    WHERE 
+    WHERE
         activity_date >= (SELECT last_month_start_range FROM dynamic_dates)
-    AND 
+    AND
         activity_date <= (SELECT last_month_end_range FROM dynamic_dates)
-    AND 
+    AND
         is_engaged = 1
-    GROUP BY 
+    GROUP BY
         1)
-    
-    SELECT 
-        linked.enterprise_customer_id as uuid, 
-        linked.linked_learners, 
+
+    SELECT
+        linked.enterprise_customer_id as uuid,
+        linked.linked_learners,
         learners_with_sessions.had_sessions,
         (had_sessions/linked_learners) as perc_with_sessions
-    FROM 
-        linked 
-    JOIN 
-        learners_with_sessions 
-    on 
+    FROM
+        linked
+    JOIN
+        learners_with_sessions
+    on
         linked.enterprise_customer_id=learners_with_sessions.enterprise_customer_uuid),
-    
+
     leader_board as (
-    
+
     WITH TOP_TEN as (
-    SELECT 
+    SELECT
         dash.enterprise_customer_uuid,
         au.username,
         round(sum(dash.learning_time_seconds)/60) as learning_minutes,
         SUM(coalesce(has_passed,0)) as num_completions,
         ROW_NUMBER() OVER (PARTITION BY dash.enterprise_customer_uuid ORDER BY learning_minutes DESC) as rank_
-    FROM 
+    FROM
         enterprise.fact_enrollment_engagement_day_admin_dash as dash
     LEFT JOIN
-        lms_pii.auth_user as au 
+        lms_pii.auth_user as au
     ON
         dash.user_id = au.id
     LEFT JOIN
-        enterprise.fact_enrollment_admin_dash as fead 
+        enterprise.fact_enrollment_admin_dash as fead
     ON
         dash.user_id = fead.user_id AND dash.activity_date = fead.passed_date
-    WHERE 
+    WHERE
         dash.activity_date >= (SELECT last_month_start_range FROM dynamic_dates)
     --      dash.activity_date >= '2021-1-1'
-    AND 
+    AND
         dash.activity_date <= (SELECT last_month_end_range FROM dynamic_dates)
     --      dash.activity_date <= '2021-1-31'
-    GROUP BY 
+    GROUP BY
         1,2
     HAVING
         learning_minutes > 0
     QUALIFY
         rank_ <= 10)
-    
+
     SELECT
         enterprise_customer_uuid,
         MAX(CASE WHEN rank_ = 1 THEN username END) as username_1,
@@ -697,74 +685,72 @@ QUERY = '''
         TOP_TEN
     GROUP BY
         1
-    
-    
     )
-    
+
     /*
     Aggregate all the metrics for this month.
-        */
-        
-    SELECT DISTINCT 
-        admins.uuid, 
-        admins.enterprise_name, 
+    */
+
+    SELECT DISTINCT
+        admins.uuid,
+        admins.enterprise_name,
         admins.email,
-        COALESCE(learning_hours.learning_hrs,0) as learning_hrs, 
-        COALESCE(new_enrolls.new_enrolls,0) as new_enrolls, 
-        COALESCE(completions.new_completes,0) as new_completes, 
+        COALESCE(learning_hours.learning_hrs,0) as learning_hrs,
+        COALESCE(new_enrolls.new_enrolls,0) as new_enrolls,
+        COALESCE(completions.new_completes,0) as new_completes,
         COALESCE(daily_sessions.sessions,0) as sessions,
         top_5_enrolled.top_5_skills,
         avg_learning_hrs.avg_hours_per_learner,
         avg_learning_hrs.percent_rank,
         with_sessions.perc_with_sessions,
         lb.*
-    FROM 
+    FROM
         admins
-    LEFT JOIN 
-        learning_hours 
-    on 
+    LEFT JOIN
+        learning_hours
+    on
         learning_hours.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        new_enrolls 
-    on 
+    LEFT JOIN
+        new_enrolls
+    on
         new_enrolls.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        completions 
-    on 
+    LEFT JOIN
+        completions
+    on
         completions.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        daily_sessions 
-    on 
+    LEFT JOIN
+        daily_sessions
+    on
         daily_sessions.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        top_5_enrolled 
-    on 
+    LEFT JOIN
+        top_5_enrolled
+    on
         top_5_enrolled.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        avg_learning_hrs 
-    on 
+    LEFT JOIN
+        avg_learning_hrs
+    on
         avg_learning_hrs.enterprise_customer_uuid=admins.uuid
-    LEFT JOIN 
-        with_sessions 
-    on 
+    LEFT JOIN
+        with_sessions
+    on
         with_sessions.uuid=admins.uuid
-    LEFT JOIN 
-        lms_pii.enterprise_enterprisecustomer ec 
-    on 
+    LEFT JOIN
+        lms_pii.enterprise_enterprisecustomer ec
+    on
         ec.uuid=admins.uuid
     LEFT JOIN
         leader_board as lb
     ON
         admins.uuid = lb.enterprise_customer_uuid
-    WHERE 
-        ec.enable_analytics_screen --- FILTER FOR ONLY CUSTOMERS WITH AA        
-    AND 
+    WHERE
+        ec.enable_analytics_screen --- FILTER FOR ONLY CUSTOMERS WITH AA
+    AND
         ec.customer_type_id != 3
                     )
     /*
     Combines the two month's together for one view, with all the fields needed to
     populate the email.
-        */
+    */
     SELECT
         date_.year_month,
         oma.uuid,
@@ -840,14 +826,13 @@ QUERY = '''
         IFNULL(oma.username_10,'---') as username_10,
         IFNULL(oma.learning_minutes_10,'---') as learning_minutes_10,
         num_completions_10
-        
-    FROM 
+    FROM
         TWO_MONTHS_AGO as tma
-    JOIN 
+    JOIN
         ONE_MONTH_AGO as oma
-    ON 
-        tma.uuid=oma.uuid 
-      AND 
+    ON
+        tma.uuid=oma.uuid
+      AND
         tma.email=oma.email
     JOIN
         lms_pii.enterprise_enterprisecustomer as eec
@@ -874,16 +859,16 @@ QUERY = '''
     AND
         -- only customers where we know they have an active contract.
         oma.uuid IN (
-        
+
         SELECT
             t.uuid
         FROM (
-            
+
         SELECT
             acc.integration_enterprise_uuid__c as uuid,
             MAX(opp.contract_end_date__c) latest_contract_end_date
-        FROM 
-            salesforce_prod_pii.opportunity as opp 
+        FROM
+            salesforce_prod_pii.opportunity as opp
         LEFT JOIN
             salesforce_prod_pii._account as acc
         ON
@@ -897,15 +882,14 @@ QUERY = '''
             -- where the latest close won end date is in the future.
             latest_contract_end_date >= CURRENT_DATE()
         ) as t
-        
         )
     AND
         au.id NOT IN (
     select distinct user_id
     from lms_pii.student_courseaccessrole
-    where role ='staff'    
+    where role ='staff'
         )
-    ORDER BY 
+    ORDER BY
         tma.enterprise_name
 '''
 
@@ -933,10 +917,10 @@ class Command(BaseCommand):
         Get query results from Snowflake and yield each row.
         """
         ctx = snowflake.connector.connect(
-            user = settings.SNOWFLAKE_SERVICE_USER,
-            password = settings.SNOWFLAKE_SERVICE_USER_PASSWORD,
-            account = 'edx.us-east-1',
-            database = 'prod'
+            user=settings.SNOWFLAKE_SERVICE_USER,
+            password=settings.SNOWFLAKE_SERVICE_USER_PASSWORD,
+            account='edx.us-east-1',
+            database='prod'
         )
         cs = ctx.cursor()
         try:
