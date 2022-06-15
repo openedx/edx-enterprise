@@ -57,7 +57,7 @@ class MonthlyImpactReportCommandTests(TestCase):
         mock_connector.connect.return_value.cursor.return_value.fetchall.return_value = [range(50), range(50)]
         with LogCapture(LOGGER_NAME) as log:
             call_command(self.command)
-            self.assertEqual(mock_event_track.call_count, 0)
+            self.assertEqual(mock_event_track.call_count, 2)
             self.assertIn(
                 '[Monthly Impact Report] Execution completed.',
                 log.records[-1].message
