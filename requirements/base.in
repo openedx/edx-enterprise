@@ -36,6 +36,7 @@ pytz
 requests
 rules
 slumber
+snowflake-connector-python
 stevedore
 tableauserverclient
 testfixtures

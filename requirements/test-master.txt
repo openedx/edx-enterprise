@@ -14,6 +14,10 @@ asgiref==3.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
+asn1crypto==1.5.1
+    # via
+    #   oscrypto
+    #   snowflake-connector-python
 billiard==3.6.4.0
     # via celery
 bleach==4.1.0
@@ -207,6 +211,8 @@ newrelic==7.4.0.172
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
+oscrypto==1.3.0
+    # via snowflake-connector-python
 packaging==21.3
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -257,6 +263,8 @@ pyparsing==3.0.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   packaging
+pyopenssl==22.0.0
+    # via snowflake-connector-python
 python-dateutil==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -294,6 +302,8 @@ semantic-version==2.9.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
+snowflake-connector-python==2.7.8
+    # via -r requirements/base.in
 six==1.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt

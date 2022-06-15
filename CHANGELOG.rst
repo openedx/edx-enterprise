@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.51.0]
+--------
+feat: Added command for monthly impact report for enterprise administrators
+
 [3.50.0]
 --------
 feat: add `enable_learner_portal_offers` to `EnterpriseCustomer`
