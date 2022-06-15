@@ -54,7 +54,7 @@ class MonthlyImpactReportCommandTests(TestCase):
         """
         Test get_query_results_from_snowflake works correctly
         """
-        mock_connector.connect.return_value.cursor.return_value.fetchall.return_value = [1, 2, 3]
+        mock_connector.connect.return_value.cursor.return_value.fetchall.return_value = [range(50), range(50)]
         with LogCapture(LOGGER_NAME) as log:
             call_command(self.command)
             self.assertEqual(mock_event_track.call_count, 0)
