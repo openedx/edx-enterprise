@@ -19,9 +19,6 @@ class MonthlyImpactReportCommandTests(TestCase):
     """
     command = 'monthly_impact_report'
 
-    def setUp(self):
-        super().setUp()
-
     @mock.patch('enterprise.management.commands.monthly_impact_report.utils.track_event')
     @mock.patch('enterprise.management.commands.monthly_impact_report.Command.get_query_results_from_snowflake')
     def test_monthly_impact_report(
@@ -32,7 +29,7 @@ class MonthlyImpactReportCommandTests(TestCase):
         """
         Test that monthly_impact_report event is sent
         """
-        mock_get_query_results.return_value = [list(range(0,50)) for i in range(10)]
+        mock_get_query_results.return_value = [list(range(50)) for i in range(10)]
         with LogCapture(LOGGER_NAME) as log:
             call_command(self.command)
             self.assertEqual(mock_event_track.call_count, 10)
