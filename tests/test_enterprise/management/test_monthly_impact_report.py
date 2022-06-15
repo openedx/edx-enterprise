@@ -39,9 +39,24 @@ class MonthlyImpactReportCommandTests(TestCase):
                 log.records[-2].message
             )
         mock_event_track.reset_mock()
-        # test when consent is missing, with --no-commit param
+        # test with --no-commit param
         with LogCapture(LOGGER_NAME) as log:
             call_command(self.command, '--no-commit')
+            self.assertEqual(mock_event_track.call_count, 0)
+            self.assertIn(
+                '[Monthly Impact Report] Execution completed.',
+                log.records[-1].message
+            )
+
+    @mock.patch('enterprise.management.commands.monthly_impact_report.snowflake.connector')
+    @mock.patch('enterprise.management.commands.monthly_impact_report.utils.track_event')
+    def test_get_query_results_from_snowflake(self, mock_event_track, mock_connector):
+        """
+        Test get_query_results_from_snowflake works correctly
+        """
+        mock_connector.return_value = mock.MagicMock()
+        with LogCapture(LOGGER_NAME) as log:
+            call_command(self.command)
             self.assertEqual(mock_event_track.call_count, 0)
             self.assertIn(
                 '[Monthly Impact Report] Execution completed.',
