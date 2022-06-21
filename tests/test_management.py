@@ -246,8 +246,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
 
         expected_calls = [
-            mock.call('C-3PO', 'SAP', 1),
-            mock.call('C-3PO', 'DEGREED', 1)
+            mock.call(username='C-3PO', channel_code='SAP', channel_pk=1),
+            mock.call(username='C-3PO', channel_code='DEGREED', channel_pk=1)
         ]
 
         call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
@@ -279,8 +279,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
         expected_calls = [
-            mock.call('C-3PO', 'SAP', 1),
-            mock.call('C-3PO', 'DEGREED', 1),
+            mock.call(username='C-3PO', channel_code='SAP', channel_pk=1),
+            mock.call(username='C-3PO', channel_code='DEGREED', channel_pk=1),
         ]
 
         call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')

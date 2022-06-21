@@ -53,4 +53,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
 
         # Transmit the learner data to each integrated channel
         for integrated_channel in self.get_integrated_channels(options):
-            transmit_learner_data.delay(api_username, integrated_channel.channel_code(), integrated_channel.pk)
+            # NOTE pass arguments as named kwargs for use in lock key
+            transmit_learner_data.delay(
+                username=api_username, channel_code=integrated_channel.channel_code(), channel_pk=integrated_channel.pk)
