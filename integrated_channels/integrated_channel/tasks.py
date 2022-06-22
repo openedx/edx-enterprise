@@ -31,7 +31,7 @@ def locked(expiry_seconds, lock_name_kwargs):  # lint-amnesty, pylint: disable=m
         def wrapper(*args, **kwargs):  # lint-amnesty, pylint: disable=inconsistent-return-statements
             cache_key = f'{func.__name__}'
             for key in lock_name_kwargs:
-                cache_key = f'{cache_key}-{key}:{kwargs.get(key)}'
+                cache_key += f'-{key}:{kwargs.get(key)}'
             if cache.add(cache_key, "true", expiry_seconds):
                 exception = None
                 try:
