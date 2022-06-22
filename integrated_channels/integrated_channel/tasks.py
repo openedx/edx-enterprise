@@ -25,9 +25,9 @@ LOGGER = get_task_logger(__name__)
 User = auth.get_user_model()
 
 
-def locked(expiry_seconds, lock_name_kwargs):  # lint-amnesty, pylint: disable=missing-function-docstring
+def locked(expiry_seconds, lock_name_kwargs):
     """
-    A decorator to wrap a method in a cache-based lock with a cache-key derrived from function name and selected kwargs 
+    A decorator to wrap a method in a cache-based lock with a cache-key derrived from function name and selected kwargs
     """
     def task_decorator(func):
         @wraps(func)
