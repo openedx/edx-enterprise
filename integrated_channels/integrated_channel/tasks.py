@@ -3,15 +3,18 @@ Celery tasks for integrated channel management commands.
 """
 
 import time
+from functools import wraps
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.contrib import auth
+from django.core.cache import cache
 from django.utils import timezone
 
 from enterprise.utils import get_enterprise_uuids_for_user_and_course
+from integrated_channels.integrated_channel.constants import TASK_LOCK_EXPIRY_SECONDS
 from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandUtils,
@@ -20,6 +23,37 @@ from integrated_channels.utils import generate_formatted_log
 
 LOGGER = get_task_logger(__name__)
 User = auth.get_user_model()
+
+
+def locked(expiry_seconds, lock_name_kwargs):
+    """
+    A decorator to wrap a method in a cache-based lock with a cache-key derrived from function name and selected kwargs
+    """
+    def task_decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):  # lint-amnesty, pylint: disable=inconsistent-return-statements
+            cache_key = f'{func.__name__}'
+            for key in lock_name_kwargs:
+                cache_key += f'-{key}:{kwargs.get(key)}'
+            if cache.add(cache_key, "true", expiry_seconds):
+                exception = None
+                try:
+                    LOGGER.info('Locking task in cache with key: %s for %s seconds', cache_key, expiry_seconds)
+                    return func(*args, **kwargs)
+                except Exception as error:  # lint-amnesty, pylint: disable=broad-except
+                    LOGGER.exception(error)
+                    exception = error
+                finally:
+                    LOGGER.info('Unlocking task in cache with key: %s', cache_key)
+                    cache.delete(cache_key)
+                    if exception:
+                        LOGGER.error(f'Re-raising exception from inside locked task: {type(exception).__name__}')
+                        raise exception
+            else:
+                LOGGER.info('Task with key %s already exists in cache', cache_key)
+                return None
+        return wrapper
+    return task_decorator
 
 
 def _log_batch_task_start(task_name, channel_code, job_user_id, integrated_channel_full_config, extra_message=''):
@@ -57,6 +91,7 @@ def _log_batch_task_finish(task_name, channel_code, job_user_id,
 
 @shared_task
 @set_code_owner_attribute
+@locked(expiry_seconds=TASK_LOCK_EXPIRY_SECONDS, lock_name_kwargs=['channel_code', 'channel_pk'])
 def transmit_content_metadata(username, channel_code, channel_pk):
     """
     Task to send content metadata to each linked integrated channel.
@@ -90,6 +125,7 @@ def transmit_content_metadata(username, channel_code, channel_pk):
 
 @shared_task
 @set_code_owner_attribute
+@locked(expiry_seconds=TASK_LOCK_EXPIRY_SECONDS, lock_name_kwargs=['channel_code', 'channel_pk'])
 def transmit_learner_data(username, channel_code, channel_pk):
     """
     Task to send learner data to a linked integrated channel.
@@ -278,6 +314,7 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
 
 @shared_task
 @set_code_owner_attribute
+@locked(expiry_seconds=TASK_LOCK_EXPIRY_SECONDS, lock_name_kwargs=['channel_code', 'channel_pk'])
 def transmit_subsection_learner_data(job_username, channel_code, channel_pk):
     """
     Task to send assessment level learner data to a linked integrated channel.

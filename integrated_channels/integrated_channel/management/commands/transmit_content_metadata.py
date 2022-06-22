@@ -50,4 +50,5 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         for channel in channels:
             channel_code = channel.channel_code()
             channel_pk = channel.pk
-            transmit_content_metadata.delay(username, channel_code, channel_pk)
+            # NOTE pass arguments as named kwargs for use in lock key
+            transmit_content_metadata.delay(username=username, channel_code=channel_code, channel_pk=channel_pk)

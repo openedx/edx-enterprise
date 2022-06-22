@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.51.1]
+--------
+feat: basic integrated channels task concurrency control
+
 [3.51.0]
 --------
 feat: Added command for monthly impact report for enterprise administrators
