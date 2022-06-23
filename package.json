@@ -17,9 +17,9 @@
     "jasmine-jquery": "^2.1.1",
     "jquery": "^2.2.4",
     "jshint": "^2.9.5",
-    "node-sass": "^4.14.1",
-    "sass-loader": "^6.0.6",
+    "sass-loader": "^7.2.0",
+    "sass": "^1.22.10",
     "style-loader": "^0.18.2",
-    "webpack": "^3.6.0"
+    "webpack": "^3.12.0"
   }
 }

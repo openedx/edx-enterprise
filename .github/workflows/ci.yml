@@ -24,7 +24,7 @@ jobs:
         architecture: x64
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 16
     - run: pip install -r requirements/ci.txt
     - name: Run tox
       env:
