@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.52.0]
+--------
+feat: add `enable_portal_learner_credit_management_screen` to `EnterpriseCustomer`
+
 [3.51.1]
 --------
 feat: basic integrated channels task concurrency control
