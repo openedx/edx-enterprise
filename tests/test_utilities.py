@@ -137,6 +137,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_browse_and_request",
                 "enable_learner_portal",
                 "enable_learner_portal_offers",
+                "enable_portal_learner_credit_management_screen",
                 "enable_integrated_customer_learner_portal_search",
                 "enable_analytics_screen",
                 "enable_slug_login",

@@ -315,6 +315,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether enterprise offers will be made known to learners in the learner portal.")
     )
 
+    enable_portal_learner_credit_management_screen = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether to allow access to the learner credit management screen in the admin portal.")
+    )
+
     hide_labor_market_data = models.BooleanField(
         default=False,
         help_text=_("Specifies whether the labor market data should be made known to the learner in learner portal.")
