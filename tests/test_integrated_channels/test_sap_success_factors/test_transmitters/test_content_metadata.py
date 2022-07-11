@@ -2,15 +2,12 @@
 Tests for the SAP SuccessFactors content metadata transmitter.
 """
 
-import logging
 import unittest
-import uuid
 from datetime import datetime
 from unittest import mock
 
 import responses
 from pytest import mark
-from testfixtures import LogCapture
 
 from django.test.utils import override_settings
 
@@ -56,18 +53,17 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         )
 
     @responses.activate
-    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    def test_transmit_create_failure(self, update_content_metadata_mock):
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
+    def test_transmit_create_failure(self, create_content_metadata_mock):
         """
         Test unsuccessful creation of content metadata during transmission.
         """
         content_id = 'course:DemoX'
-        content_id_2 = 'course:DemoX2'
 
         # Set the chunk size to 1 to simulate 2 network calls
         self.enterprise_config.transmission_chunk_size = 1
         self.enterprise_config.save()
-        update_content_metadata_mock.side_effect = ClientError('error occurred')
+        create_content_metadata_mock.side_effect = ClientError('error occurred')
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -75,40 +71,36 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             status=200
         )
 
-        with LogCapture(level=logging.ERROR) as log_capture:
-            transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+        transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
 
-            create_payload = {
-                content_id: {'courseID': content_id, 'update': True},
-                content_id_2: {'courseID': content_id_2, 'update': True},
-            }
-            update_payload = {}
-            delete_paylaod = {}
-            content_updated_mapping = {
-                content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
-                content_id_2: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()}
-            }
-            transmitter.transmit(create_payload, update_payload, delete_paylaod, content_updated_mapping)
+        new_transmission_to_create = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id,
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_last_changed='2021-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            channel_metadata={},
+            remote_created_at=None,
+        )
 
-            assert len(log_capture.records) == 2
-            assert "Failed to update ['course:DemoX'] content metadata items" in log_capture.records[0].getMessage()
-            assert not ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=self.enterprise_config.enterprise_customer,
-                plugin_configuration_id=self.enterprise_config.id,
-                integrated_channel_code=self.enterprise_config.channel_code(),
-                content_id=content_id,
-            ).exists()
+        create_payload = {
+            content_id: new_transmission_to_create,
+        }
+        update_payload = {}
+        delete_payload = {}
+        transmitter.transmit(create_payload, update_payload, delete_payload)
 
-            assert not ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=self.enterprise_config.enterprise_customer,
-                plugin_configuration_id=self.enterprise_config.id,
-                integrated_channel_code=self.enterprise_config.channel_code(),
-                content_id=content_id_2,
-            ).exists()
+        item_created = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            content_id=content_id,
+        ).first()
+        assert item_created.remote_created_at
+        assert item_created.api_response_status_code >= 400
 
     @responses.activate
-    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    def test_transmit_api_usage_limit(self, update_content_metadata_mock):
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
+    def test_transmit_api_usage_limit(self, create_content_metadata_mock):
         """
         Test that API usage limit is being observed while transmitting content metadata.
         """
@@ -125,32 +117,64 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             status=200
         )
 
+        create_content_metadata_mock.return_value = [200, 'OK']
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
-        create_payload = {
-            content_id: {'courseID': content_id, 'update': True},
-            content_id_2: {'courseID': content_id_2, 'update': True},
-        }
-        update_payload = {}
-        delete_payload = {}
+        settings_with_limits = { self.enterprise_config.channel_code(): 1 }
+        with override_settings(INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = settings_with_limits):
+            new_transmission_to_create = factories.ContentMetadataItemTransmissionFactory(
+                content_id=content_id,
+                enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
+                integrated_channel_code=self.enterprise_config.channel_code(),
+                content_last_changed='2021-07-16T15:11:10.521611Z',
+                enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+                channel_metadata={},
+                remote_created_at=None,
+            )
+            new_transmission_to_create_2 = factories.ContentMetadataItemTransmissionFactory(
+                content_id=content_id_2,
+                enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
+                integrated_channel_code=self.enterprise_config.channel_code(),
+                content_last_changed='2021-07-16T15:11:10.521611Z',
+                enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+                channel_metadata={},
+                remote_created_at=None,
+            )
 
-        content_updated_mapping = {
-            content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
-            content_id_2: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()}
-        }
+            create_payload = {
+                content_id: new_transmission_to_create,
+                content_id_2: new_transmission_to_create_2,
+            }
+            update_payload = {}
+            delete_payload = {}
 
-        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
+            transmitter.transmit(create_payload, update_payload, delete_payload)
 
-        assert update_content_metadata_mock.call_count == 1
+            assert create_content_metadata_mock.call_count == 1
 
-        assert ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_config.enterprise_customer,
-            plugin_configuration_id=self.enterprise_config.id,
-            integrated_channel_code=self.enterprise_config.channel_code(),
-        ).count() == 1
+            item_created = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+                content_id=content_id,
+            ).first()
+            assert item_created.remote_created_at
+
+            item_not_created = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+                content_id=content_id_2,
+            ).first()
+            assert not item_not_created.remote_created_at
 
     @responses.activate
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.delete_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    def test_transmit_content_metadata_updates_records(self, update_content_metadata_mock):
+    def test_transmit_content_metadata_updates_records(
+        self,
+        create_content_metadata_mock,
+        update_content_metadata_mock,
+        delete_content_metadata_mock
+    ):
         """
         Test that the sap transmitter will call the client updated method with both create and update data as well as
         save/update all appropriate records.
@@ -167,7 +191,9 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            channel_metadata={}
+            channel_metadata={},
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=None,
         )
         past_transmission_to_delete = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_2,
@@ -175,7 +201,19 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            channel_metadata={},
+            remote_created_at=datetime.utcnow(),
+            remote_deleted_at=None,
+        )
+        new_transmission_to_create = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_3,
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_last_changed='2021-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            remote_created_at=None,
         )
 
         new_channel_metadata = {
@@ -187,14 +225,14 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         }
         past_transmission_to_update.channel_metadata = new_channel_metadata
 
+        create_content_metadata_mock.return_value = [200, 'OK']
+        update_content_metadata_mock.return_value = [200, 'OK']
+        delete_content_metadata_mock.return_value = [200, 'OK']
+
+
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
-        content_updated_mapping = {
-            content_id_1: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
-            content_id_2: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
-            content_id_3: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid}
-        }
         create_payload = {
-            content_id_3: {'courseID': 'something_new'}
+            content_id_3: new_transmission_to_create
         }
         update_payload = {
             content_id_1: past_transmission_to_update
@@ -202,36 +240,32 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         delete_payload = {
             content_id_2: past_transmission_to_delete
         }
-        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
+        transmitter.transmit(create_payload, update_payload, delete_payload)
         item_updated = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            plugin_configuration_id=self.enterprise_config.id,
             content_id=content_id_1,
         ).first()
+        assert item_updated.remote_updated_at
         assert item_updated.channel_metadata == new_channel_metadata
         item_deleted = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            plugin_configuration_id=self.enterprise_config.id,
             content_id=content_id_2,
         ).first()
-        assert item_deleted.deleted_at
+        assert item_deleted.remote_deleted_at
+        assert item_deleted.channel_metadata.get('status') == 'INACTIVE'
         item_created = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            plugin_configuration_id=self.enterprise_config.id,
             content_id=content_id_3,
         ).first()
-        assert item_created.channel_metadata == {'courseID': 'something_new'}
+        assert item_created.remote_created_at
+        assert create_content_metadata_mock.call_count == 1
         assert update_content_metadata_mock.call_count == 1
+        assert delete_content_metadata_mock.call_count == 1
 
-        prepared_delete_data = past_transmission_to_delete.channel_metadata
-        prepared_delete_data['status'] = 'INACTIVE'
-        assert update_content_metadata_mock.call_args[0][0] == transmitter._serialize_items(  # pylint: disable=protected-access
-            [{'courseID': 'something_new'}, new_channel_metadata, prepared_delete_data]
-        )
 
     @responses.activate
-    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    def test_transmit_api_usage_limit_disabled(self, update_content_metadata_mock):
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
+    def test_transmit_api_usage_limit_disabled(self, create_content_metadata_mock):
         """
         Test that API usage limit is not applied if setting is not present.
         """
@@ -251,39 +285,41 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
 
         with override_settings(INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT={}):
+            new_transmission_to_create = factories.ContentMetadataItemTransmissionFactory(
+                content_id=content_id,
+                enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
+                integrated_channel_code=self.enterprise_config.channel_code(),
+                content_last_changed='2021-07-16T15:11:10.521611Z',
+                enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+                channel_metadata={},
+                remote_created_at=None,
+            )
+            new_transmission_to_create_2 = factories.ContentMetadataItemTransmissionFactory(
+                content_id=content_id_2,
+                enterprise_customer=self.enterprise_config.enterprise_customer,
+                plugin_configuration_id=self.enterprise_config.id,
+                integrated_channel_code=self.enterprise_config.channel_code(),
+                content_last_changed='2021-07-16T15:11:10.521611Z',
+                enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+                channel_metadata={},
+                remote_created_at=None,
+            )
+
+
             create_payload = {
-                content_id: {'courseID': content_id, 'update': True},
-                content_id_2: {'courseID': content_id_2, 'update': True},
+                content_id: new_transmission_to_create,
+                content_id_2: new_transmission_to_create_2,
             }
             update_payload = {}
-            delete_paylaod = {}
+            delete_payload = {}
 
-            content_updated_mapping = {
-                content_id: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()},
-                content_id_2: {'catalog_uuid': uuid.uuid4(), 'modified': datetime.now()}
-            }
-
-            transmitter.transmit(create_payload, update_payload, delete_paylaod, content_updated_mapping)
-            assert update_content_metadata_mock.call_count == 2
+            create_content_metadata_mock.return_value = [200, 'OK']
+            transmitter.transmit(create_payload, update_payload, delete_payload)
+            assert create_content_metadata_mock.call_count == 2
 
             assert ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_config.enterprise_customer,
                 plugin_configuration_id=self.enterprise_config.id,
                 integrated_channel_code=self.enterprise_config.channel_code(),
             ).count() == 2
-
-    @responses.activate
-    def test_prepare_items_for_delete(self):
-        """
-        Test items to be deleted are updated with a status of INACTIVE.
-        """
-        responses.add(
-            responses.POST,
-            self.url_base + self.oauth_api_path,
-            json=self.expected_token_response_body,
-            status=200
-        )
-        transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
-        items_to_delete = {'test': {}}
-        transmitter._prepare_items_for_delete(items_to_delete)  # pylint: disable=protected-access
-        assert items_to_delete['test']['status'] == 'INACTIVE'

@@ -67,7 +67,9 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            channel_metadata={}
+            channel_metadata={},
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=None,
         )
         past_transmission_to_delete = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_2,
@@ -75,7 +77,18 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
             plugin_configuration_id=self.enterprise_config.id,
             integrated_channel_code=self.enterprise_config.channel_code(),
             content_last_changed='2021-07-16T15:11:10.521611Z',
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            remote_created_at=datetime.utcnow(),
+            remote_deleted_at=None,
+        )
+        new_transmission_to_create = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_3,
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_last_changed='2021-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            remote_created_at=None,
         )
 
         new_channel_metadata = {
@@ -87,14 +100,14 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
         }
         past_transmission_to_update.channel_metadata = new_channel_metadata
 
+        create_content_metadata_mock.return_value = [200, 'OK']
+        update_content_metadata_mock.return_value = [200, 'OK']
+        delete_content_metadata_mock.return_value = [200, 'OK']
+
         transmitter = CanvasContentMetadataTransmitter(self.enterprise_config)
-        content_updated_mapping = {
-            content_id_1: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
-            content_id_2: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid},
-            content_id_3: {'modified': datetime.now(), 'catalog_uuid': self.enterprise_customer_catalog.uuid}
-        }
+
         create_payload = {
-            content_id_3: {'courseID': 'something_new'}
+            content_id_3: new_transmission_to_create
         }
         update_payload = {
             content_id_1: past_transmission_to_update
@@ -102,22 +115,23 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
         delete_payload = {
             content_id_2: past_transmission_to_delete
         }
-        transmitter.transmit(create_payload, update_payload, delete_payload, content_updated_mapping)
+        transmitter.transmit(create_payload, update_payload, delete_payload)
         item_updated = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_1,
         ).first()
+        assert item_updated.remote_updated_at
         assert item_updated.channel_metadata == new_channel_metadata
         item_deleted = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_2,
         ).first()
-        assert item_deleted.deleted_at
+        assert item_deleted.remote_deleted_at
         item_created = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_3,
         ).first()
-        assert item_created.channel_metadata == {'courseID': 'something_new'}
+        assert item_created.remote_created_at
         assert create_content_metadata_mock.call_count == 1
         assert update_content_metadata_mock.call_count == 1
         assert delete_content_metadata_mock.call_count == 1
