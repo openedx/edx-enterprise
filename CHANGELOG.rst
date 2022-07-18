@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.53.0]
+--------
+feat: Added management command for weekly nudge to dormant enterprise learners
+
 [3.52.0]
 --------
 feat: add `enable_portal_learner_credit_management_screen` to `EnterpriseCustomer`
