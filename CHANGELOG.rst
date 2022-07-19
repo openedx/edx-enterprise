@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.53.1]
+--------
+feat: Django Admin tweaks for integrations
+
 [3.53.0]
 --------
 feat: Added management command for weekly nudge to dormant enterprise learners
