@@ -357,8 +357,8 @@ class GrantDataSharingPermissions(View):
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,
             ),
-            'continue_text': _('Yes, continue'),
-            'abort_text': _('No, take me back.'),
+            'continue_text': _('Continue'),
+            'abort_text': _('Decline and go back'),
             'policy_dropdown_header': _('Data Sharing Policy'),
             'sharable_items_header': _(
                 'Enrollment, completion, and performance data that may be shared with {enterprise_customer_name} '
@@ -424,7 +424,7 @@ class GrantDataSharingPermissions(View):
                     'control if there is any conflict.'
                 )
             ],
-            'confirmation_modal_header': _('Are you aware...'),
+            'confirmation_modal_header': _('Are you sure you want to decline?'),
             'confirmation_modal_affirm_decline_text': _('I decline'),
             'confirmation_modal_abort_decline_text': _('View the data sharing policy'),
             'policy_link_template': _('View the {start_link}data sharing policy{end_link}.').format(
@@ -577,7 +577,8 @@ class GrantDataSharingPermissions(View):
         context_data = {
             'consent_request_prompt': _(
                 'To access this {item}, you must first consent to share your learning achievements '
-                'with {bold_start}{enterprise_customer_name}{bold_end}.'
+                'with {bold_start}{enterprise_customer_name}{bold_end}. '
+                'If you decline now, you will be redirected to the previous page.'
             ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 bold_start='<b>',
@@ -585,8 +586,9 @@ class GrantDataSharingPermissions(View):
                 item=item,
             ),
             'confirmation_alert_prompt': _(
-                'In order to start this {item} and use your discount, {bold_start}you must{bold_end} consent '
-                'to share your {item} data with {enterprise_customer_name}.'
+                'To access this {item} and use your discount, you {bold_start}must{bold_end} consent '
+                'to sharing your {item} data with {enterprise_customer_name}. '
+                'If you decline now, you will be redirected to the previous page.'
             ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 bold_start='<b>',

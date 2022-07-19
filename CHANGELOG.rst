@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.53.2]
+--------
+feat: update data sharing consent request language
+
 [3.53.1]
 --------
 feat: Django Admin tweaks for integrations
