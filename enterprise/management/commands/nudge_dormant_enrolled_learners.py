@@ -1,5 +1,5 @@
 """
-Django management command to send nudge email to dormant enrolled enterprise learners.
+Django management command to send nudge email to dormant enrolled learners.
 """
 import logging
 
@@ -13,68 +13,95 @@ from enterprise import utils
 LOGGER = logging.getLogger(__name__)
 QUERY = '''
     WITH first_video as (
-        -- fetch first unhidden video in a course.
-        SELECT
-            course_id,                        -- the course run key.
-            ROW_NUMBER() OVER
-            (PARTITION BY course_id
-             ORDER BY order_index) row_,      -- the order of the video in the course.
-            block_type,                       -- the type of block (should be "video" for all).
-            display_name,                     -- the name of the video.
-            lms_web_url                       -- the link to the area in the course where the video is.
-        FROM
-            core_sources.course_structure
-        WHERE
-            block_type = 'video'              -- filter videos only.
-        AND
-            is_visible_to_staff_only = False  -- filter hidden videos out.
-        QUALIFY
-            row_ = 1                          -- only get the first video for each course.
+    -- fetch first unhidden video in a course.
+    SELECT
+        course_id,                        -- the course run key.
+        ROW_NUMBER() OVER
+        (PARTITION BY course_id
+         ORDER BY order_index) row_,      -- the order of the video in the course.
+        block_type,                       -- the type of block (should be "video" for all).
+        display_name,                     -- the name of the video.
+        lms_web_url                       -- the link to the area in the course where the video is.
+    FROM
+        core_sources.course_structure
+    WHERE
+        block_type = 'video'              -- filter videos only.
+    AND
+        is_visible_to_staff_only = False  -- filter hidden videos out.
+    QUALIFY
+        row_ = 1                          -- only get the first video for each course.
     ),
+
     not_started as (
-        SELECT
-            lms_user_id,
-            lms_courserun_key,
-            split_part(course_key,'+',1) as org_name,
-            course_title,
-            consent_created,
-            lms_enrollment_created,
-            lms_enrollment_mode,
-            block_count
-        FROM
-            enterprise.ent_base_enterprise_enrollment
-        WHERE
-            DATE(lms_enrollment_created) BETWEEN CURRENT_DATE - 13 AND CURRENT_DATE - 7
-        AND
-            COALESCE(block_count,0) = 0
-        AND
-            consent_granted = True
-    ),
-    course_data as (
-        SELECT
-            dcr.courserun_key,
-            dcr.start_datetime,
-            cmcr.min_effort,
-            cmcr.max_effort,
-            cmcr.enrollment_count,
-            CASE WHEN cmcr.pacing_type = 'self_paced' THEN 'Self Paced' ELSE 'Instructor Paced' END as pacing_type,
-            cmcr.weeks_to_complete,
-            'https://prod-discovery.edx-cdn.org/' || cmc.image as course_image
-        FROM
-            core.dim_courseruns as dcr
-        LEFT JOIN
-            discovery.course_metadata_courserun as cmcr
-        ON
-            dcr.courserun_key = cmcr.key
-        LEFT JOIN
-            discovery.course_metadata_course as cmc
-        ON
-            cmcr.course_id = cmc.id
-        WHERE
-            cmcr.draft = False
-        AND
-            cmc.draft = False
+    /*
+    There aren't any B2C enrollment models that track block count.
+    So first, we'll use first_block to see if learners have completed a block.
+    Then, we'll use student_courseenrollment joined with first_block to recreate
+    the same table used for only enterprise learners to handle all learners.
+    */
+
+    with first_block as (
+    select
+        user_id,
+        course_key,
+        min(created) as first_block_completed
+    from
+        lms_pii.completion_blockcompletion
+    group by
+        1,2
     )
+
+    select
+        enroll.user_id as lms_user_id,
+        enroll.course_id as lms_courserun_key,
+        split_part(split_part(enroll.course_id,'+',1),':',2) as org_name,
+        course.courserun_title as course_title,
+        enroll.created as lms_enrollment_created,
+        enroll.mode as lms_enrollment_mode,
+        fb.first_block_completed
+    from
+        lms_pii.student_courseenrollment as enroll
+    left join
+        first_block as fb
+    on
+        enroll.user_id = fb.user_id and enroll.course_id = fb.course_key
+    left join
+        core.dim_courseruns as course
+    on
+        enroll.course_id = course.courserun_key
+    where
+        DATE(created) BETWEEN CURRENT_DATE - 13 AND CURRENT_DATE - 7
+    and
+        fb.first_block_completed is null
+    ),
+
+    course_data as (
+
+    SELECT
+        dcr.courserun_key,
+        dcr.start_datetime,
+        cmcr.min_effort,
+        cmcr.max_effort,
+        cmcr.enrollment_count,
+        CASE WHEN cmcr.pacing_type = 'self_paced' THEN 'Self Paced' ELSE 'Instructor Paced' END as pacing_type,
+        cmcr.weeks_to_complete,
+        'https://prod-discovery.edx-cdn.org/' || cmc.image as course_image
+    FROM
+        core.dim_courseruns as dcr
+    LEFT JOIN
+        discovery.course_metadata_courserun as cmcr
+    ON
+        dcr.courserun_key = cmcr.key
+    LEFT JOIN
+        discovery.course_metadata_course as cmc
+    ON
+        cmcr.course_id = cmc.id
+    WHERE
+        cmcr.draft = False
+    AND
+        cmc.draft = False
+    )
+
     SELECT
         not_started.lms_user_id as external_id,
         not_started.org_name,
@@ -111,15 +138,16 @@ QUERY = '''
     QUALIFY
         ROW_NUMBER() OVER (PARTITION BY not_started.lms_user_id ORDER BY lms_enrollment_created DESC) = 1
 '''
+BATCH_SIZE = 1000
 
 
 class Command(BaseCommand):
     """
-    Django management command to send nudge email to dormant enrolled enterprise learners.
+    Django management command to send nudge email to dormant enrolled learners.
 
     Example usage:
-    ./manage.py lms nudge_dormant_enrolled_enterprise_learners
-    ./manage.py lms nudge_dormant_enrolled_enterprise_learners --no-commit
+    ./manage.py lms nudge_dormant_enrolled_learners
+    ./manage.py lms nudge_dormant_enrolled_learners --no-commit
     """
 
     def add_arguments(self, parser):
@@ -144,9 +172,11 @@ class Command(BaseCommand):
         cs = ctx.cursor()
         try:
             cs.execute(QUERY)
-            rows = cs.fetchall()
-            for row in rows:
-                yield row
+            rows = cs.fetchmany(BATCH_SIZE)
+            while len(rows) > 0:
+                for row in rows:
+                    yield row
+                rows = cs.fetchmany(BATCH_SIZE)
         finally:
             cs.close()
         ctx.close()
@@ -155,9 +185,9 @@ class Command(BaseCommand):
         """
          Emit the Segment event which will be used by Braze to send the email
         """
-        utils.track_event(kwargs['EXTERNAL_ID'], 'edx.bi.enterprise.user.dormant.nudge', kwargs)
+        utils.track_event(kwargs['EXTERNAL_ID'], 'edx.bi.user.enrolled.dormant.nudge', kwargs)
         LOGGER.info(
-            '[Dormant Nudge] Segment event fired for nudge email to dormant enrolled enterprise learners. '
+            '[Dormant Nudge] Segment event fired for nudge email to dormant enrolled learners. '
             'LMS User Id: {user_id}, Organization Name: {org_name}, Course Title: {course_title}'.format(
                 user_id=kwargs['EXTERNAL_ID'],
                 org_name=kwargs['ORG_NAME'],
