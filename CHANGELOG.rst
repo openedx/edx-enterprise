@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.53.3]
+--------
+feat: mark Cornerstone session token fields read-only in admin
+
 [3.53.2]
 --------
 feat: update data sharing consent request language
