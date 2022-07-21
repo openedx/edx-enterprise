@@ -165,11 +165,11 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 200
         expected_prompt = (
             'To access this course, you must first consent to share your learning achievements '
-            'with <b>Starfleet Academy</b>.'
+            'with <b>Starfleet Academy</b>. If you decline now, you will be redirected to the previous page.'
         )
         expected_alert = (
-            'In order to start this course and use your discount, <b>you must</b> consent to share your '
-            'course data with Starfleet Academy.'
+            'To access this course and use your discount, you <b>must</b> consent to sharing your '
+            'course data with Starfleet Academy. If you decline now, you will be redirected to the previous page.'
         )
         expected_course_start_date = ''
         if course_start_date:
@@ -1187,11 +1187,11 @@ class TestProgramDataSharingPermissions(TestCase):
 
         expected_prompt = (
             'To access this program, you must first consent to share your learning achievements '
-            'with <b>Starfleet Academy</b>.'
+            'with <b>Starfleet Academy</b>. If you decline now, you will be redirected to the previous page.'
         )
         expected_alert = (
-            'In order to start this program and use your discount, <b>you must</b> consent to share your '
-            'program data with Starfleet Academy.'
+            'To access this program and use your discount, you <b>must</b> consent to sharing your '
+            'program data with Starfleet Academy. If you decline now, you will be redirected to the previous page.'
         )
 
         for key, value in {
@@ -1292,11 +1292,11 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             left_sidebar_text=self.left_sidebar_text,
             top_paragraph=self.top_paragraph,
             agreement_text=self.agreement_text,
-            continue_text='Yes, continue',
-            abort_text='No, take me back.',
+            continue_text='Continue',
+            abort_text='Decline and go back',
             policy_dropdown_header='Data Sharing Policy',
             policy_paragraph='Policy paragraph',
-            confirmation_modal_header='Are you aware...',
+            confirmation_modal_header='Are you sure you want to decline?',
             confirmation_modal_text=self.confirmation_modal_text,
             modal_affirm_decline_text='I decline',
             modal_abort_decline_text='View the data sharing policy',
@@ -1391,11 +1391,11 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             'left_sidebar_text': left_sidebar_text,
             'top_paragraph': top_paragraph,
             'agreement_text': agreement_text,
-            'continue_text': 'Yes, continue',
-            'abort_text': 'No, take me back.',
+            'continue_text': 'Continue',
+            'abort_text': 'Decline and go back',
             'policy_dropdown_header': 'Data Sharing Policy',
             'policy_paragraph': 'Policy paragraph',
-            'confirmation_modal_header': 'Are you aware...',
+            'confirmation_modal_header': 'Are you sure you want to decline?',
             'confirmation_alert_prompt': confirmation_modal_text,
             'confirmation_modal_affirm_decline_text': 'I decline',
             'confirmation_modal_abort_decline_text': 'View the data sharing policy',
@@ -1469,11 +1469,11 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             'left_sidebar_text': left_sidebar_text,
             'top_paragraph': top_paragraph,
             'agreement_text': agreement_text,
-            'continue_text': 'Yes, continue',
-            'abort_text': 'No, take me back.',
+            'continue_text': 'Continue',
+            'abort_text': 'Decline and go back',
             'policy_dropdown_header': 'Data Sharing Policy',
             'policy_paragraph': 'Policy paragraph',
-            'confirmation_modal_header': 'Are you aware...',
+            'confirmation_modal_header': 'Are you sure you want to decline?',
             'confirmation_alert_prompt': confirmation_modal_text,
             'confirmation_modal_affirm_decline_text': 'I decline',
             'confirmation_modal_abort_decline_text': 'View the data sharing policy',

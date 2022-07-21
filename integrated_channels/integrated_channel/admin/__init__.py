@@ -16,6 +16,7 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
         'enterprise_customer',
         'integrated_channel_code',
         'content_id',
+        'deleted_at',
         'modified'
     )
 

@@ -66,6 +66,8 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "enterprise_customer_name",
+        "session_token",
+        "session_token_modified",
     )
 
     raw_id_fields = (
