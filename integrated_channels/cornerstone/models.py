@@ -163,6 +163,16 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         """
         return 'CSOD'
 
+    @classmethod
+    def get_by_customer_and_subdomain(cls, enterprise_customer, customer_subdomain):
+        """
+        Get a specific config based on customer + subdomain pair, useful for "muddle of moodles"
+        """
+        return cls.objects.select_for_update().filter(
+            enterprise_customer=enterprise_customer,
+            cornerstone_base_url__icontains=customer_subdomain,
+        ).first()
+
     def get_content_metadata_transmitter(self):
         """
         Return a ``CornerstoneContentMetadataTransmitter`` instance.

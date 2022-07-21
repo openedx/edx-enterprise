@@ -2363,23 +2363,41 @@ class RouterView(NonAtomicView):
                 )
             kwargs['course_id'] = course_run_id
 
-            # Enrollments through Cornerstone have some params in querystring, need to store those params if exists.
-            session_token = request.GET.get('sessionToken')
-            if session_token:
-                csod_customer_configuration_model = apps.get_model(
-                    'cornerstone',
-                    'CornerstoneEnterpriseCustomerConfiguration'
-                )
-                with transaction.atomic():
+            CornerstoneEnterpriseCustomerConfiguration = apps.get_model(
+                'cornerstone',
+                'CornerstoneEnterpriseCustomerConfiguration'
+            )
+            with transaction.atomic():
+                # The presense of a sessionToken and subdomain param indicates a Cornerstone redirect
+                # We need to store this sessionToken for api access
+                csod_session_token = request.GET.get('sessionToken')
+                csod_subdomain = request.GET.get("subdomain")
+                if csod_session_token and csod_subdomain:
+                    LOGGER.info(
+                        f'integrated_channel=CSOD, '
+                        f'integrated_channel_enterprise_customer_uuid={enterprise_customer.uuid}, '
+                        f'integrated_channel_lms_user={request.user.id}, '
+                        f'integrated_channel_course_key={course_key}, '
+                        'enrollment redirect'
+                    )
                     cornerstone_customer_configuration = \
-                        csod_customer_configuration_model.objects.select_for_update().filter(
-                            enterprise_customer=enterprise_customer
-                        ).first()
+                        CornerstoneEnterpriseCustomerConfiguration.get_by_customer_and_subdomain(
+                            enterprise_customer=enterprise_customer,
+                            customer_subdomain=csod_subdomain
+                        )
                     if cornerstone_customer_configuration:
-                        cornerstone_customer_configuration.session_token = session_token
+                        cornerstone_customer_configuration.session_token = csod_session_token
                         cornerstone_customer_configuration.session_token_modified = localized_utcnow()
                         cornerstone_customer_configuration.save()
-            create_cornerstone_learner_data(request, course_key)
+                        create_cornerstone_learner_data(request, cornerstone_customer_configuration, course_key)
+                    else:
+                        LOGGER.error(
+                            f'integrated_channel=CSOD, '
+                            f'integrated_channel_enterprise_customer_uuid={enterprise_customer.uuid}, '
+                            f'integrated_channel_lms_user={request.user.id}, '
+                            f'integrated_channel_course_key={course_key}, '
+                            f'unable to find cornerstone config matching subdomain {request.GET.get("subdomain")}'
+                        )
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.

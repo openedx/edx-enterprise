@@ -25,10 +25,11 @@ def cornerstone_course_key_model():
 LOGGER = getLogger(__name__)
 
 
-def create_cornerstone_learner_data(request, course_id):
+def create_cornerstone_learner_data(request, cornerstone_customer_configuration, course_id):
     """
         updates or creates CornerstoneLearnerDataTransmissionAudit
     """
+    enterprise_customer_uuid = cornerstone_customer_configuration.enterprise_customer.uuid
     try:
         defaults = {
             'user_guid': request.GET['userGuid'],
@@ -37,13 +38,21 @@ def create_cornerstone_learner_data(request, course_id):
             'subdomain': request.GET['subdomain'],
         }
         cornerstone_learner_data_transmission_audit().objects.update_or_create(
+            enterprise_customer_uuid=enterprise_customer_uuid,
+            plugin_configuration_id=cornerstone_customer_configuration.id,
             user_id=request.user.id,
             course_id=course_id,
             defaults=defaults
         )
     except KeyError:
         # if we couldn't find a key, it means we don't want to save data. just skip it by doing nothing.
-        pass
+        LOGGER.exception(
+            f'integrated_channel=CSOD, '
+            f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
+            f'integrated_channel_lms_user={request.user.id}, '
+            f'integrated_channel_course_key={course_id}, '
+            'malformed cornerstone request missing a param'
+        )
     except Exception as ex:  # pylint: disable=broad-except
         LOGGER.error('Unable to Create/Update CornerstoneLearnerDataTransmissionAudit. {ex}'.format(ex=ex))
 
