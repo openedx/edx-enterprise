@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.53.4]
+--------
+fix: update course run selection logic for SAP content exporter
+
 [3.53.3]
 --------
 feat: mark Cornerstone session token fields read-only in admin

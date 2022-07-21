@@ -84,17 +84,21 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
             content_metadata_item.get('title', '')
         )
 
-        course_runs = content_metadata_item.get('course_runs')
-        if course_runs:
-            closest_course_run = get_closest_course_run(course_runs)
+        course_run = get_advertised_course_run(content_metadata_item)
 
+        if not course_run:
+            course_runs = content_metadata_item.get('course_runs')
+            if course_runs:
+                course_run = get_closest_course_run(course_runs)
+
+        if course_run:
             # Include the course run start and end dates
-            date_str = self._get_course_run_start_end_str(closest_course_run)
+            date_str = self._get_course_run_start_end_str(course_run)
             if date_str:
                 description = date_str + description
 
             # Include the course pacing
-            course_pacing = CourseEnrollmentView.PACING_FORMAT.get(closest_course_run['pacing_type'], '')
+            course_pacing = CourseEnrollmentView.PACING_FORMAT.get(course_run['pacing_type'], '')
             if course_pacing:
                 pacing_desc = 'Pacing: {pacing_type}. '.format(
                     pacing_type=course_pacing

@@ -443,6 +443,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
 
     @ddt.data(
         (
+            # active course
             {
                 'title': 'Hippity Hop',
                 'course_runs': [
@@ -461,6 +462,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             'garden home.',
         ),
         (
+            # enrollment closed, no full description
             {
                 'title': 'Happy Bunny Course',
                 'course_runs': [
@@ -478,6 +480,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             'delighted.',
         ),
         (
+            # archived course, no dates provided
             {
                 'title': 'Rabbit Care',
                 'course_runs': [
@@ -492,6 +495,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             'Pacing: Instructor-Paced. Enrollment is closed. In depth discussion of rabbit care and feeding.',
         ),
         (
+            # no end date provided
             {
                 'title': 'Acres of Carrots',
                 'course_runs': [
@@ -509,6 +513,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             'growing carrots.',
         ),
         (
+            # no start date provided
             {
                 'title': 'Bunnies are cute',
                 'course_runs': [
@@ -522,6 +527,34 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'short_description': 'Yep.',
             },
             'Pacing: Instructor-Paced. Ends: February 2317. Yep.',
+        ),
+        (
+            # advertised course run provided
+            {
+                'title': 'Acres of Carrots',
+                'course_runs': [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'start': '2019-02-05T05:00:00Z',
+                        'end': '2020-02-05T05:00:00Z',
+                        'availability': 'Archived',
+                        'pacing_type': 'instructor_paced',
+                        'status': 'published'
+                    },
+                    {
+                        'uuid': '28e2d4c2-a020-4959-b461-6f879bbe1391',
+                        'start': '2017-02-05T05:00:00Z',
+                        'availability': 'Current',
+                        'pacing_type': 'instructor_paced',
+                        'status': 'published'
+                    },
+                ],
+                'short_description': 'Learn to grow this colorful veggie.',
+                'full_description': 'Carrots are great. Rabbits love them. Come learn about growing carrots.',
+                'advertised_course_run_uuid': '28e2d4c2-a020-4959-b461-6f879bbe1391',
+            },
+            'Pacing: Instructor-Paced. Starts: February 2017. Carrots are great. Rabbits love them. Come learn about '
+            'growing carrots.',
         ),
         (
             {
