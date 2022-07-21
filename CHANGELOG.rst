@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.53.1]
+--------
+fix: update course run selection logic for SAP content exporter
+
 [3.53.0]
 --------
 feat: Added management command for weekly nudge to dormant enterprise learners
