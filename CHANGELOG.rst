@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.54.0]
+--------
+feat: Remove progress_v2 option from reporting configs and move all v2 to v3.
+
 [3.53.4]
 --------
 fix: update course run selection logic for SAP content exporter
