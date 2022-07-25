@@ -3,8 +3,6 @@ Backfill missing audit record foreign keys for Cornerstone.
 """
 import logging
 
-from django.apps import apps
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils.translation import gettext as _
@@ -27,6 +25,11 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     ''')
 
     def find_csod_config_by_subdomain(self, customer_subdomain):
+        """
+        Given the subdomain from a CornerstoneLearnerDataTransmissionAudit record, search the
+        CornerstoneEnterpriseCustomerConfiguration records for one with a matching base_url.
+        Raise an exception when we dont find exactly one (missing config or duplicate configs are bad)
+        """
         configs = CornerstoneEnterpriseCustomerConfiguration.objects.filter(
             cornerstone_base_url__icontains=customer_subdomain,
         )
