@@ -2079,13 +2079,13 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         ),
         (
             False,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,  # wrong data_type
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,  # wrong data_type
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
             False
         ),
         (
             False,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,  # wrong data_type
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,  # wrong data_type
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,  # wrong delivery_method
             False
         ),
@@ -2109,13 +2109,13 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         ),
         (
             True,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
             True
         ),
         (
             True,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
             True
         ),
