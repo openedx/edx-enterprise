@@ -1736,29 +1736,29 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
 
     def test_not_found(self):
         """
-        Verify that the management command errors out when evaluating a subdomain with no config having a
+        Verify that the management command does not adjust records when evaluating a subdomain with no config having a
         corresponding base url
         """
         factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='should-not-exist')
-        with raises(Exception):
-            call_command(
-                'backfill_missing_csod_foreign_keys',
-            )
+        call_command(
+            'backfill_missing_csod_foreign_keys',
+        )
+        assert 1 == CornerstoneLearnerDataTransmissionAudit.objects.filter(plugin_configuration_id__isnull=True).count()
 
     def test_duplicate_config_found(self):
         """
-        Verify that the management command errors out when evaluating a subdomain with multiple configs having a
-        corresponding base url
+        Verify that the management command does not adjust records when evaluating a subdomain with multiple configs 
+        having a corresponding base url
         """
         # a CSOD config with duplicate domain
         factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             cornerstone_base_url=self.cornerstone_base_url_one
         )
         factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
-        with raises(Exception):
-            call_command(
-                'backfill_missing_csod_foreign_keys',
-            )
+        call_command(
+            'backfill_missing_csod_foreign_keys',
+        )
+        assert 1 == CornerstoneLearnerDataTransmissionAudit.objects.filter(plugin_configuration_id__isnull=True).count()
 
     def test_all_one_config(self):
         """

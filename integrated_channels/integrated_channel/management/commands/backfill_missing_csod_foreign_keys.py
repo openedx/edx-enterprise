@@ -38,9 +38,11 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         configs = CornerstoneEnterpriseCustomerConfiguration.objects.filter(
             cornerstone_base_url__icontains=subdomain_formatted_as_url_prefix,
         )
-        if len(configs) != 1:
-            raise Exception(f'{len(configs)} found for {customer_subdomain} when expecting just 1')
-        return configs.first()
+        if len(configs) > 1:
+            LOGGER.error(f'multiple ({len(configs)}) configs found for "{customer_subdomain}" when expecting just 1')
+            return None
+        else:
+            return configs.first()
 
     def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=10000):
         """
@@ -69,7 +71,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 for audit_record in audit_record_batch:
                     config = self.find_csod_config_by_subdomain(audit_record.subdomain)
                     if config is None:
-                        LOGGER.error(f'cannot find CSOD config for subdomain {audit_record.subdomain}')
+                        LOGGER.error(f'cannot find CSOD config for subdomain "{audit_record.subdomain}"')
                         continue
                     ent_cust_uuid = config.enterprise_customer.uuid
                     LOGGER.info(f'CornerstoneLearnerDataTransmissionAudit <{audit_record.pk}> '
