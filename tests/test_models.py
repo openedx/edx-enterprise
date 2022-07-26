@@ -2079,13 +2079,13 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         ),
         (
             False,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,  # wrong data_type
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,  # wrong data_type
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
             False
         ),
         (
             False,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,  # wrong data_type
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,  # wrong data_type
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,  # wrong delivery_method
             False
         ),
@@ -2109,13 +2109,13 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         ),
         (
             True,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
             True
         ),
         (
             True,
-            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS,
+            EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3,
             EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
             True
         ),
@@ -2181,6 +2181,22 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
             config.clean()
         except ValidationError as validation_error:
             assert sorted(validation_error.messages) == sorted(expected_errors)
+
+    def test_default_data_type(self):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` default data type is 'progress_v3'.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY,
+            day_of_month=1,
+            hour_of_day=1,
+        )
+        assert config.data_type == EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3
 
 
 @mark.django_db
