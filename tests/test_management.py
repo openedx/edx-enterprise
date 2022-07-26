@@ -1747,7 +1747,7 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
 
     def test_duplicate_config_found(self):
         """
-        Verify that the management command does not adjust records when evaluating a subdomain with multiple configs 
+        Verify that the management command does not adjust records when evaluating a subdomain with multiple configs
         having a corresponding base url
         """
         # a CSOD config with duplicate domain
