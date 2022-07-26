@@ -30,8 +30,13 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         CornerstoneEnterpriseCustomerConfiguration records for one with a matching base_url.
         Raise an exception when we dont find exactly one (missing config or duplicate configs are bad)
         """
+        # real prod data often has a config like `https://edx.csod.com` alongside `https://edx-stg.csod.com`
+        # if we just did a plain `icontains` using `edx` subdomain, we'd get the staging config too
+        # expanding the subdomain into a proper url prefix lets us get a more exact match.
+        # we require these urls be https
+        subdomain_formatted_as_url_prefix = f'https://{customer_subdomain}.'
         configs = CornerstoneEnterpriseCustomerConfiguration.objects.filter(
-            cornerstone_base_url__icontains=customer_subdomain,
+            cornerstone_base_url__icontains=subdomain_formatted_as_url_prefix,
         )
         if len(configs) != 1:
             raise Exception(f'{len(configs)} found for {customer_subdomain} when expecting just 1')

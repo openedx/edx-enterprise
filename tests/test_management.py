@@ -1723,11 +1723,11 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
 
     def setUp(self):
         self.cleanup_test_objects()
-        self.cornerstone_base_url_one = 'https://csod-one.example.com/'
+        self.cornerstone_base_url_one = 'https://edx.example.com/'
         self.csod_config_one = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             cornerstone_base_url=self.cornerstone_base_url_one
         )
-        self.cornerstone_base_url_two = 'https://csod-two.example.com/'
+        self.cornerstone_base_url_two = 'https://edx-stg.example.com/'
         self.csod_config_two = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             cornerstone_base_url=self.cornerstone_base_url_two
         )
@@ -1754,7 +1754,7 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
         factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             cornerstone_base_url=self.cornerstone_base_url_one
         )
-        factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='csod-one')
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
         with raises(Exception):
             call_command(
                 'backfill_missing_csod_foreign_keys',
@@ -1765,7 +1765,7 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
         Verify that the management command runs when all records have the same subdomain
         """
         for _ in range(10):
-            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='csod-one')
+            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
         call_command(
             'backfill_missing_csod_foreign_keys',
         )
@@ -1776,9 +1776,9 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
         Verify that the management command runs with a mix of subdomains in the data
         """
         for _ in range(10):
-            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='csod-one')
+            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
         for _ in range(10):
-            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='csod-two')
+            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx-stg')
         call_command(
             'backfill_missing_csod_foreign_keys',
         )
