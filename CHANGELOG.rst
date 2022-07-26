@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.54.1]
+--------
+fix: create cornerstone learner audit records with new foreign keys
+
 [3.54.0]
 --------
 feat: Remove progress, progress_v2 option from reporting configs and move all v1, v2 to v3.

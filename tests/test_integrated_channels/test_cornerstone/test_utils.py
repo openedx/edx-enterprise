@@ -9,9 +9,12 @@ from pytest import mark
 
 from django.test import RequestFactory
 
-from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit
+from integrated_channels.cornerstone.models import (
+    CornerstoneEnterpriseCustomerConfiguration,
+    CornerstoneLearnerDataTransmissionAudit,
+)
 from integrated_channels.cornerstone.utils import create_cornerstone_learner_data
-from test_utils.factories import UserFactory
+from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
 
 
 @ddt.ddt
@@ -19,6 +22,28 @@ class TestCornerstoneUtils(unittest.TestCase):
     """
     Test utility functions used by Cornerstone integration channel.
     """
+    def setUp(self):
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer
+        )
+        self.config = CornerstoneEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            catalogs_to_transmit=str(self.enterprise_customer_catalog.uuid),
+            active=True,
+            cornerstone_base_url='https://dummy_subdomain.csod.com'
+        )
+        self.config.save()
+        self.config2 = CornerstoneEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            catalogs_to_transmit=str(self.enterprise_customer_catalog.uuid),
+            active=True,
+            cornerstone_base_url='https://edx-two.csod.com'
+        )
+        self.config2.save()
+
+        super().setUp()
+
     @staticmethod
     def _assert_learner_data_transmission_audit(transmission_audit, user, course_id, querystring):
         """ Asserts CornerstoneLearnerDataTransmissionAudit values"""
@@ -66,9 +91,13 @@ class TestCornerstoneUtils(unittest.TestCase):
     def test_update_cornerstone_learner_data_transmission_audit(self, querystring, course_id, expected_result):
         """ test creating records """
         request = self._get_request(querystring)
-        create_cornerstone_learner_data(request, course_id)
+        create_cornerstone_learner_data(request, self.config, course_id)
         actual_result = request.user.cornerstone_transmission_audit.filter(course_id=course_id).exists()
         assert actual_result == expected_result
+        if expected_result:
+            record = request.user.cornerstone_transmission_audit.filter(course_id=course_id).first()
+            assert record.enterprise_customer_uuid == self.enterprise_customer.uuid
+            assert record.plugin_configuration_id == self.config.id
 
     @mark.django_db
     def test_update_cornerstone_learner_data_transmission_audit_with_existing_data(self):
@@ -84,7 +113,7 @@ class TestCornerstoneUtils(unittest.TestCase):
 
         # creating data for first time
         request = self._get_request(querystring, user)
-        create_cornerstone_learner_data(request, course_id)
+        create_cornerstone_learner_data(request, self.config, course_id)
         records = CornerstoneLearnerDataTransmissionAudit.objects.all()
         assert records.count() == 1
         self._assert_learner_data_transmission_audit(records.first(), user, course_id, querystring)
@@ -92,7 +121,7 @@ class TestCornerstoneUtils(unittest.TestCase):
         # Updating just sessionToken Should NOT create new records, instead update old one.
         querystring['sessionToken'] = 'updated_dummy_session_token'
         request = self._get_request(querystring, user)
-        create_cornerstone_learner_data(request, course_id)
+        create_cornerstone_learner_data(request, self.config, course_id)
         records = CornerstoneLearnerDataTransmissionAudit.objects.all()
         assert records.count() == 1
         self._assert_learner_data_transmission_audit(records.first(), user, course_id, querystring)
@@ -100,7 +129,7 @@ class TestCornerstoneUtils(unittest.TestCase):
         # But updating courseId Should create fresh record.
         course_id = 'updated_dummy_courseId'
         request = self._get_request(querystring, user)
-        create_cornerstone_learner_data(request, course_id)
+        create_cornerstone_learner_data(request, self.config, course_id)
         records = CornerstoneLearnerDataTransmissionAudit.objects.all()
         assert records.count() == 2
         self._assert_learner_data_transmission_audit(records[1], user, course_id, querystring)

@@ -39,6 +39,10 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
+from integrated_channels.cornerstone.models import (
+    CornerstoneEnterpriseCustomerConfiguration,
+    CornerstoneLearnerDataTransmissionAudit,
+)
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
@@ -1708,3 +1712,81 @@ class TestBackfillLearnerRoleAssignmentsCommand(unittest.TestCase):
         EnterpriseCustomerUser.objects.all().delete()
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
+
+
+@mark.django_db
+@ddt.ddt
+class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``backfill_missing_csod_foreign_keys`` management command.
+    """
+
+    def setUp(self):
+        self.cleanup_test_objects()
+        self.cornerstone_base_url_one = 'https://edx.example.com/'
+        self.csod_config_one = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
+            cornerstone_base_url=self.cornerstone_base_url_one
+        )
+        self.cornerstone_base_url_two = 'https://edx-stg.example.com/'
+        self.csod_config_two = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
+            cornerstone_base_url=self.cornerstone_base_url_two
+        )
+        self.addCleanup(self.cleanup_test_objects)
+        super().setUp()
+
+    def test_not_found(self):
+        """
+        Verify that the management command errors out when evaluating a subdomain with no config having a
+        corresponding base url
+        """
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='should-not-exist')
+        with raises(Exception):
+            call_command(
+                'backfill_missing_csod_foreign_keys',
+            )
+
+    def test_duplicate_config_found(self):
+        """
+        Verify that the management command errors out when evaluating a subdomain with multiple configs having a
+        corresponding base url
+        """
+        # a CSOD config with duplicate domain
+        factories.CornerstoneEnterpriseCustomerConfigurationFactory(
+            cornerstone_base_url=self.cornerstone_base_url_one
+        )
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
+        with raises(Exception):
+            call_command(
+                'backfill_missing_csod_foreign_keys',
+            )
+
+    def test_all_one_config(self):
+        """
+        Verify that the management command runs when all records have the same subdomain
+        """
+        for _ in range(10):
+            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
+        call_command(
+            'backfill_missing_csod_foreign_keys',
+        )
+        assert 0 == CornerstoneLearnerDataTransmissionAudit.objects.filter(plugin_configuration_id__isnull=True).count()
+
+    def test_two_configs(self):
+        """
+        Verify that the management command runs with a mix of subdomains in the data
+        """
+        for _ in range(10):
+            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
+        for _ in range(10):
+            factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx-stg')
+        call_command(
+            'backfill_missing_csod_foreign_keys',
+        )
+        assert 0 == CornerstoneLearnerDataTransmissionAudit.objects.filter(plugin_configuration_id__isnull=True).count()
+
+    def cleanup_test_objects(self):
+        """
+        Helper to delete all test data
+        """
+        CornerstoneLearnerDataTransmissionAudit.objects.all().delete()
+        CornerstoneEnterpriseCustomerConfiguration.objects.all().delete()

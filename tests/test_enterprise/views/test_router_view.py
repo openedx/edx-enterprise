@@ -13,6 +13,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from enterprise import views
+from integrated_channels.cornerstone.models import (
+    CornerstoneEnterpriseCustomerConfiguration,
+    CornerstoneLearnerDataTransmissionAudit,
+)
 from test_utils import factories, fake_catalog_api, fake_enrollment_api
 
 
@@ -38,6 +42,12 @@ class TestRouterView(TestCase):
     def setUp(self):
         super().setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.cornerstone_config = CornerstoneEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            active=True,
+            cornerstone_base_url='https://dummy_subdomain.csod.com'
+        )
+        self.cornerstone_config.save()
         self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
         self.request = mock.MagicMock(
             path=reverse(
@@ -215,8 +225,19 @@ class TestRouterView(TestCase):
             'course_key': 'fake_course_key',
         }
         self.request.GET['sessionToken'] = 'fake_token'
+        self.request.GET['subdomain'] = 'dummy_subdomain'
+        self.request.GET['userGuid'] = '1'
+        self.request.GET['callbackUrl'] = 'https://example.com/csod/callback/1'
+
         router_view_mock.get(self.request, **kwargs)
         router_view_mock.redirect.assert_called_once()
+        self.cornerstone_config.refresh_from_db()
+        assert self.cornerstone_config.session_token == 'fake_token'
+        assert CornerstoneLearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            course_id='fake_course_key',
+        ).exists()
 
     @mock.patch('enterprise.views.get_global_context')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
