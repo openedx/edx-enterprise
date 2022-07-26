@@ -4091,7 +4091,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'day_of_week': None,
             'hour_of_day': 1,
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         expected_data = {
             'active': True,
@@ -4102,7 +4102,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'day_of_week': None,
             'hour_of_day': 1,
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
 
@@ -4153,7 +4153,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'day_of_week': None,
             'hour_of_day': 1,
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         expected_data = {
             'active': True,
@@ -4164,7 +4164,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'day_of_week': None,
             'hour_of_day': 1,
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         factories.EnterpriseCustomerReportingConfigFactory.create_batch(5, **model_item)
 
@@ -4213,7 +4213,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'pgp_encryption_key': ''
         }
@@ -4269,7 +4269,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'pgp_encryption_key': ''
         }
@@ -4330,7 +4330,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'decrypted_sftp_password': 'test_password',
             'frequency': 'monthly',
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         put_data = {
             'enterprise_customer_id': str(enterprise_customer.uuid),
@@ -4346,7 +4346,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'json',
             'pgp_encryption_key': ''
         }
@@ -4411,7 +4411,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'decrypted_sftp_password': 'test_password',
             'frequency': 'monthly',
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         patch_data = {
             'enterprise_customer_id': str(enterprise_customer.uuid),
@@ -4489,7 +4489,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'pgp_encryption_key': '',
         }
@@ -4536,7 +4536,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'pgp_encryption_key': ''
         }
@@ -4578,7 +4578,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'decrypted_sftp_password': 'test_password',
             'frequency': 'monthly',
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
         patch_data = {
             'enterprise_customer_id': str(enterprise_customer.uuid),
@@ -4629,7 +4629,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'pgp_encryption_key': '',
             'email': ['test.email@example.com'],
@@ -4681,7 +4681,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
             'sftp_file_path': 'null',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'pgp_encryption_key': '',
             'email': ['test.email@example.com'],
@@ -4730,7 +4730,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'decrypted_sftp_password': 'test_password',
             'frequency': 'monthly',
             'report_type': 'csv',
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
         }
 
         reporting_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
