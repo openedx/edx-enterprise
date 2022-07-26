@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.54.2]
+--------
+fix: follow-on to cornerstone learner records foreign keys job
+
 [3.54.1]
 --------
 fix: create cornerstone learner audit records with new foreign keys
