@@ -53,8 +53,14 @@ def create_cornerstone_learner_data(request, cornerstone_customer_configuration,
             f'integrated_channel_course_key={course_id}, '
             'malformed cornerstone request missing a param'
         )
-    except Exception as ex:  # pylint: disable=broad-except
-        LOGGER.error('Unable to Create/Update CornerstoneLearnerDataTransmissionAudit. {ex}'.format(ex=ex))
+    except Exception:  # pylint: disable=broad-except
+        LOGGER.exception(
+            f'integrated_channel=CSOD, '
+            f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '
+            f'integrated_channel_lms_user={request.user.id}, '
+            f'integrated_channel_course_key={course_id}, '
+            f'Unable to Create/Update CornerstoneLearnerDataTransmissionAudit.'
+        )
 
 
 def convert_invalid_course_id(course_id):
