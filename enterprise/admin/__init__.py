@@ -278,7 +278,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Arguments:
             instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
         """
-        return hasattr(instance, 'enterprise_customer_identity_providers')
+        return instance.has_identity_providers
 
     has_identity_provider.boolean = True
     has_identity_provider.short_description = 'Identity provider'
