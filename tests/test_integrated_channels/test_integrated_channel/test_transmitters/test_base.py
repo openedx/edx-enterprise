@@ -17,4 +17,4 @@ class TestTransmitter(unittest.TestCase):
         The ``transmit`` method is not implemented at the base, and so should raise ``NotImplementedError``.
         """
         with self.assertRaises(NotImplementedError):
-            Transmitter(enterprise_configuration=None).transmit({}, {}, {}, {})
+            Transmitter(enterprise_configuration=None).transmit({}, {}, {})
