@@ -446,7 +446,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         plugin_configuration_id,
         integrated_channel_code,
         content_id
-        ):
+    ):
         """
         Return any pre-existing records for this customer/plugin/content which was created but never sent
         """
