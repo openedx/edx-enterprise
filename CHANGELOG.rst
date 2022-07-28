@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.55.0]
+--------
+feat: add `enable_executive_education_2U_fulfillment` to `EnterpriseCustomer`
+
 [3.54.2]
 --------
 fix: follow-on to cornerstone learner records foreign keys job

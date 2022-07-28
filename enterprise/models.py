@@ -349,6 +349,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the learner should be able to login through enterprise's slug login")
     )
 
+    enable_executive_education_2U_fulfillment = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether the enterprise should have access to Executive Education (2U) content.")
+    )
+
     contact_email = models.EmailField(
         null=True,
         blank=True,
@@ -366,6 +371,7 @@ class EnterpriseCustomer(TimeStampedModel):
             "This is passed to ecommerce when creating orders for financial data reporting."
         )
     )
+
     default_language = models.CharField(
         max_length=25,
         null=True,
