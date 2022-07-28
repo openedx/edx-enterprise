@@ -357,8 +357,8 @@ class GrantDataSharingPermissions(View):
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,
             ),
-            'continue_text': _('Yes, continue'),
-            'abort_text': _('No, take me back.'),
+            'continue_text': _('Continue'),
+            'abort_text': _('Decline and go back'),
             'policy_dropdown_header': _('Data Sharing Policy'),
             'sharable_items_header': _(
                 'Enrollment, completion, and performance data that may be shared with {enterprise_customer_name} '
@@ -424,7 +424,7 @@ class GrantDataSharingPermissions(View):
                     'control if there is any conflict.'
                 )
             ],
-            'confirmation_modal_header': _('Are you aware...'),
+            'confirmation_modal_header': _('Are you sure you want to decline?'),
             'confirmation_modal_affirm_decline_text': _('I decline'),
             'confirmation_modal_abort_decline_text': _('View the data sharing policy'),
             'policy_link_template': _('View the {start_link}data sharing policy{end_link}.').format(
@@ -577,7 +577,8 @@ class GrantDataSharingPermissions(View):
         context_data = {
             'consent_request_prompt': _(
                 'To access this {item}, you must first consent to share your learning achievements '
-                'with {bold_start}{enterprise_customer_name}{bold_end}.'
+                'with {bold_start}{enterprise_customer_name}{bold_end}. '
+                'If you decline now, you will be redirected to the previous page.'
             ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 bold_start='<b>',
@@ -585,8 +586,9 @@ class GrantDataSharingPermissions(View):
                 item=item,
             ),
             'confirmation_alert_prompt': _(
-                'In order to start this {item} and use your discount, {bold_start}you must{bold_end} consent '
-                'to share your {item} data with {enterprise_customer_name}.'
+                'To access this {item} and use your discount, you {bold_start}must{bold_end} consent '
+                'to sharing your {item} data with {enterprise_customer_name}. '
+                'If you decline now, you will be redirected to the previous page.'
             ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 bold_start='<b>',
@@ -2361,23 +2363,41 @@ class RouterView(NonAtomicView):
                 )
             kwargs['course_id'] = course_run_id
 
-            # Enrollments through Cornerstone have some params in querystring, need to store those params if exists.
-            session_token = request.GET.get('sessionToken')
-            if session_token:
-                csod_customer_configuration_model = apps.get_model(
-                    'cornerstone',
-                    'CornerstoneEnterpriseCustomerConfiguration'
-                )
-                with transaction.atomic():
+            CornerstoneEnterpriseCustomerConfiguration = apps.get_model(
+                'cornerstone',
+                'CornerstoneEnterpriseCustomerConfiguration'
+            )
+            with transaction.atomic():
+                # The presense of a sessionToken and subdomain param indicates a Cornerstone redirect
+                # We need to store this sessionToken for api access
+                csod_session_token = request.GET.get('sessionToken')
+                csod_subdomain = request.GET.get("subdomain")
+                if csod_session_token and csod_subdomain:
+                    LOGGER.info(
+                        f'integrated_channel=CSOD, '
+                        f'integrated_channel_enterprise_customer_uuid={enterprise_customer.uuid}, '
+                        f'integrated_channel_lms_user={request.user.id}, '
+                        f'integrated_channel_course_key={course_key}, '
+                        'enrollment redirect'
+                    )
                     cornerstone_customer_configuration = \
-                        csod_customer_configuration_model.objects.select_for_update().filter(
-                            enterprise_customer=enterprise_customer
-                        ).first()
+                        CornerstoneEnterpriseCustomerConfiguration.get_by_customer_and_subdomain(
+                            enterprise_customer=enterprise_customer,
+                            customer_subdomain=csod_subdomain
+                        )
                     if cornerstone_customer_configuration:
-                        cornerstone_customer_configuration.session_token = session_token
+                        cornerstone_customer_configuration.session_token = csod_session_token
                         cornerstone_customer_configuration.session_token_modified = localized_utcnow()
                         cornerstone_customer_configuration.save()
-            create_cornerstone_learner_data(request, course_key)
+                        create_cornerstone_learner_data(request, cornerstone_customer_configuration, course_key)
+                    else:
+                        LOGGER.error(
+                            f'integrated_channel=CSOD, '
+                            f'integrated_channel_enterprise_customer_uuid={enterprise_customer.uuid}, '
+                            f'integrated_channel_lms_user={request.user.id}, '
+                            f'integrated_channel_course_key={course_key}, '
+                            f'unable to find cornerstone config matching subdomain {request.GET.get("subdomain")}'
+                        )
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.

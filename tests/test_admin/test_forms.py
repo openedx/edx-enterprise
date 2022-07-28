@@ -702,7 +702,7 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
 
         self.form_data = {
             'enterprise_customer': self.ent_customer1.uuid,
-            'data_type': 'progress',
+            'data_type': 'progress_v3',
             'report_type': 'csv',
             'delivery_method': 'email',
             'frequency': 'daily',

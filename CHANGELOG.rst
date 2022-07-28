@@ -17,6 +17,38 @@ Unreleased
 ----------
 None
 
+[3.54.2]
+--------
+fix: follow-on to cornerstone learner records foreign keys job
+
+[3.54.1]
+--------
+fix: create cornerstone learner audit records with new foreign keys
+
+[3.54.0]
+--------
+feat: Remove progress, progress_v2 option from reporting configs and move all v1, v2 to v3.
+
+[3.53.4]
+--------
+fix: update course run selection logic for SAP content exporter
+
+[3.53.3]
+--------
+feat: mark Cornerstone session token fields read-only in admin
+
+[3.53.2]
+--------
+feat: update data sharing consent request language
+
+[3.53.1]
+--------
+feat: Django Admin tweaks for integrations
+
+[3.53.0]
+--------
+feat: Added management command for weekly nudge to dormant enterprise learners
+
 [3.52.0]
 --------
 feat: add `enable_portal_learner_credit_management_screen` to `EnterpriseCustomer`

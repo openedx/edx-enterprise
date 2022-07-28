@@ -38,9 +38,17 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         self.config = CornerstoneEnterpriseCustomerConfiguration(
             enterprise_customer=self.enterprise_customer,
             catalogs_to_transmit=str(self.enterprise_customer_catalog.uuid),
-            active=True
+            active=True,
+            cornerstone_base_url='https://edx-one.csod.com'
         )
         self.config.save()
+        self.config2 = CornerstoneEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            catalogs_to_transmit=str(self.enterprise_customer_catalog.uuid),
+            active=True,
+            cornerstone_base_url='https://edx-two.csod.com'
+        )
+        self.config2.save()
         self.user = UserFactory()
         ecu = EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
@@ -77,7 +85,8 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
                 '.get_learner_data_transmitter'
         ) as mock_transmitter:
             transmit_single_learner_data(self.user.username, self.demo_course_run_id)
-            mock_transmitter.return_value.transmit.assert_called_once_with('mock_learner_exporter', **kwargs)
+            mock_transmitter.return_value.transmit.assert_called_with('mock_learner_exporter', **kwargs)
+            assert mock_transmitter.return_value.transmit.call_count == 2
 
     def test_customer_catalogs_to_transmit(self):
         """
@@ -85,6 +94,21 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         """
         assert len(self.config.customer_catalogs_to_transmit) == 1
         assert self.config.customer_catalogs_to_transmit[0] == self.enterprise_customer_catalog
+
+    def test_get_by_subdomain(self):
+        """
+        Test the model's method for looking up a specific config by subdomain
+        """
+        found1 = CornerstoneEnterpriseCustomerConfiguration.get_by_customer_and_subdomain(
+            self.enterprise_customer,
+            'edx-one'
+        )
+        assert found1 == self.config
+        found2 = CornerstoneEnterpriseCustomerConfiguration.get_by_customer_and_subdomain(
+            self.enterprise_customer,
+            'edx-two'
+        )
+        assert found2 == self.config2
 
     def test_clean(self):
         """
