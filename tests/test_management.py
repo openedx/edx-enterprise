@@ -1718,9 +1718,7 @@ class TestBackfillRemoteActionTimestampsManagementCommand(unittest.TestCase, Ent
     """
 
     def setUp(self):
-        self.cleanup_test_objects()
-
-        self.addCleanup(self.cleanup_test_objects)
+        ContentMetadataItemTransmission.objects.all().delete()
         super().setUp()
 
     def test_normal_run(self):
@@ -1742,10 +1740,3 @@ class TestBackfillRemoteActionTimestampsManagementCommand(unittest.TestCase, Ent
             'backfill_remote_action_timestamps',
         )
         assert 0 == ContentMetadataItemTransmission.objects.filter(remote_created_at__isnull=True).count()
-
-    def cleanup_test_objects(self):
-        """
-        Helper to delete all test data
-        """
-        ContentMetadataItemTransmission.objects.all().delete()
-
