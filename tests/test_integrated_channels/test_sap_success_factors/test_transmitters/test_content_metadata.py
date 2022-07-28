@@ -119,8 +119,8 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
 
         create_content_metadata_mock.return_value = [200, 'OK']
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
-        settings_with_limits = { self.enterprise_config.channel_code(): 1 }
-        with override_settings(INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = settings_with_limits):
+        settings_with_limits = {self.enterprise_config.channel_code(): 1}
+        with override_settings(INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT=settings_with_limits):
             new_transmission_to_create = factories.ContentMetadataItemTransmissionFactory(
                 content_id=content_id,
                 enterprise_customer=self.enterprise_config.enterprise_customer,
@@ -229,7 +229,6 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         update_content_metadata_mock.return_value = [200, 'OK']
         delete_content_metadata_mock.return_value = [200, 'OK']
 
-
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
         create_payload = {
             content_id_3: new_transmission_to_create
@@ -261,7 +260,6 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         assert create_content_metadata_mock.call_count == 1
         assert update_content_metadata_mock.call_count == 1
         assert delete_content_metadata_mock.call_count == 1
-
 
     @responses.activate
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
@@ -305,7 +303,6 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
                 channel_metadata={},
                 remote_created_at=None,
             )
-
 
             create_payload = {
                 content_id: new_transmission_to_create,

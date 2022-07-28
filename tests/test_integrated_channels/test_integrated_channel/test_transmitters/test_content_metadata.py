@@ -187,7 +187,6 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         assert created_transmission_2.api_response_status_code > 400
         assert created_transmission_2.api_response_body == 'error occurred'
 
-
     def test_transmit_update_success(self):
         """
         Test successful update of content metadata during transmission.

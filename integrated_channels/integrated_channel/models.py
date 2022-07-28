@@ -432,12 +432,12 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         Return any pre-existing records for this customer/plugin/content which was previously deleted
         """
         return ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=enterprise_customer,
-                plugin_configuration_id=plugin_configuration_id,
-                content_id=content_id,
-                integrated_channel_code=integrated_channel_code,
-                remote_deleted_at__isnull=False,
-            )
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_deleted_at__isnull=False,
+        )
 
     @classmethod
     def incomplete_transmissions(
@@ -451,12 +451,12 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         Return any pre-existing records for this customer/plugin/content which was created but never sent
         """
         return ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=enterprise_customer,
-                plugin_configuration_id=plugin_configuration_id,
-                content_id=content_id,
-                integrated_channel_code=integrated_channel_code,
-                remote_created_at__isnull=True,
-            )
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_created_at__isnull=True,
+        )
 
     def prepare_to_recreate(self, content_last_changed, enterprise_customer_catalog_uuid):
         """
