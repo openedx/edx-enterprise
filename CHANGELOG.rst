@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.55.1]
+--------
+fix: properly removing update transmission payloads from SAP transmissions before saving completed records.
+
 [3.55.0]
 --------
 feat: add `enable_executive_education_2U_fulfillment` to `EnterpriseCustomer`
