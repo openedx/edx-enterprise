@@ -63,6 +63,15 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                     )
                 )
                 self.client.update_content_metadata(self._serialize_items(chunked_items))
+                LOGGER.info(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f'Successfully sent {list(chunk.keys())}'
+                    )
+                )
             except ClientError as exc:
                 LOGGER.error(
                     generate_formatted_log(
@@ -80,7 +89,9 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                 # Remove the failed items from the create/update/delete dictionaries,
                 # so ContentMetadataItemTransmission objects are not synchronized for
                 # these items below.
-                self._remove_failed_items(chunked_items, create_payload, items_to_update, items_to_delete)
+                self._remove_failed_items(
+                    chunked_items, create_payload, items_to_update, update_payload, items_to_delete
+                )
 
         # If API transmission limit is set then mark the rest of the items as not transmitted.
         # Since, chunk_items is a generator and we have already iterated through the items that need to
@@ -96,13 +107,15 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                 )
             )
             chunked_items = list(chunk.values())
-            self._remove_failed_items(chunked_items, create_payload, items_to_update, items_to_delete)
+            self._remove_failed_items(
+                chunked_items, create_payload, items_to_update, update_payload, items_to_delete
+            )
 
         self._create_transmissions(create_payload, content_updated_mapping)
         self._update_transmissions(update_payload, content_updated_mapping)
         self._delete_transmissions(list(items_to_delete.keys()))
 
-    def _remove_failed_items(self, failed_items, items_to_create, items_to_update, items_to_delete):
+    def _remove_failed_items(self, failed_items, items_to_create, items_to_update, update_payload, items_to_delete):
         """
         Remove content metadata items from the `items_to_create`, `items_to_update`, `items_to_delete` dicts.
 
@@ -117,6 +130,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             items_to_create.pop(content_metadata_id, None)
             items_to_update.pop(content_metadata_id, None)
             items_to_delete.pop(content_metadata_id, None)
+            update_payload.pop(content_metadata_id, None)
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         return {
