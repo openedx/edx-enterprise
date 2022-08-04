@@ -18,8 +18,10 @@ from integrated_channels.integrated_channel.models import ContentMetadataItemTra
 from test_utils import APITest, factories
 from test_utils.fake_catalog_api import (
     get_fake_catalog_diff_create_w_program,
-    get_fake_catalog_diff_w_one_each,
+    get_fake_catalog_diff_w_one_each_2,
     get_fake_content_metadata,
+    get_fake_content_metadata_for_create_w_program,
+    get_fake_content_metadata_for_partial_create_w_program,
 )
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
@@ -77,8 +79,13 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         Test courses list view produces desired json when SKIP_KEY_IF_NONE is set to False
         """
-        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        # get content metadata returns a list of three pieces of content to create, a course, a course run and a program
+        # these pieces of content cannot exist as a record
+        mock_get_content_metadata.return_value = get_fake_content_metadata_for_create_w_program()
+        # get catalog diff returns the same three items in the create bucket, as the system will request the metadata on
+        # all pieces of content that it needs to update or create
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
+
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -105,8 +112,13 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         Test courses list view produces desired json
         """
-        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        # get content metadata returns a list of three pieces of content to create, a course, a course run and a program
+        # these pieces of content cannot exist as a record
+        mock_get_content_metadata.return_value = get_fake_content_metadata_for_create_w_program()
+        # get catalog diff returns the same three items in the create bucket, as the system will request the metadata on
+        # all pieces of content that it needs to update or create
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
+
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -139,8 +151,13 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         Test courses list view produces desired json
         """
-        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        # get content metadata returns a list of three pieces of content to create, a course, a course run and a program
+        # these pieces of content cannot exist as a record
+        mock_get_content_metadata.return_value = get_fake_content_metadata_for_create_w_program()
+        # get catalog diff returns the same three items in the create bucket, as the system will request the metadata on
+        # all pieces of content that it needs to update or create
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
+
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -164,7 +181,11 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         """
         Test courses list view produces desired json
         """
-        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        # get content metadata returns a list of three pieces of content to create, a course, a course run and a program
+        # these pieces of content cannot exist as a record
+        mock_get_content_metadata.return_value = get_fake_content_metadata_for_create_w_program()
+        # get catalog diff returns the same three items in the create bucket, as the system will request the metadata on
+        # all pieces of content that it needs to update or create
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_w_program()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
@@ -179,9 +200,15 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         created_transmissions = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
-        assert len(created_transmissions) == len(get_fake_content_metadata())
+        assert len(created_transmissions) == len(get_fake_content_metadata_for_create_w_program())
+
+        # change the content last changed of the records so an update can be detected
         created_transmissions.update(content_last_changed=None)
-        mock_get_catalog_diff.return_value = get_fake_catalog_diff_w_one_each()
+        # mock both the content metadata list end point and the catalog diff endpoint to return 1 create, 1 update, 1
+        # delete. This means the get content metadata endpoint is returning two pieces of content one for the update and
+        # one for the create. The course that the diff endpoint says to create cannot already exist in the DB.
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_w_one_each_2()
+        mock_get_content_metadata.return_value = get_fake_content_metadata_for_partial_create_w_program()
         response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # 1 create, 1 update, 1 delete, no deletes sent, no count restriction, so expect 2
@@ -191,8 +218,10 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid,
             count=1
         )
+        # change the content last changed of the records so an update can be detected
         created_transmissions.update(content_last_changed=None)
-        mock_get_catalog_diff.return_value = get_fake_catalog_diff_w_one_each()
+
+        # Re-request and expect the create to be already created so the only item to be returned is the update item
         response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # 1 create, 1 update, 1 delete, no deletes sent, count set to 1, so expect 1
