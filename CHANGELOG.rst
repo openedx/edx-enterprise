@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.55.2]
+--------
+fix: integrated channels properly handling customers with multiple catalogs that have overlapping content.
+
 [3.55.1]
 --------
 fix: properly removing update transmission payloads from SAP transmissions before saving completed records.

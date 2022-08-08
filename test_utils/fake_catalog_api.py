@@ -12,6 +12,90 @@ from test_utils import FAKE_UUIDS
 
 FAKE_URL = 'https://fake.url'
 
+FAKE_COURSE_RUN_TO_CREATE = {
+    'key': 'some-courserun-key=-that-doesnt-exist',
+    'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
+    'title': 'edX Demonstration Course',
+    'image': {
+        'description': None,
+        'height': None,
+        'src': 'http://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
+        'width': None
+    },
+    'short_description': 'This course demonstrates many features of the edX platform.',
+    'marketing_url': 'course/demo-course?utm_=test_enterprise&utm_medium=enterprise',
+    'seats': [
+        {
+            'type': 'audit',
+            'price': '0.00',
+            'currency': 'USD',
+            'upgrade_deadline': None,
+            'credit_provider': None,
+            'credit_hours': None,
+            'sku': '68EFFFF'
+        },
+        {
+            'type': 'verified',
+            'price': '149.00',
+            'currency': 'USD',
+            'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
+            'credit_provider': None,
+            'credit_hours': None,
+            'sku': '8CF08E5'
+        }
+    ],
+    'start': '2013-02-05T05:00:00Z',
+    'end': '3000-12-31T18:00:00Z',
+    'enrollment_start': None,
+    'enrollment_end': None,
+    'enrollment_url': FAKE_URL,
+    'pacing_type': 'instructor_paced',
+    'type': 'verified',
+    'status': 'published',
+    'course': 'edX+DemoX',
+    'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    'announcement': None,
+    'video': None,
+    'content_language': 'English',
+    'transcript_languages': [],
+    'instructors': [],
+    'staff': [
+        {
+            'uuid': '51df1077-1b8d-4f86-8305-8adbc82b72e9',
+            'given_name': 'Anant',
+            'family_name': 'Agarwal',
+            'bio': "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            'profile_image_url': 'https://www.edx.org/sites/default/files/executive/photo/anant-agarwal.jpg',
+            'slug': 'anant-agarwal',
+            'position': {
+                'title': 'CEO',
+                'organization_name': 'edX'
+            },
+            'profile_image': {},
+            'works': [],
+            'urls': {
+                'twitter': None,
+                'facebook': None,
+                'blog': None
+            },
+            'email': None
+        }
+    ],
+    'min_effort': 5,
+    'max_effort': 6,
+    'weeks_to_complete': 10,
+    'modified': '2017-08-18T00:32:33.754662Z',
+    'level_type': 'Type 1',
+    'availability': 'Current',
+    'mobile_available': False,
+    'hidden': False,
+    'reporting_type': 'mooc',
+    'eligible_for_financial_aid': True,
+    'content_type': 'courserun',
+    'has_enrollable_seats': True,
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+}
+
 FAKE_COURSE_RUN = {
     'key': 'course-v1:edX+DemoX+Demo_Course',
     'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
@@ -100,6 +184,82 @@ FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
 
 FAKE_INVALID_KEY_COURSE_RUN = copy.deepcopy(FAKE_COURSE_RUN)
 FAKE_INVALID_KEY_COURSE_RUN['key'] = 'course-v1:edX+Thisissuperlong+weneedthistobethelongestitseverbeen<.>'
+
+FAKE_COURSE_TO_CREATE_2 = {
+    'key': 'another-course-key-that-doesnt-exist',
+    'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
+    'title': 'edX Demonstration Course',
+    'course_runs': [FAKE_COURSE_RUN],
+    'owners': [
+        {
+            'uuid': '2bd367cf-c58e-400c-ac99-fb175405f7fa',
+            'key': 'edX',
+            'name': 'edX',
+            'certificate_logo_image_url': None,
+            'description': '',
+            'homepage_url': None,
+            'tags': [],
+            'logo_image_url': 'https://foo.com/bar.png',
+            'marketing_url': None
+        }
+    ],
+    'image': None,
+    'short_description': 'This course demonstrates many features of the edX platform.',
+    'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    'level_type': None,
+    'subjects': [],
+    'prerequisites': [],
+    'expected_learning_items': [
+        'XBlocks',
+        'Peer Assessment'
+    ],
+    'video': None,
+    'sponsors': [],
+    'modified': '2017-08-18T00:23:21.111991Z',
+    'marketing_url': None,
+    'content_type': 'course',
+    'enrollment_url': FAKE_URL,
+    'programs': [],
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+}
+
+FAKE_COURSE_TO_CREATE = {
+    'key': 'some-course-key',
+    'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
+    'title': 'edX Demonstration Course',
+    'course_runs': [FAKE_COURSE_RUN],
+    'owners': [
+        {
+            'uuid': '2bd367cf-c58e-400c-ac99-fb175405f7fa',
+            'key': 'edX',
+            'name': 'edX',
+            'certificate_logo_image_url': None,
+            'description': '',
+            'homepage_url': None,
+            'tags': [],
+            'logo_image_url': 'https://foo.com/bar.png',
+            'marketing_url': None
+        }
+    ],
+    'image': None,
+    'short_description': 'This course demonstrates many features of the edX platform.',
+    'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    'level_type': None,
+    'subjects': [],
+    'prerequisites': [],
+    'expected_learning_items': [
+        'XBlocks',
+        'Peer Assessment'
+    ],
+    'video': None,
+    'sponsors': [],
+    'modified': '2017-08-18T00:23:21.111991Z',
+    'marketing_url': None,
+    'content_type': 'course',
+    'enrollment_url': FAKE_URL,
+    'programs': [],
+    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+}
 
 FAKE_COURSE = {
     'key': 'edX+DemoX',
@@ -983,6 +1143,49 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
     },
 ]
 
+FAKE_SEARCH_ALL_PROGRAM_RESULT_1_TO_CREATE = {
+    "title": "some-program-key-that-doesnt-exist",
+    "marketing_url": "professional-certificate/marketingslug1",
+    "content_type": "program",
+    "card_image_url": "http://wowslider.com/sliders/demo-10/data/images/dock.jpg",
+    "min_hours_effort_per_week": 5,
+    "authoring_organization_uuids": [
+        "12de950c-6fae-49f7-aaa9-778c2fbdae56"
+    ],
+    "hidden": False,
+    "authoring_organizations": [
+        {
+            "marketing_url": None,
+            "homepage_url": None,
+            "tags": [],
+            "certificate_logo_image_url": None,
+            "name": "",
+            "key": "edX",
+            "description": None,
+            "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
+            "logo_image_url": None
+        }
+    ],
+    "staff_uuids": [],
+    "published": True,
+    "uuid": FAKE_UUIDS[3],
+    "max_hours_effort_per_week": 10,
+    "subject_uuids": [],
+    "weeks_to_complete_min": None,
+    "type": "Professional Certificate",
+    "language": [
+        "English"
+    ],
+    "partner": "edx",
+    "subtitle": "Program Subtitle 1",
+    "status": "active",
+    "weeks_to_complete_max": None,
+    "aggregation_key": "program:" + FAKE_UUIDS[3],
+    'enrollment_url': FAKE_URL,
+    "is_program_eligible_for_one_click_purchase": True,
+    'content_last_modified': '2021-08-18T00:32:33.754662Z'
+}
+
 FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "title": "Program Title 1",
     "marketing_url": "professional-certificate/marketingslug1",
@@ -1343,10 +1546,35 @@ def get_fake_catalog_diff_create_w_program():
     """
     # items_to_create, items_to_delete, matched_items
     return [
-        {'content_key': FAKE_COURSE_RUN['key']},
-        {'content_key': FAKE_COURSE['key']},
-        {'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']}
+        {'content_key': FAKE_COURSE_RUN_TO_CREATE['key']},
+        {'content_key': FAKE_COURSE_TO_CREATE['key']},
+        {'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1_TO_CREATE['uuid']}
     ], [], []
+
+
+def get_fake_content_metadata_for_create_w_program():
+    """
+    Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses and a program are to
+    be created
+    """
+    content_metadata = OrderedDict()
+    content_metadata[FAKE_COURSE_RUN_TO_CREATE['key']] = copy.deepcopy(FAKE_COURSE_RUN_TO_CREATE)
+    content_metadata[FAKE_COURSE_TO_CREATE['key']] = copy.deepcopy(FAKE_COURSE_TO_CREATE)
+    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1_TO_CREATE['uuid']] = copy.deepcopy(
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1_TO_CREATE
+    )
+    return list(content_metadata.values())
+
+
+def get_fake_content_metadata_for_partial_create_w_program():
+    """
+    Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses and a program are to
+    be created
+    """
+    content_metadata = OrderedDict()
+    content_metadata[FAKE_COURSE_TO_CREATE['key']] = copy.deepcopy(FAKE_COURSE_TO_CREATE)
+    content_metadata[FAKE_COURSE_TO_CREATE_2['key']] = copy.deepcopy(FAKE_COURSE_TO_CREATE_2)
+    return list(content_metadata.values())
 
 
 def get_fake_catalog_diff_w_one_each():
@@ -1358,6 +1586,22 @@ def get_fake_catalog_diff_w_one_each():
     items_to_delete = [{'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']}]
     matched_items = [{'content_key': FAKE_COURSE['key'], 'date_updated': datetime.datetime.now()}]
     return items_to_create, items_to_delete, matched_items
+
+
+def get_fake_catalog_diff_w_one_each_2():
+    """
+    Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses and a program are
+    returned, one in each change-type bucket. The item to create is different from get_fake_catalog_diff_w_one_each to
+    trigger a create of a different course
+    """
+    return (
+        [{'content_key': FAKE_COURSE_TO_CREATE_2['key']}],
+        [{'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']}],
+        [{
+            'content_key': FAKE_COURSE_TO_CREATE['key'],
+            'date_updated': datetime.datetime.now() - datetime.timedelta(seconds=3)
+        }]
+    )
 
 
 def get_fake_catalog_diff_create_with_invalid_key():

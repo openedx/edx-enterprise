@@ -160,7 +160,13 @@ class ContentMetadataExporter(Exporter):
                 items_to_update[matched_item.get('content_key')] = item
         return items_to_update
 
-    def _get_catalog_diff(self, enterprise_catalog, content_keys, force_retrieve_all_catalogs, max_item_count):
+    def _get_catalog_diff(
+        self,
+        enterprise_catalog,
+        content_keys,
+        force_retrieve_all_catalogs,
+        max_item_count
+    ):
         """
         From the enterprise catalog API, request a catalog diff based off of a list of content keys. Using the diff,
         retrieve past content metadata transmission records for update and delete payloads.
@@ -169,12 +175,30 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             content_keys
         )
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        # Fetch all existing, non-deleted transmission audit content keys for the customer/configuration
+        existing_content_keys = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            integrated_channel_code=self.enterprise_configuration.channel_code(),
+            plugin_configuration_id=self.enterprise_configuration.id,
+            deleted_at__isnull=True,
+        ).only("content_id")
+        unique_new_items_to_create = []
+
+        # We need to remove any potential create transmissions if the content already exists on the customer's instance
+        # under a different catalog
+        for item in items_to_create:
+            if item.get('content_key') not in existing_content_keys:
+                unique_new_items_to_create.append(item)
 
         # if we have more to work with than the allowed space, slice it up
-        if len(items_to_create) + len(items_to_delete) + len(matched_items) > max_item_count:
+        if len(unique_new_items_to_create) + len(items_to_delete) + len(matched_items) > max_item_count:
             # prioritize creates, then updates, then deletes
-            items_to_create = items_to_create[0:max_item_count]
-            count_left = max_item_count - len(items_to_create)
+            unique_new_items_to_create = unique_new_items_to_create[0:max_item_count]
+            count_left = max_item_count - len(unique_new_items_to_create)
             matched_items = matched_items[0:count_left]
             count_left = count_left - len(matched_items)
             # in testing, this is sometimes a list, sometimes a dict
@@ -192,7 +216,7 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             items_to_delete
         )
-        return items_to_create, content_to_update, content_to_delete
+        return unique_new_items_to_create, content_to_update, content_to_delete
 
     def _retrieve_past_transmission_content(self, enterprise_customer_catalog, items):
         """
