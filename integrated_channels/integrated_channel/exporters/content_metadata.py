@@ -279,7 +279,7 @@ class ContentMetadataExporter(Exporter):
 
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
-            items_to_create
+            unique_new_items_to_create
         )
 
         content_to_update = self._check_matched_content_updated_at(
@@ -291,7 +291,7 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             items_to_delete
         )
-        return unique_new_items_to_create, content_to_update, content_to_delete
+        return content_to_create, content_to_update, content_to_delete
 
     def _check_matched_content_to_delete(self, enterprise_customer_catalog, items):
         """
