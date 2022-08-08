@@ -17,6 +17,18 @@ Unreleased
 ----------
 None
 
+[3.55.2]
+--------
+fix: integrated channels properly handling customers with multiple catalogs that have overlapping content.
+
+[3.55.1]
+--------
+fix: properly removing update transmission payloads from SAP transmissions before saving completed records.
+
+[3.55.0]
+--------
+feat: add `enable_executive_education_2U_fulfillment` to `EnterpriseCustomer`
+
 [3.54.2]
 --------
 fix: follow-on to cornerstone learner records foreign keys job

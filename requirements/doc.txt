@@ -112,7 +112,7 @@ django-waffle==2.3.0
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==3.2.12
+django==3.2.15
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
