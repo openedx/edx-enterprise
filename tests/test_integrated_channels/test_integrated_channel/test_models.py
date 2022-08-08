@@ -2,8 +2,8 @@
 Tests for the integrated channel models.
 """
 
-import unittest
 import datetime
+import unittest
 from unittest import mock
 
 from pytest import mark
@@ -18,6 +18,7 @@ from test_utils.fake_catalog_api import (
     get_fake_content_metadata,
 )
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
+
 
 @mark.django_db
 class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin):
