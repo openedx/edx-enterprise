@@ -401,7 +401,6 @@ class ContentMetadataExporter(Exporter):
                     # transform the content metadata into the channel specific format
                     transformed_item = self._transform_item(item)
                     if key in items_create_keys:
-                        create_payload[key] = transformed_item
                         existing_record = items_to_create.get(key)
                         existing_record.channel_metadata = transformed_item
                         existing_record.content_last_changed = item.get('content_last_modified')
