@@ -283,7 +283,6 @@ class ContentMetadataExporter(Exporter):
         items_to_delete = {}
         for item in items:
             content_id = item.get('content_key')
-            content_last_changed = item.get('date_updated')
 
             incomplete_transmission = ContentMetadataItemTransmission.incomplete_delete_transmissions(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
