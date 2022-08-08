@@ -11,11 +11,7 @@ from pytest import mark
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import factories
-from test_utils.fake_catalog_api import (
-    FAKE_COURSE_RUN,
-    get_fake_catalog,
-    get_fake_content_metadata,
-)
+from test_utils.fake_catalog_api import FAKE_COURSE_RUN, get_fake_catalog, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
