@@ -194,7 +194,7 @@ class ContentMetadataExporter(Exporter):
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 content_id=content_id,
             ).first()
-            incomplete_transmission = ContentMetadataItemTransmission.incomplete_transmissions(
+            incomplete_transmission = ContentMetadataItemTransmission.incomplete_create_transmissions(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 plugin_configuration_id=self.enterprise_configuration.id,
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
@@ -210,7 +210,7 @@ class ContentMetadataExporter(Exporter):
                 items_to_create[content_id] = past_deleted_transmission
             elif incomplete_transmission:
                 self._log_info(
-                    'Found an unsent content record while creating record. '
+                    'Found an unsent content create record while creating record. '
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
@@ -263,31 +263,59 @@ class ContentMetadataExporter(Exporter):
             matched_items,
             force_retrieve_all_catalogs
         )
-        content_to_delete = self._retrieve_past_transmission_content(
+        content_to_delete = self._check_matched_content_to_delete(
             enterprise_catalog,
             items_to_delete
         )
         return content_to_create, content_to_update, content_to_delete
 
-    def _retrieve_past_transmission_content(self, enterprise_customer_catalog, items):
+    def _check_matched_content_to_delete(self, enterprise_customer_catalog, items):
         """
         Retrieve all past content metadata transmission records that have a `content_id` contained within a provided
         list.
+        renamed from _retrieve_past_transmission_content
         """
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
-        content_keys = [item.get('content_key') for item in items]
 
-        past_content_query = ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            integrated_channel_code=self.enterprise_configuration.channel_code(),
-            enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
-            plugin_configuration_id=self.enterprise_configuration.id,
-            content_id__in=content_keys
-        )
-        return past_content_query.all()
+        items_to_delete = {}
+        for item in items:
+            content_id = item.get('content_key')
+            content_last_changed = item.get('date_updated')
+
+            incomplete_transmission = ContentMetadataItemTransmission.incomplete_delete_transmissions(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+            ).first()
+
+            past_content = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                content_id=content_id
+            ).first()
+
+            if incomplete_transmission:
+                self._log_info(
+                    'Found an unsent content delete record while deleting record. '
+                    'Including record.',
+                    course_or_course_run_key=content_id
+                )
+                items_to_delete[content_id] = incomplete_transmission
+            elif past_content:
+                items_to_delete[content_id] = past_content
+            else:
+                self._log_info(
+                    'Could not find a content record while deleting record. '
+                    'Skipping record.',
+                    course_or_course_run_key=content_id
+                )
+        return items_to_delete
 
     def export(self, **kwargs):
         """
@@ -367,9 +395,8 @@ class ContentMetadataExporter(Exporter):
 
                         update_payload[key] = existing_record
 
-            # Deleting transmissions doesn't require us to fetch content metadata
-            for content in items_to_delete:
-                delete_payload[content.content_id] = content
+            for key, item in items_to_delete.items():
+                delete_payload[key] = item
 
         self._log_info(
             f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '
