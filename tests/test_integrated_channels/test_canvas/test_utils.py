@@ -5,6 +5,7 @@ import copy
 import datetime
 import random
 import unittest
+from unittest import mock
 
 import pytest
 from requests.models import Response
@@ -105,6 +106,17 @@ class TestCanvasUtils(unittest.TestCase):
         course = CanvasUtil.find_course_in_account(
             self.enterprise_config, mock_session, canvas_account_id, edx_course_id)
         assert course == a_course_2
+
+    @mock.patch('integrated_channels.canvas.utils.CanvasUtil.find_course_in_account')
+    @mock.patch('integrated_channels.canvas.utils.CanvasUtil.find_root_canvas_account')
+    def test_find_no_root_account(self, mock_find_root_canvas_account, mock_find_course_in_account):
+        mock_find_course_in_account.return_value = None
+        mock_find_root_canvas_account.return_value = None
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+        course = CanvasUtil.find_course_by_course_id(
+            self.enterprise_config, mock_session, 666
+        )
+        assert course is None
 
     def test_find_course_in_account_fail(self):
         success_response = unittest.mock.Mock(spec=Response)
