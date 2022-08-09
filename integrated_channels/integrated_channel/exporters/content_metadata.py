@@ -185,7 +185,7 @@ class ContentMetadataExporter(Exporter):
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             plugin_configuration_id=self.enterprise_configuration.id,
             deleted_at__isnull=True,
-        ).only("content_id")
+        ).values_list("content_id", flat=True)
         unique_new_items_to_create = []
 
         # We need to remove any potential create transmissions if the content already exists on the customer's instance
