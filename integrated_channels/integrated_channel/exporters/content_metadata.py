@@ -164,7 +164,7 @@ class ContentMetadataExporter(Exporter):
                     remote_deleted_at__isnull=True,
                     remote_created_at__isnull=False,
                 )
-                # If not force_retrieve_all_catalogs, filter for content records where `content last changed` is less than
+                # If not force_retrieve_all_catalogs, filter content records where `content last changed` is less than
                 # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
                 last_changed_query = Q(content_last_changed__lt=content_last_changed)
                 last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
