@@ -270,7 +270,7 @@ class ContentMetadataExporter(Exporter):
             plugin_configuration_id=self.enterprise_configuration.id,
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
-        ).only("content_id")
+        ).values_list("content_id", flat=True)
         unique_new_items_to_create = []
 
         # We need to remove any potential create transmissions if the content already exists on the customer's instance
@@ -278,6 +278,12 @@ class ContentMetadataExporter(Exporter):
         for item in items_to_create:
             if item.get('content_key') not in existing_content_keys:
                 unique_new_items_to_create.append(item)
+            else:
+                self._log_info(
+                    'Found an previous content record in another catalog while creating. '
+                    'Skipping record.',
+                    course_or_course_run_key=content_id
+                )
 
         # if we have more to work with than the allowed space, slice it up
         if len(unique_new_items_to_create) + len(items_to_delete) + len(matched_items) > max_item_count:

@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.55.3]
+--------
+fix: accurately selecting content key values when filtering for existing content metadata transmission audits.
+
 [3.55.2]
 --------
 fix: integrated channels properly handling customers with multiple catalogs that have overlapping content.

@@ -15,6 +15,7 @@ from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import FAKE_UUIDS, factories
+from test_utils.factories import ContentMetadataItemTransmissionFactory
 from test_utils.fake_catalog_api import (
     FAKE_COURSE_RUN,
     get_fake_catalog,
@@ -70,6 +71,39 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_with_overlapping_content(self, mock_get_catalog_diff, mock_get_content_metadata):
+        """
+        Test that the content metadata exporter will check the diff request `create` payload for any already existing
+        transmission audits and exclude those from the create payload
+        """
+        content_1 = 'course-v1:edX+DemoX+Demo_Course'
+        content_2 = 'edX+DemoX'
+
+        # Double check that neither of these values exists as transmission audits yet
+        assert not ContentMetadataItemTransmission.objects.filter(content_id__in=[content_1, content_2])
+
+        # Create one
+        ContentMetadataItemTransmissionFactory(
+            content_id=content_1,
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+        )
+
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        # Mock that the catalog service reports we need to create both pieces of content
+        mock_get_catalog_diff.return_value = (
+            [{'content_key': content_1}, {'content_key': content_2}], [], []
+        )
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        create_payload, update_payload, delete_payload, _ = exporter.export()
+        # Assert that the exporter detects the already existing content, and excludes it from the create payload
+        assert len(create_payload) == 1
+        assert len(update_payload) == 0
+        assert len(delete_payload) == 0
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
