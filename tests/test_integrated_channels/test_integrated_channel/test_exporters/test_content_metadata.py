@@ -155,6 +155,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_deleted_at=None,
         )
         past_transmission.save()
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         mock_create_items = [{'content_key': FAKE_COURSE_RUN['key']}]
         mock_delete_items = []
         mock_matched_items = []
@@ -164,8 +165,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert create_payload.get(FAKE_COURSE_RUN['key']) == past_transmission
         assert not update_payload
         assert not delete_payload
-        # Sanity check
-        mock_get_content_metadata.assert_not_called()
 
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_content_exporter_update_not_needed_export(self, mock_api_client):
