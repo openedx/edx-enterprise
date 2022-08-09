@@ -282,7 +282,7 @@ class ContentMetadataExporter(Exporter):
                 self._log_info(
                     'Found an previous content record in another catalog while creating. '
                     'Skipping record.',
-                    course_or_course_run_key=content_id
+                    course_or_course_run_key=item.get('content_key')
                 )
 
         # if we have more to work with than the allowed space, slice it up

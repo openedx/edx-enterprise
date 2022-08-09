@@ -99,7 +99,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             [{'content_key': content_1}, {'content_key': content_2}], [], []
         )
         exporter = ContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, _ = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
         # Assert that the exporter detects the already existing content, and excludes it from the create payload
         assert len(create_payload) == 1
         assert len(update_payload) == 0
