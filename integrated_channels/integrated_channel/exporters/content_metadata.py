@@ -139,27 +139,42 @@ class ContentMetadataExporter(Exporter):
         )
         items_to_update = {}
         for matched_item in matched_items:
-            content_query = Q(
+            content_id = matched_item.get('content_key')
+            content_last_changed = matched_item.get('date_updated')
+            incomplete_transmission = ContentMetadataItemTransmission.incomplete_update_transmissions(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                integrated_channel_code=self.enterprise_configuration.channel_code(),
-                enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
-                content_id=matched_item.get('content_key'),
-                remote_deleted_at__isnull=True,
-                remote_created_at__isnull=False,
-            )
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+            ).first()
+            if incomplete_transmission:
+                self._log_info(
+                    'Found an unsent content update record while creating record. '
+                    'Including record.',
+                    course_or_course_run_key=content_id
+                )
+                items_to_update[content_id] = incomplete_transmission
+            else:
+                content_query = Q(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                    plugin_configuration_id=self.enterprise_configuration.id,
+                    content_id=content_id,
+                    remote_deleted_at__isnull=True,
+                    remote_created_at__isnull=False,
+                )
+                # If not force_retrieve_all_catalogs, filter for content records where `content last changed` is less than
+                # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
+                last_changed_query = Q(content_last_changed__lt=content_last_changed)
+                last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
+                if not force_retrieve_all_catalogs:
+                    content_query.add(last_changed_query, Q.AND)
 
-            # If not force_retrieve_all_catalogs, filter for content records where `content last changed` is less than
-            # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
-            last_changed_query = Q(content_last_changed__lt=matched_item.get('date_updated'))
-            last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
-            if not force_retrieve_all_catalogs:
-                content_query.add(last_changed_query, Q.AND)
-
-            items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
-            item = items_to_update_query.first()
-            if item:
-                items_to_update[matched_item.get('content_key')] = item
+                items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
+                item = items_to_update_query.first()
+                if item:
+                    items_to_update[content_id] = item
         return items_to_update
 
     def _check_matched_content_to_create(
@@ -214,7 +229,6 @@ class ContentMetadataExporter(Exporter):
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
-                incomplete_transmission.prepare_to_recreate(content_last_changed, enterprise_customer_catalog.uuid)
                 items_to_create[content_id] = incomplete_transmission
             else:
                 new_transmission = ContentMetadataItemTransmission(
