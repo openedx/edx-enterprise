@@ -269,6 +269,7 @@ class ContentMetadataExporter(Exporter):
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             plugin_configuration_id=self.enterprise_configuration.id,
             remote_deleted_at__isnull=True,
+            remote_created_at__isnull=False,
         ).only("content_id")
         unique_new_items_to_create = []
 
