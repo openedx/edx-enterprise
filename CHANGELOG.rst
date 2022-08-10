@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.0]
+--------
+feat: refactor content metadata jobs to save api call status
+
 [3.55.3]
 --------
 fix: accurately selecting content key values when filtering for existing content metadata transmission audits.
