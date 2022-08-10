@@ -52,11 +52,14 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         """
         return self.enterprise_configuration.provider_id
 
-    def transform_status(self, content_metadata_item):  # pylint: disable=unused-argument
+    def transform_status(self, content_metadata_item):
         """
         Return the status of the content item.
         """
-        return 'ACTIVE'
+        if content_metadata_item.get('status') == 'INACTIVE':
+            return 'INACTIVE'
+        else:
+            return 'ACTIVE'
 
     def transform_title(self, content_metadata_item):
         """

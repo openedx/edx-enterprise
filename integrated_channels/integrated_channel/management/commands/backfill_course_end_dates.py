@@ -35,7 +35,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             transmitted_course_ids = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=canvas_channel.enterprise_customer,
                 integrated_channel_code='CANVAS',
-                deleted_at__isnull=True,
+                remote_deleted_at__isnull=True,
             ).values('content_id')
 
             CanvasAPIClient(canvas_channel).update_participation_types(transmitted_course_ids)

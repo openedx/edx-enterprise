@@ -71,24 +71,24 @@ class ContentMetadataExporter(Exporter):
         super().__init__(user, enterprise_configuration)
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
-    def _log_info(self, msg):
+    def _log_info(self, msg, course_or_course_run_key=None):
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
-                None,
+                course_or_course_run_key,
                 msg
             )
         )
 
-    def _log_exception(self, msg):
+    def _log_exception(self, msg, course_or_course_run_key=None):
         LOGGER.exception(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
-                None,
+                course_or_course_run_key,
                 msg
             )
         )
@@ -106,7 +106,8 @@ class ContentMetadataExporter(Exporter):
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
             plugin_configuration_id=self.enterprise_configuration.id,
-            deleted_at__isnull=True,
+            remote_deleted_at__isnull=True,
+            remote_created_at__isnull=False,
         ).values('content_id')
         if not past_transmissions:
             return []
@@ -138,27 +139,110 @@ class ContentMetadataExporter(Exporter):
         )
         items_to_update = {}
         for matched_item in matched_items:
-            content_query = Q(
+            content_id = matched_item.get('content_key')
+            content_last_changed = matched_item.get('date_updated')
+            incomplete_transmission = ContentMetadataItemTransmission.incomplete_update_transmissions(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                integrated_channel_code=self.enterprise_configuration.channel_code(),
-                enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
-                content_id=matched_item.get('content_key'),
-                deleted_at__isnull=True,
-            )
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+            ).first()
+            if incomplete_transmission:
+                self._log_info(
+                    'Found an unsent content update record while creating record. '
+                    'Including record.',
+                    course_or_course_run_key=content_id
+                )
+                items_to_update[content_id] = incomplete_transmission
+            else:
+                content_query = Q(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                    plugin_configuration_id=self.enterprise_configuration.id,
+                    content_id=content_id,
+                    remote_deleted_at__isnull=True,
+                    remote_created_at__isnull=False,
+                )
+                # If not force_retrieve_all_catalogs, filter content records where `content last changed` is less than
+                # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
+                last_changed_query = Q(content_last_changed__lt=content_last_changed)
+                last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
+                if not force_retrieve_all_catalogs:
+                    content_query.add(last_changed_query, Q.AND)
 
-            # If not force_retrieve_all_catalogs, filter for content records where `content last changed` is less than
-            # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
-            last_changed_query = Q(content_last_changed__lt=matched_item.get('date_updated'))
-            last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
-            if not force_retrieve_all_catalogs:
-                content_query.add(last_changed_query, Q.AND)
-
-            items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
-            item = items_to_update_query.first()
-            if item:
-                items_to_update[matched_item.get('content_key')] = item
+                items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
+                item = items_to_update_query.first()
+                if item:
+                    items_to_update[content_id] = item
         return items_to_update
+
+    def _check_matched_content_to_create(
+        self,
+        enterprise_customer_catalog,
+        matched_items
+    ):
+        """
+        Take a list of content keys and create ContentMetadataItemTransmission records. When existed soft-deleted
+        records exist, resurrect them. When created but not-yet-transmitted records exist, include them.
+
+        Args:
+            enterprise_customer_catalog (EnterpriseCustomerCatalog): The enterprise catalog object
+
+            matched_items (list): A list of dicts containing content keys and the last datetime that the respective
+                content was updated
+
+            force_retrieve_all_catalogs (Bool): If set to True, all content under the catalog will be retrieved,
+                regardless of the last updated at time
+        """
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        items_to_create = {}
+        for matched_item in matched_items:
+            content_id = matched_item.get('content_key')
+            content_last_changed = matched_item.get('date_updated')
+            past_deleted_transmission = ContentMetadataItemTransmission.deleted_transmissions(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+            ).first()
+            incomplete_transmission = ContentMetadataItemTransmission.incomplete_create_transmissions(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+            ).first()
+            if past_deleted_transmission:
+                self._log_info(
+                    'Found previously deleted content record while creating record. '
+                    'Marking record as active.',
+                    course_or_course_run_key=content_id
+                )
+                past_deleted_transmission.prepare_to_recreate(content_last_changed, enterprise_customer_catalog.uuid)
+                items_to_create[content_id] = past_deleted_transmission
+            elif incomplete_transmission:
+                self._log_info(
+                    'Found an unsent content create record while creating record. '
+                    'Including record.',
+                    course_or_course_run_key=content_id
+                )
+                items_to_create[content_id] = incomplete_transmission
+            else:
+                new_transmission = ContentMetadataItemTransmission(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    content_id=content_id,
+                    channel_metadata=None,
+                    content_last_changed=content_last_changed,
+                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                    plugin_configuration_id=self.enterprise_configuration.id
+                )
+                new_transmission.save()
+                items_to_create[content_id] = new_transmission
+        return items_to_create
 
     def _get_catalog_diff(
         self,
@@ -184,7 +268,8 @@ class ContentMetadataExporter(Exporter):
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             plugin_configuration_id=self.enterprise_configuration.id,
-            deleted_at__isnull=True,
+            remote_deleted_at__isnull=True,
+            remote_created_at__isnull=False,
         ).values_list("content_id", flat=True)
         unique_new_items_to_create = []
 
@@ -193,6 +278,12 @@ class ContentMetadataExporter(Exporter):
         for item in items_to_create:
             if item.get('content_key') not in existing_content_keys:
                 unique_new_items_to_create.append(item)
+            else:
+                self._log_info(
+                    'Found an previous content record in another catalog while creating. '
+                    'Skipping record.',
+                    course_or_course_run_key=item.get('content_key')
+                )
 
         # if we have more to work with than the allowed space, slice it up
         if len(unique_new_items_to_create) + len(items_to_delete) + len(matched_items) > max_item_count:
@@ -207,36 +298,68 @@ class ContentMetadataExporter(Exporter):
                 items_to_delete = list(items_to_delete.values())
             items_to_delete = items_to_delete[0:count_left]
 
+        content_to_create = self._check_matched_content_to_create(
+            enterprise_catalog,
+            unique_new_items_to_create
+        )
+
         content_to_update = self._check_matched_content_updated_at(
             enterprise_catalog,
             matched_items,
             force_retrieve_all_catalogs
         )
-        content_to_delete = self._retrieve_past_transmission_content(
+        content_to_delete = self._check_matched_content_to_delete(
             enterprise_catalog,
             items_to_delete
         )
-        return unique_new_items_to_create, content_to_update, content_to_delete
+        return content_to_create, content_to_update, content_to_delete
 
-    def _retrieve_past_transmission_content(self, enterprise_customer_catalog, items):
+    def _check_matched_content_to_delete(self, enterprise_customer_catalog, items):
         """
         Retrieve all past content metadata transmission records that have a `content_id` contained within a provided
         list.
+        renamed from _retrieve_past_transmission_content
         """
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
-        content_keys = [item.get('content_key') for item in items]
 
-        past_content_query = ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            integrated_channel_code=self.enterprise_configuration.channel_code(),
-            enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
-            plugin_configuration_id=self.enterprise_configuration.id,
-            content_id__in=content_keys
-        )
-        return past_content_query.all()
+        items_to_delete = {}
+        for item in items:
+            content_id = item.get('content_key')
+
+            incomplete_transmission = ContentMetadataItemTransmission.incomplete_delete_transmissions(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                content_id=content_id,
+            ).first()
+
+            past_content = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                content_id=content_id
+            ).first()
+
+            if incomplete_transmission:
+                self._log_info(
+                    'Found an unsent content delete record while deleting record. '
+                    'Including record.',
+                    course_or_course_run_key=content_id
+                )
+                items_to_delete[content_id] = incomplete_transmission
+            elif past_content:
+                items_to_delete[content_id] = past_content
+            else:
+                self._log_info(
+                    'Could not find a content record while deleting record. '
+                    'Skipping record.',
+                    course_or_course_run_key=content_id
+                )
+        return items_to_delete
 
     def export(self, **kwargs):
         """
@@ -257,7 +380,6 @@ class ContentMetadataExporter(Exporter):
         create_payload = {}
         update_payload = {}
         delete_payload = {}
-        content_updated_mapping = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
 
             # if we're already at the max in a multi-catalog situation, break out
@@ -286,7 +408,7 @@ class ContentMetadataExporter(Exporter):
 
             # We only need to fetch content metadata if there are items to update or create
             if items_to_create or items_to_update:
-                items_create_keys = [key.get('content_key') for key in items_to_create]
+                items_create_keys = list(items_to_create.keys())
                 items_update_keys = list(items_to_update.keys())
                 content_keys_filter = items_create_keys + items_update_keys
                 content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
@@ -297,16 +419,16 @@ class ContentMetadataExporter(Exporter):
                 for item in content_metadata_items:
                     key = get_content_metadata_item_id(item)
 
-                    # Used to save modified times and catalog uuid's to sent transmission records
-                    content_updated_mapping[key] = {
-                        'modified': item.get('content_last_modified'),
-                        'catalog_uuid': enterprise_customer_catalog.uuid
-                    }
-
                     # transform the content metadata into the channel specific format
                     transformed_item = self._transform_item(item)
                     if key in items_create_keys:
-                        create_payload[key] = transformed_item
+                        existing_record = items_to_create.get(key)
+                        existing_record.channel_metadata = transformed_item
+                        existing_record.content_last_changed = item.get('content_last_modified')
+                        # Sanity check
+                        existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
+
+                        create_payload[key] = existing_record
                     elif key in items_update_keys:
                         existing_record = items_to_update.get(key)
                         existing_record.channel_metadata = transformed_item
@@ -316,16 +438,16 @@ class ContentMetadataExporter(Exporter):
 
                         update_payload[key] = existing_record
 
-            # Deleting transmissions doesn't require us to fetch content metadata
-            for content in items_to_delete:
-                delete_payload[content.content_id] = content
+            for key, item in items_to_delete.items():
+                delete_payload[key] = item
 
         self._log_info(
             f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '
             f'{create_payload}, update_payload: {update_payload}, delete_payload: {delete_payload}'
         )
 
-        return create_payload, update_payload, delete_payload, content_updated_mapping
+        # collections of ContentMetadataItemTransmission objects
+        return create_payload, update_payload, delete_payload
 
     def _transform_item(self, content_metadata_item):
         """

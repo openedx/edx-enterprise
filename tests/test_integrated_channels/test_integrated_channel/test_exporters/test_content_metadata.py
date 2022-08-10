@@ -62,7 +62,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_get_content_metadata.return_value = get_fake_content_metadata()
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
         exporter = ContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         assert not update_payload
         assert not delete_payload
@@ -71,7 +71,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
-            assert key in content_updated_mapping
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
@@ -92,6 +91,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code=self.config.channel_code(),
             plugin_configuration_id=self.config.id,
+            remote_created_at=datetime.datetime.utcnow(),
         )
 
         mock_get_content_metadata.return_value = get_fake_content_metadata()
@@ -100,7 +100,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             [{'content_key': content_1}, {'content_key': content_2}], [], []
         )
         exporter = ContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, _ = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
         # Assert that the exporter detects the already existing content, and excludes it from the create payload
         assert len(create_payload) == 1
         assert len(update_payload) == 0
@@ -120,7 +120,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
             content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
-            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
         )
         past_transmission.save()
         mock_create_items = []
@@ -128,13 +129,43 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_matched_items = []
         mock_get_catalog_diff.return_value = mock_create_items, mock_delete_items, mock_matched_items
         exporter = ContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
         assert not create_payload
         assert not update_payload
-        assert not content_updated_mapping
         assert delete_payload.get(FAKE_COURSE_RUN['key']) == past_transmission
         # Sanity check
         mock_get_content_metadata.assert_not_called()
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_failed_create_export(self, mock_get_catalog_diff, mock_get_content_metadata):
+        """
+        ``ContentMetadataExporter``'s ``export`` produces a delete payload of the course data when retrieving catalog
+        diffs with content to delete.
+        """
+        past_transmission = ContentMetadataItemTransmission(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_id=FAKE_COURSE_RUN['key'],
+            channel_metadata={},
+            content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=None,
+            remote_updated_at=None,
+            remote_deleted_at=None,
+        )
+        past_transmission.save()
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
+        mock_create_items = [{'content_key': FAKE_COURSE_RUN['key']}]
+        mock_delete_items = []
+        mock_matched_items = []
+        mock_get_catalog_diff.return_value = mock_create_items, mock_delete_items, mock_matched_items
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        create_payload, update_payload, delete_payload = exporter.export()
+        assert create_payload.get(FAKE_COURSE_RUN['key']) == past_transmission
+        assert not update_payload
+        assert not delete_payload
 
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_content_exporter_update_not_needed_export(self, mock_api_client):
@@ -156,7 +187,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
             content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
-            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
         )
         past_transmission.save()
 
@@ -169,10 +201,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_api_client.return_value.get_catalog_diff.return_value = mock_create_items, mock_delete_items, \
             mock_matched_items
         exporter = ContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         assert update_payload.get(FAKE_COURSE_RUN['key']).channel_metadata.get('contentId') == FAKE_COURSE_RUN['key']
-        assert content_updated_mapping.get(FAKE_COURSE_RUN['key'])
         assert not create_payload
         assert not delete_payload
 
@@ -184,12 +215,11 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         past_transmission.content_last_changed = datetime.datetime.now()
         past_transmission.save()
 
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         assert not update_payload
         assert not create_payload
         assert not delete_payload
-        assert not content_updated_mapping
         assert mock_api_client.return_value.get_catalog_diff.call_count == 2
         assert mock_api_client.return_value.get_content_metadata.call_count == 1
 
@@ -201,7 +231,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         content_id = 'course:DemoX'
 
         mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata()
-        mock_create_items = [{'course_key': content_id}]
+        mock_create_items = [{'content_key': content_id}]
         mock_delete_items = {}
         mock_matched_items = []
         mock_api_client.return_value.get_catalog_diff.return_value = mock_create_items, mock_delete_items, \
@@ -231,17 +261,16 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_create_items = []
         mock_delete_items = {}
         mock_matched_items = [
-            {'course_key': past_content_transmission.content_id, 'date_updated': '2021-07-16T15:11:10.521611Z'}
+            {'content_key': past_content_transmission.content_id, 'date_updated': '2021-07-16T15:11:10.521611Z'}
         ]
         mock_ent_catalog_api.return_value.get_catalog_diff.return_value = mock_create_items, mock_delete_items, \
             mock_matched_items
         exporter = ContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         assert not create_payload
         assert not update_payload
         assert not delete_payload
-        assert not content_updated_mapping
 
         # We should make a call for the enterprise catalog, but no call for the metadata because no update needed
         assert mock_ent_catalog_api.return_value.get_content_metadata.call_count == 0

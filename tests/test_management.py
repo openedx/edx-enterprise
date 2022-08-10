@@ -51,6 +51,7 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
+from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -1790,3 +1791,35 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
         """
         CornerstoneLearnerDataTransmissionAudit.objects.all().delete()
         CornerstoneEnterpriseCustomerConfiguration.objects.all().delete()
+
+
+@mark.django_db
+@ddt.ddt
+class TestBackfillRemoteActionTimestampsManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``backfill_remote_action_timestamps`` management command.
+    """
+
+    def setUp(self):
+        ContentMetadataItemTransmission.objects.all().delete()
+        super().setUp()
+
+    def test_normal_run(self):
+        """
+        Verify that the management command sets the new columns
+        """
+        factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX',
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            plugin_configuration_id=1,
+            integrated_channel_code='GENERIC',
+            channel_metadata={},
+            remote_created_at=None,
+            remote_updated_at=None,
+            created=NOW,
+            modified=NOW,
+        )
+        call_command(
+            'backfill_remote_action_timestamps',
+        )
+        assert 0 == ContentMetadataItemTransmission.objects.filter(remote_created_at__isnull=True).count()

@@ -50,10 +50,9 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_get_content_metadata.return_value = fake_content_metadata
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
         for key in create_payload:
             assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
-            assert key in content_updated_mapping
         assert not update_payload
         assert not delete_payload
 

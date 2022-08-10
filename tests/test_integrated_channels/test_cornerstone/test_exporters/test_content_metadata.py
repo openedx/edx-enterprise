@@ -71,11 +71,10 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         mock_get_content_metadata.return_value = get_fake_content_metadata()
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
-            assert key in content_updated_mapping
         assert not update_payload
         assert not delete_payload
 
@@ -94,7 +93,8 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE['key'],
             content_last_changed=now,
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            remote_created_at=now,
         )
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
@@ -102,7 +102,8 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             content_last_changed=now,
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            remote_created_at=now,
         )
 
         content_metadata_response_payload = get_fake_content_metadata()
@@ -120,20 +121,18 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         mock_get_catalog_diff.return_value = mock_items_not_included, mock_items_not_found, mock_items_found
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
 
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export_force_all_catalogs()
+        create_payload, update_payload, delete_payload = exporter.export_force_all_catalogs()
         assert len(update_payload) == 2
         assert not create_payload
         assert not delete_payload
         for key in update_payload:
             assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
-            assert key in content_updated_mapping
 
         # Sanity check that the regular export won't yield the update payload
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
         assert not create_payload
         assert not update_payload
         assert not delete_payload
-        assert not content_updated_mapping
 
     @mock.patch('integrated_channels.cornerstone.utils.uuid4')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
@@ -152,14 +151,13 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         mock_get_content_metadata.return_value = get_fake_content_metadata_with_invalid_key()
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create_with_invalid_key()
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         assert list(create_payload.keys()) == [get_fake_content_metadata_with_invalid_key()[0].get('key')]
-        assert content_updated_mapping.get(get_fake_content_metadata_with_invalid_key()[0].get('key'))
         assert not update_payload
         assert not delete_payload
         for item in create_payload.values():
-            assert item.get('ID') == FAKE_UUIDS[4]
+            assert item.channel_metadata.get('ID') == FAKE_UUIDS[4]
 
     @ddt.data(
         (

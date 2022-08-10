@@ -10,6 +10,7 @@ from jsonfield.fields import JSONField
 from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -400,11 +401,137 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True,
     )
-    deleted_at = models.DateTimeField(
-        help_text='Date when the content transmission was deleted',
+    remote_deleted_at = models.DateTimeField(
+        help_text='Date when the content transmission was deleted in the remote API',
         blank=True,
         null=True
     )
+    remote_created_at = models.DateTimeField(
+        help_text='Date when the content transmission was created in the remote API',
+        blank=True,
+        null=True
+    )
+    remote_updated_at = models.DateTimeField(
+        help_text='Date when the content transmission was last updated in the remote API',
+        blank=True,
+        null=True
+    )
+    api_response_status_code = models.PositiveIntegerField(
+        help_text='The most recent remote API call response HTTP status code',
+        blank=True,
+        null=True
+    )
+    api_response_body = models.TextField(
+        help_text='The most recent remote API call response body',
+        blank=True,
+        null=True
+    )
+
+    @classmethod
+    def deleted_transmissions(cls, enterprise_customer, plugin_configuration_id, integrated_channel_code, content_id):
+        """
+        Return any pre-existing records for this customer/plugin/content which was previously deleted
+        """
+        return ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_deleted_at__isnull=False,
+        )
+
+    @classmethod
+    def incomplete_create_transmissions(
+        cls,
+        enterprise_customer,
+        plugin_configuration_id,
+        integrated_channel_code,
+        content_id
+    ):
+        """
+        Return any pre-existing records for this customer/plugin/content which was created but never sent or failed
+        """
+        in_db_but_unsent_query = Q(
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_created_at__isnull=True,
+            remote_updated_at__isnull=True,
+            remote_deleted_at__isnull=True,
+        )
+        in_db_but_failed_to_send_query = Q(
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_created_at__isnull=False,
+            remote_updated_at__isnull=True,
+            remote_deleted_at__isnull=True,
+            api_response_status_code__gte=400,
+        )
+        in_db_but_unsent_query.add(in_db_but_failed_to_send_query, Q.OR)
+        return ContentMetadataItemTransmission.objects.filter(in_db_but_unsent_query)
+
+    @classmethod
+    def incomplete_update_transmissions(
+        cls,
+        enterprise_customer,
+        plugin_configuration_id,
+        integrated_channel_code,
+        content_id
+    ):
+        """
+        Return any pre-existing records for this customer/plugin/content which was updated but never sent or failed
+        """
+        in_db_but_failed_to_send_query = Q(
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_created_at__isnull=False,
+            remote_updated_at__isnull=False,
+            remote_deleted_at__isnull=True,
+            api_response_status_code__gte=400,
+        )
+        return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
+
+    @classmethod
+    def incomplete_delete_transmissions(
+        cls,
+        enterprise_customer,
+        plugin_configuration_id,
+        integrated_channel_code,
+        content_id
+    ):
+        """
+        Return any pre-existing records for this customer/plugin/content which was deleted but never sent or failed
+        """
+        in_db_but_failed_to_send_query = Q(
+            enterprise_customer=enterprise_customer,
+            plugin_configuration_id=plugin_configuration_id,
+            content_id=content_id,
+            integrated_channel_code=integrated_channel_code,
+            remote_created_at__isnull=False,
+            remote_deleted_at__isnull=False,
+            api_response_status_code__gte=400,
+        )
+        return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
+
+    def prepare_to_recreate(self, content_last_changed, enterprise_customer_catalog_uuid):
+        """
+        Prepare a deleted or unsent record to be re-created in the remote API by resetting dates and audit fields
+        """
+        self.api_response_status_code = None
+        self.api_response_body = None
+        self.remote_deleted_at = None
+        self.remote_created_at = None
+        self.remote_updated_at = None
+        self.channel_metadata = None
+        self.content_last_changed = content_last_changed
+        self.enterprise_customer_catalog_uuid = enterprise_customer_catalog_uuid
+        self.save()
+        return self
 
     def __str__(self):
         """

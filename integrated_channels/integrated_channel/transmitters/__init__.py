@@ -24,7 +24,7 @@ class Transmitter:
         self.enterprise_configuration = enterprise_configuration
         self.client = client(enterprise_configuration) if client else None
 
-    def transmit(self, create_payload, update_payload, delete_payload, content_updated_mapping, **kwargs):
+    def transmit(self, create_payload, update_payload, delete_payload, **kwargs):
         """
         The abstract interface method for sending exported data to an integrated channel through its API client.
         """
