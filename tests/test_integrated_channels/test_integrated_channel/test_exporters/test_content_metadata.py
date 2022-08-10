@@ -91,6 +91,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code=self.config.channel_code(),
             plugin_configuration_id=self.config.id,
+            remote_created_at=datetime.datetime.utcnow(),
         )
 
         mock_get_content_metadata.return_value = get_fake_content_metadata()
