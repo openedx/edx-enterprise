@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.1]
+--------
+fix: accounting for integrated Canvas instances that have no root account Ids.
+
 [3.56.0]
 --------
 feat: refactor content metadata jobs to save api call status
