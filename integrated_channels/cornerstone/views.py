@@ -127,11 +127,11 @@ class CornerstoneCoursesListView(BaseViewSet):
 
         get_count = int(request.GET.get('count', exporter.MAX_PAYLOAD_COUNT))
         content_item_count = min(get_count, exporter.MAX_PAYLOAD_COUNT)
-        created, updated, _ = transmitter.transmit(
+        created, updated, deleted = transmitter.transmit(
             *exporter.export_for_web_polling(max_payload_count=content_item_count)
         )
 
-        data = [i.channel_metadata for i in (created + updated)]
+        data = [i.channel_metadata for i in (created + updated + deleted)]
 
         logger.info(f'integrated_channel=CSOD, '
                     f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '

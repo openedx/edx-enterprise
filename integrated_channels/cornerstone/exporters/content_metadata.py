@@ -93,6 +93,9 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
         Return the transformed version of the course is_active status by traversing course runs and setting IsActive to
         True if any of the course runs have availability value set to `Current`, `Starting Soon` or `Upcoming`.
         """
+        # lets not overwrite something we've already tried to set INACTIVE
+        if content_metadata_item.get('IsActive') is not None and content_metadata_item.get('IsActive') == False:
+            return False
         is_active = False
         for course_run in content_metadata_item.get('course_runs', []):
             if course_run.get('availability') in ['Current', 'Starting Soon', 'Upcoming']:

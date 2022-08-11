@@ -56,6 +56,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         """
         Return the status of the content item.
         """
+        # lets not overwrite something we've already tried to set INACTIVE
         if content_metadata_item.get('status') == 'INACTIVE':
             return 'INACTIVE'
         else:
