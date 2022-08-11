@@ -16,13 +16,12 @@ class CornerstoneContentMetadataTransmitter(ContentMetadataTransmitter):
             client=client
         )
 
-def _transmit_action(self, content_metadata_item_map, client_method, action_name):
-    """
-    Set status to IsActive to False for items that should be deleted.
-    """
-    if action_name == 'delete':
-        for _, item in content_metadata_item_map.items():
-            LOGGER.info(f'_transmit_delete <{item.id}>')
-            item.channel_metadata['IsActive'] = False
-            item.save()
-    return super()._transmit_action(content_metadata_item_map, client_method, action_name)
+    def _transmit_action(self, content_metadata_item_map, client_method, action_name):
+        """
+        Set status to IsActive to False for items that should be deleted.
+        """
+        if action_name == 'delete':
+            for _, item in content_metadata_item_map.items():
+                item.channel_metadata['IsActive'] = False
+                item.save()
+        return super()._transmit_action(content_metadata_item_map, client_method, action_name)
