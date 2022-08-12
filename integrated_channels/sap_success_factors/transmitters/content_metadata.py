@@ -1,13 +1,8 @@
 """
 Class for transmitting content metadata to SuccessFactors.
 """
-
-import logging
-
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-
-LOGGER = logging.getLogger(__name__)
 
 
 class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
@@ -30,7 +25,6 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         if action_name == 'delete':
             for _, item in content_metadata_item_map.items():
-                LOGGER.info(f'_transmit_delete <{item.id}>')
                 item.channel_metadata['status'] = 'INACTIVE'
                 item.save()
         return super()._transmit_action(content_metadata_item_map, client_method, action_name)

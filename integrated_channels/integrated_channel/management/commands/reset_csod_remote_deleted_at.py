@@ -1,5 +1,5 @@
 """
-Backfill the new remote_created_at and remote_updated_at content audit record values.
+Mark for re-send all CSOD content transmission with a remote_deleted_at but no api_response_status_code
 """
 import logging
 
@@ -18,14 +18,14 @@ LOGGER = logging.getLogger(__name__)
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):
     """
-    Update content transmission items to have the new remote_created_at and remote_updated_at values.
+    Mark for re-send all CSOD content transmission with a remote_deleted_at but no api_response_status_code
 
-    ./manage.py lms backfill_remote_action_timestamps
+    ./manage.py lms reset_csod_remote_deleted_at
     """
 
     def handle(self, *args, **options):
         """
-        Update all past content transmission items remote_created_at and remote_updated_at
+        Mark for re-send all CSOD content transmission with a remote_deleted_at but no api_response_status_code
         """
 
         ContentMetadataItemTransmission = apps.get_model(
@@ -33,21 +33,24 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             'ContentMetadataItemTransmission'
         )
 
-        no_remote_created_at = Q(remote_created_at__isnull=True)
-        for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=no_remote_created_at):
+        csod_deleted_at_but_null_status = Q(
+            integrated_channel_code='CSOD',
+            remote_deleted_at__isnull=False,
+            api_response_status_code__isnull=True
+        )
+
+        for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=csod_deleted_at_but_null_status):
             for item in items_batch:
                 try:
-                    item.remote_created_at = item.created
-                    item.remote_updated_at = item.modified
+                    item.remote_deleted_at = None
                     item.save()
                     LOGGER.info(generate_formatted_log(
                         item.integrated_channel_code,
                         item.enterprise_customer.uuid,
                         None,
                         item.content_id,
-                        f'ContentMetadataItemTransmission <{item.id}> '
-                        f'remote_created_at={item.remote_created_at}, '
-                        f'remote_updated_at={item.remote_updated_at}'
+                        f'integrated_channel_content_transmission_id={item.id}, '
+                        'setting remote_deleted_at to None'
                     ))
                 except Exception:  # pylint: disable=broad-except
                     LOGGER.exception(generate_formatted_log(
@@ -55,6 +58,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         item.enterprise_customer.uuid,
                         None,
                         item.content_id,
-                        f'ContentMetadataItemTransmission <{item.id}> '
-                        'error backfilling remote_created_at & remote_updated_at'
+                        f'integrated_channel_content_transmission_id={item.id}, '
+                        'error setting remote_deleted_at to None'
                     ))

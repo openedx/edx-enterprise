@@ -1823,3 +1823,63 @@ class TestBackfillRemoteActionTimestampsManagementCommand(unittest.TestCase, Ent
             'backfill_remote_action_timestamps',
         )
         assert 0 == ContentMetadataItemTransmission.objects.filter(remote_created_at__isnull=True).count()
+
+
+@mark.django_db
+@ddt.ddt
+class TestResetCsodRemoteDeletedAtManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``reset_csod_remote_deleted_at`` management command.
+    """
+
+    def setUp(self):
+        ContentMetadataItemTransmission.objects.all().delete()
+        super().setUp()
+
+    def test_normal_run(self):
+        """
+        Verify that the management command touches the correct objects
+        """
+
+        # a non-CSOD item we DO NOT want touched
+        generic1 = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX-GENERIC-1',
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            plugin_configuration_id=1,
+            integrated_channel_code='GENERIC',
+            channel_metadata={},
+            remote_deleted_at=NOW,
+            api_response_status_code=None,
+        )
+        # a CSOD item we DO NOT want touched
+        csod1 = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX-CSOD-1',
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            plugin_configuration_id=1,
+            integrated_channel_code='CSOD',
+            channel_metadata={},
+            remote_deleted_at=NOW,
+            api_response_status_code=200,
+        )
+        # a CSOD item we DO want touched
+        csod2 = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX-CSOD-2',
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            plugin_configuration_id=1,
+            integrated_channel_code='CSOD',
+            channel_metadata={},
+            remote_deleted_at=NOW,
+            api_response_status_code=None,
+        )
+
+        call_command(
+            'reset_csod_remote_deleted_at',
+        )
+
+        generic1.refresh_from_db()
+        csod1.refresh_from_db()
+        csod2.refresh_from_db()
+
+        assert generic1.remote_deleted_at is not None
+        assert csod1.remote_deleted_at is not None
+        assert csod2.remote_deleted_at is None
