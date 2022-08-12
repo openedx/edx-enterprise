@@ -112,7 +112,7 @@ class Command(BaseCommand):
         """ Ensures the `ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP` is created """
         Group.objects.get_or_create(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
 
-    def _create_enterprise_user(self, username, role, enterprise_customer=None):
+    def _create_enterprise_user(self, username, role, enterprise_customer=None, applies_to_all_contexts=False):
         """
         Creates a new user with the specified `username` and `role` (e.g.,
         'enterprise_learner'). The newly created user is added to the
@@ -143,7 +143,9 @@ class Command(BaseCommand):
                 self._create_system_wide_role_assignment(
                     user=user,
                     role=role,
-                    enterprise_customer=enterprise_customer)
+                    enterprise_customer=enterprise_customer,
+                    applies_to_all_contexts=applies_to_all_contexts,
+                )
                 self._create_feature_role_assignments(user=user, role=role)
                 return {
                     "user": user,
@@ -172,7 +174,7 @@ class Command(BaseCommand):
         enrollment_api_group = Group.objects.get(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
         enrollment_api_group.user_set.add(user)
 
-    def _create_system_wide_role_assignment(self, user, role, enterprise_customer):
+    def _create_system_wide_role_assignment(self, user, role, enterprise_customer, applies_to_all_contexts=False):
         """
         Gets or creates a system-wide role assignment for the specified user and role
         """
@@ -180,6 +182,7 @@ class Command(BaseCommand):
         kwargs = {
             'user': user,
             'role': system_role,
+            'applies_to_all_contexts': applies_to_all_contexts,
         }
         if enterprise_customer is not None:
             kwargs['enterprise_customer'] = enterprise_customer
@@ -279,25 +282,29 @@ class Command(BaseCommand):
             # Creates a super admin who has the admin role on all enterprises.
             self._create_enterprise_user(
                 username=ENTERPRISE_ADMIN_ROLE,
-                role=ENTERPRISE_ADMIN_ROLE
+                role=ENTERPRISE_ADMIN_ROLE,
+                applies_to_all_contexts=True,
             ),
             self._create_enterprise_user(
                 username=ENTERPRISE_OPERATOR_ROLE,
-                role=ENTERPRISE_OPERATOR_ROLE
-
+                role=ENTERPRISE_OPERATOR_ROLE,
+                applies_to_all_contexts=True,
             ),
             # Make all of the service workers enterprise_openedx_operators for all enterprises
             self._create_enterprise_user(
                 username='license_manager_worker',
                 role=ENTERPRISE_OPERATOR_ROLE,
+                applies_to_all_contexts=True,
             ),
             self._create_enterprise_user(
                 username='enterprise_catalog_worker',
                 role=ENTERPRISE_OPERATOR_ROLE,
+                applies_to_all_contexts=True,
             ),
             self._create_enterprise_user(
                 username='enterprise_worker',
                 role=ENTERPRISE_OPERATOR_ROLE,
+                applies_to_all_contexts=True,
             ),
         ]
         # Add a couple more learners!
