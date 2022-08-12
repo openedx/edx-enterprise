@@ -1,5 +1,5 @@
 """
-Backfill the new remote_created_at and remote_updated_at content audit record values.
+Mark for re-send all CSOD content transmission with a remote_deleted_at but no api_response_status_code
 """
 import logging
 
