@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.utils import generate_formatted_log, batch_by_pk
+from integrated_channels.utils import batch_by_pk, generate_formatted_log
 
 User = auth.get_user_model()
 

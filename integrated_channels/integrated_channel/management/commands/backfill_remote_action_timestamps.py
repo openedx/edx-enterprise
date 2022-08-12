@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import batch_by_pk, generate_formatted_log
 
 User = auth.get_user_model()
 
@@ -23,22 +23,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     ./manage.py lms backfill_remote_action_timestamps
     """
 
-    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=10000):
-        """
-        using limit/offset does a lot of table scanning to reach higher offsets
-        this scanning can be slow on very large tables
-        if you order by pk, you can use the pk as a pivot rather than offset
-        this utilizes the index, which is faster than scanning to reach offset
-        """
-        qs = ModelClass.objects.filter(extra_filter).order_by('pk')[:batch_size]
-        while qs.exists():
-            yield qs
-            # qs.last() doesn't work here because we've already sliced
-            # loop through so we eventually grab the last one
-            for item in qs:
-                start_pk = item.pk
-            qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
-
     def handle(self, *args, **options):
         """
         Update all past content transmission items remote_created_at and remote_updated_at
@@ -50,7 +34,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         )
 
         no_remote_created_at = Q(remote_created_at__isnull=True)
-        for items_batch in self.batch_by_pk(ContentMetadataItemTransmission, extra_filter=no_remote_created_at):
+        for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=no_remote_created_at):
             for item in items_batch:
                 try:
                     item.remote_created_at = item.created

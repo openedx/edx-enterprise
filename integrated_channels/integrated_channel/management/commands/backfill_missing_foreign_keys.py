@@ -42,6 +42,7 @@ from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SapSuccessFactorsLearnerDataTransmissionAudit,
 )
+from integrated_channels.utils import batch_by_pk
 
 MODELS = {
     'MOODLE': [MoodleEnterpriseCustomerConfiguration, MoodleLearnerDataTransmissionAudit],
@@ -66,22 +67,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     help = _('''
     Backfill missing audit record foreign keys.
     ''')
-
-    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=10000):
-        """
-        using limit/offset does a lot of table scanning to reach higher offsets
-        this scanning can be slow on very large tables
-        if you order by pk, you can use the pk as a pivot rather than offset
-        this utilizes the index, which is faster than scanning to reach offset
-        """
-        qs = ModelClass.objects.filter(extra_filter).order_by('pk')[:batch_size]
-        while qs.exists():
-            yield qs
-            # qs.last() doesn't work here because we've already sliced
-            # loop through so we eventually grab the last one
-            for item in qs:
-                start_pk = item.pk
-            qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
 
     def find_ent_cust(self, enrollment_id):
         """
@@ -109,7 +94,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 # make reentrant ie pickup where we've left off in case the job needs to be restarted
                 # only need to check plugin config OR enterprise customer uuid
                 only_missing_ld_fks = Q(plugin_configuration_id__isnull=True)
-                for audit_record_batch in self.batch_by_pk(LearnerAuditModel, extra_filter=only_missing_ld_fks):
+                for audit_record_batch in batch_by_pk(LearnerAuditModel, extra_filter=only_missing_ld_fks):
                     for audit_record in audit_record_batch:
                         enterprise_customer = self.find_ent_cust(audit_record.enterprise_course_enrollment_id)
                         if enterprise_customer is None:
