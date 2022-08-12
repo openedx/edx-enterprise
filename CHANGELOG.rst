@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.2]
+--------
+fix: refactor the way we send cornerstone content metadata deletes
+
 [3.56.1]
 --------
 fix: accounting for integrated Canvas instances that have no root account Ids.
