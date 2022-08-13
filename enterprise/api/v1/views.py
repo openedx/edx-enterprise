@@ -7,6 +7,7 @@ from smtplib import SMTPException
 from urllib.parse import quote_plus, unquote
 
 import requests
+from django.contrib import auth
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
@@ -83,14 +84,24 @@ try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
     from openedx.core.djangoapps.enrollments import api as enrollment_api
+    from oauth2_provider.generators import generate_client_id, generate_client_secret
+    from oauth2_provider.models import get_application_model
+    from oauth2_provider.views import ApplicationRegistration
 except ImportError:
     get_course_overviews = None
     get_certificate_for_user = None
     CourseEnrollment = None
     CourseMode = None
     enrollment_api = None
+    generate_client_id = None
+    generate_client_secret = None
+    get_application_model = None
+    ApplicationRegistration = None
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()
+if get_application_model:
+    Application = get_application_model()
 
 
 class EnterpriseViewSet:
@@ -1199,6 +1210,91 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+
+class EnterpriseAdminAPICredsView(APIView):
+    """
+    placeholder
+    """
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    http_method_names = ['post', 'get']
+
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def get(self, request):
+        results = {}
+        # find all oauth2 applications for the user
+        user_applications = Application.objects.filter(user=request.user)
+        user_creds = []
+        # collect the client id's and secrets
+        for user_application in user_applications:
+            user_creds.append(
+                {'client_id': user_application.client_id, 'client_secret': user_application.client_secret}
+            )
+        # check if the user supplied an org
+        enterprise_uuid = request.query_params.get('enterprise_uuid')
+        org_creds = []
+        user_enterprise = None
+        if enterprise_uuid:
+            # verify that the customer exists
+            enterprise = models.EnterpriseCustomer.objects.filter(uuid=enterprise_uuid).first()
+            if enterprise:
+                # verify the user is a part of the customer
+                user_enterprise = models.EnterpriseCustomerUser.objects.filter(
+                    user_id=request.user.id,
+                    enterprise_customer=enterprise,
+                ).first()
+                if user_enterprise:
+                    # find all other users other than the requesting user
+                    all_enterprise_users = models.EnterpriseCustomerUser.objects.filter(
+                        enterprise_customer=enterprise
+                    ).exclude(user_id=request.user.id).values_list('user_id', flat=True)
+                    # loop through those user's oauth2 applications and collect the client IDs and screts
+                    for org_application in Application.objects.filter(user__in=all_enterprise_users):
+                        org_creds.append(
+                            {'client_id': org_application.client_id, 'client_secret': org_application.client_secret}
+                        )
+
+        # only append org creds if the requesting user is verified to be part of the customer
+        if user_enterprise:
+            results['org_creds'] = org_creds
+
+        results['user_creds'] = user_creds
+        return Response(results, status=HTTP_200_OK)
+
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def post(self, request):
+        # there are three user roles associated with authorizing a user to make API requests
+        models.SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=request.user,
+            role=models.SystemWideEnterpriseRole.objects.filter(name='enterprise_admin')
+        )
+        models.EnterpriseFeatureUserRoleAssignment.objects.get_or_create(
+            user=request.user,
+            role=models.EnterpriseFeatureRole.objects.filter(name="dashboard_admin")
+        )
+        models.EnterpriseFeatureUserRoleAssignment.objects.get_or_create(
+            user=request.user,
+            role=models.EnterpriseFeatureRole.objects.filter(name="catalog_admin")
+        )
+        new_client_id = None
+        new_client_secret = None
+        if generate_client_id and generate_client_secret:
+            # generate a new set of client IDs and secrets for the user
+            new_application = Application.objects.create(
+                name="e-commerce service",
+                user=request.user,
+                client_id=generate_client_id(),
+                client_secret=generate_client_secret(),
+                client_type='confidential'
+            )
+            new_client_id = new_application.client_id
+            new_client_secret = new_application.client_secret
+
+        return Response(
+            {'client_id': new_client_id, 'client_secret': new_client_secret},
+            status=HTTP_200_OK
+        )
 
 
 class CatalogQueryView(APIView):

@@ -45,6 +45,11 @@ urlpatterns = [
         name='link-pending-enterprise-learner'
     ),
     re_path(
+        r'^generate_api_access$',
+        views.EnterpriseAdminAPICredsView.as_view(),
+        name='enterprise-admin-access'
+    ),
+    re_path(
         r'^enterprise_catalog_query/(?P<catalog_query_id>[\d]+)/$',
         views.CatalogQueryView.as_view(),
         name='enterprise-catalog-query'
