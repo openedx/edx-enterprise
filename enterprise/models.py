@@ -1519,7 +1519,7 @@ class PendingEnrollment(TimeStampedModel):
         return self.__str__()
 
 
-def logo_path(instance, filename):
+def logo_path(instance, filename):  # pylint: disable=unused-argument
     """
     Delete the file if it already exist and returns the enterprise customer logo image path.
 
@@ -1528,12 +1528,12 @@ def logo_path(instance, filename):
         filename (str): file to upload
 
     Returns:
-        path: path of image file e.g. enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower()
+        path: path of image file e.g. enterprise/branding/logo_<uuid>.<ext>.lower()
 
     """
     extension = os.path.splitext(filename)[1].lower()
-    instance_id = str(instance.id)
-    fullname = os.path.join("enterprise/branding/", instance_id, instance_id + "_logo" + extension)
+    generated_uuid = str(uuid4())
+    fullname = os.path.join("enterprise/branding/logo_" + generated_uuid + extension)
     if default_storage.exists(fullname):
         default_storage.delete(fullname)
     return fullname

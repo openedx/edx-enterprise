@@ -3,6 +3,7 @@ Tests for the `edx-enterprise` models module.
 """
 
 import json
+import re
 import logging
 import os
 import shutil
@@ -991,6 +992,8 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
     """
     Tests of the EnterpriseCustomerBrandingConfiguration model.
     """
+    BRANDING_PATH_REGEX = r'enterprise\/branding\/logo_[0-9a-fA-F]{8}\b-[0-9a-fA-F]'\
+        r'{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}.png$'
 
     @staticmethod
     def _make_file_mock(name="logo.png", size=240 * 1024):
@@ -1036,7 +1039,6 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         """
         file_mock = self._make_file_mock()
         branding_config = EnterpriseCustomerBrandingConfiguration(
-            id=1,
             enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo=file_mock
         )
@@ -1045,14 +1047,14 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         storage_mock.exists.return_value = file_exists
         with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
             path = logo_path(branding_config, branding_config.logo.name)
-            self.assertEqual(path, "enterprise/branding/1/1_logo.png")
+            self.assertTrue(re.search(self.BRANDING_PATH_REGEX, path))
             assert storage_mock.delete.call_count == (1 if delete_called else 0)
             if delete_called:
-                storage_mock.delete.assert_called_once_with('enterprise/branding/1/1_logo.png')
+                storage_mock.delete.assert_called_once_with(path)
 
     def test_logo_path_after_save(self):
         """
-        Test that `EnterpriseCustomerBrandingConfiguration`.logo is saved at the correct path with correct id after the
+        Test that `EnterpriseCustomerBrandingConfiguration`.logo is saved at the correct path after the
         model instance is saved.
         """
         file_mock = self._make_file_mock()
@@ -1061,9 +1063,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo=file_mock
         )
         branding_config.save()
-        saved_path = branding_config.logo.path  # pylint: disable=no-member
-        expected_path = os.path.abspath(logo_path(branding_config, branding_config.logo.name))
-        self.assertEqual(saved_path, expected_path)
+        self.assertTrue(re.search(self.BRANDING_PATH_REGEX, branding_config.logo.path))
         self.addCleanup(self.cleanup)
 
     def test_branding_configuration_saving_successfully(self):
