@@ -46,19 +46,18 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
 
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
-        create_payload, update_payload, delete_payload, content_updated_mapping = exporter.export()
+        create_payload, update_payload, delete_payload = exporter.export()
 
         # not testing with program content type yet (it just generates a lot of keyError)
         for key in create_payload:
             assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
-            assert key in content_updated_mapping
         assert not update_payload
         assert not delete_payload
         expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()
         for item in create_payload.values():
             self.assertTrue(
                 set(expected_keys)
-                .issubset(set(item.keys()))
+                .issubset(set(item.channel_metadata.keys()))
             )
 
     def test_transform_course_metadata(self):

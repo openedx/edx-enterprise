@@ -12,6 +12,7 @@ from integrated_channels.cornerstone.models import (
     CornerstoneLearnerDataTransmissionAudit,
 )
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
+from integrated_channels.utils import batch_by_pk
 
 LOGGER = logging.getLogger(__name__)
 
@@ -44,22 +45,6 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         else:
             return configs.first()
 
-    def batch_by_pk(self, ModelClass, extra_filter=Q(), batch_size=10000):
-        """
-        using limit/offset does a lot of table scanning to reach higher offsets
-        this scanning can be slow on very large tables
-        if you order by pk, you can use the pk as a pivot rather than offset
-        this utilizes the index, which is faster than scanning to reach offset
-        """
-        qs = ModelClass.objects.filter(extra_filter).order_by('pk')[:batch_size]
-        while qs.exists():
-            yield qs
-            # qs.last() doesn't work here because we've already sliced
-            # loop through so we eventually grab the last one
-            for item in qs:
-                start_pk = item.pk
-            qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
-
     def backfill_join_keys(self):
         """
         For each audit record kind, find all the records in batch, then lookup the appropriate
@@ -67,7 +52,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         """
         try:
             only_missing_ld_fks = Q(plugin_configuration_id__isnull=True)
-            for audit_record_batch in self.batch_by_pk(CornerstoneLearnerDataTransmissionAudit, extra_filter=only_missing_ld_fks):  # pylint: disable=line-too-long
+            for audit_record_batch in batch_by_pk(CornerstoneLearnerDataTransmissionAudit, extra_filter=only_missing_ld_fks):  # pylint: disable=line-too-long
                 for audit_record in audit_record_batch:
                     config = self.find_csod_config_by_subdomain(audit_record.subdomain)
                     if config is None:

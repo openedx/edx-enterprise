@@ -3,9 +3,9 @@ Tests for the `edx-enterprise` models module.
 """
 
 import json
-import re
 import logging
 import os
+import re
 import shutil
 import unittest
 from datetime import timedelta

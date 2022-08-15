@@ -156,20 +156,21 @@ class CanvasUtil:
         if not course:
             # now let's try the root account instead (searches under all subaccounts)
             root_canvas_account = CanvasUtil.find_root_canvas_account(enterprise_configuration, session)
-            course = CanvasUtil.find_course_in_account(
-                enterprise_configuration,
-                session,
-                root_canvas_account['id'],
-                edx_course_id,
-            )
-            if course:
-                LOGGER.info(generate_formatted_log(
-                    'canvas',
-                    enterprise_configuration.enterprise_customer.uuid,
-                    None,
+            if root_canvas_account:
+                course = CanvasUtil.find_course_in_account(
+                    enterprise_configuration,
+                    session,
+                    root_canvas_account['id'],
                     edx_course_id,
-                    'Found course under root Canvas account'
-                ))
+                )
+                if course:
+                    LOGGER.info(generate_formatted_log(
+                        'canvas',
+                        enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        edx_course_id,
+                        'Found course under root Canvas account'
+                    ))
         return course
 
     @staticmethod

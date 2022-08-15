@@ -211,8 +211,8 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         mock_get_content_metadata.return_value = get_fake_content_metadata_for_partial_create_w_program()
         response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # 1 create, 1 update, 1 delete, no deletes sent, no count restriction, so expect 2
-        self.assertEqual(len(response.data), 2)
+        # 1 create, 1 update, 1 delete, so expect 3
+        self.assertEqual(len(response.data), 3)
         url = '{path}?ciid={customer_uuid}&count={count}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid,
@@ -224,5 +224,5 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         # Re-request and expect the create to be already created so the only item to be returned is the update item
         response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=if_modified_since)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # 1 create, 1 update, 1 delete, no deletes sent, count set to 1, so expect 1
+        # 1 create, 1 update, 1 delete, count set to 1, so expect 1
         self.assertEqual(len(response.data), 1)

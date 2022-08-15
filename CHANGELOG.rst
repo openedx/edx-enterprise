@@ -17,6 +17,22 @@ Unreleased
 ----------
 None
 
+[3.56.3]
+--------
+fix: replace id with uuid in branding logo file path
+
+[3.56.2]
+--------
+fix: refactor the way we send cornerstone content metadata deletes
+
+[3.56.1]
+--------
+fix: accounting for integrated Canvas instances that have no root account Ids.
+
+[3.56.0]
+--------
+feat: refactor content metadata jobs to save api call status
+
 [3.55.3]
 --------
 fix: accurately selecting content key values when filtering for existing content metadata transmission audits.

@@ -884,8 +884,11 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
         model = ContentMetadataItemTransmission
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    integrated_channel_code = 'CORNERSTONE'
+    integrated_channel_code = 'GENERIC'
+    plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     content_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    content_last_changed = localized_utcnow()
+    enterprise_customer_catalog_uuid = factory.LazyAttribute(lambda x: FAKER.uuid4())
     channel_metadata = {
         'title': 'edX Demonstration Course',
         'key': 'edX+DemoX',
