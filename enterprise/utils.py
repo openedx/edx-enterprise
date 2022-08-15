@@ -4,9 +4,10 @@ Utility functions for enterprise app.
 import datetime
 import json
 import logging
+import os
 import re
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import bleach
 import pytz
@@ -2331,3 +2332,22 @@ def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FOR
 def localized_utcnow():
     """Helper function to return localized utcnow()."""
     return pytz.UTC.localize(datetime.datetime.utcnow())  # pylint: disable=no-value-for-parameter
+
+
+def logo_path(instance, filename):
+    """
+    Delete the file if it already exist and returns the enterprise customer logo image path.
+
+    Arguments:
+        instance (:class:`.EnterpriseCustomerBrandingConfiguration`): EnterpriseCustomerBrandingConfiguration object
+        filename (str): file to upload
+
+    Returns:
+        path: path of image file e.g. enterprise/branding/logo_<uuid>.<ext>.lower()
+
+    """
+    extension = os.path.splitext(filename)[1].lower()
+    generated_uuid = str(uuid4())
+    fullname = os.path.join("enterprise/branding/" + str(instance.enterprise_customer.uuid) +
+                            "/logo_" + generated_uuid + extension)
+    return fullname
