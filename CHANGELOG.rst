@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.3]
+--------
+fix: replace id with uuid in branding logo file path
+
 [3.56.2]
 --------
 fix: refactor the way we send cornerstone content metadata deletes

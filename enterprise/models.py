@@ -5,7 +5,6 @@ Database models for enterprise.
 import collections
 import itertools
 import json
-import os
 from decimal import Decimal
 from logging import getLogger
 from urllib.parse import urljoin
@@ -26,7 +25,6 @@ from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
-from django.core.files.storage import default_storage
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
 from django.template import Context, Template
@@ -66,6 +64,7 @@ from enterprise.utils import (
     get_platform_logo_url,
     get_user_valid_idp,
     localized_utcnow,
+    logo_path,
     serialize_notification_content,
     track_enrollment,
 )
@@ -1517,26 +1516,6 @@ class PendingEnrollment(TimeStampedModel):
         Return string representation of the enrollment.
         """
         return self.__str__()
-
-
-def logo_path(instance, filename):
-    """
-    Delete the file if it already exist and returns the enterprise customer logo image path.
-
-    Arguments:
-        instance (:class:`.EnterpriseCustomerBrandingConfiguration`): EnterpriseCustomerBrandingConfiguration object
-        filename (str): file to upload
-
-    Returns:
-        path: path of image file e.g. enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower()
-
-    """
-    extension = os.path.splitext(filename)[1].lower()
-    instance_id = str(instance.id)
-    fullname = os.path.join("enterprise/branding/", instance_id, instance_id + "_logo" + extension)
-    if default_storage.exists(fullname):
-        default_storage.delete(fullname)
-    return fullname
 
 
 class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):

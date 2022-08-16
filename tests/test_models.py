@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` models module.
 import json
 import logging
 import os
+import re
 import shutil
 import unittest
 from datetime import timedelta
@@ -991,6 +992,9 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
     """
     Tests of the EnterpriseCustomerBrandingConfiguration model.
     """
+    BRANDING_PATH_REGEX = r'enterprise\/branding\/[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}'\
+        r'\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\/logo_[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}'\
+        r'\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}.png$'
 
     @staticmethod
     def _make_file_mock(name="logo.png", size=240 * 1024):
@@ -1023,36 +1027,25 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         )
         self.assertEqual(method(customer_branding_config), expected_str)
 
-    @ddt.data(
-        (True, True),
-        (False, False),
-    )
-    @ddt.unpack
-    def test_logo_path(self, file_exists, delete_called):
+    def test_logo_path(self):
         """
-        Test that the path of image file should beenterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
-
-        Additionally, test that the correct backend actions are taken in regards to deleting existing data.
+        Test that the path of image file should be enterprise/branding/<enterprise_uuid>/logo_<uuid>.<ext>.lower().
         """
         file_mock = self._make_file_mock()
         branding_config = EnterpriseCustomerBrandingConfiguration(
-            id=1,
             enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo=file_mock
         )
 
         storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
-        storage_mock.exists.return_value = file_exists
         with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
             path = logo_path(branding_config, branding_config.logo.name)
-            self.assertEqual(path, "enterprise/branding/1/1_logo.png")
-            assert storage_mock.delete.call_count == (1 if delete_called else 0)
-            if delete_called:
-                storage_mock.delete.assert_called_once_with('enterprise/branding/1/1_logo.png')
+            print(path)
+            self.assertTrue(re.search(self.BRANDING_PATH_REGEX, path))
 
     def test_logo_path_after_save(self):
         """
-        Test that `EnterpriseCustomerBrandingConfiguration`.logo is saved at the correct path with correct id after the
+        Test that `EnterpriseCustomerBrandingConfiguration`.logo is saved at the correct path after the
         model instance is saved.
         """
         file_mock = self._make_file_mock()
@@ -1061,9 +1054,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo=file_mock
         )
         branding_config.save()
-        saved_path = branding_config.logo.path  # pylint: disable=no-member
-        expected_path = os.path.abspath(logo_path(branding_config, branding_config.logo.name))
-        self.assertEqual(saved_path, expected_path)
+        self.assertTrue(re.search(self.BRANDING_PATH_REGEX, branding_config.logo.path))
         self.addCleanup(self.cleanup)
 
     def test_branding_configuration_saving_successfully(self):
