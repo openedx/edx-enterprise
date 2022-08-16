@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.4]
+--------
+fix: open redirect url whitelisting for data sharing conseent and change enterprise page
+
 [3.56.3]
 --------
 fix: replace id with uuid in branding logo file path

@@ -332,3 +332,10 @@ ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY = 'test_backend_oauth2_key'
 ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET = 'test_backend_oauth2_secret'
 
 ECOMMERCE_API_URL = 'https://ecommerce.example.com/api/v2/'
+
+LOGIN_REDIRECT_WHITELIST = [
+    'success.url',
+    'failure.url',
+    'google.com',
+    'facebook.com'
+    ]
