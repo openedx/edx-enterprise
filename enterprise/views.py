@@ -3,6 +3,7 @@ User-facing views for the Enterprise app.
 """
 
 import datetime
+from importlib.metadata import requires
 import json
 import re
 from collections import namedtuple
@@ -27,6 +28,8 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.encoding import iri_to_uri
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import slugify
 from django.utils.translation import get_language_from_request
 from django.utils.translation import gettext as _
@@ -183,6 +186,13 @@ DSC_DENIED = FailedEnrollmentReason(
     enrollment_client_error='Data Sharing Consent terms must be accepted in order to enroll',
     failure_reason_message='dsc_denied',
 )
+
+
+def get_safe_redirect_url(url, requires_https=None):
+    redirect_whitelist = set(getattr(settings, 'LOGIN_REDIRECT_WHITELIST', []))
+    if url_has_allowed_host_and_scheme(url, allowed_hosts=redirect_whitelist, require_https=requires_https):
+        return iri_to_uri(url)
+    return url
 
 
 def verify_edx_resources():
@@ -909,6 +919,8 @@ class GrantDataSharingPermissions(View):
 
         context_data = get_global_context(request, enterprise_customer)
 
+        success_url = get_safe_redirect_url(success_url)
+        failure_url = get_safe_redirect_url(failure_url)
         if not (success_url and failure_url):
             return render_page_with_error_code_message(
                 request, context_data, REDIRECT_URLS_MISSING_ERROR_CODE,
@@ -1078,7 +1090,7 @@ class EnterpriseSelectionView(FormView):
         )
         initial.update({
             'enterprises': [(str(uuid), name) for uuid, name in enterprises],
-            'success_url': self.request.GET.get('success_url'),
+            'success_url': get_safe_redirect_url(self.request.GET.get('success_url')),
             'user_id': self.request.user.id
         })
         LOGGER.info(
