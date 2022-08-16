@@ -2336,14 +2336,14 @@ def localized_utcnow():
 
 def logo_path(instance, filename):
     """
-    Delete the file if it already exist and returns the enterprise customer logo image path.
+    Returns the enterprise customer logo image path.
 
     Arguments:
         instance (:class:`.EnterpriseCustomerBrandingConfiguration`): EnterpriseCustomerBrandingConfiguration object
         filename (str): file to upload
 
     Returns:
-        path: path of image file e.g. enterprise/branding/logo_<uuid>.<ext>.lower()
+        path: path of image file e.g. enterprise/branding/<enterprise_uuid>/logo_<uuid>.<ext>.lower()
 
     """
     extension = os.path.splitext(filename)[1].lower()

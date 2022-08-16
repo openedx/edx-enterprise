@@ -1029,9 +1029,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
 
     def test_logo_path(self):
         """
-        Test that the path of image file should beenterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
-
-        Additionally, test that the correct backend actions are taken in regards to deleting existing data.
+        Test that the path of image file should be enterprise/branding/<enterprise_uuid>/logo_<uuid>.<ext>.lower().
         """
         file_mock = self._make_file_mock()
         branding_config = EnterpriseCustomerBrandingConfiguration(
