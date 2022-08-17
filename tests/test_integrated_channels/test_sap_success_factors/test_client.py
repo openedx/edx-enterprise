@@ -284,7 +284,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         )
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-        status, body = sap_client.create_content_metadata(self.content_payload)
+        status, _ = sap_client.create_content_metadata(self.content_payload)
         assert status >= 400
 
     @responses.activate
