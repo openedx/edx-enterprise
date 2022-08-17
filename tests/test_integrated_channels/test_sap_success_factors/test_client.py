@@ -239,7 +239,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
     @responses.activate
     def test_sap_api_connection_error(self):
         """
-        ``create_content_metadata`` should raise ClientError when API request fails with a connection error.
+        ``create_content_metadata`` should NOT raise ClientError when API request fails with a connection error.
         """
         responses.add(
             responses.POST,
@@ -257,7 +257,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             body=requests.exceptions.RequestException()
         )
 
-        with raises(ClientError):
+        with raises(requests.exceptions.RequestException):
             sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
             sap_client.create_content_metadata(self.content_payload)
 
@@ -283,9 +283,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=400
         )
 
-        with raises(ClientError):
-            sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-            sap_client.create_content_metadata(self.content_payload)
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        status, body = sap_client.create_content_metadata(self.content_payload)
+        assert status >= 400
 
     @responses.activate
     def test_expired_access_token(self):

@@ -157,7 +157,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         if status_code >= 400:
             raise ClientError(
                 f'Degreed2: fetch request failed: attempted, external ID={external_id},'
-                f'received status_code={status_code}'
+                f'received status_code={status_code}',
+                status_code=status_code
             )
         response_json = json.loads(response_body)
         if response_json['data']:
@@ -188,9 +189,12 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                     f'Course with integration_id = {a_course.get("external-id")} already exists, '
                 )
             )
+            # content already exists, we'll treat this as a success
+            status_code = 200
         elif status_code >= 400:
             raise ClientError(
-                f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}'
+                f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
+                status_code=status_code
             )
         return status_code, response_body
 
@@ -220,12 +224,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             patch_url,
             course_id
         )
-        if patch_status_code >= 400:
-            raise ClientError(
-                f'Degreed2: patch request failed: attempted, external ID={external_id},'
-                f'status_code={patch_status_code}'
-                f'response_body={patch_response_body}'
-            )
         return patch_status_code, patch_response_body
 
     def delete_content_metadata(self, serialized_data):
@@ -261,7 +259,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 raise ClientError(
                     f'Degreed2: delete request failed: attempted, external ID={external_id},'
                     f'status_code={del_status_code}'
-                    f'response_body={del_response_body}'
+                    f'response_body={del_response_body}',
+                    status_code=del_status_code
                 )
         except requests.exceptions.RequestException as exc:
             raise ClientError(

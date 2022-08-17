@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime
 from itertools import islice
+import requests
 
 from django.conf import settings
 
@@ -137,15 +138,38 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 response_status_code, response_body = client_method(serialized_chunk)
             except ClientError as exc:
+                LOGGER.exception(exc)
+                response_status_code = exc.status_code
+                response_body = exc.message
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "
-                    f"Task failed with message [{exc.message}] and status code [{exc.status_code}]"
+                    f"Task failed with message [{exc.message}] and status code [{response_status_code}]"
                 )
+            except requests.exceptions.RequestException as exc:
                 LOGGER.exception(exc)
-                response_status_code = exc.status_code
+                if exc.response:
+                    response_status_code = exc.response.status_code
+                    response_body = exc.response.text
+                else:
+                    response_status_code = 555
+                self._log_error(
+                    f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "
+                    f"[{self.enterprise_configuration.channel_code()}]. "
+                    f"Task failed with message [{exc.message}] and status code [{response_status_code}]"
+                )
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.exception(exc)
+                response_status_code = 555
                 response_body = exc.message
+                self._log_error(
+                    f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
+                    f"[{self.enterprise_configuration.enterprise_customer.name}] "
+                    f"[{self.enterprise_configuration.channel_code()}]. "
+                    f"Task failed with message [{exc.message}]"
+                )
             finally:
                 action_happened_at = datetime.utcnow()
                 for content_id, transmission in chunk.items():
