@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.5]
+--------
+fix: properly pass SAP client status back to content transmission records
+
 [3.56.4]
 --------
 fix: open redirect url whitelisting for data sharing conseent and change enterprise page

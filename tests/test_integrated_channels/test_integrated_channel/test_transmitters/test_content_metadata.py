@@ -8,6 +8,7 @@ from datetime import datetime
 from unittest import mock
 
 import ddt
+import requests
 from pytest import mark
 
 from integrated_channels.exceptions import ClientError
@@ -186,6 +187,84 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         assert created_transmission_2.remote_created_at is not None
         assert created_transmission_2.api_response_status_code > 400
         assert created_transmission_2.api_response_body == 'error occurred'
+
+    def test_transmit_create_exception_failure(self):
+        """
+        Test unsuccessful creation of content metadata during transmission.
+        """
+        content_id_1 = 'course:DemoX'
+
+        content_1 = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_1,
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            enterprise_customer_catalog_uuid=self.enterprise_catalog.uuid,
+            channel_metadata={}
+        )
+
+        create_payload = {
+            content_id_1: content_1,
+        }
+        update_payload = {}
+        delete_payload = {}
+        self.create_content_metadata_mock.side_effect = Exception('error occurred')
+        transmitter = ContentMetadataTransmitter(self.enterprise_config)
+        transmitter.transmit(create_payload, update_payload, delete_payload)
+
+        self.create_content_metadata_mock.assert_called()
+        self.update_content_metadata_mock.assert_not_called()
+        self.delete_content_metadata_mock.assert_not_called()
+
+        created_transmission_1 = ContentMetadataItemTransmission.objects.get(
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_id=content_id_1,
+        )
+
+        assert created_transmission_1.remote_created_at is not None
+        assert created_transmission_1.api_response_status_code == 555
+        assert created_transmission_1.api_response_body == 'error occurred'
+
+    def test_transmit_create_request_exception_failure(self):
+        """
+        Test unsuccessful creation of content metadata during transmission.
+        """
+        content_id_1 = 'course:DemoX'
+
+        content_1 = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_1,
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            enterprise_customer_catalog_uuid=self.enterprise_catalog.uuid,
+            channel_metadata={}
+        )
+
+        create_payload = {
+            content_id_1: content_1,
+        }
+        update_payload = {}
+        delete_payload = {}
+        self.create_content_metadata_mock.side_effect = requests.exceptions.ConnectionError('error occurred')
+        transmitter = ContentMetadataTransmitter(self.enterprise_config)
+        transmitter.transmit(create_payload, update_payload, delete_payload)
+
+        self.create_content_metadata_mock.assert_called()
+        self.update_content_metadata_mock.assert_not_called()
+        self.delete_content_metadata_mock.assert_not_called()
+
+        created_transmission_1 = ContentMetadataItemTransmission.objects.get(
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            content_id=content_id_1,
+        )
+
+        assert created_transmission_1.remote_created_at is not None
+        assert created_transmission_1.api_response_status_code == 555
+        assert created_transmission_1.api_response_body == 'error occurred'
 
     def test_transmit_update_success(self):
         """

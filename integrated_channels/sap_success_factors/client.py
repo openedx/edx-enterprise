@@ -179,7 +179,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Raises:
             ClientError: If SuccessFactors API call fails.
         """
-        self._sync_content_metadata(serialized_data)
+        return self._sync_content_metadata(serialized_data)
 
     def update_content_metadata(self, serialized_data):
         """
@@ -191,7 +191,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Raises:
             ClientError: If SuccessFactors API call fails.
         """
-        self._sync_content_metadata(serialized_data)
+        return self._sync_content_metadata(serialized_data)
 
     def delete_content_metadata(self, serialized_data):
         """
@@ -203,7 +203,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Raises:
             ClientError: If SuccessFactors API call fails.
         """
-        self._sync_content_metadata(serialized_data)
+        return self._sync_content_metadata(serialized_data)
 
     def _sync_content_metadata(self, serialized_data):
         """
@@ -216,41 +216,20 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             ClientError: If SuccessFactors API call fails.
         """
         url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.course_api_path
-        try:
-            status_code, response_body = self._call_post_with_session(url, serialized_data)
-        except requests.exceptions.RequestException as exc:
-            LOGGER.error(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    f"SAPSuccessFactorsAPIClient request failed: {exc.__class__.__name__} {str(exc)}"
-                )
-            )
-            raise ClientError(
-                'SAPSuccessFactorsAPIClient request failed: {error} {message}'.format(
-                    error=exc.__class__.__name__,
-                    message=str(exc)
-                )
-            ) from exc
 
-        if status_code >= 400:
+        response_status_code, response_body = self._call_post_with_session(url, serialized_data)
+
+        if response_status_code >= 400:
             LOGGER.error(
                 generate_formatted_log(
                     self.enterprise_configuration.channel_code(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     None,
-                    f"SAPSuccessFactorsAPIClient request failed with status {status_code}: {response_body}"
+                    f"SAPSuccessFactorsAPIClient request failed with status {response_status_code}: {response_body}"
                 )
             )
-            raise ClientError(
-                'SAPSuccessFactorsAPIClient request failed with status {status_code}: {message}'.format(
-                    status_code=status_code,
-                    message=response_body
-                )
-            )
+        return response_status_code, response_body
 
     def _call_post_with_user_override(self, sap_user_id, url, payload):
         """
