@@ -24,6 +24,10 @@ class ContentMetadataTransmitter(Transmitter):
     Used to transmit content metadata to an integrated channel.
     """
 
+    # a 'magic number' to designate an unknown error
+    UNKNOWN_ERROR_HTTP_STATUS_CODE = 555
+
+
     def __init__(self, enterprise_configuration, client=IntegratedChannelApiClient):
         """
         By default, use the abstract integrated channel API client which raises an error when used if not subclassed.
@@ -153,7 +157,7 @@ class ContentMetadataTransmitter(Transmitter):
                     response_status_code = exc.response.status_code
                     response_body = exc.response.text
                 else:
-                    response_status_code = 555
+                    response_status_code = UNKNOWN_ERROR_HTTP_STATUS_CODE
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
@@ -162,7 +166,7 @@ class ContentMetadataTransmitter(Transmitter):
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.exception(exc)
-                response_status_code = 555
+                response_status_code = UNKNOWN_ERROR_HTTP_STATUS_CODE
                 response_body = exc.message
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
