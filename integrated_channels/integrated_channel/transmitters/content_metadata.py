@@ -144,12 +144,12 @@ class ContentMetadataTransmitter(Transmitter):
             except ClientError as exc:
                 LOGGER.exception(exc)
                 response_status_code = exc.status_code
-                response_body = exc.message
+                response_body = str(exc)
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "
-                    f"Task failed with message [{exc.message}] and status code [{response_status_code}]"
+                    f"Task failed with message [{response_body}] and status code [{response_status_code}]"
                 )
             except requests.exceptions.RequestException as exc:
                 LOGGER.exception(exc)
@@ -158,21 +158,22 @@ class ContentMetadataTransmitter(Transmitter):
                     response_body = exc.response.text
                 else:
                     response_status_code = self.UNKNOWN_ERROR_HTTP_STATUS_CODE
+                    response_body = str(exc)
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "
-                    f"Task failed with message [{exc.message}] and status code [{response_status_code}]"
+                    f"Task failed with message [{str(exc)}] and status code [{response_status_code}]"
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.exception(exc)
                 response_status_code = self.UNKNOWN_ERROR_HTTP_STATUS_CODE
-                response_body = exc.message
+                response_body = str(exc)
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "
-                    f"Task failed with message [{exc.message}]"
+                    f"Task failed with message [{response_body}]"
                 )
             finally:
                 action_happened_at = datetime.utcnow()
