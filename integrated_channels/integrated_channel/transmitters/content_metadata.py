@@ -157,7 +157,7 @@ class ContentMetadataTransmitter(Transmitter):
                     response_status_code = exc.response.status_code
                     response_body = exc.response.text
                 else:
-                    response_status_code = UNKNOWN_ERROR_HTTP_STATUS_CODE
+                    response_status_code = self.UNKNOWN_ERROR_HTTP_STATUS_CODE
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
@@ -166,7 +166,7 @@ class ContentMetadataTransmitter(Transmitter):
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.exception(exc)
-                response_status_code = UNKNOWN_ERROR_HTTP_STATUS_CODE
+                response_status_code = self.UNKNOWN_ERROR_HTTP_STATUS_CODE
                 response_body = exc.message
                 self._log_error(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
