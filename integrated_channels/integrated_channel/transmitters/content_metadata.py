@@ -7,6 +7,7 @@ import json
 import logging
 from datetime import datetime
 from itertools import islice
+
 import requests
 
 from django.conf import settings
