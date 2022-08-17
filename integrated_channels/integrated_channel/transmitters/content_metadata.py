@@ -27,7 +27,6 @@ class ContentMetadataTransmitter(Transmitter):
     # a 'magic number' to designate an unknown error
     UNKNOWN_ERROR_HTTP_STATUS_CODE = 555
 
-
     def __init__(self, enterprise_configuration, client=IntegratedChannelApiClient):
         """
         By default, use the abstract integrated channel API client which raises an error when used if not subclassed.
