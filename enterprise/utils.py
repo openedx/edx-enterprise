@@ -31,7 +31,9 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.encoding import iri_to_uri
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
@@ -2351,3 +2353,21 @@ def logo_path(instance, filename):
     fullname = os.path.join("enterprise/branding/" + str(instance.enterprise_customer.uuid) +
                             "/logo_" + generated_uuid + extension)
     return fullname
+
+
+def get_safe_redirect_url(url, requires_https=None):
+    """
+    Ensure that the URL which is going to be used for redirection exists in whitelist.
+
+    Args:
+        url (str): url which would be checked againts allowed_hosts list
+        requires_https (Boolean): Boolean which defines if https scheme is required
+
+    Returns:
+        url: URL string if it exists in allowed_hosts list
+    """
+    redirect_whitelist = set(getattr(settings, 'LOGIN_REDIRECT_WHITELIST', []))
+    if url_has_allowed_host_and_scheme(url, allowed_hosts=redirect_whitelist, require_https=requires_https):
+        return iri_to_uri(url)
+    LOGGER.exception('Doamin of URL {url} does not exist in LOGIN_REDIRECT_WHITELIST.'.format(url=url))
+    return None

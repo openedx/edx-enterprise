@@ -16,6 +16,7 @@ from enterprise.utils import (
     enroll_licensed_users_in_courses,
     get_idiff_list,
     get_platform_logo_url,
+    get_safe_redirect_url,
     is_pending_user,
     parse_lms_api_datetime,
     serialize_notification_content,
@@ -332,3 +333,15 @@ class TestUtils(unittest.TestCase):
 
         expected_email_items = [expected_email_item(user, activation_links) for user in users]
         assert email_items == expected_email_items
+
+    @ddt.unpack
+    @ddt.data(
+        (None, None),
+        ('https://pending.url', None),
+        ('https://success.url', 'https://success.url'),
+    )
+    def test_get_safe_redirect_url(self, url, safe_url):
+        """
+        Verify that the URL returned from get_safe_redirect_url is safe
+        """
+        self.assertEqual(get_safe_redirect_url(url), safe_url)

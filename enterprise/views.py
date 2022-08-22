@@ -27,8 +27,6 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.encoding import iri_to_uri
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import slugify
 from django.utils.translation import get_language_from_request
 from django.utils.translation import gettext as _
@@ -76,6 +74,7 @@ from enterprise.utils import (
     get_enterprise_customer_user,
     get_platform_logo_url,
     get_program_type_description,
+    get_safe_redirect_url,
     is_course_run_enrollable,
     localized_utcnow,
     track_enrollment,
@@ -185,16 +184,6 @@ DSC_DENIED = FailedEnrollmentReason(
     enrollment_client_error='Data Sharing Consent terms must be accepted in order to enroll',
     failure_reason_message='dsc_denied',
 )
-
-
-def get_safe_redirect_url(url, requires_https=None):
-    """
-    Ensure that the URL which is going to be used for redirection exists in whitelist.
-    """
-    redirect_whitelist = set(getattr(settings, 'LOGIN_REDIRECT_WHITELIST', []))
-    if url_has_allowed_host_and_scheme(url, allowed_hosts=redirect_whitelist, require_https=requires_https):
-        return iri_to_uri(url)
-    return None
 
 
 def verify_edx_resources():
