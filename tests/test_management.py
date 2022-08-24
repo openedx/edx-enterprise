@@ -1851,7 +1851,7 @@ class TestResetCsodRemoteDeletedAtManagementCommand(unittest.TestCase, Enterpris
             remote_deleted_at=NOW,
             api_response_status_code=None,
         )
-        # a CSOD item we DO NOT want touched
+        # a CSOD item we DO want touched
         csod1 = factories.ContentMetadataItemTransmissionFactory(
             content_id='DemoX-CSOD-1',
             enterprise_customer=factories.EnterpriseCustomerFactory(),
@@ -1881,5 +1881,5 @@ class TestResetCsodRemoteDeletedAtManagementCommand(unittest.TestCase, Enterpris
         csod2.refresh_from_db()
 
         assert generic1.remote_deleted_at is not None
-        assert csod1.remote_deleted_at is not None
+        assert csod1.remote_deleted_at is None
         assert csod2.remote_deleted_at is None

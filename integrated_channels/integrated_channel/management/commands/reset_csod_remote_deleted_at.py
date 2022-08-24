@@ -25,7 +25,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Mark for re-send all CSOD content transmission with a remote_deleted_at but no api_response_status_code
+        Mark for re-send all CSOD content transmission with a remote_deleted_at
         """
 
         ContentMetadataItemTransmission = apps.get_model(
@@ -33,13 +33,12 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             'ContentMetadataItemTransmission'
         )
 
-        csod_deleted_at_but_null_status = Q(
+        csod_deleted_at = Q(
             integrated_channel_code='CSOD',
-            remote_deleted_at__isnull=False,
-            api_response_status_code__isnull=True
+            remote_deleted_at__isnull=False
         )
 
-        for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=csod_deleted_at_but_null_status):
+        for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=csod_deleted_at):
             for item in items_batch:
                 try:
                     item.remote_deleted_at = None

@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.6]
+--------
+feat: expand utility of CSOD deleted_at reset job
+
 [3.56.5]
 --------
 fix: properly pass SAP client status back to content transmission records
