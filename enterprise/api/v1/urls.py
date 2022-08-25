@@ -62,6 +62,10 @@ urlpatterns = [
         views.EnterpriseCustomerReportTypesView.as_view(),
         name='enterprise-report-types'
     ),
+    re_path(
+        r'^enterprise-customer-branding/update-branding/(?P<enterprise_uuid>[A-Za-z0-9-]+)/$',
+        views.EnterpriseCustomerBrandingConfigurationViewSet.as_view({'patch': 'update_branding'}),
+        name='enterprise-customer-update-branding')
 ]
 
 urlpatterns += router.urls
