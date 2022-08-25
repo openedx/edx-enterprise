@@ -14,7 +14,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -1004,7 +1004,9 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, enterprise_uuid: enterprise_uuid)
     def update_branding(self, request, enterprise_uuid):
         """
-        POST /enterprise/api/v1/enterprise-customer-branding/update_branding
+        PATCH /enterprise/api/v1/enterprise-customer-branding/update_branding/uuid
+
+        Requires enterprise customer uuid path parameter
         """
         try:
             enterprise_customer = models.EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
@@ -1022,13 +1024,13 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
             if 'secondary_color' in request.data:
                 branding_config.secondary_color = request.data['secondary_color']
             if 'tertiary_color' in request.data:
-                 branding_config.tertiary_color = request.data['tertiary_color']
+                branding_config.tertiary_color = request.data['tertiary_color']
             branding_config.save()
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception(
                 'Error with updating branding configuration'
             )
-            return Response("Error with updating branding configuration", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Error with updating branding configuration", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response("Branding was updated", status=status.HTTP_204_NO_CONTENT)
 
 

@@ -1091,10 +1091,10 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo="test1.png"
         )
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test1.png')  # pylint: disable=no-member
+        self.assertEqual(configuration.logo.url, '/test1.png')
         configuration.logo = 'test2.png'
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test2.png')  # pylint: disable=no-member
+        self.assertEqual(configuration.logo.url, '/test2.png')
 
     @ddt.data(
         (False, 2048),
