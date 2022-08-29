@@ -277,34 +277,34 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
     def test_get_courserun_duration_in_hours(self, course_run, expected_duration_days):
         assert utils.get_courserun_duration_in_hours(course_run) == expected_duration_days
 
-    def test_resize_item_collections(self):
+    def test_truncate_item_collections(self):
         in_a = [1, 2, 3]
         in_b = [1, 2, 3, 4, 5]
         in_c = [1, 2, 3, 4, 5, 6, 7]
 
         # pick a max > combined input size
-        out_a, out_b, out_c = utils.resize_item_collections(in_a, in_b, in_c, 100)
+        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 100)
 
         assert len(out_a) == 3
         assert len(out_b) == 5
         assert len(out_c) == 7
 
         # only room for part of input A
-        out_a, out_b, out_c = utils.resize_item_collections(in_a, in_b, in_c, 1)
+        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 1)
 
         assert len(out_a) == 1
         assert len(out_b) == 0
         assert len(out_c) == 0
 
         # all of input A, part of input B
-        out_a, out_b, out_c = utils.resize_item_collections(in_a, in_b, in_c, 4)
+        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 4)
 
         assert len(out_a) == 3
         assert len(out_b) == 1
         assert len(out_c) == 0
 
         # all of input A and B, part of input C
-        out_a, out_b, out_c = utils.resize_item_collections(in_a, in_b, in_c, 10)
+        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 10)
 
         assert len(out_a) == 3
         assert len(out_b) == 5
