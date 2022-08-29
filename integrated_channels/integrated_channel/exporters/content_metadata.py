@@ -15,7 +15,7 @@ from django.db.models import Q
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, truncate_item_collections
 
 LOGGER = getLogger(__name__)
 
@@ -285,32 +285,25 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=item.get('content_key')
                 )
 
-        # if we have more to work with than the allowed space, slice it up
-        if len(unique_new_items_to_create) + len(items_to_delete) + len(matched_items) > max_item_count:
-            # prioritize creates, then updates, then deletes
-            unique_new_items_to_create = unique_new_items_to_create[0:max_item_count]
-            count_left = max_item_count - len(unique_new_items_to_create)
-            matched_items = matched_items[0:count_left]
-            count_left = count_left - len(matched_items)
-            # in testing, this is sometimes a list, sometimes a dict
-            # we need it to be a list for our purposes
-            if isinstance(items_to_delete, dict):
-                items_to_delete = list(items_to_delete.values())
-            items_to_delete = items_to_delete[0:count_left]
+        truncated_create, truncated_update, truncated_delete = truncate_item_collections(
+            unique_new_items_to_create,
+            matched_items,
+            items_to_delete,
+            max_item_count
+        )
 
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
-            unique_new_items_to_create
+            truncated_create
         )
-
         content_to_update = self._check_matched_content_updated_at(
             enterprise_catalog,
-            matched_items,
+            truncated_update,
             force_retrieve_all_catalogs
         )
         content_to_delete = self._check_matched_content_to_delete(
             enterprise_catalog,
-            items_to_delete
+            truncated_delete
         )
         return content_to_create, content_to_update, content_to_delete
 
@@ -390,9 +383,16 @@ class ContentMetadataExporter(Exporter):
             content_keys = self._get_catalog_content_keys(enterprise_customer_catalog)
 
             self._log_info(
-                f'Retrieved content keys: {content_keys} for past transmissions to customer: '
+                f'Retrieved {len(content_keys)} content keys for past transmissions to customer: '
                 f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
             )
+
+            for content_key in content_keys:
+                self._log_info(
+                    f'Retrieved content key: {content_key} for past transmissions to customer: '
+                    f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.',
+                    course_or_course_run_key=content_key
+                )
 
             # From the saved content records, use the enterprise catalog API to determine what needs sending
             items_to_create, items_to_update, items_to_delete = self._get_catalog_diff(
