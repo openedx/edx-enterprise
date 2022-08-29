@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.7]
+--------
+feat: add debug logging to investigate missing CSOD deletes
+
 [3.56.6]
 --------
 feat: expand utility of CSOD deleted_at reset job
