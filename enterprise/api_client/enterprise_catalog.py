@@ -125,7 +125,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
         api_url = self.get_api_url(self.CATALOG_DIFF_ENDPOINT.format(catalog_uuid))
         body = {'content_keys': content_keys}
 
-        items_to_delete = {}
+        items_to_delete = []
         items_to_create = []
         items_found = []
         try:
