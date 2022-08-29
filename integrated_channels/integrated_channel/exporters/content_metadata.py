@@ -285,7 +285,7 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=item.get('content_key')
                 )
 
-        truncated_create, truncated_update, truincated_delete = truncate_item_collections(
+        truncated_create, truncated_update, truncated_delete = truncate_item_collections(
             unique_new_items_to_create,
             matched_items,
             items_to_delete,
@@ -303,7 +303,7 @@ class ContentMetadataExporter(Exporter):
         )
         content_to_delete = self._check_matched_content_to_delete(
             enterprise_catalog,
-            truincated_delete
+            truncated_delete
         )
         return content_to_create, content_to_update, content_to_delete
 
