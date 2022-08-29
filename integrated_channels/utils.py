@@ -407,7 +407,11 @@ def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000):
         qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
 
 
-def resize_item_collections(items_to_create, items_to_update, items_to_delete, combined_maximum_size):
+def truncate_item_collections(items_to_create, items_to_update, items_to_delete, combined_maximum_size):
+    """
+    given the item collections to create, update, and delete on the remote LMS side, truncate the
+    collections to keep under a maximum batch size, prioritizing creates, updates, then deletes
+    """
     # if we have more to work with than the allowed space, slice it up
     if len(items_to_create) + len(items_to_delete) + len(items_to_update) > combined_maximum_size:
         # prioritize creates, then updates, then deletes

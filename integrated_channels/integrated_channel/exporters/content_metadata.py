@@ -15,7 +15,7 @@ from django.db.models import Q
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import generate_formatted_log, resize_item_collections
+from integrated_channels.utils import generate_formatted_log, truncate_item_collections
 
 LOGGER = getLogger(__name__)
 
@@ -285,7 +285,7 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=item.get('content_key')
                 )
 
-        resized_create, resized_update, resized_delete = resize_item_collections(
+        truncated_create, truncated_update, truincated_delete = truncate_item_collections(
             unique_new_items_to_create,
             matched_items,
             items_to_delete,
@@ -294,16 +294,16 @@ class ContentMetadataExporter(Exporter):
 
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
-            resized_create
+            truncated_create
         )
         content_to_update = self._check_matched_content_updated_at(
             enterprise_catalog,
-            resized_update,
+            truncated_update,
             force_retrieve_all_catalogs
         )
         content_to_delete = self._check_matched_content_to_delete(
             enterprise_catalog,
-            resized_delete
+            truincated_delete
         )
         return content_to_create, content_to_update, content_to_delete
 
