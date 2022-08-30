@@ -259,6 +259,21 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             content_keys
         )
+
+        stuff_to_log = {
+            'items_to_create': items_to_create,
+            'items_to_delete': items_to_delete,
+            'matched_items': matched_items,
+        }
+
+        for key, content_list in stuff_to_log.items():
+            for content in content_list:
+                content_id = content.get('content_key')
+                self._log_info(
+                    f'get_catalog_diff api results {key} includes {content_id}',
+                    course_or_course_run_key=content_id
+                )
+
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
@@ -305,6 +320,21 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             truncated_delete
         )
+
+        stuff_to_log = {
+            'content_to_create': content_to_create,
+            'content_to_update': content_to_update,
+            'content_to_delete': content_to_delete,
+        }
+
+        for log_key, items in stuff_to_log.items():
+            for key_content_id, item in items.items():
+                item_content_id = item.content_id
+                self._log_info(
+                    f'_get_catalog_diff return {log_key} includes {key_content_id} : {item_content_id}',
+                    course_or_course_run_key=key_content_id
+                )
+
         return content_to_create, content_to_update, content_to_delete
 
     def _check_matched_content_to_delete(self, enterprise_customer_catalog, items):
@@ -361,14 +391,15 @@ class ContentMetadataExporter(Exporter):
         enterprise_customer_catalogs = self.enterprise_configuration.customer_catalogs_to_transmit or \
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
-        self._log_info(
-            f'Beginning export for customer: {self.enterprise_customer.uuid} with catalogs: '
-            f'{enterprise_customer_catalogs}'
-        )
-
         # a maximum number of changes/payloads to export at once
         # default to something huge to simplifly logic, the max system int size
         max_payload_count = kwargs.get('max_payload_count', sys.maxsize)
+
+        self._log_info(
+            f'Beginning export for customer: {self.enterprise_customer.uuid}, with '
+            f'max_payload_count of {max_payload_count}, and catalogs: '
+            f'{enterprise_customer_catalogs}'
+        )
 
         create_payload = {}
         update_payload = {}
