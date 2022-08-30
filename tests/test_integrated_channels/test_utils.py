@@ -309,3 +309,25 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         assert len(out_a) == 3
         assert len(out_b) == 5
         assert len(out_c) == 2
+
+        in_a = []
+        in_b = []
+        in_c = [1, 2, 3, 4, 5, 6, 7]
+
+        # all of input A and B (empty), all of input C
+        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 10)
+
+        assert len(out_a) == 0
+        assert len(out_b) == 0
+        assert len(out_c) == 7
+
+        in_a = [1]
+        in_b = []
+        in_c = [1, 2, 3, 4, 5, 6, 7]
+
+        # all of input A and B (empty), all of input C
+        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 10)
+
+        assert len(out_a) == 1
+        assert len(out_b) == 0
+        assert len(out_c) == 7
