@@ -193,7 +193,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         )
         past_transmission_to_update.save()
 
-
         mock_content_metadata_response = OrderedDict()
         mock_content_metadata_response[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
         mock_content_metadata_response[FAKE_COURSE_RUN2['key']] = FAKE_COURSE_RUN2
