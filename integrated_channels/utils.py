@@ -416,9 +416,9 @@ def truncate_item_dicts(items_to_create, items_to_update, items_to_delete, combi
     # if we have more to work with than the allowed space, slice it up
     if len(items_to_create) + len(items_to_delete) + len(items_to_update) > combined_maximum_size:
         # prioritize creates, then updates, then deletes
-        items_to_create = dict(itertools.islice(items_to_create.items(),combined_maximum_size))
+        items_to_create = dict(itertools.islice(items_to_create.items(), combined_maximum_size))
         count_left = combined_maximum_size - len(items_to_create)
-        items_to_update = dict(itertools.islice(items_to_update.items(),count_left))
+        items_to_update = dict(itertools.islice(items_to_update.items(), count_left))
         count_left = count_left - len(items_to_update)
-        items_to_delete = dict(itertools.islice(items_to_delete.items(),count_left))
+        items_to_delete = dict(itertools.islice(items_to_delete.items(), count_left))
     return items_to_create, items_to_update, items_to_delete
