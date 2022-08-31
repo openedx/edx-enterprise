@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.9]
+--------
+fix: properly truncate payload to resolve missing CSOD deletes
+
 [3.56.8]
 --------
 feat: add debug logging to investigate missing CSOD deletes
