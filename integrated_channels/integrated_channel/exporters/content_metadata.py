@@ -300,31 +300,31 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=item.get('content_key')
                 )
 
-        truncated_create, truncated_update, truncated_delete = truncate_item_collections(
-            unique_new_items_to_create,
-            matched_items,
-            items_to_delete,
-            max_item_count
-        )
-
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
-            truncated_create
+            unique_new_items_to_create
         )
         content_to_update = self._check_matched_content_updated_at(
             enterprise_catalog,
-            truncated_update,
+            matched_items,
             force_retrieve_all_catalogs
         )
         content_to_delete = self._check_matched_content_to_delete(
             enterprise_catalog,
-            truncated_delete
+            items_to_delete
+        )
+
+        truncated_create, truncated_update, truncated_delete = truncate_item_collections(
+            content_to_create,
+            content_to_update,
+            content_to_delete,
+            max_item_count
         )
 
         stuff_to_log = {
-            'content_to_create': content_to_create,
-            'content_to_update': content_to_update,
-            'content_to_delete': content_to_delete,
+            'truncated_create': truncated_create,
+            'truncated_update': truncated_update,
+            'truncated_delete': truncated_delete,
         }
 
         for log_key, items in stuff_to_log.items():
@@ -335,7 +335,7 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=key_content_id
                 )
 
-        return content_to_create, content_to_update, content_to_delete
+        return truncated_create, truncated_update, truncated_delete
 
     def _check_matched_content_to_delete(self, enterprise_customer_catalog, items):
         """
