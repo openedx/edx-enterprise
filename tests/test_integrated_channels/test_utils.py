@@ -277,56 +277,56 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
     def test_get_courserun_duration_in_hours(self, course_run, expected_duration_days):
         assert utils.get_courserun_duration_in_hours(course_run) == expected_duration_days
 
-    def test_truncate_item_collections(self):
-        in_a = [1, 2, 3]
-        in_b = [1, 2, 3, 4, 5]
-        in_c = [1, 2, 3, 4, 5, 6, 7]
+    def test_truncate_item_dicts(self):
+        in_a = {'one': 1, 'two': 2, 'three': 3}
+        in_b = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5}
+        in_c = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7}
 
         # pick a max > combined input size
-        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 100)
+        out_a, out_b, out_c = utils.truncate_item_dicts(in_a, in_b, in_c, 100)
 
         assert len(out_a) == 3
         assert len(out_b) == 5
         assert len(out_c) == 7
 
         # only room for part of input A
-        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 1)
+        out_a, out_b, out_c = utils.truncate_item_dicts(in_a, in_b, in_c, 1)
 
         assert len(out_a) == 1
         assert len(out_b) == 0
         assert len(out_c) == 0
 
         # all of input A, part of input B
-        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 4)
+        out_a, out_b, out_c = utils.truncate_item_dicts(in_a, in_b, in_c, 4)
 
         assert len(out_a) == 3
         assert len(out_b) == 1
         assert len(out_c) == 0
 
         # all of input A and B, part of input C
-        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 10)
+        out_a, out_b, out_c = utils.truncate_item_dicts(in_a, in_b, in_c, 10)
 
         assert len(out_a) == 3
         assert len(out_b) == 5
         assert len(out_c) == 2
 
-        in_a = []
-        in_b = []
-        in_c = [1, 2, 3, 4, 5, 6, 7]
+        in_a = {}
+        in_b = {}
+        in_c = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7}
 
         # all of input A and B (empty), all of input C
-        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 10)
+        out_a, out_b, out_c = utils.truncate_item_dicts(in_a, in_b, in_c, 10)
 
         assert len(out_a) == 0
         assert len(out_b) == 0
         assert len(out_c) == 7
 
-        in_a = [1]
-        in_b = []
-        in_c = [1, 2, 3, 4, 5, 6, 7]
+        in_a = {'one': 1}
+        in_b = {}
+        in_c = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7}
 
         # all of input A and B (empty), all of input C
-        out_a, out_b, out_c = utils.truncate_item_collections(in_a, in_b, in_c, 10)
+        out_a, out_b, out_c = utils.truncate_item_dicts(in_a, in_b, in_c, 10)
 
         assert len(out_a) == 1
         assert len(out_b) == 0

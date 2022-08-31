@@ -15,7 +15,7 @@ from django.db.models import Q
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import generate_formatted_log, truncate_item_collections
+from integrated_channels.utils import generate_formatted_log, truncate_item_dicts
 
 LOGGER = getLogger(__name__)
 
@@ -314,7 +314,7 @@ class ContentMetadataExporter(Exporter):
             items_to_delete
         )
 
-        truncated_create, truncated_update, truncated_delete = truncate_item_collections(
+        truncated_create, truncated_update, truncated_delete = truncate_item_dicts(
             content_to_create,
             content_to_update,
             content_to_delete,
