@@ -1187,6 +1187,10 @@ class HandleConsentEnrollment(View):
             lms_root_url,
             '/courses/{course_id}/courseware',
         )
+        LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(
+            lms_root_url,
+            '/verify_student/start-flow/{course_id}/',
+        )
         enrollment_course_mode = request.GET.get('course_mode')
         enterprise_catalog_uuid = request.GET.get('catalog')
 
@@ -1638,11 +1642,16 @@ class CourseEnrollmentView(NonAtomicView):
         """
         Process a submitted track selection form for the enterprise.
         """
-        # We need to override this constant here, because it's calculated at load time and there's no
+        # We need to override these constants here, because they are calculated at load time and there's no
         # Site context at load time.
+        lms_root_url = get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL)
         LMS_COURSEWARE_URL = urljoin(
-            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            lms_root_url,
             '/courses/{course_id}/courseware',
+        )
+        LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(
+            lms_root_url,
+            '/verify_student/start-flow/{course_id}/',
         )
         enterprise_customer, course, course_run, course_modes = self.get_base_details(
             request, enterprise_uuid, course_id
