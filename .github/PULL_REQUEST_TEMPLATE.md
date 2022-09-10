@@ -10,16 +10,16 @@
       - It may or may not make a migration depending on exactly what you modified, but it should still be run.
     - This should be run from either a venv with all the lms/edx-enterprise requirements installed or if you checked out edx-enterprise into the src directory used by lms, you can run this command through an lms shell.
         - It would be `./manage.py lms makemigrations` in the shell.
-- [ ] [Version](https://github.com/edx/edx-enterprise/blob/master/enterprise/__init__.py) bumped
-- [ ] [Changelog](https://github.com/edx/edx-enterprise/blob/master/CHANGELOG.rst) record added
+- [ ] [Version](https://github.com/openedx/edx-enterprise/blob/master/enterprise/__init__.py) bumped
+- [ ] [Changelog](https://github.com/openedx/edx-enterprise/blob/master/CHANGELOG.rst) record added
 - [ ] Translations updated (see docs/internationalization.rst but also this isn't blocking for merge atm)
 
 **Post merge:**
-- [ ] Tag pushed and a new [version](https://github.com/edx/edx-enterprise/releases) released
+- [ ] Tag pushed and a new [version](https://github.com/openedx/edx-enterprise/releases) released
     - *Note*: Assets will be added automatically. You just need to provide a tag (should match your version number) and title and description.
-- [ ] After versioned build finishes in [GitHub Actions](https://github.com/edx/edx-enterprise/actions), verify version has been pushed to [PyPI](https://pypi.org/project/edx-enterprise/)
+- [ ] After versioned build finishes in [GitHub Actions](https://github.com/openedx/edx-enterprise/actions), verify version has been pushed to [PyPI](https://pypi.org/project/edx-enterprise/)
     - Each step in the release build has a condition flag that checks if the rest of the steps are done and if so will deploy to PyPi.
     (so basically once your build finishes, after maybe a minute you should see the new version in PyPi automatically (on refresh))
-- [ ] PR created in [edx-platform](https://github.com/edx/edx-platform) to upgrade dependencies (including edx-enterprise)
+- [ ] PR created in [edx-platform](https://github.com/openedx/edx-platform) to upgrade dependencies (including edx-enterprise)
     - This **must** be done after the version is visible in PyPi as `make upgrade` in edx-platform will look for the latest version in PyPi.
     - Note: the edx-enterprise constraint in edx-platform **must** also be bumped to the latest version in PyPi.

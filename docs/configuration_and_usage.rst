@@ -51,7 +51,7 @@ as the ``edx-enterprise`` admin interface expects. This is covered in greater de
 
 .. _Course Catalog Service: https://open-edx-course-catalog.readthedocs.io/en/latest/getting_started.html
 .. _docs section: https://open-edx-course-catalog.readthedocs.io/en/latest/getting_started.html#lms-integration
-.. _Pull Request #7: https://github.com/edx/edx-enterprise/pull/7
+.. _Pull Request #7: https://github.com/openedx/edx-enterprise/pull/7
 
 Managing Linked Learners Lists
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
