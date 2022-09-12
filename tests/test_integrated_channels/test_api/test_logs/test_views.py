@@ -2,7 +2,6 @@
 Tests for the `integrated_channels` moodle configuration api.
 """
 import datetime
-import json
 from logging import getLogger
 from unittest import mock
 from uuid import uuid4
@@ -26,7 +25,6 @@ class ContentSyncStatusViewSetTests(APITest):
     Tests for ContentSyncStatusViewSet REST endpoints
     """
     def setUp(self):
-        
         with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
             self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
@@ -56,7 +54,7 @@ class ContentSyncStatusViewSetTests(APITest):
         self.setup_admin_user(True)
         expected_enterprise_uuid = str(self.enterprise_customer_catalog.enterprise_customer.uuid)
         url = reverse(
-            f'api:v1:logs:content_sync_status_logs',
+            'api:v1:logs:content_sync_status_logs',
             kwargs={
                 'enterprise_customer_uuid': expected_enterprise_uuid,
                 'integrated_channel_code': 'GENERIC',
@@ -64,8 +62,8 @@ class ContentSyncStatusViewSetTests(APITest):
             }
         )
         response = self.client.get(url)
+        LOGGER.info(response.content)
         response_json = self.load_json(response.content)
-        LOGGER.info(response_json)
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
@@ -78,7 +76,7 @@ class ContentSyncStatusViewSetTests(APITest):
         self.setup_admin_user(True)
         expected_enterprise_uuid = self.enterprise_customer_catalog.enterprise_customer.uuid
         url = reverse(
-            f'api:v1:logs:content_sync_status_logs',
+            'api:v1:logs:content_sync_status_logs',
             kwargs={
                 'enterprise_customer_uuid': expected_enterprise_uuid,
                 'integrated_channel_code': 'BROKEN',
@@ -113,7 +111,7 @@ class LearnerSyncStatusViewSetTests(APITest):
         """
         self.setup_admin_user(True)
         url = reverse(
-            f'api:v1:logs:learner_sync_status_logs',
+            'api:v1:logs:learner_sync_status_logs',
             kwargs={
                 'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
                 'integrated_channel_code': 'GENERIC',
@@ -121,15 +119,15 @@ class LearnerSyncStatusViewSetTests(APITest):
             }
         )
         response = self.client.get(url)
+        LOGGER.info(response.content)
         response_json = self.load_json(response.content)
-        LOGGER.info(response_json)
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
         assert self.generic_audit_1.enterprise_customer_uuid == response_json['results'][0]['enterprise_customer_uuid']
 
         url = reverse(
-            f'api:v1:logs:learner_sync_status_logs',
+            'api:v1:logs:learner_sync_status_logs',
             kwargs={
                 'enterprise_customer_uuid': self.sap_audit_1.enterprise_customer_uuid,
                 'integrated_channel_code': 'SAP',
@@ -137,8 +135,8 @@ class LearnerSyncStatusViewSetTests(APITest):
             }
         )
         response = self.client.get(url)
+        LOGGER.info(response.content)
         response_json = self.load_json(response.content)
-        LOGGER.info(response_json)
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
@@ -150,12 +148,12 @@ class LearnerSyncStatusViewSetTests(APITest):
         """
         self.setup_admin_user(True)
         url = reverse(
-            f'api:v1:logs:learner_sync_status_logs',
+            'api:v1:logs:learner_sync_status_logs',
             kwargs={
                 'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
                 'integrated_channel_code': 'BROKEN',
                 'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
             }
         )
-        response = self.client.get(url)           
+        response = self.client.get(url)
         assert response.status_code == 400

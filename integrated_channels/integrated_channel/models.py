@@ -166,11 +166,11 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         raise NotImplementedError('Implemented in concrete subclass.')
 
     @classmethod
-    def get_class_by_channel_code(this_cls, channel_code):
+    def get_class_by_channel_code(cls, channel_code):
         """
         Return the `EnterpriseCustomerPluginConfiguration` implementation for the particular channel_code, or None
         """
-        for a_cls in this_cls.__subclasses__():
+        for a_cls in cls.__subclasses__():
             if a_cls.channel_code().lower() == channel_code.lower():
                 return a_cls
         return None
@@ -336,12 +336,12 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         return None
 
     @classmethod
-    def get_class_by_channel_code(this_cls, channel_code):
+    def get_class_by_channel_code(cls, channel_code):
         """
         Return the `LearnerDataTransmissionAudit` implementation for the particular channel_code, or None
         """
         app_label = channel_code_to_app_label(channel_code)
-        for a_cls in this_cls.__subclasses__():
+        for a_cls in cls.__subclasses__():
             if a_cls._meta.app_label == app_label:
                 return a_cls
         return None
