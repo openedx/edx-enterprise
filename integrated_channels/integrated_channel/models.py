@@ -20,7 +20,7 @@ from integrated_channels.integrated_channel.exporters.content_metadata import Co
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
-from integrated_channels.utils import convert_comma_separated_string_to_list
+from integrated_channels.utils import channel_code_to_app_label, convert_comma_separated_string_to_list
 
 LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
@@ -164,6 +164,16 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """
         raise NotImplementedError('Implemented in concrete subclass.')
+
+    @classmethod
+    def get_class_by_channel_code(this_cls, channel_code):
+        """
+        Return the `EnterpriseCustomerPluginConfiguration` implementation for the particular channel_code, or None
+        """
+        for a_cls in this_cls.__subclasses__():
+            if a_cls.channel_code().lower() == channel_code.lower():
+                return a_cls
+        return None
 
     def generate_default_display_name(self):
         """
@@ -327,13 +337,12 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
 
     @classmethod
     def get_class_by_channel_code(this_cls, channel_code):
-        # this is a qurik of the generic class
-        if channel_code.lower() == 'generic':
-            channel_code = 'integrated_channel'
-        elif channel_code.lower() == 'sap':
-            channel_code = 'sap_success_factors'
+        """
+        Return the `LearnerDataTransmissionAudit` implementation for the particular channel_code, or None
+        """
+        app_label = channel_code_to_app_label(channel_code)
         for a_cls in this_cls.__subclasses__():
-            if a_cls._meta.app_label == channel_code.lower():
+            if a_cls._meta.app_label == app_label:
                 return a_cls
         return None
 

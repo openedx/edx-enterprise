@@ -50,9 +50,9 @@ from integrated_channels.degreed.models import (
 )
 from integrated_channels.integrated_channel.models import (
     ContentMetadataItemTransmission,
-    LearnerDataTransmissionAudit,
-    GenericLearnerDataTransmissionAudit,
     GenericEnterpriseCustomerPluginConfiguration,
+    GenericLearnerDataTransmissionAudit,
+    LearnerDataTransmissionAudit,
 )
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (

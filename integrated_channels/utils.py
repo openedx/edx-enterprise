@@ -422,3 +422,16 @@ def truncate_item_dicts(items_to_create, items_to_update, items_to_delete, combi
         count_left = count_left - len(items_to_update)
         items_to_delete = dict(itertools.islice(items_to_delete.items(), count_left))
     return items_to_create, items_to_update, items_to_delete
+
+
+def channel_code_to_app_label(channel_code):
+    """
+    Convert an integrated_channel channel_code to app_label.
+    They can be different, such as in the case of SAP -> sap_success_factors
+    """
+    app_label = channel_code.lower()
+    if app_label == 'generic':
+        app_label = 'integrated_channel'
+    elif app_label == 'sap':
+        app_label = 'sap_success_factors'
+    return app_label
