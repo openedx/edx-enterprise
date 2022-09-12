@@ -325,6 +325,18 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         """
         return None
 
+    @classmethod
+    def get_class_by_channel_code(this_cls, channel_code):
+        # this is a qurik of the generic class
+        if channel_code.lower() == 'generic':
+            channel_code = 'integrated_channel'
+        elif channel_code.lower() == 'sap':
+            channel_code = 'sap_success_factors'
+        for a_cls in this_cls.__subclasses__():
+            if a_cls._meta.app_label == channel_code.lower():
+                return a_cls
+        return None
+
     def serialize(self, *args, **kwargs):
         """
         Return a JSON-serialized representation.
