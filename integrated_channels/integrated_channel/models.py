@@ -411,6 +411,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     integrated_channel_code = models.CharField(max_length=30)
     plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
     content_id = models.CharField(max_length=255)
+    content_title = models.CharField(max_length=255, default=None, null=True, blank=True)
     channel_metadata = JSONField()
     content_last_changed = models.DateTimeField(
         help_text='Date of the last time the enterprise catalog associated with this metadata item was updated',
@@ -441,6 +442,13 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         help_text='The most recent remote API call response HTTP status code',
         blank=True,
         null=True
+    )
+    friendly_status_message = models.CharField(
+        help_text='A user-friendly API response status message.',
+        max_length=255,
+        default=None,
+        null=True,
+        blank=True
     )
     api_response_body = models.TextField(
         help_text='The most recent remote API call response body',
