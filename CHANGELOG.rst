@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.57.2]
+--------
+feat: Added POST support for catalog query preview
+
 [3.57.1]
 --------
 fix: impoving transmission records by moving response body to new table

@@ -36,6 +36,7 @@ from enterprise.admin.forms import (
 )
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import (
+    CatalogQueryPreviewView,
     EnterpriseCustomerManageLearnerDataSharingConsentView,
     EnterpriseCustomerManageLearnersView,
     EnterpriseCustomerTransmitCoursesView,
@@ -715,6 +716,19 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     class Meta:
         model = EnterpriseCatalogQuery
 
+    def get_urls(self):
+        """
+        Returns the additional urls used by the custom object tools.
+        """
+        preview_urls = [
+            re_path(
+                r"^([^/]+)/preview/$",
+                self.admin_site.admin_view(CatalogQueryPreviewView.as_view()),
+                name=UrlNames.PREVIEW_QUERY_RESULT
+            )
+        ]
+        return preview_urls + super().get_urls()
+
     list_display = (
         'title',
         'discovery_query_url',
@@ -725,7 +739,11 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
         """
         Return discovery url for preview.
         """
-        return discovery_query_url(obj.content_filter)
+        url = reverse("admin:" + UrlNames.PREVIEW_QUERY_RESULT, args=(obj.pk,))
+        return format_html(
+            '<a href="{url}" target="_blank">Preview</a>',
+            url=url
+        )
 
     def has_delete_permission(self, request, obj=None):
         return False

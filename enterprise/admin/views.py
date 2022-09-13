@@ -5,6 +5,9 @@ Custom Django Admin views used in enterprise app.
 import datetime
 import logging
 
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from django.conf import settings
 from django.contrib import admin, auth, messages
 from django.contrib.auth import get_permission_codename
@@ -31,11 +34,13 @@ from enterprise.admin.utils import (
     parse_csv,
     split_usernames_and_emails,
 )
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    EnterpriseCatalogQuery,
     EnterpriseCustomer,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
@@ -100,6 +105,30 @@ class TemplatePreviewView(View):
         Get a human-readable name for the user.
         """
         return request.user.first_name or request.user.username
+
+
+class CatalogQueryPreviewView(APIView):
+    """
+    Renders a search/all response from Discovery for a particular catalog query.
+    """
+
+    def get(self, request, catalog_query_id):
+        """
+        Render the response for a particular catalog query.
+        """
+        enterprise_catalog_query = get_object_or_404(EnterpriseCatalogQuery, pk=catalog_query_id)
+        return Response(self.get_response_from_discovery(request, enterprise_catalog_query))
+
+    @staticmethod
+    def get_response_from_discovery(request, catalog_query):
+        """
+        POST a query to Discovery's search/all endpoint and return the results.
+        """
+        response = get_course_catalog_api_service_client().get_catalog_results(
+            catalog_query.content_filter,
+            traverse_pagination=True
+        )
+        return response
 
 
 class BaseEnterpriseCustomerView(View):

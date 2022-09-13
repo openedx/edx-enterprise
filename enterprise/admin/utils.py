@@ -26,6 +26,7 @@ class UrlNames:
     MANAGE_LEARNERS_DSC = URL_PREFIX + "manage_learners_data_sharing_consent"
     TRANSMIT_COURSES_METADATA = URL_PREFIX + "transmit_courses_metadata"
     PREVIEW_EMAIL_TEMPLATE = URL_PREFIX + "preview_email_template"
+    PREVIEW_QUERY_RESULT = URL_PREFIX + "preview_query_result"
 
 
 def validate_csv(file_stream, expected_columns=None):

@@ -36,6 +36,7 @@ from enterprise.admin.utils import ValidationMessages
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerUser,
@@ -43,7 +44,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from test_utils import fake_enrollment_api
+from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (
     FAKER,
     DataSharingConsentFactory,
@@ -151,6 +152,79 @@ class TestPreviewTemplateView(TestCase):
         )
         result = self.client.get(url)
         assert result.status_code == 404
+
+
+@mark.django_db
+@override_settings(ROOT_URLCONF="test_utils.admin_urls")
+class TestCatalogQueryPreviewView(TestCase):
+    """
+    Test the Catalog Query Preview view
+    """
+    def setUp(self):
+        """
+        Set up testing variables
+        """
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.non_staff_user = UserFactory.create(is_staff=False, is_active=True)
+        self.non_staff_user.set_password("QWERTY")
+        self.non_staff_user.save()
+        self.client = Client()
+        self.catalog_query = EnterpriseCatalogQuery.objects.create(
+            title='Test Catalog Query',
+            content_filter={'partner': 'MuiX'}
+        )
+        super().setUp()
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_preview_query(self, mock_catalog_api_client):
+        """
+        Test that we render the query preview correctly.
+        """
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_catalog_results=mock.Mock(
+                return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
+            ),
+        )
+        assert self.client.login(username=self.user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_QUERY_RESULT,
+            args=(self.catalog_query.pk,)
+        )
+        result = self.client.get(url)
+        content_count = json.loads(result.content)['count']
+        self.assertEqual(content_count, 3)
+
+    def test_missing_object(self):
+        """
+        Test that a missing object causes a 404.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_QUERY_RESULT,
+            args=(self.catalog_query.pk + 1,)
+        )
+        result = self.client.get(url)
+        assert result.status_code == 404
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_no_data_for_non_staff(self, mock_catalog_api_client):
+        """
+        Test that a non staff user is not returned any data.
+        """
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_catalog_results=mock.Mock(
+                return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
+            ),
+        )
+        assert self.client.login(username=self.non_staff_user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_QUERY_RESULT,
+            args=(self.catalog_query.pk,)
+        )
+        result = self.client.get(url)
+        self.assertEqual(result.content, b'')
 
 
 class BaseEnterpriseCustomerView(TestCase):
