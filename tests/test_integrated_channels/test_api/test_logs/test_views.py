@@ -8,16 +8,9 @@ from uuid import uuid4
 
 from django.urls import reverse
 
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE
-from integrated_channels.integrated_channel.models import (
-    ContentMetadataItemTransmission,
-    GenericLearnerDataTransmissionAudit,
-)
-from integrated_channels.sap_success_factors.models import SapSuccessFactorsLearnerDataTransmissionAudit
 from test_utils import TEST_PASSWORD, APITest, factories
 
 LOGGER = getLogger(__name__)
-ENTERPRISE_ID = str(uuid4())
 
 
 class ContentSyncStatusViewSetTests(APITest):
