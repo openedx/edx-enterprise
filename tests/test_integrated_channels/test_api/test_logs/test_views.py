@@ -28,7 +28,7 @@ class ContentSyncStatusViewSetTests(APITest):
         with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
             self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
-        factories.ContentMetadataItemTransmissionFactory(
+        self.content_metadata_item = factories.ContentMetadataItemTransmissionFactory(
             content_id='DemoX',
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code='GENERIC',
@@ -37,6 +37,18 @@ class ContentSyncStatusViewSetTests(APITest):
         )
 
         super().setUp()
+
+    def tearDown(self):
+        """
+        Perform common tear down operations to all tests.
+        """
+        # Remove client authentication credentials
+        self.client.logout()
+        if self.content_metadata_item:
+            self.content_metadata_item.delete()
+        if self.enterprise_customer_catalog:
+            self.enterprise_customer_catalog.delete()
+        super().tearDown()
 
     def setup_admin_user(self, is_staff=True):
         """
@@ -95,6 +107,18 @@ class LearnerSyncStatusViewSetTests(APITest):
         self.generic_audit_1 = factories.GenericLearnerDataTransmissionAuditFactory()
         self.sap_audit_1 = factories.SapSuccessFactorsLearnerDataTransmissionAuditFactory()
         super().setUp()
+
+    def tearDown(self):
+        """
+        Perform common tear down operations to all tests.
+        """
+        # Remove client authentication credentials
+        self.client.logout()
+        if self.generic_audit_1:
+            self.generic_audit_1.delete()
+        if self.sap_audit_1:
+            self.sap_audit_1.delete()
+        super().tearDown()
 
     def setup_admin_user(self, is_staff=True):
         """
