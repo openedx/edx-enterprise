@@ -137,9 +137,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params.update(additional_params)
 
         response = requests.post(
-            url='{url}{api_path}'.format(
-                url=self.enterprise_configuration.moodle_base_url,
-                api_path=self.MOODLE_API_PATH
+            url=urljoin(
+                self.enterprise_configuration.moodle_base_url,
+                self.MOODLE_API_PATH,
             ),
             data=params,
             headers=headers
