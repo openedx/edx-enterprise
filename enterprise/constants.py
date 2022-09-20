@@ -38,9 +38,9 @@ class DefaultColors:
     Class to group the default branding color codes.
     These color codes originated in the Enterprise Learner Portal.
     """
-    PRIMARY = '#00262B'
-    SECONDARY = '#EFF8FA'
-    TERTIARY = '#0A7DA3'
+    PRIMARY = '#2D494E'
+    SECONDARY = '#F2F0EF'
+    TERTIARY = '#D23228'
 
 
 class CourseModes:
