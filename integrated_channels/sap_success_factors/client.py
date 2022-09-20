@@ -6,6 +6,7 @@ import datetime
 import json
 import logging
 import time
+from urllib.parse import urljoin
 
 import requests
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
@@ -33,17 +34,30 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
     GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
 
-    @staticmethod
-    def get_oauth_access_token(url_base, client_id, client_secret, company_id, user_id, user_type, customer_uuid):
-        """ Retrieves OAuth 2.0 access token using the client credentials grant.
+    def __init__(self, enterprise_configuration):
+        """
+        Instantiate a new client.
 
         Args:
-            url_base (str): Oauth2 access token endpoint
+            enterprise_configuration (SAPSuccessFactorsEnterpriseCustomerConfiguration): An enterprise customers's
+            configuration model for connecting with SAP SuccessFactors
+        """
+        super().__init__(enterprise_configuration)
+        self.global_sap_config = apps.get_model('sap_success_factors', 'SAPSuccessFactorsGlobalConfiguration').current()
+        self.session = None
+        self.expires_at = None
+
+    def get_oauth_access_token(self, client_id, client_secret, company_id, user_id, user_type, customer_uuid):
+        """
+        Retrieves OAuth 2.0 access token using the client credentials grant.
+
+        Args:
             client_id (str): client ID
             client_secret (str): client secret
             company_id (str): SAP company ID
             user_id (str): SAP user ID
             user_type (str): type of SAP user (admin or user)
+            customer_uuid (str): Enterprise Customer UUID
 
         Returns:
             tuple: Tuple containing access token string and expiration datetime.
@@ -56,10 +70,12 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             'SAPSuccessFactorsGlobalConfiguration'
         )
         global_sap_config = SAPSuccessFactorsGlobalConfiguration.current()
-        url = url_base + global_sap_config.oauth_api_path
 
         response = requests.post(
-            url,
+            urljoin(
+                self.enterprise_configuration.sapsf_base_url,
+                global_sap_config.oauth_api_path,
+            ),
             json={
                 'grant_type': 'client_credentials',
                 'scope': {
@@ -90,19 +106,6 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             )
             raise ClientError(response, response.status_code) from error
 
-    def __init__(self, enterprise_configuration):
-        """
-        Instantiate a new client.
-
-        Args:
-            enterprise_configuration (SAPSuccessFactorsEnterpriseCustomerConfiguration): An enterprise customers's
-            configuration model for connecting with SAP SuccessFactors
-        """
-        super().__init__(enterprise_configuration)
-        self.global_sap_config = apps.get_model('sap_success_factors', 'SAPSuccessFactorsGlobalConfiguration').current()
-        self.session = None
-        self.expires_at = None
-
     def _create_session(self):
         """
         Instantiate a new session object for use in connecting with SAP SuccessFactors
@@ -113,8 +116,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             if self.session:
                 self.session.close()
 
-            oauth_access_token, expires_at = SAPSuccessFactorsAPIClient.get_oauth_access_token(
-                self.enterprise_configuration.sapsf_base_url,
+            oauth_access_token, expires_at = self.get_oauth_access_token(
                 self.enterprise_configuration.key,
                 self.enterprise_configuration.secret,
                 self.enterprise_configuration.sapsf_company_id,
@@ -246,8 +248,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             'sap_success_factors',
             'SAPSuccessFactorsEnterpriseCustomerConfiguration'
         )
-        oauth_access_token, _ = SAPSuccessFactorsAPIClient.get_oauth_access_token(
-            self.enterprise_configuration.sapsf_base_url,
+        oauth_access_token, _ = self.get_oauth_access_token(
             self.enterprise_configuration.key,
             self.enterprise_configuration.secret,
             self.enterprise_configuration.sapsf_company_id,

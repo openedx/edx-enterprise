@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.10]
+---------
+fix: adhering to urljoin patterns in integrated channels API views
+
 [3.56.9]
 --------
 fix: properly truncate payload to resolve missing CSOD deletes
