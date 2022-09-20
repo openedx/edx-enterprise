@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.10]
+---------
+chore: add plugin_configuration_id to standard integration logging
+
 [3.56.9]
 --------
 fix: properly truncate payload to resolve missing CSOD deletes
