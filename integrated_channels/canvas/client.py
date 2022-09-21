@@ -171,12 +171,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             self.session,
             integration_id,
         )
-
-        url = '{}/api/v1/courses/{}'.format(
-            self.enterprise_configuration.canvas_base_url,
-            course_id,
-        )
-
+        url = urljoin(self.enterprise_configuration.canvas_base_url, f'/api/v1/courses/{course_id}')
         return self._delete(url)
 
     def create_assessment_reporting(self, user_id, payload):
@@ -584,11 +579,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Args:
             user_email (string) : The email associated with both the user's Edx account and Canvas account.
         """
-        get_user_id_from_email_url = '{url_base}/api/v1/accounts/{account_id}/users?search_term={email_address}'.format(
-            url_base=self.enterprise_configuration.canvas_base_url,
-            account_id=self.enterprise_configuration.canvas_account_id,
-            email_address=quote_plus(user_email)  # emails with unique symbols such as `+` can cause issues
-        )
+        path = f'/api/v1/accounts/{self.enterprise_configuration.canvas_account_id}/users'
+        query_params = f'?search_term={quote_plus(user_email)}'  # emails with unique symbols such as `+` cause issues
+        get_user_id_from_email_url = urljoin(self.enterprise_configuration.canvas_base_url, path + query_params)
         rsps = self.session.get(get_user_id_from_email_url)
 
         if rsps.status_code >= 400:
@@ -610,10 +603,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
     def _get_canvas_user_courses_by_id(self, user_id):
         """Helper method to retrieve all courses that a Canvas user is enrolled in."""
-        get_users_courses_url = '{canvas_base_url}/api/v1/users/{canvas_user_id}/courses'.format(
-            canvas_base_url=self.enterprise_configuration.canvas_base_url,
-            canvas_user_id=user_id
-        )
+        path = f'/api/v1/users/{user_id}/courses'
+        get_users_courses_url = urljoin(self.enterprise_configuration.canvas_base_url, path)
         rsps = self.session.get(get_users_courses_url)
 
         if rsps.status_code >= 400:
@@ -646,10 +637,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             transmitting learner data to.
         """
         # Check if the course assignment already exists
-        canvas_assignments_url = '{canvas_base_url}/api/v1/courses/{course_id}/assignments'.format(
-            canvas_base_url=self.enterprise_configuration.canvas_base_url,
-            course_id=course_id
-        )
+        canvas_assignments_url = CanvasUtil.course_assignments_endpoint(self.enterprise_configuration, course_id)
         resp = self.session.get(canvas_assignments_url)
 
         more_pages_present = True
@@ -723,13 +711,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """
         Helper method to take necessary learner data and post to Canvas as a submission to the correlated assignment.
         """
-        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
-            '{assignment_id}/submissions/{user_id}'.format(
-                base_url=self.enterprise_configuration.canvas_base_url,
-                course_id=course_id,
-                assignment_id=assignment_id,
-                user_id=canvas_user_id
-            )
+        path = f'/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions/{canvas_user_id}'
+        submission_url = urljoin(self.enterprise_configuration.canvas_base_url, path)
 
         # The percent grade from the grades api is represented as a decimal
         submission_data = {
