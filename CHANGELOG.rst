@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.12]
+---------
+chore: adding http status response code to content record django admin table
+
 [3.56.11]
 ---------
 chore: cleaning up Canvas client url construction
