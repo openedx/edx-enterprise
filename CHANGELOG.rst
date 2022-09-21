@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.11]
+---------
+chore: cleaning up Canvas client url construction
+
 [3.56.10]
 ---------
 fix: adhering to urljoin patterns in integrated channels API views
