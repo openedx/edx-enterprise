@@ -17,6 +17,10 @@ Unreleased
 ----------
 None
 
+[3.56.13]
+---------
+chore: smarter canvas client update course behavior
+
 [3.56.12]
 ---------
 chore: adding http status response code to content record django admin table
