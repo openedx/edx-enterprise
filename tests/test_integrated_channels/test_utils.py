@@ -231,11 +231,28 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         ) is True
 
     def test_generate_formatted_log(self):
+        log_str = utils.generate_formatted_log(1, 2, 3, 4, 5, 6)
+        assert log_str == 'integrated_channel=1, '\
+            'integrated_channel_enterprise_customer_uuid=2, '\
+            'integrated_channel_lms_user=3, '\
+            'integrated_channel_course_key=4, '\
+            'integrated_channel_plugin_configuration_id=6, 5'
+
+    def test_generate_formatted_log_old(self):
         log_str = utils.generate_formatted_log(1, 2, 3, 4, 5)
         assert log_str == 'integrated_channel=1, '\
             'integrated_channel_enterprise_customer_uuid=2, '\
             'integrated_channel_lms_user=3, '\
-            'integrated_channel_course_key=4, 5'
+            'integrated_channel_course_key=4, '\
+            'integrated_channel_plugin_configuration_id=None, 5'
+
+    def test_generate_formatted_log_kwargs(self):
+        log_str = utils.generate_formatted_log(channel_name="GENERIC")
+        assert log_str == 'integrated_channel=GENERIC, '\
+            'integrated_channel_enterprise_customer_uuid=None, '\
+            'integrated_channel_lms_user=None, '\
+            'integrated_channel_course_key=None, '\
+            'integrated_channel_plugin_configuration_id=None, None'
 
     def test_is_url_valid(self):
         assert utils.is_valid_url('https://test.com/a-really-really-really-really-long-url/')

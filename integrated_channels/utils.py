@@ -272,11 +272,12 @@ def get_subjects_from_content_metadata(content_metadata_item):
 
 
 def generate_formatted_log(
-    channel_name,
-    enterprise_customer_uuid,
-    lms_user_id,
-    course_or_course_run_key,
-    message
+    channel_name=None,
+    enterprise_customer_uuid=None,
+    lms_user_id=None,
+    course_or_course_run_key=None,
+    message=None,
+    plugin_configuration_id=None,
 ):
     """
     Formats and returns a standardized message for the integrated channels.
@@ -289,12 +290,14 @@ def generate_formatted_log(
     - lms_user_id (str): The LMS User id (if applicable) related to the message
     - course_or_course_run_key (str): The course key (if applicable) for the message
     - message (str): The string to be formatted and logged
+    - plugin_configuration_id (str): The configuration id related to the message
 
     """
     return f'integrated_channel={channel_name}, '\
         f'integrated_channel_enterprise_customer_uuid={enterprise_customer_uuid}, '\
         f'integrated_channel_lms_user={lms_user_id}, '\
-        f'integrated_channel_course_key={course_or_course_run_key}, {message}'
+        f'integrated_channel_course_key={course_or_course_run_key}, '\
+        f'integrated_channel_plugin_configuration_id={plugin_configuration_id}, {message}'
 
 
 def refresh_session_if_expired(
