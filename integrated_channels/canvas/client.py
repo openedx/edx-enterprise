@@ -77,7 +77,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         desired_payload = json.loads(serialized_data.decode('utf-8'))
         course_details = desired_payload['course']
-
         edx_course_id = course_details['integration_id']
         located_course = CanvasUtil.find_course_by_course_id(
             self.enterprise_configuration,
@@ -85,10 +84,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             edx_course_id
         )
 
+        # Do one of 3 things with the fetched canvas course info
+        # If no course was found, create it
         if not located_course:
             LOGGER.info(
                 generate_formatted_log(
-                    'canvas',
+                    self.enterprise_configuration.channel_code(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     edx_course_id,
@@ -104,12 +105,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
             # step 2: upload image_url and any other details
             self._update_course_details(created_course_id, course_details)
+            return status_code, response_text
+        # If the course was deleted, Canvas cannot support recreating
         else:
             workflow_state = located_course['workflow_state']
             if workflow_state.lower() == 'deleted':
                 LOGGER.error(
                     generate_formatted_log(
-                        'canvas',
+                        self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         edx_course_id,
@@ -119,13 +122,13 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                         ),
                     )
                 )
-                status_code = 200
-                response_text = MESSAGE_WHEN_COURSE_WAS_DELETED
+                return 200, MESSAGE_WHEN_COURSE_WAS_DELETED
+            # If the course is found, update it instead of creating one
             else:
                 # 'unpublished', 'completed' or 'available' cases
                 LOGGER.warning(
                     generate_formatted_log(
-                        'canvas',
+                        self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         edx_course_id,
@@ -138,28 +141,40 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                         ),
                     )
                 )
-                status_code, response_text = self._update_course_details(
+                return self._update_course_details(
                     located_course['id'],
                     course_details,
                 )
-
-        return status_code, response_text
 
     def update_content_metadata(self, serialized_data):
         self._create_session()
 
         integration_id = self._extract_integration_id(serialized_data)
-        course_id = CanvasUtil.get_course_id_from_edx_course_id(
+        canvas_course = CanvasUtil.find_course_by_course_id(
             self.enterprise_configuration,
             self.session,
             integration_id,
         )
 
+        # If no course was found, we should create the content.
+        if not canvas_course:
+            LOGGER.info(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    integration_id,
+                    f'Requested course:{integration_id} for update was not found in customers instance. Requesting a '
+                    f'create instead',
+                )
+            )
+            return self.create_content_metadata(serialized_data)
+
+        canvas_course_id = canvas_course.get('id')
         url = CanvasUtil.course_update_endpoint(
             self.enterprise_configuration,
-            course_id,
+            canvas_course_id,
         )
-
         return self._put(url, serialized_data)
 
     def delete_content_metadata(self, serialized_data):
@@ -287,7 +302,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 if resp.status_code >= 400:
                     LOGGER.error(
                         generate_formatted_log(
-                            'canvas',
+                            self.enterprise_configuration.channel_code(),
                             self.enterprise_configuration.enterprise_customer.uuid,
                             None,
                             edx_course,
@@ -372,7 +387,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             except ClientError:
                 LOGGER.info(
                     generate_formatted_log(
-                        'canvas',
+                        self.enterprise_configuration.channel_code(),
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         integration_id,
@@ -480,7 +495,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             exc_string = str(course_exc)
             LOGGER.error(
                 generate_formatted_log(
-                    'canvas',
+                    self.enterprise_configuration.channel_code(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     edx_course_id,
@@ -560,7 +575,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             integration_id = decoded_json['course']['integration_id']
         except KeyError as error:
             LOGGER.exception(generate_formatted_log(
-                'canvas',
+                self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
                 None,

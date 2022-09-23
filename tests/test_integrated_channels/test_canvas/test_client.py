@@ -946,14 +946,53 @@ class TestCanvasApiClient(unittest.TestCase):
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
     def test_course_delete_fails_when_course_id_not_found(self, mock_find_course_by_course_id):
         mock_find_course_by_course_id.return_value = None
-        self.update_fails_when_course_id_not_found("delete_content_metadata")
+        course_to_update = '{{"course": {{"integration_id": "{}", "name": "test_course"}}}}'.format(
+            self.integration_id
+        ).encode()
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+
+        with pytest.raises(ClientError) as client_error:
+            with responses.RequestsMock() as request_mock:
+                request_mock.add(
+                    responses.POST,
+                    self.oauth_url,
+                    json=self._token_response(),
+                    status=200
+                )
+                canvas_api_client.delete_content_metadata(course_to_update)
+
+        assert client_error.value.message == 'No Canvas courses found with associated edx course ID: {}.'.format(
+            self.integration_id
+        )
 
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
-    def test_course_update_fails_when_course_id_not_found(self, mock_find_course_by_course_id):
+    def test_course_update_creates_when_course_id_not_found(self, mock_find_course_by_course_id):
         # None here indicates no matching course is found
         # we are already testing logic for CanvasUtil separately
         mock_find_course_by_course_id.return_value = None
-        self.update_fails_when_course_id_not_found("update_content_metadata")
+        course_to_update = '{{"course": {{"integration_id": "{}", "name": "test_course"}}}}'.format(
+            self.integration_id
+        ).encode()
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            mocked_create_messaged = '{"id": 1, "message": "content was created!"}'
+            request_mock.add(
+                responses.POST,
+                canvas_api_client.course_create_url,
+                body=mocked_create_messaged,
+                status=200
+            )
+            status, response = canvas_api_client.update_content_metadata(course_to_update)
+
+        assert status == 200
+        assert response == mocked_create_messaged
 
     def test_successful_client_update(self):
         """
@@ -1028,30 +1067,6 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method(bad_course_to_update)
 
         assert client_error.value.message == 'Could not transmit data, no integration ID present.'
-
-    def update_fails_when_course_id_not_found(self, request_type):
-        """
-        Helper method to test error handling when no course ID is found
-        """
-        course_to_update = '{{"course": {{"integration_id": "{}", "name": "test_course"}}}}'.format(
-            self.integration_id
-        ).encode()
-        canvas_api_client = CanvasAPIClient(self.enterprise_config)
-
-        with pytest.raises(ClientError) as client_error:
-            with responses.RequestsMock() as request_mock:
-                request_mock.add(
-                    responses.POST,
-                    self.oauth_url,
-                    json=self._token_response(),
-                    status=200
-                )
-                transmitter_method = getattr(canvas_api_client, request_type)
-                transmitter_method(course_to_update)
-
-        assert client_error.value.message == 'No Canvas courses found with associated edx course ID: {}.'.format(
-            self.integration_id
-        )
 
     def transmission_with_empty_data(self, request_type):
         """
