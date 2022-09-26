@@ -153,6 +153,7 @@ class ContentMetadataExporter(Exporter):
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
+                incomplete_transmission.marked_for = 'update'
                 items_to_update[content_id] = incomplete_transmission
             else:
                 content_query = Q(
@@ -174,6 +175,7 @@ class ContentMetadataExporter(Exporter):
                 items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
                 item = items_to_update_query.first()
                 if item:
+                    item.marked_for = 'update'
                     items_to_update[content_id] = item
         return items_to_update
 
@@ -222,6 +224,7 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=content_id
                 )
                 past_deleted_transmission.prepare_to_recreate(content_last_changed, enterprise_customer_catalog.uuid)
+                past_deleted_transmission.marked_for = 'create'
                 items_to_create[content_id] = past_deleted_transmission
             elif incomplete_transmission:
                 self._log_info(
@@ -229,6 +232,7 @@ class ContentMetadataExporter(Exporter):
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
+                incomplete_transmission.marked_for = 'create'
                 items_to_create[content_id] = incomplete_transmission
             else:
                 new_transmission = ContentMetadataItemTransmission(
@@ -238,7 +242,8 @@ class ContentMetadataExporter(Exporter):
                     channel_metadata=None,
                     content_last_changed=content_last_changed,
                     enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
-                    plugin_configuration_id=self.enterprise_configuration.id
+                    plugin_configuration_id=self.enterprise_configuration.id,
+                    marked_for='create',
                 )
                 new_transmission.save()
                 items_to_create[content_id] = new_transmission
@@ -373,8 +378,10 @@ class ContentMetadataExporter(Exporter):
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
+                incomplete_transmission.marked_for = 'delete'
                 items_to_delete[content_id] = incomplete_transmission
             elif past_content:
+                past_content.marked_for = 'delete'
                 items_to_delete[content_id] = past_content
             else:
                 self._log_info(
@@ -385,6 +392,19 @@ class ContentMetadataExporter(Exporter):
         return items_to_delete
 
     def export(self, **kwargs):
+        use_export_cache = kwargs.get('use_export_cache', False)
+        if use_export_cache:
+            return self._cached_export(**kwargs)
+        return self._export(**kwargs)
+
+    def _cached_export(self, **kwargs):
+        # TODO add enterprise, plugin filtering
+        create_payload = ContentMetadataItemTransmission.objects.filter(marked_for='create')
+        update_payload = ContentMetadataItemTransmission.objects.filter(marked_for='update')
+        delete_payload = ContentMetadataItemTransmission.objects.filter(marked_for='delete')
+        return create_payload, update_payload, delete_payload
+
+    def _export(self, **kwargs):
         """
         Export transformed content metadata if there has been an update to the consumer's catalogs
         """

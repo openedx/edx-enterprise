@@ -49,11 +49,11 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
     SKIP_KEY_IF_NONE = True
     MAX_PAYLOAD_COUNT = getattr(settings, "ENTERPRISE_CORNERSTONE_MAX_CONTENT_PAYLOAD_COUNT", 1000)
 
-    def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT):
+    def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT, use_export_cache=True):
         """
         Return the exported and transformed content metadata as a dictionary for CSDO web pull.
         """
-        return self.export(max_payload_count=max_payload_count)
+        return self.export(max_payload_count=max_payload_count, use_export_cache=use_export_cache)
 
     def export_force_all_catalogs(self):
         """

@@ -191,6 +191,7 @@ class ContentMetadataTransmitter(Transmitter):
                         transmission.remote_updated_at = action_happened_at
                     elif action_name == 'delete':
                         transmission.remote_deleted_at = action_happened_at
+                    transmission.marked_for = None
                     transmission.save()
                     results.append(transmission)
         return results
