@@ -4,6 +4,7 @@ Tests for the Cornerstone content metadata transmitter.
 
 import unittest
 from datetime import datetime
+from unittest import mock
 
 from pytest import mark
 
@@ -28,10 +29,27 @@ class TestCornerstoneContentMetadataTransmitter(unittest.TestCase):
             enterprise_customer=enterprise_customer
         )
 
+    # @mock.patch('integrated_channels.cornerstone.transmitter.content_metadata._log_info')
+    def test_cornerstone_transmitter_transmit_method_noop(self):
+        record = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=None,
+        )
+        transmitter = CornerstoneContentMetadataTransmitter(self.enterprise_config)
+        transmitter._log_info = mock.MagicMock()  # pylint: disable=protected-access
+
+        transmitter.transmit({record.content_id: record}, {}, {})
+        transmitter._log_info.assert_called_with(  # pylint: disable=protected-access
+            f'Cornerstone base transmission invoked for config: {self.enterprise_config.id}. Treating as a NOOP'
+        )
+
     def test_transmit_content_metadata_updates_records(self):
         """
-        Test that the Cornerstone content metadata transmitter generates and updates the appropriate content records as
-        well as returns a transmit payload of both update and create content.
+        Test that the Cornerstone content metadata transmitter transmit for web method generates and updates the
+        appropriate content records as well as returns a transmit payload of both update and create content.
         """
         self.enterprise_config.transmission_chunk_size = 3
         self.enterprise_config.save()
@@ -89,7 +107,7 @@ class TestCornerstoneContentMetadataTransmitter(unittest.TestCase):
         delete_payload = {
             content_id_2: past_transmission_to_delete
         }
-        transmitter.transmit(create_payload, update_payload, delete_payload)
+        transmitter.transmit_for_web(create_payload, update_payload, delete_payload)
         item_updated = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_1,

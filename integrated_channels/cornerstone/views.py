@@ -127,7 +127,8 @@ class CornerstoneCoursesListView(BaseViewSet):
 
         get_count = int(request.GET.get('count', exporter.MAX_PAYLOAD_COUNT))
         content_item_count = min(get_count, exporter.MAX_PAYLOAD_COUNT)
-        created, updated, deleted = transmitter.transmit(
+        # Remove content records `marked for transmission` flags
+        created, updated, deleted = transmitter.transmit_for_web(
             *exporter.export_for_web_polling(max_payload_count=content_item_count)
         )
 

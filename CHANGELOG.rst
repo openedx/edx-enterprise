@@ -16,6 +16,9 @@ Change Log
 Unreleased
 ----------
 
+[3.56.15]
+---------
+feat: tagging exported content records for transmission
 
 [3.56.14]
 ---------

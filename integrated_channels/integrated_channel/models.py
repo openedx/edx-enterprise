@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
+from enterprise.constants import TRANSMISSION_MARK_CREATE, TRANSMISSION_MARK_DELETE, TRANSMISSION_MARK_UPDATE
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerCatalog
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
@@ -426,6 +427,12 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True
     )
+    marked_for = models.CharField(
+        help_text='Flag marking a record as needing a form of transmitting',
+        max_length=32,
+        blank=True,
+        null=True
+    )
 
     @classmethod
     def deleted_transmissions(cls, enterprise_customer, plugin_configuration_id, integrated_channel_code, content_id):
@@ -517,6 +524,37 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
+
+    def _mark_transmission(self, mark_for):
+        """
+        Helper method to tag a transmission for any operation
+        """
+        self.marked_for = mark_for
+        self.save()
+
+    def mark_for_create(self):
+        """
+        Mark a transmission for creation
+        """
+        self._mark_transmission(TRANSMISSION_MARK_CREATE)
+
+    def mark_for_update(self):
+        """
+        Mark a transmission for update
+        """
+        self._mark_transmission(TRANSMISSION_MARK_UPDATE)
+
+    def mark_for_delete(self):
+        """
+        Mark a transmission for delete
+        """
+        self._mark_transmission(TRANSMISSION_MARK_DELETE)
+
+    def remove_marked_for(self):
+        """
+        Remove and mark on a transmission
+        """
+        self._mark_transmission(None)
 
     def prepare_to_recreate(self, content_last_changed, enterprise_customer_catalog_uuid):
         """

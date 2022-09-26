@@ -49,17 +49,33 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
     SKIP_KEY_IF_NONE = True
     MAX_PAYLOAD_COUNT = getattr(settings, "ENTERPRISE_CORNERSTONE_MAX_CONTENT_PAYLOAD_COUNT", 1000)
 
-    def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT):
+    def export_for_web_polling(self, max_payload_count=MAX_PAYLOAD_COUNT):  # pylint: disable=unused-argument
         """
         Return the exported and transformed content metadata as a dictionary for CSDO web pull.
         """
-        return self.export(max_payload_count=max_payload_count)
-
-    def export_force_all_catalogs(self):
-        """
-        Return the exported and transformed content metadata as a dictionary regardless if there is an update needed.
-        """
-        return self.export(force_retrieve_all_catalogs=True)
+        ContentMetadataItemTransmission = apps.get_model(
+            'integrated_channel',
+            'ContentMetadataItemTransmission'
+        )
+        create_payload = ContentMetadataItemTransmission.objects.filter(
+            marked_for='create',
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            plugin_configuration_id=self.enterprise_configuration.id,
+        )
+        update_payload = ContentMetadataItemTransmission.objects.filter(
+            marked_for='update',
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            plugin_configuration_id=self.enterprise_configuration.id,
+        )
+        delete_payload = ContentMetadataItemTransmission.objects.filter(
+            marked_for='delete',
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            plugin_configuration_id=self.enterprise_configuration.id,
+        )
+        created = {record.content_id: record for record in create_payload}
+        updated = {record.content_id: record for record in update_payload}
+        deleted = {record.content_id: record for record in delete_payload}
+        return created, updated, deleted
 
     def transform_courserun_key(self, content_metadata_item):
         """
