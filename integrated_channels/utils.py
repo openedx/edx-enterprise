@@ -281,8 +281,7 @@ def generate_formatted_log(
 ):
     """
     Formats and returns a standardized message for the integrated channels.
-    'None' may be passed as a value to any format field, but all fields are mandatory to
-    encourage log standardization.
+    All fields are optional.
 
     Arguments:
     - channel_name (str): The name of the integrated channel
