@@ -4,7 +4,6 @@ Tests for the `integrated_channels` moodle configuration api.
 import datetime
 from logging import getLogger
 from unittest import mock
-from uuid import uuid4
 
 from django.urls import reverse
 

@@ -1737,6 +1737,7 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
 
     def tearDown(self):
         self.cleanup_test_objects()
+        super().tearDown()
 
     def test_not_found(self):
         """
