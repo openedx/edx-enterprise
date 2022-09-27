@@ -51,6 +51,7 @@ class ContentSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, view
             plugin_configuration_id=plugin_configuration_id
         )
 
+
 class LearnerSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, viewsets.ModelViewSet):
     """
     Sync-status APIs for `LearnerDataTransmissionAudit` implementation items.

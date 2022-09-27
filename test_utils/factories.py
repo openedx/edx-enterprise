@@ -609,6 +609,7 @@ class SapSuccessFactorsLearnerDataTransmissionAuditFactory(LearnerDataTransmissi
     course_completed = True
     completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
 
+
 class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
     """
     ``DegreedGlobalConfiguration`` factory.
