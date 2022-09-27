@@ -74,22 +74,22 @@ class ContentMetadataExporter(Exporter):
     def _log_info(self, msg, course_or_course_run_key=None):
         LOGGER.info(
             generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                course_or_course_run_key,
-                msg
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                course_or_course_run_key=course_or_course_run_key,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                message=msg
             )
         )
 
     def _log_exception(self, msg, course_or_course_run_key=None):
         LOGGER.exception(
             generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                course_or_course_run_key,
-                msg
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                course_or_course_run_key=course_or_course_run_key,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                message=msg
             )
         )
 

@@ -99,8 +99,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        actual_response = SAPSuccessFactorsAPIClient.get_oauth_access_token(
-            self.url_base,
+        actual_response = SAPSuccessFactorsAPIClient(self.enterprise_config).get_oauth_access_token(
             self.client_id,
             self.client_secret,
             self.company_id,
@@ -121,8 +120,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
                 json={"issuedFor": "learning_public_api"}
             )
 
-            SAPSuccessFactorsAPIClient.get_oauth_access_token(
-                self.url_base,
+            SAPSuccessFactorsAPIClient(self.enterprise_config).get_oauth_access_token(
                 self.client_id,
                 self.client_secret,
                 self.company_id,
@@ -139,8 +137,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
                 responses.POST,
                 urljoin(self.url_base, self.oauth_api_path),
             )
-            SAPSuccessFactorsAPIClient.get_oauth_access_token(
-                self.url_base,
+            SAPSuccessFactorsAPIClient(self.enterprise_config).get_oauth_access_token(
                 self.client_id,
                 self.client_secret,
                 self.company_id,

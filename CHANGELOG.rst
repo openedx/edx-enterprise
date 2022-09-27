@@ -15,7 +15,27 @@ Change Log
 
 Unreleased
 ----------
-None
+
+
+[3.56.14]
+---------
+chore: add plugin_configuration_id to standard integration logging
+
+[3.56.13]
+---------
+chore: smarter canvas client update course behavior
+
+[3.56.12]
+---------
+chore: adding http status response code to content record django admin table
+
+[3.56.11]
+---------
+chore: cleaning up Canvas client url construction
+
+[3.56.10]
+---------
+fix: adhering to urljoin patterns in integrated channels API views
 
 [3.56.9]
 --------

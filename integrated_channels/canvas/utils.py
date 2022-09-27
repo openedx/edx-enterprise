@@ -1,6 +1,7 @@
 '''Collection of static util methods for various Canvas operations'''
 import logging
 from http import HTTPStatus
+from urllib.parse import urljoin
 
 from requests.utils import quote
 
@@ -40,7 +41,7 @@ class CanvasUtil:
 
         If root account cannot be found, returns None
         """
-        url = "{}/api/v1/accounts".format(enterprise_configuration.canvas_base_url)
+        url = urljoin(enterprise_configuration.canvas_base_url, "/api/v1/accounts")
         resp = session.get(url)
         all_accounts = resp.json()
         root_account = None
@@ -71,11 +72,8 @@ class CanvasUtil:
 
         The `&state[]=all` is added so we can also fetch priorly 'delete'd courses as well
         """
-        url = "{}/api/v1/accounts/{}/courses/?search_term={}&state[]=all".format(
-            enterprise_configuration.canvas_base_url,
-            canvas_account_id,
-            quote(edx_course_id),
-        )
+        path = f"/api/v1/accounts/{canvas_account_id}/courses/?search_term={quote(edx_course_id)}&state[]=all"
+        url = urljoin(enterprise_configuration.canvas_base_url, path)
         resp = session.get(url)
         all_courses_response = resp.json()
 
@@ -204,9 +202,9 @@ class CanvasUtil:
         """
         Returns endpoint to POST to for course creation
         """
-        return '{}/api/v1/accounts/{}/courses'.format(
+        return urljoin(
             enterprise_configuration.canvas_base_url,
-            enterprise_configuration.canvas_account_id,
+            f'/api/v1/accounts/{enterprise_configuration.canvas_account_id}/courses',
         )
 
     @staticmethod
@@ -214,9 +212,9 @@ class CanvasUtil:
         """
         Returns endpoint to PUT to for course update
         """
-        return '{}/api/v1/courses/{}'.format(
+        return urljoin(
             enterprise_configuration.canvas_base_url,
-            course_id,
+            f'/api/v1/courses/{course_id}',
         )
 
     @staticmethod
@@ -224,7 +222,7 @@ class CanvasUtil:
         """
         Returns endpoint to GET to for course assignments
         """
-        return '{}/api/v1/courses/{}/assignments'.format(
+        return urljoin(
             enterprise_configuration.canvas_base_url,
-            course_id,
+            f'/api/v1/courses/{course_id}/assignments',
         )
