@@ -22,8 +22,39 @@ class ContentSyncStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ContentMetadataItemTransmission
-        fields = '__all__'
+        fields = (
+            'content_title',
+            'content_id',
+            'sync_status',
+            'sync_last_attempted_at',
+            'friendly_status_message',
+        )
 
+    sync_status = serializers.SerializerMethodField()
+    sync_last_attempted_at = serializers.SerializerMethodField()
+
+    def get_sync_status(self, obj):
+        """
+        Return a string representation of the sync status.
+        """
+        if obj.api_response_status_code is None:
+            sync_status = 'pending'
+        elif obj.api_response_status_code < 400:
+            sync_status = 'okay'
+        elif obj.api_response_status_code >= 400:
+            sync_status = 'error'
+        return sync_status
+
+    def get_sync_last_attempted_at(self, obj):
+        """
+        Return the most recent/youngest sync attempt date.
+        """
+        date_list = [obj.remote_created_at, obj.remote_updated_at, obj.remote_deleted_at]
+        res = [i for i in date_list if i is not None]
+        if not res:
+            return None
+        else:
+            return max(res)
 
 class LearnerSyncStatusSerializer(serializers.ModelSerializer):
     """

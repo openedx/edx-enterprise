@@ -128,12 +128,6 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         for key in update_payload:
             assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
 
-        # Sanity check that the regular export won't yield the update payload
-        create_payload, update_payload, delete_payload = exporter.export()
-        assert not create_payload
-        assert not update_payload
-        assert not delete_payload
-
     @mock.patch('integrated_channels.cornerstone.utils.uuid4')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')

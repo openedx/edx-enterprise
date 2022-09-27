@@ -922,7 +922,9 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
     integrated_channel_code = 'GENERIC'
     plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     content_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    content_title = 'edX Demonstration Course'
     content_last_changed = localized_utcnow()
+    api_response_status_code = None
     enterprise_customer_catalog_uuid = factory.LazyAttribute(lambda x: FAKER.uuid4())
     channel_metadata = {
         'title': 'edX Demonstration Course',

@@ -26,6 +26,7 @@ class ContentSyncStatusViewSetTests(APITest):
             integrated_channel_code='GENERIC',
             plugin_configuration_id=1,
             remote_created_at=datetime.datetime.utcnow(),
+            api_response_status_code=200,
         )
 
         super().setUp()
@@ -71,7 +72,8 @@ class ContentSyncStatusViewSetTests(APITest):
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
-        assert expected_enterprise_uuid == response_json['results'][0]['enterprise_customer']
+        assert self.content_metadata_item.content_id == response_json['results'][0]['content_id']
+        assert 'okay' == response_json['results'][0]['sync_status']
 
     def test_get_with_bad_channel_code(self):
         """
