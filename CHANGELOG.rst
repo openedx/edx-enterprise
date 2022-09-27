@@ -15,7 +15,11 @@ Change Log
 
 Unreleased
 ----------
-None
+
+
+[3.56.14]
+---------
+chore: add plugin_configuration_id to standard integration logging
 
 [3.56.13]
 ---------
