@@ -16,6 +16,9 @@ Change Log
 Unreleased
 ----------
 
+[3.56.15]
+---------
+feat: Add verbose field name to enable_learner_portal_offers
 
 [3.56.14]
 ---------
