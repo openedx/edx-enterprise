@@ -56,6 +56,7 @@ class ContentSyncStatusSerializer(serializers.ModelSerializer):
         else:
             return max(res)
 
+
 class LearnerSyncStatusSerializer(serializers.ModelSerializer):
     """
     A base sync-status serializer class for LearnerDataTransmissionAudit implementations.
