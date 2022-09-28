@@ -38,13 +38,12 @@ ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES = OrderedDict([
     )
 ])
 
-# Since Cornerstone is following pull content model we don't need to include CSOD customers in a content metadata
-# transmission job
 CONTENT_METADATA_JOB_INTEGRATED_CHANNEL_CHOICES = OrderedDict([
     (integrated_channel_class.channel_code(), integrated_channel_class)
     for integrated_channel_class in (
         BlackboardEnterpriseCustomerConfiguration,
         CanvasEnterpriseCustomerConfiguration,
+        CornerstoneEnterpriseCustomerConfiguration,
         DegreedEnterpriseCustomerConfiguration,
         Degreed2EnterpriseCustomerConfiguration,
         MoodleEnterpriseCustomerConfiguration,

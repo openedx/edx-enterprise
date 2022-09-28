@@ -4,7 +4,6 @@ Tests for Cornerstone content metadata exporters.
 
 import datetime
 import unittest
-from datetime import timedelta
 from unittest import mock
 
 import ddt
@@ -17,8 +16,6 @@ from integrated_channels.cornerstone.exporters.content_metadata import Cornersto
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import (
-    FAKE_COURSE,
-    FAKE_COURSE_RUN,
     FAKE_SEARCH_ALL_COURSE_RESULT_3,
     get_fake_catalog_diff_create,
     get_fake_catalog_diff_create_with_invalid_key,
@@ -77,56 +74,6 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
         assert not update_payload
         assert not delete_payload
-
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
-    def test_content_exporter_force_all_content_export(self, mock_get_catalog_diff, mock_get_content_metadata):
-        """
-        ``CornerstoneContentMetadataExporter``'s ``export_force_all_catalogs`` produces the expected export where
-        content that would be skipped normally by the base export method (being identified as not needing updates from
-        the enterprise-catalog service) is produced within the update payload.
-        """
-        now = datetime.datetime.now()
-        factories.ContentMetadataItemTransmissionFactory(
-            enterprise_customer=self.config.enterprise_customer,
-            plugin_configuration_id=self.config.id,
-            integrated_channel_code=self.config.channel_code(),
-            content_id=FAKE_COURSE['key'],
-            content_last_changed=now,
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            remote_created_at=now,
-        )
-        factories.ContentMetadataItemTransmissionFactory(
-            enterprise_customer=self.config.enterprise_customer,
-            plugin_configuration_id=self.config.id,
-            integrated_channel_code=self.config.channel_code(),
-            content_id=FAKE_COURSE_RUN['key'],
-            content_last_changed=now,
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            remote_created_at=now,
-        )
-
-        content_metadata_response_payload = get_fake_content_metadata()
-        for content in content_metadata_response_payload:
-            content['content_last_modified'] = now - timedelta(hours=10)
-
-        mock_get_content_metadata.return_value = content_metadata_response_payload
-
-        mock_items_found = [
-            {'content_key': FAKE_COURSE_RUN['key'], 'date_updated': str(now)},
-            {'content_key': FAKE_COURSE['key'], 'date_updated': str(now)}
-        ]
-        mock_items_not_found = []
-        mock_items_not_included = []
-        mock_get_catalog_diff.return_value = mock_items_not_included, mock_items_not_found, mock_items_found
-        exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
-
-        create_payload, update_payload, delete_payload = exporter.export_force_all_catalogs()
-        assert len(update_payload) == 2
-        assert not create_payload
-        assert not delete_payload
-        for key in update_payload:
-            assert key in [FAKE_COURSE_RUN['key'], FAKE_COURSE['key']]
 
     @mock.patch('integrated_channels.cornerstone.utils.uuid4')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')

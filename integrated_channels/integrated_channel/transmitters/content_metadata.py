@@ -44,12 +44,12 @@ class ContentMetadataTransmitter(Transmitter):
         self._transmit_update = functools.partial(
             self._transmit_action,
             client_method=self.client.update_content_metadata,
-            action_name='update'
+            action_name='update',
         )
         self._transmit_delete = functools.partial(
             self._transmit_action,
             client_method=self.client.delete_content_metadata,
-            action_name='delete'
+            action_name='delete',
         )
 
     def _log_info(self, msg, course_or_course_run_key=None):
@@ -82,7 +82,7 @@ class ContentMetadataTransmitter(Transmitter):
                 course_or_course_run_key=content_id
             )
 
-    def transmit(self, create_payload, update_payload, delete_payload, **kwargs):
+    def transmit(self, create_payload, update_payload, delete_payload):
         """
         Transmit content metadata items to the integrated channel. Save or update content metadata records according to
         the type of transmission.
@@ -192,5 +192,6 @@ class ContentMetadataTransmitter(Transmitter):
                     elif action_name == 'delete':
                         transmission.remote_deleted_at = action_happened_at
                     transmission.save()
+                    transmission.remove_marked_for()
                     results.append(transmission)
         return results

@@ -931,7 +931,14 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
         'key': 'edX+DemoX',
         'content_type': 'course',
         'start': '2030-01-01T00:00:00Z',
-        'end': '2030-03-01T00:00:00Z'
+        'end': '2030-03-01T00:00:00Z',
+        'enrollment_url': 'https://www.foobar.com',
+        'is_active': True,
+        'estimated_hours': '666',
+        'organizations': ['ayylmao'],
+        'languages': 'Klingon',
+        'subjects': 'ayylmaooo',
+        'image_url': 'https://www,foobar.com'
     }
 
 
