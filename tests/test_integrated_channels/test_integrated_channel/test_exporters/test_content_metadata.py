@@ -74,8 +74,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
 
-        cmti = ContentMetadataItemTransmission.objects.get(content_id=FAKE_COURSE['key'])
-        assert cmti.content_title is not None
+        cmit = ContentMetadataItemTransmission.objects.get(content_id=FAKE_COURSE['key'])
+        assert cmit.content_title is not None
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
