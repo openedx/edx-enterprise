@@ -51,6 +51,8 @@ from integrated_channels.degreed.models import (
 from integrated_channels.integrated_channel.models import (
     ContentMetadataItemTransmission,
     GenericEnterpriseCustomerPluginConfiguration,
+    GenericLearnerDataTransmissionAudit,
+    LearnerDataTransmissionAudit,
 )
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (
@@ -469,6 +471,39 @@ class DataSharingConsentTextOverridesFactory(factory.django.DjangoModelFactory):
     published = True
 
 
+class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``LearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of LearnerDataTransmissionAudit with minimal boilerplate
+    """
+    class Meta:
+        """
+        Meta for ``LearnerDataTransmissionAuditFactory``.
+        """
+        model = LearnerDataTransmissionAudit
+
+    enterprise_customer_uuid = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class GenericLearnerDataTransmissionAuditFactory(LearnerDataTransmissionAuditFactory):
+    """
+    ``GenericLearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of ``GenericLearnerDataTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``GenericLearnerDataTransmissionAuditFactory``.
+        """
+
+        model = GenericLearnerDataTransmissionAudit
+
+
 class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory):
     """
     ``EnterpriseCustomerReportingConfiguration`` factory.
@@ -551,7 +586,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(GenericEnterpriseC
     user_type = SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER
 
 
-class SapSuccessFactorsLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+class SapSuccessFactorsLearnerDataTransmissionAuditFactory(LearnerDataTransmissionAuditFactory):
     """
     ``SapSuccessFactorsLearnerDataTransmissionAudit`` factory.
 
@@ -568,11 +603,11 @@ class SapSuccessFactorsLearnerDataTransmissionAuditFactory(factory.django.Django
     sapsf_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
-    course_completed = True
-    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
     grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
     status = factory.LazyAttribute(lambda x: FAKER.word())
+    course_completed = True
+    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
 
 
 class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
@@ -639,7 +674,7 @@ class Degreed2EnterpriseCustomerConfigurationFactory(factory.django.DjangoModelF
     client_secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
 
 
-class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+class DegreedLearnerDataTransmissionAuditFactory(LearnerDataTransmissionAuditFactory):
     """
     ``DegreedLearnerDataTransmissionAudit`` factory.
 
@@ -661,7 +696,7 @@ class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFacto
     status = factory.LazyAttribute(lambda x: FAKER.word())
 
 
-class CornerstoneLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+class CornerstoneLearnerDataTransmissionAuditFactory(LearnerDataTransmissionAuditFactory):
     """
     ``CornerstoneLearnerDataTransmissionAudit`` factory.
 
@@ -887,7 +922,9 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
     integrated_channel_code = 'GENERIC'
     plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     content_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    content_title = 'edX Demonstration Course'
     content_last_changed = localized_utcnow()
+    api_response_status_code = None
     enterprise_customer_catalog_uuid = factory.LazyAttribute(lambda x: FAKER.uuid4())
     channel_metadata = {
         'title': 'edX Demonstration Course',

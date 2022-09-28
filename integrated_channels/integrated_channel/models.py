@@ -21,7 +21,7 @@ from integrated_channels.integrated_channel.exporters.content_metadata import Co
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
-from integrated_channels.utils import convert_comma_separated_string_to_list
+from integrated_channels.utils import channel_code_to_app_label, convert_comma_separated_string_to_list
 
 LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
@@ -166,6 +166,16 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         raise NotImplementedError('Implemented in concrete subclass.')
 
+    @classmethod
+    def get_class_by_channel_code(cls, channel_code):
+        """
+        Return the `EnterpriseCustomerPluginConfiguration` implementation for the particular channel_code, or None
+        """
+        for a_cls in cls.__subclasses__():
+            if a_cls.channel_code().lower() == channel_code.lower():
+                return a_cls
+        return None
+
     def generate_default_display_name(self):
         """
         Returns a default display namem which can be overriden by a subclass.
@@ -294,6 +304,13 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     subsection_name = models.CharField(max_length=255, blank=False, null=True)
     status = models.CharField(max_length=100, blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
+    friendly_status_message = models.CharField(
+        help_text='A user-friendly API response status message.',
+        max_length=255,
+        default=None,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         abstract = True
@@ -324,6 +341,17 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         """
         Fetch ``provider_id`` from global configuration settings
         """
+        return None
+
+    @classmethod
+    def get_class_by_channel_code(cls, channel_code):
+        """
+        Return the `LearnerDataTransmissionAudit` implementation for the particular channel_code, or None
+        """
+        app_label = channel_code_to_app_label(channel_code)
+        for a_cls in cls.__subclasses__():
+            if a_cls._meta.app_label == app_label:
+                return a_cls
         return None
 
     def serialize(self, *args, **kwargs):
@@ -391,6 +419,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     integrated_channel_code = models.CharField(max_length=30)
     plugin_configuration_id = models.PositiveIntegerField(blank=True, null=True)
     content_id = models.CharField(max_length=255)
+    content_title = models.CharField(max_length=255, default=None, null=True, blank=True)
     channel_metadata = JSONField()
     content_last_changed = models.DateTimeField(
         help_text='Date of the last time the enterprise catalog associated with this metadata item was updated',
@@ -421,6 +450,13 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         help_text='The most recent remote API call response HTTP status code',
         blank=True,
         null=True
+    )
+    friendly_status_message = models.CharField(
+        help_text='A user-friendly API response status message.',
+        max_length=255,
+        default=None,
+        null=True,
+        blank=True
     )
     api_response_body = models.TextField(
         help_text='The most recent remote API call response body',

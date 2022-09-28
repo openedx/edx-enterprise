@@ -463,18 +463,20 @@ class ContentMetadataExporter(Exporter):
                     if key in items_create_keys:
                         existing_record = items_to_create.get(key)
                         existing_record.channel_metadata = transformed_item
+                        existing_record.content_title = item.get('title')
                         existing_record.content_last_changed = item.get('content_last_modified')
                         # Sanity check
                         existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
-
+                        existing_record.save()
                         create_payload[key] = existing_record
                     elif key in items_update_keys:
                         existing_record = items_to_update.get(key)
                         existing_record.channel_metadata = transformed_item
+                        existing_record.content_title = item.get('title')
                         existing_record.content_last_changed = item.get('content_last_modified')
                         # Sanity check
                         existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
-
+                        existing_record.save()
                         update_payload[key] = existing_record
 
             for key, item in items_to_delete.items():

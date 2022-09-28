@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.56.16]
+---------
+feat: integration sync status self service endpoints
+
 [3.56.15]
 ---------
 feat: tagging exported content records for transmission

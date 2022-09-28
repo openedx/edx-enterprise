@@ -1735,12 +1735,19 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
         self.addCleanup(self.cleanup_test_objects)
         super().setUp()
 
+    def tearDown(self):
+        self.cleanup_test_objects()
+        super().tearDown()
+
     def test_not_found(self):
         """
         Verify that the management command does not adjust records when evaluating a subdomain with no config having a
         corresponding base url
         """
-        factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='should-not-exist')
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            subdomain='should-not-exist',
+            plugin_configuration_id=None
+        )
         call_command(
             'backfill_missing_csod_foreign_keys',
         )
@@ -1755,7 +1762,10 @@ class TestBackfillCSODJoinKeysManagementCommand(unittest.TestCase, EnterpriseMoc
         factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             cornerstone_base_url=self.cornerstone_base_url_one
         )
-        factories.CornerstoneLearnerDataTransmissionAuditFactory(subdomain='edx')
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            subdomain='edx',
+            plugin_configuration_id=None,
+        )
         call_command(
             'backfill_missing_csod_foreign_keys',
         )

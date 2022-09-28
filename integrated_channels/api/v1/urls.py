@@ -16,4 +16,5 @@ urlpatterns = [
     path('degreed2/', include('integrated_channels.api.v1.degreed2.urls')),
     path('cornerstone/', include('integrated_channels.api.v1.cornerstone.urls')),
     path('configs/', IntegratedChannelsBaseViewSet.as_view({'get': 'list'}), name='configs'),
+    path('logs/', include('integrated_channels.api.v1.logs.urls')),
 ]

@@ -17,6 +17,7 @@ from integrated_channels.integrated_channel.models import ContentMetadataItemTra
 from test_utils import FAKE_UUIDS, factories
 from test_utils.factories import ContentMetadataItemTransmissionFactory
 from test_utils.fake_catalog_api import (
+    FAKE_COURSE,
     FAKE_COURSE_RUN,
     FAKE_COURSE_RUN2,
     get_fake_catalog,
@@ -72,6 +73,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         for key in create_payload:
             assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
+
+        cmit = ContentMetadataItemTransmission.objects.get(content_id=FAKE_COURSE['key'])
+        assert cmit.content_title is not None
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')

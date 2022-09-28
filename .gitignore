@@ -54,7 +54,7 @@ pii_report/
 
 # Logging
 log/
-logs/
+/logs/
 chromedriver.log
 ghostdriver.log
 geckodriver.log
