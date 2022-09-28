@@ -153,6 +153,7 @@ class ContentMetadataExporter(Exporter):
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
+                incomplete_transmission.mark_for_update()
                 items_to_update[content_id] = incomplete_transmission
             else:
                 content_query = Q(
@@ -174,6 +175,7 @@ class ContentMetadataExporter(Exporter):
                 items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
                 item = items_to_update_query.first()
                 if item:
+                    item.mark_for_update()
                     items_to_update[content_id] = item
         return items_to_update
 
@@ -209,12 +211,6 @@ class ContentMetadataExporter(Exporter):
                 integrated_channel_code=self.enterprise_configuration.channel_code(),
                 content_id=content_id,
             ).first()
-            incomplete_transmission = ContentMetadataItemTransmission.incomplete_create_transmissions(
-                enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                plugin_configuration_id=self.enterprise_configuration.id,
-                integrated_channel_code=self.enterprise_configuration.channel_code(),
-                content_id=content_id,
-            ).first()
             if past_deleted_transmission:
                 self._log_info(
                     'Found previously deleted content record while creating record. '
@@ -222,26 +218,36 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=content_id
                 )
                 past_deleted_transmission.prepare_to_recreate(content_last_changed, enterprise_customer_catalog.uuid)
+                past_deleted_transmission.mark_for_create()
                 items_to_create[content_id] = past_deleted_transmission
-            elif incomplete_transmission:
-                self._log_info(
-                    'Found an unsent content create record while creating record. '
-                    'Including record.',
-                    course_or_course_run_key=content_id
-                )
-                items_to_create[content_id] = incomplete_transmission
             else:
-                new_transmission = ContentMetadataItemTransmission(
+                incomplete_transmission = ContentMetadataItemTransmission.incomplete_create_transmissions(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    plugin_configuration_id=self.enterprise_configuration.id,
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     content_id=content_id,
-                    channel_metadata=None,
-                    content_last_changed=content_last_changed,
-                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
-                    plugin_configuration_id=self.enterprise_configuration.id
-                )
-                new_transmission.save()
-                items_to_create[content_id] = new_transmission
+                ).first()
+                if incomplete_transmission:
+                    self._log_info(
+                        'Found an unsent content create record while creating record. '
+                        'Including record.',
+                        course_or_course_run_key=content_id
+                    )
+                    incomplete_transmission.mark_for_create()
+                    items_to_create[content_id] = incomplete_transmission
+                else:
+                    new_transmission = ContentMetadataItemTransmission(
+                        enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                        integrated_channel_code=self.enterprise_configuration.channel_code(),
+                        content_id=content_id,
+                        channel_metadata=None,
+                        content_last_changed=content_last_changed,
+                        enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                        plugin_configuration_id=self.enterprise_configuration.id
+                    )
+                    new_transmission.save()
+                    new_transmission.mark_for_create()
+                    items_to_create[content_id] = new_transmission
         return items_to_create
 
     def _get_catalog_diff(
@@ -359,29 +365,31 @@ class ContentMetadataExporter(Exporter):
                 content_id=content_id,
             ).first()
 
-            past_content = ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                integrated_channel_code=self.enterprise_configuration.channel_code(),
-                enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
-                plugin_configuration_id=self.enterprise_configuration.id,
-                content_id=content_id
-            ).first()
-
             if incomplete_transmission:
                 self._log_info(
                     'Found an unsent content delete record while deleting record. '
                     'Including record.',
                     course_or_course_run_key=content_id
                 )
+                incomplete_transmission.mark_for_delete()
                 items_to_delete[content_id] = incomplete_transmission
-            elif past_content:
-                items_to_delete[content_id] = past_content
             else:
-                self._log_info(
-                    'Could not find a content record while deleting record. '
-                    'Skipping record.',
-                    course_or_course_run_key=content_id
-                )
+                past_content = ContentMetadataItemTransmission.objects.filter(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
+                    plugin_configuration_id=self.enterprise_configuration.id,
+                    content_id=content_id
+                ).first()
+                if past_content:
+                    past_content.mark_for_delete()
+                    items_to_delete[content_id] = past_content
+                else:
+                    self._log_info(
+                        'Could not find a content record while deleting record. '
+                        'Skipping record.',
+                        course_or_course_run_key=content_id
+                    )
         return items_to_delete
 
     def export(self, **kwargs):
