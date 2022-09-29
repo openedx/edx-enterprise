@@ -66,7 +66,8 @@ class Command(BaseCommand):
                 )
                 catalog_query = enterprise_catalog.enterprise_catalog_query
                 catalog_query_uuid = str(catalog_query.uuid) if catalog_query else None
-                query_title = catalog_query.title if catalog_query and hasattr(catalog_query, 'title') else None
+                query_title = getattr(catalog_query, 'title', None)
+                include_exec_ed_2u_courses = getattr(catalog_query, 'include_exec_ed_2u_courses', False)
                 if not response:
                     # catalog with matching uuid does NOT exist in enterprise-catalog
                     # service, so we should create a new catalog
@@ -80,6 +81,7 @@ class Command(BaseCommand):
                         enterprise_catalog.publish_audit_enrollment_urls,
                         catalog_query_uuid,
                         query_title,
+                        include_exec_ed_2u_courses,
                     )
                 else:
                     # catalog with matching uuid does exist in enterprise-catalog
@@ -93,6 +95,7 @@ class Command(BaseCommand):
                         'publish_audit_enrollment_urls': enterprise_catalog.publish_audit_enrollment_urls,
                         'catalog_query_uuid': catalog_query_uuid,
                         'query_title': query_title,
+                        'include_exec_ed_2u_courses': include_exec_ed_2u_courses,
                     }
                     client.update_enterprise_catalog(
                         str(enterprise_catalog.uuid),

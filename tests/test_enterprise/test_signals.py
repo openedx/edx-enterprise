@@ -908,6 +908,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.publish_audit_enrollment_urls,
             str(enterprise_catalog.enterprise_catalog_query.uuid),
             enterprise_catalog.enterprise_catalog_query.title,
+            enterprise_catalog.enterprise_catalog_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -930,6 +931,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.publish_audit_enrollment_urls,
             str(enterprise_catalog.enterprise_catalog_query.uuid),
             enterprise_catalog.enterprise_catalog_query.title,
+            enterprise_catalog.enterprise_catalog_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -952,6 +954,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls,
             catalog_query_uuid=str(enterprise_catalog.enterprise_catalog_query.uuid),
             query_title=enterprise_catalog.enterprise_catalog_query.title,
+            include_exec_ed_2u_courses=enterprise_catalog.enterprise_catalog_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
@@ -1006,6 +1009,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls,
             catalog_query_uuid=str(test_query.uuid),
             query_title=test_query.title,
+            include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
 

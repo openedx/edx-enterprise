@@ -15,6 +15,14 @@ Change Log
 
 Unreleased
 ----------
+* Nothing
+
+[3.57.0]
+---------
+* feat: adds an EnterpriseCatalogQuery.include_exec_ed_2u_courses field.
+  When True for an EnterpriseCatalogQuery record, this field indicates that
+  course content with type ``executive-education-2u`` should not be excluded from being associated with that record.
+  See related enterprise-catalog PR, which includes an ADR: https://github.com/openedx/enterprise-catalog/pull/507
 
 [3.56.16]
 ---------

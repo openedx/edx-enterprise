@@ -46,7 +46,9 @@ class EnterpriseCatalogApiClient(UserAPIClient):
             enabled_course_modes,
             publish_audit_enrollment_urls,
             catalog_query_uuid,
-            query_title=None):
+            query_title=None,
+            include_exec_ed_2u_courses=False,
+    ):
         """
         Creates an enterprise catalog.
         """
@@ -61,6 +63,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
             'publish_audit_enrollment_urls': json.dumps(publish_audit_enrollment_urls),
             'catalog_query_uuid': catalog_query_uuid,
             'query_title': query_title,
+            'include_exec_ed_2u_courses': include_exec_ed_2u_courses,
         }
         try:
             LOGGER.info(
