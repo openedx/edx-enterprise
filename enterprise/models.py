@@ -1998,6 +1998,14 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         null=False,
         default=uuid4,
     )
+    include_exec_ed_2u_courses = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether the catalog is allowed to include exec ed (2U) courses.  This means that, "
+            "when the content_filter specifies that 'course' content types should be included in the catalog, "
+            "executive-education-2u course types won't be excluded from the content of the associated catalog."
+        ),
+    )
 
     class Meta:
         verbose_name = _("Enterprise Catalog Query")

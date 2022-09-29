@@ -717,7 +717,8 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
 
     list_display = (
         'title',
-        'discovery_query_url'
+        'discovery_query_url',
+        'include_exec_ed_2u_courses',
     )
 
     def discovery_query_url(self, obj):

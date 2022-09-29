@@ -252,7 +252,7 @@ def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: d
             )
         )
         catalog.content_filter = updated_content_filter
-        catalog.save()
+        catalog.save()  # This save will trigger the update_enterprise_catalog_data() receiver below
 
 
 @receiver(post_save, sender=EnterpriseCustomerCatalog)
@@ -265,8 +265,8 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
     """
     catalog_uuid = instance.uuid
     catalog_query_uuid = str(instance.enterprise_catalog_query.uuid) if instance.enterprise_catalog_query else None
-    query_title = getattr(instance.enterprise_catalog_query, 'title', None) \
-        if instance.enterprise_catalog_query else None
+    query_title = getattr(instance.enterprise_catalog_query, 'title', None)
+    include_exec_ed_2u_courses = getattr(instance.enterprise_catalog_query, 'include_exec_ed_2u_courses', False)
     try:
         catalog_client = EnterpriseCatalogApiClient()
         if kwargs['created']:
@@ -296,6 +296,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 instance.publish_audit_enrollment_urls,
                 catalog_query_uuid,
                 query_title,
+                include_exec_ed_2u_courses,
             )
         else:
             # catalog with matching uuid does exist in enterprise-catalog
@@ -309,6 +310,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 'publish_audit_enrollment_urls': instance.publish_audit_enrollment_urls,
                 'catalog_query_uuid': catalog_query_uuid,
                 'query_title': query_title,
+                'include_exec_ed_2u_courses': include_exec_ed_2u_courses,
             }
             catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
         # Refresh catalog on all creates and updates
