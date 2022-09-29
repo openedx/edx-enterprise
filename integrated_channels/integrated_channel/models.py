@@ -283,6 +283,24 @@ class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfi
         return 'GENERIC'
 
 
+class ApiResponseRecord(TimeStampedModel):
+    """
+    Api response data for learner and content metadata transmissions
+
+    .. no_pii;
+    """
+    status_code = models.PositiveIntegerField(
+        help_text='The most recent remote API call response HTTP status code',
+        blank=True,
+        null=True
+    )
+    body = models.TextField(
+        help_text='The most recent remote API call response body',
+        blank=True,
+        null=True
+    )
+
+
 class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
@@ -310,6 +328,13 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         default=None,
         null=True,
         blank=True
+    )
+    api_record = models.OneToOneField(
+        ApiResponseRecord,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text=_('Data pertaining to the transmissions API request response.')
     )
 
     class Meta:
@@ -414,6 +439,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
 
     .. no_pii:
     """
+    class Meta:
+        index_together = [('enterprise_customer', 'integrated_channel_code', 'plugin_configuration_id', 'content_id')]
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
     integrated_channel_code = models.CharField(max_length=30)
@@ -458,16 +485,18 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         null=True,
         blank=True
     )
-    api_response_body = models.TextField(
-        help_text='The most recent remote API call response body',
-        blank=True,
-        null=True
-    )
     marked_for = models.CharField(
         help_text='Flag marking a record as needing a form of transmitting',
         max_length=32,
         blank=True,
         null=True
+    )
+    api_record = models.OneToOneField(
+        ApiResponseRecord,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text=_('Data pertaining to the transmissions API request response.')
     )
 
     @classmethod
@@ -596,14 +625,18 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         """
         Prepare a deleted or unsent record to be re-created in the remote API by resetting dates and audit fields
         """
+        # maintaining status code on the transmission record to aid with querying
         self.api_response_status_code = None
-        self.api_response_body = None
+        if self.api_record:
+            self.api_record.body = None
+            self.api_record.status_code = None
         self.remote_deleted_at = None
         self.remote_created_at = None
         self.remote_updated_at = None
         self.channel_metadata = None
         self.content_last_changed = content_last_changed
         self.enterprise_customer_catalog_uuid = enterprise_customer_catalog_uuid
+        self.marked_for = TRANSMISSION_MARK_CREATE
         self.save()
         return self
 

@@ -120,12 +120,12 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         )
 
         assert created_transmission_1.remote_created_at is not None
-        assert created_transmission_1.api_response_status_code == self.success_response_code
-        assert created_transmission_1.api_response_body == self.success_response_body
+        assert created_transmission_1.api_record.status_code == self.success_response_code
+        assert created_transmission_1.api_record.body == self.success_response_body
 
         assert created_transmission_2.remote_created_at is not None
-        assert created_transmission_2.api_response_status_code == self.success_response_code
-        assert created_transmission_2.api_response_body == self.success_response_body
+        assert created_transmission_2.api_record.status_code == self.success_response_code
+        assert created_transmission_2.api_record.body == self.success_response_body
 
     def test_transmit_create_failure(self):
         """
@@ -182,11 +182,13 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert created_transmission_1.remote_created_at is not None
         assert created_transmission_1.api_response_status_code > 400
-        assert created_transmission_1.api_response_body == 'error occurred'
+        assert created_transmission_1.api_record.status_code > 400
+        assert created_transmission_1.api_record.body == 'error occurred'
 
         assert created_transmission_2.remote_created_at is not None
         assert created_transmission_2.api_response_status_code > 400
-        assert created_transmission_2.api_response_body == 'error occurred'
+        assert created_transmission_2.api_record.status_code > 400
+        assert created_transmission_2.api_record.body == 'error occurred'
 
     def test_transmit_create_exception_failure(self):
         """
@@ -225,7 +227,8 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert created_transmission_1.remote_created_at is not None
         assert created_transmission_1.api_response_status_code == 555
-        assert created_transmission_1.api_response_body == 'error occurred'
+        assert created_transmission_1.api_record.status_code == 555
+        assert created_transmission_1.api_record.body == 'error occurred'
 
     def test_transmit_create_request_exception_failure(self):
         """
@@ -264,7 +267,8 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert created_transmission_1.remote_created_at is not None
         assert created_transmission_1.api_response_status_code == 555
-        assert created_transmission_1.api_response_body == 'error occurred'
+        assert created_transmission_1.api_record.status_code == 555
+        assert created_transmission_1.api_record.body == 'error occurred'
 
     def test_transmit_update_success(self):
         """
@@ -302,7 +306,8 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert updated_transmission.remote_updated_at is not None
         assert updated_transmission.api_response_status_code == self.success_response_code
-        assert updated_transmission.api_response_body == self.success_response_body
+        assert updated_transmission.api_record.status_code == self.success_response_code
+        assert updated_transmission.api_record.body == self.success_response_body
 
     def test_transmit_update_not_needed(self):
         """
@@ -364,7 +369,8 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert updated_transmission.remote_updated_at is not None
         assert updated_transmission.api_response_status_code > 400
-        assert updated_transmission.api_response_body == 'error occurred'
+        assert updated_transmission.api_record.status_code > 400
+        assert updated_transmission.api_record.body == 'error occurred'
 
     @mark.django_db
     @ddt.ddt
@@ -404,7 +410,8 @@ class TestContentMetadataTransmitter(unittest.TestCase):
 
         assert deleted_transmission.remote_deleted_at is not None
         assert deleted_transmission.api_response_status_code == self.success_response_code
-        assert deleted_transmission.api_response_body == self.success_response_body
+        assert deleted_transmission.api_record.status_code == self.success_response_code
+        assert deleted_transmission.api_record.body == self.success_response_body
 
     def test_transmit_delete_failure(self):
         """
@@ -441,5 +448,5 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         )
 
         assert deleted_transmission.remote_deleted_at is not None
-        assert deleted_transmission.api_response_status_code > 400
-        assert deleted_transmission.api_response_body == 'error occurred'
+        assert deleted_transmission.api_record.status_code > 400
+        assert deleted_transmission.api_record.body == 'error occurred'

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.57.1]
+--------
+fix: impoving transmission records by moving response body to new table
+
 [3.57.0]
 ---------
 * feat: adds an EnterpriseCatalogQuery.include_exec_ed_2u_courses field.
