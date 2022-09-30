@@ -10,6 +10,7 @@ from itertools import islice
 
 import requests
 
+from django.apps import apps
 from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
@@ -124,7 +125,7 @@ class ContentMetadataTransmitter(Transmitter):
             sort_keys=True
         ).encode('utf-8')
 
-    def _transmit_action(self, content_metadata_item_map, client_method, action_name):
+    def _transmit_action(self, content_metadata_item_map, client_method, action_name):  # pylint: disable=too-many-statements
         """
         Do the work of calling the appropriate client method, saving the results, and updating
         the appropriate timestamps
@@ -184,7 +185,19 @@ class ContentMetadataTransmitter(Transmitter):
                         course_or_course_run_key=content_id
                     )
                     transmission.api_response_status_code = response_status_code
-                    transmission.api_response_body = response_body
+
+                    if transmission.api_record:
+                        transmission.api_record.body = response_body
+                        transmission.api_record.status_code = response_status_code
+                        transmission.api_record.save()
+                    else:
+                        ApiResponseRecord = apps.get_model(
+                            'integrated_channel',
+                            'ApiResponseRecord'
+                        )
+                        transmission.api_record = ApiResponseRecord.objects.create(
+                            body=response_body, status_code=response_status_code
+                        )
                     if action_name == 'create':
                         transmission.remote_created_at = action_happened_at
                     elif action_name == 'update':

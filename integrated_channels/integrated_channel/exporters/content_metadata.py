@@ -13,6 +13,7 @@ from django.apps import apps
 from django.db.models import Q
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.constants import TRANSMISSION_MARK_CREATE
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 from integrated_channels.utils import generate_formatted_log, truncate_item_dicts
@@ -218,7 +219,6 @@ class ContentMetadataExporter(Exporter):
                     course_or_course_run_key=content_id
                 )
                 past_deleted_transmission.prepare_to_recreate(content_last_changed, enterprise_customer_catalog.uuid)
-                past_deleted_transmission.mark_for_create()
                 items_to_create[content_id] = past_deleted_transmission
             else:
                 incomplete_transmission = ContentMetadataItemTransmission.incomplete_create_transmissions(
@@ -243,10 +243,10 @@ class ContentMetadataExporter(Exporter):
                         channel_metadata=None,
                         content_last_changed=content_last_changed,
                         enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
-                        plugin_configuration_id=self.enterprise_configuration.id
+                        plugin_configuration_id=self.enterprise_configuration.id,
+                        marked_for=TRANSMISSION_MARK_CREATE
                     )
                     new_transmission.save()
-                    new_transmission.mark_for_create()
                     items_to_create[content_id] = new_transmission
         return items_to_create
 

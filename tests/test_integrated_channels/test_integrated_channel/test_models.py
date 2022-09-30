@@ -9,7 +9,7 @@ from unittest import mock
 from pytest import mark
 
 from enterprise.utils import get_content_metadata_item_id
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
+from integrated_channels.integrated_channel.models import ApiResponseRecord, ContentMetadataItemTransmission
 from test_utils import factories
 from test_utils.fake_catalog_api import FAKE_COURSE_RUN, get_fake_catalog, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -67,6 +67,8 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
         """
         Test that we properly find created but unsent transmission audit items
         """
+        api_record = ApiResponseRecord(status_code=500, body='ERROR')
+        api_record.save()
         deleted_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
@@ -79,7 +81,7 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
             remote_updated_at=None,
             remote_deleted_at=datetime.datetime.utcnow(),
             api_response_status_code=500,
-            api_response_body='ERROR',
+            api_record=api_record,
         )
         deleted_transmission.save()
         found_item = ContentMetadataItemTransmission.incomplete_delete_transmissions(
@@ -94,6 +96,8 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
         """
         Test that we properly find created but unsent transmission audit items
         """
+        api_record = ApiResponseRecord(status_code=500, body='ERROR')
+        api_record.save()
         updated_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
@@ -106,7 +110,7 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
             remote_updated_at=datetime.datetime.utcnow(),
             remote_deleted_at=None,
             api_response_status_code=500,
-            api_response_body='ERROR',
+            api_record=api_record,
         )
         updated_transmission.save()
         found_item = ContentMetadataItemTransmission.incomplete_update_transmissions(
@@ -146,6 +150,8 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
         """
         Test that we properly find created and attemped but unsuccessful transmission audit items
         """
+        api_record = ApiResponseRecord(status_code=500, body='ERROR')
+        api_record.save()
         failed_transmission = ContentMetadataItemTransmission(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
@@ -158,7 +164,7 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
             remote_updated_at=None,
             remote_deleted_at=None,
             api_response_status_code=500,
-            api_response_body='ERROR',
+            api_record=api_record,
         )
         failed_transmission.save()
         found_item = ContentMetadataItemTransmission.incomplete_create_transmissions(
