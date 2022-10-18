@@ -266,20 +266,6 @@ class ContentMetadataExporter(Exporter):
             content_keys
         )
 
-        stuff_to_log = {
-            'items_to_create': items_to_create,
-            'items_to_delete': items_to_delete,
-            'matched_items': matched_items,
-        }
-
-        for key, content_list in stuff_to_log.items():
-            for content in content_list:
-                content_id = content.get('content_key')
-                self._log_info(
-                    f'get_catalog_diff api results {key} includes {content_id}',
-                    course_or_course_run_key=content_id
-                )
-
         ContentMetadataItemTransmission = apps.get_model(
             'integrated_channel',
             'ContentMetadataItemTransmission'
@@ -326,20 +312,6 @@ class ContentMetadataExporter(Exporter):
             content_to_delete,
             max_item_count
         )
-
-        stuff_to_log = {
-            'truncated_create': truncated_create,
-            'truncated_update': truncated_update,
-            'truncated_delete': truncated_delete,
-        }
-
-        for log_key, items in stuff_to_log.items():
-            for key_content_id, item in items.items():
-                item_content_id = item.content_id
-                self._log_info(
-                    f'_get_catalog_diff return {log_key} includes {key_content_id} : {item_content_id}',
-                    course_or_course_run_key=key_content_id
-                )
 
         return truncated_create, truncated_update, truncated_delete
 
@@ -425,13 +397,6 @@ class ContentMetadataExporter(Exporter):
                 f'Retrieved {len(content_keys)} content keys for past transmissions to customer: '
                 f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
             )
-
-            for content_key in content_keys:
-                self._log_info(
-                    f'Retrieved content key: {content_key} for past transmissions to customer: '
-                    f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.',
-                    course_or_course_run_key=content_key
-                )
 
             # From the saved content records, use the enterprise catalog API to determine what needs sending
             items_to_create, items_to_update, items_to_delete = self._get_catalog_diff(

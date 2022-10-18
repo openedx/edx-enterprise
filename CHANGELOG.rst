@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.57.3]
+--------
+feat: remove debug logging used to investigate missing CSOD deletes
+
 [3.57.2]
 --------
 feat: Added POST support for catalog query preview
