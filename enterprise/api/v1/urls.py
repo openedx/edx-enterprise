@@ -58,6 +58,11 @@ urlpatterns = [
         name='tableau-token'
     ),
     re_path(
+        r'^plotly_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        views.PlotlyAuthView.as_view(),
+        name='plotly-token'
+    ),
+    re_path(
         r'^enterprise_report_types/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         views.EnterpriseCustomerReportTypesView.as_view(),
         name='enterprise-report-types'
