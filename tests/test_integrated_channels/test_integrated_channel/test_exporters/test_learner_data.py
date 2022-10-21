@@ -51,8 +51,8 @@ class TestLearnerExporter(unittest.TestCase):
     YESTERDAY_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
 
     def setUp(self):
-        self.user = factories.UserFactory(username='C3PO', id=1, email='burneremail@aol.com')
-        self.user_2 = factories.UserFactory(username='R2D2', id=2, email='burneremail2@yahoo.com')
+        self.user = factories.UserFactory(username='C3PO', id=1, email='burneremail@example.com')
+        self.user_2 = factories.UserFactory(username='R2D2', id=2, email='burneremail2@example.com')
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.course_id_2 = 'course-v2:edX+Much+Wow+Very+Test'
         self.course_key = 'edX+DemoX'
@@ -252,7 +252,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert learner_data[1].course_id == self.course_id
 
         for report in learner_data:
-            assert report.user_email == 'burneremail@aol.com'
+            assert report.user_email == self.user.email
             assert report.enterprise_course_enrollment_id == enrollment.id
             assert not report.course_completed
             assert report.completed_timestamp is None
