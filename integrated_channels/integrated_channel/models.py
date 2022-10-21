@@ -305,15 +305,19 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
 
-    .. no_pii:
+    .. pii: The user_email model field contains PII
+
     """
 
     # TODO: index customer uuid + plugin coinfig id together, with enrollment id?
     enterprise_customer_uuid = models.UUIDField(blank=True, null=True)
+    user_email = models.CharField(max_length=255, blank=True, null=True)
     plugin_configuration_id = models.IntegerField(blank=True, null=True)
     enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
+    content_title = models.CharField(max_length=255, default=None, null=True, blank=True)
     course_completed = models.BooleanField(default=True)
+    progress_status = models.CharField(max_length=255, blank=True)
     completed_timestamp = models.DateTimeField(blank=True, null=True)
     instructor_name = models.CharField(max_length=255, blank=True)
     grade = models.FloatField(blank=True, null=True)

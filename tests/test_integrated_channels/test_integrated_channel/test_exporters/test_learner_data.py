@@ -51,8 +51,8 @@ class TestLearnerExporter(unittest.TestCase):
     YESTERDAY_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
 
     def setUp(self):
-        self.user = factories.UserFactory(username='C3PO', id=1)
-        self.user_2 = factories.UserFactory(username='R2D2', id=2)
+        self.user = factories.UserFactory(username='C3PO', id=1, email='burneremail@aol.com')
+        self.user_2 = factories.UserFactory(username='R2D2', id=2, email='burneremail2@yahoo.com')
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.course_id_2 = 'course-v2:edX+Much+Wow+Very+Test'
         self.course_key = 'edX+DemoX'
@@ -252,6 +252,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert learner_data[1].course_id == self.course_id
 
         for report in learner_data:
+            assert report.user_email == 'burneremail@aol.com'
             assert report.enterprise_course_enrollment_id == enrollment.id
             assert not report.course_completed
             assert report.completed_timestamp is None
@@ -349,6 +350,7 @@ class TestLearnerExporter(unittest.TestCase):
         # Return instructor-paced course details
         mock_get_course_details.return_value = mock_course_overview(
             pacing='instructor',
+            display_name='Dogs and Cats: Star Crossed Lovers or Fated Foes'
         )
 
         # Mock enrollment data
@@ -366,6 +368,8 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.course_completed
             assert report.completed_timestamp == self.NOW_TIMESTAMP
             assert report.grade == LearnerExporter.GRADE_PASSING
+            assert report.progress_status == 'Passed'
+            assert report.content_title == 'Dogs and Cats: Star Crossed Lovers or Fated Foes'
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
@@ -473,24 +477,25 @@ class TestLearnerExporter(unittest.TestCase):
             assert not report.course_completed
             assert report.completed_timestamp is None
             assert report.grade is LearnerExporter.GRADE_INCOMPLETE
+            assert report.progress_status == 'In Progress'
 
     @ddt.data(
         # passing grade with no course end date
-        (True, None, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        (True, None, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified', 'Passed'),
         # passing grade with course end date in past
-        (True, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        (True, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified', 'Passed'),
         # passing grade with course end date in future
-        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified', 'Passed'),
         # passing grade with course end date in future
-        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'audit'),
+        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'audit', 'Passed'),
         # non-passing grade with no course end date
-        (False, None, None, LearnerExporter.GRADE_INCOMPLETE, 'verified'),
+        (False, None, None, LearnerExporter.GRADE_INCOMPLETE, 'verified', 'In Progress'),
         # non-passing grade with course end date in past
-        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_FAILING, 'verified'),
+        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_FAILING, 'verified', 'Failed'),
         # non-passing grade with course end date in past
-        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_AUDIT, 'audit'),
+        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_AUDIT, 'audit', 'Failed'),
         # non-passing grade with course end date in future
-        (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE, 'verified'),
+        (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE, 'verified', 'In Progress'),
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseEnrollment')
@@ -508,6 +513,7 @@ class TestLearnerExporter(unittest.TestCase):
             expected_completion,
             expected_grade,
             course_enrollment_mode,
+            progress_status,
             mock_course_catalog_api,
             mock_is_course_completed,
             mock_get_completion_summary,
@@ -556,6 +562,7 @@ class TestLearnerExporter(unittest.TestCase):
 
         for report in learner_data:
             assert report.enterprise_course_enrollment_id == enrollment.id
+            assert report.progress_status == progress_status
             assert report.course_completed
             assert report.completed_timestamp == expected_completion
             assert report.grade == expected_grade
@@ -998,6 +1005,7 @@ class TestLearnerExporter(unittest.TestCase):
         # if we autofill the date, then this shouldn't be None since collect_grades_data is set to
         # return a None value for completed_date
         assert completed_date_from_api is not None
+
         exporter.collect_grades_data.assert_called_once()
 
     def test_grades_summary_for_incompleted_audit_honors_existing_date(self):
