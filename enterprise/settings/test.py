@@ -339,3 +339,5 @@ LOGIN_REDIRECT_WHITELIST = [
     'google.com',
     'facebook.com'
     ]
+
+ENTERPRISE_PLOTLY_SECRET = "I am a secret"
