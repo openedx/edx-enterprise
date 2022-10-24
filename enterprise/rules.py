@@ -166,13 +166,13 @@ def has_explicit_access_to_reporting_api(user, obj):
 
 
 rules.add_perm('enterprise.can_access_admin_dashboard',
-               has_implicit_access_to_dashboard | has_explicit_access_to_dashboard)
+               has_implicit_access_to_dashboard | has_explicit_access_to_dashboard)  # pylint: disable=unsupported-binary-operation
 
 rules.add_perm('enterprise.can_view_catalog',
-               has_implicit_access_to_catalog | has_explicit_access_to_catalog)
+               has_implicit_access_to_catalog | has_explicit_access_to_catalog)  # pylint: disable=unsupported-binary-operation
 
 rules.add_perm('enterprise.can_enroll_learners',
-               has_implicit_access_to_enrollment_api | has_explicit_access_to_enrollment_api)
+               has_implicit_access_to_enrollment_api | has_explicit_access_to_enrollment_api)  # pylint: disable=unsupported-binary-operation
 
 rules.add_perm('enterprise.can_manage_reporting_config',
-               has_implicit_access_to_reporting_api | has_explicit_access_to_reporting_api)
+               has_implicit_access_to_reporting_api | has_explicit_access_to_reporting_api)  # pylint: disable=unsupported-binary-operation
