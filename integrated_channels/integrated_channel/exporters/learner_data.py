@@ -371,6 +371,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         Yields a learner data object for each enrollment, containing:
 
         * ``enterprise_enrollment``: ``EnterpriseCourseEnrollment`` object.
+        * ``user_email``: PII User/learner email string
+        * ``content_title``: Course title string
         * ``completed_date``: datetime instance containing the course/enrollment completion date; None if not complete.
           "Course completion" occurs for instructor-paced courses when course certificates are issued, and
           for self-paced courses, when the course end date is passed, or when the learner achieves a passing grade.
@@ -401,6 +403,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
         for enterprise_enrollment in enrollments_permitted:
             lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
+            user_email = enterprise_enrollment.enterprise_customer_user.user_email
             enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
             course_id = enterprise_enrollment.course_id
 
@@ -429,13 +432,24 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 incomplete_count,
             )
 
+            if completed_date_from_api:
+                if is_passing_from_api:
+                    progress_status = 'Passed'
+                else:
+                    progress_status = 'Failed'
+            else:
+                progress_status = 'In Progress'
+
             # Apply the Source of Truth for Grades
             # Note: Only completed records are transmitted by the completion transmitter
             #       therefore even non complete grading/cert records are exported here.
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
+                user_email=user_email,
                 completed_date=completed_date_from_api,
                 grade=grade_from_api,
+                content_title=course_details.display_name,
+                progress_status=progress_status,
                 course_completed=is_course_completed(
                     enterprise_enrollment,
                     is_passing_from_api,
@@ -571,6 +585,10 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             grade=None,
             course_completed=False,
             grade_percent=None,
+            content_title=None,
+            user_email=None,
+            progress_status=None,
+
     ):  # pylint: disable=unused-argument
         """
         Generate a learner data transmission audit with fields properly filled in.
@@ -590,6 +608,9 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 course_completed=course_completed,
                 completed_timestamp=completed_timestamp,
                 grade=grade,
+                user_email=user_email,
+                content_title=content_title,
+                progress_status=progress_status,
             ),
             TransmissionAudit(
                 plugin_configuration_id=self.enterprise_configuration.id,
@@ -599,6 +620,9 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 course_completed=course_completed,
                 completed_timestamp=completed_timestamp,
                 grade=grade,
+                user_email=user_email,
+                content_title=content_title,
+                progress_status=progress_status,
             )
         ]
 

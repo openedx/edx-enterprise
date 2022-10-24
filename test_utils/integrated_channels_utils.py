@@ -23,11 +23,12 @@ def merge_dicts(dict1, dict2):
     return merged_dict
 
 
-def mock_course_overview(pacing='instructor', end=timezone.now()):
+def mock_course_overview(display_name='Course Title', pacing='instructor', end=timezone.now()):
     """Generate an object approximating the CourseOverview model from edx-platform"""
     dictionary = {
         'end': end,
         'pacing': pacing,
+        'display_name': display_name,
     }
     return namedtuple("CourseOverview", dictionary.keys())(*dictionary.values())
 
