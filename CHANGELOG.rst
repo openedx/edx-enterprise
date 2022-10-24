@@ -17,6 +17,14 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.1]
+--------
+feat: adding new variables to the learner transmission audit model
+
+[3.58.0]
+--------
+feat: Add a new endpoint to generate a signed token for plotly analytics.
+
 [3.57.3]
 --------
 feat: remove debug logging used to investigate missing CSOD deletes
