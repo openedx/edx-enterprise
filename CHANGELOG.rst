@@ -17,9 +17,13 @@ Unreleased
 ----------
 * Nothing
 
-[3.58.1]
+[3.58.2]
 --------
 fix: integrated channels not picking up courses to update
+
+[3.58.1]
+--------
+feat: adding new variables to the learner transmission audit model
 
 [3.58.0]
 --------
