@@ -436,14 +436,15 @@ class ContentMetadataExporter(Exporter):
                         create_payload[key] = existing_record
                     elif key in items_update_keys:
                         existing_record = items_to_update.get(key)
-                        existing_record.channel_metadata = transformed_item
                         existing_record.content_title = item.get('title')
                         # Sanity check
                         existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
                         existing_record.save()
-                        # Intentionally setting the content_last_changed field post-save so that
-                        # untransmitted courses will get picked up again in subsequent runs
+                        # Intentionally setting the channel_metadata and content_last_changed
+                        # fields post-save to clarify what data has been transmitted
+                        # and so that untransmitted courses will get picked up again in subsequent runs
                         existing_record.content_last_changed = item.get('content_last_modified')
+                        existing_record.channel_metadata = transformed_item
                         update_payload[key] = existing_record
 
             for key, item in items_to_delete.items():

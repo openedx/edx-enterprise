@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.1]
+--------
+fix: integrated channels not picking up courses to update
+
 [3.58.0]
 --------
 feat: Add a new endpoint to generate a signed token for plotly analytics.
