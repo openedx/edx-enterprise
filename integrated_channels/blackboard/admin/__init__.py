@@ -9,7 +9,9 @@ from django.utils.html import format_html
 from integrated_channels.blackboard.models import (
     BlackboardEnterpriseCustomerConfiguration,
     BlackboardGlobalConfiguration,
+    BlackboardLearnerDataTransmissionAudit,
 )
+from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 
 
 @admin.register(BlackboardGlobalConfiguration)
@@ -75,3 +77,28 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
             return format_html((f'<a href="{obj.oauth_authorization_url}">Authorize Link</a>'))
         else:
             return None
+
+
+@admin.register(BlackboardLearnerDataTransmissionAudit)
+class BlackboardLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
+    """
+    Django admin model for BlackboardLearnerDataTransmissionAudit.
+    """
+    list_display = (
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "status",
+        "modified",
+    )
+
+    readonly_fields = (
+        "blackboard_user_email",
+        "progress_status",
+        "content_title",
+        "enterprise_customer_name",
+    )
+
+    list_per_page = 1000
+
+    class Meta:
+        model = BlackboardLearnerDataTransmissionAudit

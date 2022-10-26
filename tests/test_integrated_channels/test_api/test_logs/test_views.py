@@ -5,6 +5,8 @@ import datetime
 from logging import getLogger
 from unittest import mock
 
+import ddt
+
 from django.urls import reverse
 
 from test_utils import TEST_PASSWORD, APITest, factories
@@ -93,6 +95,7 @@ class ContentSyncStatusViewSetTests(APITest):
         assert response.status_code == 400
 
 
+@ddt.ddt
 class LearnerSyncStatusViewSetTests(APITest):
     """
     Tests for LearnerSyncStatusViewSet REST endpoints
@@ -142,7 +145,7 @@ class LearnerSyncStatusViewSetTests(APITest):
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
-        assert self.generic_audit_1.enterprise_customer_uuid == response_json['results'][0]['enterprise_customer_uuid']
+        assert self.generic_audit_1.content_title == response_json['results'][0]['content_title']
 
         url = reverse(
             'api:v1:logs:learner_sync_status_logs',
@@ -158,7 +161,30 @@ class LearnerSyncStatusViewSetTests(APITest):
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
-        assert self.sap_audit_1.enterprise_customer_uuid == response_json['results'][0]['enterprise_customer_uuid']
+        assert self.sap_audit_1.content_title == response_json['results'][0]['content_title']
+        assert self.sap_audit_1.user_email == response_json['results'][0]['user_email']
+
+    @ddt.data((None, 'pending'), ('400', 'error'), ('200', 'okay'))
+    @ddt.unpack
+    def test_get_sync_statuses(self, audit_status, expected_sync_status):
+        """
+        tests learner data transmission audit API serializer sync status value based on transmission audit status
+        """
+        self.setup_admin_user(True)
+        url = reverse(
+            'api:v1:logs:learner_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
+                'integrated_channel_code': 'GENERIC',
+                'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
+            }
+        )
+        self.generic_audit_1.status = audit_status
+        self.generic_audit_1.save()
+        response = self.client.get(url)
+        LOGGER.info(response.content)
+        response_json = self.load_json(response.content)
+        assert response_json['results'][0]['sync_status'] == expected_sync_status
 
     def test_get_with_bad_channel_code(self):
         """

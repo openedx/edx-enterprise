@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.3]
+--------
+feat: transmission audit admin view and api improvements
+
 [3.58.2]
 --------
 fix: integrated channels not picking up courses to update

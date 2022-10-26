@@ -4,36 +4,14 @@ Django admin integration for configuring cornerstone ondemand app to communicate
 
 from config_models.admin import ConfigurationModelAdmin
 
-from django.apps import apps
 from django.contrib import admin
-from django.core.exceptions import ObjectDoesNotExist
 
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
 )
-
-
-def enterprise_course_enrollment_model():
-    """
-    Returns the ``EnterpriseCourseEnrollment`` class.
-    """
-    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
-
-
-def enterprise_customer_user_model():
-    """
-    Returns the ``EnterpriseCustomerUser`` class.
-    """
-    return apps.get_model('enterprise', 'EnterpriseCustomerUser')
-
-
-def enterprise_customer_model():
-    """
-    Returns the ``EnterpriseCustomer`` class.
-    """
-    return apps.get_model('enterprise', 'EnterpriseCustomer')
+from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 
 
 @admin.register(CornerstoneGlobalConfiguration)
@@ -93,12 +71,11 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
 
 @admin.register(CornerstoneLearnerDataTransmissionAudit)
-class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
+class CornerstoneLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
     """
     Django admin model for CornerstoneLearnerDataTransmissionAudit.
     """
     list_display = (
-        "user_email",
         "user_id",
         "enterprise_course_enrollment_id",
         "course_id",
@@ -110,6 +87,9 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
+        "user_email",
+        "progress_status",
+        "content_title",
         "enterprise_customer_name",
     )
 
@@ -125,24 +105,3 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         return obj.user.email
-
-    def enterprise_customer_name(self, obj):
-        """
-        Returns: the name for the attached EnterpriseCustomer.
-        Args:
-            obj: The instance of CornerstoneLearnerDataTransmissionAudit
-                being rendered with this admin form.
-        """
-
-        # a direct foreign key relationship is missing
-        # multiple queries here so, avoid adding it to list_display fields
-        EnterpriseCourseEnrollment = enterprise_course_enrollment_model()
-        EnterpriseCustomerUser = enterprise_customer_user_model()
-        EnterpriseCustomer = enterprise_customer_model()
-        try:
-            ece = EnterpriseCourseEnrollment.objects.get(pk=obj.enterprise_course_enrollment_id)
-            ecu = EnterpriseCustomerUser.objects.get(pk=ece.enterprise_customer_user_id)
-            ec = EnterpriseCustomer.objects.get(pk=ecu.enterprise_customer_id)
-            return ec.name
-        except ObjectDoesNotExist:
-            return None

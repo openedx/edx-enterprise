@@ -52,11 +52,14 @@ class MoodleLearnerExporter(LearnerExporter):
         )
 
         percent_grade = kwargs.get('grade_percent', None)
-
+        # We return two records here, one with the course key and one with the course run id, to account for
+        # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
+        # TODO: this shouldn't be necessary anymore and eventually phased out as part of tech debt
         return [
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 moodle_user_email=enterprise_customer_user.user_email,
+                user_email=enterprise_customer_user.user_email,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
                 grade=percent_grade,
@@ -67,6 +70,7 @@ class MoodleLearnerExporter(LearnerExporter):
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 moodle_user_email=enterprise_customer_user.user_email,
+                user_email=enterprise_customer_user.user_email,
                 course_id=enterprise_enrollment.course_id,
                 course_completed=course_completed,
                 grade=percent_grade,
