@@ -62,7 +62,7 @@ class LearnerSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, view
 
     def get_serializer_class(self):
         integrated_channel_code = self.kwargs.get('integrated_channel_code', None)
-        serializer = LearnerSyncStatusSerializer.get_class_by_channel_code(integrated_channel_code)
+        serializer = LearnerSyncStatusSerializer.get_completion_class_by_channel_code(integrated_channel_code)
         if serializer is None:
             raise exceptions.ParseError("Invalid channel code.")
         return serializer
@@ -71,7 +71,7 @@ class LearnerSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, view
         enterprise_customer_uuid = self.kwargs.get('enterprise_customer_uuid', None)
         integrated_channel_code = self.kwargs.get('integrated_channel_code', None)
         plugin_configuration_id = self.kwargs.get('plugin_configuration_id', None)
-        ThisLearnerClass = LearnerDataTransmissionAudit.get_class_by_channel_code(integrated_channel_code)
+        ThisLearnerClass = LearnerDataTransmissionAudit.get_completion_class_by_channel_code(integrated_channel_code)
         if ThisLearnerClass is None:
             raise exceptions.ParseError("Invalid channel code.")
 

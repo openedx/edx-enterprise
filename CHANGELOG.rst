@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.4]
+--------
+chore: fixing api view that included unneeded values
+
 [3.58.3]
 --------
 feat: transmission audit admin view and api improvements

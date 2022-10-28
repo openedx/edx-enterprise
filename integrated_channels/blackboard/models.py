@@ -301,6 +301,13 @@ class BlackboardLearnerAssessmentDataTransmissionAudit(LearnerDataTransmissionAu
             subsection_name=self.subsection_name,
         )
 
+    @classmethod
+    def audit_type(cls):
+        """
+        Assessment level audit type labeling
+        """
+        return "assessment"
+
 
 class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """

@@ -5,10 +5,7 @@ Admin integration for configuring Canvas app to communicate with Canvas systems.
 from django.contrib import admin
 from django.utils.html import format_html
 
-from integrated_channels.canvas.models import (
-    CanvasEnterpriseCustomerConfiguration,
-    CanvasLearnerAssessmentDataTransmissionAudit,
-)
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasLearnerDataTransmissionAudit
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 
 
@@ -66,10 +63,10 @@ class CanvasEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
             return None
 
 
-@admin.register(CanvasLearnerAssessmentDataTransmissionAudit)
-class CanvasLearnerAssessmentDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
+@admin.register(CanvasLearnerDataTransmissionAudit)
+class CanvasLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
     """
-    Django admin model for CanvasLearnerAssessmentDataTransmissionAudit.
+    Django admin model for CanvasLearnerDataTransmissionAudit.
     """
     list_display = (
         "enterprise_course_enrollment_id",
@@ -88,4 +85,4 @@ class CanvasLearnerAssessmentDataTransmissionAuditAdmin(BaseLearnerDataTransmiss
     list_per_page = 1000
 
     class Meta:
-        model = CanvasLearnerAssessmentDataTransmissionAudit
+        model = CanvasLearnerDataTransmissionAudit

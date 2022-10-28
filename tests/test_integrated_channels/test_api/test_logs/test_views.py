@@ -126,6 +126,28 @@ class LearnerSyncStatusViewSetTests(APITest):
         self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
         self.client.login(username=client_username, password=TEST_PASSWORD)
 
+    def test_get_excludes_unneeded_fields(self):
+        """
+        tests a a get request will not return unneeded fields
+        """
+        self.setup_admin_user(True)
+        url = reverse(
+            'api:v1:logs:learner_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
+                'integrated_channel_code': 'GENERIC',
+                'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
+            }
+        )
+        response = self.client.get(url)
+        LOGGER.info(response.content)
+        response_json = self.load_json(response.content)
+
+        # check that it excludes expected data
+        assert "course_completed" not in response_json['results'][0].keys()
+        assert "instructor_name" not in response_json['results'][0].keys()
+        assert "course_id" not in response_json['results'][0].keys()
+
     def test_get(self):
         """
         tests a regular get with expected data
