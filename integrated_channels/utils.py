@@ -16,6 +16,8 @@ from urllib.parse import urlparse
 import pytz
 import requests
 
+from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -437,3 +439,24 @@ def channel_code_to_app_label(channel_code):
     elif app_label == 'sap':
         app_label = 'sap_success_factors'
     return app_label
+
+
+def get_enterprise_customer_model():
+    """
+    Returns the ``EnterpriseCustomer`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomer')
+
+
+def get_enterprise_customer_from_enterprise_enrollment(enrollment_id):
+    """
+    Returns the Django ORM enterprise customer object that is associated with an enterprise enrollment ID
+    """
+    EnterpriseCustomer = get_enterprise_customer_model()
+    try:
+        ec = EnterpriseCustomer.objects.filter(
+            enterprise_customer_users__enterprise_enrollments=enrollment_id
+        ).first()
+        return ec
+    except ObjectDoesNotExist:
+        return None

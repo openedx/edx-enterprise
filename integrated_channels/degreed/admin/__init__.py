@@ -6,7 +6,12 @@ from config_models.admin import ConfigurationModelAdmin
 
 from django.contrib import admin
 
-from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration, DegreedGlobalConfiguration
+from integrated_channels.degreed.models import (
+    DegreedEnterpriseCustomerConfiguration,
+    DegreedGlobalConfiguration,
+    DegreedLearnerDataTransmissionAudit,
+)
+from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 
 
 @admin.register(DegreedGlobalConfiguration)
@@ -66,3 +71,28 @@ class DegreedEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         return obj.enterprise_customer.name
+
+
+@admin.register(DegreedLearnerDataTransmissionAudit)
+class DegreedLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
+    """
+    Django admin model for DegreedLearnerDataTransmissionAudit.
+    """
+    list_display = (
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "status",
+        "modified",
+    )
+
+    readonly_fields = (
+        "degreed_user_email",
+        "progress_status",
+        "content_title",
+        "enterprise_customer_name",
+    )
+
+    list_per_page = 1000
+
+    class Meta:
+        model = DegreedLearnerDataTransmissionAudit

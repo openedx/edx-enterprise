@@ -56,6 +56,7 @@ class CanvasLearnerExporter(LearnerExporter):
             CanvasLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_customer_user.user_email,
+                user_email=enterprise_customer_user.user_email,
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
                 grade=percent_grade,

@@ -54,6 +54,9 @@ class CornerstoneLearnerExporter(LearnerExporter):
             csod_learner_data_transmission.course_completed = course_completed
             csod_learner_data_transmission.completed_timestamp = completed_date
 
+            # Used for api error reporting
+            csod_learner_data_transmission.user_email = enterprise_enrollment.enterprise_customer_user.user_email
+
             enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
             csod_learner_data_transmission.enterprise_customer_uuid = enterprise_customer.uuid
             csod_learner_data_transmission.plugin_configuration_id = self.enterprise_configuration.id

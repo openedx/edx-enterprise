@@ -7,7 +7,8 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
+from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
+from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration, MoodleLearnerDataTransmissionAudit
 
 
 class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
@@ -40,3 +41,28 @@ class MoodleEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     form = MoodleEnterpriseCustomerConfigurationForm
+
+
+@admin.register(MoodleLearnerDataTransmissionAudit)
+class MoodleLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
+    """
+    Django admin model for MoodleLearnerDataTransmissionAudit.
+    """
+    list_display = (
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "status",
+        "modified",
+    )
+
+    readonly_fields = (
+        "moodle_user_email",
+        "progress_status",
+        "content_title",
+        "enterprise_customer_name",
+    )
+
+    list_per_page = 1000
+
+    class Meta:
+        model = MoodleLearnerDataTransmissionAudit

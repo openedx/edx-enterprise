@@ -484,6 +484,8 @@ class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
         model = LearnerDataTransmissionAudit
 
     enterprise_customer_uuid = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    content_title = factory.LazyAttribute(lambda x: FAKER.word())
+    status = factory.LazyAttribute(lambda x: str(FAKER.random_int(min=1)))
     plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
@@ -603,6 +605,7 @@ class SapSuccessFactorsLearnerDataTransmissionAuditFactory(LearnerDataTransmissi
     sapsf_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    user_email = factory.LazyAttribute(lambda x: FAKER.email())
     instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
     grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
     status = factory.LazyAttribute(lambda x: FAKER.word())

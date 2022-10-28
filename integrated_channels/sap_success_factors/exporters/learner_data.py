@@ -62,6 +62,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     sapsf_user_id=sapsf_user_id,
+                    user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=get_course_id_for_enrollment(enterprise_enrollment),
                     course_completed=course_completed,
                     completed_timestamp=completed_timestamp,
@@ -74,6 +75,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     sapsf_user_id=sapsf_user_id,
+                    user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=enterprise_enrollment.course_id,
                     course_completed=course_completed,
                     completed_timestamp=completed_timestamp,

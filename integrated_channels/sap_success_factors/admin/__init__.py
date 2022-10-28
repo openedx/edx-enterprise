@@ -8,10 +8,12 @@ from requests import RequestException
 from django.contrib import admin
 
 from integrated_channels.exceptions import ClientError
+from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
+    SapSuccessFactorsLearnerDataTransmissionAudit,
 )
 
 
@@ -116,3 +118,28 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
     has_access_token.boolean = True
     has_access_token.short_description = 'Has Access Token?'
+
+
+@admin.register(SapSuccessFactorsLearnerDataTransmissionAudit)
+class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
+    """
+    Django admin model for SapSuccessFactorsLearnerDataTransmissionAudit.
+    """
+    list_display = (
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "status",
+        "modified",
+    )
+
+    readonly_fields = (
+        "sapsf_user_id",
+        "progress_status",
+        "content_title",
+        "enterprise_customer_name",
+    )
+
+    list_per_page = 1000
+
+    class Meta:
+        model = SapSuccessFactorsLearnerDataTransmissionAudit
