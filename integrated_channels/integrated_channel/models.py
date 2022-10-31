@@ -373,13 +373,21 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         return None
 
     @classmethod
-    def get_class_by_channel_code(cls, channel_code):
+    def audit_type(cls):
         """
-        Return the `LearnerDataTransmissionAudit` implementation for the particular channel_code, or None
+        The base learner data transmission audit type - defaults to `completion`
+        """
+        return "completion"
+
+    @classmethod
+    def get_completion_class_by_channel_code(cls, channel_code):
+        """
+        Return the `LearnerDataTransmissionAudit` implementation related to completion reporting for
+        the particular channel_code, or None
         """
         app_label = channel_code_to_app_label(channel_code)
         for a_cls in cls.__subclasses__():
-            if a_cls._meta.app_label == app_label:
+            if a_cls._meta.app_label == app_label and a_cls.audit_type() == "completion":
                 return a_cls
         return None
 

@@ -96,9 +96,9 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
         return obj.modified or obj.created
 
     @classmethod
-    def get_class_by_channel_code(this_cls, channel_code):
+    def get_completion_class_by_channel_code(this_cls, channel_code):
         """
-        return the `LearnerDataTransmissionAudit` sync-status serializer for a particular channel_code
+        return the `LearnerDataTransmissionAudit` completion related sync-status serializer for a particular channel_code
         """
         app_label = channel_code_to_app_label(channel_code)
         for a_cls in this_cls.__subclasses__():
@@ -114,7 +114,7 @@ class GenericLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = GenericLearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class BlackboardLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -124,7 +124,7 @@ class BlackboardLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = BlackboardLearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class CanvasLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -134,7 +134,7 @@ class CanvasLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = CanvasLearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class CornerstoneLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -144,7 +144,7 @@ class CornerstoneLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = CornerstoneLearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class DegreedLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -154,6 +154,7 @@ class DegreedLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = DegreedLearnerDataTransmissionAudit
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class Degreed2LearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -163,7 +164,7 @@ class Degreed2LearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = Degreed2LearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class MoodleLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -173,7 +174,7 @@ class MoodleLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = MoodleLearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
 
 
 class SapLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
@@ -183,4 +184,4 @@ class SapLearnerSyncStatusSerializer(LearnerSyncStatusSerializer):
 
     class Meta:
         model = SapSuccessFactorsLearnerDataTransmissionAudit
-        fields = "__all__"
+        fields = LearnerSyncStatusSerializer.Meta.fields
