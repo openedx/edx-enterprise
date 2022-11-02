@@ -11,12 +11,14 @@ from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
 from enterprise.constants import TRANSMISSION_MARK_CREATE, TRANSMISSION_MARK_DELETE, TRANSMISSION_MARK_UPDATE
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerCatalog
+from enterprise.utils import localized_utcnow
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
@@ -39,7 +41,60 @@ def set_default_display_name(*args, **kw):
         kw['instance'].save()
 
 
-class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
+class SoftDeletionQuerySet(QuerySet):
+    """
+    Soft deletion query set.
+    """
+    def delete(self):
+        return super().update(deleted_at=localized_utcnow())
+
+    def hard_delete(self):
+        return super().delete()
+
+    def revive(self):
+        return super().update(deleted_at=None)
+
+
+class SoftDeletionManager(models.Manager):
+    """
+    Soft deletion manager overriding a model's query set in order to soft delete.
+    """
+    use_for_related_fields = True
+
+    def __init__(self, *args, **kwargs):
+        self.alive_only = kwargs.pop('alive_only', True)
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        if self.alive_only:
+            return SoftDeletionQuerySet(self.model, using=self._db, hints=self._hints).filter(deleted_at=None)
+        return SoftDeletionQuerySet(self.model)
+
+    def delete(self):
+        return self.get_queryset().delete()
+
+    def hard_delete(self):
+        return self.get_queryset().hard_delete()
+
+    def revive(self):
+        return self.get_queryset().revive()
+
+
+class SoftDeletionModel(TimeStampedModel):
+    """
+    Soft deletion model that sets a particular entries `deleted_at` field instead of removing the entry on delete.
+    Use `hard_delete()` to permanently remove entries.
+    """
+    deleted_at = models.DateTimeField(blank=True, null=True)
+
+    objects = SoftDeletionManager()
+    all_objects = SoftDeletionManager(alive_only=False)
+
+    class Meta:
+        abstract = True
+
+
+class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
     """
     Abstract base class for information related to integrating with external systems for an enterprise customer.
 
@@ -122,6 +177,17 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         super().__init_subclass__(**kwargs)
         models.signals.post_save.connect(set_default_display_name, sender=cls)
+
+    def delete(self, *args, **kwargs):
+        self.deleted_at = localized_utcnow()
+        self.save()
+
+    def revive(self):
+        self.deleted_at = None
+        self.save()
+
+    def hard_delete(self):
+        return super().delete()
 
     def clean(self):
         invalid_uuids = []
