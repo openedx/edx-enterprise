@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.6]
+--------
+feat: populate freindly_status_message in content and learner metadata api
+
 [3.58.5]
 --------
 feat: integrated channels customer configs soft delete support
