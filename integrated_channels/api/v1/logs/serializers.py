@@ -110,7 +110,7 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
         """
         Return a human readable status string.
         """
-        if obj.status.isdigit() and HTTP_STATUS_STRINGS.get(int(obj.status)):
+        if obj.status is not None and obj.status.isdigit() and HTTP_STATUS_STRINGS.get(int(obj.status)):
             return HTTP_STATUS_STRINGS[int(obj.status)]
         return None
 
