@@ -169,13 +169,31 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 )
             )
             return self.create_content_metadata(serialized_data)
-
-        canvas_course_id = canvas_course.get('id')
-        url = CanvasUtil.course_update_endpoint(
-            self.enterprise_configuration,
-            canvas_course_id,
-        )
-        return self._put(url, serialized_data)
+        else:
+            workflow_state = canvas_course.get('workflow_state', '')
+            # If the course was deleted, don't update
+            if workflow_state.lower() == 'deleted':
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        integration_id,
+                        'Course with integration_id = {integration_id} found in deleted state, '
+                        'not attempting to create/update'.format(
+                            integration_id=integration_id,
+                        ),
+                    )
+                )
+                return 200, MESSAGE_WHEN_COURSE_WAS_DELETED
+            # Update the course
+            else:
+                canvas_course_id = canvas_course.get('id')
+                url = CanvasUtil.course_update_endpoint(
+                    self.enterprise_configuration,
+                    canvas_course_id,
+                )
+                return self._put(url, serialized_data)
 
     def delete_content_metadata(self, serialized_data):
         self._create_session()
