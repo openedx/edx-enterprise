@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.7]
+--------
+feat: populate freindly_status_message in content and learner metadata api
+
 [3.58.6]
 --------
 chore: smarter canvas client update course behavior (course deleted)

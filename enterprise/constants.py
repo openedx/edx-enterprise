@@ -176,3 +176,14 @@ LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
 TRANSMISSION_MARK_CREATE = 'create'
 TRANSMISSION_MARK_UPDATE = 'update'
 TRANSMISSION_MARK_DELETE = 'delete'
+
+HTTP_STATUS_STRINGS = {
+    400: 'The request was invalid, check the fields you entered are correct.',
+    401: 'The request was unauthorized, check your credentials.',
+    403: 'The request was rejected because it did not have the rights to access the content.',
+    404: 'The requested resource was not found.',
+    408: 'The request timed out.',
+    429: 'The user has sent too many requests.',
+    500: 'An internal problem on our side interfered.',
+    503: 'The server is temporarily unavailable.',
+}

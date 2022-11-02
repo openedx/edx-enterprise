@@ -3,6 +3,7 @@ Serializer for Degreed2 configuration.
 """
 from rest_framework import serializers
 
+from enterprise.constants import HTTP_STATUS_STRINGS
 from integrated_channels.blackboard.models import BlackboardLearnerDataTransmissionAudit
 from integrated_channels.canvas.models import CanvasLearnerDataTransmissionAudit
 from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit
@@ -32,6 +33,7 @@ class ContentSyncStatusSerializer(serializers.ModelSerializer):
 
     sync_status = serializers.SerializerMethodField()
     sync_last_attempted_at = serializers.SerializerMethodField()
+    friendly_status_message = serializers.SerializerMethodField()
 
     def get_sync_status(self, obj):
         """
@@ -56,6 +58,14 @@ class ContentSyncStatusSerializer(serializers.ModelSerializer):
         else:
             return max(res)
 
+    def get_friendly_status_message(self, obj):
+        """
+        Return a human readable status string.
+        """
+        if obj.api_response_status_code is not None and HTTP_STATUS_STRINGS.get(obj.api_response_status_code):
+            return HTTP_STATUS_STRINGS.get(obj.api_response_status_code)
+        return None
+
 
 class LearnerSyncStatusSerializer(serializers.ModelSerializer):
     """
@@ -75,6 +85,7 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
 
     sync_status = serializers.SerializerMethodField()
     sync_last_attempted_at = serializers.SerializerMethodField()
+    friendly_status_message = serializers.SerializerMethodField()
 
     def get_sync_status(self, obj):
         """
@@ -94,6 +105,14 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
         Return the most recent/youngest sync attempt date.
         """
         return obj.modified or obj.created
+
+    def get_friendly_status_message(self, obj):
+        """
+        Return a human readable status string.
+        """
+        if obj.status is not None and obj.status.isdigit() and HTTP_STATUS_STRINGS.get(int(obj.status)):
+            return HTTP_STATUS_STRINGS.get(int(obj.status))
+        return None
 
     @classmethod
     def get_completion_class_by_channel_code(this_cls, channel_code):
