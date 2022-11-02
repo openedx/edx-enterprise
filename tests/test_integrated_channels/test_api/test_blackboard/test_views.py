@@ -7,6 +7,7 @@ from unittest import mock
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
+from enterprise.utils import localized_utcnow
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from test_utils import FAKE_UUIDS, APITest, factories
 
@@ -37,6 +38,26 @@ class BlackboardConfigurationViewSetTests(APITest):
             app_secret='test_app_secret',
             enabled=True,
         )
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_soft_deleted_content_in_lists(self, mock_current_request):
+        factories.BlackboardEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            refresh_token='',
+            deleted_at=localized_utcnow()
+        )
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:blackboard:configuration-list')
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+
+        assert len(data) == 1
+        assert data[0]['uuid'] == str(self.enterprise_customer_conf.uuid)
+        assert len(BlackboardEnterpriseCustomerConfiguration.all_objects.all()) == 2
+        assert len(BlackboardEnterpriseCustomerConfiguration.objects.all()) == 1
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_list(self, mock_current_request):

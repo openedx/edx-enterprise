@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.5]
+--------
+feat: integrated channels customer configs soft delete support
+
 [3.58.4]
 --------
 chore: fixing api view that included unneeded values

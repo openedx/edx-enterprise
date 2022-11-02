@@ -8,8 +8,8 @@ from unittest import mock
 import ddt
 
 from django.urls import reverse
-from enterprise.constants import HTTP_STATUS_STRINGS
 
+from enterprise.constants import HTTP_STATUS_STRINGS
 from test_utils import TEST_PASSWORD, APITest, factories
 
 LOGGER = getLogger(__name__)
