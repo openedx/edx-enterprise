@@ -994,6 +994,35 @@ class TestCanvasApiClient(unittest.TestCase):
         assert status == 200
         assert response == mocked_create_messaged
 
+    @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
+    def test_dont_update_if_course_is_deleted(self, mock_find_course_by_course_id):
+        # to simulate finding an existing course with workflow_state == 'deleted'
+        mock_find_course_by_course_id.return_value = {
+            'workflow_state': 'deleted',
+            'id': 111,
+            'name': 'course already deleted in Canvas!',
+        }
+
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        course_to_update = json.dumps({
+            "course": {
+                "integration_id": self.integration_id,
+                "name": "test_course_update"
+            }
+        }).encode()
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+
+            status_code, response_text = canvas_api_client.update_content_metadata(course_to_update)
+            assert status_code == 200
+            assert response_text == MESSAGE_WHEN_COURSE_WAS_DELETED
+
     def test_successful_client_update(self):
         """
         Test the full workflow of a Canvas integrated channel client update request
