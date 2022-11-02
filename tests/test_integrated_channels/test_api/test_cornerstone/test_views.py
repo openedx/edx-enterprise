@@ -8,6 +8,7 @@ from uuid import uuid4
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
+from enterprise.utils import localized_utcnow
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from test_utils import APITest, factories
 
@@ -20,8 +21,8 @@ class CornerstoneConfigurationViewSetTests(APITest):
     """
     def setUp(self):
         super().setUp()
-        self.set_jwt_cookie(self.client, [(ENTERPRISE_ADMIN_ROLE, ENTERPRISE_ID)])
-        self.client.force_authenticate(user=self.user)
+        self.user.is_superuser = True
+        self.user.save()
 
         self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ENTERPRISE_ID)
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
@@ -32,6 +33,26 @@ class CornerstoneConfigurationViewSetTests(APITest):
         self.cornerstone_config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer
         )
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_soft_deleted_content_in_lists(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        factories.CornerstoneEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            deleted_at=localized_utcnow()
+        )
+
+        url = reverse('api:v1:cornerstone:configuration-list')
+        response = self.client.get(url)
+        data = json.loads(response.content.decode('utf-8')).get('results')
+
+        assert len(data) == 1
+        assert data[0]['id'] == self.cornerstone_config.id
+        assert len(CornerstoneEnterpriseCustomerConfiguration.all_objects.all()) == 2
+        assert len(CornerstoneEnterpriseCustomerConfiguration.objects.all()) == 1
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_get(self, mock_current_request):
