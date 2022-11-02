@@ -96,8 +96,6 @@ class BlackboardGlobalConfiguration(ConfigurationModel):
 class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Blackboard.
-
-    .. no_pii:
     """
 
     client_id = models.CharField(

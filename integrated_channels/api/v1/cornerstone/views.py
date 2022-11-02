@@ -1,7 +1,7 @@
 """
 Viewsets for integrated_channels/v1/cornerstone/
 """
-from rest_framework import exceptions, permissions, status, viewsets
+from rest_framework import permissions, viewsets
 
 from integrated_channels.api.v1.mixins import PermissionRequiredForIntegratedChannelMixin
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
