@@ -63,7 +63,7 @@ class ContentSyncStatusSerializer(serializers.ModelSerializer):
         Return a human readable status string.
         """
         if obj.api_response_status_code is not None and HTTP_STATUS_STRINGS.get(obj.api_response_status_code):
-            return HTTP_STATUS_STRINGS[obj.api_response_status_code]
+            return HTTP_STATUS_STRINGS.get(obj.api_response_status_code)
         return None
 
 
@@ -111,7 +111,7 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
         Return a human readable status string.
         """
         if obj.status is not None and obj.status.isdigit() and HTTP_STATUS_STRINGS.get(int(obj.status)):
-            return HTTP_STATUS_STRINGS[int(obj.status)]
+            return HTTP_STATUS_STRINGS.get(int(obj.status))
         return None
 
     @classmethod

@@ -8,6 +8,7 @@ from unittest import mock
 import ddt
 
 from django.urls import reverse
+from enterprise.constants import HTTP_STATUS_STRINGS
 
 from test_utils import TEST_PASSWORD, APITest, factories
 
@@ -28,7 +29,7 @@ class ContentSyncStatusViewSetTests(APITest):
             integrated_channel_code='GENERIC',
             plugin_configuration_id=1,
             remote_created_at=datetime.datetime.utcnow(),
-            api_response_status_code=200,
+            api_response_status_code=400,
         )
 
         super().setUp()
@@ -75,7 +76,8 @@ class ContentSyncStatusViewSetTests(APITest):
         assert 1 == response_json.get('count')
         # check that it includes expected data
         assert self.content_metadata_item.content_id == response_json['results'][0]['content_id']
-        assert 'okay' == response_json['results'][0]['sync_status']
+        assert 'error' == response_json['results'][0]['sync_status']
+        assert HTTP_STATUS_STRINGS.get(400) == response_json['results'][0]['friendly_status_message']
 
     def test_get_with_bad_channel_code(self):
         """
