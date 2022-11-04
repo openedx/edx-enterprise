@@ -1,5 +1,5 @@
 """
-Tests for the `integrated_channels` moodle configuration api.
+Tests for the `integrated_channels` content and learner sync api.
 """
 import datetime
 from logging import getLogger
@@ -10,11 +10,12 @@ import ddt
 from django.urls import reverse
 
 from enterprise.constants import HTTP_STATUS_STRINGS
+from enterprise_learner_portal.utils import CourseRunProgressStatuses
 from test_utils import TEST_PASSWORD, APITest, factories
 
 LOGGER = getLogger(__name__)
 
-
+@ddt.ddt
 class ContentSyncStatusViewSetTests(APITest):
     """
     Tests for ContentSyncStatusViewSet REST endpoints
@@ -70,13 +71,14 @@ class ContentSyncStatusViewSetTests(APITest):
             }
         )
         response = self.client.get(url)
-        LOGGER.info(response.content)
         response_json = self.load_json(response.content)
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
+        assert self.content_metadata_item.content_title == response_json['results'][0]['content_title']
         assert self.content_metadata_item.content_id == response_json['results'][0]['content_id']
         assert 'error' == response_json['results'][0]['sync_status']
+        assert 'sync_last_attempted_at' in response_json['results'][0].keys()
         assert HTTP_STATUS_STRINGS.get(400) == response_json['results'][0]['friendly_status_message']
 
     def test_get_with_bad_channel_code(self):
@@ -96,6 +98,54 @@ class ContentSyncStatusViewSetTests(APITest):
         response = self.client.get(url)
         assert response.status_code == 400
 
+    @ddt.data('CANVAS', 'BLACKBOARD', 'CSOD', 'DEGREED', 'DEGREED2', 'MOODLE', 'SAP')
+    def test_gets_of_all_channels(self, app_label):
+        self.setup_admin_user(True)
+        expected_enterprise_uuid = str(self.enterprise_customer_catalog.enterprise_customer.uuid)
+        url = reverse(
+            'api:v1:logs:content_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': expected_enterprise_uuid,
+                'integrated_channel_code': app_label,
+                'plugin_configuration_id': 1
+            }
+        )
+        response = self.client.get(url)
+        assert response.status_code == 200
+
+
+    @ddt.data(
+        (400, HTTP_STATUS_STRINGS[400]),
+        (401, HTTP_STATUS_STRINGS[401]),
+        (403, HTTP_STATUS_STRINGS[403]),
+        (404, HTTP_STATUS_STRINGS[404]),
+        (408, HTTP_STATUS_STRINGS[408]),
+        (429, HTTP_STATUS_STRINGS[429]),
+        (500, HTTP_STATUS_STRINGS[500]),
+        (503, HTTP_STATUS_STRINGS[503]),
+        (12345, None)
+    )
+    @ddt.unpack
+    def test_get_friendly_status_message(self, status, expected_status_message):
+        """
+        tests learner data transmission audit API serializer sync status value based on transmission audit status
+        """
+        self.setup_admin_user(True)
+        expected_enterprise_uuid = str(self.enterprise_customer_catalog.enterprise_customer.uuid)
+        url = reverse(
+            'api:v1:logs:content_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': expected_enterprise_uuid,
+                'integrated_channel_code': 'GENERIC',
+                'plugin_configuration_id': 1
+            }
+        )
+        self.content_metadata_item.api_response_status_code = status
+        self.content_metadata_item.save()
+        response = self.client.get(url)
+        response_json = self.load_json(response.content)
+        assert response_json['results'][0]['friendly_status_message'] == expected_status_message
+
 
 @ddt.ddt
 class LearnerSyncStatusViewSetTests(APITest):
@@ -103,8 +153,19 @@ class LearnerSyncStatusViewSetTests(APITest):
     Tests for LearnerSyncStatusViewSet REST endpoints
     """
     def setUp(self):
-        self.generic_audit_1 = factories.GenericLearnerDataTransmissionAuditFactory()
-        self.sap_audit_1 = factories.SapSuccessFactorsLearnerDataTransmissionAuditFactory()
+
+        with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
+            self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+
+        self.generic_audit = factories.GenericLearnerDataTransmissionAuditFactory()
+        self.sap_audit = factories.SapSuccessFactorsLearnerDataTransmissionAuditFactory(
+            content_title='DemoX',
+            enterprise_customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid,
+            plugin_configuration_id=1,
+            status=401,
+            user_email='totallynormalemail@example.com',
+            progress_status=CourseRunProgressStatuses.IN_PROGRESS,
+        )
         super().setUp()
 
     def tearDown(self):
@@ -113,10 +174,10 @@ class LearnerSyncStatusViewSetTests(APITest):
         """
         # Remove client authentication credentials
         self.client.logout()
-        if self.generic_audit_1:
-            self.generic_audit_1.delete()
-        if self.sap_audit_1:
-            self.sap_audit_1.delete()
+        if self.generic_audit:
+            self.generic_audit.delete()
+        if self.sap_audit:
+            self.sap_audit.delete()
         super().tearDown()
 
     def setup_admin_user(self, is_staff=True):
@@ -130,15 +191,15 @@ class LearnerSyncStatusViewSetTests(APITest):
 
     def test_get_excludes_unneeded_fields(self):
         """
-        tests a a get request will not return unneeded fields
+        tests that a get request will not return unneeded fields
         """
         self.setup_admin_user(True)
         url = reverse(
             'api:v1:logs:learner_sync_status_logs',
             kwargs={
-                'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
+                'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
                 'integrated_channel_code': 'GENERIC',
-                'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
+                'plugin_configuration_id': self.generic_audit.plugin_configuration_id
             }
         )
         response = self.client.get(url)
@@ -158,25 +219,27 @@ class LearnerSyncStatusViewSetTests(APITest):
         url = reverse(
             'api:v1:logs:learner_sync_status_logs',
             kwargs={
-                'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
+                'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
                 'integrated_channel_code': 'GENERIC',
-                'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
+                'plugin_configuration_id': self.generic_audit.plugin_configuration_id
             }
         )
+
+        # user_email, content_title, progress_status, sync_status, sync_last_attempted_at, friendly_status_message
         response = self.client.get(url)
         LOGGER.info(response.content)
         response_json = self.load_json(response.content)
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
-        assert self.generic_audit_1.content_title == response_json['results'][0]['content_title']
+        assert self.generic_audit.content_title == response_json['results'][0]['content_title']
 
         url = reverse(
             'api:v1:logs:learner_sync_status_logs',
             kwargs={
-                'enterprise_customer_uuid': self.sap_audit_1.enterprise_customer_uuid,
+                'enterprise_customer_uuid': self.sap_audit.enterprise_customer_uuid,
                 'integrated_channel_code': 'SAP',
-                'plugin_configuration_id': self.sap_audit_1.plugin_configuration_id
+                'plugin_configuration_id': self.sap_audit.plugin_configuration_id
             }
         )
         response = self.client.get(url)
@@ -185,8 +248,28 @@ class LearnerSyncStatusViewSetTests(APITest):
         # check for pagination, ensure correct count
         assert 1 == response_json.get('count')
         # check that it includes expected data
-        assert self.sap_audit_1.content_title == response_json['results'][0]['content_title']
-        assert self.sap_audit_1.user_email == response_json['results'][0]['user_email']
+        assert self.sap_audit.user_email == response_json['results'][0]['user_email']
+        assert self.sap_audit.progress_status == response_json['results'][0]['progress_status']
+        assert 'error' == response_json['results'][0]['sync_status']
+        assert 'sync_last_attempted_at' in response_json['results'][0].keys()
+        assert HTTP_STATUS_STRINGS.get(401) == response_json['results'][0]['friendly_status_message']
+
+
+    def test_gets_of_all_channels(self):
+        app_labels = ['CANVAS', 'BLACKBOARD', 'CORNERSTONE', 'DEGREED', 'DEGREED2', 'MOODLE', 'SAP']
+        self.setup_admin_user(True)
+        for label in app_labels:
+            url = reverse(
+                'api:v1:logs:learner_sync_status_logs',
+                kwargs={
+                    'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
+                    'integrated_channel_code': label,
+                    'plugin_configuration_id': self.generic_audit.plugin_configuration_id
+                }
+            )
+            response = self.client.get(url)
+            assert response.status_code == 200
+
 
     @ddt.data((None, 'pending'), ('400', 'error'), ('200', 'okay'))
     @ddt.unpack
@@ -198,17 +281,48 @@ class LearnerSyncStatusViewSetTests(APITest):
         url = reverse(
             'api:v1:logs:learner_sync_status_logs',
             kwargs={
-                'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
+                'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
                 'integrated_channel_code': 'GENERIC',
-                'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
+                'plugin_configuration_id': self.generic_audit.plugin_configuration_id
             }
         )
-        self.generic_audit_1.status = audit_status
-        self.generic_audit_1.save()
+        self.generic_audit.status = audit_status
+        self.generic_audit.save()
         response = self.client.get(url)
-        LOGGER.info(response.content)
         response_json = self.load_json(response.content)
         assert response_json['results'][0]['sync_status'] == expected_sync_status
+
+    @ddt.data(
+        (400, HTTP_STATUS_STRINGS[400]),
+        (401, HTTP_STATUS_STRINGS[401]),
+        (403, HTTP_STATUS_STRINGS[403]),
+        (404, HTTP_STATUS_STRINGS[404]),
+        (408, HTTP_STATUS_STRINGS[408]),
+        (429, HTTP_STATUS_STRINGS[429]),
+        (500, HTTP_STATUS_STRINGS[500]),
+        (503, HTTP_STATUS_STRINGS[503]),
+        (12345, None)
+    )
+    @ddt.unpack
+    def test_get_friendly_status_message(self, audit_status, expected_status_message):
+        """
+        tests learner data transmission audit API serializer sync status value based on transmission audit status
+        """
+        self.setup_admin_user(True)
+        url = reverse(
+            'api:v1:logs:learner_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
+                'integrated_channel_code': 'GENERIC',
+                'plugin_configuration_id': self.generic_audit.plugin_configuration_id
+            }
+        )
+        self.generic_audit.status = audit_status
+        self.generic_audit.save()
+        response = self.client.get(url)
+        response_json = self.load_json(response.content)
+        assert response_json['results'][0]['friendly_status_message'] == expected_status_message
+
 
     def test_get_with_bad_channel_code(self):
         """
@@ -218,10 +332,12 @@ class LearnerSyncStatusViewSetTests(APITest):
         url = reverse(
             'api:v1:logs:learner_sync_status_logs',
             kwargs={
-                'enterprise_customer_uuid': self.generic_audit_1.enterprise_customer_uuid,
+                'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
                 'integrated_channel_code': 'BROKEN',
-                'plugin_configuration_id': self.generic_audit_1.plugin_configuration_id
+                'plugin_configuration_id': self.generic_audit.plugin_configuration_id
             }
         )
         response = self.client.get(url)
         assert response.status_code == 400
+        response_json = self.load_json(response.content)
+        assert 'Invalid channel code.' == response_json['detail']
