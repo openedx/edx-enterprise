@@ -15,6 +15,7 @@ from test_utils import TEST_PASSWORD, APITest, factories
 
 LOGGER = getLogger(__name__)
 
+
 @ddt.ddt
 class ContentSyncStatusViewSetTests(APITest):
     """
@@ -30,7 +31,7 @@ class ContentSyncStatusViewSetTests(APITest):
             integrated_channel_code='GENERIC',
             plugin_configuration_id=1,
             remote_created_at=datetime.datetime.utcnow(),
-            api_response_status_code=400,
+            api_response_status_code=None,
         )
 
         super().setUp()
@@ -77,9 +78,8 @@ class ContentSyncStatusViewSetTests(APITest):
         # check that it includes expected data
         assert self.content_metadata_item.content_title == response_json['results'][0]['content_title']
         assert self.content_metadata_item.content_id == response_json['results'][0]['content_id']
-        assert 'error' == response_json['results'][0]['sync_status']
+        assert 'pending' == response_json['results'][0]['sync_status']
         assert 'sync_last_attempted_at' in response_json['results'][0].keys()
-        assert HTTP_STATUS_STRINGS.get(400) == response_json['results'][0]['friendly_status_message']
 
     def test_get_with_bad_channel_code(self):
         """
@@ -112,7 +112,6 @@ class ContentSyncStatusViewSetTests(APITest):
         )
         response = self.client.get(url)
         assert response.status_code == 200
-
 
     @ddt.data(
         (400, HTTP_STATUS_STRINGS[400]),
@@ -162,7 +161,7 @@ class LearnerSyncStatusViewSetTests(APITest):
             content_title='DemoX',
             enterprise_customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid,
             plugin_configuration_id=1,
-            status=401,
+            status=200,
             user_email='totallynormalemail@example.com',
             progress_status=CourseRunProgressStatuses.IN_PROGRESS,
         )
@@ -250,10 +249,9 @@ class LearnerSyncStatusViewSetTests(APITest):
         # check that it includes expected data
         assert self.sap_audit.user_email == response_json['results'][0]['user_email']
         assert self.sap_audit.progress_status == response_json['results'][0]['progress_status']
-        assert 'error' == response_json['results'][0]['sync_status']
+        assert 'okay' == response_json['results'][0]['sync_status']
         assert 'sync_last_attempted_at' in response_json['results'][0].keys()
-        assert HTTP_STATUS_STRINGS.get(401) == response_json['results'][0]['friendly_status_message']
-
+        assert response_json['results'][0]['friendly_status_message'] is None
 
     def test_gets_of_all_channels(self):
         app_labels = ['CANVAS', 'BLACKBOARD', 'CORNERSTONE', 'DEGREED', 'DEGREED2', 'MOODLE', 'SAP']
@@ -269,7 +267,6 @@ class LearnerSyncStatusViewSetTests(APITest):
             )
             response = self.client.get(url)
             assert response.status_code == 200
-
 
     @ddt.data((None, 'pending'), ('400', 'error'), ('200', 'okay'))
     @ddt.unpack
@@ -322,7 +319,6 @@ class LearnerSyncStatusViewSetTests(APITest):
         response = self.client.get(url)
         response_json = self.load_json(response.content)
         assert response_json['results'][0]['friendly_status_message'] == expected_status_message
-
 
     def test_get_with_bad_channel_code(self):
         """
