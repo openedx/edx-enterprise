@@ -121,7 +121,7 @@ class ContentMetadataExporter(Exporter):
         force_retrieve_all_catalogs
     ):
         """
-        Take a list of content keys and their respective last updated time and build an mapping between content keys and
+        Take a list of content keys and their respective last updated time and build a mapping between content keys and
         past content metadata transmission record when the last updated time comes after the last updated time of the
         record.
 
@@ -168,11 +168,12 @@ class ContentMetadataExporter(Exporter):
                 )
                 # If not force_retrieve_all_catalogs, filter content records where `content last changed` is less than
                 # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
-                last_changed_query = Q(content_last_changed__lt=content_last_changed)
-                last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
                 if not force_retrieve_all_catalogs:
-                    content_query.add(last_changed_query, Q.AND)
-
+                    last_changed_query = Q(content_last_changed__lt=content_last_changed)
+                    last_changed_query.add(Q(content_last_changed__isnull=True), Q.OR)
+                    get_marked_for = Q(marked_for='update')
+                    get_marked_for.add(last_changed_query, Q.OR)
+                    content_query.add(get_marked_for, Q.AND)
                 items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
                 item = items_to_update_query.first()
                 if item:

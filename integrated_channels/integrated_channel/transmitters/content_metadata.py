@@ -205,6 +205,7 @@ class ContentMetadataTransmitter(Transmitter):
                     elif action_name == 'delete':
                         transmission.remote_deleted_at = action_happened_at
                     transmission.save()
-                    transmission.remove_marked_for()
+                    if transmission.api_response_status_code < 300:
+                        transmission.remove_marked_for()
                     results.append(transmission)
         return results

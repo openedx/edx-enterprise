@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.15]
+---------
+fix: catch update transmissions that failed and need to be resent
+
 [3.58.14]
 ---------
 feat: Add health check for canvas integrated channels
