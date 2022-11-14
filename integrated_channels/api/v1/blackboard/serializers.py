@@ -1,9 +1,9 @@
 """
     Serializer for Blackboard configuration.
 """
-from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from rest_framework import serializers
 
+from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from integrated_channels.blackboard.models import (
     BlackboardEnterpriseCustomerConfiguration,
     BlackboardGlobalConfiguration,

@@ -1,9 +1,9 @@
 """
 Serializer for Degreed2 configuration.
 """
-from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from rest_framework import serializers
 
+from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 
 

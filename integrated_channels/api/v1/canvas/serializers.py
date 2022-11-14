@@ -1,9 +1,9 @@
 """
 Serializers for Canvas.
 """
-from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from rest_framework import serializers
 
+from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 
 

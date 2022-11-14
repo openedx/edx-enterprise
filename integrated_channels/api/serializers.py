@@ -3,9 +3,10 @@ Serializer for integrated channel api.
 """
 
 from logging import getLogger
-from rest_framework import serializers
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
+from rest_framework import serializers
+
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.utils import get_recent_content_sync, get_recent_learner_sync
 
 LOGGER = getLogger(__name__)
