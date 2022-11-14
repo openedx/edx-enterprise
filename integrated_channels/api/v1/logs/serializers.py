@@ -95,7 +95,7 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
             sync_status = 'pending'
         elif not obj.status.isdigit() or int(obj.status) >= 400:
             sync_status = 'error'
-        elif int(obj.status) < 400:
+        elif int(obj.status) < 300:
             sync_status = 'okay'
 
         return sync_status

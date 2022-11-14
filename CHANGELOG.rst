@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.8]
+--------
+feat: integration sync reporting viewset improvements
+
 [3.58.7]
 --------
 feat: populate freindly_status_message in content and learner metadata api
