@@ -50,6 +50,7 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
         data = json.loads(response.content.decode('utf-8')).get('results')
 
         assert len(data) == 1
+        print(data[0])
         assert data[0]['id'] == self.sap_config.id
         assert len(SAPSuccessFactorsEnterpriseCustomerConfiguration.all_objects.all()) == 2
         assert len(SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.all()) == 1

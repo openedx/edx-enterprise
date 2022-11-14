@@ -460,3 +460,102 @@ def get_enterprise_customer_from_enterprise_enrollment(enrollment_id):
         return ec
     except ObjectDoesNotExist:
         return None
+
+
+def get_recent_learner_sync(config, error):
+    """
+    Returns the most recent timestamp for all learner transmission audits associated with a configuration
+    """
+    BlackboardLearnerDataTransmissionAudit = apps.get_model(
+        'blackboard',
+        'BlackboardLearnerDataTransmissionAudit'
+    )
+    CanvasLearnerDataTransmissionAudit = apps.get_model(
+        'canvas',
+        'CanvasLearnerDataTransmissionAudit'
+    )
+    CornerstoneLearnerDataTransmissionAudit = apps.get_model(
+        'cornerstone',
+        'CornerstoneLearnerDataTransmissionAudit'
+    )
+    DegreedLearnerDataTransmissionAudit = apps.get_model(
+        'degreed',
+        'DegreedLearnerDataTransmissionAudit'
+    )
+    Degreed2LearnerDataTransmissionAudit = apps.get_model(
+        'degreed2',
+        'Degreed2LearnerDataTransmissionAudit'
+    )
+    MoodleLearnerDataTransmissionAudit = apps.get_model(
+        'moodle',
+        'MoodleLearnerDataTransmissionAudit'
+    )
+    SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(
+        'sap_success_factors',
+        'SapSuccessFactorsLearnerDataTransmissionAudit'
+    )
+
+    lms_audit_classes = [
+        BlackboardLearnerDataTransmissionAudit,
+        CanvasLearnerDataTransmissionAudit,
+        CornerstoneLearnerDataTransmissionAudit,
+        DegreedLearnerDataTransmissionAudit,
+        Degreed2LearnerDataTransmissionAudit,
+        MoodleLearnerDataTransmissionAudit,
+        SapSuccessFactorsLearnerDataTransmissionAudit,
+    ]
+
+    learner_audits = []
+    max_sync_time = 0
+
+    # look through every lms that is associated with the specific EnterpriseCustomerPluginConfiguration
+    # to get a list of every learner audit record
+    for lms_audit_class in lms_audit_classes:
+        learner_audits.append(lms_audit_class.objects.filter(
+            plugin_configuration_id=config.id,
+            enterprise_customer_uuid=config.enterprise_customer.uuid,
+        ))
+
+    # for each config, then check what is the most recent time stamp associated
+    # if we pass in 'error' as True, we are looking for only error audit records
+    for learner_audit in learner_audits:
+        is_error_audit = learner_audit.status.isdigit() or int(learner_audit.status) >= 400
+        if (not error or (error and is_error_audit)):
+            date_list = [learner_audit.remote_created_at, learner_audit.remote_updated_at,
+                         learner_audit.remote_deleted_at]
+            res = [i for i in date_list if i is not None]
+            if res:
+                max_sync_time = max(max_sync_time, max(res))
+
+
+def get_recent_content_sync(config, error):
+    """
+    Returns the most recent timestamp for all learner transmission audits associated with a configuration
+    """
+    ContentMetadataItemTransmission = apps.get_model(
+        'integrated_channel',
+        'ContentMetadataItemTransmission'
+    )
+    lms_channel_codes = ['BLACKBOARD', 'CANVAS', 'CSOD', 'DEGREED', 'DEGREED2', 'MOODLE', 'SAP']
+
+    content_syncs = []
+    max_sync_time = 0
+
+    # look through every lms that is associated with the specific EnterpriseCustomerPluginConfiguration to get
+    # a list of every content transmission record
+    for channel in lms_channel_codes:
+        content_syncs.append(ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer_id=config.enterprise_customer.uuid,
+            integrated_channel_code=channel,
+            plugin_configuration_id=config.id
+        ))
+
+    # for each config, then check what is the most recent time stamp associated
+    # if we pass in 'error' as True, we are looking for only error content records
+    for content in content_syncs:
+        is_error_record = content.api_response_status_code >= 400
+        if (not error or (error and is_error_record)):
+            date_list = [content.remote_created_at, content.remote_updated_at, content.remote_deleted_at]
+            res = [i for i in date_list if i is not None]
+            if res:
+                max_sync_time = max(max_sync_time, max(res))

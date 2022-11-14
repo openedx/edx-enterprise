@@ -166,6 +166,36 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("When set to True, the configured customer will no longer receive learner data transmissions, both"
                     " scheduled and signal based")
     )
+    last_sync_attemped_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The last recorded time of attempted communication with this integrated channel.")
+    )
+    last_content_sync_attempted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The last recorded time of attempted content transmission with this integrated channel.")
+    )
+    last_learner_sync_attempted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The last recorded time of attempted learner transmission with this integrated channel.")
+    )
+    last_sync_errored_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The last recorded time of an error in communication with this integrated channel.")
+    )
+    last_content_sync_errored_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The last recorded time of a content transmission error with this integrated channel.")
+    )
+    last_learner_sync_errored_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The last recorded time of a learner transmission error with this integrated channel.")
+    )
 
     class Meta:
         abstract = True
