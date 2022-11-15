@@ -19,10 +19,15 @@ from django.utils import timezone
 from integrated_channels.canvas.client import MESSAGE_WHEN_COURSE_WAS_DELETED, CanvasAPIClient
 from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
+from integrated_channels.integrated_channel.client import IntegratedChannelHealthStatus
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
+
+
+def _raise_ClientError(*unused_args):
+    raise ClientError('Test Exception')
 
 
 @pytest.mark.django_db
@@ -1056,6 +1061,37 @@ class TestCanvasApiClient(unittest.TestCase):
                 body=b'Mock update response text'
             )
             canvas_api_client.update_content_metadata(course_to_update)
+
+    @mock.patch('integrated_channels.canvas.client.refresh_session_if_expired', lambda x: ('mock session', 30))
+    def test_health_check_healthy(self):
+        """
+        Test the client health check with healthy status
+        """
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        assert canvas_api_client.health_check() == IntegratedChannelHealthStatus.HEALTHY
+
+    @mock.patch('integrated_channels.canvas.client.refresh_session_if_expired', lambda x: ('mock session', 30))
+    def test_health_check_invalid_config(self):
+        """
+        Test the client health check with invalid config
+        """
+        bad_enterprise_config = factories.CanvasEnterpriseCustomerConfigurationFactory(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            canvas_account_id=self.account_id,
+            canvas_base_url='Not a valid url',
+            refresh_token=self.refresh_token,
+        )
+        canvas_api_client = CanvasAPIClient(bad_enterprise_config)
+        assert canvas_api_client.health_check() == IntegratedChannelHealthStatus.INVALID_CONFIG
+
+    @mock.patch('integrated_channels.canvas.client.refresh_session_if_expired', _raise_ClientError)
+    def test_health_check_connection_failure(self):
+        """
+        Test the client health check with connection failure
+        """
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        assert canvas_api_client.health_check() == IntegratedChannelHealthStatus.CONNECTION_FAILURE
 
     def update_fails_with_poorly_formatted_data(self, request_type):
         """

@@ -1,7 +1,9 @@
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from rest_framework import permissions, viewsets
+from rest_framework import generics, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
 
 from django.utils.decorators import method_decorator
 
@@ -20,8 +22,11 @@ from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfigurat
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.integrated_channel.client import IntegratedChannelHealthStatus
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
+from integrated_channels.utils import get_enterprise_client_by_channel_code
 
 
 class IntegratedChannelsBaseViewSet(viewsets.ViewSet):
@@ -78,3 +83,51 @@ class IntegratedChannelsBaseViewSet(viewsets.ViewSet):
         response = blackboard_serializer.data + canvas_serializer.data + cornerstone_serializer.data + \
             degreed_serializer.data + degreed2_serializer.data + moodle_serializer.data + sap_serializer.data
         return Response(response)
+
+
+class IntegratedChannelHealthCheckView(generics.ListAPIView):
+    """
+        **Use Cases**
+
+            Perform Health Check on user's connection
+
+        **Example Requests**
+
+            GET /config/health-check
+
+        **Query Parameters for GET**
+
+            * channel_code: The channel code of the CanvasEnterpriseCustomerConfiguration
+            * uuid: The uuid of the CanvasEnterpriseCustomerConfiguration
+
+        **Supported Channels**
+        canvas
+
+        **Response Values**
+
+            * is_healthy: Whether the Canvas connection is healthy
+            * health_status: Status code for health status
+
+
+    """
+    renderer_classes = [JSONRenderer, ]
+
+    @method_decorator(require_at_least_one_query_parameter('channel_code'))
+    @method_decorator(require_at_least_one_query_parameter('uuid'))
+    def get(self, request, *args, **kwargs):
+        """
+        Enterprise Customer's Integrated Channel health check
+        """
+        channel_code = request.query_params.get('channel_code').lower()
+        uuid = request.query_params.get('uuid')
+
+        # Get enterprise configuration
+        config_type = EnterpriseCustomerPluginConfiguration.get_class_by_channel_code(channel_code)
+        config = config_type.objects.get(uuid=uuid)
+        client_type = get_enterprise_client_by_channel_code(channel_code)
+        client = client_type(config)
+
+        health_status = client.health_check()
+        is_healthy = health_status == IntegratedChannelHealthStatus.HEALTHY
+        payload = {'is_healthy': is_healthy, 'health_status': health_status.value}
+        return Response(payload, status=HTTP_200_OK)

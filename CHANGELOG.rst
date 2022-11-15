@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.14]
+---------
+feat: Add health check for canvas integrated channels
+
 [3.58.13]
 ---------
 feat: Add in learner and content sync time records to integrated channel configs 

@@ -29,6 +29,12 @@ class BaseConfigurationsViewSetTests(APITest):
 
         self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ENTERPRISE_ID)
 
+        self.canvas_config = factories.CanvasEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            refresh_token='foobar',
+            uuid=str(uuid4())
+        )
+
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
             user_id=self.user.id,
@@ -38,10 +44,7 @@ class BaseConfigurationsViewSetTests(APITest):
             enterprise_customer=self.enterprise_customer,
             refresh_token='foobar',
         ).channel_code())
-        self.customer_configs.add(factories.CanvasEnterpriseCustomerConfigurationFactory(
-            enterprise_customer=self.enterprise_customer,
-            refresh_token='foobar',
-        ).channel_code())
+        self.customer_configs.add(self.canvas_config.channel_code())
         self.customer_configs.add(factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer
         ).channel_code())
@@ -82,3 +85,12 @@ class BaseConfigurationsViewSetTests(APITest):
         for config in resp.data:
             remaining_configs -= {config.get('channel_code')}
         assert len(remaining_configs) == 0
+
+    def test_health_check(self):
+        url = reverse('api:v1:health_check')
+        supported_channel_configs = [self.canvas_config]
+        for channel_config in supported_channel_configs:
+            resp = self.client.get(url + f'?channel_code={channel_config.channel_code()}&uuid={channel_config.uuid}')
+
+            assert resp.data['is_healthy'] is False
+            assert resp.data['health_status'] == 'INVALID_CONFIG'
