@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.10]
+---------
+refactor: update enterprise manual reporting to make it generic
+
 [3.58.9]
 --------
 fix: Added validation for PGP encryption key entered by the user.

@@ -25,7 +25,7 @@ from enterprise.admin.forms import (
 )
 from enterprise.admin.utils import ValidationMessages
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
-from enterprise.models import EnterpriseCustomer, SystemWideEnterpriseRole
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerReportingConfiguration, SystemWideEnterpriseRole
 from test_utils import TEST_PGP_KEY, fake_enrollment_api
 from test_utils.factories import (
     AdminNotificationFactory,
@@ -787,6 +787,24 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
             data=self.form_data,
         )
         assert form.is_valid()
+
+    def test_validate_manual_reporting(self):
+        """
+        Verify that manual reporting validation works as exepcted.
+
+        Only enterprises enabled for manual reporting can create reporting configuration.
+        """
+        report_config_data = dict(self.form_data, data_type=EnterpriseCustomerReportingConfiguration.DATA_TYPE_GRADE)
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            data=report_config_data,
+        )
+        assert not form.is_valid()
+        errors = form.errors
+        message = '"{data_type}" data type is not supported for enterprise customer "{enterprise_customer.name}". Please select a different data type.'.format(  # pylint: disable=line-too-long
+            enterprise_customer=self.ent_customer1,
+            data_type=EnterpriseCustomerReportingConfiguration.DATA_TYPE_GRADE,
+        )
+        assert errors == {'data_type': [message]}
 
 
 @ddt.ddt

@@ -2516,9 +2516,9 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     # Data types that are allowed to be sent without compression, all other data types must be compressed.
     ALLOWED_NON_COMPRESSION_DATA_TYPES = (DATA_TYPE_CATALOG, )
 
-    # These types are only valid for the enterprise customer named `Pearson`. We are adding these Reports temporarily
-    # and will be reverted after Aurora based reports will be available.
-    PEARSON_ONLY_REPORTS = (DATA_TYPE_GRADE, DATA_TYPE_COMPLETION, DATA_TYPE_COURSE_STRUCTURE,)
+    # These types are only valid for specific enterprise customers. Enabling these reports for a
+    # customer requires to manually add Snowflake models for an enterprise.
+    MANUAL_REPORTS = (DATA_TYPE_GRADE, DATA_TYPE_COMPLETION, DATA_TYPE_COURSE_STRUCTURE,)
 
     REPORT_TYPE_CSV = 'csv'
     REPORT_TYPE_JSON = 'json'
