@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.9]
+--------
+fix: Added validation for PGP encryption key entered by the user.
+
 [3.58.8]
 --------
 feat: integration sync reporting viewset improvements

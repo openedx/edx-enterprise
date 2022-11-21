@@ -2733,8 +2733,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     def clean(self):
         """
-        Override of clean method to perform additional validation on frequency, day_of_month/day_of week
-        and compression.
+        Override of clean method to perform additional validation on frequency, day_of_month/day_of week,
+        compression and pgp_encryption_key.
         """
         validation_errors = {}
 
@@ -2785,6 +2785,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 f'Compression can only be disabled for the following data types: {allowed_data_types} and '
                 f'delivery method: {self.DELIVERY_METHOD_SFTP}'
             )
+
+        # Run validation only of pgp_encryption_key is not empty.
+        if self.pgp_encryption_key:
+            try:
+                utils.validate_pgp_key(self.pgp_encryption_key)
+            except ValidationError:
+                validation_errors['pgp_encryption_key'] = 'Please enter a valid PGP key.'
 
         if validation_errors:
             raise ValidationError(validation_errors)

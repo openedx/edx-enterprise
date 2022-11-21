@@ -45,6 +45,24 @@ from test_utils.factories import (
 )
 
 DATETIME_NOW = datetime.datetime.utcnow()
+TEST_PGP_KEY = """
+-----BEGIN PGP PRIVATE KEY BLOCK-----
+Comment: Alice's OpenPGP Transferable Secret Key
+Comment: https://www.ietf.org/id/draft-bre-openpgp-samples-01.html
+lFgEXEcE6RYJKwYBBAHaRw8BAQdArjWwk3FAqyiFbFBKT4TzXcVBqPTB3gmzlC/U
+b7O1u10AAP9XBeW6lzGOLx7zHH9AsUDUTb2pggYGMzd0P3ulJ2AfvQ4RtCZBbGlj
+ZSBMb3ZlbGFjZSA8YWxpY2VAb3BlbnBncC5leGFtcGxlPoiQBBMWCAA4AhsDBQsJ
+CAcCBhUKCQgLAgQWAgMBAh4BAheAFiEE64W7X6M6deFelE5j8jFVDE9H444FAl2l
+nzoACgkQ8jFVDE9H447pKwD6A5xwUqIDprBzrHfahrImaYEZzncqb25vkLV2arYf
+a78A/R3AwtLQvjxwLDuzk4dUtUwvUYibL2sAHwj2kGaHnfICnF0EXEcE6RIKKwYB
+BAGXVQEFAQEHQEL/BiGtq0k84Km1wqQw2DIikVYrQrMttN8d7BPfnr4iAwEIBwAA
+/3/xFPG6U17rhTuq+07gmEvaFYKfxRB6sgAYiW6TMTpQEK6IeAQYFggAIBYhBOuF
+u1+jOnXhXpROY/IxVQxPR+OOBQJcRwTpAhsMAAoJEPIxVQxPR+OOWdABAMUdSzpM
+hzGs1O0RkWNQWbUzQ8nUOeD9wNbjE3zR+yfRAQDbYqvtWQKN4AQLTxVJN5X5AWyb
+Pnn+We1aTBhaGa86AQ==
+=n8OM
+-----END PGP PRIVATE KEY BLOCK-----
+"""
 
 
 def mock_get_available_idps(idps):
@@ -1963,3 +1981,19 @@ class TestValidateEmailToLink(unittest.TestCase):
         else:
             exists = utils.validate_email_to_link(email, self.enterprise_customer, raise_exception=False)
             assert exists
+
+    @ddt.data(
+        (True, 'Invalid PGP Key'),
+        (True, None),
+        (False, TEST_PGP_KEY),
+    )
+    @ddt.unpack
+    def test_validate_pgp_key(self, raise_exception, key):
+        """
+        Test the behavior of validate_pgp_key.
+        """
+        if raise_exception:
+            with raises(ValidationError, match='Invalid PGP Key provided.'):
+                utils.validate_pgp_key(key)
+        else:
+            utils.validate_pgp_key(key)

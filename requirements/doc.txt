@@ -75,6 +75,7 @@ cryptography==36.0.1
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields
+    #   pgpy
     #   pyjwt
 defusedxml==0.7.1
     # via
@@ -223,6 +224,8 @@ pbr==5.8.1
     # via
     #   -r requirements/test-master.txt
     #   stevedore
+pgpy==0.5.4
+    # via -r requirements/test-master.txt
 pillow==9.0.1
     # via -r requirements/test-master.txt
 prompt-toolkit==3.0.28
@@ -233,6 +236,10 @@ psutil==5.9.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
+pyasn1==0.4.8
+    # via
+    #   -r requirements/test-master.txt
+    #   pgpy
 pycparser==2.21
     # via
     #   -r requirements/test-master.txt
@@ -314,6 +321,7 @@ six==1.16.0
     #   edx-drf-extensions
     #   edx-rbac
     #   edx-sphinx-theme
+    #   pgpy
     #   pyjwkest
     #   python-dateutil
 slumber==0.7.1

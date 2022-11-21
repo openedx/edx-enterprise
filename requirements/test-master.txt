@@ -62,6 +62,7 @@ cryptography==36.0.1
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   django-fernet-fields
+    #   pgpy
     #   pyjwt
 defusedxml==0.7.1
     # via
@@ -227,6 +228,8 @@ pbr==5.8.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
+pgpy==0.5.4
+    # via -r requirements/base.in
 pillow==9.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -237,6 +240,8 @@ psutil==5.9.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
+pyasn1==0.4.8
+    # via pgpy
 pycparser==2.21
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -311,6 +316,7 @@ six==1.16.0
     #   click-repl
     #   edx-drf-extensions
     #   edx-rbac
+    #   pgpy
     #   pyjwkest
     #   python-dateutil
 slumber==0.7.1
