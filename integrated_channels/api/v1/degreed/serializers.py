@@ -10,6 +10,12 @@ from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfigur
 class DegreedConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
     is_valid = serializers.ReadOnlyField()
     channel_code = serializers.ReadOnlyField()
+    last_sync_attemped_at = serializers.ReadOnlyField()
+    last_content_sync_attempted_at  = serializers.ReadOnlyField()
+    last_learner_sync_attempted_at = serializers.ReadOnlyField()
+    last_sync_errored_at = serializers.ReadOnlyField()
+    last_content_sync_errored_at = serializers.ReadOnlyField()
+    last_learner_sync_errored_at = serializers.ReadOnlyField()
 
     class Meta:
         extra_fields = ('key', 'secret', 'degreed_company_id', 'degreed_base_url', 'channel_code',

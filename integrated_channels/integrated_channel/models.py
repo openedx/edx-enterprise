@@ -166,36 +166,6 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("When set to True, the configured customer will no longer receive learner data transmissions, both"
                     " scheduled and signal based")
     )
-    last_sync_attemped_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text=_("The last recorded time of attempted communication with this integrated channel.")
-    )
-    last_content_sync_attempted_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text=_("The last recorded time of attempted content transmission with this integrated channel.")
-    )
-    last_learner_sync_attempted_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text=_("The last recorded time of attempted learner transmission with this integrated channel.")
-    )
-    last_sync_errored_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text=_("The last recorded time of an error in communication with this integrated channel.")
-    )
-    last_content_sync_errored_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text=_("The last recorded time of a content transmission error with this integrated channel.")
-    )
-    last_learner_sync_errored_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        help_text=_("The last recorded time of a learner transmission error with this integrated channel.")
-    )
 
     class Meta:
         abstract = True
@@ -234,6 +204,57 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                     ]
                 }
             )
+
+    def get_learner_data_audit_model(self):
+        return LearnerDataTransmissionAudit.get_completion_class_by_channel_code(self.channel_code())
+
+    def get_last_learner_synced_at(self):
+        LearnerDataTransmissionAudit = self.get_learner_data_audit_model()
+        LOGGER.debug('KIRA')
+        LOGGER.debug(LearnerDataTransmissionAudit)
+        learner_audits = LearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.plugin_configuration_id,
+        )
+        return learner_audits.aggregate(max('modified'))
+
+    def get_last_learner_errored_at(self):
+        LearnerDataTransmissionAudit = self.get_learner_data_audit_model()
+        learner_audits = LearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.plugin_configuration_id,
+            status__gte=400,
+        )
+        return learner_audits.aggregate(max('modified'))
+
+    def get_last_content_synced_at(self):
+        content_audits = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.plugin_configuration_id,
+            integrated_channel_codd=self.channel_code(),
+        )
+        max_remote_created_at = content_audits.aggregate(max('remote_created_at'))
+        max_remote_updated_at = content_audits.aggregate(max('remote_updated_at'))
+        max_remote_deleted_at = content_audits.aggregate(max('remote_deleted_at'))
+        return max(max_remote_created_at, max_remote_updated_at, max_remote_deleted_at)
+
+    def get_last_content_errored_at(self):
+        content_audits = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.plugin_configuration_id,
+            integrated_channel_codd=self.channel_code(),
+            api_response_status_code__gte=400,
+        )
+        max_remote_created_at = content_audits.aggregate(max('remote_created_at'))
+        max_remote_updated_at = content_audits.aggregate(max('remote_updated_at'))
+        max_remote_deleted_at = content_audits.aggregate(max('remote_deleted_at'))
+        return max(max_remote_created_at, max_remote_updated_at, max_remote_deleted_at)
+
+    def get_last_sync_attemped_at(self):
+        return max(self.get_last_learner_synced_at(), self.get_last_content_synced_at())
+
+    def get_last_sync_errored_at(self):
+        return max(self.get_last_learner_errored_at(), self.get_last_content_errored_at())
 
     @property
     def channel_worker_user(self):
@@ -357,7 +378,6 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         """
         exporter = self.get_content_metadata_exporter(user)
         exporter.update_content_transmissions_catalog_uuids()
-
 
 class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfiguration):
     """
