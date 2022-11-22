@@ -53,6 +53,7 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
 
     list_per_page = 1000
 
+
 @admin.register(ApiResponseRecord)
 class ApiResponseRecordAdmin(admin.ModelAdmin):
     """
