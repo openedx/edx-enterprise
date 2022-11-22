@@ -964,3 +964,27 @@ class EnterpriseCustomerInviteKeyFactory(factory.django.DjangoModelFactory):
     usage_limit = 10
     expiration_date = localized_utcnow()
     is_active = True
+
+
+class EnterpriseCustomerReportingConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerReportingConfiguration factory.
+
+    Creates an instance of EnterpriseCustomerReportingConfiguration with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCustomerReportingConfiguration.
+        """
+
+        model = EnterpriseCustomerReportingConfiguration
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    delivery_method = 'email'
+    data_type = 'progress_v3'
+    report_type = 'json'
+    frequency = 'daily'
+    hour_of_day = 1

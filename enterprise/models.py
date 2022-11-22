@@ -73,6 +73,7 @@ from enterprise.validators import (
     validate_hex_color,
     validate_image_extension,
     validate_image_size,
+    validate_pgp_key,
 )
 
 try:
@@ -2516,9 +2517,9 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     # Data types that are allowed to be sent without compression, all other data types must be compressed.
     ALLOWED_NON_COMPRESSION_DATA_TYPES = (DATA_TYPE_CATALOG, )
 
-    # These types are only valid for the enterprise customer named `Pearson`. We are adding these Reports temporarily
-    # and will be reverted after Aurora based reports will be available.
-    PEARSON_ONLY_REPORTS = (DATA_TYPE_GRADE, DATA_TYPE_COMPLETION, DATA_TYPE_COURSE_STRUCTURE,)
+    # These types are only valid for specific enterprise customers. Enabling these reports for a
+    # customer requires to manually add Snowflake models for an enterprise.
+    MANUAL_REPORTS = (DATA_TYPE_GRADE, DATA_TYPE_COMPLETION, DATA_TYPE_COURSE_STRUCTURE,)
 
     REPORT_TYPE_CSV = 'csv'
     REPORT_TYPE_JSON = 'json'
@@ -2567,7 +2568,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         null=True,
         blank=True,
         verbose_name=_("PGP Encryption Key"),
-        help_text=_('The key for encryption, if PGP encrypted file is required.')
+        help_text=_('The key for encryption, if PGP encrypted file is required.'),
+        validators=[validate_pgp_key]
     )
     data_type = models.CharField(
         max_length=20,

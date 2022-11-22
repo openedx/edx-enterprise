@@ -4,6 +4,7 @@ Forms to be used in the enterprise djangoapp.
 
 import re
 from logging import getLogger
+from uuid import UUID
 
 from config_models.admin import ConfigurationModelAdmin
 from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
@@ -597,11 +598,11 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
         report_customer = cleaned_data.get('enterprise_customer')
         data_type = cleaned_data.get('data_type')
 
-        if data_type in EnterpriseCustomerReportingConfiguration.PEARSON_ONLY_REPORTS \
-                and report_customer.name != 'Pearson':
+        if data_type in EnterpriseCustomerReportingConfiguration.MANUAL_REPORTS \
+                and report_customer.uuid not in map(UUID, settings.ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS):
             message = _(
-                'This data_type "{data_type}" is not supported for enterprise'
-                'customer {enterprise_customer}. Please select a different data_type.',
+                '"{data_type}" data type is not supported for enterprise '
+                'customer "{enterprise_customer.name}". Please select a different data type.',
             ).format(
                 enterprise_customer=report_customer,
                 data_type=data_type,

@@ -16,6 +16,7 @@ from rest_framework.settings import api_settings
 
 from django.contrib import auth
 from django.contrib.sites.models import Site
+from django.core import exceptions as django_exceptions
 from django.utils.translation import gettext_lazy as _
 
 from enterprise import models, utils
@@ -36,6 +37,7 @@ from enterprise.utils import (
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
+from enterprise.validators import validate_pgp_key
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
@@ -816,6 +818,17 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         # update enterprise customer catalogs on the reporting configuration instance
         instance.enterprise_customer_catalogs.set(ec_catalog_uuids)
         return instance
+
+    def validate_pgp_encryption_key(self, value):
+        """
+        Validate that pgp_encryption_key is correctly set or left empty.
+        """
+        if value:
+            try:
+                validate_pgp_key(value)
+            except django_exceptions.ValidationError as error:
+                raise serializers.ValidationError('Please enter a valid PGP key.') from error
+        return value
 
     def validate(self, data):  # pylint: disable=arguments-renamed
         delivery_method = data.get('delivery_method')

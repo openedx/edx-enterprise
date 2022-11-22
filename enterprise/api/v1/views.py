@@ -1529,7 +1529,7 @@ class EnterpriseCustomerReportTypesView(APIView):
         """
         reduced_data_types = []
         for data_type in data_types:
-            if data_type[1] not in models.EnterpriseCustomerReportingConfiguration.PEARSON_ONLY_REPORTS:
+            if data_type[1] not in models.EnterpriseCustomerReportingConfiguration.MANUAL_REPORTS:
                 reduced_data_types.append(data_type)
         return reduced_data_types
 
