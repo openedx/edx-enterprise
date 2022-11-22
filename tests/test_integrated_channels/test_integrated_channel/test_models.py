@@ -148,7 +148,7 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
 
     def test_failed_incomplete_create_transmissions_getter(self):
         """
-        Test that we properly find created and attemped but unsuccessful transmission audit items
+        Test that we properly find created and attempted but unsuccessful transmission audit items
         """
         api_record = ApiResponseRecord(status_code=500, body='ERROR')
         api_record.save()

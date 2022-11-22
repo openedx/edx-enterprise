@@ -2,6 +2,7 @@
 Database models for Enterprise Integrated Channel.
 """
 
+import datetime
 import json
 import logging
 
@@ -10,7 +11,7 @@ from jsonfield.fields import JSONField
 from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Max, Q
 from django.db.models.query import QuerySet
 from django.utils.translation import gettext_lazy as _
 
@@ -204,6 +205,76 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                     ]
                 }
             )
+
+    def get_learner_data_audit_model(self):
+        return LearnerDataTransmissionAudit.get_completion_class_by_channel_code(self.channel_code())
+
+    def get_last_learner(self, error, config_id):
+        """
+        Gets every learner audit associated with the configuration and finds the most recent record.
+        If the boolean parameter 'error' is True, then we are only looking for the most recent
+        audit record where the status > 400.
+        """
+        audit_model = self.get_learner_data_audit_model()
+        if error:
+            learner_audits = audit_model.objects.filter(
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=config_id,
+                status__gte=400,
+        )
+        else:
+            learner_audits = LearnerDataTransmissionAudit.objects.filter(
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                plugin_configuration_id=config_id,
+            )
+        if learner_audits:
+            return learner_audits.aggregate(max=Max('completed_timestamp')).get('max')
+        else:
+            return None
+
+    def get_last_content(self, error, config_id):
+        """
+        Gets every content transmission associated with the configuration and finds the most
+        recent record. If the boolean parameter 'error' is True, then we are only looking for
+        the most recent transmission record where the status > 400.
+        """
+        if error:
+            content_audits = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_customer,
+                plugin_configuration_id=config_id,
+                integrated_channel_code=self.channel_code(),
+                api_response_status_code__gte=400,
+            )
+        else:
+            content_audits = ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_customer,
+                plugin_configuration_id=config_id,
+                integrated_channel_code=self.channel_code(),
+            )
+        if content_audits:
+            max_created = (content_audits.aggregate(max_created=Max('remote_created_at'))).get('max_created')
+            max_updated = (content_audits.aggregate(max_updated=Max('remote_updated_at'))).get('max_updated')
+            max_deleted = (content_audits.aggregate(max_deleted=Max('remote_deleted_at'))).get('max_deleted')
+            return max(x for x in [max_created, max_updated, max_deleted] if x is not None)
+        else:
+            return None
+
+    def get_last_sync(self, error, config_id):
+        """
+        Gets every transmission (content and learner) associated with the configuration
+        and finds the most recent record. If the boolean parameter 'error' is True, then
+        we are only looking for the most recent transmission record where the status > 400.
+        """
+        learner = self.get_last_learner(error, config_id)
+        content = self.get_last_content(error, config_id)
+        if learner is not None and content is not None:
+            return max(datetime.datetime.strptime(learner, '%Y-%m-%d %H:%M:%S'), content)
+        elif learner is not None:
+            return learner
+        elif content is not None:
+            return content
+        else:
+            return None
 
     @property
     def channel_worker_user(self):
