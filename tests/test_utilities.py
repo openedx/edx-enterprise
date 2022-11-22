@@ -17,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.forms.models import model_to_dict
 from django.test import override_settings
 
-from enterprise import utils
+from enterprise import utils, validators
 from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
@@ -1994,6 +1994,6 @@ class TestValidateEmailToLink(unittest.TestCase):
         """
         if raise_exception:
             with raises(ValidationError, match='Invalid PGP Key provided.'):
-                utils.validate_pgp_key(key)
+                validators.validate_pgp_key(key)
         else:
-            utils.validate_pgp_key(key)
+            validators.validate_pgp_key(key)

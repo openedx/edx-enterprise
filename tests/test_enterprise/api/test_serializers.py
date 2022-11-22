@@ -13,13 +13,14 @@ from django.contrib.auth.models import Permission
 from django.test import TestCase
 
 from enterprise.api.v1.serializers import (
+    EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
     ImmutableStateSerializer,
 )
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
-from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, factories
+from test_utils import FAKE_UUIDS, TEST_PGP_KEY, TEST_USERNAME, APITest, factories
 
 
 @mark.django_db
@@ -285,3 +286,54 @@ class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpr
         ecu_2_data = serializer.data[1]
         assert sorted(ecu_1_data['role_assignments']) == sorted([ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE])
         assert ecu_2_data['role_assignments'] == [ENTERPRISE_LEARNER_ROLE]
+
+
+@mark.django_db
+class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):
+    """
+    Tests for EnterpriseCustomerReportingConfigurationSerializer.
+    """
+
+    def setUp(self):
+        """
+        Perform operations common for all tests.
+
+        Populate database for api testing.
+        """
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.data = {
+            "enterprise_customer_id": self.enterprise_customer.uuid,
+            "active": True,
+            "delivery_method": "email",
+            "email": ['test@example.com'],
+            "frequency": 'daily',
+            "day_of_month": 1,
+            "day_of_week": 1,
+            "hour_of_day": 1,
+            "include_date": False,
+            "encrypted_password": 'password',
+            "encrypted_sftp_password": 'password',
+            "data_type": 'progress_v3',
+            "report_type": 'json',
+            "pgp_encryption_key": '',
+        }
+        self.validated_data = self.data
+
+    def test_create(self):
+        """
+        Test ``create`` method of EnterpriseCustomerReportingConfigurationSerializer.
+        """
+        # Empty PGP key is valid.
+        serializer = EnterpriseCustomerReportingConfigurationSerializer(data=self.data)
+        assert serializer.is_valid()
+
+        # Use a valid PGP key.
+        self.data['pgp_encryption_key'] = TEST_PGP_KEY
+        serializer = EnterpriseCustomerReportingConfigurationSerializer(data=self.data)
+        assert serializer.is_valid()
+
+        # Invalid PGP key should be flagged.
+        self.data['pgp_encryption_key'] = 'invalid-key'
+        serializer = EnterpriseCustomerReportingConfigurationSerializer(data=self.data)
+        assert not serializer.is_valid()

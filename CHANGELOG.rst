@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.11]
+---------
+fix: Added model field validation for pgp_encryption_key
+
 [3.58.10]
 ---------
 refactor: update enterprise manual reporting to make it generic
