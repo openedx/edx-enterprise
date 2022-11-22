@@ -5,6 +5,8 @@ Database models field validators.
 import os
 import re
 
+import pgpy
+
 from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -67,3 +69,17 @@ def validate_content_filter_fields(content_filter):
                             key, cftype['subtype']
                         )
                     )
+
+
+def validate_pgp_key(pgp_key):
+    """
+    Validate that given PGP key is valid.
+
+    Raises:
+        (ValidationError): Raised if given pgp_key is not valid.
+    """
+    try:
+        pgpy.PGPKey.from_blob(pgp_key)
+    except (ValueError, TypeError) as error:
+        # Raise validation error in case of ValueError or TypeError.
+        raise ValidationError('Invalid PGP Key provided.') from error

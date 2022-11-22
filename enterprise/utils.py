@@ -10,7 +10,6 @@ from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit
 from uuid import UUID, uuid4
 
 import bleach
-import pgpy
 import pytz
 import tableauserverclient as TSC
 from edx_django_utils.cache import TieredCache
@@ -2352,17 +2351,3 @@ def logo_path(instance, filename):
     fullname = os.path.join("enterprise/branding/" + str(instance.enterprise_customer.uuid) +
                             "/logo_" + generated_uuid + extension)
     return fullname
-
-
-def validate_pgp_key(pgp_key):
-    """
-    Validate that given PGP key is valid.
-
-    Raises:
-        (ValidationError): Raised if given pgp_key is not valid.
-    """
-    try:
-        pgpy.PGPKey.from_blob(pgp_key)
-    except (ValueError, TypeError) as error:
-        # Raise validation error in case of ValueError or TypeError.
-        raise ValidationError('Invalid PGP Key provided.') from error

@@ -57,14 +57,7 @@ from enterprise.models import (
     logo_path,
 )
 from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter, localized_utcnow
-from test_utils import (
-    TEST_PGP_KEY,
-    EmptyCacheMixin,
-    assert_url,
-    assert_url_contains_query_parameters,
-    factories,
-    fake_catalog_api,
-)
+from test_utils import EmptyCacheMixin, assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 
 @mark.django_db
@@ -2195,37 +2188,6 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
             hour_of_day=1,
         )
         assert config.data_type == EnterpriseCustomerReportingConfiguration.DATA_TYPE_PROGRESS_V3
-
-    @ddt.data(
-        ('', None),
-        ('invalid-key', 'Please enter a valid PGP key.'),
-        (TEST_PGP_KEY, None),
-    )
-    @ddt.unpack
-    def test_clean_validate_pgp_encryption_keu(self, pgp_encryption_key, expected_error):
-        """
-        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating PGP encryption key fields.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
-        config = EnterpriseCustomerReportingConfiguration(
-            enterprise_customer=enterprise_customer,
-            active=True,
-            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
-            email='test@edx.org',
-            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY,
-            day_of_month=1,
-            hour_of_day=1,
-            pgp_encryption_key=pgp_encryption_key,
-            decrypted_password='test_password'
-        )
-
-        if expected_error:
-            with self.assertRaises(ValidationError) as context:
-                config.clean()
-            assert context.exception.messages[0] == expected_error
-        else:
-            # Validate no errors
-            config.clean()
 
 
 @mark.django_db
