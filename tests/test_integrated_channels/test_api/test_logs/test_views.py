@@ -790,6 +790,7 @@ class LearnerSyncStatusViewSetTests(APITest):
         response_json = self.load_json(response.content)
         assert 'Invalid channel code.' == response_json['detail']
 
+
 @ddt.ddt
 class IntegratedChannelsBaseViewSetTests(APITest):
     """
@@ -803,7 +804,6 @@ class IntegratedChannelsBaseViewSetTests(APITest):
         self.client.logout()
         self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
         self.client.login(username=client_username, password=TEST_PASSWORD)
-
 
     def setUp(self):
         customer_uuid = uuid4()

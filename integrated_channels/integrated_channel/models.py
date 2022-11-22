@@ -221,7 +221,7 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                 enterprise_customer_uuid=self.enterprise_customer.uuid,
                 plugin_configuration_id=config_id,
                 status__gte=400,
-        )
+            )
         else:
             learner_audits = LearnerDataTransmissionAudit.objects.filter(
                 enterprise_customer_uuid=self.enterprise_customer.uuid,

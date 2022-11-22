@@ -6,10 +6,17 @@ from rest_framework import serializers
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
+
 class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerPluginConfiguration model
     """
+    last_sync_attempted_at = serializers.SerializerMethodField()
+    last_content_sync_attempted_at = serializers.SerializerMethodField()
+    last_learner_sync_attempted_at = serializers.SerializerMethodField()
+    last_sync_errored_at = serializers.SerializerMethodField()
+    last_content_sync_errored_at = serializers.SerializerMethodField()
+    last_learner_sync_errored_at = serializers.SerializerMethodField()
 
     class Meta:
         model = EnterpriseCustomerPluginConfiguration
@@ -26,14 +33,6 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
             'last_content_sync_errored_at',
             'last_learner_sync_errored_at',
         )
-
-        last_sync_attempted_at = serializers.SerializerMethodField()
-        last_content_sync_attempted_at = serializers.SerializerMethodField()
-        last_learner_sync_attempted_at = serializers.SerializerMethodField()
-        last_sync_errored_at = serializers.SerializerMethodField()
-        last_content_sync_errored_at = serializers.SerializerMethodField()
-        last_learner_sync_errored_at = serializers.SerializerMethodField()
-
 
     # TODO: only returning content sync times because learner audits have string representations
     # of timstamps (werid), and cannot be compared to a datetime with an associated timezone.
@@ -53,7 +52,7 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
         """
         return obj.get_last_content(False, obj.id)
 
-    def get_last_learner_sync_attempted_at(self):
+    def get_last_learner_sync_attempted_at(self, obj):
         """
         Return the most recent learner data transmission audit sync attempt date.
         """
@@ -71,9 +70,10 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
         """
         Return the most recent content metadata error transmission.
         """
+        print(obj)
         return obj.get_last_content(True, obj.id)
 
-    def get_last_learner_sync_errored_at(self):
+    def get_last_learner_sync_errored_at(self, obj):
         """
         Return the most recent learner data error transmission.
         """
