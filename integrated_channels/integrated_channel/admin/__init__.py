@@ -4,7 +4,7 @@ Admin site configurations for integrated channel's Content Metadata Transmission
 
 from django.contrib import admin
 
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
+from integrated_channels.integrated_channel.models import ApiResponseRecord, ContentMetadataItemTransmission
 from integrated_channels.utils import get_enterprise_customer_from_enterprise_enrollment
 
 
@@ -48,7 +48,29 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = [
-        'api_record_id'
+        'api_record'
     ]
+
+    list_per_page = 1000
+
+@admin.register(ApiResponseRecord)
+class ApiResponseRecord(admin.ModelAdmin):
+    """
+    Admin for the ApiResponseRecord table
+    """
+    list_display = (
+        'id',
+        'status_code'
+    )
+
+    search_fields = (
+        'id',
+        'status_code'
+    )
+
+    readonly_fields = (
+        'status_code',
+        'body'
+    )
 
     list_per_page = 1000
