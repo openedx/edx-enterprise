@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.12]
+---------
+fix: make integrated channels api response record field readonly in admin view
+
 [3.58.11]
 ---------
 fix: Added model field validation for pgp_encryption_key
