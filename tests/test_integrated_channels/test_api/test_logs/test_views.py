@@ -5,6 +5,7 @@ import datetime
 import math
 from logging import getLogger
 from unittest import mock
+from uuid import uuid4
 
 import ddt
 
@@ -788,3 +789,79 @@ class LearnerSyncStatusViewSetTests(APITest):
         assert response.status_code == 400
         response_json = self.load_json(response.content)
         assert 'Invalid channel code.' == response_json['detail']
+
+
+@ddt.ddt
+class IntegratedChannelsBaseViewSetTests(APITest):
+    """
+    Tests for configs list endpoint
+    """
+    def setup_admin_user(self, is_staff=True):
+        """
+        Creates an admin user and logs them in
+        """
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
+    def setUp(self):
+        customer_uuid = uuid4()
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=customer_uuid)
+
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.degreed_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.degreed_content_transmission_1 = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer,
+            content_title='course-v1:edX+DemoX+DemoCourse3',
+            integrated_channel_code=self.degreed_config.channel_code(),
+            plugin_configuration_id=self.degreed_config.id,
+            api_response_status_code='200',
+            channel_metadata={},
+            remote_created_at=datetime.datetime.fromtimestamp(1486855998),
+            remote_updated_at=datetime.datetime.fromtimestamp(1586855998),
+            remote_deleted_at=datetime.datetime.fromtimestamp(1486856000),
+        )
+        self.degreed_content_transmission_2 = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer,
+            content_title='course-v1:edX+DemoX+DemoCourse4',
+            integrated_channel_code=self.degreed_config.channel_code(),
+            plugin_configuration_id=self.degreed_config.id,
+            api_response_status_code='400',
+            channel_metadata={},
+            remote_created_at=datetime.datetime.fromtimestamp(1386855998),
+        )
+        self.degreed_learner_audit_1 = factories.DegreedLearnerDataTransmissionAuditFactory(
+            enterprise_customer_uuid=customer_uuid,
+            course_id='course-v1:edX+DemoX+DemoCourse5',
+            plugin_configuration_id=self.degreed_config.id,
+            status='200',
+            completed_timestamp='2022-02-15',
+        )
+
+    def tearDown(self):
+        """
+        Perform common tear down operations to all tests.
+        """
+        # Remove client authentication credentials
+        self.client.logout()
+        super().tearDown()
+
+    def test_get_list(self):
+        self.setup_admin_user(True)
+        url = reverse('api:v1:configs')
+        full_url = url + "?enterprise_customer=" + str(self.enterprise_customer.uuid)
+        response = self.client.get(full_url)
+        response_json = self.load_json(response.content)
+
+        assert response_json[0]['last_sync_attempted_at'] == '2022-02-15T00:00:00Z'
+        assert response_json[0]['last_content_sync_attempted_at'] == '2017-02-11T23:33:18Z'
+        assert response_json[0]['last_learner_sync_attempted_at'] == '2022-02-15T00:00:00Z'
+        assert response_json[0]['last_sync_errored_at'] == '2013-12-12T13:46:38Z'
+        assert response_json[0]['last_content_sync_errored_at'] == '2013-12-12T13:46:38Z'
+        assert response_json[0]['last_learner_sync_errored_at'] is None

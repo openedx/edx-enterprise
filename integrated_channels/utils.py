@@ -438,6 +438,8 @@ def channel_code_to_app_label(channel_code):
         app_label = 'integrated_channel'
     elif app_label == 'sap':
         app_label = 'sap_success_factors'
+    elif app_label == 'csod':
+        app_label = 'cornerstone'
     return app_label
 
 
