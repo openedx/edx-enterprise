@@ -813,27 +813,6 @@ class IntegratedChannelsBaseViewSetTests(APITest):
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
         )
-        # commenting these out to save someone from rewriting them for
-        # when we do put learner audit logic back in
-
-        # self.cornerstone_config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
-        #     enterprise_customer=self.enterprise_customer
-        # )
-        # self.cornerstone_learner_audit_1 = factories.CornerstoneLearnerDataTransmissionAuditFactory(
-        #     enterprise_customer_uuid=customer_uuid,
-        #     course_id='course-v1:edX+DemoX+DemoCourse1',
-        #     plugin_configuration_id=self.cornerstone_config.id,
-        #     status='404',
-        #     completed_timestamp=datetime.datetime.fromtimestamp(1486855998),
-
-        # )
-        # self.cornerstone_learner_audit_2 = factories.CornerstoneLearnerDataTransmissionAuditFactory(
-        #     enterprise_customer_uuid=customer_uuid,
-        #     course_id='course-v1:edX+DemoX+DemoCourse2',
-        #     plugin_configuration_id=self.cornerstone_config.id,
-        #     status='200',
-        #     completed_timestamp=datetime.datetime.fromtimestamp(1586855998),
-        # )
         self.degreed_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
         )
@@ -855,15 +834,15 @@ class IntegratedChannelsBaseViewSetTests(APITest):
             plugin_configuration_id=self.degreed_config.id,
             api_response_status_code='400',
             channel_metadata={},
-            remote_created_at=datetime.datetime.fromtimestamp(1486855998),
+            remote_created_at=datetime.datetime.fromtimestamp(1386855998),
         )
-        # self.degreed_learner_audit_1 = factories.DegreedLearnerDataTransmissionAuditFactory(
-        #     enterprise_customer_uuid=customer_uuid,
-        #     course_id='course-v1:edX+DemoX+DemoCourse5',
-        #     plugin_configuration_id=self.degreed_config.id,
-        #     status='200',
-        #     completed_timestamp=datetime.datetime.fromtimestamp(1686855998),
-        # )
+        self.degreed_learner_audit_1 = factories.DegreedLearnerDataTransmissionAuditFactory(
+            enterprise_customer_uuid=customer_uuid,
+            course_id='course-v1:edX+DemoX+DemoCourse5',
+            plugin_configuration_id=self.degreed_config.id,
+            status='200',
+            completed_timestamp='2022-02-15',
+        )
 
     def tearDown(self):
         """
@@ -879,9 +858,10 @@ class IntegratedChannelsBaseViewSetTests(APITest):
         full_url = url + "?enterprise_customer=" + str(self.enterprise_customer.uuid)
         response = self.client.get(full_url)
         response_json = self.load_json(response.content)
-        assert response_json[0]['last_sync_attempted_at'] == "2020-04-14T09:19:58Z"
-        assert response_json[0]['last_content_sync_attempted_at'] == "2020-04-14T09:19:58Z"
-        assert response_json[0]['last_learner_sync_attempted_at'] is None
-        assert response_json[0]['last_sync_errored_at'] == "2017-02-11T23:33:18Z"
-        assert response_json[0]['last_content_sync_errored_at'] == "2017-02-11T23:33:18Z"
+
+        assert response_json[0]['last_sync_attempted_at'] == '2022-02-15T00:00:00Z'
+        assert response_json[0]['last_content_sync_attempted_at'] == '2017-02-11T23:33:18Z'
+        assert response_json[0]['last_learner_sync_attempted_at'] == '2022-02-15T00:00:00Z'
+        assert response_json[0]['last_sync_errored_at'] == '2013-12-12T13:46:38Z'
+        assert response_json[0]['last_content_sync_errored_at'] == '2013-12-12T13:46:38Z'
         assert response_json[0]['last_learner_sync_errored_at'] is None

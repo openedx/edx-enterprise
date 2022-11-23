@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.13]
+---------
+feat: Add in learner and content sync time records to integrated channel configs 
+
 [3.58.12]
 ---------
 fix: make integrated channels api response record field readonly in admin view

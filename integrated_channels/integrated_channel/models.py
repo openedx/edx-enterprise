@@ -209,66 +209,78 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
     def get_learner_data_audit_model(self):
         return LearnerDataTransmissionAudit.get_completion_class_by_channel_code(self.channel_code())
 
-    def get_last_learner(self, error, config_id):
+    def get_last_learner(self, include_only_errors):
         """
-        Gets every learner audit associated with the configuration and finds the most recent record.
-        If the boolean parameter 'error' is True, then we are only looking for the most recent
-        audit record where the status > 400.
+        Gets every learner audit associated with the configuration and returns the timestamp the most recent
+        recorded transmission. If the boolean parameter 'include_only_errors' is True, then we are only
+        looking at the timestamps of the most recent transmission record where the status > 400.
         """
         audit_model = self.get_learner_data_audit_model()
-        if error:
+        if include_only_errors:
             learner_audits = audit_model.objects.filter(
                 enterprise_customer_uuid=self.enterprise_customer.uuid,
-                plugin_configuration_id=config_id,
+                plugin_configuration_id=self.id,
                 status__gte=400,
             )
         else:
-            learner_audits = LearnerDataTransmissionAudit.objects.filter(
+            learner_audits = audit_model.objects.filter(
                 enterprise_customer_uuid=self.enterprise_customer.uuid,
-                plugin_configuration_id=config_id,
+                plugin_configuration_id=self.id,
             )
+
+        print("HELLO CUTIE")
+        print('1 ', self.channel_code())
+        print('2 ', self.id)
+        print(learner_audits)
         if learner_audits:
-            return learner_audits.aggregate(max=Max('completed_timestamp')).get('max')
+            org_time = learner_audits.aggregate(max=Max('completed_timestamp')).get('max')
+            return datetime.datetime.strptime(org_time, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
         else:
             return None
 
-    def get_last_content(self, error, config_id):
+    def get_last_content(self, include_only_errors):
         """
-        Gets every content transmission associated with the configuration and finds the most
-        recent record. If the boolean parameter 'error' is True, then we are only looking for
-        the most recent transmission record where the status > 400.
+        Gets every content transmission associated with the configuration and returns the timestamp
+        the most recent recorded audit. If the boolean parameter 'include_only_errors' is True,
+        then we are only looking at the timestamps of the most recent transmission record where
+        the status > 400.
         """
-        if error:
+        if include_only_errors:
             content_audits = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_customer,
-                plugin_configuration_id=config_id,
+                plugin_configuration_id=self.id,
                 integrated_channel_code=self.channel_code(),
                 api_response_status_code__gte=400,
             )
         else:
             content_audits = ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_customer,
-                plugin_configuration_id=config_id,
+                plugin_configuration_id=self.id,
                 integrated_channel_code=self.channel_code(),
             )
         if content_audits:
             max_created = (content_audits.aggregate(max_created=Max('remote_created_at'))).get('max_created')
             max_updated = (content_audits.aggregate(max_updated=Max('remote_updated_at'))).get('max_updated')
             max_deleted = (content_audits.aggregate(max_deleted=Max('remote_deleted_at'))).get('max_deleted')
-            return max(x for x in [max_created, max_updated, max_deleted] if x is not None)
+            max_not_nulls = [x for x in [max_created, max_updated, max_deleted]  if x is not None]
+            if len(max_not_nulls) > 0:
+                return (max(y for y in [max_not_nulls] if y is not None))[0]
+            else:
+                return None
         else:
             return None
 
-    def get_last_sync(self, error, config_id):
+    def get_last_sync(self, include_only_errors):
         """
         Gets every transmission (content and learner) associated with the configuration
-        and finds the most recent record. If the boolean parameter 'error' is True, then
-        we are only looking for the most recent transmission record where the status > 400.
+        and returns the timestamp the most recent recorded transmission or audit. If the boolean parameter
+        'include_only_errors' is True, then we are only looking at the timestamps of the most recent
+        transmission record where the status > 400.
         """
-        learner = self.get_last_learner(error, config_id)
-        content = self.get_last_content(error, config_id)
+        learner = self.get_last_learner(include_only_errors)
+        content = self.get_last_content(include_only_errors)
         if learner is not None and content is not None:
-            return max(datetime.datetime.strptime(learner, '%Y-%m-%d %H:%M:%S'), content)
+            return max(learner, content)
         elif learner is not None:
             return learner
         elif content is not None:
