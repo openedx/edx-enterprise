@@ -227,11 +227,6 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                 enterprise_customer_uuid=self.enterprise_customer.uuid,
                 plugin_configuration_id=self.id,
             )
-
-        print("HELLO CUTIE")
-        print('1 ', self.channel_code())
-        print('2 ', self.id)
-        print(learner_audits)
         if learner_audits:
             org_time = learner_audits.aggregate(max=Max('completed_timestamp')).get('max')
             return datetime.datetime.strptime(org_time, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
@@ -262,7 +257,7 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             max_created = (content_audits.aggregate(max_created=Max('remote_created_at'))).get('max_created')
             max_updated = (content_audits.aggregate(max_updated=Max('remote_updated_at'))).get('max_updated')
             max_deleted = (content_audits.aggregate(max_deleted=Max('remote_deleted_at'))).get('max_deleted')
-            max_not_nulls = [x for x in [max_created, max_updated, max_deleted]  if x is not None]
+            max_not_nulls = [x for x in [max_created, max_updated, max_deleted] if x is not None]
             if len(max_not_nulls) > 0:
                 return (max(y for y in [max_not_nulls] if y is not None))[0]
             else:
