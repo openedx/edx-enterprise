@@ -13,7 +13,7 @@ from django.apps import apps
 
 from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
-from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.integrated_channel.client import IntegratedChannelApiClient, IntegratedChannelHealthStatus
 from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
@@ -860,3 +860,26 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             return data['access_token'], data["expires_in"]
         except (KeyError, ValueError) as error:
             raise ClientError(auth_response.text, auth_response.status_code) from error
+
+    def health_check(self):
+        """Check integrated channel's config/connection health
+
+        Returns: IntegratedChannelHealthStatus
+            HEALTHY if healthy
+            INVALID_CONFIG if configuration is incomplete/invalid
+            CONNECTION_FAILURE if unable to refresh session token
+        """
+        health_status = super().health_check()
+        if health_status != IntegratedChannelHealthStatus.HEALTHY:
+            return health_status
+
+        # Force refresh session, just in case the service goes down after a previous successful session
+        try:
+            self.session, self.expires_at = refresh_session_if_expired(
+                self._get_oauth_access_token
+            )
+        except ClientError:
+            # TODO: Give more error details
+            health_status = IntegratedChannelHealthStatus.CONNECTION_FAILURE
+
+        return health_status

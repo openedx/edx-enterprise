@@ -4,7 +4,7 @@ URL definitions for v1 Integrated Channel API endpoints.
 
 from django.urls import include, path
 
-from .views import IntegratedChannelsBaseViewSet
+from .views import IntegratedChannelHealthCheckView, IntegratedChannelsBaseViewSet
 
 app_name = 'v1'
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path('degreed/', include('integrated_channels.api.v1.degreed.urls')),
     path('degreed2/', include('integrated_channels.api.v1.degreed2.urls')),
     path('cornerstone/', include('integrated_channels.api.v1.cornerstone.urls')),
+    path('configs/health-check', IntegratedChannelHealthCheckView.as_view(), name='health_check'),
     path('configs/', IntegratedChannelsBaseViewSet.as_view({'get': 'list'}), name='configs'),
     path('logs/', include('integrated_channels.api.v1.logs.urls')),
 ]

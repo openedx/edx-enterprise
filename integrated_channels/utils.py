@@ -462,3 +462,15 @@ def get_enterprise_customer_from_enterprise_enrollment(enrollment_id):
         return ec
     except ObjectDoesNotExist:
         return None
+
+
+def get_enterprise_client_by_channel_code(channel_code):
+    """
+    Get the appropriate enterprise client based on channel code
+    """
+    # TODO: Other configs
+    from integrated_channels.canvas.client import CanvasAPIClient  # pylint: disable=C0415
+    _enterprise_client_model_by_channel_code = {
+        'canvas': CanvasAPIClient,
+    }
+    return _enterprise_client_model_by_channel_code[channel_code]
