@@ -353,3 +353,52 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         # We should make a call for the enterprise catalog, but no call for the metadata because no update needed
         assert mock_ent_catalog_api.return_value.get_content_metadata.call_count == 0
         assert mock_ent_catalog_api.return_value.get_catalog_diff.call_count == 1
+
+    def test__check_matched_content_updated_at_incomplete_transmission(self):
+        """
+        Test the __check_matched_content_updated_at function when the transmission is incomplete.
+        """
+        past_transmission_updated_at_after_mock = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        past_transmission_updated_at_before_mock = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed='2020-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        past_transmission_updated_at_marked_for = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+            marked_for='update',
+        )
+        mock_matched_items = [
+            {'content_key': past_transmission_updated_at_after_mock.content_id,
+                'date_updated': '2021-07-16T15:11:10.521611Z'},
+            {'content_key': past_transmission_updated_at_before_mock.content_id,
+                'date_updated': '2021-07-16T15:11:10.521611Z'},
+            {'content_key': past_transmission_updated_at_marked_for.content_id,
+                'date_updated': '2021-07-16T15:11:10.521611Z'}
+        ]
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        # pylint: disable=protected-access
+        matched_records = exporter._check_matched_content_updated_at(
+            self.config.enterprise_customer.enterprise_customer_catalogs.first(),
+            mock_matched_items,
+            False
+        )
+        assert len(matched_records) == 2
