@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.16]
+---------
+fix: fix bug that didn't allow admins to customize branding
+
 [3.58.15]
 ---------
 fix: catch update transmissions that failed and need to be resent
