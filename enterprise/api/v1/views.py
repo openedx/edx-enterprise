@@ -990,6 +990,7 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
     """
     API views for the ``enterprise-customer-branding`` API endpoint.
     """
+    permission_classes = (permissions.IsAuthenticated,)
     parser_classes = [MultiPartParser, FormParser]
     queryset = models.EnterpriseCustomerBrandingConfiguration.objects.all()
     serializer_class = serializers.EnterpriseCustomerBrandingConfigurationSerializer
@@ -1002,7 +1003,7 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
     ordering_fields = FIELDS
     lookup_field = 'enterprise_customer__slug'
 
-    @action(methods=['patch'], detail=True, permission_classes=[permissions.IsAuthenticated])
+    @action(methods=['patch'], detail=False, permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, enterprise_uuid: enterprise_uuid)
     def update_branding(self, request, enterprise_uuid):
         """
