@@ -178,8 +178,7 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         )
         mock_track_enrollment.assert_called_once_with('pending-admin-enrollment', user.id, course_id)
 
-    @mock.patch('enterprise.api.create_tableau_user')
-    def test_handle_user_post_save_with_pending_enterprise_admin(self, mock_create_tableau_user):
+    def test_handle_user_post_save_with_pending_enterprise_admin(self):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
         enterprise_customer = EnterpriseCustomerFactory()
@@ -194,19 +193,12 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1, \
             "Precondition check: enterprise customer user exists"
 
-        enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=user.id)
-
         enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
         admin_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             user=user,
             role=enterprise_admin_role,
         )
         assert admin_role_assignment.exists()
-
-        mock_create_tableau_user.assert_called_once_with(
-            str(enterprise_customer.uuid).replace('-', ''),
-            enterprise_customer_user,
-        )
 
         assert PendingEnterpriseCustomerAdminUser.objects.filter(user_email=email).count() == 0, \
             "Final check: pending admin user no longer exists"
@@ -399,11 +391,7 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory()
         super().setUp()
 
-    @mock.patch('enterprise.api.create_tableau_user')
-    def test_delete_enterprise_admin_role_assignment_success(
-            self,
-            mock_create_tableau_user,  # pylint: disable=unused-argument
-    ):
+    def test_delete_enterprise_admin_role_assignment_success(self):
         """
         Test that when `EnterpriseCustomerUser` record is deleted, the associated
         enterprise admin user role assignment is also deleted.

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.17]
+---------
+fix: fixed a bug that didn't allow admins to create an account or update password
+
 [3.58.16]
 ---------
 fix: fix bug that didn't allow admins to customize branding
@@ -31,7 +35,7 @@ feat: Add health check for canvas integrated channels
 
 [3.58.13]
 ---------
-feat: Add in learner and content sync time records to integrated channel configs 
+feat: Add in learner and content sync time records to integrated channel configs
 
 [3.58.12]
 ---------
