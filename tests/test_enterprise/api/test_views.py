@@ -11,9 +11,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
-import responses
 from faker import Faker
-from path import Path
 from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -65,7 +63,6 @@ from test_utils import (
     update_course_with_enterprise_context,
     update_program_with_enterprise_context,
 )
-from test_utils.decorators import mock_api_response
 from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
 from test_utils.fake_enterprise_api import get_default_branding_object
 
@@ -4804,44 +4801,6 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         # Make sure the enterprise customer catalog was linked with the reporting configuration.
         assert [str(enterprise_catalog_2.uuid)] == ec_catalog_uuids
-
-    @mock_api_response(
-        responses.POST,
-        Path(settings.TABLEAU_URL) / 'trusted',
-        content_type='text/plain',
-        body='12345'
-    )
-    @mock.patch('enterprise.rules.crum.get_current_request')
-    @ddt.data(
-        (False, status.HTTP_403_FORBIDDEN),
-        (True, status.HTTP_200_OK),
-    )
-    @ddt.unpack
-    def test_tableau_auth_view(self, has_feature_role, expected_status, request_or_stub_mock):
-        """
-        Tests that the TableauAuthView::get endpoint works as expected.
-        """
-        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
-
-        client = APIClient()
-        client.login(username='test_user', password='test_password')
-
-        if has_feature_role:
-            self._add_feature_role(user, ENTERPRISE_DASHBOARD_ADMIN_ROLE)
-
-        system_wide_role = ENTERPRISE_ADMIN_ROLE
-        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
-
-        response = client.get(
-            '{server}{view_url}'.format(
-                server=settings.TEST_SERVER,
-                view_url=reverse('tableau-token', kwargs={'enterprise_uuid': enterprise_customer.uuid})
-            ),
-        )
-
-        assert response.status_code == expected_status
-        if has_feature_role:
-            assert response.json() == '12345'
 
 
 class TestReadNotificationView(BaseTestEnterpriseAPIViews):

@@ -4,7 +4,7 @@ Django signal handlers.
 
 from logging import getLogger
 
-from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from enterprise import roles_api
@@ -12,7 +12,6 @@ from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
-    EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
@@ -24,7 +23,6 @@ from enterprise.models import (
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
-    delete_tableau_user_by_id,
     get_default_catalog_content_filter,
     unset_enterprise_learner_language,
     unset_language_of_all_enterprise_learners,
@@ -58,8 +56,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
 
     4. Using the newly created EnterpriseCustomerUser (or an existing record if one
        existed), check if there is a PendingEnterpriseCustomerAdminUser. If so,
-       ensure the user has the "enterprise_admin" role and a Tableau user is
-       created for the user.
+       ensure the user has the "enterprise_admin" role.
     """
     created = kwargs.get("created", False)
     user_instance = kwargs.get("instance", None)
@@ -198,15 +195,6 @@ def update_learner_language_preference(sender, instance, created, **kwargs):    
     # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
     if created and instance.enterprise_customer.default_language:
         unset_enterprise_learner_language(instance)
-
-
-@receiver(pre_delete, sender=EnterpriseAnalyticsUser)
-def delete_enterprise_analytics_user(sender, instance, **kwargs):     # pylint: disable=unused-argument
-    """
-    Delete the associated enterprise analytics user in Tableau.
-    """
-    if instance.analytics_user_id:
-        delete_tableau_user_by_id(instance.analytics_user_id)
 
 
 @receiver(post_save, sender=PendingEnterpriseCustomerAdminUser)

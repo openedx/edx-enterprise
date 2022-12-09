@@ -53,11 +53,6 @@ urlpatterns = [
             name='request-codes'
             ),
     re_path(
-        r'^tableau_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
-        views.TableauAuthView.as_view(),
-        name='tableau-token'
-    ),
-    re_path(
         r'^plotly_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         views.PlotlyAuthView.as_view(),
         name='plotly-token'

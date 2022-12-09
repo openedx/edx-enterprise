@@ -312,7 +312,6 @@ requests==2.27.1
     #   pyjwkest
     #   responses
     #   slumber
-    #   tableauserverclient
 responses==0.10.15
     # via
     #   -c requirements/constraints.txt
@@ -352,8 +351,6 @@ stevedore==3.5.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.17.0
-    # via -r requirements/test-master.txt
 testfixtures==6.18.3
     # via
     #   -r requirements/test-master.txt

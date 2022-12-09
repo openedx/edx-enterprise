@@ -8,7 +8,6 @@ from time import time
 from urllib.parse import quote_plus, unquote
 
 import jwt
-import requests
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
@@ -1365,43 +1364,6 @@ class CouponCodesView(APIView):
                 {'error': 'Request codes email could not be sent'},
                 status=HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-
-class TableauAuthView(generics.GenericAPIView):
-    """
-    API to authenticate user with Tableau.
-    """
-    permission_classes = (IsAuthenticated,)
-
-    @permission_required(
-        'enterprise.can_access_admin_dashboard',
-        fn=lambda request, enterprise_uuid: enterprise_uuid
-    )
-    def get(self, request, enterprise_uuid):
-        """
-        Get the auth token against logged in user from tableau
-        """
-        enterprise_customer_uuid = enterprise_uuid
-        if not enterprise_customer_uuid:
-            enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
-
-        LOGGER.info(
-            "[TABLEAU_TOKEN_REQUEST] User: [%s], Enterprise: [%s]",
-            request.user.username,
-            enterprise_customer_uuid
-        )
-
-        url = settings.TABLEAU_URL + '/trusted'
-
-        # Enterprise customer uuid is being store without hyphens in tableau
-        tableau_username = enterprise_customer_uuid.replace('-', '')
-        payload = {'username': tableau_username}
-        files = []
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-        response = requests.request("POST", url, headers=headers, data=payload, files=files)
-        return Response(data=response.text)
 
 
 class NotificationReadView(APIView):

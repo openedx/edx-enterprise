@@ -174,7 +174,6 @@ class TestEnterpriseUtils(unittest.TestCase):
             [
                 "adminnotificationread",
                 "enterprise_enrollments",
-                "enterpriseanalyticsuser",
                 "id",
                 "created",
                 "modified",

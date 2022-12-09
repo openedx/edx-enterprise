@@ -298,7 +298,6 @@ requests==2.27.1
     #   edx-rest-api-client
     #   pyjwkest
     #   slumber
-    #   tableauserverclient
 rules==3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -335,10 +334,6 @@ stevedore==3.5.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.17.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
 testfixtures==6.18.3
     # via
     #   -c requirements/edx-platform-constraints.txt

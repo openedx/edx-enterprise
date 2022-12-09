@@ -599,7 +599,6 @@ requests==2.27.1
     #   responses
     #   slumber
     #   sphinx
-    #   tableauserverclient
     #   twine
 responses==0.10.15
     # via
@@ -698,11 +697,6 @@ stevedore==3.5.0
     #   doc8
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.17.0
-    # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
 testfixtures==6.18.3
     # via
     #   -r requirements/dev.in

@@ -3118,47 +3118,6 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         return self.__str__()
 
 
-class EnterpriseAnalyticsUser(TimeStampedModel):
-    """
-    Model for analytics users.
-
-     .. no_pii:
-    """
-    enterprise_customer_user = models.ForeignKey(
-        EnterpriseCustomerUser,
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE
-    )
-    analytics_user_id = models.CharField(
-        max_length=255,
-        blank=False,
-        null=False,
-        help_text=_("User id in the third party analytics system."))
-    history = HistoricalRecords()
-
-    class Meta:
-        app_label = 'enterprise'
-        ordering = ['created']
-        unique_together = (('enterprise_customer_user', 'analytics_user_id'),)
-
-    def __str__(self):
-        """
-        Return human-readable string representation.
-        """
-        return "<EnterpriseAnalyticsUser {id}>: {enterprise_customer_user} - {analytics_user_id}".format(
-            id=self.id,
-            enterprise_customer_user=self.enterprise_customer_user.id,
-            analytics_user_id=self.analytics_user_id,
-        )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
-
-
 class AdminNotificationFilter(TimeStampedModel):
     """
     Model for Admin Notification Filters.

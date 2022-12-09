@@ -1143,10 +1143,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             enterprise_customer=self.enterprise_customer,
             user_id=self.user.id
         )
-        factories.EnterpriseAnalyticsUserFactory(
-            enterprise_customer_user=self.learner,
-            analytics_user_id='9999'
-        )
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.learner,
             course_id=self.course_run_id,

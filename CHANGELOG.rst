@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.59.0]
+---------
+refactor: Removed unused code related to tableau.
+
 [3.58.18]
 ---------
 fix: internal service error fix for enterprise branding
