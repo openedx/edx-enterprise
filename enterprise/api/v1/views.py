@@ -1013,8 +1013,9 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
         """
         try:
             enterprise_customer = models.EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
-            if len(models.EnterpriseCustomerBrandingConfiguration.objects.filter(
-                enterprise_customer=enterprise_customer)) > 0:
+            branding_configs = models.EnterpriseCustomerBrandingConfiguration.objects.filter(
+                enterprise_customer=enterprise_customer)
+            if len(branding_configs) > 0:
                 branding_config = models.EnterpriseCustomerBrandingConfiguration.objects.get(
                     enterprise_customer=enterprise_customer)
             else:
