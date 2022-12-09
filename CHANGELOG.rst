@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.58.18]
+---------
+fix: internal service error fix for enterprise branding
+
 [3.58.17]
 ---------
 fix: fixed a bug that didn't allow admins to create an account or update password
