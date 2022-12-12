@@ -14,7 +14,6 @@ from django.test import override_settings
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
-    EnterpriseAnalyticsUser,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -27,7 +26,6 @@ from enterprise.models import (
 from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils import EmptyCacheMixin
 from test_utils.factories import (
-    EnterpriseAnalyticsUserFactory,
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
@@ -1000,40 +998,3 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
-
-
-@mark.django_db
-@ddt.ddt
-class TestEnterpriseAnalyticsUserSignals(unittest.TestCase):
-    """
-    Test signals associated with EnterpriseAnalyticsUser.
-    """
-
-    def setUp(self):
-        """
-        Setup for `TestEnterpriseAnalyticsUserSignals` test.
-        """
-        self.admin_user = UserFactory(id=2, email='user@example.com')
-        self.enterprise_customer = EnterpriseCustomerFactory()
-        super().setUp()
-
-    @mock.patch('enterprise.signals.delete_tableau_user_by_id')
-    def test_delete_enterprise_analytics_user(self, mock_delete_tableau_user_by_id):
-        """
-        Test that when `EnterpriseCustomerUser` record is deleted, the associated
-        enterprise admin user role assignment is also deleted.
-        """
-        # create new EnterpriseCustomerUser and SystemWideEnterpriseUserRoleAssignment records.
-        EnterpriseCustomerUserFactory(
-            user_id=self.admin_user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-        enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=self.admin_user.id)
-        EnterpriseAnalyticsUserFactory(
-            enterprise_customer_user=enterprise_customer_user,
-            analytics_user_id=self.admin_user.id,
-        )
-
-        # delete EnterpriseAnalyticsUser record and verify that Tableau user is deleted as well.
-        EnterpriseAnalyticsUser.objects.filter(analytics_user_id=self.admin_user.id).delete()
-        mock_delete_tableau_user_by_id.assert_called_once_with(str(self.admin_user.id))

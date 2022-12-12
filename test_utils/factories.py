@@ -15,7 +15,6 @@ from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
     AdminNotification,
     EnrollmentNotificationEmailTemplate,
-    EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -169,26 +168,6 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     linked = True
     is_relinkable = True
     invite_key = None
-
-
-class EnterpriseAnalyticsUserFactory(factory.django.DjangoModelFactory):
-    """
-    EnterpriseAnalyticsUser factory.
-
-    Creates an instance of EnterpriseAnalyticsUser with minimal boilerplate - uses this class' attributes as default
-    parameters for EnterpriseAnalyticsUser constructor.
-    """
-
-    class Meta:
-        """
-        Meta for EnterpriseAnalyticsUserFactory.
-        """
-
-        model = EnterpriseAnalyticsUser
-        django_get_or_create = ('enterprise_customer_user', 'analytics_user_id',)
-
-    enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
-    analytics_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
 
 
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
