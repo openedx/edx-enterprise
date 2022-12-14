@@ -320,8 +320,7 @@ class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
                   ' order for both learner and content metadata integrations.'
     )
 
-    # XXX non-standard, should store datetime and export the format
-    completed_timestamp = models.CharField(
+    blackboard_completed_timestamp = models.CharField(
         null=True,
         blank=True,
         max_length=10,
@@ -374,7 +373,7 @@ class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             userID=self.blackboard_user_email,
             courseID=self.course_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.blackboard_completed_timestamp,
             grade=self.grade,
             totalHours=self.total_hours,
         )

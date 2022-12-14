@@ -468,6 +468,7 @@ class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
     plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
 
 
 class GenericLearnerDataTransmissionAuditFactory(LearnerDataTransmissionAuditFactory):
@@ -589,7 +590,7 @@ class SapSuccessFactorsLearnerDataTransmissionAuditFactory(LearnerDataTransmissi
     grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
     status = factory.LazyAttribute(lambda x: FAKER.word())
     course_completed = True
-    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    sap_completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
 
 
 class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
@@ -674,7 +675,7 @@ class DegreedLearnerDataTransmissionAuditFactory(LearnerDataTransmissionAuditFac
     enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     course_completed = True
-    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    degreed_completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     status = factory.LazyAttribute(lambda x: FAKER.word())
 
 

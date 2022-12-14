@@ -2,7 +2,6 @@
 Database models for Enterprise Integrated Channel.
 """
 
-import datetime
 import json
 import logging
 
@@ -229,7 +228,7 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             )
         if learner_audits:
             org_time = learner_audits.aggregate(max=Max('completed_timestamp')).get('max')
-            return datetime.datetime.strptime(org_time, '%Y-%m-%d').replace(tzinfo=datetime.timezone.utc)
+            return org_time
         else:
             return None
 

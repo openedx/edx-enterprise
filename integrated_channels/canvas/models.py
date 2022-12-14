@@ -269,8 +269,7 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         null=False
     )
 
-    # XXX non-standard, should store datetime and export the format
-    completed_timestamp = models.CharField(
+    canvas_completed_timestamp = models.CharField(
         null=True,
         blank=True,
         max_length=10,
@@ -322,6 +321,6 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             userID=self.canvas_user_email,
             courseID=self.course_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.canvas_completed_timestamp,
             grade=self.grade,
         )

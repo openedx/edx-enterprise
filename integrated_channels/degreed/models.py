@@ -238,8 +238,7 @@ class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         null=False
     )
 
-    # XXX non-standard, should store datetime and export the format
-    completed_timestamp = models.CharField(
+    degreed_completed_timestamp = models.CharField(
         max_length=10,
         blank=True,
         null=True,
@@ -292,7 +291,7 @@ class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             'completions': [{
                 'email': self.degreed_user_email,
                 'id': self.course_id,
-                'completionDate': self.completed_timestamp,
+                'completionDate': self.degreed_completed_timestamp,
             }]
         }
         return json.dumps(json_payload, sort_keys=True)

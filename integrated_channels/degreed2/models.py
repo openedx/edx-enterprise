@@ -168,8 +168,7 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         help_text='Used as the user-id field when creating a completion',
     )
 
-    # XXX non-standard, should store datetime and export the format
-    completed_timestamp = models.CharField(
+    degreed_completed_timestamp = models.CharField(
         null=True,
         blank=True,
         max_length=19,
@@ -216,7 +215,7 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
                     "content-id": self.course_id,
                     "content-id-type": "externalId",
                     "content-type": "course",
-                    "completed-at": self.completed_timestamp,
+                    "completed-at": self.degreed_completed_timestamp,
                 }
             }
         }

@@ -282,9 +282,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
     grade = models.CharField(max_length=100, blank=False, null=False)
     credit_hours = models.FloatField(null=True, blank=True)
 
-    # XXX non-standard, should store datetime and export the format
-    # We send a UNIX timestamp to SAPSF.
-    completed_timestamp = models.BigIntegerField(null=True, blank=True)
+    sap_completed_timestamp = models.BigIntegerField(null=True, blank=True)
 
     # override fields here otherwise multiple migrations created.
     plugin_configuration_id = models.IntegerField(blank=True, null=True)
@@ -340,7 +338,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
             courseID=self.course_id,
             providerID=self.provider_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.sap_completed_timestamp,
             grade=self.grade,
             totalHours=self.total_hours,
             creditHours=self.credit_hours,

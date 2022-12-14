@@ -841,7 +841,8 @@ class IntegratedChannelsBaseViewSetTests(APITest):
             course_id='course-v1:edX+DemoX+DemoCourse5',
             plugin_configuration_id=self.degreed_config.id,
             status='200',
-            completed_timestamp='2022-02-15',
+            degreed_completed_timestamp='2022-02-15',
+            completed_timestamp=datetime.datetime.fromtimestamp(1644883200),
         )
 
     def tearDown(self):

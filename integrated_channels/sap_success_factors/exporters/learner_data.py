@@ -39,9 +39,9 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
 
         If no remote ID can be found, return None.
         """
-        completed_timestamp = None
+        sap_completed_timestamp = None
         if completed_date is not None:
-            completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
+            sap_completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
         sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
             self.enterprise_configuration.idp_id
@@ -65,7 +65,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=get_course_id_for_enrollment(enterprise_enrollment),
                     course_completed=course_completed,
-                    completed_timestamp=completed_timestamp,
+                    completed_timestamp=completed_date,
+                    sap_completed_timestamp=sap_completed_timestamp,
                     grade=grade,
                     total_hours=total_hours,
                     credit_hours=total_hours,
@@ -78,7 +79,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=enterprise_enrollment.course_id,
                     course_completed=course_completed,
-                    completed_timestamp=completed_timestamp,
+                    completed_timestamp=completed_date,
+                    sap_completed_timestamp=sap_completed_timestamp,
                     grade=grade,
                     total_hours=total_hours,
                     credit_hours=total_hours,
