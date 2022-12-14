@@ -161,8 +161,7 @@ class MoodleLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         help_text='The learner`s Moodle email. This must match the email on edX'
     )
 
-    # XXX non-standard, should store datetime and export the format
-    completed_timestamp = models.CharField(
+    moodle_completed_timestamp = models.CharField(
         null=True,
         blank=True,
         max_length=10,

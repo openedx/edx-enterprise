@@ -169,7 +169,7 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     )
 
     # XXX non-standard, should store datetime and export the format
-    completed_timestamp = models.CharField(
+    degreed_completed_timestamp = models.CharField(
         null=True,
         blank=True,
         max_length=19,
