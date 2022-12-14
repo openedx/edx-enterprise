@@ -42,9 +42,9 @@ class BlackboardLearnerExporter(LearnerExporter):
                  ))))
             return None
         percent_grade = kwargs.get('grade_percent', None)
-        completed_timestamp = None
+        blackboard_completed_timestamp = None
         if completed_date is not None:
-            completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
+            blackboard_completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
         BlackboardLearnerDataTransmissionAudit = apps.get_model(
             'blackboard',
@@ -59,7 +59,8 @@ class BlackboardLearnerExporter(LearnerExporter):
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
                 grade=percent_grade,
-                completed_timestamp=completed_timestamp,
+                completed_timestamp=completed_date,
+                blackboard_completed_timestamp=blackboard_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
             )

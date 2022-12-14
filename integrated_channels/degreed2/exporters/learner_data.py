@@ -33,7 +33,7 @@ class Degreed2LearnerExporter(LearnerExporter):
         If no remote ID can be found, return None.
         """
         # Degreed expects completion dates of the form 'yyyy-mm-ddTHH:MM:SS'.
-        completed_timestamp = completed_date.strftime('%Y-%m-%dT%H:%M:%S') if isinstance(
+        degreed_completed_timestamp = completed_date.strftime('%Y-%m-%dT%H:%M:%S') if isinstance(
             completed_date, datetime
         ) else None
         if enterprise_enrollment.enterprise_customer_user.get_remote_id(
@@ -51,7 +51,8 @@ class Degreed2LearnerExporter(LearnerExporter):
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=get_course_id_for_enrollment(enterprise_enrollment),
-                    completed_timestamp=completed_timestamp,
+                    completed_timestamp=completed_date,
+                    degreed_completed_timestamp=degreed_completed_timestamp,
                     course_completed=course_completed,
                     enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
@@ -61,7 +62,8 @@ class Degreed2LearnerExporter(LearnerExporter):
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=enterprise_enrollment.course_id,
-                    completed_timestamp=completed_timestamp,
+                    completed_timestamp=completed_date,
+                    degreed_completed_timestamp=degreed_completed_timestamp,
                     course_completed=course_completed,
                     enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,

@@ -30,9 +30,9 @@ class MoodleLearnerExporter(LearnerExporter):
         If no remote ID can be found, return None.
         """
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
-        completed_timestamp = None
+        moodle_completed_timestamp = None
         if completed_date is not None:
-            completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
+            moodle_completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
         if enterprise_customer_user.user_email is None:
             LOGGER.debug(generate_formatted_log(
@@ -63,7 +63,8 @@ class MoodleLearnerExporter(LearnerExporter):
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
                 grade=percent_grade,
-                completed_timestamp=completed_timestamp,
+                completed_timestamp=completed_date,
+                moodle_completed_timestamp=moodle_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
             ),
@@ -74,7 +75,8 @@ class MoodleLearnerExporter(LearnerExporter):
                 course_id=enterprise_enrollment.course_id,
                 course_completed=course_completed,
                 grade=percent_grade,
-                completed_timestamp=completed_timestamp,
+                completed_timestamp=completed_date,
+                moodle_completed_timestamp=moodle_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
             )

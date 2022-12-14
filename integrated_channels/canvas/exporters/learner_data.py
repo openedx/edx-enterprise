@@ -44,7 +44,7 @@ class CanvasLearnerExporter(LearnerExporter):
                  ))))
             return None
         percent_grade = kwargs.get('grade_percent', None)
-        completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
+        canvas_completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
 
         CanvasLearnerDataTransmissionAudit = apps.get_model(
             'canvas',
@@ -60,7 +60,8 @@ class CanvasLearnerExporter(LearnerExporter):
                 course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=course_completed,
                 grade=percent_grade,
-                completed_timestamp=completed_timestamp,
+                completed_timestamp=completed_date,
+                canvas_completed_timestamp=canvas_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
             ),
