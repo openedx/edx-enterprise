@@ -91,7 +91,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
             assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
             assert learner_data_record.degreed_user_email == 'degreed@email.com'
             assert learner_data_record.course_completed == course_completed
-            assert learner_data_record.completed_timestamp == (
+            assert learner_data_record.degreed_completed_timestamp == (
                 self.NOW.strftime('%F') if completed_date is not None else None
             )
 

@@ -213,7 +213,7 @@ class MoodleLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             userID=self.moodle_user_email,
             courseID=self.course_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.moodle_completed_timestamp,
             grade=self.grade,
             totalHours=self.total_hours,
         )

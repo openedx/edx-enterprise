@@ -373,7 +373,7 @@ class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             userID=self.blackboard_user_email,
             courseID=self.course_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.blackboard_completed_timestamp,
             grade=self.grade,
             totalHours=self.total_hours,
         )

@@ -1,6 +1,7 @@
 """
 Tests for Blackboard learner data transmissions.
 """
+import datetime
 import unittest
 from unittest import mock
 
@@ -44,7 +45,8 @@ class TestBlackboardLearnerDataTransmitter(unittest.TestCase):
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             course_id='course-v1:edX+DemoX+DemoCourse',
             course_completed=True,
-            completed_timestamp=1486855998,
+            completed_timestamp=datetime.datetime.fromtimestamp(1486855998),
+            blackboard_completed_timestamp=1486855998,
             total_hours=1.0,
             grade=.9,
         )

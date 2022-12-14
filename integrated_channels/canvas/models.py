@@ -321,6 +321,6 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             userID=self.canvas_user_email,
             courseID=self.course_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.canvas_completed_timestamp,
             grade=self.grade,
         )

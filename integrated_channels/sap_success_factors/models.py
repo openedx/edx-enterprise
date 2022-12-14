@@ -338,7 +338,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
             courseID=self.course_id,
             providerID=self.provider_id,
             courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
+            completedTimestamp=self.sap_completed_timestamp,
             grade=self.grade,
             totalHours=self.total_hours,
             creditHours=self.credit_hours,

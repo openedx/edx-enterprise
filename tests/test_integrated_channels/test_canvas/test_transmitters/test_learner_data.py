@@ -1,6 +1,7 @@
 """
 Tests for Canvas learner data transmissions.
 """
+import datetime
 import unittest
 from unittest import mock
 
@@ -42,7 +43,8 @@ class TestCanvasLearnerDataTransmitter(unittest.TestCase):
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             course_id='course-v1:edX+DemoX+DemoCourse',
             course_completed=True,
-            completed_timestamp=1486855998,
+            canvas_completed_timestamp=1486855998,
+            completed_timestamp=datetime.datetime.fromtimestamp(1486855998),
             grade=.9,
         )
         self.completion_exporter = lambda payloads=self.completion_payload: mock.MagicMock(

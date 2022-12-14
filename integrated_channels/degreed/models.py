@@ -291,7 +291,7 @@ class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             'completions': [{
                 'email': self.degreed_user_email,
                 'id': self.course_id,
-                'completionDate': self.completed_timestamp,
+                'completionDate': self.degreed_completed_timestamp,
             }]
         }
         return json.dumps(json_payload, sort_keys=True)
