@@ -17,12 +17,16 @@ Unreleased
 ----------
 * Nothing
 
+[3.59.2]
+--------
+chore: allowing for page size specification in error reporting api
+
 [3.59.1]
----------
-fix: cleaning up integrated channels inheritance column types 
+--------
+fix: cleaning up integrated channels inheritance column types
 
 [3.59.0]
----------
+--------
 refactor: Removed unused code related to tableau.
 
 [3.58.18]
