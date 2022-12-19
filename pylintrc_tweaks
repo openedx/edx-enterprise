@@ -8,3 +8,4 @@ no-docstring-rgx=(__.*__)|Meta
 disable+ =
     logging-format-interpolation,
     no-member,
+    missing-timeout,

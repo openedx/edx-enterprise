@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.0]
+--------
+build: write an updated pylintrc and quiet a noisy logging statement
+
 [3.59.2]
 --------
 chore: allowing for page size specification in error reporting api

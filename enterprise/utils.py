@@ -110,15 +110,15 @@ User = auth.get_user_model()
 try:
     from common.djangoapps.third_party_auth.provider import Registry
 except ImportError as exception:
-    LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
-    LOGGER.warning(exception)
+    LOGGER.debug("Could not import Registry from common.djangoapps.third_party_auth.provider")
+    LOGGER.debug(exception)
     Registry = None
 
 try:
     from common.djangoapps.track import segment
 except ImportError as exception:
-    LOGGER.warning("Could not import segment from common.djangoapps.track")
-    LOGGER.warning(exception)
+    LOGGER.debug("Could not import segment from common.djangoapps.track")
+    LOGGER.debug(exception)
     segment = None
 
 try:

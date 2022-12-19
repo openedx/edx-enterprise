@@ -61,7 +61,7 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
             integrated_channel_code=integrated_channel_code,
             content_id=content_id
         )
-        assert expected_string == transmission.__repr__()
+        assert expected_string == repr(transmission)
 
     def test_failed_delete_transmissions_getter(self):
         """

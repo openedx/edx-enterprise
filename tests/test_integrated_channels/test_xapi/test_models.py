@@ -27,7 +27,7 @@ class TestXAPILRSConfiguration(unittest.TestCase):
         expected_string = '<XAPILRSConfiguration for Enterprise {enterprise_name}>'.format(
             enterprise_name=self.x_api_lrs_config.enterprise_customer.name,
         )
-        assert expected_string == self.x_api_lrs_config.__repr__()
+        assert expected_string == repr(self.x_api_lrs_config)
 
     def test_authorization_header(self):
         """
