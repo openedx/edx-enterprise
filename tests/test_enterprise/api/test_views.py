@@ -151,7 +151,6 @@ class BaseTestEnterpriseAPIViews(APITest):
         super().setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
 
-    # pylint: disable=arguments-differ
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=True, **kwargs):
         """
         Create a test user and set its password.

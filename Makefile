@@ -161,6 +161,12 @@ validate: test ## run tests and quality checks
 quality: ## run python quality checks
 	tox -e quality
 
+pylint: ## run pylint outside of tox
+	pylint -j 0 enterprise enterprise_learner_portal consent integrated_channels tests test_utils requirements/check_pins.py --django-settings-module=enterprise.settings.test
+
+pycodestyle: ## run pycodestyle outside of tox
+	pycodestyle enterprise enterprise_learner_portal consent integrated_channels tests test_utils
+
 pii_check: pii_clean
 	tox -e pii-annotations
 

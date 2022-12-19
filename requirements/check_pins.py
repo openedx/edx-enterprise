@@ -53,4 +53,4 @@ def check_pins(our_file, their_file):
                 print(their_pkg)
                 print("")
 
-check_pins(*sys.argv[1:])               # pylint: disable=no-value-for-parameter
+check_pins(*sys.argv[1:])  # pylint: disable=too-many-function-args

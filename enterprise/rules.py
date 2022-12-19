@@ -165,6 +165,7 @@ def has_explicit_access_to_reporting_api(user, obj):
     )
 
 
+# pylint: disable=unsupported-binary-operation
 rules.add_perm('enterprise.can_access_admin_dashboard',
                has_implicit_access_to_dashboard | has_explicit_access_to_dashboard)
 
