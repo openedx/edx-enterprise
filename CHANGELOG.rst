@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.1]
+--------
+fix: adding an index for performance, testing syntax for no-lock
+
 [3.60.0]
 --------
 build: write an updated pylintrc and quiet a noisy logging statement

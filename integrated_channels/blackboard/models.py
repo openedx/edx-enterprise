@@ -332,6 +332,7 @@ class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
 
     class Meta:
         app_label = 'blackboard'
+        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):
         """
