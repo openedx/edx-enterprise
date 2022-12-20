@@ -17,8 +17,6 @@ from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
-MOODLE_FINAL_GRADE_ASSIGNMENT_NAME = '(edX integration) Final Grade'
-
 
 class MoodleClientError(ClientError):
     """
@@ -254,14 +252,13 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             - module_name (string): The string name of the module. Required for sending a grade update request.
         """
         response = self._get_course_contents(course_id)
-
         course_module_id = None
         if isinstance(response.json(), list):
             for course in response.json():
                 if course.get('name') == 'General':
                     modules = course.get('modules')
                     for module in modules:
-                        if module.get('name') == MOODLE_FINAL_GRADE_ASSIGNMENT_NAME:
+                        if module.get('name') == self.enterprise_configuration.grade_assignment_name:
                             course_module_id = module.get('id')
                             module_name = module.get('modname')
 
@@ -340,7 +337,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'itemnumber': 0,
             'grades[0][studentid]': moodle_user_id,
             # The grade is exported as a decimal between [0-1]
-            'grades[0][grade]': completion_data['grade'] * 100
+            'grades[0][grade]': completion_data['grade'] * self.enterprise_configuration.grade_scale
         }
         return self._post(params)
 

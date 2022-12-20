@@ -87,6 +87,21 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         help_text=_("The maximum number of data items to transmit to the integrated channel with each request.")
     )
 
+    grade_scale = models.IntegerField(
+        default=100,
+        verbose_name="Grade Scale",
+        help_text=_("The maximum grade points for the courses. Default: 100")
+    )
+
+    grade_assignment_name = models.CharField(
+        default="(edX integration) Final Grade",
+        max_length=255,
+        verbose_name="Grade Assignment Name",
+        help_text=_(
+            "The name for the grade assigment created for the grade integration."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:

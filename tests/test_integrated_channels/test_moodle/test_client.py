@@ -83,6 +83,14 @@ class TestMoodleApiClient(unittest.TestCase):
             password=self.password,
             token=self.token,
         )
+        self.enterprise_custom_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
+            moodle_base_url=self.moodle_base_url,
+            username=self.user,
+            password=self.password,
+            token=self.token,
+            grade_scale=10,
+            grade_assignment_name='edX Grade Test'
+        )
 
     def test_moodle_config_is_set(self):
         """
@@ -280,3 +288,63 @@ class TestMoodleApiClient(unittest.TestCase):
         }
 
         client._post.assert_called_once_with(expected_params)  # pylint: disable=protected-access
+
+    def test_client_behavior_on_successful_learner_data_transmission_customization(self):
+        """
+        Test that given successful requests for moodle learner data,
+        the client makes the appropriate _post call to update a user's grade
+        """
+        client = MoodleAPIClient(self.enterprise_custom_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
+
+        client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
+        client.get_course_id.return_value = self.moodle_course_id
+
+        client.get_course_final_grade_module = unittest.mock.MagicMock(name='_get_final_grade_module')
+        client.get_course_final_grade_module.return_value = self.moodle_module_id, self.moodle_module_name
+
+        client.get_creds_of_user_in_course = unittest.mock.MagicMock(name='get_user_in_course')
+        client.get_creds_of_user_in_course.return_value = self.moodle_user_id
+
+        # The base transmitter expects the create course completion response to be a tuple of (code, body)
+        assert client.create_course_completion(self.user_email, self.learner_data_payload) == (
+            SUCCESSFUL_RESPONSE.status_code,
+            SUCCESSFUL_RESPONSE.text
+        )
+
+        expected_params = {
+            'wsfunction': 'core_grades_update_grades',
+            'source': self.moodle_module_name,
+            'courseid': self.moodle_course_id,
+            'component': 'mod_assign',
+            'activityid': self.moodle_module_id,
+            'itemnumber': 0,
+            'grades[0][studentid]': self.moodle_user_id,
+            'grades[0][grade]': self.grade * self.enterprise_custom_config.grade_scale
+        }
+
+        client._post.assert_called_once_with(expected_params)  # pylint: disable=protected-access
+
+    def test_get_course_final_grade_module_custom_name(self):
+        """
+        Test that given successful requests for moodle learner data,
+        the client makes the appropriate _post call to update a user's grade
+        """
+        client = MoodleAPIClient(self.enterprise_custom_config)
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
+
+        client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
+        client.get_course_id.return_value = self.moodle_course_id
+        mock_response = unittest.mock.Mock(spec=Response)
+        mock_response.json.return_value = [{
+            'name': 'General',
+            'modules': [{'name': self.enterprise_custom_config.grade_assignment_name,
+                        'id': 1337, 'modname': 'foobar'}]}]
+
+        client._get_course_contents = unittest.mock.MagicMock(name='_get_course_contents', return_value=mock_response)  # pylint: disable=protected-access
+
+        client.get_creds_of_user_in_course = unittest.mock.MagicMock(name='get_user_in_course')
+        client.get_creds_of_user_in_course.return_value = self.moodle_user_id
+
+        # The base transmitter expects the create course completion response to be a tuple of (code, body)
+        assert client.get_course_final_grade_module(2) == (1337, 'foobar')
