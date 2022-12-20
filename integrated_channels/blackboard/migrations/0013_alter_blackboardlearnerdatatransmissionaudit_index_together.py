@@ -29,11 +29,11 @@ class Migration(migrations.Migration):
                 ],
                 database_operations=[
                     migrations.RunSQL(sql="""
-                        CREATE INDEX blackboard_blackboardlearnerdatatransmissionaudit_enterprise_customer_uuid_plugin_configuration_id_85936b55_idx
+                        CREATE INDEX blackboard_bldta_85936b55_idx
                         ON blackboard_blackboardlearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
                         ALGORITHM=INPLACE LOCK=NONE
                     """, reverse_sql="""
-                        DROP INDEX blackboard_blackboardlearnerdatatransmissionaudit_enterprise_customer_uuid_plugin_configuration_id_85936b55_idx
+                        DROP INDEX blackboard_bldta_85936b55_idx
                         ON blackboard_blackboardlearnerdatatransmissionaudit
                     """),
                 ]
