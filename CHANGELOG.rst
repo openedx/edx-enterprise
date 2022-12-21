@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.3]
+--------
+feat: exec ed content is tagged and distinguishable from edx content
+
 [3.60.2]
 --------
 fix: sorting error reporting audits by all datetimes at once instead of three separate order bys

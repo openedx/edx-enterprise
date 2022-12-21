@@ -13,7 +13,7 @@ from django.apps import apps
 from django.db.models import Q
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.constants import TRANSMISSION_MARK_CREATE
+from enterprise.constants import EXEC_ED_CONTENT_DESCRIPTION_TAG, EXEC_ED_COURSE_TYPE, TRANSMISSION_MARK_CREATE
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 from integrated_channels.utils import generate_formatted_log, truncate_item_dicts
@@ -424,6 +424,10 @@ class ContentMetadataExporter(Exporter):
                 for item in content_metadata_items:
                     key = get_content_metadata_item_id(item)
 
+                    # Ensure executive education content is properly tagged before transforming the content to
+                    # the channel specific, expected form
+                    item = self._transform_exec_ed_content(item)
+
                     # transform the content metadata into the channel specific format
                     transformed_item = self._transform_item(item)
                     if key in items_create_keys:
@@ -458,6 +462,18 @@ class ContentMetadataExporter(Exporter):
 
         # collections of ContentMetadataItemTransmission objects
         return create_payload, update_payload, delete_payload
+
+    def _transform_exec_ed_content(self, content):
+        """
+        Transform only executive education course type content to add executive education identifying tags to both the
+        title and description of the content
+        """
+        if content.get('course_type') == EXEC_ED_COURSE_TYPE:
+            if title := content.get('title'):
+                content['title'] = "ExecEd: " + title
+            if description := content.get('full_description'):
+                content['full_description'] = EXEC_ED_CONTENT_DESCRIPTION_TAG + description
+        return content
 
     def _transform_item(self, content_metadata_item):
         """

@@ -65,6 +65,10 @@ COURSE_MODE_SORT_ORDER = [
     CourseModes.HONOR,
 ]
 
+EXEC_ED_COURSE_TYPE = "executive-education-2u"
+EXEC_ED_CONTENT_DESCRIPTION_TAG = ("This instructor-led Executive Education course is "
+                                   "presented by GetSmarter, an edX partner. ")
+
 # Course modes that should not be displayed to users.
 EXCLUDED_COURSE_MODES = [CourseModes.CREDIT]
 
