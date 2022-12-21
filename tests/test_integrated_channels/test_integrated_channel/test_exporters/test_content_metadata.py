@@ -11,6 +11,7 @@ from unittest import mock
 from pytest import mark
 from testfixtures import LogCapture
 
+from enterprise.constants import EXEC_ED_COURSE_TYPE
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
@@ -76,6 +77,29 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         cmit = ContentMetadataItemTransmission.objects.get(content_id=FAKE_COURSE['key'])
         assert cmit.content_title is not None
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_tags_exec_ed_content(self, mock_get_catalog_diff, mock_get_content_metadata):
+        """
+        ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
+        """
+        mock_exec_ed_content = get_fake_content_metadata()
+
+        # make the first course and only the first course of type exec ed
+        mock_exec_ed_content[0]['content_type'] = 'course'
+        mock_exec_ed_content[0]['course_type'] = EXEC_ED_COURSE_TYPE
+        mock_get_content_metadata.return_value = mock_exec_ed_content
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        create_payload, update_payload, delete_payload = exporter.export()
+
+        assert not update_payload
+        assert not delete_payload
+
+        # Assert that only the exec ed content has been tagged
+        assert "ExecEd:" in create_payload[mock_exec_ed_content[0]['key']].content_title
+        assert "ExecEd:" not in create_payload[mock_exec_ed_content[1]['key']].content_title
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
