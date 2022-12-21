@@ -17,6 +17,7 @@ from integrated_channels.api.v1.logs.views import ReportingSyncStatusPagination
 from test_utils import TEST_PASSWORD, APITest, factories
 
 LOGGER = getLogger(__name__)
+TEST_CONTENT_ID = 'DemoX'
 
 
 @ddt.ddt
@@ -24,12 +25,13 @@ class ContentSyncStatusViewSetTests(APITest):
     """
     Tests for ContentSyncStatusViewSet REST endpoints
     """
+
     def setUp(self):
         with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
             self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
         self.content_metadata_item = factories.ContentMetadataItemTransmissionFactory(
-            content_id='DemoX',
+            content_id=TEST_CONTENT_ID,
             content_title='A',
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code='GENERIC',
@@ -260,6 +262,115 @@ class ContentSyncStatusViewSetTests(APITest):
 
         assert response_json == {'detail': 'Invalid sort_by filter.'}
 
+    @ddt.data(
+        # Base case- no datetimes, `A` comes before the test content metadata
+        (
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            'A',
+            TEST_CONTENT_ID,
+            '',
+        ),
+        # Ordering (`-` and lack thereof) tests
+        (
+            datetime.datetime.utcnow(),
+            None,
+            None,
+            datetime.datetime.utcnow() - datetime.timedelta(days=10),
+            None,
+            None,
+            'A',
+            TEST_CONTENT_ID,
+            '-',
+        ),
+        (
+            datetime.datetime.utcnow(),
+            None,
+            None,
+            datetime.datetime.utcnow() - datetime.timedelta(days=10),
+            None,
+            None,
+            TEST_CONTENT_ID,
+            'A',
+            '',
+        ),
+        # tests existing values are ordered higher compared to null values
+        (
+            datetime.datetime.utcnow(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            'A',
+            TEST_CONTENT_ID,
+            '-',
+        ),
+        # tests filtering one remote timestamp with a different one (created at )
+        (
+            datetime.datetime.utcnow() - datetime.timedelta(days=1),
+            datetime.datetime.utcnow() - datetime.timedelta(days=15),
+            None,
+            datetime.datetime.utcnow() - datetime.timedelta(days=10),
+            datetime.datetime.utcnow(),
+            None,
+            TEST_CONTENT_ID,
+            'A',
+            '-',
+        ),
+    )
+    @ddt.unpack
+    def test_view_properly_sorts_sync_dates(
+        self,
+        remote_updated_at,
+        remote_created_at,
+        remote_deleted_at,
+        remote_created_at_2,
+        remote_updated_at_2,
+        remote_deleted_at_2,
+        first_result,
+        second_result,
+        order
+    ):
+        """
+        Test that the ContentSyncStatusViewSet properly filters by remote timestamps under the `sync_status` field
+        """
+        factories.ContentMetadataItemTransmissionFactory(
+            content_id='A',
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+            integrated_channel_code='GENERIC',
+            plugin_configuration_id=1,
+            remote_created_at=remote_created_at,
+            remote_updated_at=remote_updated_at,
+            remote_deleted_at=remote_deleted_at,
+            api_response_status_code=200,
+        )
+
+        self.content_metadata_item.remote_created_at = remote_created_at_2
+        self.content_metadata_item.remote_updated_at = remote_updated_at_2
+        self.content_metadata_item.remote_deleted_at = remote_deleted_at_2
+        self.content_metadata_item.save()
+
+        self.setup_admin_user(True)
+        expected_enterprise_uuid = str(self.enterprise_customer_catalog.enterprise_customer.uuid)
+        url = reverse(
+            'api:v1:logs:content_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': expected_enterprise_uuid,
+                'integrated_channel_code': 'GENERIC',
+                'plugin_configuration_id': 1
+            }
+        ) + f'?sort_by={order}sync_last_attempted_at'
+        response = self.client.get(url)
+        response_json = self.load_json(response.content)
+
+        assert response_json.get('results')[0].get('content_id') == first_result
+        assert response_json.get('results')[1].get('content_id') == second_result
+
     def test_view_allows_for_sort_by_filters(self):
         """
         Test that the ContentSyncStatusViewSet supports custom queryset ordering by specifying a `sort_by` query param
@@ -392,6 +503,7 @@ class LearnerSyncStatusViewSetTests(APITest):
     """
     Tests for LearnerSyncStatusViewSet REST endpoints
     """
+
     def setUp(self):
 
         with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
@@ -556,6 +668,32 @@ class LearnerSyncStatusViewSetTests(APITest):
         assert response_json.get('pages_count') == math.ceil(
             (num_records + 1) / ReportingSyncStatusPagination.page_size
         )
+
+    def test_view_supports_sync_status_filters(self):
+        """
+        Test that the LearnerSyncStatusViewSet supports sync status datetime filtering
+        """
+        now = datetime.datetime.utcnow()
+        self.generic_audit.created = now - datetime.timedelta(days=1)
+        self.generic_audit.save()
+        comes_first = factories.GenericLearnerDataTransmissionAuditFactory(
+            enterprise_customer_uuid=self.generic_audit.enterprise_customer_uuid,
+            plugin_configuration_id=self.generic_audit.plugin_configuration_id,
+            modified=now,
+        )
+        self.setup_admin_user(True)
+        url = reverse(
+            'api:v1:logs:learner_sync_status_logs',
+            kwargs={
+                'enterprise_customer_uuid': self.generic_audit.enterprise_customer_uuid,
+                'integrated_channel_code': 'GENERIC',
+                'plugin_configuration_id': self.generic_audit.plugin_configuration_id
+            }
+        ) + '?sort_by=-sync_last_attempted_at'
+        response = self.client.get(url)
+        response_json = self.load_json(response.content)
+        assert response_json.get('results')[0].get('content_title') == comes_first.content_title
+        assert response_json.get('results')[1].get('content_title') == self.generic_audit.content_title
 
     def test_view_supports_field_filters(self):
         """
@@ -796,6 +934,7 @@ class IntegratedChannelsBaseViewSetTests(APITest):
     """
     Tests for configs list endpoint
     """
+
     def setup_admin_user(self, is_staff=True):
         """
         Creates an admin user and logs them in

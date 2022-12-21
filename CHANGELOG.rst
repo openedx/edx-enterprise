@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.2]
+--------
+fix: sorting error reporting audits by all datetimes at once instead of three separate order bys
+
 [3.60.1]
 --------
 fix: adding an index for performance, testing syntax for no-lock

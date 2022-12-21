@@ -3,6 +3,7 @@ Viewsets for integrated_channels/v1/logs
 """
 import logging
 from collections import OrderedDict
+from datetime import datetime
 
 from rest_framework import exceptions, permissions, viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -17,6 +18,9 @@ from rest_framework.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
+
+from django.db.models import DateTimeField
+from django.db.models.functions import Cast, Coalesce, Greatest
 
 from integrated_channels.api.v1.mixins import PermissionRequiredForIntegratedChannelMixin
 from integrated_channels.integrated_channel.models import (
@@ -66,6 +70,17 @@ def validate_sort_by_query_params(model_table, request):
             raise InvalidSortByParamException
 
 
+def sort_by_date_aggregation(objects, date_fields, filter, order):
+    # Arbitrarily old date to make sure null dates are considered lower in the `Greatest` annotation than any existing or to be
+    # created datetime in the audits
+    long_ago = datetime(year=1995, month=6, day=18)
+    return objects.annotate(
+        newest_date=Greatest(
+            *[Coalesce(field, Cast(long_ago, DateTimeField()), output_field=DateTimeField()) for field in date_fields]
+        )
+    ).filter(**filter).order_by(f'{order}newest_date')
+
+
 class ContentSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, viewsets.ModelViewSet):
     """
     Sync-status APIs for `ContentMetadataItemTransmission` items.
@@ -104,7 +119,12 @@ class ContentSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, view
             # The serialized `sync_last_attempted_at` value is the representation of the `remote_<X>_at` values
             if "sync_last_attempted_at" in content_sort_by[0]:
                 order = "-" if "-" in content_sort_by[0] else ""
-                content_sort_by = (f"{order}remote_deleted_at", f"{order}remote_updated_at", f"{order}remote_created_at")
+                return sort_by_date_aggregation(
+                    ContentMetadataItemTransmission.objects,
+                    ['remote_updated_at', 'remote_deleted_at', 'remote_created_at'],
+                    content_metadata_transmission_audit_filter,
+                    order
+                )
 
         return ContentMetadataItemTransmission.objects.filter(
             **content_metadata_transmission_audit_filter
@@ -155,6 +175,11 @@ class LearnerSyncStatusViewSet(PermissionRequiredForIntegratedChannelMixin, view
             # The serialized `sync_last_attempted_at` value is the representation of both the `modified` and `created` values
             if "sync_last_attempted_at" in content_sort_by[0]:
                 order = "-" if "-" in content_sort_by[0] else ""
-                content_sort_by = (f"{order}modified", f"{order}created")
+                return sort_by_date_aggregation(
+                    ThisLearnerClass.objects,
+                    ['modified', 'created'],
+                    learner_data_transmission_audit_filter,
+                    order
+                )
 
         return ThisLearnerClass.objects.filter(**learner_data_transmission_audit_filter).order_by(*content_sort_by)
