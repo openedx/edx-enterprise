@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.4]
+--------
+fix: add back squashed migrations (fixes devstack provisioning)
+
 [3.60.3]
 --------
 feat: exec ed content is tagged and distinguishable from edx content
