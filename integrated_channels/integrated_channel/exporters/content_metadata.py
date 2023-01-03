@@ -10,7 +10,7 @@ import sys
 from logging import getLogger
 
 from django.apps import apps
-from django.db.models import Case, F, IntegerField, Q, Value, When
+from django.db.models import Q
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import EXEC_ED_CONTENT_DESCRIPTION_TAG, EXEC_ED_COURSE_TYPE, TRANSMISSION_MARK_CREATE
@@ -118,7 +118,7 @@ class ContentMetadataExporter(Exporter):
         base_content_query.add(Q(api_response_status_code__isnull=True) | Q(api_response_status_code__lt=400), Q.AND)
 
         # deleted regardless of create, with a failed status
-        failed_deletes_content_query = Q(
+        failed_deletes_query = Q(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             plugin_configuration_id=self.enterprise_configuration.id,
@@ -127,10 +127,10 @@ class ContentMetadataExporter(Exporter):
         )
         # enterprise_customer_catalog filter is optional
         if enterprise_customer_catalog is not None:
-            failed_deletes_content_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
+            failed_deletes_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
 
         # base query OR failed delete query
-        final_content_query = Q(base_content_query | failed_deletes_content_query);
+        final_content_query = Q(base_content_query | failed_deletes_query)
 
         past_transmissions = ContentMetadataItemTransmission.objects.filter(
             final_content_query
@@ -292,10 +292,6 @@ class ContentMetadataExporter(Exporter):
             content_keys
         )
 
-        ContentMetadataItemTransmission = apps.get_model(
-            'integrated_channel',
-            'ContentMetadataItemTransmission'
-        )
         # Fetch all existing, non-deleted transmission audit content keys for the customer/configuration
         existing_content_keys = set(self._get_catalog_content_keys())
         unique_new_items_to_create = []

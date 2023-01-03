@@ -431,7 +431,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         Test the _get_catalog_content_keys function when the transmission has successful deletes.
         """
-        past_transmission_one = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -440,7 +440,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
-        past_transmission_two = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -449,7 +449,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
-        past_transmission_successful_delete = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -471,7 +471,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         Test the _get_catalog_content_keys function when the transmission has failed deletes.
         """
-        past_transmission_one = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -480,7 +480,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
-        past_transmission_two = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -489,7 +489,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
-        past_transmission_failed_delete = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -511,7 +511,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         Test the _get_catalog_content_keys function when the transmission has failed deletes.
         """
-        past_transmission_one = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -520,7 +520,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
-        past_transmission_two = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
@@ -529,7 +529,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
-        past_transmission_failed_create = factories.ContentMetadataItemTransmissionFactory(
+        factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
