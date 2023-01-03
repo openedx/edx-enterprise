@@ -9,12 +9,6 @@ class Migration(migrations.Migration):
         ('canvas', '0027_move_and_recrete_completed_timestamp'),
     ]
 
-    operations = [
-        migrations.AlterIndexTogether(
-            name='canvaslearnerdatatransmissionaudit',
-            index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
-        ),
-    ]
     db_engine = connection.settings_dict['ENGINE']
     if 'sqlite3' in db_engine:
         operations = [
