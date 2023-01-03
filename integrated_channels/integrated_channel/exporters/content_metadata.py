@@ -10,7 +10,7 @@ import sys
 from logging import getLogger
 
 from django.apps import apps
-from django.db.models import Q
+from django.db.models import IntegerField, F, Q, Case, Value, When
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import EXEC_ED_CONTENT_DESCRIPTION_TAG, EXEC_ED_COURSE_TYPE, TRANSMISSION_MARK_CREATE
@@ -94,7 +94,7 @@ class ContentMetadataExporter(Exporter):
             )
         )
 
-    def _get_catalog_content_keys(self, enterprise_customer_catalog):
+    def _get_catalog_content_keys(self, enterprise_customer_catalog=None):
         """
         Retrieve all non-deleted content transmissions under a given customer's catalog
         """
@@ -102,13 +102,35 @@ class ContentMetadataExporter(Exporter):
             'integrated_channel',
             'ContentMetadataItemTransmission'
         )
-        past_transmissions = ContentMetadataItemTransmission.objects.filter(
+
+        # created, not deleted, no error code
+        base_content_query = Q(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
-            enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
             plugin_configuration_id=self.enterprise_configuration.id,
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
+        )
+        if enterprise_customer_catalog is not None:
+            base_content_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
+        # api_response_status_code can be null, treat that as successful, otherwise look for less than http 400
+        base_content_query.add(Q(api_response_status_code__isnull=True) | Q(api_response_status_code__lt=400), Q.AND)
+
+        # deleted regardless of create, with a failed status
+        failed_deletes_content_query = Q(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            integrated_channel_code=self.enterprise_configuration.channel_code(),
+            plugin_configuration_id=self.enterprise_configuration.id,
+            remote_deleted_at__isnull=False,
+            api_response_status_code__gte=400
+        )
+        if enterprise_customer_catalog is not None:
+            failed_deletes_content_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
+
+        final_content_query = Q(base_content_query | failed_deletes_content_query);
+
+        past_transmissions = ContentMetadataItemTransmission.objects.filter(
+            final_content_query
         ).values('content_id')
         if not past_transmissions:
             return []
@@ -272,13 +294,7 @@ class ContentMetadataExporter(Exporter):
             'ContentMetadataItemTransmission'
         )
         # Fetch all existing, non-deleted transmission audit content keys for the customer/configuration
-        existing_content_keys = ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            integrated_channel_code=self.enterprise_configuration.channel_code(),
-            plugin_configuration_id=self.enterprise_configuration.id,
-            remote_deleted_at__isnull=True,
-            remote_created_at__isnull=False,
-        ).values_list("content_id", flat=True)
+        existing_content_keys = set(self._get_catalog_content_keys())
         unique_new_items_to_create = []
 
         # We need to remove any potential create transmissions if the content already exists on the customer's instance
