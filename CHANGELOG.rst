@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.5]
+--------
+fix: adding an index for performance, non-blocking syntax
+
 [3.60.4]
 --------
 fix: add back squashed migrations (fixes devstack provisioning)

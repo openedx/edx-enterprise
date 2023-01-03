@@ -250,6 +250,7 @@ class DegreedLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
 
     class Meta:
         app_label = 'degreed'
+        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):
         """

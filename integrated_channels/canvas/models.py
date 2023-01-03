@@ -284,6 +284,7 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
 
     class Meta:
         app_label = 'canvas'
+        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):
         return (
