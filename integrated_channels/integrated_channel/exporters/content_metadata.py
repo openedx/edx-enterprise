@@ -10,7 +10,7 @@ import sys
 from logging import getLogger
 
 from django.apps import apps
-from django.db.models import IntegerField, F, Q, Case, Value, When
+from django.db.models import Case, F, IntegerField, Q, Value, When
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import EXEC_ED_CONTENT_DESCRIPTION_TAG, EXEC_ED_COURSE_TYPE, TRANSMISSION_MARK_CREATE
