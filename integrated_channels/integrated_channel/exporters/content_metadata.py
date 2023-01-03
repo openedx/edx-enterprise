@@ -111,6 +111,7 @@ class ContentMetadataExporter(Exporter):
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
         )
+        # enterprise_customer_catalog filter is optional
         if enterprise_customer_catalog is not None:
             base_content_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
         # api_response_status_code can be null, treat that as successful, otherwise look for less than http 400
@@ -124,9 +125,11 @@ class ContentMetadataExporter(Exporter):
             remote_deleted_at__isnull=False,
             api_response_status_code__gte=400
         )
+        # enterprise_customer_catalog filter is optional
         if enterprise_customer_catalog is not None:
             failed_deletes_content_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
 
+        # base query OR failed delete query
         final_content_query = Q(base_content_query | failed_deletes_content_query);
 
         past_transmissions = ContentMetadataItemTransmission.objects.filter(
