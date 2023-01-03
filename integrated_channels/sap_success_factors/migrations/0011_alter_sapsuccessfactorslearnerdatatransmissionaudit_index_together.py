@@ -29,11 +29,11 @@ class Migration(migrations.Migration):
                 database_operations=[
                     migrations.RunSQL(sql="""
                         CREATE INDEX sapsf_sldta_85936b55_idx
-                        ON sap_success_factors_sapsuccessfactorslearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
+                        ON sap_success_factors_sapsuccessfactorslearnerdatatransmission3ce5 (enterprise_customer_uuid, plugin_configuration_id)
                         ALGORITHM=INPLACE LOCK=NONE
                     """, reverse_sql="""
                         DROP INDEX sapsf_sldta_85936b55_idx
-                        ON sap_success_factors_sapsuccessfactorslearnerdatatransmissionaudit
+                        ON sap_success_factors_sapsuccessfactorslearnerdatatransmission3ce5
                     """),
                 ]
             ),
