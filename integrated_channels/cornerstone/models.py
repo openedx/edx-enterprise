@@ -236,7 +236,9 @@ class CornerstoneLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
 
     class Meta:
         app_label = 'cornerstone'
+        # XXX non-standard
         unique_together = ("user", "course_id")
+        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):
         """
