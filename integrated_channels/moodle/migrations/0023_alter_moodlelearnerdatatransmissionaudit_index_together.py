@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                         ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
                         ALGORITHM=INPLACE LOCK=NONE
                     """, reverse_sql="""
-                        DROP INDEX moodle_dldta_85936b55_idx
+                        DROP INDEX moodle_mldta_85936b55_idx
                         ON moodle_moodlelearnerdatatransmissionaudit
                     """),
                 ]
