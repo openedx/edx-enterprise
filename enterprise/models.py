@@ -2761,7 +2761,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 validation_errors['email'] = _(
                     'Email(s) must be set if the delivery method is email.'
                 )
-            if not self.decrypted_password:
+            if not self.pgp_encryption_key and not self.decrypted_password:
                 validation_errors['decrypted_password'] = _(
                     'Decrypted password must be set if the delivery method is email.'
                 )

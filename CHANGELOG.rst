@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing
 
+
+[3.60.6]
+--------
+fix: password is required when pgp key is provided
+
 [3.60.5]
 --------
 fix: adding an index for performance, non-blocking syntax
