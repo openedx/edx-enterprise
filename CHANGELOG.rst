@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.60.7]
+--------
+fix: cleaning up serializer field inheritance
+
 [3.60.6]
 --------
 fix: password is required when pgp key is provided
