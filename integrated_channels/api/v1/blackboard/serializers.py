@@ -25,6 +25,7 @@ class BlackboardConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
         )
         fields = EnterpriseCustomerPluginConfigSerializer.Meta.fields + extra_fields
 
+
 class BlackboardGlobalConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
