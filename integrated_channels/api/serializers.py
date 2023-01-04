@@ -11,6 +11,8 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerPluginConfiguration model
     """
+    is_valid = serializers.ReadOnlyField()
+    channel_code = serializers.ReadOnlyField()
     last_sync_attempted_at = serializers.SerializerMethodField()
     last_content_sync_attempted_at = serializers.SerializerMethodField()
     last_learner_sync_attempted_at = serializers.SerializerMethodField()
@@ -23,15 +25,18 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'display_name',
+            'channel_code',
             'enterprise_customer',
             'idp_id',
             'active',
+            'is_valid',
             'last_sync_attempted_at',
             'last_content_sync_attempted_at',
             'last_learner_sync_attempted_at',
             'last_sync_errored_at',
             'last_content_sync_errored_at',
             'last_learner_sync_errored_at',
+            'transmission_chunk_size',
         )
 
     def get_last_sync_attempted_at(self, obj):
