@@ -426,3 +426,121 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             False
         )
         assert len(matched_records) == 2
+
+    def test__get_catalog_content_keys_with_deletes(self):
+        """
+        Test the _get_catalog_content_keys function when the transmission has successful deletes.
+        """
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed='2020-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+            remote_deleted_at=datetime.datetime.utcnow(),
+            api_response_status_code=200,
+        )
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        # pylint: disable=protected-access
+        matched_records = exporter._get_catalog_content_keys(
+            self.config.enterprise_customer.enterprise_customer_catalogs.first(),
+        )
+        assert len(matched_records) == 2
+
+    def test__get_catalog_content_keys_failed_deletes(self):
+        """
+        Test the _get_catalog_content_keys function when the transmission has failed deletes.
+        """
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed='2020-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+            remote_deleted_at=datetime.datetime.utcnow(),
+            api_response_status_code=500,
+        )
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        # pylint: disable=protected-access
+        matched_records = exporter._get_catalog_content_keys(
+            self.config.enterprise_customer.enterprise_customer_catalogs.first(),
+        )
+        assert len(matched_records) == 3
+
+    def test__get_catalog_content_keys_failed_creates(self):
+        """
+        Test the _get_catalog_content_keys function when the transmission has failed deletes.
+        """
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed='2020-07-16T15:11:10.521611Z',
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            content_last_changed=datetime.datetime.now(),
+            enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
+            remote_created_at=datetime.datetime.utcnow(),
+            api_response_status_code=500,
+        )
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        # pylint: disable=protected-access
+        matched_records = exporter._get_catalog_content_keys(
+            self.config.enterprise_customer.enterprise_customer_catalogs.first(),
+        )
+        assert len(matched_records) == 2

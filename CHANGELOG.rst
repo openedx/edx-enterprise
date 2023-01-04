@@ -18,6 +18,10 @@ Unreleased
 * Nothing
 
 
+[3.60.8]
+--------
+fix: failed content deletes and creates are never retried
+
 [3.60.7]
 --------
 fix: cleaning up serializer field inheritance
