@@ -283,6 +283,19 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             return None
 
     @property
+    def is_valid(self):
+        """
+        Returns whether or not the configuration is valid and ready to be activated
+
+        Args:
+            obj: The instance of EnterpriseCustomerConfiguration
+                being rendered with this admin form.
+        """
+        missing_items = {'missing': []}
+        incorrect_items = {'incorrect': []}
+        return missing_items, incorrect_items
+
+    @property
     def channel_worker_user(self):
         """
         default worker username for channel
