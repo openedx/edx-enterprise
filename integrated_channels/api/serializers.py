@@ -13,12 +13,12 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
     """
     is_valid = serializers.ReadOnlyField()
     channel_code = serializers.ReadOnlyField()
-    last_sync_attempted_at = serializers.SerializerMethodField()
-    last_content_sync_attempted_at = serializers.SerializerMethodField()
-    last_learner_sync_attempted_at = serializers.SerializerMethodField()
-    last_sync_errored_at = serializers.SerializerMethodField()
-    last_content_sync_errored_at = serializers.SerializerMethodField()
-    last_learner_sync_errored_at = serializers.SerializerMethodField()
+    last_sync_attempted_at = serializers.ReadOnlyField()
+    last_content_sync_attempted_at = serializers.ReadOnlyField()
+    last_learner_sync_attempted_at = serializers.ReadOnlyField()
+    last_sync_errored_at = serializers.ReadOnlyField()
+    last_content_sync_errored_at = serializers.ReadOnlyField()
+    last_learner_sync_errored_at = serializers.ReadOnlyField()
 
     class Meta:
         model = EnterpriseCustomerPluginConfiguration
@@ -38,39 +38,3 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
             'last_learner_sync_errored_at',
             'transmission_chunk_size',
         )
-
-    def get_last_sync_attempted_at(self, obj):
-        """
-        Return the most recent sync attempt date.
-        """
-        return obj.get_last_sync(False)
-
-    def get_last_content_sync_attempted_at(self, obj):
-        """
-        Return the most recent content metadata item transmission sync attempt date.
-        """
-        return obj.get_last_content(False)
-
-    def get_last_learner_sync_attempted_at(self, obj):
-        """
-        Return the most recent learner data transmission audit sync attempt date.
-        """
-        return obj.get_last_learner(False)
-
-    def get_last_sync_errored_at(self, obj):
-        """
-        Return the most recent error transmission.
-        """
-        return obj.get_last_sync(True)
-
-    def get_last_content_sync_errored_at(self, obj):
-        """
-        Return the most recent content metadata error transmission.
-        """
-        return obj.get_last_content(True)
-
-    def get_last_learner_sync_errored_at(self, obj):
-        """
-        Return the most recent learner data error transmission.
-        """
-        return obj.get_last_learner(True)

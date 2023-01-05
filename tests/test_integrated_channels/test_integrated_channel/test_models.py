@@ -174,3 +174,71 @@ class TestContentMetadataItemTransmission(unittest.TestCase, EnterpriseMockMixin
             FAKE_COURSE_RUN['key'],
         ).first()
         assert found_item == failed_transmission
+
+
+@mark.django_db
+class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Tests for the ``EnterpriseCustomerPluginConfiguration`` model.
+    """
+
+    def setUp(self):
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.config = factories.GenericEnterpriseCustomerPluginConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        super().setUp()
+
+    def test_update_content_synced_at(self):
+        """
+        Test synced_at timestamps for content data.
+        """
+        first_timestamp = datetime.datetime.fromtimestamp(1400000000)
+        self.config.update_content_synced_at(first_timestamp, True)
+        assert self.config.last_sync_attempted_at == first_timestamp
+        assert self.config.last_content_sync_attempted_at == first_timestamp
+        assert self.config.last_learner_sync_attempted_at is None
+        assert self.config.last_sync_errored_at is None
+        assert self.config.last_content_sync_errored_at is None
+        assert self.config.last_learner_sync_errored_at is None
+
+        second_timestamp = datetime.datetime.fromtimestamp(1500000000)
+        self.config.update_content_synced_at(second_timestamp, False)
+        assert self.config.last_sync_attempted_at == second_timestamp
+        assert self.config.last_content_sync_attempted_at == second_timestamp
+        assert self.config.last_learner_sync_attempted_at is None
+        assert self.config.last_sync_errored_at == second_timestamp
+        assert self.config.last_content_sync_errored_at == second_timestamp
+        assert self.config.last_learner_sync_errored_at is None
+
+        # if passing a date older than what we've already recorded, no-op
+        self.config.update_content_synced_at(first_timestamp, True)
+        assert self.config.last_sync_attempted_at == second_timestamp
+        assert self.config.last_content_sync_attempted_at == second_timestamp
+
+    def test_update_learner_synced_at(self):
+        """
+        Test synced_at timestamps for learner data.
+        """
+        first_timestamp = datetime.datetime.fromtimestamp(1400000000)
+        self.config.update_learner_synced_at(first_timestamp, True)
+        assert self.config.last_sync_attempted_at == first_timestamp
+        assert self.config.last_content_sync_attempted_at is None
+        assert self.config.last_learner_sync_attempted_at == first_timestamp
+        assert self.config.last_sync_errored_at is None
+        assert self.config.last_content_sync_errored_at is None
+        assert self.config.last_learner_sync_errored_at is None
+
+        second_timestamp = datetime.datetime.fromtimestamp(1500000000)
+        self.config.update_learner_synced_at(second_timestamp, False)
+        assert self.config.last_sync_attempted_at == second_timestamp
+        assert self.config.last_content_sync_attempted_at is None
+        assert self.config.last_learner_sync_attempted_at == second_timestamp
+        assert self.config.last_sync_errored_at == second_timestamp
+        assert self.config.last_content_sync_errored_at is None
+        assert self.config.last_learner_sync_errored_at == second_timestamp
+
+        # if passing a date older than what we've already recorded, no-op
+        self.config.update_learner_synced_at(first_timestamp, True)
+        assert self.config.last_sync_attempted_at == second_timestamp
+        assert self.config.last_learner_sync_attempted_at == second_timestamp

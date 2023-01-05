@@ -166,6 +166,36 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("When set to True, the configured customer will no longer receive learner data transmissions, both"
                     " scheduled and signal based")
     )
+    last_sync_attempted_at = models.DateTimeField(
+        help_text='The DateTime of the most recent Content or Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_content_sync_attempted_at = models.DateTimeField(
+        help_text='The DateTime of the most recent Content data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_learner_sync_attempted_at = models.DateTimeField(
+        help_text='The DateTime of the most recent Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_sync_errored_at = models.DateTimeField(
+        help_text='The DateTime of the most recent failure of a Content or Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_content_sync_errored_at = models.DateTimeField(
+        help_text='The DateTime of the most recent failure of a Content data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_learner_sync_errored_at = models.DateTimeField(
+        help_text='The DateTime of the most recent failure of a Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         abstract = True
@@ -204,6 +234,44 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                     ]
                 }
             )
+
+    def update_content_synced_at(self, action_happened_at, was_successful):
+        """
+        Given the last time a Content record sync was attempted and status update the appropriate timestamps.
+        """
+        if self.last_sync_attempted_at is None \
+            or action_happened_at > self.last_sync_attempted_at:
+            self.last_sync_attempted_at = action_happened_at
+        if self.last_content_sync_attempted_at is None \
+            or action_happened_at > self.last_content_sync_attempted_at:
+            self.last_content_sync_attempted_at = action_happened_at
+        if not was_successful:
+            if self.last_sync_errored_at is None \
+                or action_happened_at > self.last_sync_errored_at:
+                self.last_sync_errored_at = action_happened_at
+            if self.last_content_sync_errored_at is None \
+                or action_happened_at > self.last_content_sync_errored_at:
+                self.last_content_sync_errored_at = action_happened_at
+        return self.save()
+
+    def update_learner_synced_at(self, action_happened_at, was_successful):
+        """
+        Given the last time a Learner record sync was attempted and status update the appropriate timestamps.
+        """
+        if self.last_sync_attempted_at is None \
+            or action_happened_at > self.last_sync_attempted_at:
+            self.last_sync_attempted_at = action_happened_at
+        if self.last_learner_sync_attempted_at is None \
+            or action_happened_at > self.last_learner_sync_attempted_at:
+            self.last_learner_sync_attempted_at = action_happened_at
+        if not was_successful:
+            if self.last_sync_errored_at is None \
+                or action_happened_at > self.last_sync_errored_at:
+                self.last_sync_errored_at = action_happened_at
+            if self.last_learner_sync_errored_at is None \
+                or action_happened_at > self.last_learner_sync_errored_at:
+                self.last_learner_sync_errored_at = action_happened_at
+        return self.save()
 
     def get_learner_data_audit_model(self):
         return LearnerDataTransmissionAudit.get_completion_class_by_channel_code(self.channel_code())

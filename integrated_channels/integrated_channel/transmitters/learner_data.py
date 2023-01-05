@@ -3,6 +3,7 @@ Generic learner data transmitter for integrated channels.
 """
 
 import logging
+from datetime import datetime
 from http import HTTPStatus
 
 from django.apps import apps
@@ -389,9 +390,12 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 )
                 raise
 
+            action_happened_at = datetime.utcnow()
+            was_successful = code < 300
             learner_data.status = str(code)
-            learner_data.error_message = body if code >= 400 else ''
+            learner_data.error_message = body if not was_successful else ''
             learner_data.save()
+            self.enterprise_configuration.update_learner_synced_at(action_happened_at, was_successful)
 
     def deduplicate_assignment_records_transmit(self, exporter, **kwargs):
         """
