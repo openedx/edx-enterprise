@@ -265,9 +265,6 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                 self.last_learner_sync_errored_at = action_happened_at
         return self.save()
 
-    def get_learner_data_audit_model(self):
-        return LearnerDataTransmissionAudit.get_completion_class_by_channel_code(self.channel_code())
-
     @property
     def is_valid(self):
         """
