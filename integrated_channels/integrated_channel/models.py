@@ -241,17 +241,17 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         """
         if self.last_sync_attempted_at is None \
             or action_happened_at > self.last_sync_attempted_at:
-            self.last_sync_attempted_at = action_happened_at
+                self.last_sync_attempted_at = action_happened_at
         if self.last_content_sync_attempted_at is None \
             or action_happened_at > self.last_content_sync_attempted_at:
-            self.last_content_sync_attempted_at = action_happened_at
+                self.last_content_sync_attempted_at = action_happened_at
         if not was_successful:
             if self.last_sync_errored_at is None \
                 or action_happened_at > self.last_sync_errored_at:
-                self.last_sync_errored_at = action_happened_at
+                    self.last_sync_errored_at = action_happened_at
             if self.last_content_sync_errored_at is None \
                 or action_happened_at > self.last_content_sync_errored_at:
-                self.last_content_sync_errored_at = action_happened_at
+                    self.last_content_sync_errored_at = action_happened_at
         return self.save()
 
     def update_learner_synced_at(self, action_happened_at, was_successful):
@@ -260,17 +260,17 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         """
         if self.last_sync_attempted_at is None \
             or action_happened_at > self.last_sync_attempted_at:
-            self.last_sync_attempted_at = action_happened_at
+                self.last_sync_attempted_at = action_happened_at
         if self.last_learner_sync_attempted_at is None \
             or action_happened_at > self.last_learner_sync_attempted_at:
-            self.last_learner_sync_attempted_at = action_happened_at
+                self.last_learner_sync_attempted_at = action_happened_at
         if not was_successful:
             if self.last_sync_errored_at is None \
                 or action_happened_at > self.last_sync_errored_at:
-                self.last_sync_errored_at = action_happened_at
+                    self.last_sync_errored_at = action_happened_at
             if self.last_learner_sync_errored_at is None \
                 or action_happened_at > self.last_learner_sync_errored_at:
-                self.last_learner_sync_errored_at = action_happened_at
+                    self.last_learner_sync_errored_at = action_happened_at
         return self.save()
 
     def get_learner_data_audit_model(self):
