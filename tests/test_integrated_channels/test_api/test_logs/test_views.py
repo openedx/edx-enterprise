@@ -954,6 +954,12 @@ class IntegratedChannelsBaseViewSetTests(APITest):
         )
         self.degreed_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
+            last_sync_attempted_at=datetime.datetime.fromtimestamp(1644883200),
+            last_content_sync_attempted_at=datetime.datetime.fromtimestamp(1486855998),
+            last_learner_sync_attempted_at=datetime.datetime.fromtimestamp(1644883200),
+            last_sync_errored_at=datetime.datetime.fromtimestamp(1386855998),
+            last_content_sync_errored_at=datetime.datetime.fromtimestamp(1386855998),
+            last_learner_sync_errored_at=None,
         )
         self.degreed_content_transmission_1 = factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.enterprise_customer,

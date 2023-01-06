@@ -10,7 +10,7 @@ from jsonfield.fields import JSONField
 from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Max, Q
+from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.utils.translation import gettext_lazy as _
 
@@ -166,6 +166,36 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("When set to True, the configured customer will no longer receive learner data transmissions, both"
                     " scheduled and signal based")
     )
+    last_sync_attempted_at = models.DateTimeField(
+        help_text='The DateTime of the most recent Content or Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_content_sync_attempted_at = models.DateTimeField(
+        help_text='The DateTime of the most recent Content data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_learner_sync_attempted_at = models.DateTimeField(
+        help_text='The DateTime of the most recent Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_sync_errored_at = models.DateTimeField(
+        help_text='The DateTime of the most recent failure of a Content or Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_content_sync_errored_at = models.DateTimeField(
+        help_text='The DateTime of the most recent failure of a Content data record sync attempt',
+        blank=True,
+        null=True
+    )
+    last_learner_sync_errored_at = models.DateTimeField(
+        help_text='The DateTime of the most recent failure of a Learner data record sync attempt',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         abstract = True
@@ -205,82 +235,35 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                 }
             )
 
-    def get_learner_data_audit_model(self):
-        return LearnerDataTransmissionAudit.get_completion_class_by_channel_code(self.channel_code())
+    def update_content_synced_at(self, action_happened_at, was_successful):
+        """
+        Given the last time a Content record sync was attempted and status update the appropriate timestamps.
+        """
+        if self.last_sync_attempted_at is None or action_happened_at > self.last_sync_attempted_at:
+            self.last_sync_attempted_at = action_happened_at
+        if self.last_content_sync_attempted_at is None or action_happened_at > self.last_content_sync_attempted_at:
+            self.last_content_sync_attempted_at = action_happened_at
+        if not was_successful:
+            if self.last_sync_errored_at is None or action_happened_at > self.last_sync_errored_at:
+                self.last_sync_errored_at = action_happened_at
+            if self.last_content_sync_errored_at is None or action_happened_at > self.last_content_sync_errored_at:
+                self.last_content_sync_errored_at = action_happened_at
+        return self.save()
 
-    def get_last_learner(self, include_only_errors):
+    def update_learner_synced_at(self, action_happened_at, was_successful):
         """
-        Gets every learner audit associated with the configuration and returns the timestamp the most recent
-        recorded transmission. If the boolean parameter 'include_only_errors' is True, then we are only
-        looking at the timestamps of the most recent transmission record where the status > 400.
+        Given the last time a Learner record sync was attempted and status update the appropriate timestamps.
         """
-        audit_model = self.get_learner_data_audit_model()
-        if include_only_errors:
-            learner_audits = audit_model.objects.filter(
-                enterprise_customer_uuid=self.enterprise_customer.uuid,
-                plugin_configuration_id=self.id,
-                status__gte=400,
-            )
-        else:
-            learner_audits = audit_model.objects.filter(
-                enterprise_customer_uuid=self.enterprise_customer.uuid,
-                plugin_configuration_id=self.id,
-            )
-        if learner_audits:
-            org_time = learner_audits.aggregate(max=Max('completed_timestamp')).get('max')
-            return org_time
-        else:
-            return None
-
-    def get_last_content(self, include_only_errors):
-        """
-        Gets every content transmission associated with the configuration and returns the timestamp
-        the most recent recorded audit. If the boolean parameter 'include_only_errors' is True,
-        then we are only looking at the timestamps of the most recent transmission record where
-        the status > 400.
-        """
-        if include_only_errors:
-            content_audits = ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=self.enterprise_customer,
-                plugin_configuration_id=self.id,
-                integrated_channel_code=self.channel_code(),
-                api_response_status_code__gte=400,
-            )
-        else:
-            content_audits = ContentMetadataItemTransmission.objects.filter(
-                enterprise_customer=self.enterprise_customer,
-                plugin_configuration_id=self.id,
-                integrated_channel_code=self.channel_code(),
-            )
-        if content_audits:
-            max_created = (content_audits.aggregate(max_created=Max('remote_created_at'))).get('max_created')
-            max_updated = (content_audits.aggregate(max_updated=Max('remote_updated_at'))).get('max_updated')
-            max_deleted = (content_audits.aggregate(max_deleted=Max('remote_deleted_at'))).get('max_deleted')
-            max_not_nulls = [x for x in [max_created, max_updated, max_deleted] if x is not None]
-            if len(max_not_nulls) > 0:
-                return (max(y for y in [max_not_nulls] if y is not None))[0]
-            else:
-                return None
-        else:
-            return None
-
-    def get_last_sync(self, include_only_errors):
-        """
-        Gets every transmission (content and learner) associated with the configuration
-        and returns the timestamp the most recent recorded transmission or audit. If the boolean parameter
-        'include_only_errors' is True, then we are only looking at the timestamps of the most recent
-        transmission record where the status > 400.
-        """
-        learner = self.get_last_learner(include_only_errors)
-        content = self.get_last_content(include_only_errors)
-        if learner is not None and content is not None:
-            return max(learner, content)
-        elif learner is not None:
-            return learner
-        elif content is not None:
-            return content
-        else:
-            return None
+        if self.last_sync_attempted_at is None or action_happened_at > self.last_sync_attempted_at:
+            self.last_sync_attempted_at = action_happened_at
+        if self.last_learner_sync_attempted_at is None or action_happened_at > self.last_learner_sync_attempted_at:
+            self.last_learner_sync_attempted_at = action_happened_at
+        if not was_successful:
+            if self.last_sync_errored_at is None or action_happened_at > self.last_sync_errored_at:
+                self.last_sync_errored_at = action_happened_at
+            if self.last_learner_sync_errored_at is None or action_happened_at > self.last_learner_sync_errored_at:
+                self.last_learner_sync_errored_at = action_happened_at
+        return self.save()
 
     @property
     def is_valid(self):

@@ -185,6 +185,7 @@ class ContentMetadataTransmitter(Transmitter):
                         course_or_course_run_key=content_id
                     )
                     transmission.api_response_status_code = response_status_code
+                    was_successful = response_status_code < 300
 
                     if transmission.api_record:
                         transmission.api_record.body = response_body
@@ -205,7 +206,8 @@ class ContentMetadataTransmitter(Transmitter):
                     elif action_name == 'delete':
                         transmission.remote_deleted_at = action_happened_at
                     transmission.save()
-                    if transmission.api_response_status_code < 300:
+                    if was_successful:
                         transmission.remove_marked_for()
+                    self.enterprise_configuration.update_content_synced_at(action_happened_at, was_successful)
                     results.append(transmission)
         return results
