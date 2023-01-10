@@ -305,6 +305,7 @@ class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):
         self.data = {
             "enterprise_customer_id": self.enterprise_customer.uuid,
             "active": True,
+            "enable_compression": True,
             "delivery_method": "email",
             "email": ['test@example.com'],
             "frequency": 'daily',
@@ -337,3 +338,14 @@ class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):
         self.data['pgp_encryption_key'] = 'invalid-key'
         serializer = EnterpriseCustomerReportingConfigurationSerializer(data=self.data)
         assert not serializer.is_valid()
+
+        # Valid Compression check should be flagged.
+        self.data['enable_compression'] = False
+        self.data['pgp_encryption_key'] = TEST_PGP_KEY
+        serializer = EnterpriseCustomerReportingConfigurationSerializer(data=self.data)
+        assert not serializer.is_valid()
+        error_message = serializer.errors.get('enable_compression')
+        self.assertEqual(
+            str(error_message[0]),
+            'Compression can only be disabled for the following data types: catalog and delivery method: sftp'
+        )
