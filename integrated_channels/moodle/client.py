@@ -22,6 +22,7 @@ class MoodleClientError(ClientError):
     """
     Indicate a problem when interacting with Moodle.
     """
+
     def __init__(self, message, status_code=500, moodle_error=None):
         """Save the status code and message raised from the client."""
         self.status_code = status_code
@@ -35,6 +36,7 @@ def moodle_request_wrapper(method):
     Wraps requests to Moodle's API in a token check.
     Will obtain a new token if there isn't one.
     """
+
     def inner(self, *args, **kwargs):
         if not self.token:
             self.token = self._get_access_token()  # pylint: disable=protected-access
@@ -361,30 +363,29 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         more_than_one_course = serialized_data.get('courses[1][shortname]')
         serialized_data['wsfunction'] = 'core_course_create_courses'
         try:
-            self._wrapped_post(serialized_data)
+            response = self._wrapped_post(serialized_data)
         except MoodleClientError as error:
             # treat duplicate as successful, but only if its a single course
             # set chunk size settings to 1 if youre seeing a lot of these errors
             if error.moodle_error == 'shortnametaken' and not more_than_one_course:
-                return True
+                return 200, "shortnametaken"
             elif error.moodle_error == 'courseidnumbertaken' and not more_than_one_course:
-                return True
+                return 200, "courseidnumbertaken"
             else:
                 raise error
-        return True
+        return response.status_code, response.text
 
-    @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):
         moodle_course_id = self._get_course_id(serialized_data['courses[0][idnumber]'])
         # if we cannot find the course, lets create it
         if moodle_course_id:
             serialized_data['courses[0][id]'] = moodle_course_id
             serialized_data['wsfunction'] = 'core_course_update_courses'
-            return self._post(serialized_data)
+            response = self._wrapped_post(serialized_data)
+            return response.status_code, response.text
         else:
             return self.create_content_metadata(serialized_data)
 
-    @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
         response = self._get_courses(serialized_data['courses[0][idnumber]'])
         parsed_response = json.loads(response.text)
@@ -408,7 +409,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'wsfunction': 'core_course_delete_courses',
             'courseids[]': moodle_course_id
         }
-        return self._post(params)
+        response = self._wrapped_post(params)
+        return response.status_code, response.text
 
     def create_assessment_reporting(self, user_id, payload):
         """
