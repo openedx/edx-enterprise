@@ -17,6 +17,14 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.11]
+---------
+fix: integrations log TypeErrors
+
+[3.60.10]
+---------
+fix: making moodle client return value match other channels
+
 [3.60.9]
 --------
 fix: memoize synced_at datimes on config record

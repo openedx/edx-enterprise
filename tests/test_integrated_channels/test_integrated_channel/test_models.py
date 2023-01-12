@@ -1,14 +1,14 @@
 """
 Tests for the integrated channel models.
 """
-
 import datetime
 import unittest
 from unittest import mock
 
+import pytz
 from pytest import mark
 
-from enterprise.utils import get_content_metadata_item_id
+from enterprise.utils import get_content_metadata_item_id, localized_utcnow
 from integrated_channels.integrated_channel.models import ApiResponseRecord, ContentMetadataItemTransmission
 from test_utils import factories
 from test_utils.fake_catalog_api import FAKE_COURSE_RUN, get_fake_catalog, get_fake_content_metadata
@@ -193,7 +193,7 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         """
         Test synced_at timestamps for content data.
         """
-        first_timestamp = datetime.datetime.fromtimestamp(1400000000)
+        first_timestamp = datetime.datetime.fromtimestamp(1400000000).replace(tzinfo=pytz.utc)
         self.config.update_content_synced_at(first_timestamp, True)
         assert self.config.last_sync_attempted_at == first_timestamp
         assert self.config.last_content_sync_attempted_at == first_timestamp
@@ -202,7 +202,7 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         assert self.config.last_content_sync_errored_at is None
         assert self.config.last_learner_sync_errored_at is None
 
-        second_timestamp = datetime.datetime.fromtimestamp(1500000000)
+        second_timestamp = datetime.datetime.fromtimestamp(1500000000).replace(tzinfo=pytz.utc)
         self.config.update_content_synced_at(second_timestamp, False)
         assert self.config.last_sync_attempted_at == second_timestamp
         assert self.config.last_content_sync_attempted_at == second_timestamp
@@ -220,7 +220,7 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         """
         Test synced_at timestamps for learner data.
         """
-        first_timestamp = datetime.datetime.fromtimestamp(1400000000)
+        first_timestamp = datetime.datetime.fromtimestamp(1400000000).replace(tzinfo=pytz.utc)
         self.config.update_learner_synced_at(first_timestamp, True)
         assert self.config.last_sync_attempted_at == first_timestamp
         assert self.config.last_content_sync_attempted_at is None
@@ -229,7 +229,7 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         assert self.config.last_content_sync_errored_at is None
         assert self.config.last_learner_sync_errored_at is None
 
-        second_timestamp = datetime.datetime.fromtimestamp(1500000000)
+        second_timestamp = datetime.datetime.fromtimestamp(1500000000).replace(tzinfo=pytz.utc)
         self.config.update_learner_synced_at(second_timestamp, False)
         assert self.config.last_sync_attempted_at == second_timestamp
         assert self.config.last_content_sync_attempted_at is None
@@ -242,3 +242,12 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         self.config.update_learner_synced_at(first_timestamp, True)
         assert self.config.last_sync_attempted_at == second_timestamp
         assert self.config.last_learner_sync_attempted_at == second_timestamp
+
+    def test_offset_naive_error(self):
+        """
+        Test ENT-6661 comparison bug of offset-naive and offset-aware datetimes
+        """
+        self.config.last_sync_attempted_at = datetime.datetime.fromtimestamp(1500000000).replace(tzinfo=pytz.utc)
+        first_timestamp = localized_utcnow()
+        self.config.update_content_synced_at(first_timestamp, True)
+        assert self.config.last_sync_attempted_at == first_timestamp
