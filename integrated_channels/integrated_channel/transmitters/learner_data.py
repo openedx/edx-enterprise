@@ -8,6 +8,7 @@ from http import HTTPStatus
 
 from django.apps import apps
 
+from enterprise.utils import localized_utcnow
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -390,7 +391,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 )
                 raise
 
-            action_happened_at = datetime.utcnow()
+            action_happened_at = localized_utcnow()
             was_successful = code < 300
             learner_data.status = str(code)
             learner_data.error_message = body if not was_successful else ''
