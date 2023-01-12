@@ -5,7 +5,6 @@ Generic content metadata transmitter for integrated channels.
 import functools
 import json
 import logging
-from datetime import datetime
 from itertools import islice
 
 import requests

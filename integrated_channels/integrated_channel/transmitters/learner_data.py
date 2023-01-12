@@ -3,7 +3,6 @@ Generic learner data transmitter for integrated channels.
 """
 
 import logging
-from datetime import datetime
 from http import HTTPStatus
 
 from django.apps import apps
