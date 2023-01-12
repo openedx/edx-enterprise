@@ -5,7 +5,6 @@ Generic content metadata transmitter for integrated channels.
 import functools
 import json
 import logging
-from datetime import datetime
 from itertools import islice
 
 import requests
@@ -13,6 +12,7 @@ import requests
 from django.apps import apps
 from django.conf import settings
 
+from enterprise.utils import localized_utcnow
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
@@ -177,7 +177,7 @@ class ContentMetadataTransmitter(Transmitter):
                     f"Task failed with message [{response_body}]"
                 )
             finally:
-                action_happened_at = datetime.utcnow()
+                action_happened_at = localized_utcnow()
                 for content_id, transmission in chunk.items():
                     self._log_info(
                         f'integrated_channel_content_transmission_id={transmission.id}, '
