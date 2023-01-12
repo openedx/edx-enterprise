@@ -196,6 +196,12 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         blank=True,
         null=True
     )
+    last_modified_at = models.DateTimeField(
+        help_text='The DateTime of the last change made to this configuration.',
+        auto_now=True,
+        blank=True,
+        null=True
+    )
 
     class Meta:
         abstract = True
