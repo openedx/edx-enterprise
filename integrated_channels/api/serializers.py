@@ -19,6 +19,7 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
     last_sync_errored_at = serializers.ReadOnlyField()
     last_content_sync_errored_at = serializers.ReadOnlyField()
     last_learner_sync_errored_at = serializers.ReadOnlyField()
+    last_modified_at = serializers.ReadOnlyField()
 
     class Meta:
         model = EnterpriseCustomerPluginConfiguration
@@ -37,4 +38,5 @@ class EnterpriseCustomerPluginConfigSerializer(serializers.ModelSerializer):
             'last_content_sync_errored_at',
             'last_learner_sync_errored_at',
             'transmission_chunk_size',
+            'last_modified_at',
         )
