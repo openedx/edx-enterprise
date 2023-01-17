@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.13]
+---------
+fix: handle file compression check and test
+
 [3.60.12]
 ---------
 feat: adding last modified timestamp to single LMS config endpoints
