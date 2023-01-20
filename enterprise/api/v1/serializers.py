@@ -1193,6 +1193,7 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
             ("no-id-professional", _("Professional Education (no ID)")),
             ("credit", _("Credit")),
             ("honor", _("Honor")),
+            ("unpaid-executive-education", _("Unpaid Executive Education")),
         ],
         required=False,
     )

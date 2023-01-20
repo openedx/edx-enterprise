@@ -54,7 +54,15 @@ class CourseModes:
     NO_ID_PROFESSIONAL = 'no-id-professional'
     PROFESSIONAL = 'professional'
     VERIFIED = 'verified'
+    UNPAID_EXECUTIVE_EDUCATION = 'unpaid-executive-education'
 
+
+BEST_MODE_ORDER = [
+    CourseModes.VERIFIED,
+    CourseModes.PROFESSIONAL,
+    CourseModes.NO_ID_PROFESSIONAL,
+    CourseModes.UNPAID_EXECUTIVE_EDUCATION,
+]
 
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = [
@@ -63,6 +71,7 @@ COURSE_MODE_SORT_ORDER = [
     CourseModes.NO_ID_PROFESSIONAL,
     CourseModes.AUDIT,
     CourseModes.HONOR,
+    CourseModes.UNPAID_EXECUTIVE_EDUCATION,
 ]
 
 EXEC_ED_COURSE_TYPE = "executive-education-2u"

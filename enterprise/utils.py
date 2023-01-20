@@ -36,6 +36,7 @@ from django.utils.translation import ngettext
 
 from enterprise.constants import (
     ALLOWED_TAGS,
+    BEST_MODE_ORDER,
     DEFAULT_CATALOG_CONTENT_FILTER,
     LMS_API_DATETIME_FORMAT,
     LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE,
@@ -2161,12 +2162,9 @@ def get_best_mode_from_course_key(course_key):
     enterprise learner in.
     """
     course_modes = [mode.slug for mode in CourseMode.objects.filter(course_id=course_key)]
-    best_course_mode = CourseModes.VERIFIED if CourseModes.VERIFIED in course_modes \
-        else CourseModes.PROFESSIONAL if CourseModes.PROFESSIONAL in course_modes \
-        else CourseModes.NO_ID_PROFESSIONAL if CourseModes.NO_ID_PROFESSIONAL in course_modes \
-        else CourseModes.AUDIT
-
-    return best_course_mode
+    if best_mode := [mode for mode in BEST_MODE_ORDER if mode in course_modes]:
+        return best_mode[0]
+    return CourseModes.AUDIT
 
 
 def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):
