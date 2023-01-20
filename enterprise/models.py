@@ -2733,13 +2733,36 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         """
         return self.__str__()
 
+    @classmethod
+    def validate_compression(cls, enable_compression, data_type, delivery_method):
+        """
+        Check enable_compression flag is set as expected
+
+        Arguments:
+            enable_compression (bool): file copression flag
+            data_type (str): report type
+            delivery_method (str): delivery method for sending files
+
+        Returns:
+            (dict): Validation Error
+        """
+        if data_type in cls.ALLOWED_NON_COMPRESSION_DATA_TYPES and delivery_method == cls.DELIVERY_METHOD_SFTP:
+            return {}
+        elif not enable_compression:
+            allowed_data_types = ", ".join(cls.ALLOWED_NON_COMPRESSION_DATA_TYPES)
+            error_message = (
+                f'Compression can only be disabled for the following data types: {allowed_data_types} and '
+                f'delivery method: {cls.DELIVERY_METHOD_SFTP}'
+            )
+            return {'enable_compression': error_message}
+        return {}
+
     def clean(self):
         """
         Override of clean method to perform additional validation on frequency, day_of_month/day_of week
         and compression.
         """
         validation_errors = {}
-
         # Check that the frequency selections make sense.
         if self.frequency == self.FREQUENCY_TYPE_DAILY:
             self.day_of_month = None
@@ -2778,15 +2801,11 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 )
 
         # Check enable_compression flag is set as expected.
-        if not self.enable_compression and (
-                self.data_type not in self.ALLOWED_NON_COMPRESSION_DATA_TYPES
-                or self.delivery_method != self.DELIVERY_METHOD_SFTP
-        ):
-            allowed_data_types = ", ".join(self.ALLOWED_NON_COMPRESSION_DATA_TYPES)
-            validation_errors['enable_compression'] = (
-                f'Compression can only be disabled for the following data types: {allowed_data_types} and '
-                f'delivery method: {self.DELIVERY_METHOD_SFTP}'
-            )
+        validation_errors.update(self.validate_compression(
+            self.enable_compression,
+            self.data_type,
+            self.delivery_method
+        ))
 
         if validation_errors:
             raise ValidationError(validation_errors)

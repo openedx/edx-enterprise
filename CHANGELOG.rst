@@ -17,6 +17,18 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.14]
+---------
+feat: adding exec ed course mode to enterprise
+
+[3.60.13]
+---------
+fix: handle file compression check and test
+
+[3.60.12]
+---------
+feat: adding last modified timestamp to single LMS config endpoints
+
 [3.60.11]
 ---------
 fix: integrations log TypeErrors
