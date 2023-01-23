@@ -77,6 +77,7 @@ class ManageLearnersForm(forms.Form):
             ("no-id-professional", _("Professional Education (no ID)")),
             ("credit", _("Credit")),
             ("honor", _("Honor")),
+            ("unpaid-executive-education", _("Unpaid Executive Education")),
         ],
     )
     reason = forms.CharField(label=_("Reason for manual enrollment"), required=False)
