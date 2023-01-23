@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.14]
+---------
+feat: adding exec ed course mode to enterprise
+
 [3.60.13]
 ---------
 fix: handle file compression check and test
