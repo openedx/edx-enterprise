@@ -841,6 +841,15 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
             raise serializers.ValidationError(error)
 
         delivery_method = data.get('delivery_method')
+        create_report = data.get('uuid') is not None
+        if create_report:
+            delivery_method_error = self.instance.validate_delivery_method(
+                data.get('uuid'),
+                delivery_method
+            )
+            if delivery_method_error:
+                raise serializers.ValidationError(delivery_method_error)
+
         if not delivery_method and self.instance:
             delivery_method = self.instance.delivery_method
 

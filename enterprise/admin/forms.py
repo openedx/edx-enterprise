@@ -627,6 +627,16 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             )
             self.add_error('enterprise_customer_catalogs', message)
 
+        # Check delivery_method validity while updating report
+        create_report = self.instance.pk is not None
+        if create_report:
+            error = (self.instance.validate_delivery_method(
+                self.instance.uuid,
+                cleaned_data.get('delivery_method')
+            ))
+            if error:
+                self.add_error('delivery_method', error.get('delivery_method'))
+
 
 class TransmitEnterpriseCoursesForm(forms.Form):
     """
