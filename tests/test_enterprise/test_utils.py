@@ -13,7 +13,7 @@ from django.forms.models import model_to_dict
 
 from enterprise.models import EnterpriseCourseEnrollment
 from enterprise.utils import (
-    enroll_licensed_users_in_courses,
+    enroll_subsidy_users_in_courses,
     get_idiff_list,
     get_platform_logo_url,
     is_pending_user,
@@ -97,14 +97,14 @@ class TestUtils(unittest.TestCase):
     @mock.patch('enterprise.utils.lms_enroll_user_in_course')
     @mock.patch('enterprise.utils.CourseEnrollmentError', new_callable=lambda: StubException)
     @mock.patch('enterprise.utils.CourseUserGroup', new_callable=lambda: StubModel)
-    def test_enroll_licensed_users_in_courses_fails(
+    def test_enroll_subsidy_users_in_courses_fails(
         self,
         mock_model,
         mock_error,
         mock_customer_admin_enroll_user_with_status
     ):
         """
-        Test that `enroll_licensed_users_in_courses` properly handles failure cases where something goes wrong with the
+        Test that `enroll_subsidy_users_in_courses` properly handles failure cases where something goes wrong with the
         user enrollment.
         """
         self.create_user()
@@ -121,7 +121,7 @@ class TestUtils(unittest.TestCase):
             'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
         }]
 
-        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
             {
                 'successes': [],
@@ -134,14 +134,14 @@ class TestUtils(unittest.TestCase):
     @mock.patch('enterprise.utils.lms_enroll_user_in_course')
     @mock.patch('enterprise.utils.CourseEnrollmentError', new_callable=lambda: StubException)
     @mock.patch('enterprise.utils.CourseUserGroup', new_callable=lambda: StubModel)
-    def test_enroll_licensed_users_in_courses_partially_fails(
+    def test_enroll_subsidy_users_in_courses_partially_fails(
         self,
         mock_model,
         mock_error,
         mock_customer_admin_enroll_user_with_status
     ):
         """
-        Test that `enroll_licensed_users_in_courses` properly handles partial failure states and still creates
+        Test that `enroll_subsidy_users_in_courses` properly handles partial failure states and still creates
         enrollments for the users that succeed.
         """
         self.create_user()
@@ -173,7 +173,7 @@ class TestUtils(unittest.TestCase):
         mock_model.DoesNotExist = Exception
         mock_customer_admin_enroll_user_with_status.side_effect = [True, mock_error('mocked error')]
 
-        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
             {
                 'pending': [],
@@ -191,9 +191,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
 
     @mock.patch('enterprise.utils.lms_enroll_user_in_course')
-    def test_enroll_licensed_users_in_courses_succeeds(self, mock_customer_admin_enroll_user):
+    def test_enroll_subsidy_users_in_courses_succeeds(self, mock_customer_admin_enroll_user):
         """
-        Test that users that already exist are enrolled by enroll_licensed_users_in_courses and returned under the
+        Test that users that already exist are enrolled by enroll_subsidy_users_in_courses and returned under the
         `succeeded` field.
         """
         self.create_user()
@@ -215,7 +215,7 @@ class TestUtils(unittest.TestCase):
 
         mock_customer_admin_enroll_user.return_value = True
 
-        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
             {
                 'pending': [],
@@ -234,7 +234,7 @@ class TestUtils(unittest.TestCase):
 
     def test_enroll_pending_licensed_users_in_courses_succeeds(self):
         """
-        Test that users that do not exist are pre-enrolled by enroll_licensed_users_in_courses and returned under the
+        Test that users that do not exist are pre-enrolled by enroll_subsidy_users_in_courses and returned under the
         `pending` field.
         """
         ent_customer = factories.EnterpriseCustomerFactory(
@@ -247,7 +247,7 @@ class TestUtils(unittest.TestCase):
             'course_mode': 'verified',
             'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
         }]
-        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
 
         self.assertEqual(result['pending'][0]['email'], 'pending-user-email@example.com')
         self.assertFalse(result['successes'])

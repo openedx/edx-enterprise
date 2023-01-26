@@ -110,15 +110,15 @@ class Command(BaseCommand):
         for ecu in ecus:
             eces = EnterpriseCourseEnrollment.objects.filter(
                 enterprise_customer_user=ecu,
-                licensed_with__is_revoked=True,
-                licensed_with__modified__gte=time_to_revert_to,
+                licensedenterprisecourseenrollment_enrollment_fulfillment__is_revoked=True,
+                licensedenterprisecourseenrollment_enrollment_fulfillment__modified__gte=time_to_revert_to,
             )
 
             for enrollment in eces:
                 student_course_enrollment = enrollment.course_enrollment
                 student_course_enrollment.history.as_of(time_to_revert_to).save()
 
-                licensed_enrollment = enrollment.licensed_with
+                licensed_enrollment = enrollment.licensedenterprisecourseenrollment_enrollment_fulfillment
                 licensed_enrollment.history.as_of(time_to_revert_to).save()
 
                 enrollment.history.as_of(time_to_revert_to).save()
