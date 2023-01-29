@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.16]
+---------
+fix: adding backoff and retry logic to the grades api client
+
 [3.60.15]
 ---------
 feat: allowing manage learners form enroll learners using exec ed modes

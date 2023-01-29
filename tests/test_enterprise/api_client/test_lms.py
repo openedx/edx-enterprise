@@ -767,7 +767,7 @@ def test_get_course_assessment_grades():
     response_body = {'results': [{'username': 'DarthVadar', 'section_breakdown': expected_result}]}
     responses.add(
         responses.GET,
-        _url("course_grades", f"gradebook/{course_id}/?user_contains={username}"),
+        _url("course_grades", f"gradebook/{course_id}/?username={username}"),
         match_querystring=True,
         json=response_body,
     )
@@ -783,7 +783,7 @@ def test_get_course_assessment_grades_not_found():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
-        _url("course_grades", f"gradebook/{course_id}/?user_contains={username}"),
+        _url("course_grades", f"gradebook/{course_id}/?username={username}"),
         match_querystring=True,
         json={'results': [{'username': 'another_username'}]}
     )

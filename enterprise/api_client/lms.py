@@ -3,6 +3,7 @@ Utilities to get details from the course catalog API.
 """
 
 import logging
+import time
 from urllib.parse import urljoin
 
 from opaque_keys.edx.keys import CourseKey
@@ -372,8 +373,15 @@ class GradesApiClient(UserAPIClient):
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
+    MAX_RETRIES = getattr(settings, "ENTERPRISE_DEGREED2_MAX_RETRIES", 4)
     API_BASE_URL = urljoin(f"{settings.LMS_INTERNAL_ROOT_URL}/", "api/grades/v1/")
     APPEND_SLASH = True
+
+    def _calculate_backoff(self, attempt_count):
+        """
+        Calculate the seconds to sleep based on attempt_count
+        """
+        return (self.BACKOFF_FACTOR * (2 ** (attempt_count - 1)))
 
     @UserAPIClient.refresh_token
     def get_course_grade(self, course_id, username):
@@ -434,9 +442,29 @@ class GradesApiClient(UserAPIClient):
         * ``percent``: A float representing the overall grade for the course.
         * ``module_id``: The ID of the subsection.
         """
-        api_url = self.get_api_url(f"gradebook/{course_id}")
-        response = self.client.get(api_url, params={"user_contains": username})
-        response.raise_for_status()
+        attempts = 0
+        while True:
+            attempts = attempts + 1
+            api_url = self.get_api_url(f"gradebook/{course_id}")
+            try:
+                response = self.client.get(api_url, params={"username": username}, timeout=40)
+                response.raise_for_status()
+                break
+            except Timeout as to_exception:
+                if attempts <= self.MAX_RETRIES:
+                    sleep_seconds = self._calculate_backoff(attempts)
+                    LOGGER.warning(
+                        f"[ATTEMPT: {attempts}] Request to the LMS grades API timeouted out with "
+                        f"exception: {to_exception}, backing off for {sleep_seconds} seconds and retrying"
+                    )
+                    time.sleep(sleep_seconds)
+                else:
+                    LOGGER.warning(
+                        f"Requests to the grades API has reached the max number of retries [{self.MAX_RETRIES}], "
+                        f"attempting to retrieve grade data for learner: {username} under course {course_id}"
+                    )
+                    raise to_exception
+
         results = response.json().get('results', [])
         for row in results:
             if row.get('username') == username:
