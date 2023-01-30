@@ -318,7 +318,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def _calculate_backoff(self, attempt_count):
         """
-        Calcualte the seconds to sleep based on attempt_count
+        Calculate the seconds to sleep based on attempt_count
         """
         return (self.BACKOFF_FACTOR * (2 ** (attempt_count - 1)))
 
