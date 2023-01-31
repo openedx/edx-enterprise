@@ -744,9 +744,9 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         try:
             assessment_grades_data = self.grades_api.get_course_assessment_grades(course_id, username)
         except HTTPError as err:
-            if err.response.status_code == 404:
+            if err.response and err.response.status_code == 404:
                 return {}
-            raise
+            raise err
 
         assessment_grades = {}
         for grade in assessment_grades_data:

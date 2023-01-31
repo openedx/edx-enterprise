@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.18]
+---------
+fix: checking for response attr in http exception handling
+
 [3.60.17]
 ---------
 fix: making backend generated fields read only on django admin
