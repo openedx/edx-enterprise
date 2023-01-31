@@ -17,9 +17,25 @@ Unreleased
 ----------
 * Nothing
 
-[3.60.13]
+[3.60.17]
 ---------
 fix: making backend generated fields read only on django admin
+
+[3.60.16]
+---------
+fix: adding backoff and retry logic to the grades api client
+
+[3.60.15]
+---------
+feat: allowing manage learners form enroll learners using exec ed modes
+
+[3.60.14]
+---------
+feat: adding exec ed course mode to enterprise
+
+[3.60.13]
+---------
+fix: handle file compression check and test
 
 [3.60.12]
 ---------

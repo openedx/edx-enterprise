@@ -4203,6 +4203,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         post_data = {
             'active': 'true',
+            'enable_compression': True,
             'delivery_method': 'email',
             'email': ['test@test.com', 'foo@test.com'],
             'encrypted_password': 'testPassword',
@@ -4259,6 +4260,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         post_data = {
             'active': 'true',
+            'enable_compression': True,
             'delivery_method': 'email',
             'email': ['test@test.com', 'foo@test.com'],
             'encrypted_password': 'testPassword',
@@ -4321,6 +4323,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
         model_item = {
             'active': True,
+            'enable_compression': True,
             'delivery_method': 'email',
             'day_of_month': 1,
             'day_of_week': None,
@@ -4336,6 +4339,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         put_data = {
             'enterprise_customer_id': str(enterprise_customer.uuid),
             'active': 'true',
+            'enable_compression': True,
             'delivery_method': 'email',
             'email': ['test@test.com', 'foo@test.com'],
             'encrypted_password': 'passwordUpdate',
@@ -4402,6 +4406,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
         model_item = {
             'active': True,
+            'enable_compression': True,
             'delivery_method': 'email',
             'day_of_month': 1,
             'day_of_week': None,
@@ -4419,6 +4424,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'day_of_month': 4,
             'day_of_week': 1,
             'hour_of_day': 12,
+            'enable_compression': True,
         }
         expected_data = patch_data.copy()
         expected_data.pop('enterprise_customer_id')
@@ -4480,6 +4486,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         post_data = {
             'active': 'true',
+            'enable_compression': 'true',
             'delivery_method': 'email',
             'encrypted_password': 'testPassword',
             'frequency': 'monthly',
@@ -4527,6 +4534,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         post_data = {
             'active': 'true',
+            'enable_compression': 'true',
             'delivery_method': 'sftp',
             'encrypted_password': 'testPassword',
             'frequency': 'monthly',
@@ -4569,6 +4577,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
         model_item = {
             'active': True,
+            'enable_compression': True,
             'delivery_method': 'email',
             'day_of_month': 1,
             'day_of_week': None,
@@ -4620,6 +4629,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         post_data = {
             'active': 'true',
+            'enable_compression': 'true',
             'delivery_method': 'email',
             'encrypted_password': 'testPassword',
             'frequency': 'monthly',
@@ -4672,6 +4682,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
 
         post_data = {
             'active': 'true',
+            'enable_compression': 'true',
             'delivery_method': 'email',
             'encrypted_password': 'testPassword',
             'frequency': 'monthly',
@@ -4721,6 +4732,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
         model_item = {
             'active': True,
+            'enable_compression': True,
             'delivery_method': 'email',
             'day_of_month': 1,
             'day_of_week': None,
@@ -4749,6 +4761,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         patch_data = {
             'enterprise_customer_id': str(enterprise_customer.uuid),
             'day_of_month': 4,
+            'enable_compression': True,
             'day_of_week': 1,
             'hour_of_day': 12,
             'enterprise_customer_catalog_uuids': [enterprise_catalog_2.uuid]

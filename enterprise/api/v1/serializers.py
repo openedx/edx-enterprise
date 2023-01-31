@@ -27,6 +27,7 @@ from enterprise.models import (
     AdminNotification,
     AdminNotificationRead,
     EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -831,6 +832,14 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         return value
 
     def validate(self, data):  # pylint: disable=arguments-renamed
+        error = EnterpriseCustomerReportingConfiguration.validate_compression(
+            data.get('enable_compression'),
+            data.get('data_type'),
+            data.get('delivery_method')
+        )
+        if error:
+            raise serializers.ValidationError(error)
+
         delivery_method = data.get('delivery_method')
         if not delivery_method and self.instance:
             delivery_method = self.instance.delivery_method
@@ -1193,6 +1202,7 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
             ("no-id-professional", _("Professional Education (no ID)")),
             ("credit", _("Credit")),
             ("honor", _("Honor")),
+            ("unpaid-executive-education", _("Unpaid Executive Education")),
         ],
         required=False,
     )
