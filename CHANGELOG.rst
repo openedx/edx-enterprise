@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.17]
+---------
+fix: making backend generated fields read only on django admin
+
 [3.60.16]
 ---------
 fix: adding backoff and retry logic to the grades api client

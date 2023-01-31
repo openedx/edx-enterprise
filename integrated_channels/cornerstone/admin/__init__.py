@@ -91,6 +91,7 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAu
         "progress_status",
         "content_title",
         "enterprise_customer_name",
+        "friendly_status_message",
     )
 
     class Meta:

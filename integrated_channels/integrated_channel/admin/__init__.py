@@ -31,7 +31,6 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
         'enterprise_customer',
         'integrated_channel_code',
         'content_id',
-        'api_response_status_code',
         'remote_deleted_at',
         'modified'
     )
@@ -48,7 +47,9 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = [
-        'api_record'
+        'api_record',
+        'api_response_status_code',
+        'friendly_status_message',
     ]
 
     list_per_page = 1000
