@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.20]
+---------
+fix: changing api client to parse grades api response body
+
 [3.60.19]
 ---------
 fix: applied validatoins on report delivery_method
