@@ -2173,6 +2173,56 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         except ValidationError as validation_error:
             assert sorted(validation_error.messages) == sorted(expected_errors)
 
+    def test_clean_validate_delivery_method(self):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating delivery method field.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration.objects.create(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            decrypted_password='test_password',
+            day_of_month=1,
+            hour_of_day=1,
+        )
+
+        config.delivery_method = EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP
+        config.sftp_hostname = 'sftp_hostname'
+        config.sftp_username = 'sftp_username'
+        config.sftp_file_path = 'sftp_file_path'
+        config.decrypted_sftp_password = 'decrypted_sftp_password'
+
+        expected_errors = [
+            'Delivery method cannot be updated',
+        ]
+        try:
+            config.clean()
+        except ValidationError as validation_error:
+            assert sorted(validation_error.messages) == sorted(expected_errors)
+
+    def test_clean_validate_delivery_method_creating(self):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function for valid delivery method.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration.objects.create(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            decrypted_password='test_password',
+            day_of_month=1,
+            hour_of_day=1,
+        )
+        config.email = 'test2@edx.org'
+        expected_errors = []
+        try:
+            config.clean()
+        except ValidationError as validation_error:
+            assert sorted(validation_error.messages) == sorted(expected_errors)
+
     def test_default_data_type(self):
         """
         Test ``EnterpriseCustomerReportingConfiguration`` default data type is 'progress_v3'.

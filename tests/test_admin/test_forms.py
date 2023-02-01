@@ -26,7 +26,7 @@ from enterprise.admin.forms import (
 from enterprise.admin.utils import ValidationMessages
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerReportingConfiguration, SystemWideEnterpriseRole
-from test_utils import TEST_PGP_KEY, fake_enrollment_api
+from test_utils import TEST_PGP_KEY, factories, fake_enrollment_api
 from test_utils.factories import (
     AdminNotificationFactory,
     EnterpriseCatalogQueryFactory,
@@ -711,6 +711,37 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
             'decrypted_password': 'password',
             'enable_compression': True,
         }
+
+    def test_form_valid_delivery_method(self):
+        """
+        Test clean method on form that check delivery method validity
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration.objects.create(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method='email',
+            email='test@edx.org',
+            decrypted_password='test_password',
+            day_of_month=1,
+            hour_of_day=1,
+        )
+        form_data = self.form_data.copy()
+        form_data['delivery_method'] = 'email'
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            instance=config,
+            data=form_data,
+        )
+        assert form.is_valid()
+
+        form_data = self.form_data.copy()
+        form_data['delivery_method'] = 'sftp'
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            instance=config,
+            data=form_data,
+        )
+
+        assert not form.is_valid()
 
     def test_form_no_catalogs(self):
         """

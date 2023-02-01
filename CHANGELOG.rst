@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.19]
+---------
+fix: applied validatoins on report delivery_method
+
 [3.60.18]
 ---------
 fix: checking for response attr in http exception handling

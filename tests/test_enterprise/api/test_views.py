@@ -4394,6 +4394,75 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
                 assert response_content[key] == value
 
     @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_validate_delivery_method(self, request_or_stub_mock):
+        """
+        Tests that the PUT endpoint raise error if delivery method is changed while report updation.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'active': True,
+            'enable_compression': True,
+            'delivery_method': 'email',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'frequency': 'monthly',
+            'report_type': 'csv',
+            'data_type': 'progress_v3',
+        }
+        put_data = {
+            'enterprise_customer_id': str(enterprise_customer.uuid),
+            'active': 'true',
+            'enable_compression': True,
+            'delivery_method': 'sftp',
+            'email': [],
+            'encrypted_sftp_password': 'test_password',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'sftp_host_name',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'sft-_file_path',
+            'data_type': 'progress_v3',
+            'report_type': 'csv',
+            'pgp_encryption_key': ''
+        }
+
+        test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
+
+        put_data.update({
+            'uuid': str(test_config.uuid),
+        })
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+
+        response = client.put(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(test_config.uuid)}
+                ),
+            ),
+            data=put_data,
+            format='json',
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        self.assertEqual(
+            response.json().get('delivery_method')[0],
+            'Delivery method cannot be updated'
+        )
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         (False, status.HTTP_403_FORBIDDEN),
         (True, status.HTTP_200_OK),

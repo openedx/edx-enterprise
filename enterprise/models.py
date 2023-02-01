@@ -2757,6 +2757,23 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             return {'enable_compression': error_message}
         return {}
 
+    def validate_delivery_method(self, create_report, delivery_method):
+        """
+        Check delivery_method is changed or not while updating report
+
+        Arguments:
+            create_report (str): report uuid
+            delivery_method (str): selected delivery method
+
+        Returns:
+            (dict): Validation Error
+        """
+        if create_report:
+            if self.delivery_method != delivery_method:
+                error_message = _('Delivery method cannot be updated')
+                return {'delivery_method': error_message}
+        return {}
+
     def clean(self):
         """
         Override of clean method to perform additional validation on frequency, day_of_month/day_of week
