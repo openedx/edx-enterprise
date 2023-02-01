@@ -465,10 +465,9 @@ class GradesApiClient(UserAPIClient):
                     )
                     raise to_exception
 
-        results = response.json().get('results', [])
-        for row in results:
-            if row.get('username') == username:
-                return row.get('section_breakdown')
+        results = response.json()
+        if results.get('username') == username:
+            return results.get('section_breakdown')
 
         raise HTTPError(f"No assessment grade record found for course={course_id}, username={username}")
 

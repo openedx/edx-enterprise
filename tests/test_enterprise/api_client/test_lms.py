@@ -763,8 +763,17 @@ def test_get_course_certificate_not_found():
 def test_get_course_assessment_grades():
     username = "DarthVadar"
     course_id = "course-v1:edX+DemoX+Demo_Course"
-    expected_result = 'section_breakdown_content'
-    response_body = {'results': [{'username': 'DarthVadar', 'section_breakdown': expected_result}]}
+    expected_result = [{
+        "attempted": True,
+        "category": "Module Assessment",
+        "label": "MA 01",
+        "subsection_name": "section_breakdown_content"
+    }]
+    response_body = {
+        "user_id": 51071028,
+        "username": "DarthVadar",
+        "section_breakdown": expected_result
+    }
     responses.add(
         responses.GET,
         _url("course_grades", f"gradebook/{course_id}/?username={username}"),
