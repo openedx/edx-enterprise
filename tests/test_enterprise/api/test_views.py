@@ -1276,6 +1276,11 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
                 'created': '2021-10-20T19:01:31Z',
                 'unenrolled_at': None,
+                'enrollment_date': None,
+                'enrollment_track': None,
+                'user_email': None,
+                'course_start': None,
+                'course_end': None,
             }],
         ),
         (

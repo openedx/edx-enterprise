@@ -27,6 +27,8 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
+    EnterpriseFeatureRole,
+    EnterpriseFeatureUserRoleAssignment,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
@@ -270,6 +272,39 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     linked = True
     is_relinkable = True
     invite_key = None
+
+
+class EnterpriseFeatureRoleFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseFeatureRole factory.
+    Creates an instance of EnterpriseFeatureRole with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseFeatureRoleFactory.
+        """
+
+        model = EnterpriseFeatureRole
+
+    name = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class EnterpriseFeatureUserRoleAssignmentFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseFeatureUserRoleAssignment factory.
+    Creates an instance of EnterpriseFeatureUserRoleAssignment with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseFeatureUserRoleAssignmentFactory.
+        """
+
+        model = EnterpriseFeatureUserRoleAssignment
+
+    role = factory.SubFactory(EnterpriseFeatureRoleFactory)
+    user = factory.SubFactory(UserFactory)
 
 
 class AnonymousUserFactory(factory.Factory):
