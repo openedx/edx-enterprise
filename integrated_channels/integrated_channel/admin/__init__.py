@@ -22,6 +22,10 @@ class BaseLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
         return ent_customer.name if ent_customer else None
 
 
+@admin.action(description='Clear remote_deleted_at on ContentMetadataItemTransmission item(s)')
+def clear_remote_deleted_at(modeladmin, request, queryset):
+    queryset.update(remote_deleted_at=None)
+
 @admin.register(ContentMetadataItemTransmission)
 class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
     """
@@ -50,6 +54,10 @@ class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
         'api_record',
         'api_response_status_code',
         'friendly_status_message',
+    ]
+
+    actions = [
+        clear_remote_deleted_at,
     ]
 
     list_per_page = 1000
