@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.60.21]
+---------
+feat: django admin bulk action to clear remote_deleted_at on ContentMetadataItemTransmission records
+
 [3.60.20]
 ---------
 fix: changing api client to parse grades api response body
