@@ -26,6 +26,7 @@ class BaseLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
 def clear_remote_deleted_at(modeladmin, request, queryset):  # pylint: disable=unused-argument
     queryset.update(remote_deleted_at=None)
 
+
 @admin.register(ContentMetadataItemTransmission)
 class ContentMetadataItemTransmissionAdmin(admin.ModelAdmin):
     """
