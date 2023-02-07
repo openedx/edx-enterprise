@@ -23,7 +23,7 @@ class BaseLearnerDataTransmissionAuditAdmin(admin.ModelAdmin):
 
 
 @admin.action(description='Clear remote_deleted_at on ContentMetadataItemTransmission item(s)')
-def clear_remote_deleted_at(modeladmin, request, queryset):
+def clear_remote_deleted_at(modeladmin, request, queryset):  # pylint: disable=unused-argument
     queryset.update(remote_deleted_at=None)
 
 @admin.register(ContentMetadataItemTransmission)
