@@ -1229,26 +1229,29 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
         return data
 
 
-class LicensesInfoSerializer(serializers.Serializer):
+class EnrollmentsInfoSerializer(serializers.Serializer):
     """
     Nested serializer class to allow for many license info dictionaries.
     """
-    email = serializers.CharField(required=False)
-    course_run_key = serializers.CharField(required=False)
+    email = serializers.CharField(required=True)
+    course_run_key = serializers.CharField(required=True)
     license_uuid = serializers.CharField(required=False)
+    transaction_id = serializers.CharField(required=False)
 
     def create(self, validated_data):
         return validated_data
 
     def validate(self, data):  # pylint: disable=arguments-renamed
-        missing_fields = []
-        for key in self.fields.keys():
-            if not data.get(key):
-                missing_fields.append(key)
-
-        if missing_fields:
-            raise serializers.ValidationError('Found missing licenses_info field(s): {}.'.format(missing_fields))
-
+        license_uuid = data.get('license_uuid')
+        transaction_id = data.get('transaction_id')
+        if not license_uuid and not transaction_id:
+            raise serializers.ValidationError(
+                "At least one subsidy info field [license_uuid or transaction_id] required."
+            )
+        if license_uuid and transaction_id:
+            raise serializers.ValidationError(
+                "Enrollment info contains conflicting subsidy information: `license_uuid` and `transaction_id` found"
+            )
         return data
 
 
@@ -1257,7 +1260,8 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
     """
     Serializes a licenses info field for bulk enrollment requests.
     """
-    licenses_info = LicensesInfoSerializer(many=True, required=False)
+    licenses_info = EnrollmentsInfoSerializer(many=True, required=False)
+    enrollments_info = EnrollmentsInfoSerializer(many=True, required=False)
     reason = serializers.CharField(required=False)
     salesforce_id = serializers.CharField(required=False)
     discount = serializers.DecimalField(None, 5, required=False)
@@ -1267,9 +1271,15 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
         return validated_data
 
     def validate(self, data):  # pylint: disable=arguments-renamed
-        if data.get('licenses_info') is None:
+        licenses_info = data.get('licenses_info')
+        enrollments_info = data.get('enrollments_info')
+        if bool(licenses_info) == bool(enrollments_info):
+            if licenses_info:
+                raise serializers.ValidationError(
+                    '`licenses_info` must be ommitted if `enrollments_info` is present.'
+                )
             raise serializers.ValidationError(
-                'Must include the "licenses_info" parameter in request.'
+                'Must include the `enrollment_info` parameter in request.'
             )
         return data
 
