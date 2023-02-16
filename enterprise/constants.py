@@ -200,10 +200,3 @@ HTTP_STATUS_STRINGS = {
     500: 'An internal problem on our side interfered.',
     503: 'The server is temporarily unavailable.',
 }
-
-
-class FulfillmentTypes:
-    LICENSE = 'license'
-    LEARNER_CREDIT = 'learner_credit'
-    COUPON_CODE = 'coupon_code'
-    CHOICES = [(choice, choice.capitalize().replace('_', ' ')) for choice in (LICENSE, LEARNER_CREDIT, COUPON_CODE)]

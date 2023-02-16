@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.1]
+--------
+fix: revert of entitlement and enrollment rework
+
 [3.61.0]
 --------
 feat: enterprise entitlements and subsidy based fulfillment models heirarchy rework

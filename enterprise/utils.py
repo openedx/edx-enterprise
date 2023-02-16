@@ -711,13 +711,6 @@ def licensed_enterprise_course_enrollment_model():
     return apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')
 
 
-def subsidized_enterprise_course_enrollment_model():
-    """
-    returns the ``LearnerCreditEnterpriseCourseEnrollment`` class.
-    """
-    return apps.get_model('enterprise', 'LearnerCreditEnterpriseCourseEnrollment')
-
-
 def enterprise_customer_invite_key_model():
     """
     Returns the ``EnterpriseCustomerInviteKey`` class.
@@ -1758,8 +1751,7 @@ def customer_admin_enroll_user_with_status(
         course_mode,
         course_id,
         enrollment_source=None,
-        license_uuid=None,
-        transaction_id=None,
+        license_uuid=None
 ):
     """
     For use with bulk enrollment, or any use case of admin enrolling a user
@@ -1820,11 +1812,6 @@ def customer_admin_enroll_user_with_status(
                 'source': source
             }
         )
-        if transaction_id:
-            subsidized_enterprise_course_enrollment_model().objects.get_or_create(
-                transaction_id=transaction_id,
-                enterprise_course_enrollment=obj,
-            )
         if license_uuid:
             licensed_enterprise_course_enrollment_model().objects.get_or_create(
                 license_uuid=license_uuid,
@@ -1910,15 +1897,14 @@ def get_create_ent_enrollment(
     return enterprise_course_enrollment, created
 
 
-def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, discount=100.00):
+def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, discount=100.00):
     """
     Takes a list of licensed learner data and enrolls each learner in the requested courses.
 
     Args:
         enterprise_customer: The EnterpriseCustomer (object) which is sponsoring the enrollment
-        subsidy_users_info: (list) An array of dictionaries, each containing information necessary to create a
-        enterprise enrollment from a subsidy for a specific learner in a specified course run. Accepted forms of
-        subsidies are: [`license_uuid` and `transaction_id`]
+        licensed_users_info: (list) An array of dictionaries, each containing information necessary to create a
+            licensed enterprise enrollment for a specific learner in a specified course run.
             Example::
 
                 licensed_users_info: [
@@ -1927,13 +1913,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                         'course_mode': 'verified',
                         'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
-                    },
-                    {
-                        'email': 'newuser2@test.com',
-                        'course_run_key': 'course-v2:edX+FunX+Fun_Course',
-                        'course_mode': 'unpaid-executive-education',
-                        'transaction_id': '84kdbdbade7b4fcb838f8asjke8e18ae',
-                    },
+                    }
                 ]
         discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
             default to 100
@@ -1951,28 +1931,21 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
         'pending': [],
         'failures': [],
     }
-    for subsidy_user_info in subsidy_users_info:
-        user_email = subsidy_user_info.get('email').strip().lower()
-        course_mode = subsidy_user_info.get('course_mode')
-        course_run_key = subsidy_user_info.get('course_run_key')
-        license_uuid = subsidy_user_info.get('license_uuid')
-        transaction_id = subsidy_user_info.get('transaction_id')
-        activation_link = subsidy_user_info.get('activation_link')
+    for licensed_user_info in licensed_users_info:
+        user_email = licensed_user_info.get('email')
+        course_mode = licensed_user_info.get('course_mode')
+        course_run_key = licensed_user_info.get('course_run_key')
+        license_uuid = licensed_user_info.get('license_uuid')
+        activation_link = licensed_user_info.get('activation_link')
 
-        user = User.objects.filter(email=subsidy_user_info['email']).first()
+        user = User.objects.filter(email=licensed_user_info['email']).first()
         try:
             if user:
                 enrollment_source = enterprise_enrollment_source_model().get_source(
                     enterprise_enrollment_source_model().CUSTOMER_ADMIN
                 )
                 succeeded, created = customer_admin_enroll_user_with_status(
-                    enterprise_customer,
-                    user,
-                    course_mode,
-                    course_run_key,
-                    enrollment_source,
-                    license_uuid,
-                    transaction_id
+                    enterprise_customer, user, course_mode, course_run_key, enrollment_source, license_uuid
                 )
                 if succeeded:
                     results['successes'].append({
