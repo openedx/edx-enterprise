@@ -176,7 +176,7 @@ class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):
         )
         super().setUp()
 
-    def test_create_license_enrollment_no_course_enrollment_or_entitlement(self):
+    def test_create_license_enrollment_no_course_enrollment(self):
         """
         Test creating a LicensedEnterpriseCourseEnrollment without a Course Enrollment.
         """

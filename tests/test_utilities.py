@@ -172,7 +172,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         (
             EnterpriseCustomerUser,
             [
-                'enterprise_entitlements',
                 "adminnotificationread",
                 "enterprise_enrollments",
                 "id",

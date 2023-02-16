@@ -17,10 +17,6 @@ Unreleased
 ----------
 * Nothing
 
-[3.61.0]
---------
-feat: enterprise entitlements and subsidy based fulfillment models heirarchy rework
-
 [3.60.21]
 ---------
 feat: django admin bulk action to clear remote_deleted_at on ContentMetadataItemTransmission records

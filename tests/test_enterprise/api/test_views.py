@@ -3408,34 +3408,11 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     """
 
     @ddt.data(
-        # enrollment_info usage
-        {
-            'body': {
-                'enrollments_info': [{
-                    'email': 'abc@test.com',
-                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
-                }]
-            },
-            'expected_code': 202,
-            'expected_response': {
-                'successes': [],
-                'pending': [{
-                    'email': 'abc@test.com',
-                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                    'created': True,
-                    'activation_link': None,
-                }],
-                'failures': []
-            },
-            'expected_num_pending_licenses': 1,
-            'expected_events': [mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course')],
-        },
         # Validation failure cases
         {
             'body': {},
             'expected_code': 400,
-            'expected_response': {'non_field_errors': ['Must include the `enrollment_info` parameter in request.']},
+            'expected_response': {'non_field_errors': ['Must include the "licenses_info" parameter in request.']},
             'expected_num_pending_licenses': 0,
             'expected_events': None,
         },
@@ -3456,54 +3433,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_code': 400,
             'expected_response': {
-                'licenses_info': [
-                    {
-                        'non_field_errors': [
-                            "At least one subsidy info field [license_uuid or transaction_id] required."
-                        ],
-                    }
-                ]
-            },
-            'expected_num_pending_licenses': 0,
-            'expected_events': None,
-        },
-        {
-            'body': {
-                'licenses_info': [
-                    {
-                        'email': 'abc@test.com',
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'license_uuid': 'foobar',
-                        'transaction_id': 'ayylmao'
-                    },
-                ]
-            },
-            'expected_code': 400,
-            'expected_response': {
-                'licenses_info': [
-                    {
-                        'non_field_errors': [
-                            "Enrollment info contains conflicting subsidy information: "
-                            "`license_uuid` and `transaction_id` found",
-                        ]
-                    }
-                ]
-            },
-            'expected_num_pending_licenses': 0,
-            'expected_events': None,
-        },
-        {
-            'body': {
-                'licenses_info': [
-                    {
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
-                    }
-                ]
-            },
-            'expected_code': 400,
-            'expected_response': {
-                'licenses_info': [{'email': ['This field is required.']}]
+                'licenses_info': [{'non_field_errors': ["Found missing licenses_info field(s): ['license_uuid']."]}]
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
@@ -3590,68 +3520,6 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         {
             'body': {
                 'licenses_info': [
-                    {
-                        'email': 'abc@test.com',
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
-                    },
-                    {
-                        'email': 'xyz@test.com',
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
-                    },
-                    {
-                        'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
-                    },
-                    {
-                        'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
-                    },
-                ]
-            },
-            'expected_code': 202,
-            'expected_response': {
-                'successes': [],
-                'pending': [
-                    {
-                        'email': 'abc@test.com',
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'created': True,
-                        'activation_link': None,
-                    },
-                    {
-                        'email': 'xyz@test.com',
-                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'created': True,
-                        'activation_link': None,
-                    },
-                    {
-                        'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'created': True,
-                        'activation_link': None,
-                    },
-                    {
-                        'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'created': True,
-                        'activation_link': None,
-                    }
-                ],
-                'failures': []
-            },
-            'expected_num_pending_licenses': 4,
-            'expected_events': [
-                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
-                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
-            ],
-        },
-        {
-            'body': {
-                'enrollments_info': [
                     {
                         'email': 'abc@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
@@ -3903,7 +3771,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         mock_notify_task.assert_has_calls(mock_calls, any_order=True)
 
-    @mock.patch('enterprise.api.v1.views.enroll_subsidy_users_in_courses')
+    @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
     @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user):
         """
