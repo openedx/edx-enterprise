@@ -9,13 +9,6 @@ import simple_history.models
 import uuid
 
 
-def create_uuid(apps, schema_editor):
-    Category = apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')
-    for category in Category.objects.all():
-        category.uuid = uuid.uuid4()
-        category.save()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -87,12 +80,6 @@ class Migration(migrations.Migration):
             model_name='licensedenterprisecourseenrollment',
             name='uuid',
             field=models.UUIDField(default=uuid.uuid4, editable=False, null=True),
-        ),
-        migrations.RunPython(create_uuid, reverse_code=migrations.RunPython.noop),
-        migrations.AlterField(
-            model_name='licensedenterprisecourseenrollment',
-            name='uuid',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
         ),
         migrations.AlterField(
             model_name='licensedenterprisecourseenrollment',
