@@ -69,7 +69,7 @@ from enterprise.errors import (
 )
 from enterprise.utils import (
     NotConnectedToOpenEdX,
-    enroll_licensed_users_in_courses,
+    enroll_subsidy_users_in_courses,
     get_best_mode_from_course_key,
     get_enterprise_customer,
     get_request_value,
@@ -245,22 +245,29 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=unused-argument
     def enroll_learners_in_courses(self, request, pk):
         """
-        Creates a set of licensed enterprise_learners by bulk enrolling them in all specified courses. This endpoint is
-        not transactional, in that any one or more failures will not affect other successful enrollments made within
-        the same request.
+        Creates a set of enterprise enrollments for specified learners by bulk enrolling them in provided courses.
+        This endpoint is not transactional, in that any one or more failures will not affect other successful
+        enrollments smade within the same request.
 
         Parameters:
-            licenses_info (list of dicts): an array of dictionaries, each containing the necessary information to
-                create a licenced enrollment for a user in a specified course. Each dictionary must contain a user
-                email, a course run key, and a UUID of the license that the learner is using to enroll with.
+            enrollment_info (list of dicts): an array of dictionaries, each containing the necessary information to
+                create an enrollment based on a subsidy for a user in a specified course. Each dictionary must contain
+                a user email, a course run key, and either a UUID of the license that the learner is using to enroll
+                with or a transaction ID related to Executive Education the enrollment. `licenses_info` is also
+                accepted as a body param name.
 
                 Example::
 
-                    licenses_info: [
+                    enrollment_info: [
                         {
                             'email': 'newuser@test.com',
                             'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                             'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+                        },
+                        {
+                            'email': 'newuser2@test.com',
+                            'course_run_key': 'course-v2:edX+FunX+Fun_Course',
+                            'transaction_id': '84kdbdbade7b4fcb838f8asjke8e18ae',
                         },
                         ...
                     ]
@@ -298,21 +305,22 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
         email_errors = []
-        licenses_info = serializer.validated_data.get('licenses_info')
+        serialized_data = serializer.validated_data
+        enrollments_info = serialized_data.get('licenses_info', serialized_data.get('enrollments_info'))
 
         # Default subscription discount is 100%
-        discount = serializer.validated_data.get('discount', 100.00)
+        discount = serialized_data.get('discount', 100.00)
 
         emails = set()
 
         # Retrieve and store course modes for each unique course provided
-        course_runs_modes = {license_info['course_run_key']: None for license_info in licenses_info}
+        course_runs_modes = {enrollment_info['course_run_key']: None for enrollment_info in enrollments_info}
         for course_run in course_runs_modes:
             course_runs_modes[course_run] = get_best_mode_from_course_key(course_run)
 
-        for index, info in enumerate(licenses_info):
+        for index, info in enumerate(enrollments_info):
             emails.add(info['email'])
-            licenses_info[index]['course_mode'] = course_runs_modes[info['course_run_key']]
+            enrollments_info[index]['course_mode'] = course_runs_modes[info['course_run_key']]
 
         for email in emails:
             try:
@@ -326,12 +334,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             except LinkUserToEnterpriseError:
                 email_errors.append(email)
 
-        # Remove the bad emails from licenses_info and emails, don't attempt to enroll or link bad emails.
+        # Remove the bad emails from enrollments_info and the emails set, don't attempt to enroll or link bad emails.
         for errored_user in email_errors:
-            licenses_info[:] = [info for info in licenses_info if info['email'] != errored_user]
+            enrollments_info[:] = [info for info in enrollments_info if info['email'] != errored_user]
             emails.remove(errored_user)
 
-        results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
+        results = enroll_subsidy_users_in_courses(enterprise_customer, enrollments_info, discount)
 
         # collect the returned activation links for licenses which need activation
         activation_links = {}
@@ -858,17 +866,18 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
 
             try:
                 termination_status = self._terminate_enrollment(enterprise_course_enrollment, course_overview)
-                LOGGER.info((
-                    "EnterpriseCourseEnrollment record with enterprise license %s "
-                    "unenrolled to status %s."
-                ), enterprise_course_enrollment.licensed_with.license_uuid, termination_status)
+                license_uuid = enterprise_course_enrollment.license.license_uuid
+                LOGGER.info(
+                    f"EnterpriseCourseEnrollment record with enterprise license {license_uuid} "
+                    f"unenrolled to status {termination_status}."
+                )
                 if termination_status != self.EnrollmentTerminationStatus.COURSE_COMPLETED:
                     enterprise_course_enrollment.license.revoke()
             except EnrollmentModificationException as exc:
-                LOGGER.error((
-                    "Failed to unenroll EnterpriseCourseEnrollment record for enterprise license %s. "
-                    "error message %s."
-                ), enterprise_course_enrollment.licensed_with.license_uuid, str(exc))
+                LOGGER.error(
+                    f"Failed to unenroll EnterpriseCourseEnrollment record for enterprise license "
+                    f"{enterprise_course_enrollment.license.license_uuid}. error message {str(exc)}."
+                )
                 any_failures = True
 
         status_code = status.HTTP_200_OK if not any_failures else status.HTTP_422_UNPROCESSABLE_ENTITY

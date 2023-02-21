@@ -48,6 +48,7 @@ from enterprise.constants import (
     AVAILABLE_LANGUAGES,
     ENTERPRISE_OPERATOR_ROLE,
     DefaultColors,
+    FulfillmentTypes,
     json_serialized_course_modes,
 )
 from enterprise.errors import LinkUserToEnterpriseError
@@ -80,6 +81,11 @@ try:
     from common.djangoapps.student.models import CourseEnrollment
 except ImportError:
     CourseEnrollment = None
+
+try:
+    from common.djangoapps.entitlements.models import CourseEntitlement
+except ImportError:
+    CourseEntitlement = None
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
@@ -1686,6 +1692,75 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         return identity_provider is not None and identity_provider.sync_learner_profile_data
 
 
+class EnterpriseCourseEntitlementManager(models.Manager):
+    """
+    Model manager for `EnterpriseCourseEntitlement`.
+    """
+
+    def get_queryset(self):
+        """
+        Override to return only those entitlment records for which learner is linked to an enterprise.
+        """
+        return super().get_queryset().select_related('enterprise_customer_user').filter(
+            enterprise_customer_user__linked=True
+        )
+
+
+class EnterpriseCourseEntitlement(TimeStampedModel):
+    """
+    Store the information about the entitlement of an enterprise user for a course
+    """
+
+    objects = EnterpriseCourseEntitlementManager()
+
+    class Meta:
+        unique_together = (('enterprise_customer_user', 'course_uuid',),)
+        app_label = 'enterprise'
+        ordering = ['created']
+
+    uuid = models.UUIDField(
+        unique=True,
+        editable=False,
+        null=False,
+        default=uuid4,
+    )
+    course_uuid = models.CharField(
+        max_length=255,
+        blank=False,
+        help_text=_(
+            "The UUID of the course (not course run) in which the learner is entitled."
+        )
+    )
+    enterprise_customer_user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        blank=False,
+        null=False,
+        related_name='enterprise_entitlements',
+        on_delete=models.deletion.CASCADE,
+        help_text=_(
+            "The enterprise learner to which this entitlement is attached."
+        )
+    )
+    history = HistoricalRecords()
+
+    # TODO we probably want to verify that this exists on save?
+    @cached_property
+    def course_entitlement(self):
+        """
+        Returns the ``CourseEntitlement`` associated with this enterprise course entitlement record.
+        """
+        if not CourseEntitlement:
+            return None
+        try:
+            return CourseEntitlement.objects.get(
+                user=self.enterprise_customer_user.user,
+                course_uuid=self.course_uuid,
+            )
+        except CourseEntitlement.DoesNotExist:
+            LOGGER.error(f'{self} does not have a matching CourseEntitlement')
+            return None
+
+
 class EnterpriseCourseEnrollmentManager(models.Manager):
     """
     Model manager for `EnterpriseCourseEnrollment`.
@@ -1794,7 +1869,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         Returns the license associated with this enterprise course enrollment if one exists.
         """
         try:
-            associated_license = self.licensed_with  # pylint: disable=no-member
+            associated_license = self.licensedenterprisecourseenrollment_enrollment_fulfillment  # pylint: disable=no-member
         except LicensedEnterpriseCourseEnrollment.DoesNotExist:
             associated_license = None
         return associated_license
@@ -1906,34 +1981,53 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         return self.__str__()
 
 
-class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
+class EnterpriseFulfillmentSource(TimeStampedModel):
     """
-    An Enterprise Course Enrollment that is enrolled via a license.
-
-    .. no_pii:
+    Base class for enterprise subsidy fulfillments
     """
+    class Meta:
+        abstract = True
 
-    license_uuid = models.UUIDField(
-        primary_key=False,
+    uuid = models.UUIDField(
+        unique=True,
         editable=False,
-        null=False
+        null=False,
+        default=uuid4,
+    )
+
+    fulfillment_type = models.CharField(
+        max_length=128,
+        choices=FulfillmentTypes.CHOICES,
+        default=FulfillmentTypes.LICENSE,
+        help_text=f"Subsidy fulfillment type, can be one of: {[choice[0] for choice in FulfillmentTypes.CHOICES]}"
+    )
+
+    enterprise_course_entitlement = models.OneToOneField(
+        EnterpriseCourseEntitlement,
+        blank=True,
+        null=True,
+        related_name="%(class)s_entitlement_fulfillment",
+        on_delete=models.deletion.CASCADE,
+        help_text=_(
+            "The course entitlement the associated subsidy is for."
+        )
     )
 
     enterprise_course_enrollment = models.OneToOneField(
         EnterpriseCourseEnrollment,
-        blank=False,
-        null=False,
-        related_name='licensed_with',
+        blank=True,
+        null=True,
+        related_name="%(class)s_enrollment_fulfillment",
         on_delete=models.deletion.CASCADE,
         help_text=_(
-            "The course enrollment the associated license is for."
+            "The course enrollment the associated subsidy is for."
         )
     )
 
     is_revoked = models.BooleanField(
         default=False,
         help_text=_(
-            "Whether the licensed enterprise course enrollment is revoked, e.g., when a user's license is revoked."
+            "Whether the enterprise subsidy is revoked, e.g., when a user's license is revoked."
         )
     )
 
@@ -1942,8 +2036,8 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
     @classmethod
     def enrollments_for_user(cls, enterprise_customer_user):
         """
-        Returns a QuerySet of LicensedEnterpriseCourseEnrollments, along with their associated (hydrated)
-        enterprise enrollments, users, and customers.
+        Returns a QuerySet of subsidy based enrollment records for a particular user, along with their associated
+        (hydrated) user, enterprise enrollments, and customer object.
         """
         return cls.objects.filter(
             enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
@@ -1953,6 +2047,11 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
             'enterprise_course_enrollment__enterprise_customer_user__enterprise_customer',
         )
 
+    @property
+    def enterprise_customer_user(self):
+        user_source = self.enterprise_course_entitlement or self.enterprise_course_enrollment
+        return user_source.enterprise_customer_user  # may be null
+
     def revoke(self):
         """
         Marks this object as revoked and marks the associated EnterpriseCourseEnrollment
@@ -1961,7 +2060,48 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
         self.is_revoked = True
         self.enterprise_course_enrollment.saved_for_later = True
         self.enterprise_course_enrollment.save()
+
+        # TODO revoke entitlements as well?
         self.save()
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return f"<{self.__class__.__name__} for Enterprise user {self.enterprise_customer_user}>"
+
+    def save(self, *args, **kwargs):
+        if not self.enterprise_course_enrollment and not self.enterprise_course_entitlement:
+            raise IntegrityError
+        super().save(*args, **kwargs)
+
+
+class LearnerCreditEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
+    """
+    An Enterprise Course Enrollment that is enrolled via a transaction ID.
+
+    .. no_pii:
+    """
+
+    transaction_id = models.UUIDField(
+        primary_key=False,
+        editable=False,
+        null=False
+    )
+
+
+class LicensedEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
+    """
+    An Enterprise Course Enrollment that is enrolled via a license.
+
+    .. no_pii:
+    """
+
+    license_uuid = models.UUIDField(
+        primary_key=False,
+        editable=False,
+        null=False,
+    )
 
 
 class EnterpriseCatalogQuery(TimeStampedModel):
