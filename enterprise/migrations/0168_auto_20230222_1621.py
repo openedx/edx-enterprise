@@ -11,20 +11,6 @@ def create_license_enrollment_uuid(apps, schema_editor):
         licensed_enrollment.save()
 
 
-def create_hist_learner_credit_enrollment_uuid(apps, schema_editor):
-    hist_learner_credit_enrollments = apps.get_model('enterprise', 'historicallearnercreditenterprisecourseenrollment')
-    for hist_learner_credit_enrollment in hist_learner_credit_enrollments.objects.all():
-        hist_learner_credit_enrollment.uuid = uuid.uuid4()
-        hist_learner_credit_enrollment.save()
-
-
-def create_hist_license_enrollment_uuid(apps, schema_editor):
-    hist_licensed_enrollments = apps.get_model('enterprise', 'historicallicensedenterprisecourseenrollment')
-    for hist_licensed_enrollment in hist_licensed_enrollments.objects.all():
-        hist_licensed_enrollment.uuid = uuid.uuid4()
-        hist_licensed_enrollment.save()
-
-
 def create_learner_credit_enrollment_uuid(apps, schema_editor):
     learner_credit_enrollments = apps.get_model('enterprise', 'learnercreditenterprisecourseenrollment')
     for learner_credit_enrollment in learner_credit_enrollments.objects.all():
@@ -40,7 +26,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(create_license_enrollment_uuid, reverse_code=migrations.RunPython.noop),
-        migrations.RunPython(create_hist_learner_credit_enrollment_uuid, reverse_code=migrations.RunPython.noop),
-        migrations.RunPython(create_hist_license_enrollment_uuid, reverse_code=migrations.RunPython.noop),
         migrations.RunPython(create_learner_credit_enrollment_uuid, reverse_code=migrations.RunPython.noop),
     ]
