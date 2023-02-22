@@ -1989,9 +1989,9 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         abstract = True
 
     uuid = models.UUIDField(
-        unique=True,
+        unique=False,
         editable=False,
-        null=False,
+        null=True,
         default=uuid4,
     )
 
@@ -2031,7 +2031,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         )
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(inherit=True)
 
     @classmethod
     def enrollments_for_user(cls, enterprise_customer_user):

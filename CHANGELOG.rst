@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.1]
+--------
+fix: allowing for uuid column migration to be non-unique
+
 [3.61.0]
 --------
 feat: enterprise entitlements and subsidy based fulfillment models heirarchy rework

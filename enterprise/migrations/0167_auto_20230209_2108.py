@@ -9,13 +9,6 @@ import simple_history.models
 import uuid
 
 
-def create_uuid(apps, schema_editor):
-    Category = apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')
-    for category in Category.objects.all():
-        category.uuid = uuid.uuid4()
-        category.save()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -67,7 +60,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, unique=True)),
+                ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, null=True, unique=False)),
                 ('fulfillment_type', models.CharField(choices=[('license', 'License'), ('learner_credit', 'Learner credit'), ('coupon_code', 'Coupon code')], default='license', help_text="Subsidy fulfillment type, can be one of: ['license', 'learner_credit', 'coupon_code']", max_length=128)),
                 ('is_revoked', models.BooleanField(default=False, help_text="Whether the enterprise subsidy is revoked, e.g., when a user's license is revoked.")),
                 ('transaction_id', models.UUIDField(editable=False)),
@@ -86,13 +79,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='licensedenterprisecourseenrollment',
             name='uuid',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, null=True),
-        ),
-        migrations.RunPython(create_uuid, reverse_code=migrations.RunPython.noop),
-        migrations.AlterField(
-            model_name='licensedenterprisecourseenrollment',
-            name='uuid',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+            field=models.UUIDField(default=uuid.uuid4, editable=False, null=True, unique=False),
         ),
         migrations.AlterField(
             model_name='licensedenterprisecourseenrollment',
@@ -104,8 +91,55 @@ class Migration(migrations.Migration):
             name='is_revoked',
             field=models.BooleanField(default=False, help_text="Whether the enterprise subsidy is revoked, e.g., when a user's license is revoked."),
         ),
-        migrations.DeleteModel(
-            name='HistoricalLicensedEnterpriseCourseEnrollment',
+        migrations.AddField(
+            model_name='historicallicensedenterprisecourseenrollment',
+            name='enterprise_course_entitlement',
+            field=models.ForeignKey(blank=True, db_constraint=False, help_text='The course entitlement the associated subsidy is for.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.enterprisecourseentitlement'),
+        ),
+        migrations.AddField(
+            model_name='historicallicensedenterprisecourseenrollment',
+            name='fulfillment_type',
+            field=models.CharField(choices=[('license', 'License'), ('learner_credit', 'Learner credit'), ('coupon_code', 'Coupon code')], default='license', help_text="Subsidy fulfillment type, can be one of: ['license', 'learner_credit', 'coupon_code']", max_length=128),
+        ),
+        migrations.AddField(
+            model_name='historicallicensedenterprisecourseenrollment',
+            name='uuid',
+            field=models.UUIDField(default=uuid.uuid4, editable=False, null=True),
+        ),
+        migrations.AlterField(
+            model_name='historicallicensedenterprisecourseenrollment',
+            name='enterprise_course_enrollment',
+            field=models.ForeignKey(blank=True, db_constraint=False, help_text='The course enrollment the associated subsidy is for.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.enterprisecourseenrollment'),
+        ),
+        migrations.AlterField(
+            model_name='historicallicensedenterprisecourseenrollment',
+            name='is_revoked',
+            field=models.BooleanField(default=False, help_text="Whether the enterprise subsidy is revoked, e.g., when a user's license is revoked."),
+        ),
+        migrations.CreateModel(
+            name='HistoricalLearnerCreditEnterpriseCourseEnrollment',
+            fields=[
+                ('id', models.IntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, null=True)),
+                ('fulfillment_type', models.CharField(choices=[('license', 'License'), ('learner_credit', 'Learner credit'), ('coupon_code', 'Coupon code')], default='license', help_text="Subsidy fulfillment type, can be one of: ['license', 'learner_credit', 'coupon_code']", max_length=128)),
+                ('is_revoked', models.BooleanField(default=False, help_text="Whether the enterprise subsidy is revoked, e.g., when a user's license is revoked.")),
+                ('transaction_id', models.UUIDField(editable=False)),
+                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_date', models.DateTimeField()),
+                ('history_change_reason', models.CharField(max_length=100, null=True)),
+                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
+                ('enterprise_course_enrollment', models.ForeignKey(blank=True, db_constraint=False, help_text='The course enrollment the associated subsidy is for.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.enterprisecourseenrollment')),
+                ('enterprise_course_entitlement', models.ForeignKey(blank=True, db_constraint=False, help_text='The course entitlement the associated subsidy is for.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.enterprisecourseentitlement')),
+                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'historical learner credit enterprise course enrollment',
+                'ordering': ('-history_date', '-history_id'),
+                'get_latest_by': 'history_date',
+            },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
         migrations.AddField(
             model_name='licensedenterprisecourseenrollment',
