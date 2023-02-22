@@ -1989,9 +1989,9 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         abstract = True
 
     uuid = models.UUIDField(
-        unique=False,
+        unique=True,
         editable=False,
-        null=True,
+        null=False,
         default=uuid4,
     )
 

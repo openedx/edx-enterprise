@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.2]
+--------
+fix: migrating uuid and updating column constraints
+
 [3.61.1]
 --------
 fix: allowing for uuid column migration to be non-unique
