@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.3]
+--------
+chore: cleanup squashed migration files
+
 [3.61.2]
 --------
 fix: migrating uuid and updating column constraints
