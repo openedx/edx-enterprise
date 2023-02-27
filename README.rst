@@ -18,7 +18,7 @@ enterprise
     :alt: Supported Python versions
 
 .. image:: https://img.shields.io/github/license/edx/edx-enterprise.svg
-    :target: https://github.com/edx/edx-enterprise/blob/master/LICENSE.txt
+    :target: https://github.com/openedx/edx-enterprise/blob/master/LICENSE.txt
     :alt: License
 
 The ``Open edx Enterprise Service`` app provides enterprise features to the Open
@@ -44,7 +44,7 @@ How To Contribute
 
 Contributions are very welcome.
 
-Please read `How To Contribute <https://github.com/edx/edx-platform/blob/master/CONTRIBUTING.rst>`_ for details.
+Please read `How To Contribute <https://github.com/openedx/edx-platform/blob/master/CONTRIBUTING.rst>`_ for details.
 
 Even though they were written with ``edx-platform`` in mind, the guidelines
 should be followed for Open edX code in general.
@@ -53,7 +53,7 @@ A Pull Request Description Template can be found at`PULL_REQUEST_TEMPLATE.md`_ -
 template is automatically applied when you open a pull request from GitHub.  Please
 make sure to include this template if submitting a pull request via other channels.
 
-.. _PULL_REQUEST_TEMPLATE.md: https://github.com/edx/edx-enterprise/blob/master/.github/PULL_REQUEST_TEMPLATE_TEMPLATE.md
+.. _PULL_REQUEST_TEMPLATE.md: https://github.com/openedx/edx-enterprise/blob/master/.github/PULL_REQUEST_TEMPLATE_TEMPLATE.md
 
 After submitting a pull request, please use the Github "Reviewers" widget to add
 relevant reviewers and track review process.

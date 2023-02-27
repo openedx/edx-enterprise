@@ -24,7 +24,7 @@ The subsystem organizes the integration into two separate phases:
    the integrated channel by whatever means is provided by the third-party
    system, usually an HTTP-based API. 
 
-There are [base implementations](https://github.com/edx/edx-enterprise/tree/master/integrated_channels/integrated_channel)
+There are [base implementations](https://github.com/openedx/edx-enterprise/tree/master/integrated_channels/integrated_channel)
 for each of these phases which can be extended for
 channel-specific customizations needed for integrating with a given integrated channel.
 Channel-specific implementation code should be placed in a new directory adjacent to
@@ -32,8 +32,8 @@ the base implementation code.
 
 For example:
 
-* [degreed](https://github.com/edx/edx-enterprise/tree/master/integrated_channels/degreed)
-* [sap_success_factors](https://github.com/edx/edx-enterprise/tree/master/integrated_channels/sap_success_factors)
+* [degreed](https://github.com/openedx/edx-enterprise/tree/master/integrated_channels/degreed)
+* [sap_success_factors](https://github.com/openedx/edx-enterprise/tree/master/integrated_channels/sap_success_factors)
 
 ## Integration Points
 
@@ -50,18 +50,18 @@ Additional integration points may be added in the future.
 There is a many-to-many relationship between integrated channels and enterprise customers.
 Configuration information related to an enterprise-specific integrated channel is stored in
 the database by creating a concrete implementation of the abstract
-[EnterpriseCustomerPluginConfiguration](https://github.com/edx/edx-enterprise/blob/master/integrated_channels/integrated_channel/models.py) model. Fields can be added to the concrete
+[EnterpriseCustomerPluginConfiguration](https://github.com/openedx/edx-enterprise/blob/master/integrated_channels/integrated_channel/models.py) model. Fields can be added to the concrete
 implementation to store values such as the API credentials for a given enterprise customer's
 instance of an integrated channel.
 
 Configuration that is common for all instances of integrated channel regardless of enterprise
 customer should be persisted by implementing a model within the channel-specific implementation
-directory, (e.g. [SAPSuccessFactorsGlobalConfiguration](https://github.com/edx/edx-enterprise/blob/master/integrated_channels/sap_success_factors/models.py)).
+directory, (e.g. [SAPSuccessFactorsGlobalConfiguration](https://github.com/openedx/edx-enterprise/blob/master/integrated_channels/sap_success_factors/models.py)).
 
 ## Content Metadata Synchronization
 
 The set of content metadata transmitted for a given integrated channel instance is defined by the
-EnterpriseCustomerCatalogs configured for the associated EnterpriseCustomer. In order to ensure that the content metadata transmitted to an integrated channel is synchronized with the content made available by the EnterpriseCustomer's catalogs, each content metadata item transmission is persisted using the [ContentMetadataItemTransmission](https://github.com/edx/edx-enterprise/blob/master/integrated_channels/integrated_channel/models.py) model. ContentMetadataItemTransmission records are created, updated, and deleted as EnterpriseCustomerCatalogs are modified and modified sets of content metadata are exported and transmitted to the integrated channel.
+EnterpriseCustomerCatalogs configured for the associated EnterpriseCustomer. In order to ensure that the content metadata transmitted to an integrated channel is synchronized with the content made available by the EnterpriseCustomer's catalogs, each content metadata item transmission is persisted using the [ContentMetadataItemTransmission](https://github.com/openedx/edx-enterprise/blob/master/integrated_channels/integrated_channel/models.py) model. ContentMetadataItemTransmission records are created, updated, and deleted as EnterpriseCustomerCatalogs are modified and modified sets of content metadata are exported and transmitted to the integrated channel.
 
 ## Implementing a new Integrated Channel
 
@@ -69,6 +69,6 @@ Here is the general implementation plan for creating a new integrated channel.
 
 1. Obtain API documentation for the third-party service which the integrated
    channel will represent.
-2. Implement a concrete subclass of [IntegratedChannelApiClient](https://github.com/edx/edx-enterprise/blob/master/integrated_channels/integrated_channel/client.py).
+2. Implement a concrete subclass of [IntegratedChannelApiClient](https://github.com/openedx/edx-enterprise/blob/master/integrated_channels/integrated_channel/client.py).
 3. Copy/paste one of the existing integrated channel directories and modify the implementation
    as needed for the new integrated channel.

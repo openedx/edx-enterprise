@@ -87,7 +87,7 @@ setup(
     long_description=f"{README}\n\n{CHANGELOG}",
     author="edX",
     author_email="oscm@edx.org",
-    url="https://github.com/edx/edx-enterprise",
+    url="https://github.com/openedx/edx-enterprise",
     packages=[
         "enterprise",
         "consent",

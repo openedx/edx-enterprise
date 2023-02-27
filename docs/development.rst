@@ -150,7 +150,7 @@ as an example) and run migrations:
     # Or use a more down-to-the-root command (replace aws with your version of config)
     $ ./manage.py lms migrate --settings=devstack
 
-.. _lms/env/common.py: https://github.com/edx/edx-platform/blob/488467883409b9d06df3e0ccfa55fe8e8a9903b3/lms/envs/common.py#L2678-L2681
+.. _lms/env/common.py: https://github.com/openedx/edx-platform/blob/488467883409b9d06df3e0ccfa55fe8e8a9903b3/lms/envs/common.py#L2678-L2681
 
 .. rubric:: Footnotes
 

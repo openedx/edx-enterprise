@@ -8,7 +8,7 @@ Production setup
 ``edx-platform``. ``Edx-enterprise`` is shipped with default edx-platform setup (see `edx-platform requirements file`_),
 so new installs should already have it set up and enabled.
 
-.. _edx-platform requirements file: https://github.com/edx/edx-platform/blob/master/requirements/edx/base.txt
+.. _edx-platform requirements file: https://github.com/openedx/edx-platform/blob/master/requirements/edx/base.txt
 
 If you're migrating from an earlier (i.e. pre-Ficus) release, the only step you *might* have to do manually is to
 perform database migrations.
