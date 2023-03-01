@@ -696,6 +696,30 @@ class SystemWideEnterpriseUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
         except SystemWideEnterpriseUserRoleAssignment.user.RelatedObjectDoesNotExist:
             self.fields['enterprise_customer'].queryset = EnterpriseCustomer.objects.none()
 
+    def clean(self):
+        """
+        Ensure that the form's enterprise customer value defaults to the first active, linked enterprise customer
+        by the provided user
+        """
+        cleaned_data = super().clean()
+        user = cleaned_data.get('user')
+        enterprise_customer = cleaned_data.get('enterprise_customer')
+        applies_to_all_contexts = cleaned_data.get('applies_to_all_contexts', False)
+        if not enterprise_customer and not applies_to_all_contexts:
+            default_ent_customer = EnterpriseCustomer.objects.filter(
+                enterprise_customer_users__user_id=user.id, active=True
+            ).first()
+
+            if not default_ent_customer:
+                message = _(
+                    'User specified is not linked to an active Enterprise Customer. '
+                    'Select `Applies to all contexts` or choose a different user.',
+                )
+                logger.exception(message)
+                raise ValidationError(message)
+            cleaned_data['enterprise_customer'] = default_ent_customer
+        return cleaned_data
+
 
 class EnterpriseFeatureUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
     """

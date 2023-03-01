@@ -906,8 +906,7 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     paginator = BigTableMysqlPaginator
     show_full_result_count = False
 
-    fields = ('user', 'role', 'enterprise_customer', 'applies_to_all_contexts', 'effective_enterprise_customer')
-    readonly_fields = ('effective_enterprise_customer',)
+    fields = ('user', 'role', 'enterprise_customer', 'applies_to_all_contexts')
 
     list_display = ('user', 'role', 'enterprise_customer', 'applies_to_all_contexts')
     # This tells Django to use select_related() in retrieving the list of objects on the change list page.
@@ -925,43 +924,6 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
     class Meta:
         model = SystemWideEnterpriseUserRoleAssignment
-
-    def effective_enterprise_customer(self, instance):
-        """
-        Return the comma separated names of all enterprise customers attached to the user.
-
-        Arguments:
-            instance (SystemWideEnterpriseUserRoleAssignment): model instance
-        """
-        if instance.enterprise_customer:
-            return instance.enterprise_customer
-
-        enterprise_customers = EnterpriseCustomerUser.objects.filter(
-            user_id=instance.user.id
-        ).select_related(
-            'enterprise_customer'
-        ).values_list(
-            'enterprise_customer__name',
-            flat=True
-        )
-        if enterprise_customers.exists():
-            return ', '.join(list(enterprise_customers))
-        return None
-
-    def get_form(self, request, obj=None, **kwargs):  # pylint: disable=arguments-differ
-        """
-        Adds help text to the callable-defined ``effective_enterprise_customer`` field.
-        """
-        kwargs.update({
-            'help_texts': {
-                'effective_enterprise_customer': (
-                    'The comma-separated name(s) of all enterprise customers the user '
-                    'is currently linked to (deprecated - we will eventually have explicitly defined '
-                    'one enterprise customer per user role assignment via the Enterprise customer field).'
-                ),
-            },
-        })
-        return super().get_form(request, obj, **kwargs)
 
 
 @admin.register(EnterpriseFeatureUserRoleAssignment)

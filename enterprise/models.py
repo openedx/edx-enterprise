@@ -3017,9 +3017,10 @@ class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
         related_name="system_wide_role_assignments",
         on_delete=models.CASCADE,
         help_text=_(
-            'The EnterpriseCustomer for which the role is assigned for the user.  If creating a new assignment, '
-            'you must first provide a user email and role, then click "Save and continue editing" '
-            'BEFORE selecting from this dropdown.'
+            'The EnterpriseCustomer for which the role is assigned to for the provided user. '
+            'Defaults to the first active Enterprise Customer that the user is linked to.'
+            'If another Enterprise Customer object is desired, please first create the record then '
+            'modify the enterprise customer field by using the drop down.'
         ),
     )
 

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.4]
+--------
+fix: impoved admin screen for system wide enterprise role assignments
+
 [3.61.3]
 --------
 chore: cleanup squashed migration files
