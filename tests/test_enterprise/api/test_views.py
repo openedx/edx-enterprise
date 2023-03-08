@@ -3503,7 +3503,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_code': 400,
             'expected_response': {
-                'licenses_info': [{'email': ['This field is required.']}]
+                'licenses_info': [
+                    {'non_field_errors': ['At least one user identifier field [user_id or email] required.']}
+                ]
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
@@ -3760,6 +3762,148 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
         else:
             mock_track_enroll.assert_not_called()
+
+        # no notifications to be sent unless 'notify' specifically asked for in payload
+        mock_notify_task.assert_not_called()
+
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
+    @mock.patch('enterprise.utils.lms_enroll_user_in_course')
+    def test_bulk_enrollment_in_bulk_courses_existing_users(
+        self,
+        mock_customer_admin_enroll_user,
+        mock_notify_task,
+        mock_track_enroll,
+        mock_get_course_mode,
+    ):
+        """
+        Tests the bulk enrollment endpoint at enroll_learners_in_courses.
+
+        This tests the case where existing users are supplied, so the enrollments are fulfilled rather than pending.
+        """
+        mock_customer_admin_enroll_user.return_value = True
+
+        user_one = factories.UserFactory(is_active=True)
+        user_two = factories.UserFactory(is_active=True)
+
+        factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+
+        self.assertEqual(len(PendingEnrollment.objects.all()), 0)
+        body = {
+            'enrollments_info': [
+                {
+                    'user_id': user_one.id,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                },
+                {
+                    'email': user_two.email,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                },
+            ]
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_json = response.json()
+        self.assertEqual({
+            'successes': [
+                {
+                    'user_id': user_one.id,
+                    'email': user_one.email,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'created': True,
+                    'activation_link': None,
+                },
+                {
+                    'user_id': user_two.id,
+                    'email': user_two.email,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'created': True,
+                    'activation_link': None,
+                },
+            ],
+            'pending': [],
+            'failures': [],
+        }, response_json)
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 2)
+
+        mock_track_enroll.assert_has_calls([
+            mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
+        ])
+
+        # no notifications to be sent unless 'notify' specifically asked for in payload
+        mock_notify_task.assert_not_called()
+
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
+    def test_bulk_enrollment_in_bulk_courses_nonexisting_user_id(
+        self,
+        mock_notify_task,
+        mock_track_enroll,
+        mock_get_course_mode,
+    ):
+        """
+        Tests the bulk enrollment endpoint at enroll_learners_in_courses.
+
+        This tests the case where a non-existent user_id is supplied, so an error should occur.
+        """
+        user = factories.UserFactory(is_active=True)
+
+        factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+
+        self.assertEqual(len(PendingEnrollment.objects.all()), 0)
+        body = {
+            'enrollments_info': [
+                {
+                    'user_id': 9998,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                },
+                {
+                    # Also make sure an invalid user_id fails even when a valid email is supplied.
+                    'user_id': 9999,
+                    'email': user.email,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                },
+            ]
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        response_json = response.json()
+        self.assertEqual({
+            'successes': [],
+            'pending': [],
+            'failures': [],
+            'invalid_user_ids': [9998, 9999],
+        }, response_json)
+
+        mock_track_enroll.assert_not_called()
 
         # no notifications to be sent unless 'notify' specifically asked for in payload
         mock_notify_task.assert_not_called()

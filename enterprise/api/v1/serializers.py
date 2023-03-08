@@ -1233,7 +1233,8 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
     """
     Nested serializer class to allow for many license info dictionaries.
     """
-    email = serializers.CharField(required=True)
+    user_id = serializers.IntegerField(required=False)
+    email = serializers.CharField(required=False)
     course_run_key = serializers.CharField(required=True)
     license_uuid = serializers.CharField(required=False)
     transaction_id = serializers.CharField(required=False)
@@ -1242,6 +1243,15 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
         return validated_data
 
     def validate(self, data):  # pylint: disable=arguments-renamed
+        # Validate that at least one user identifier was provided.  Providing both will not fail validation, so the
+        # burden is on the caller to validate that they match.
+        user_id = data.get('user_id')
+        email = data.get('email')
+        if not user_id and not email:
+            raise serializers.ValidationError(
+                "At least one user identifier field [user_id or email] required."
+            )
+        # Validate that one and only one subsidy info field was provided:
         license_uuid = data.get('license_uuid')
         transaction_id = data.get('transaction_id')
         if not license_uuid and not transaction_id:

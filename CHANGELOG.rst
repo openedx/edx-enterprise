@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.6]
+--------
+feat: Add user_id support to enroll_learners_in_courses endpoint
+
 [3.61.5]
 --------
 fix: Ensure `EnterpriseCustomerBrandingConfigurationSerializer` returns correct logo URL on stage/production after `settings.DEFAULT_FILE_STORAGE` changed to use `storages.backends.s3boto3.S3Boto3Storage` instead of `storages.backends.s3boto.S3BotoStorage`.
