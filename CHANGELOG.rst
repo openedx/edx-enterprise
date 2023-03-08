@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.5]
+--------
+fix: Ensure `EnterpriseCustomerBrandingConfigurationSerializer` returns correct logo URL on stage/production after `settings.DEFAULT_FILE_STORAGE` changed to use `storages.backends.s3boto3.S3Boto3Storage` instead of `storages.backends.s3boto.S3BotoStorage`.
+
 [3.61.4]
 --------
 fix: impoved admin screen for system wide enterprise role assignments

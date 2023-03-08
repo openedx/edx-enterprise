@@ -1592,6 +1592,17 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         """
         return self.__str__()
 
+    def _check_file_storage_environment(self):
+        """
+        Returns whether `settings.DEFAULT_FILE_STORAGE` is set for
+        stage/prod or dev environment.
+        """
+        allowed_default_file_storages = [
+            'storages.backends.s3boto.S3BotoStorage',
+            'storages.backends.s3boto3.S3Boto3Storage',
+        ]
+        return settings.DEFAULT_FILE_STORAGE in allowed_default_file_storages
+
     @property
     def safe_logo_url(self):
         """
@@ -1602,7 +1613,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
 
         # AWS S3 storage is used in stage/production environments but file system
         # storage is used in devstack environment
-        if settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto.S3BotoStorage':
+        if self._check_file_storage_environment():
             media_base_url = 'https://' + settings.AWS_S3_CUSTOM_DOMAIN
         else:
             media_base_url = settings.LMS_ROOT_URL + settings.MEDIA_URL
