@@ -1268,25 +1268,18 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         return super().destroy(request, *args, **kwargs)
 
 
-class CatalogQueryView(APIView):
+class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
     """
-    View for enterprise catalog query.
-    This will be called from django admin tool to populate `content_filter` field of `EnterpriseCustomerCatalog` model.
+    API views for the ``enterprise_catalog_query`` API endpoint.
     """
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    http_method_names = ['get']
+    queryset = models.EnterpriseCatalogQuery.objects.all()
+    serializer_class = serializers.EnterpriseCatalogQuerySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
 
-    def get(self, request, catalog_query_id):
-        """
-        API endpoint for fetching an enterprise catalog query.
-        """
-        try:
-            catalog_query = models.EnterpriseCatalogQuery.objects.get(pk=catalog_query_id)
-        except models.EnterpriseCatalogQuery.DoesNotExist:
-            return Response({"detail": "Could not find enterprise catalog query."}, status=HTTP_404_NOT_FOUND)
-        return Response(catalog_query.content_filter, status=HTTP_200_OK)
-
+    # isEn
+    # permission_classes = [permissions.IsAdminUser] --> licsense manager Lookup
+    # JWT with enterprise Role, if staff user --> this endpoint
 
 class CouponCodesView(APIView):
     """

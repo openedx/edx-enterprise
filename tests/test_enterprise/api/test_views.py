@@ -2888,84 +2888,69 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
-class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCatalogQueryViewSet(BaseTestEnterpriseAPIViews):
     """
-    Test CatalogQueryView
+    Test EnterpriseCatalogQueryViewSet
     """
+    catalog_query_content_filter = {
+        "query_field": "query_data"
+    }
+    # -list
+    # -detail
 
-    CATALOG_QUERY_ENDPOINT = 'enterprise-catalog-query'
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super().setUp()
+        factories.EnterpriseCatalogQueryFactory(content_filter=self.catalog_query_content_filter)
 
-    def test_get_catalog_query(self):
+    def test_enterprise_catalog_query_response_formats(self):
         """
-        Test that `CatalogQueryView` returns expected response.
+        ``enterprise_catalog_query``'s json responses verification.
         """
-        expected_content_filter = {'partner': 'MushiX'}
-        catalog_query = EnterpriseCatalogQuery.objects.create(
-            title='Test Catalog Query',
-            content_filter=expected_content_filter
-        )
-        response = self.client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': catalog_query.id})
-        )
-        assert response.status_code == 200
-        assert response.json() == expected_content_filter
+        response_default = self.client.get('/enterprise/api/v1/enterprise_catalog_query/')
+        self.assertEqual(response_default['content-type'], 'application/json')
 
-    def test_get_catalog_query_not_found(self):
-        """
-        Test that `CatalogQueryView` returns correct response when enterprise catalog query is not found.
-        """
-        non_existed_id = 100
-        response = self.client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': non_existed_id})
-        )
-        assert response.status_code == 404
-        response = response.json()
-        assert response['detail'] == 'Could not find enterprise catalog query.'
+        response_json = self.client.get('/enterprise/api/v1/enterprise_catalog_query.json')
+        self.assertEqual(response_json['content-type'], 'application/json')
 
-    def test_get_catalog_query_post_method_not_allowed(self):
+    def test_enteprise_catalog_query_list(self):
         """
-        Test that `CatalogQueryView` does not allow POST method.
+        ``enterprise_catalog_query``'s response when no catalog uuid is provided.
         """
-        response = self.client.post(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1}),
-            data=json.dumps({'current_troll_hunter': 'Jim Lake Jr.'}),
-            content_type='application/json'
-        )
-        assert response.status_code == 405
-        response = response.json()
-        assert response['detail'] == 'Method "POST" not allowed.'
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-list')
 
-    def test_get_catalog_query_not_staff(self):
-        """
-        Test that `CatalogQueryView` does not allow non staff users.
-        """
-        # Creating a non staff user so as to verify the insufficient permission conditions.
-        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')
-        user.save()
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 200)
 
-        client = APIClient()
-        client.login(username='test_user', password='test_password')
-        response = client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
-        )
-
-        assert response.status_code == 403
-        response = response.json()
-        assert response['detail'] == 'You do not have permission to perform this action.'
-
-    def test_get_catalog_query_not_logged_in(self):
+    def test_enterprise_catalog_query_detail(self):
         """
-        Test that `CatalogQueryView` only allows logged in users.
+        ``enterprise_catalog_query``'s response when a catalog uuid is provided.
         """
-        client = APIClient()
-        # User is not logged in.
-        response = client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
-        )
-        assert response.status_code == 403
-        response = response.json()
-        assert response['detail'] == 'Authentication credentials were not provided.'
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-detail', args=[1])
+
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 200)
+
+    def test_enterprise_catalog_query_detail_not_found(self):
+        """
+        ``enterprise_catalog_query``'s response when a catalog uuid is provided.
+        """
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-detail', args=[2])
+
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 404)
+
+    def test_enterprise_catalog_query_detail_bad_uuid(self):
+        """
+        ``enterprise_catalog_query``'s response when a catalog uuid is provided.
+        """
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-detail', args=['bad-uuid'])
+
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 404)
+
 
 
 @ddt.ddt

@@ -34,6 +34,11 @@ router.register(
     views.EnterpriseCustomerInviteKeyViewSet,
     "enterprise-customer-invite-key"
 )
+router.register(
+    "enterprise_catalog_query",
+    views.EnterpriseCatalogQueryViewSet,
+    "enterprise_catalog_query"
+)
 
 urlpatterns = [
     re_path(r'^read_notification$', views.NotificationReadView.as_view(),
@@ -43,11 +48,6 @@ urlpatterns = [
         r'link_pending_enterprise_users/(?P<enterprise_uuid>[A-Za-z0-9-]+)/?$',
         views.PendingEnterpriseCustomerUserEnterpriseAdminViewSet.as_view({'post': 'link_learners'}),
         name='link-pending-enterprise-learner'
-    ),
-    re_path(
-        r'^enterprise_catalog_query/(?P<catalog_query_id>[\d]+)/$',
-        views.CatalogQueryView.as_view(),
-        name='enterprise-catalog-query'
     ),
     re_path(r'^request_codes$', views.CouponCodesView.as_view(),
             name='request-codes'
