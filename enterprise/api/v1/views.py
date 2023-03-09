@@ -34,6 +34,7 @@ from rest_framework_xml.renderers import XMLRenderer
 
 from django.apps import apps
 from django.conf import settings
+from django.contrib import auth
 from django.core import exceptions, mail
 from django.db import transaction
 from django.http import Http404, JsonResponse
@@ -93,6 +94,8 @@ except ImportError:
     enrollment_api = None
 
 LOGGER = getLogger(__name__)
+
+User = auth.get_user_model()
 
 
 class EnterpriseViewSet:
@@ -242,7 +245,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
-    # pylint: disable=unused-argument
+    # pylint: disable=unused-argument, too-many-statements
     def enroll_learners_in_courses(self, request, pk):
         """
         Creates a set of enterprise enrollments for specified learners by bulk enrolling them in provided courses.
@@ -252,9 +255,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Parameters:
             enrollment_info (list of dicts): an array of dictionaries, each containing the necessary information to
                 create an enrollment based on a subsidy for a user in a specified course. Each dictionary must contain
-                a user email, a course run key, and either a UUID of the license that the learner is using to enroll
-                with or a transaction ID related to Executive Education the enrollment. `licenses_info` is also
-                accepted as a body param name.
+                a user email (or user_id), a course run key, and either a UUID of the license that the learner is using
+                to enroll with or a transaction ID related to Executive Education the enrollment. `licenses_info` is
+                also accepted as a body param name.
 
                 Example::
 
@@ -268,6 +271,11 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                             'email': 'newuser2@test.com',
                             'course_run_key': 'course-v2:edX+FunX+Fun_Course',
                             'transaction_id': '84kdbdbade7b4fcb838f8asjke8e18ae',
+                        },
+                        {
+                            'user_id': 1234,
+                            'course_run_key': 'course-v2:edX+SadX+Sad_Course',
+                            'transaction_id': 'ba1f7b61951987dc2e1743fa4886b62d',
                         },
                         ...
                     ]
@@ -304,6 +312,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             LOGGER.warning(error_message)
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
+        user_id_errors = []
         email_errors = []
         serialized_data = serializer.validated_data
         enrollments_info = serialized_data.get('licenses_info', serialized_data.get('enrollments_info'))
@@ -311,16 +320,24 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         # Default subscription discount is 100%
         discount = serialized_data.get('discount', 100.00)
 
-        emails = set()
-
         # Retrieve and store course modes for each unique course provided
         course_runs_modes = {enrollment_info['course_run_key']: None for enrollment_info in enrollments_info}
         for course_run in course_runs_modes:
             course_runs_modes[course_run] = get_best_mode_from_course_key(course_run)
 
-        for index, info in enumerate(enrollments_info):
-            emails.add(info['email'])
-            enrollments_info[index]['course_mode'] = course_runs_modes[info['course_run_key']]
+        emails = set()
+
+        for info in enrollments_info:
+            if 'user_id' in info:
+                user = User.objects.filter(id=info['user_id']).first()
+                if user:
+                    info['email'] = user.email
+                    emails.add(user.email)
+                else:
+                    user_id_errors.append(info['user_id'])
+            else:
+                emails.add(info['email'])
+            info['course_mode'] = course_runs_modes[info['course_run_key']]
 
         for email in emails:
             try:
@@ -334,10 +351,11 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             except LinkUserToEnterpriseError:
                 email_errors.append(email)
 
-        # Remove the bad emails from enrollments_info and the emails set, don't attempt to enroll or link bad emails.
-        for errored_user in email_errors:
-            enrollments_info[:] = [info for info in enrollments_info if info['email'] != errored_user]
-            emails.remove(errored_user)
+        # Remove the bad emails and bad user_ids from enrollments_info; don't attempt to enroll or link them.
+        enrollments_info = [
+            info for info in enrollments_info
+            if info.get('email') not in email_errors and info.get('user_id') not in user_id_errors
+        ]
 
         results = enroll_subsidy_users_in_courses(enterprise_customer, enrollments_info, discount)
 
@@ -388,10 +406,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 f'Bulk enrollment request submitted for users: {existing_enrollments} who already have enrollments'
             )
 
+        if user_id_errors:
+            results['invalid_user_ids'] = user_id_errors
         if email_errors:
             results['invalid_email_addresses'] = email_errors
 
-        if results['failures'] or email_errors:
+        if results['failures'] or email_errors or user_id_errors:
             return Response(results, status=HTTP_409_CONFLICT)
         if results['pending']:
             return Response(results, status=HTTP_202_ACCEPTED)

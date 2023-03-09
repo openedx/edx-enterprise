@@ -1916,9 +1916,15 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
 
     Args:
         enterprise_customer: The EnterpriseCustomer (object) which is sponsoring the enrollment
-        subsidy_users_info: (list) An array of dictionaries, each containing information necessary to create a
-        enterprise enrollment from a subsidy for a specific learner in a specified course run. Accepted forms of
-        subsidies are: [`license_uuid` and `transaction_id`]
+        subsidy_users_info (list of dict):
+            Each element contains information necessary to create a enterprise enrollment from a subsidy for a specific
+            learner in a specified course run. Required fields:
+
+            * 'user_id' OR 'email': Either unique identifier describing the user to enroll.
+            * 'course_run_key': The course to enroll into.
+            * 'course_mode': The course mode.
+            * 'license_uuid' OR 'transaction_id': ID of either accepted form of subsidy.
+
             Example::
 
                 licensed_users_info: [
@@ -1934,6 +1940,12 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                         'course_mode': 'unpaid-executive-education',
                         'transaction_id': '84kdbdbade7b4fcb838f8asjke8e18ae',
                     },
+                    {
+                        'user_id': 1234,
+                        'course_run_key': 'course-v1:edX+SadX+Sad_Course',
+                        'course_mode': 'unpaid-executive-education',
+                        'transaction_id': '3a5312d722564db0a16e3d81f53a3718',
+                    },
                 ]
         discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
             default to 100
@@ -1941,9 +1953,12 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
     Expected Return Values::
 
         Results: {
-            successes: [{ 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
-            pending: [{ 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
-            failures: [{ 'email': <email>, 'course_run_key': <key> } ... ]
+            successes:
+                [{ 'user_id': <lms_user_id>, 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
+            pending:
+                [{ 'user_id': <lms_user_id>, 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
+            failures:
+                [{ 'user_id': <lms_user_id>, 'email': <email>, 'course_run_key': <key> } ... ]
         }
     """
     results = {
@@ -1952,14 +1967,30 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
         'failures': [],
     }
     for subsidy_user_info in subsidy_users_info:
-        user_email = subsidy_user_info.get('email').strip().lower()
+        user_id = subsidy_user_info.get('user_id')
+        user_email = subsidy_user_info['email'].strip().lower() if 'email' in subsidy_user_info else None
         course_mode = subsidy_user_info.get('course_mode')
         course_run_key = subsidy_user_info.get('course_run_key')
         license_uuid = subsidy_user_info.get('license_uuid')
         transaction_id = subsidy_user_info.get('transaction_id')
         activation_link = subsidy_user_info.get('activation_link')
 
-        user = User.objects.filter(email=subsidy_user_info['email']).first()
+        if user_id and user_email:
+            user = User.objects.filter(id=subsidy_user_info['user_id']).first()
+            # If either the provided user_id does not match an existing user, or the provided email does not match that
+            # of the existing user, fail.
+            if not user or user_email != user.email:
+                results['failures'].append({'user_id': user_id, 'email': user_email, 'course_run_key': course_run_key})
+                continue
+        elif user_id and not user_email:
+            user = User.objects.filter(id=subsidy_user_info['user_id']).first()
+        elif not user_id and user_email:
+            user = User.objects.filter(email=subsidy_user_info['email']).first()
+        elif not user_id and not user_email:
+            # Neither 'user_id', nor 'email' were supplied for the current user info, but at least one is required.
+            results['failures'].append({'course_run_key': course_run_key})
+            continue
+
         try:
             if user:
                 enrollment_source = enterprise_enrollment_source_model().get_source(
@@ -1977,13 +2008,16 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                 if succeeded:
                     results['successes'].append({
                         'user': user,
-                        'email': user_email,
+                        'user_id': user.id,
+                        'email': user.email,
                         'course_run_key': course_run_key,
                         'created': created,
                         'activation_link': activation_link,
                     })
                 else:
-                    results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
+                    results['failures'].append(
+                        {'user_id': user.id, 'email': user.email, 'course_run_key': course_run_key}
+                    )
             else:
                 pending_user, new_enrollments = enterprise_customer.enroll_user_pending_registration_with_status(
                     user_email,
@@ -2003,7 +2037,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     'activation_link': activation_link,
                 })
         except utils.IntegrityError:
-            results['failures'].append({'email': user_email, 'course_run_key': course_run_key})
+            results['failures'].append({'user_id': user_id, 'email': user_email, 'course_run_key': course_run_key})
             continue
 
     return results
