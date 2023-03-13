@@ -253,7 +253,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         enrollments smade within the same request.
 
         Parameters:
-            enrollment_info (list of dicts): an array of dictionaries, each containing the necessary information to
+            enrollments_info (list of dicts): an array of dictionaries, each containing the necessary information to
                 create an enrollment based on a subsidy for a user in a specified course. Each dictionary must contain
                 a user email (or user_id), a course run key, and either a UUID of the license that the learner is using
                 to enroll with or a transaction ID related to Executive Education the enrollment. `licenses_info` is
@@ -261,7 +261,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
                 Example::
 
-                    enrollment_info: [
+                    enrollments_info: [
                         {
                             'email': 'newuser@test.com',
                             'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
