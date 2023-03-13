@@ -42,6 +42,8 @@ from enterprise.models import (
     EnterpriseEnrollmentSource,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
+    LearnerCreditEnterpriseCourseEnrollment,
+    LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
@@ -3407,6 +3409,22 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     Test bulk enrollment (EnterpriseCustomerViewSet)
     """
 
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        user = factories.UserFactory(email=username, is_active=True, is_staff=False)
+        user.set_password(password)
+        user.save()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        return user, enterprise_customer
+
     @ddt.data(
         # enrollment_info usage
         {
@@ -3826,6 +3844,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                     'created': True,
                     'activation_link': None,
+                    'enterprise_fufillment_source_uuid': str(EnterpriseCourseEnrollment.objects.filter(
+                        enterprise_customer_user__user_id=user_one.id
+                    ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid)
                 },
                 {
                     'user_id': user_two.id,
@@ -3833,6 +3854,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                     'created': True,
                     'activation_link': None,
+                    'enterprise_fufillment_source_uuid': str(EnterpriseCourseEnrollment.objects.filter(
+                        enterprise_customer_user__user_id=user_two.id
+                    ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid)
                 },
             ],
             'pending': [],
@@ -3907,6 +3931,77 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         # no notifications to be sent unless 'notify' specifically asked for in payload
         mock_notify_task.assert_not_called()
+
+    @ddt.data(
+        {
+            'body': {
+                'notify': 'true',
+                'enrollments_info': [
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'transaction_id': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    },
+                ]
+            },
+            'fulfillment_source': LearnerCreditEnterpriseCourseEnrollment,
+        },
+        {
+            'body': {
+                'notify': 'true',
+                'enrollments_info': [
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    },
+                ]
+            },
+            'fulfillment_source': LicensedEnterpriseCourseEnrollment,
+        },
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch("enterprise.utils.lms_enroll_user_in_course")
+    def test_bulk_enrollment_includes_fulfillment_source_uuid(
+        self,
+        mock_platform_enrollment,
+        mock_get_course_mode,
+        body,
+        fulfillment_source,
+    ):
+        """
+        Test that a successful bulk enrollmnet call to generate subsidy based enrollment records will return the newly
+        generated subsidized enrollment uuid value as part of the response payload.
+        """
+        mock_platform_enrollment.return_value = True
+
+        user, enterprise_customer = self._create_user_and_enterprise_customer(
+            body.get('enrollments_info')[0].get('email'), 'test_password'
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        user.user_permissions.add(permission)
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+
+        enrollment_url = reverse(
+            'enterprise-customer-enroll-learners-in-courses',
+            (str(enterprise_customer.uuid),)
+        )
+        with mock.patch('enterprise.api.v1.views.track_enrollment'):
+            with mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners"):
+                response = self.client.post(
+                    settings.TEST_SERVER + enrollment_url, data=json.dumps(body), content_type='application/json',
+                )
+
+        self.assertEqual(response.status_code, 201)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json.get('successes')), 1)
+        self.assertEqual(
+            str(fulfillment_source.objects.first().uuid),
+            response_json.get('successes')[0].get('enterprise_fufillment_source_uuid')
+        )
 
     @ddt.data(
         {

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.7]
+--------
+feat: surfacing subsized enrollment uuid value in the bulk enrollment endpoint
+
 [3.61.6]
 --------
 feat: Add user_id support to enroll_learners_in_courses endpoint
