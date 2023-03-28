@@ -36,9 +36,21 @@ router.register(
 )
 
 urlpatterns = [
-    re_path(r'^read_notification$', views.NotificationReadView.as_view(),
-            name='read-notification'
-            ),
+    re_path(
+        r'enterprise-subsidy-fulfillment/(?P<fulfillment_source_uuid>[A-Za-z0-9-]+)/?$',
+        views.EnterpriseSubsidyFulfillmentViewSet.as_view({'get': 'retrieve'}),
+        name='enterprise-subsidy-fulfillment'
+    ),
+    re_path(
+        r'enterprise-subsidy-fulfillment/(?P<fulfillment_source_uuid>[A-Za-z0-9-]+)/cancel-fulfillment?$',
+        views.EnterpriseSubsidyFulfillmentViewSet.as_view({'post': 'cancel_enrollment'}),
+        name='enterprise-subsidy-fulfillment-cancel-enrollment'
+    ),
+    re_path(
+        r'^read_notification$',
+        views.NotificationReadView.as_view(),
+        name='read-notification'
+    ),
     re_path(
         r'link_pending_enterprise_users/(?P<enterprise_uuid>[A-Za-z0-9-]+)/?$',
         views.PendingEnterpriseCustomerUserEnterpriseAdminViewSet.as_view({'post': 'link_learners'}),
@@ -49,9 +61,11 @@ urlpatterns = [
         views.CatalogQueryView.as_view(),
         name='enterprise-catalog-query'
     ),
-    re_path(r'^request_codes$', views.CouponCodesView.as_view(),
-            name='request-codes'
-            ),
+    re_path(
+        r'^request_codes$',
+        views.CouponCodesView.as_view(),
+        name='request-codes'
+    ),
     re_path(
         r'^plotly_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         views.PlotlyAuthView.as_view(),

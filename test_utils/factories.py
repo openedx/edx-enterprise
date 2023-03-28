@@ -24,6 +24,7 @@ from enterprise.models import (
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
@@ -371,6 +372,23 @@ class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactor
         model = LicensedEnterpriseCourseEnrollment
 
     license_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_course_enrollment = factory.SubFactory(EnterpriseCourseEnrollmentFactory)
+    is_revoked = False
+
+
+class LearnerCreditEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
+    """
+    LearnerCreditEnterpriseCourseEnrollment factory.
+    """
+
+    class Meta:
+        """
+        Meta for LearnerCreditEnterpriseCourseEnrollment.
+        """
+
+        model = LearnerCreditEnterpriseCourseEnrollment
+
+    transaction_id = factory.LazyAttribute(lambda x: FAKER.uuid4())
     enterprise_course_enrollment = factory.SubFactory(EnterpriseCourseEnrollmentFactory)
     is_revoked = False
 

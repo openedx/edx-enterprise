@@ -37,6 +37,7 @@ from django.conf import settings
 from django.contrib import auth
 from django.core import exceptions, mail
 from django.db import transaction
+from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
@@ -552,6 +553,146 @@ class EnrollmentModificationException(Exception):
     An exception that represents an error when modifying the state
     of an enrollment via the EnrollmentApiClient.
     """
+
+
+class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
+    """
+    General API views for subsidized enterprise course enrollments.
+
+    Supported operations:
+        * Fetch a subsidy fulfillment record by uuid.
+            /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/
+        * Cancel a subsidy fulfillment enrollment record by uuid.
+            /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/cancel-enrollment/
+
+    Requires a fulfillment source uuid query parameter. Supports both fetch and cancel operations.
+
+    Arguments:
+        fulfillment_source_uuid (str): The uuid of the subsidy fulfillment record.
+    Returns (Fetch):
+        (Response): JSON response containing the subsidy fulfillment record.
+    Raises
+        (Http404): If the subsidy fulfillment record does not exist or if subsidy fulfillment exists under a separate
+        enterprise.
+        (Http403): If the requesting user does not have the appropriate permissions.
+        (EnrollmentModificationException): If something goes wrong while updating the platform CourseEnrollment object.
+    """
+
+    def get_queryset(self):
+        """
+        Return the queryset for this view. Queries across subsidy types until it finds a match for the provided uuid.
+        Returns a 404 if no subsidy fulfillment record is found.
+        """
+        enterprise_customer_uuid = get_enterprise_customer_from_user_id(self.request.user.id)
+        fulfillment_source_uuid = self.kwargs.get('fulfillment_source_uuid')
+
+        subsidy_fulfillment_filter = Q(
+            enterprise_course_enrollment__enterprise_customer_user__enterprise_customer__uuid=enterprise_customer_uuid
+        )
+        subsidy_fulfillment_filter |= Q(
+            enterprise_course_entitlement__enterprise_customer_user__enterprise_customer__uuid=enterprise_customer_uuid
+        )
+        learner_credit_enrollments = models.LearnerCreditEnterpriseCourseEnrollment.objects.filter(
+            uuid=fulfillment_source_uuid
+        )
+        if not self.request.user.is_staff:
+            learner_credit_enrollments = learner_credit_enrollments.filter(subsidy_fulfillment_filter)
+
+        if learner_credit_enrollments:
+            return learner_credit_enrollments
+
+        licensed_enrollments = models.LicensedEnterpriseCourseEnrollment.objects.filter(
+            uuid=fulfillment_source_uuid
+        )
+        if not self.request.user.is_staff:
+            licensed_enrollments = licensed_enrollments.filter(subsidy_fulfillment_filter)
+
+        if licensed_enrollments:
+            return licensed_enrollments
+
+        raise ValidationError('No enrollment found for the given fulfillment source uuid.', code=HTTP_404_NOT_FOUND)
+
+    def get_serializer_class(self):
+        """
+        Fetch the correct serializer class based on the subsidy type.
+        """
+        fulfillment_source_uuid = self.kwargs.get('fulfillment_source_uuid')
+
+        learner_credit_enrollments = models.LearnerCreditEnterpriseCourseEnrollment.objects.filter(
+            uuid=fulfillment_source_uuid
+        )
+        if len(learner_credit_enrollments):
+            return serializers.LearnerCreditEnterpriseCourseenrollmentReadOnlySerializer
+        licensed_enrollments = models.LicensedEnterpriseCourseEnrollment.objects.filter(
+            uuid=fulfillment_source_uuid
+        )
+        if len(licensed_enrollments):
+            return serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
+
+        raise ValidationError('No enrollment found for the given fulfillment source uuid.', code=HTTP_404_NOT_FOUND)
+
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request, fulfillment_source_uuid: get_enterprise_customer_from_user_id(request.user.id)
+    )
+    def retrieve(self, request, fulfillment_source_uuid, *args, **kwargs):
+        """
+        Retrieve a single subsidized enrollment.
+            /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/
+        """
+        try:
+            queryset = self.get_queryset()
+            fulfillment = get_object_or_404(queryset, uuid=fulfillment_source_uuid)
+            serializer_class = self.get_serializer_class()
+            serialized_object = serializer_class(fulfillment)
+        except ValidationError as exc:
+            return Response(
+                status=HTTP_404_NOT_FOUND,
+                data={'detail': exc.detail}
+            )
+        return Response(serialized_object.data)
+
+    @action(methods=['post'], detail=True)
+    @permission_required(
+        'enterprise.can_enroll_learners',
+        fn=lambda request, fulfillment_source_uuid: get_enterprise_customer_from_user_id(request.user.id)
+    )
+    def cancel_enrollment(self, request, fulfillment_source_uuid):
+        """
+        Cancel a single subsidized enrollment. Assumes fulfillment source has a valid enterprise enrollment.
+            /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/cancel-enrollment/
+        """
+        try:
+            enrollment = get_object_or_404(
+                self.get_queryset(), uuid=fulfillment_source_uuid
+            )
+            if enrollment.is_revoked:
+                return Response(
+                    status=HTTP_400_BAD_REQUEST,
+                    data={'detail': 'Enrollment is already canceled.'}
+                )
+        except ValidationError as exc:
+            return Response(
+                status=HTTP_404_NOT_FOUND,
+                data={'detail': exc.detail}
+            )
+
+        try:
+            username = enrollment.enterprise_course_enrollment.enterprise_customer_user.username
+            enrollment_api.update_enrollment(
+                username,
+                enrollment.enterprise_course_enrollment.course_id,
+                is_active=False,
+            )
+            enrollment.revoke()
+        except Exception as exc:  # pylint: disable=broad-except
+            msg = (
+                f'Subsized enrollment terminationss error: unable to unenroll User {username}'
+                f'from Course {enrollment.course_id}  because: {str(exc)}'
+            )
+            LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
+            return Response(msg, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(status=HTTP_200_OK)
 
 
 class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
@@ -1271,8 +1412,11 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
 class CatalogQueryView(APIView):
     """
     View for enterprise catalog query.
-    This will be called from django admin tool to populate `content_filter` field of `EnterpriseCustomerCatalog` model.
+
+    This will be called from django admin tool to populate `content_filter` field of `EnterpriseCustomerCatalog`
+    model.
     """
+
     authentication_classes = [SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
     http_method_names = ['get']

@@ -3136,6 +3136,223 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
+class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseSubsidyFulfillmentViewSet
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        self.client = APIClient()
+        self.client.login(username='test_user', password='test_password')
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer.uuid))
+
+        self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_user,
+        )
+        self.licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=self.enterprise_course_enrollment,
+        )
+        self.learner_credit_course_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=self.enterprise_course_enrollment,
+        )
+
+        self.licensed_fulfillment_url = reverse(
+            'enterprise-subsidy-fulfillment',
+            kwargs={'fulfillment_source_uuid': str(self.licensed_course_enrollment.uuid)}
+        )
+        self.learner_credit_fulfillment_url = reverse(
+            'enterprise-subsidy-fulfillment',
+            kwargs={'fulfillment_source_uuid': str(self.learner_credit_course_enrollment.uuid)}
+        )
+        self.cancel_licensed_fulfillment_url = self.licensed_fulfillment_url + '/cancel-fulfillment'
+        self.cancel_learner_credit_fulfillment_url = self.learner_credit_fulfillment_url + '/cancel-fulfillment'
+
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        self.user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        self.user.set_password(password)
+        self.user.save()
+
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+    def test_successful_retrieve_licensed_enrollment(self):
+        """
+        Test that we can sucessfully retrieve a licensed enrollment.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        assert response_json == {
+            'license_uuid': str(self.licensed_course_enrollment.license_uuid),
+            'enterprise_course_enrollment': {
+                'enterprise_customer_user': self.enterprise_user.id,
+                'course_id': self.enterprise_course_enrollment.course_id,
+            }
+        }
+
+    def test_successful_retrieve_learner_credit_enrollment(self):
+        """
+        Test that we can sucessfully retrieve a learner credit enrollment.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + self.learner_credit_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        assert response_json == {
+            'transaction_id': str(self.learner_credit_course_enrollment.transaction_id),
+            'enterprise_course_enrollment': {
+                'enterprise_customer_user': self.enterprise_user.id,
+                'course_id': self.enterprise_course_enrollment.course_id,
+            }
+        }
+
+    def test_retrieve_nonexistent_enrollment(self):
+        """
+        Test that we get a 404 when trying to retrieve a nonexistent enrollment.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(uuid.uuid4())}
+            ),
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_unsupported_methods(self):
+        """
+        Ensure that we get a 405 when trying to use unsupported methods.
+        """
+        create_response = self.client.post(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert create_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        delete_response = self.client.delete(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert delete_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        update_response = self.client.put(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert update_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    def test_successful_cancel_fulfillment(self, mock_enrollment_api):
+        """
+        Test that we can successfully cancel both licensed and learner credit fulfillments.
+        """
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+        self.licensed_course_enrollment.is_revoked = False
+        self.licensed_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_licensed_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.licensed_course_enrollment.refresh_from_db()
+        assert self.licensed_course_enrollment.is_revoked
+        mock_enrollment_api.update_enrollment.assert_called_once()
+        assert mock_enrollment_api.update_enrollment.call_args.args == (
+            self.enterprise_course_enrollment.enterprise_customer_user.user.username,
+            self.enterprise_course_enrollment.course_id,
+        )
+        assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
+            'is_active': False,
+        }
+
+        mock_enrollment_api.reset_mock()
+
+        self.learner_credit_course_enrollment.is_revoked = False
+        self.learner_credit_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_learner_credit_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.learner_credit_course_enrollment.refresh_from_db()
+        assert self.learner_credit_course_enrollment.is_revoked
+        mock_enrollment_api.update_enrollment.assert_called_once()
+        assert mock_enrollment_api.update_enrollment.call_args.args == (
+            self.enterprise_course_enrollment.enterprise_customer_user.user.username,
+            self.enterprise_course_enrollment.course_id,
+        )
+        assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
+            'is_active': False,
+        }
+
+    def test_cancel_fulfillment_nonexistent_enrollment(self):
+        """
+        Test that we get a 404 when trying to cancel a nonexistent enrollment.
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(uuid.uuid4())}
+            ) + '/cancel-fulfillment',
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_cancel_fulfillment_belonging_to_different_enterprise(self):
+        """
+        Test that a non staff user cannot cancel a fulfillment belonging to a different enterprise.
+        """
+        self.user.is_staff = False
+        other_enterprise_user = factories.EnterpriseCustomerUserFactory()
+        other_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=other_enterprise_user
+        )
+        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=other_enrollment,
+        )
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
+            ) + '/cancel-fulfillment',
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    def test_staff_can_cancel_fulfillments_not_belonging_to_them(self, mock_enrollment_api):
+        """
+        Test that a staff user can cancel a fulfillment belonging to a different enterprise.
+        """
+        self.user.is_staff = True
+        self.user.save()
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+        other_enterprise_user = factories.EnterpriseCustomerUserFactory()
+        other_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=other_enterprise_user
+        )
+        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=other_enrollment,
+        )
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
+            ) + '/cancel-fulfillment',
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+
+@ddt.ddt
+@mark.django_db
 class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
     """
     Test LicensedEnterpriseCourseEnrollemntViewset

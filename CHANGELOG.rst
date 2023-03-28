@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.8]
+--------
+feat: added enterprise fulfillment viewset
+
 [3.61.7]
 --------
 feat: surfacing subsized enrollment uuid value in the bulk enrollment endpoint
