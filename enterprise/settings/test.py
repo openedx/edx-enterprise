@@ -183,6 +183,7 @@ ENTERPRISE_ALL_SERVICE_USERNAMES = [
     'enterprise_worker',
     'license_manager_worker',
     'enterprise_catalog_worker',
+    'enterprise_subsidy_worker',
 ]
 
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'

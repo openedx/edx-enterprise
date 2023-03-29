@@ -11,7 +11,7 @@ from pytest import mark
 from django.conf import settings
 from django.forms.models import model_to_dict
 
-from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
     get_idiff_list,
@@ -120,7 +120,6 @@ class TestUtils(unittest.TestCase):
             'course_mode': 'verified',
             'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
         }]
-
         result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
             {
@@ -171,8 +170,7 @@ class TestUtils(unittest.TestCase):
             }
         ]
         mock_model.DoesNotExist = Exception
-        mock_customer_admin_enroll_user_with_status.side_effect = [True, mock_error('mocked error')]
-
+        mock_customer_admin_enroll_user_with_status.side_effect = [True, mock_error('mocked error'), None]
         result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
             {
@@ -184,6 +182,7 @@ class TestUtils(unittest.TestCase):
                     'user': self.user,
                     'created': True,
                     'activation_link': None,
+                    'enterprise_fufillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
                 }],
                 'failures': [{
                     'user_id': failure_user.id,
@@ -219,7 +218,6 @@ class TestUtils(unittest.TestCase):
         }]
 
         mock_customer_admin_enroll_user.return_value = True
-
         result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
         self.assertEqual(
             {
@@ -231,6 +229,7 @@ class TestUtils(unittest.TestCase):
                     'user': self.user,
                     'created': True,
                     'activation_link': None,
+                    'enterprise_fufillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
                 }],
                 'failures': []
             },
@@ -287,6 +286,9 @@ class TestUtils(unittest.TestCase):
                         'user': self.user,
                         'created': True,
                         'activation_link': None,
+                        'enterprise_fufillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=self.user.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
                     },
                     {
                         'user_id': another_user.id,
@@ -295,7 +297,10 @@ class TestUtils(unittest.TestCase):
                         'user': another_user,
                         'created': True,
                         'activation_link': None,
-                    },
+                        'enterprise_fufillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=another_user.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
+                    }
                 ],
                 'failures': [],
             },

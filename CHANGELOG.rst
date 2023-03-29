@@ -17,9 +17,17 @@ Unreleased
 ----------
 * Nothing
 
-[3.61.7]
+[3.61.9]
 --------
 feat: Serialize and create a viewset for enterpriseCatalogQuery as readonly
+
+[3.61.8]
+--------
+feat: added enterprise fulfillment viewset
+
+[3.61.7]
+--------
+feat: surfacing subsized enrollment uuid value in the bulk enrollment endpoint
 
 [3.61.6]
 --------

@@ -1790,6 +1790,7 @@ def customer_admin_enroll_user_with_status(
     )
     succeeded = False
     new_enrollment = False
+    enterprise_fufillment_source_uuid = None
     try:
         # enrolls a user in a course per LMS flow, but this method does not create enterprise records yet so we need to
         # create it immediately after calling lms_enroll_user_in_course. lms_enroll_user_in_course can return None if
@@ -1821,22 +1822,24 @@ def customer_admin_enroll_user_with_status(
             }
         )
         if transaction_id:
-            subsidized_enterprise_course_enrollment_model().objects.get_or_create(
+            subsidy_enrollment_obj, __ = subsidized_enterprise_course_enrollment_model().objects.get_or_create(
                 transaction_id=transaction_id,
                 enterprise_course_enrollment=obj,
             )
+            enterprise_fufillment_source_uuid = subsidy_enrollment_obj.uuid
         if license_uuid:
-            licensed_enterprise_course_enrollment_model().objects.get_or_create(
+            licensed_enrollment_obj, __ = licensed_enterprise_course_enrollment_model().objects.get_or_create(
                 license_uuid=license_uuid,
                 enterprise_course_enrollment=obj,
             )
+            enterprise_fufillment_source_uuid = licensed_enrollment_obj.uuid
         if created:
             # Note: this tracking event only caters to bulk enrollment right now.
             track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
 
     # If new_enrollment is None then the enrollment already existed
     created = bool(new_enrollment)
-    return succeeded, created
+    return succeeded, created, enterprise_fufillment_source_uuid
 
 
 def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id, enrollment_source=None):
@@ -1855,7 +1858,7 @@ def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id
     Returns:
         succeeded (Boolean): Whether or not enrollment succeeded for the course specified
     """
-    succeeded, __ = customer_admin_enroll_user_with_status(
+    succeeded, __, __ = customer_admin_enroll_user_with_status(
         enterprise_customer,
         user,
         course_mode,
@@ -1996,7 +1999,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                 enrollment_source = enterprise_enrollment_source_model().get_source(
                     enterprise_enrollment_source_model().CUSTOMER_ADMIN
                 )
-                succeeded, created = customer_admin_enroll_user_with_status(
+                succeeded, created, source_uuid = customer_admin_enroll_user_with_status(
                     enterprise_customer,
                     user,
                     course_mode,
@@ -2006,14 +2009,18 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     transaction_id
                 )
                 if succeeded:
-                    results['successes'].append({
+                    success_dict = {
                         'user': user,
                         'user_id': user.id,
                         'email': user.email,
                         'course_run_key': course_run_key,
                         'created': created,
                         'activation_link': activation_link,
-                    })
+                    }
+
+                    if source_uuid:
+                        success_dict['enterprise_fufillment_source_uuid'] = source_uuid
+                    results['successes'].append(success_dict)
                 else:
                     results['failures'].append(
                         {'user_id': user.id, 'email': user.email, 'course_run_key': course_run_key}
