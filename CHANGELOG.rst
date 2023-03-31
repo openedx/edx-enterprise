@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.10]
+---------
+feat: new tagging orphaned content tast for integrated channels
+
 [3.61.9]
 --------
 feat: Serialize and create a viewset for enterpriseCatalogQuery as readonly

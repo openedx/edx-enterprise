@@ -4,6 +4,7 @@ Test the Enterprise management commands and related functions.
 
 import logging
 import unittest
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest import mock, skip
@@ -22,6 +23,7 @@ from django.contrib import auth
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import signals
+from django.test.utils import override_settings
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -51,7 +53,7 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
+from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, OrphanedContentTransmissions
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -1889,3 +1891,46 @@ class TestResetCsodRemoteDeletedAtManagementCommand(unittest.TestCase, Enterpris
         assert generic1.remote_deleted_at is not None
         assert csod1.remote_deleted_at is None
         assert csod2.remote_deleted_at is None
+
+
+@mark.django_db
+@ddt.ddt
+class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``mark_orphaned_content_metadata_audits`` management command.
+    """
+
+    def setUp(self):
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            name='Veridian Dynamics',
+        )
+        ContentMetadataItemTransmission.objects.all().delete()
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.enterprise_customer.enterprise_customer_catalogs.set([enterprise_catalog])
+        self.enterprise_customer.save()
+        self.customer_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            key='key',
+            secret='secret',
+            degreed_company_id='Degreed Company',
+            degreed_base_url='https://www.degreed.com/',
+        )
+        self.orphaned_content = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX',
+            enterprise_customer=self.enterprise_customer,
+            plugin_configuration_id=self.customer_config.id,
+            integrated_channel_code=self.customer_config.channel_code(),
+            channel_metadata={},
+            enterprise_customer_catalog_uuid=uuid.uuid4(),
+            remote_created_at=datetime.now()
+        )
+        super().setUp()
+
+    @override_settings(ALLOW_ORPHANED_CONTENT_REMOVAL=True)
+    def test_normal_run(self):
+        assert not OrphanedContentTransmissions.objects.all()
+        call_command('mark_orphaned_content_metadata_audits')
+        orphaned_content = OrphanedContentTransmissions.objects.first()
+        assert orphaned_content.content_id == self.orphaned_content.content_id

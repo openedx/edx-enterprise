@@ -11,6 +11,8 @@ from unittest import mock
 from pytest import mark
 from testfixtures import LogCapture
 
+from django.test.utils import override_settings
+
 from enterprise.constants import EXEC_ED_COURSE_TYPE
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
@@ -544,3 +546,110 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             self.config.enterprise_customer.enterprise_customer_catalogs.first(),
         )
         assert len(matched_records) == 2
+
+    def test_get_customer_orphaned_content(self):
+        """
+        Test the get_customer_orphaned_content function.
+        """
+        transmission_audit = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            remote_created_at=datetime.datetime.utcnow(),
+        )
+        orphaned_content = factories.OrphanedContentTransmissionsFactory(
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+            content_id='fake-content-id',
+            transmission=transmission_audit,
+        )
+
+        exporter = ContentMetadataExporter('fake-user', self.config)
+
+        # pylint: disable=protected-access
+        retrieved_orphaned_content = exporter._get_customer_config_orphaned_content(
+            max_set_count=1,
+        )
+        assert len(retrieved_orphaned_content) == 1
+        assert retrieved_orphaned_content[0].content_id == orphaned_content.content_id
+
+    def test_get_customer_orphaned_content_under_different_channel(self):
+        """
+        Test the _get_customer_config_orphaned_content function with records under a separate channel.
+        """
+        transmission_audit = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code='foobar',
+            remote_created_at=datetime.datetime.utcnow(),
+        )
+        factories.OrphanedContentTransmissionsFactory(
+            integrated_channel_code='foobar',
+            plugin_configuration_id=self.config.id,
+            content_id='fake-content-id-1',
+            transmission=transmission_audit,
+        )
+        exporter = ContentMetadataExporter('fake-user', self.config)
+
+        # pylint: disable=protected-access
+        retrieved_orphaned_content = exporter._get_customer_config_orphaned_content(
+            max_set_count=1,
+        )
+        assert len(retrieved_orphaned_content) == 0
+
+    @override_settings(ALLOW_ORPHANED_CONTENT_REMOVAL=True)
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_content_exporter_fetches_orphaned_content(self, mock_get_catalog_diff, mock_get_content_metadata):
+        """
+        ``ContentMetadataExporter``'s ``export`` fetches orphaned content to delete.
+        """
+        transmission_audit = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            remote_created_at=datetime.datetime.utcnow(),
+        )
+        orphaned_content = factories.OrphanedContentTransmissionsFactory(
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+            content_id='fake-content-id',
+            transmission=transmission_audit,
+        )
+
+        mock_exec_ed_content = get_fake_content_metadata()
+        mock_get_content_metadata.return_value = mock_exec_ed_content
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
+
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        _, __, delete_payload = exporter.export()
+
+        assert delete_payload == {orphaned_content.content_id: transmission_audit}
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_exporter_skips_orphaned_content_when_at_max_size(self, mock_get_catalog_diff, mock_get_content_metadata):
+        """
+        ``ContentMetadataExporter``'s ``export`` skips orphaned content when at max size.
+        """
+        transmission_audit = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            remote_created_at=datetime.datetime.utcnow(),
+        )
+        factories.OrphanedContentTransmissionsFactory(
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+            content_id='fake-content-id',
+            transmission=transmission_audit,
+        )
+
+        mock_exec_ed_content = get_fake_content_metadata()
+        mock_get_content_metadata.return_value = mock_exec_ed_content
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
+
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        _, __, delete_payload = exporter.export(max_payload_count=1)
+
+        assert len(delete_payload) == 0
