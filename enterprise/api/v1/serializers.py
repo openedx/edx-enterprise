@@ -484,6 +484,22 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         return representation
 
 
+class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSerializer):
+    """
+    Serializer for the ``EnterpriseCustomerCatalog`` model which includes
+    the catalog's discovery service search query results.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomerCatalog
+        fields = (
+            'uuid',
+            'title',
+            'enterprise_customer',
+            'enterprise_catalog_query'
+        )
+
+
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
