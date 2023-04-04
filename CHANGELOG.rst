@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.9]
+--------
+feat: Serialize and create a viewset for enterpriseCatalogQuery as readonly
+
 [3.61.8]
 --------
 feat: added enterprise fulfillment viewset

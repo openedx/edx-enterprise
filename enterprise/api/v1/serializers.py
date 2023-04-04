@@ -1419,3 +1419,16 @@ class EnterpriseCustomerUnlinkUsersSerializer(serializers.Serializer):
         required=False,
         default=False,
     )
+
+
+class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCatalogQuery`` model.
+    """
+
+    class Meta:
+        model = models.EnterpriseCatalogQuery
+        fields = '__all__'
+
+    # Parses from a dictionary to JSON
+    content_filter = serializers.JSONField(required=False)
