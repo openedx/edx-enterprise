@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.12]
+---------
+feat: expands pagination page size from enterprise catalog query viewset
+
 [3.61.11]
 ---------
 feat: include owners and longer descriptions for degreed2 content metadata transmissions
