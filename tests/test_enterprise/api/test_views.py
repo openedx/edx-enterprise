@@ -34,7 +34,6 @@ from enterprise.constants import (
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
-    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerInviteKey,
@@ -2890,84 +2889,68 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
-class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCatalogQueryViewSet(BaseTestEnterpriseAPIViews):
     """
-    Test CatalogQueryView
+    Test EnterpriseCatalogQueryViewSet
     """
+    catalog_query_content_filter = {
+        "query_field": "query_data"
+    }
 
-    CATALOG_QUERY_ENDPOINT = 'enterprise-catalog-query'
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super().setUp()
+        self.enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory(
+            content_filter=self.catalog_query_content_filter)
 
-    def test_get_catalog_query(self):
+    def test_enterprise_catalog_query_list_response_formats(self):
         """
-        Test that `CatalogQueryView` returns expected response.
+        ``enterprise_catalog_query``'s json responses verification.
         """
-        expected_content_filter = {'partner': 'MushiX'}
-        catalog_query = EnterpriseCatalogQuery.objects.create(
-            title='Test Catalog Query',
-            content_filter=expected_content_filter
-        )
-        response = self.client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': catalog_query.id})
-        )
-        assert response.status_code == 200
-        assert response.json() == expected_content_filter
+        response_default = self.client.get('/enterprise/api/v1/enterprise_catalog_query/')
+        self.assertEqual(response_default['content-type'], 'application/json')
 
-    def test_get_catalog_query_not_found(self):
-        """
-        Test that `CatalogQueryView` returns correct response when enterprise catalog query is not found.
-        """
-        non_existed_id = 100
-        response = self.client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': non_existed_id})
-        )
-        assert response.status_code == 404
-        response = response.json()
-        assert response['detail'] == 'Could not find enterprise catalog query.'
+        response_json = self.client.get('/enterprise/api/v1/enterprise_catalog_query.json')
+        self.assertEqual(response_json['content-type'], 'application/json')
 
-    def test_get_catalog_query_post_method_not_allowed(self):
+    def test_enteprise_catalog_query_list(self):
         """
-        Test that `CatalogQueryView` does not allow POST method.
+        ``enterprise_catalog_query``'s response when no catalog uuid is provided.
         """
-        response = self.client.post(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1}),
-            data=json.dumps({'current_troll_hunter': 'Jim Lake Jr.'}),
-            content_type='application/json'
-        )
-        assert response.status_code == 405
-        response = response.json()
-        assert response['detail'] == 'Method "POST" not allowed.'
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-list')
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 200)
 
-    def test_get_catalog_query_not_staff(self):
+    def test_enterprise_catalog_query_detail(self):
         """
-        Test that `CatalogQueryView` does not allow non staff users.
+        ``enterprise_catalog_query``'s response when a catalog uuid is provided.
         """
-        # Creating a non staff user so as to verify the insufficient permission conditions.
-        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')
-        user.save()
 
-        client = APIClient()
-        client.login(username='test_user', password='test_password')
-        response = client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
-        )
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-detail',
+                                                    args=[self.enterprise_catalog_query.id])
 
-        assert response.status_code == 403
-        response = response.json()
-        assert response['detail'] == 'You do not have permission to perform this action.'
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 200)
 
-    def test_get_catalog_query_not_logged_in(self):
+    def test_enterprise_catalog_query_detail_not_found(self):
         """
-        Test that `CatalogQueryView` only allows logged in users.
+        ``enterprise_catalog_query``'s response when a catalog uuid is provided but not found.
         """
-        client = APIClient()
-        # User is not logged in.
-        response = client.get(
-            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
-        )
-        assert response.status_code == 403
-        response = response.json()
-        assert response['detail'] == 'Authentication credentials were not provided.'
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-detail', args=[2])
+
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 404)
+
+    def test_enterprise_catalog_query_detail_bad_uuid(self):
+        """
+        ``enterprise_catalog_query``'s response when a catalog uuid is provided but bad.
+        """
+        ENTERPRISE_CATALOG_QUERY_ENDPOINT = reverse('enterprise_catalog_query-detail', args=['bad-uuid'])
+
+        response = self.client.get(ENTERPRISE_CATALOG_QUERY_ENDPOINT)
+        self.assertEqual(response.status_code, 404)
 
 
 @ddt.ddt
@@ -3132,6 +3115,223 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
         )
 
         assert response.status_code == expected_status
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseSubsidyFulfillmentViewSet
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        self.client = APIClient()
+        self.client.login(username='test_user', password='test_password')
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer.uuid))
+
+        self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_user,
+        )
+        self.licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=self.enterprise_course_enrollment,
+        )
+        self.learner_credit_course_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=self.enterprise_course_enrollment,
+        )
+
+        self.licensed_fulfillment_url = reverse(
+            'enterprise-subsidy-fulfillment',
+            kwargs={'fulfillment_source_uuid': str(self.licensed_course_enrollment.uuid)}
+        )
+        self.learner_credit_fulfillment_url = reverse(
+            'enterprise-subsidy-fulfillment',
+            kwargs={'fulfillment_source_uuid': str(self.learner_credit_course_enrollment.uuid)}
+        )
+        self.cancel_licensed_fulfillment_url = self.licensed_fulfillment_url + '/cancel-fulfillment'
+        self.cancel_learner_credit_fulfillment_url = self.learner_credit_fulfillment_url + '/cancel-fulfillment'
+
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        self.user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        self.user.set_password(password)
+        self.user.save()
+
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+    def test_successful_retrieve_licensed_enrollment(self):
+        """
+        Test that we can sucessfully retrieve a licensed enrollment.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        assert response_json == {
+            'license_uuid': str(self.licensed_course_enrollment.license_uuid),
+            'enterprise_course_enrollment': {
+                'enterprise_customer_user': self.enterprise_user.id,
+                'course_id': self.enterprise_course_enrollment.course_id,
+            }
+        }
+
+    def test_successful_retrieve_learner_credit_enrollment(self):
+        """
+        Test that we can sucessfully retrieve a learner credit enrollment.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + self.learner_credit_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        assert response_json == {
+            'transaction_id': str(self.learner_credit_course_enrollment.transaction_id),
+            'enterprise_course_enrollment': {
+                'enterprise_customer_user': self.enterprise_user.id,
+                'course_id': self.enterprise_course_enrollment.course_id,
+            }
+        }
+
+    def test_retrieve_nonexistent_enrollment(self):
+        """
+        Test that we get a 404 when trying to retrieve a nonexistent enrollment.
+        """
+        response = self.client.get(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(uuid.uuid4())}
+            ),
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_unsupported_methods(self):
+        """
+        Ensure that we get a 405 when trying to use unsupported methods.
+        """
+        create_response = self.client.post(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert create_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        delete_response = self.client.delete(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert delete_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+        update_response = self.client.put(
+            settings.TEST_SERVER + self.licensed_fulfillment_url,
+        )
+        assert update_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    def test_successful_cancel_fulfillment(self, mock_enrollment_api):
+        """
+        Test that we can successfully cancel both licensed and learner credit fulfillments.
+        """
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+        self.licensed_course_enrollment.is_revoked = False
+        self.licensed_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_licensed_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.licensed_course_enrollment.refresh_from_db()
+        assert self.licensed_course_enrollment.is_revoked
+        mock_enrollment_api.update_enrollment.assert_called_once()
+        assert mock_enrollment_api.update_enrollment.call_args.args == (
+            self.enterprise_course_enrollment.enterprise_customer_user.user.username,
+            self.enterprise_course_enrollment.course_id,
+        )
+        assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
+            'is_active': False,
+        }
+
+        mock_enrollment_api.reset_mock()
+
+        self.learner_credit_course_enrollment.is_revoked = False
+        self.learner_credit_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_learner_credit_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.learner_credit_course_enrollment.refresh_from_db()
+        assert self.learner_credit_course_enrollment.is_revoked
+        mock_enrollment_api.update_enrollment.assert_called_once()
+        assert mock_enrollment_api.update_enrollment.call_args.args == (
+            self.enterprise_course_enrollment.enterprise_customer_user.user.username,
+            self.enterprise_course_enrollment.course_id,
+        )
+        assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
+            'is_active': False,
+        }
+
+    def test_cancel_fulfillment_nonexistent_enrollment(self):
+        """
+        Test that we get a 404 when trying to cancel a nonexistent enrollment.
+        """
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(uuid.uuid4())}
+            ) + '/cancel-fulfillment',
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_cancel_fulfillment_belonging_to_different_enterprise(self):
+        """
+        Test that a non staff user cannot cancel a fulfillment belonging to a different enterprise.
+        """
+        self.user.is_staff = False
+        other_enterprise_user = factories.EnterpriseCustomerUserFactory()
+        other_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=other_enterprise_user
+        )
+        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=other_enrollment,
+        )
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
+            ) + '/cancel-fulfillment',
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    def test_staff_can_cancel_fulfillments_not_belonging_to_them(self, mock_enrollment_api):
+        """
+        Test that a staff user can cancel a fulfillment belonging to a different enterprise.
+        """
+        self.user.is_staff = True
+        self.user.save()
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+        other_enterprise_user = factories.EnterpriseCustomerUserFactory()
+        other_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=other_enterprise_user
+        )
+        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=other_enrollment,
+        )
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                'enterprise-subsidy-fulfillment',
+                kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
+            ) + '/cancel-fulfillment',
+        )
+        assert response.status_code == status.HTTP_200_OK
 
 
 @ddt.ddt

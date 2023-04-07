@@ -384,6 +384,19 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
             track_enrollment('rest-api-enrollment', self.enterprise_customer_user.user_id, course_id)
 
 
+class LearnerCreditEnterpriseCourseenrollmentReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Serializer for LearnerCreditEnterpriseCourseEnrollment model.
+    """
+    enterprise_course_enrollment = EnterpriseCourseEnrollmentReadOnlySerializer(read_only=True)
+
+    class Meta:
+        model = models.LearnerCreditEnterpriseCourseEnrollment
+        fields = (
+            'enterprise_course_enrollment', 'transaction_id'
+        )
+
+
 class LicensedEnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for LicensedEnterpriseCourseEnrollment model.
@@ -1406,3 +1419,16 @@ class EnterpriseCustomerUnlinkUsersSerializer(serializers.Serializer):
         required=False,
         default=False,
     )
+
+
+class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCatalogQuery`` model.
+    """
+
+    class Meta:
+        model = models.EnterpriseCatalogQuery
+        fields = '__all__'
+
+    # Parses from a dictionary to JSON
+    content_filter = serializers.JSONField(required=False)
