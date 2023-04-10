@@ -53,6 +53,7 @@ from integrated_channels.integrated_channel.models import (
     GenericEnterpriseCustomerPluginConfiguration,
     GenericLearnerDataTransmissionAudit,
     LearnerDataTransmissionAudit,
+    OrphanedContentTransmissions,
 )
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (
@@ -941,6 +942,25 @@ class ContentMetadataItemTransmissionFactory(factory.django.DjangoModelFactory):
         'subjects': 'ayylmaooo',
         'image_url': 'https://www,foobar.com'
     }
+
+
+class OrphanedContentTransmissionsFactory(factory.django.DjangoModelFactory):
+    """
+    ``OrphanedContentTransmissions`` factory.
+    """
+
+    class Meta:
+        """
+        Meta for ``OrphanedContentTransmissions``.
+        """
+
+        model = OrphanedContentTransmissions
+
+    integrated_channel_code = 'GENERIC'
+    content_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    plugin_configuration_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    resolved = False
+    transmission = factory.Iterator(ContentMetadataItemTransmission.objects.all())
 
 
 class EnterpriseCustomerInviteKeyFactory(factory.django.DjangoModelFactory):
