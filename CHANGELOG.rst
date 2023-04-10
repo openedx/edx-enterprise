@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.11]
+---------
+feat: include owners and longer descriptions for degreed2 content metadata transmissions
+
 [3.61.10]
 ---------
 feat: new tagging orphaned content tast for integrated channels
