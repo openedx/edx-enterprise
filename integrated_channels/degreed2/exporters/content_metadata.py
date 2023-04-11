@@ -25,6 +25,7 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
     CHUNK_PAGE_LENGTH = 1000
     SHORT_STRING_LIMIT = 255
     LONG_STRING_LIMIT = 2000
+    ELLIPSIS = '...'
 
     DATA_TRANSFORM_MAPPING = {
         'title': 'title',
@@ -84,19 +85,32 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         Return the transformed version of the course description.
 
         We choose one value out of the course's full description, short description, and title
-        depending on availability and length limits.
+        depending on availability.
         """
         course_runs = content_metadata_item.get('course_runs')
+
         duration_info = get_course_run_duration_info(
             get_closest_course_run(course_runs)
         ) if course_runs else ''
-        full_description = content_metadata_item.get('full_description') or ''
-        if full_description and 0 < len(full_description + duration_info) <= self.LONG_STRING_LIMIT:
-            description = full_description
-        else:
-            description = content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''
+
+        owner_names = ''
+        owners = content_metadata_item.get('owners')
+        if owners:
+            owner_names = ', '.join([owner['name'] for owner in owners])
+            if owner_names:
+                owner_names = "[{}]: ".format(owner_names)
+
+        description = (
+            content_metadata_item.get('full_description')
+            or content_metadata_item.get('short_description')
+            or content_metadata_item.get('title')
+            or '')
+
         if description:
-            description = "{duration_info}{description}".format(duration_info=duration_info, description=description)
+            description = "{}{}{}".format(owner_names, duration_info, description)
+            if len(description) > self.LONG_STRING_LIMIT:
+                description = description[:self.LONG_STRING_LIMIT - len(self.ELLIPSIS)] + self.ELLIPSIS
+
         return strip_html_tags(description)
 
     def transform_courserun_content_language(self, content_metadata_item):
