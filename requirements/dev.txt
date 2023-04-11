@@ -20,7 +20,7 @@ aniso8601==9.0.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-tincan-py35
-asgiref==3.5.2
+asgiref==3.6.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
