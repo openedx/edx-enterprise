@@ -106,7 +106,7 @@ check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platfo
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
 upgrade: check_pins  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	pip install -q pip-tools
+	pip install -q pip-tools==6.10.0
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/doc.txt requirements/doc.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test.txt requirements/test.in
