@@ -38,7 +38,7 @@ astroid==2.15.2
     # via
     #   pylint
     #   pylint-celery
-attrs==22.2.0
+attrs==23.1.0
     # via
     #   -r requirements/test.txt
     #   pytest
@@ -356,7 +356,7 @@ imagesize==1.4.1
     # via
     #   -r requirements/doc.txt
     #   sphinx
-importlib-metadata==6.3.0
+importlib-metadata==6.4.1
     # via
     #   -r requirements/doc.txt
     #   sphinx

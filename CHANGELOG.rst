@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.12]
+---------
+chore: remove codecov from requirements as it removed from PyPi and is breaking CI when trying to install the package. Pinned ``pip-tools`` and ``tox`` in ``common_constraints.txt`` due to dependency resolution issues with ``click`` and ``filelock``.
+
 [3.61.11]
 ---------
 feat: include owners and longer descriptions for degreed2 content metadata transmissions

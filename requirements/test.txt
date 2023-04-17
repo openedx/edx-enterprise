@@ -21,7 +21,7 @@ asn1crypto==1.5.1
     #   -r requirements/test-master.txt
     #   oscrypto
     #   snowflake-connector-python
-attrs==22.2.0
+attrs==23.1.0
     # via pytest
     # via
     #   -r requirements/test-master.txt
