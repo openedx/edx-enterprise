@@ -239,15 +239,15 @@ class CanvasLearnerAssessmentDataTransmissionAudit(LearnerDataTransmissionAudit)
         """
         Convert the audit record's fields into Canvas key/value pairs.
         """
-        return dict(
-            userID=self.canvas_user_email,
-            courseID=self.course_id,
-            grade=self.grade,
-            subsectionID=self.subsection_id,
-            points_possible=self.grade_points_possible,
-            points_earned=self.grade_point_score,
-            subsection_name=self.subsection_name,
-        )
+        return {
+            'userID': self.canvas_user_email,
+            'courseID': self.course_id,
+            'grade': self.grade,
+            'subsectionID': self.subsection_id,
+            'points_possible': self.grade_points_possible,
+            'points_earned': self.grade_point_score,
+            'subsection_name': self.subsection_name,
+        }
 
     @classmethod
     def audit_type(cls):
@@ -318,10 +318,10 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         """
         Convert the audit record's fields into Canvas key/value pairs.
         """
-        return dict(
-            userID=self.canvas_user_email,
-            courseID=self.course_id,
-            courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.canvas_completed_timestamp,
-            grade=self.grade,
-        )
+        return {
+            'userID': self.canvas_user_email,
+            'courseID': self.course_id,
+            'courseCompleted': 'true' if self.course_completed else 'false',
+            'completedTimestamp': self.canvas_completed_timestamp,
+            'grade': self.grade,
+        }

@@ -1700,7 +1700,7 @@ class CourseEnrollmentView(NonAtomicView):
                     error_message = default_message
                 LOGGER.exception(
                     'Error while enrolling user %(user)s: %(message)s',
-                    dict(user=self.user_id, message=error_message)
+                    {'user': self.user_id, 'message': error_message},
                 )
             if succeeded:
                 try:
@@ -2029,7 +2029,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 enrollment_count += 1
 
         # We're certificate eligible for the program if we have certificate-eligible enrollment in all of its courses.
-        program_details['certificate_eligible_for_program'] = (enrollment_count == len(program_details['courses']))
+        program_details['certificate_eligible_for_program'] = enrollment_count == len(program_details['courses'])
         program_details['type_details'] = program_type
         return program_details, None
 

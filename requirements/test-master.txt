@@ -10,10 +10,11 @@ aniso8601==9.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-tincan-py35
-asgiref==3.5.2
+asgiref==3.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
+    #   django-countries
 asn1crypto==1.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -21,7 +22,7 @@ asn1crypto==1.5.1
     #   snowflake-connector-python
 billiard==3.6.4.0
     # via celery
-bleach==5.0.1
+bleach[css]==6.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -29,7 +30,7 @@ celery==5.0.4
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
-certifi==2022.9.24
+certifi==2022.12.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
@@ -65,7 +66,7 @@ code-annotations==1.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-cryptography==36.0.2
+cryptography==38.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -78,8 +79,7 @@ defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-    #   tableauserverclient
-django==3.2.16
+django==3.2.18
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -104,7 +104,7 @@ django-config-models==2.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-countries==7.4.2
+django-countries==7.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -126,7 +126,7 @@ django-ipware==4.0.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-model-utils==4.2.0
+django-model-utils==4.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -135,7 +135,7 @@ django-multi-email-field==0.6.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-object-actions==4.0.0
+django-object-actions==4.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -165,14 +165,14 @@ drf-jwt==1.19.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==5.2.0
+edx-django-utils==5.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==8.3.1
+edx-drf-extensions==8.5.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -194,11 +194,11 @@ edx-tincan-py35==1.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-filelock==3.8.0
+filelock==3.10.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-future==0.18.2
+future==0.18.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   pyjwkest
@@ -221,11 +221,11 @@ jsonfield==3.1.0
     #   -r requirements/base.in
 kombu==5.2.4
     # via celery
-markupsafe==2.1.1
+markupsafe==2.1.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-newrelic==8.4.0
+newrelic==8.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -233,11 +233,11 @@ oscrypto==1.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-packaging==21.3
+packaging==23.0
     # via
     #   -c requirements/edx-platform-constraints.txt
-    #   tableauserverclient
-path==16.5.0
+    #   snowflake-connector-python
+path==16.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   path-py
@@ -245,7 +245,7 @@ path-py==12.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-pbr==5.11.0
+pbr==5.11.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
@@ -253,13 +253,13 @@ pgpy==0.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-pillow==9.3.0
+pillow==9.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-prompt-toolkit==3.0.33
+prompt-toolkit==3.0.38
     # via click-repl
-psutil==5.9.3
+psutil==5.9.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -271,7 +271,7 @@ pycparser==2.21
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cffi
-pycryptodomex==3.15.0
+pycryptodomex==3.17
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   pyjwkest
@@ -299,20 +299,16 @@ pyopenssl==22.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-pyparsing==3.0.9
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   packaging
 python-dateutil==2.8.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-drf-extensions
-python-slugify==6.1.2
+python-slugify==8.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-pytz==2022.2.1
+pytz==2022.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -324,7 +320,7 @@ pyyaml==6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-requests==2.28.1
+requests==2.28.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -333,7 +329,6 @@ requests==2.28.1
     #   pyjwkest
     #   slumber
     #   snowflake-connector-python
-    #   tableauserverclient
 rules==3.3
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -356,7 +351,7 @@ slumber==0.7.1
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rest-api-client
-snowflake-connector-python==2.8.0
+snowflake-connector-python==3.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -364,18 +359,14 @@ sqlparse==0.4.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
-stevedore==4.1.0
+stevedore==5.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.23
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
-testfixtures==7.0.2
+testfixtures==7.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -383,7 +374,11 @@ text-unidecode==1.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   python-slugify
-typing-extensions==4.4.0
+tinycss2==1.1.1
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   bleach
+typing-extensions==4.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django-countries
@@ -392,18 +387,17 @@ unicodecsv==0.14.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-urllib3==1.26.12
+urllib3==1.26.15
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
     #   snowflake-connector-python
-    #   tableauserverclient
 vine==5.0.0
     # via
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.5
+wcwidth==0.2.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   prompt-toolkit
@@ -411,6 +405,4 @@ webencodings==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
+    #   tinycss2
