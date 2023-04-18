@@ -44,10 +44,7 @@ How To Contribute
 
 Contributions are very welcome.
 
-Please read `How To Contribute <https://github.com/openedx/edx-platform/blob/master/CONTRIBUTING.rst>`_ for details.
-
-Even though they were written with ``edx-platform`` in mind, the guidelines
-should be followed for Open edX code in general.
+Please read `How To Contribute <https://github.com/openedx/.github/blob/master/CONTRIBUTING.md>`_ for details.
 
 A Pull Request Description Template can be found at`PULL_REQUEST_TEMPLATE.md`_ - this
 template is automatically applied when you open a pull request from GitHub.  Please
@@ -69,4 +66,4 @@ Getting Help
 Have a question about this repository, or about Open edX in general?  Please
 refer to this `list of resources`_ if you need any assistance.
 
-.. _list of resources: https://open.edx.org/getting-help
+.. _list of resources: https://openedx.org/getting-help

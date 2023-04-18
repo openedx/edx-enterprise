@@ -15,6 +15,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -30,7 +31,6 @@ from rest_framework.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from rest_framework.mixins import CreateModelMixin
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
 
@@ -153,11 +153,11 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
 
 
 class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, viewsets.GenericViewSet):
-   """
-   Base class for all write only Enterprise model view sets.
-   """
+    """
+    Base class for all write only Enterprise model view sets.
+    """
 
-   permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions)
+    permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions)
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
@@ -1219,10 +1219,10 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
 
 
 class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
-   queryset = models.EnterpriseCustomerCatalog.objects.all()
-   permissions = (permissions.IsAdminUser,)
-   serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
-   authentication_classes = (JwtAuthentication, SessionAuthentication,)
+    queryset = models.EnterpriseCustomerCatalog.objects.all()
+    permissions = (permissions.IsAdminUser,)
+    serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
 
 
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
@@ -1427,10 +1427,11 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
 
 
 class ExpandDefaultPageSize(PageNumberPagination):
-   """
-   Expands page size for the API endpoint.
-   """
-   page_size = 100
+    """
+    Expands page size for the API.
+    Used to populate support-tools repo's provisioning form catalog query dropdown component.
+    """
+    page_size = 100
 
 
 class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
