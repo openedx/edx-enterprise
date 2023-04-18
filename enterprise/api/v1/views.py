@@ -1412,7 +1412,8 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
 
 class ExpandDefaultPageSize(PageNumberPagination):
     """
-    Expands page size for the API endpoint.
+    Expands page size for the API.
+    Used to populate support-tools repo's provisioning form catalog query dropdown component.
     """
     page_size = 100
 
