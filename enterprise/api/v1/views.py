@@ -15,6 +15,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -29,6 +30,7 @@ from rest_framework.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
 
@@ -148,6 +150,14 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     """
 
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
+
+
+class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, viewsets.GenericViewSet):
+   """
+   Base class for all write only Enterprise model view sets.
+   """
+
+   permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions)
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
@@ -1208,6 +1218,13 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
         return Response("Branding was updated", status=status.HTTP_204_NO_CONTENT)
 
 
+class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
+   queryset = models.EnterpriseCustomerCatalog.objects.all()
+   permissions = (permissions.IsAdminUser,)
+   serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
+   authentication_classes = (JwtAuthentication, SessionAuthentication,)
+
+
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API Views for performing search through course discovery at the ``enterprise_catalogs`` API endpoint.
@@ -1409,6 +1426,14 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         return super().destroy(request, *args, **kwargs)
 
 
+class ExpandDefaultPageSize(PageNumberPagination):
+   """
+   Expands page size for the API endpoint.
+   """
+   page_size = 100
+   pagination_class = ExpandDefaultPageSize
+
+
 class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API views for the ``enterprise_catalog_query`` API endpoint.
@@ -1417,6 +1442,7 @@ class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
     serializer_class = serializers.EnterpriseCatalogQuerySerializer
     permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
     authentication_classes = (JwtAuthentication, SessionAuthentication,)
+    pagination_class = ExpandDefaultPageSize
 
 
 class CouponCodesView(APIView):
