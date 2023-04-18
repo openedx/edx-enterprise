@@ -673,9 +673,9 @@ class TestLearnerExporter(unittest.TestCase):
 
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode='verified',
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            'mode': 'verified',
+        }
 
         # Mock grades data
         assessment_grade_data = [{
