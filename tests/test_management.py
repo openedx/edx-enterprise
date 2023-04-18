@@ -335,38 +335,38 @@ COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
 COURSE_KEY = 'edX+DemoX'
 
 # Mock passing certificate data
-MOCK_PASSING_CERTIFICATE = dict(
-    grade='A-',
-    created_date=NOW.strftime(LMS_API_DATETIME_FORMAT),
-    status='downloadable',
-    is_passing=True,
-)
+MOCK_PASSING_CERTIFICATE = {
+    'grade': 'A-',
+    'created_date': NOW.strftime(LMS_API_DATETIME_FORMAT),
+    'status': 'downloadable',
+    'is_passing': True,
+}
 
 # Mock failing certificate data
-MOCK_FAILING_CERTIFICATE = dict(
-    grade='D',
-    created_date=NOW.strftime(LMS_API_DATETIME_FORMAT),
-    status='downloadable',
-    is_passing=False,
-    percent_grade=0.6,
-)
+MOCK_FAILING_CERTIFICATE = {
+    'grade': 'D',
+    'created_date': NOW.strftime(LMS_API_DATETIME_FORMAT),
+    'status': 'downloadable',
+    'is_passing': False,
+    'percent_grade': 0.6,
+}
 
 # Expected learner completion data from the mock passing certificate
-CERTIFICATE_PASSING_COMPLETION = dict(
-    completed='true',
-    timestamp=NOW_TIMESTAMP,
-    grade=LearnerExporter.GRADE_PASSING,
-    total_hours=0.0,
-    percent_grade=0.8,
-)
+CERTIFICATE_PASSING_COMPLETION = {
+    'completed': 'true',
+    'timestamp': NOW_TIMESTAMP,
+    'grade': LearnerExporter.GRADE_PASSING,
+    'total_hours': 0.0,
+    'percent_grade': 0.8,
+}
 
 # Expected learner completion data from the mock failing certificate
-CERTIFICATE_FAILING_COMPLETION = dict(
-    completed='false',
-    timestamp=NOW_TIMESTAMP,
-    grade=LearnerExporter.GRADE_FAILING,
-    total_hours=0.0,
-)
+CERTIFICATE_FAILING_COMPLETION = {
+    'completed': 'false',
+    'timestamp': NOW_TIMESTAMP,
+    'grade': LearnerExporter.GRADE_FAILING,
+    'total_hours': 0.0,
+}
 
 
 @mark.django_db
@@ -509,9 +509,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
                     "providers/{provider}/users?username={user}".format(provider=testcase.identity_provider,
                                                                         user=user.username)),
             match_querystring=True,
-            json=dict(results=[
-                dict(username=user.username, remote_id='remote-user-id'),
-            ]),
+            json={"results": [{'username': user.username, 'remote_id': 'remote-user-id'}]},
         )
 
         # Course API course_details response
@@ -519,11 +517,11 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
             responses.GET,
             urljoin(lms_api.CourseApiClient.API_BASE_URL,
                     "courses/{course}/".format(course=testcase.course_id)),
-            json=dict(
-                course_id=COURSE_ID,
-                pacing="self" if self_paced else "instructor",
-                end=end_date.isoformat() if end_date else None,
-            ),
+            json={
+                "course_id": COURSE_ID,
+                "pacing": "self" if self_paced else "instructor",
+                "end": end_date.isoformat() if end_date else None,
+            },
         )
 
         # Grades API course_grades response
@@ -533,11 +531,11 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
                     "courses/{course}/?username={user}".format(course=testcase.course_id,
                                                                user=user.username)),
             match_querystring=True,
-            json=[dict(
-                username=user.username,
-                course_id=COURSE_ID,
-                passed=passed,
-            )],
+            json=[{
+                "username": user.username,
+                "course_id": COURSE_ID,
+                "passed": passed,
+            }],
         )
 
         # Enrollment API enrollment response
@@ -547,9 +545,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
                     "enrollment/{username},{course_id}".format(username=user.username,
                                                                course_id=testcase.course_id)),
             match_querystring=True,
-            json=dict(
-                mode="verified",
-            ),
+            json={"mode": "verified"},
         )
 
         # Certificates API course_grades response
@@ -1031,38 +1027,38 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
     @responses.activate
     @ddt.data(
         # Certificate marks course completion
-        (dict(enterprise_customer_slug=None), MOCK_PASSING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer_slug': None}, MOCK_PASSING_CERTIFICATE, False, None, False,
          CERTIFICATE_PASSING_COMPLETION),
-        (dict(enterprise_customer_slug=None), MOCK_FAILING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer_slug': None}, MOCK_FAILING_CERTIFICATE, False, None, False,
          CERTIFICATE_FAILING_COMPLETION),
 
         # enterprise_customer UUID gets filled in below
-        (dict(enterprise_customer=None, enterprise_customer_slug=None), MOCK_PASSING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer': None, 'enterprise_customer_slug': None}, MOCK_PASSING_CERTIFICATE, False, None, False,
          CERTIFICATE_PASSING_COMPLETION),
-        (dict(enterprise_customer=None, enterprise_customer_slug=None), MOCK_FAILING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer': None, 'enterprise_customer_slug': None}, MOCK_FAILING_CERTIFICATE, False, None, False,
          CERTIFICATE_FAILING_COMPLETION),
 
         # Instructor-paced course with no certificates issued yet results in incomplete course data
-        (dict(enterprise_customer_slug=None), None, False, None, False,
-         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, False, None, False,
+         {'completed': 'false', 'timestamp': 'null', 'grade': 'In Progress', 'total_hours': 0.0}),
 
         # Self-paced course with no end date send grade=Pass, or grade=In Progress, depending on current grade.
-        (dict(enterprise_customer_slug=None), None, True, None, False,
-         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
-        (dict(enterprise_customer_slug=None), None, True, None, True,
-         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, True, None, False,
+         {'completed': 'false', 'timestamp': 'null', 'grade': 'In Progress', 'total_hours': 0.0}),
+        ({'enterprise_customer_slug': None}, None, True, None, True,
+         {'completed': 'true', 'timestamp': NOW_TIMESTAMP, 'grade': 'Pass', 'total_hours': 0.0}),
 
         # Self-paced course with future end date sends grade=Pass, or grade=In Progress, depending on current grade.
-        (dict(enterprise_customer_slug=None), None, True, FUTURE, False,
-         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
-        (dict(enterprise_customer_slug=None), None, True, FUTURE, True,
-         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, True, FUTURE, False,
+         {'completed': 'false', 'timestamp': 'null', 'grade': 'In Progress', 'total_hours': 0.0}),
+        ({'enterprise_customer_slug': None}, None, True, FUTURE, True,
+         {'completed': 'true', 'timestamp': NOW_TIMESTAMP, 'grade': 'Pass', 'total_hours': 0.0}),
 
         # Self-paced course with past end date sends grade=Pass, or grade=Fail, depending on current grade.
-        (dict(enterprise_customer_slug=None), None, True, PAST, False,
-         dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail', total_hours=0.0)),
-        (dict(enterprise_customer_slug=None), None, True, PAST, True,
-         dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, True, PAST, False,
+         {'completed': 'false', 'timestamp': PAST_TIMESTAMP, 'grade': 'Fail', 'total_hours': 0.0}),
+        ({'enterprise_customer_slug': None}, None, True, PAST, True,
+         {'completed': 'true', 'timestamp': PAST_TIMESTAMP, 'grade': 'Pass', 'total_hours': 0.0}),
     )
     @ddt.unpack
     @skip(

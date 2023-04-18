@@ -1431,7 +1431,6 @@ class ExpandDefaultPageSize(PageNumberPagination):
    Expands page size for the API endpoint.
    """
    page_size = 100
-   pagination_class = ExpandDefaultPageSize
 
 
 class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):

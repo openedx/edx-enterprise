@@ -334,13 +334,13 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
         """
         Convert the audit record's fields into SAP SuccessFactors key/value pairs.
         """
-        return dict(
-            userID=self.sapsf_user_id,
-            courseID=self.course_id,
-            providerID=self.provider_id,
-            courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.sap_completed_timestamp,
-            grade=self.grade,
-            totalHours=self.total_hours,
-            creditHours=self.credit_hours,
-        )
+        return {
+            'userID': self.sapsf_user_id,
+            'courseID': self.course_id,
+            'providerID': self.provider_id,
+            'courseCompleted': 'true' if self.course_completed else 'false',
+            'completedTimestamp': self.sap_completed_timestamp,
+            'grade': self.grade,
+            'totalHours': self.total_hours,
+            'creditHours': self.credit_hours,
+        }

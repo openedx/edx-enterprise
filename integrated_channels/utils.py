@@ -238,7 +238,7 @@ def get_courserun_duration_in_hours(course_run):
     weeks_to_complete = course_run.get('weeks_to_complete')
     if min_effort and max_effort and weeks_to_complete:
         average_hours_per_week = (min_effort + max_effort) / 2.0
-        total_hours = (weeks_to_complete * average_hours_per_week)
+        total_hours = weeks_to_complete * average_hours_per_week
         return math.ceil(total_hours)
     else:
         return 0
