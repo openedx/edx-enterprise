@@ -337,7 +337,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
         return {
             'userID': self.sapsf_user_id,
             'courseID': self.course_id,
-            'providerID':self.provider_id,
+            'providerID': self.provider_id,
             'courseCompleted': 'true' if self.course_completed else 'false',
             'completedTimestamp': self.sap_completed_timestamp,
             'grade': self.grade,
