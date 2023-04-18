@@ -41,17 +41,17 @@ class TestUtils(unittest.TestCase):
 
         now = datetime.now()
 
-        self.course_overview_mock_data = dict(
-            id=self.faker.text(max_nb_chars=25),  # pylint: disable=no-member
-            display_name=self.faker.text(max_nb_chars=25),  # pylint: disable=no-member
-            short_description=self.faker.text(),  # pylint: disable=no-member
-            marketing_url=self.faker.url(),  # pylint: disable=no-member
-            effort=self.faker.text(max_nb_chars=10),  # pylint: disable=no-member
-            start=now,
-            end=now + timedelta(weeks=3, days=4),
-            course_key='OrgX+Course101',
-            course_uuid='b1e7c719af3c42288c6f50e2124bb913',
-        )
+        self.course_overview_mock_data = {
+            'id': self.faker.text(max_nb_chars=25),
+            'display_name': self.faker.text(max_nb_chars=25),
+            'short_description': self.faker.text(),
+            'marketing_url': self.faker.url(),
+            'effort': self.faker.text(max_nb_chars=10),
+            'start': now,
+            'end': now + timedelta(weeks=3, days=4),
+            'course_key': 'OrgX+Course101',
+            'course_uuid': 'b1e7c719af3c42288c6f50e2124bb913',
+        }
         self.course_overview = mock.Mock(**self.course_overview_mock_data)
 
         self.course_enrollment = mock.Mock(user=self.user, course=self.course_overview)

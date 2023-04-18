@@ -182,9 +182,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Return enrollment mode data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "verified"
+        }
 
         learner_data = list(self.exporter.export())
         assert not learner_data
@@ -242,9 +242,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Return enrollment mode data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "verified"
+        }
 
         learner_data = list(self.exporter.export())
         assert len(learner_data) == 2
@@ -299,9 +299,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Return enrollment mode data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="audit"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "audit"
+        }
 
         learner_data = list(self.exporter.export())
         assert not learner_data
@@ -336,15 +336,15 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_persistent_grade.return_value = None
 
         # Return a mock certificate a created_date
-        certificate = dict(
-            username=self.user,
-            course_id=self.course_id,
-            certificate_type='professional',
-            created_date=self.NOW.isoformat(),
-            status="downloadable",
-            is_passing=True,
-            grade='A-',
-        )
+        certificate = {
+            'username': self.user,
+            'course_id': self.course_id,
+            'certificate_type': 'professional',
+            'created_date': self.NOW.isoformat(),
+            'status': 'downloadable',
+            'is_passing': True,
+            'grade': 'A-',
+        }
         mock_get_course_certificate.return_value = certificate
 
         # Return instructor-paced course details
@@ -354,9 +354,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "verified"
+        }
 
         learner_data = list(self.exporter.export())
         assert len(learner_data) == 2
@@ -401,15 +401,15 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_persistent_grade.return_value = None
 
         # Return a mock certificate with a created field (formatted)
-        certificate = dict(
-            username=self.user,
-            course_id=self.course_id,
-            certificate_type='professional',
-            created=self.NOW.isoformat(),
-            status="downloadable",
-            is_passing=True,
-            grade='A-',
-        )
+        certificate = {
+            "username": self.user,
+            "course_id": self.course_id,
+            "certificate_type": "professional",
+            "created": self.NOW.isoformat(),
+            "status": "downloadable",
+            "is_passing": True,
+            "grade": "A-",
+        }
         mock_get_course_certificate.return_value = certificate
 
         # Return instructor-paced course details
@@ -418,9 +418,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "verified"
+        }
 
         learner_data = list(self.exporter.export())
         assert len(learner_data) == 2
@@ -463,9 +463,9 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_single_user_grade.return_value = None
 
         # Mock enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "verified"
+        }
 
         learner_data = list(self.exporter.export())
         assert len(learner_data) == 2
@@ -614,14 +614,14 @@ class TestLearnerExporter(unittest.TestCase):
 
         # Return a mock certificate with a blank created field (funky)
         # Should use passing timestamp instead
-        certificate = dict(
-            username=self.user,
-            course_id=self.course_id,
-            certificate_type='professional',
-            status="downloadable",
-            is_passing=True,
-            grade='A-',
-        )
+        certificate = {
+            'username': self.user,
+            'course_id': self.course_id,
+            'certificate_type': 'professional',
+            'status': 'downloadable',
+            'is_passing': True,
+            'grade': 'A-',
+        }
         mock_get_course_certificate.return_value = certificate
 
         mock_get_persistent_grade.return_value = mock_persistent_course_grade(
@@ -678,16 +678,16 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock grades data
-        assessment_grade_data = [dict(
-            attempted=True,
-            subsection_name='subsection_1',
-            category='subsection_category',
-            percent=1.0,
-            label='subsection_label',
-            score_earned=10,
-            score_possible=10,
-            module_id='subsection_id_1'
-        )]
+        assessment_grade_data = [{
+            'attempted': True,
+            'subsection_name': 'subsection_1',
+            'category': 'subsection_category',
+            'percent': 1.0,
+            'label': 'subsection_label',
+            'score_earned': 10,
+            'score_possible': 10,
+            'module_id': 'subsection_id_1'
+        }]
 
         mock_grades_api.return_value.get_course_assessment_grades.return_value = assessment_grade_data
 
@@ -774,11 +774,11 @@ class TestLearnerExporter(unittest.TestCase):
             Mock certificate data - return depending on course_id
             """
             if '2' in course_id:
-                return dict(
-                    username=username,
-                    is_passing=True,
-                    grade=grade,
-                )
+                return {
+                    'username': username,
+                    'is_passing': True,
+                    'grade': grade,
+                }
             return None
         mock_get_course_certificate.side_effect = get_course_certificate
 
@@ -793,9 +793,9 @@ class TestLearnerExporter(unittest.TestCase):
         mock_get_single_user_grade.side_effect = get_course_grade
 
         # Mock enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {
+            "mode": "verified"
+        }
 
         # Collect the learner data, with time set to NOW
         with freeze_time(self.NOW):
