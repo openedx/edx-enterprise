@@ -569,12 +569,12 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         """
         Convert the audit record's fields into SAP SuccessFactors key/value pairs.
         """
-        return dict(
-            courseID=self.course_id,
-            courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
-            grade=self.grade,
-        )
+        return {
+            'courseID': self.course_id,
+            'courseCompleted': 'true' if self.course_completed else 'false',
+            'completedTimestamp': self.completed_timestamp,
+            'grade': self.grade,
+        }
 
 
 class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):

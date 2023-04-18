@@ -93,14 +93,14 @@ def test_enroll_user_in_course():
     course_details = {"course_id": course_id}
     mode = "audit"
     cohort = "masters"
-    expected_response = dict(
-        user=user,
-        course_details=course_details,
-        mode=mode,
-        cohort=cohort,
-        is_active=True,
-        enterprise_uuid='None'
-    )
+    expected_response = {
+        'user': user,
+        'course_details': course_details,
+        'mode': mode,
+        'cohort': cohort,
+        'is_active': True,
+        'enterprise_uuid': 'None'
+    }
     responses.add(
         responses.POST,
         _url(
@@ -126,7 +126,7 @@ def test_get_course_enrollment():
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_details = {"course_id": course_id}
         mode = "audit"
-        expected_response = dict(user=user, course_details=course_details, mode=mode)
+        expected_response = {'user': user, 'course_details': course_details, 'mode': mode}
         responses.add(
             responses.GET,
             _url(
@@ -149,7 +149,7 @@ def test_is_enrolled():
     course_details = {"course_id": course_id}
     mode = "audit"
     is_active = True
-    expected_response = dict(user=user, course_details=course_details, mode=mode, is_active=is_active)
+    expected_response = {'user': user, 'course_details': course_details, 'mode': mode, 'is_active': is_active}
     responses.add(
         responses.GET,
         _url(
@@ -321,7 +321,7 @@ def test_is_enrolled_but_not_active():
     course_details = {"course_id": course_id}
     mode = "audit"
     is_active = False
-    expected_response = dict(user=user, course_details=course_details, mode=mode, is_active=is_active)
+    expected_response = {'user': user, 'course_details': course_details, 'mode': mode, 'is_active': is_active}
     responses.add(
         responses.GET,
         _url(
@@ -367,7 +367,7 @@ def test_unenroll():
     course_id = "course-v1:edx+DemoX+Demo_Course"
     mode = 'audit'
     is_active = True
-    expected_response = dict(user=user, course_details={'course_id': course_id}, mode=mode, is_active=is_active)
+    expected_response = {'user': user, 'course_details': {'course_id': course_id}, 'mode': mode, 'is_active': is_active}
     responses.add(
         responses.GET,
         _url(
@@ -376,7 +376,7 @@ def test_unenroll():
         ),
         json=expected_response
     )
-    expected_response = dict(user=user, is_active=False)
+    expected_response = {'user': user, 'is_active': False}
     responses.add(
         responses.POST,
         _url(
@@ -397,7 +397,7 @@ def test_update_course_enrollment_mode_for_user():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
     mode = 'audit'
-    expected_response = dict(user=user, course_details={'course_id': course_id}, mode=mode, is_active=False)
+    expected_response = {'user': user, 'course_details': {'course_id': course_id}, 'mode': mode, 'is_active': False}
     responses.add(
         responses.POST,
         _url(
@@ -425,7 +425,7 @@ def test_unenroll_already_unenrolled():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
     mode = 'audit'
-    expected_response = dict(user=user, course_details={'course_id': course_id}, mode=mode, is_active=False)
+    expected_response = {'user': user, 'course_details': {'course_id': course_id}, 'mode': mode, 'is_active': False}
     responses.add(
         responses.GET,
         _url(
@@ -434,7 +434,7 @@ def test_unenroll_already_unenrolled():
         ),
         json=expected_response
     )
-    expected_response = dict(user=user, is_active=False)
+    expected_response = {'user': user, 'is_active': False}
     responses.add(
         responses.POST,
         _url(

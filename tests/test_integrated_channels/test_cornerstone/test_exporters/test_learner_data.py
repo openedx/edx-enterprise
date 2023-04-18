@@ -172,17 +172,17 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
                 lms_api.EnrollmentApiClient.API_BASE_URL,
                 "enrollment/{username},{course_id}".format(username=self.user.username, course_id=self.course_id),
             ),
-            json=dict(mode='verified')
+            json={'mode': 'verified'}
         )
 
         # Certificates mock data
-        certificate = dict(
-            username=self.user.username,
-            course_id=self.course_id,
-            created_date="2019-06-21T12:58:17.428373Z",
-            is_passing=True,
-            grade='0.8',
-        )
+        certificate = {
+            "username": self.user.username,
+            "course_id": self.course_id,
+            "created_date": "2019-06-21T12:58:17.428373Z",
+            "is_passing": True,
+            "grade": '0.8',
+        }
         mock_get_course_certificate.return_value = certificate
 
         call_command('transmit_learner_data', '--api_user', self.staff_user.username, '--channel', 'CSOD')
@@ -237,17 +237,17 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
                 lms_api.EnrollmentApiClient.API_BASE_URL,
                 "enrollment/{username},{course_id}".format(username=self.user.username, course_id=self.course_id),
             ),
-            json=dict(mode='verified')
+            json={'mode': 'verified'}
         )
 
         # Certificates mock data
-        certificate = dict(
-            username=self.user.username,
-            course_id=self.course_id,
-            created_date="2019-06-21T12:58:17.428373Z",
-            is_passing=True,
-            grade='0.8',
-        )
+        certificate = {
+            "username": self.user.username,
+            "course_id": self.course_id,
+            "created_date": "2019-06-21T12:58:17.428373Z",
+            "is_passing": True,
+            "grade": "0.8",
+        }
         mock_get_course_certificate.return_value = certificate
 
         call_command('transmit_learner_data', '--api_user', self.staff_user.username, '--channel', 'CSOD')
@@ -315,17 +315,17 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
                 lms_api.EnrollmentApiClient.API_BASE_URL,
                 "enrollment/{username},{course_id}".format(username=self.user.username, course_id=course_id),
             ),
-            json=dict(mode='verified')
+            json={'mode': 'verified'}
         )
 
         # Certificates mock data
-        certificate = dict(
-            username=self.user.username,
-            course_id=self.course_id,
-            created_date="2019-06-21T12:58:17.428373Z",
-            is_passing=True,
-            grade='0.8',
-        )
+        certificate = {
+            "username": self.user.username,
+            "course_id": self.course_id,
+            "created_date": "2019-06-21T12:58:17.428373Z",
+            "is_passing": True,
+            "grade": "0.8",
+        }
         mock_get_course_certificate.return_value = certificate
 
         responses.add(

@@ -225,11 +225,11 @@ class MoodleLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         """
         Convert the audit record's fields into Moodle key/value pairs.
         """
-        return dict(
-            userID=self.moodle_user_email,
-            courseID=self.course_id,
-            courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.moodle_completed_timestamp,
-            grade=self.grade,
-            totalHours=self.total_hours,
-        )
+        return {
+            'userID': self.moodle_user_email,
+            'courseID': self.course_id,
+            'courseCompleted': 'true' if self.course_completed else 'false',
+            'completedTimestamp': self.moodle_completed_timestamp,
+            'grade': self.grade,
+            'totalHours': self.total_hours,
+        }
