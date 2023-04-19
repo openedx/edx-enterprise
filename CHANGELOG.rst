@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.14]
+---------
+fix: Integrated channels metadata exporter now considers failed update audits as existing records
+
 [3.61.13]
 ---------
 feat: expands pagination page size from enterprise catalog query view

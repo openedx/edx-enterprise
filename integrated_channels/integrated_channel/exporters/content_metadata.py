@@ -118,20 +118,23 @@ class ContentMetadataExporter(Exporter):
         # api_response_status_code can be null, treat that as successful, otherwise look for less than http 400
         base_content_query.add(Q(api_response_status_code__isnull=True) | Q(api_response_status_code__lt=400), Q.AND)
 
-        # deleted regardless of create, with a failed status
-        failed_deletes_query = Q(
+        # query for records that have a created at date and a failure status code
+        failed_query = Q(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             plugin_configuration_id=self.enterprise_configuration.id,
-            remote_deleted_at__isnull=False,
-            api_response_status_code__gte=400
+            api_response_status_code__gte=400,
+            remote_created_at__isnull=False,
         )
+        # filter only records who have failed to delete or update, meaning we know they exist on the customer's
+        # instance and require some kind of action
+        failed_query.add(Q(remote_deleted_at__isnull=False) | Q(remote_updated_at__isnull=False), Q.AND)
         # enterprise_customer_catalog filter is optional
         if enterprise_customer_catalog is not None:
-            failed_deletes_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
+            failed_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
 
         # base query OR failed delete query
-        final_content_query = Q(base_content_query | failed_deletes_query)
+        final_content_query = Q(base_content_query | failed_query)
 
         past_transmissions = ContentMetadataItemTransmission.objects.filter(
             final_content_query
