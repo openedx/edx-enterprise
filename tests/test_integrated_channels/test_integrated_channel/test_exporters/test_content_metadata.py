@@ -60,6 +60,55 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_exporter_considers_failed_updates_as_existing_content(
+        self,
+        mock_get_catalog_diff,
+        mock_get_content_metadata
+    ):
+        """
+        Test the exporter considers audits that failed to update as existing content.
+        """
+        test_failed_updated_content = ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+            content_last_changed=None,
+            api_response_status_code=500,
+        )
+        mock_metadata = get_fake_content_metadata()[:1]
+        mock_metadata[0]['key'] = test_failed_updated_content.content_id
+
+        mock_get_content_metadata.return_value = mock_metadata
+
+        # Mock out a response from the catalog service indicating that the content needs to be created
+        mock_get_catalog_diff.return_value = (
+            [{'content_key': test_failed_updated_content.content_id}], [], []
+        )
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        create_payload, _, __ = exporter.export()
+
+        # The exporter is supposed to consider failed updates as existing content, so the content should not be in the
+        # create payload, even though the catalog service thinks it should be created.
+        assert not create_payload
+
+        # The exporter should include the failed update audit in the payload of content keys passed to the enterprise
+        # catalog service diff endpoint.
+        assert mock_get_catalog_diff.call_args.args[1] == [test_failed_updated_content.content_id]
+
+        # Mock out a response from the catalog service (correctly) indicating that the content needs to be updated
+        mock_get_catalog_diff.return_value = (
+            [], [], [{'content_key': test_failed_updated_content.content_id, 'date_updated': datetime.datetime.now()}]
+        )
+        _, update_payload, __ = exporter.export()
+
+        # The exporter should now properly include the content in the update payload.
+        assert update_payload == {test_failed_updated_content.content_id: test_failed_updated_content}
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
     def test_content_exporter_create_export(self, mock_get_catalog_diff, mock_get_content_metadata):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
@@ -513,6 +562,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         Test the _get_catalog_content_keys function when the transmission has failed deletes.
         """
+        # Successfully created and updated audit, updated now()
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
@@ -522,6 +572,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
+        # Successfully created and updated audit, updated a while ago
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
@@ -531,6 +582,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=datetime.datetime.utcnow(),
             remote_updated_at=datetime.datetime.utcnow(),
         )
+        # Failed to create audit, updated now(). No updated_at or deleted_at
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
@@ -539,6 +591,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
             remote_created_at=datetime.datetime.utcnow(),
             api_response_status_code=500,
+            remote_updated_at=None,
+            remote_deleted_at=None,
         )
         exporter = ContentMetadataExporter('fake-user', self.config)
         # pylint: disable=protected-access

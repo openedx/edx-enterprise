@@ -1220,7 +1220,7 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
 
 class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
     queryset = models.EnterpriseCustomerCatalog.objects.all()
-    permissions = (permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAdminUser,)
     serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
     authentication_classes = (JwtAuthentication, SessionAuthentication,)
 
