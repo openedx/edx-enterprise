@@ -10,6 +10,7 @@ import sys
 from logging import getLogger
 
 from django.apps import apps
+from django.conf import settings
 from django.db.models import Q
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -117,20 +118,23 @@ class ContentMetadataExporter(Exporter):
         # api_response_status_code can be null, treat that as successful, otherwise look for less than http 400
         base_content_query.add(Q(api_response_status_code__isnull=True) | Q(api_response_status_code__lt=400), Q.AND)
 
-        # deleted regardless of create, with a failed status
-        failed_deletes_query = Q(
+        # query for records that have a created at date and a failure status code
+        failed_query = Q(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             integrated_channel_code=self.enterprise_configuration.channel_code(),
             plugin_configuration_id=self.enterprise_configuration.id,
-            remote_deleted_at__isnull=False,
-            api_response_status_code__gte=400
+            api_response_status_code__gte=400,
+            remote_created_at__isnull=False,
         )
+        # filter only records who have failed to delete or update, meaning we know they exist on the customer's
+        # instance and require some kind of action
+        failed_query.add(Q(remote_deleted_at__isnull=False) | Q(remote_updated_at__isnull=False), Q.AND)
         # enterprise_customer_catalog filter is optional
         if enterprise_customer_catalog is not None:
-            failed_deletes_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
+            failed_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
 
         # base query OR failed delete query
-        final_content_query = Q(base_content_query | failed_deletes_query)
+        final_content_query = Q(base_content_query | failed_query)
 
         past_transmissions = ContentMetadataItemTransmission.objects.filter(
             final_content_query
@@ -299,13 +303,49 @@ class ContentMetadataExporter(Exporter):
         # We need to remove any potential create transmissions if the content already exists on the customer's instance
         # under a different catalog
         for item in items_to_create:
-            if item.get('content_key') not in existing_content_keys:
+            # If the catalog system has indicated that the content is new and needs creating, we need to check if the
+            # content already exists on the customer's instance under a different catalog. If it does, we need to
+            # check if the content key exists as an orphaned transmission record for this customer and config,
+            # indicating that the content was previously created but then the config under which it was created was
+            # deleted.
+            content_key = item.get('content_key')
+            orphaned_content = self._get_customer_config_orphaned_content(
+                max_set_count=1,
+                content_key=content_key
+            ).first()
+
+            # if it does exist as an orphaned content record: 1) don't add the item to the list of items to create,
+            # 2) swap the catalog uuid of the transmission audit associated with the orphaned record, and 3) mark the
+            # orphaned record resolved
+            if orphaned_content:
+                ContentMetadataTransmissionAudit = apps.get_model(
+                    'integrated_channel',
+                    'ContentMetadataTransmissionAudit'
+                )
+                ContentMetadataTransmissionAudit.objects.filter(
+                    integrated_channel_code=self.enterprise_configuration.channel_code(),
+                    plugin_configuration_id=self.enterprise_configuration.id,
+                    content_id=content_key
+                ).update(
+                    enterprise_customer_catalog_uuid=enterprise_catalog.uuid
+                )
+
+                self._log_info(
+                    'Found an orphaned content record while creating. '
+                    'Swapping catalog uuid and marking record as resolved.',
+                    course_or_course_run_key=content_key
+                )
+                orphaned_content.resolved = True
+                orphaned_content.save()
+
+            # if the item to create doesn't exist as an orphaned piece of content, do all the normal checks
+            elif content_key not in existing_content_keys:
                 unique_new_items_to_create.append(item)
             else:
                 self._log_info(
                     'Found an previous content record in another catalog while creating. '
                     'Skipping record.',
-                    course_or_course_run_key=item.get('content_key')
+                    course_or_course_run_key=content_key
                 )
 
         content_to_create = self._check_matched_content_to_create(
@@ -379,6 +419,24 @@ class ContentMetadataExporter(Exporter):
                         course_or_course_run_key=content_id
                     )
         return items_to_delete
+
+    def _get_customer_config_orphaned_content(self, max_set_count, content_key=None):
+        """
+        Helper method to retrieve the customer's orphaned content metadata items.
+        """
+        OrphanedContentTransmissions = apps.get_model(
+            'integrated_channel',
+            'OrphanedContentTransmissions'
+        )
+        content_query = Q(content_id=content_key) if content_key else Q()
+        base_query = Q(
+            integrated_channel_code=self.enterprise_configuration.channel_code(),
+            plugin_configuration_id=self.enterprise_configuration.id,
+            resolved=False,
+        ) & content_query
+
+        # Grab orphaned content metadata items for the customer, ordered by oldest to newest
+        return OrphanedContentTransmissions.objects.filter(base_query).order_by('created')[:max_set_count]
 
     def export(self, **kwargs):
         """
@@ -469,6 +527,24 @@ class ContentMetadataExporter(Exporter):
 
             for key, item in items_to_delete.items():
                 delete_payload[key] = item
+
+        # If we're not at the max payload count, we can check for orphaned content and shove it in the delete payload
+        current_payload_count = len(items_to_create) + len(items_to_update) + len(items_to_delete)
+        if current_payload_count < max_payload_count:
+            space_left_in_payload = max_payload_count - current_payload_count
+            orphaned_content_to_delete = self._get_customer_config_orphaned_content(
+                max_set_count=space_left_in_payload,
+            )
+
+            for orphaned_item in orphaned_content_to_delete:
+                # log the content that would have been deleted because it's orphaned
+                self._log_info(
+                    f'Exporter intends to delete orphaned content for customer: {self.enterprise_customer.uuid}, '
+                    f'config {self.enterprise_configuration.channel_code}-{self.enterprise_configuration} with '
+                    f'content_id: {orphaned_item.content_id}'
+                )
+                if getattr(settings, "ALLOW_ORPHANED_CONTENT_REMOVAL", False):
+                    delete_payload[orphaned_item.content_id] = orphaned_item.transmission
 
         self._log_info(
             f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '

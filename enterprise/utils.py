@@ -1681,12 +1681,12 @@ def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
     except HttpClientError as exc:
         logging.error(
             'Error while checking enrollment status of user %(user)s: %(message)s',
-            dict(user=user.username, message=str(exc))
+            {'user': user.username, 'message': str(exc)},
         )
     except KeyError as exc:
         logging.warning(
             'Error while parsing enrollment data of user %(user)s: %(message)s',
-            dict(user=user.username, message=str(exc))
+            {'user': user.username, 'message': str(exc)},
         )
     return False
 
@@ -1735,7 +1735,7 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
                     error_message = default_message
                 logging.error(
                     'Error while enrolling user %(user)s: %(message)s',
-                    dict(user=user.username, message=error_message)
+                    {'user': user.username, 'message': error_message},
                 )
         if succeeded:
             __, created = enterprise_course_enrollment_model().objects.get_or_create(

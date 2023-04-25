@@ -450,3 +450,43 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         assert deleted_transmission.remote_deleted_at is not None
         assert deleted_transmission.api_record.status_code > 400
         assert deleted_transmission.api_record.body == 'error occurred'
+
+    @mark.django_db
+    @ddt.ddt
+    def test_transmit_success_resolve_orphaned_content(self):
+        """
+        Test that a successful transmission will resolve orphaned content.
+        """
+        content_id_1 = 'course:DemoX'
+        channel_metadata_1 = {'update': True}
+        content_1 = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_1,
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            plugin_configuration_id=self.enterprise_config.id,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            enterprise_customer_catalog_uuid=self.enterprise_catalog.uuid,
+            channel_metadata=channel_metadata_1,
+            remote_created_at=datetime.utcnow()
+        )
+        orphaned_content_record = factories.OrphanedContentTransmissionsFactory(
+            integrated_channel_code=self.enterprise_config.channel_code(),
+            plugin_configuration_id=self.enterprise_config.id,
+            content_id=content_1.content_id,
+            transmission=content_1,
+        )
+
+        assert not orphaned_content_record.resolved
+
+        create_payload = {}
+        update_payload = {}
+        delete_payload = {content_id_1: content_1}
+        self.delete_content_metadata_mock.return_value = (self.success_response_code, self.success_response_body)
+        transmitter = ContentMetadataTransmitter(self.enterprise_config)
+        transmitter.transmit(create_payload, update_payload, delete_payload)
+
+        self.create_content_metadata_mock.assert_not_called()
+        self.update_content_metadata_mock.assert_not_called()
+        self.delete_content_metadata_mock.assert_called()
+
+        orphaned_content_record.refresh_from_db()
+        assert orphaned_content_record.resolved

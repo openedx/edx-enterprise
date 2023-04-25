@@ -66,7 +66,7 @@ class TestEnterpriseAPIThrottling(APITest):
         assert response.status_code == status.HTTP_200_OK
 
         # Now exhaust remaining service user's throttle limit
-        self._exhaust_throttle_limit(throttle_limit=(self.SERVICE_USER_THROTTLE_RATE - self.USER_THROTTLE_RATE - 1))
+        self._exhaust_throttle_limit(throttle_limit=self.SERVICE_USER_THROTTLE_RATE - self.USER_THROTTLE_RATE - 1)
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
 

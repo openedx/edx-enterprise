@@ -15,6 +15,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -1409,6 +1410,14 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         return super().destroy(request, *args, **kwargs)
 
 
+class ExpandDefaultPageSize(PageNumberPagination):
+    """
+    Expands page size for the API.
+    Used to populate support-tools repo's provisioning form catalog query dropdown component.
+    """
+    page_size = 100
+
+
 class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API views for the ``enterprise_catalog_query`` API endpoint.
@@ -1417,6 +1426,7 @@ class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
     serializer_class = serializers.EnterpriseCatalogQuerySerializer
     permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
     authentication_classes = (JwtAuthentication, SessionAuthentication,)
+    pagination_class = ExpandDefaultPageSize
 
 
 class CouponCodesView(APIView):

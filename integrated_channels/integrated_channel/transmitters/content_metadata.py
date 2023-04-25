@@ -135,6 +135,21 @@ class ContentMetadataTransmitter(Transmitter):
         transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
             self.enterprise_configuration.channel_code()
         )
+
+        # If we're deleting, fetch all orphaned, uneresolved content transmissions
+        is_delete_action = action_name == 'delete'
+        if is_delete_action:
+            OrphanedContentTransmissions = apps.get_model(
+                'integrated_channel',
+                'OrphanedContentTransmissions'
+            )
+            orphaned_items = OrphanedContentTransmissions.objects.filter(
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                plugin_configuration_id=self.enterprise_configuration.id,
+                resolved=False,
+            )
+            successfully_removed_content_keys = []
+
         for chunk in islice(chunk_items, transmission_limit):
             json_payloads = [item.channel_metadata for item in list(chunk.values())]
             serialized_chunk = self._serialize_items(json_payloads)
@@ -203,11 +218,18 @@ class ContentMetadataTransmitter(Transmitter):
                         transmission.remote_created_at = action_happened_at
                     elif action_name == 'update':
                         transmission.remote_updated_at = action_happened_at
-                    elif action_name == 'delete':
+                    elif is_delete_action:
                         transmission.remote_deleted_at = action_happened_at
+                        if was_successful:
+                            successfully_removed_content_keys.append(transmission.content_id)
                     transmission.save()
                     if was_successful:
                         transmission.remove_marked_for()
                     self.enterprise_configuration.update_content_synced_at(action_happened_at, was_successful)
                     results.append(transmission)
+
+        if is_delete_action and successfully_removed_content_keys:
+            # Mark any successfully deleted, orphaned content transmissions as resolved
+            orphaned_items.filter(content_id__in=successfully_removed_content_keys).update(resolved=True)
+
         return results

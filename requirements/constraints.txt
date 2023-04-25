@@ -29,3 +29,9 @@ pytest<7.0
 
 # pinning it to latest release.
 celery==5.0.4
+
+# pip-tools>=6.11.0 requires click>=8.0.0, which is not yet compatible.
+pip-tools<6.11.0
+
+# tox>=4.4.11 require filelock>=3.10.7, which is not yet compatible.
+tox<4

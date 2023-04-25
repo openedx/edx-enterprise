@@ -19,6 +19,7 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandUtils,
 )
+from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, OrphanedContentTransmissions
 from integrated_channels.utils import generate_formatted_log
 
 LOGGER = get_task_logger(__name__)
@@ -87,6 +88,48 @@ def _log_batch_task_finish(task_name, channel_code, job_user_id,
             duration_seconds=duration_seconds,
             details=extra_message
         ))
+
+
+@shared_task
+@set_code_owner_attribute
+def mark_orphaned_content_metadata_audit():
+    """
+    Task to mark content metadata audits as orphaned if they are not linked to any customer catalogs.
+    """
+    start = time.time()
+    _log_batch_task_start('mark_orphaned_content_metadata_audit', None, None, None)
+
+    orphaned_metadata_audits = ContentMetadataItemTransmission.objects.none()
+    # Go over each integrated channel
+    for individual_channel in INTEGRATED_CHANNEL_CHOICES.values():
+        try:
+            # Iterate through each configuration for the channel
+            for config in individual_channel.objects.all():
+                # fetch orphaned content
+                orphaned_metadata_audits |= config.fetch_orphaned_content_audits()
+        except Exception as exc:  # pylint: disable=broad-except
+            LOGGER.exception(
+                f'[Integrated Channel] mark_orphaned_content_metadata_audit failed with exception {exc}.',
+                exc_info=True
+            )
+    # Generate orphaned content records for each fetched audit record
+    for orphaned_metadata_audit in orphaned_metadata_audits:
+        OrphanedContentTransmissions.objects.get_or_create(
+            integrated_channel_code=orphaned_metadata_audit.integrated_channel_code,
+            plugin_configuration_id=orphaned_metadata_audit.plugin_configuration_id,
+            transmission=orphaned_metadata_audit,
+            content_id=orphaned_metadata_audit.content_id,
+        )
+
+    duration = time.time() - start
+    _log_batch_task_finish(
+        'mark_orphaned_content_metadata_audit',
+        channel_code=None,
+        job_user_id=None,
+        integrated_channel_full_config=None,
+        duration_seconds=duration,
+        extra_message=f'Orphaned content metadata audits marked: {orphaned_metadata_audits.count()}'
+    )
 
 
 @shared_task

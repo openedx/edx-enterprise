@@ -289,15 +289,15 @@ class BlackboardLearnerAssessmentDataTransmissionAudit(LearnerDataTransmissionAu
         """
         Convert the audit record's fields into blackboard key/value pairs.
         """
-        return dict(
-            userID=self.blackboard_user_email,
-            courseID=self.course_id,
-            grade=self.grade,
-            subsectionID=self.subsection_id,
-            points_possible=self.grade_points_possible,
-            points_earned=self.grade_point_score,
-            subsection_name=self.subsection_name,
-        )
+        return {
+            'userID': self.blackboard_user_email,
+            'courseID': self.course_id,
+            'grade': self.grade,
+            'subsectionID': self.subsection_id,
+            'points_possible': self.grade_points_possible,
+            'points_earned': self.grade_point_score,
+            'subsection_name': self.subsection_name,
+        }
 
     @classmethod
     def audit_type(cls):
@@ -370,11 +370,11 @@ class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         """
         Convert the audit record's fields into Blackboard key/value pairs.
         """
-        return dict(
-            userID=self.blackboard_user_email,
-            courseID=self.course_id,
-            courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.blackboard_completed_timestamp,
-            grade=self.grade,
-            totalHours=self.total_hours,
-        )
+        return {
+            'userID': self.blackboard_user_email,
+            'courseID': self.course_id,
+            'courseCompleted': 'true' if self.course_completed else 'false',
+            'completedTimestamp': self.blackboard_completed_timestamp,
+            'grade': self.grade,
+            'totalHours': self.total_hours,
+        }
