@@ -17,6 +17,26 @@ Unreleased
 ----------
 * Nothing
 
+[3.61.14]
+---------
+fix: Integrated channels metadata exporter now considers failed update audits as existing records
+
+[3.61.13]
+---------
+feat: expands pagination page size from enterprise catalog query view
+
+[3.61.12]
+---------
+chore: remove codecov from requirements as it removed from PyPi and is breaking CI when trying to install the package. Pinned ``pip-tools`` and ``tox`` in ``common_constraints.txt`` due to dependency resolution issues with ``click`` and ``filelock``.
+
+[3.61.11]
+---------
+feat: include owners and longer descriptions for degreed2 content metadata transmissions
+
+[3.61.10]
+---------
+feat: new tagging orphaned content tast for integrated channels
+
 [3.61.9]
 --------
 feat: Serialize and create a viewset for enterpriseCatalogQuery as readonly

@@ -4,6 +4,7 @@ Test the Enterprise management commands and related functions.
 
 import logging
 import unittest
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest import mock, skip
@@ -22,6 +23,7 @@ from django.contrib import auth
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import signals
+from django.test.utils import override_settings
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -51,7 +53,7 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
+from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, OrphanedContentTransmissions
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -333,38 +335,38 @@ COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
 COURSE_KEY = 'edX+DemoX'
 
 # Mock passing certificate data
-MOCK_PASSING_CERTIFICATE = dict(
-    grade='A-',
-    created_date=NOW.strftime(LMS_API_DATETIME_FORMAT),
-    status='downloadable',
-    is_passing=True,
-)
+MOCK_PASSING_CERTIFICATE = {
+    'grade': 'A-',
+    'created_date': NOW.strftime(LMS_API_DATETIME_FORMAT),
+    'status': 'downloadable',
+    'is_passing': True,
+}
 
 # Mock failing certificate data
-MOCK_FAILING_CERTIFICATE = dict(
-    grade='D',
-    created_date=NOW.strftime(LMS_API_DATETIME_FORMAT),
-    status='downloadable',
-    is_passing=False,
-    percent_grade=0.6,
-)
+MOCK_FAILING_CERTIFICATE = {
+    'grade': 'D',
+    'created_date': NOW.strftime(LMS_API_DATETIME_FORMAT),
+    'status': 'downloadable',
+    'is_passing': False,
+    'percent_grade': 0.6,
+}
 
 # Expected learner completion data from the mock passing certificate
-CERTIFICATE_PASSING_COMPLETION = dict(
-    completed='true',
-    timestamp=NOW_TIMESTAMP,
-    grade=LearnerExporter.GRADE_PASSING,
-    total_hours=0.0,
-    percent_grade=0.8,
-)
+CERTIFICATE_PASSING_COMPLETION = {
+    'completed': 'true',
+    'timestamp': NOW_TIMESTAMP,
+    'grade': LearnerExporter.GRADE_PASSING,
+    'total_hours': 0.0,
+    'percent_grade': 0.8,
+}
 
 # Expected learner completion data from the mock failing certificate
-CERTIFICATE_FAILING_COMPLETION = dict(
-    completed='false',
-    timestamp=NOW_TIMESTAMP,
-    grade=LearnerExporter.GRADE_FAILING,
-    total_hours=0.0,
-)
+CERTIFICATE_FAILING_COMPLETION = {
+    'completed': 'false',
+    'timestamp': NOW_TIMESTAMP,
+    'grade': LearnerExporter.GRADE_FAILING,
+    'total_hours': 0.0,
+}
 
 
 @mark.django_db
@@ -507,9 +509,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
                     "providers/{provider}/users?username={user}".format(provider=testcase.identity_provider,
                                                                         user=user.username)),
             match_querystring=True,
-            json=dict(results=[
-                dict(username=user.username, remote_id='remote-user-id'),
-            ]),
+            json={"results": [{'username': user.username, 'remote_id': 'remote-user-id'}]},
         )
 
         # Course API course_details response
@@ -517,11 +517,11 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
             responses.GET,
             urljoin(lms_api.CourseApiClient.API_BASE_URL,
                     "courses/{course}/".format(course=testcase.course_id)),
-            json=dict(
-                course_id=COURSE_ID,
-                pacing="self" if self_paced else "instructor",
-                end=end_date.isoformat() if end_date else None,
-            ),
+            json={
+                "course_id": COURSE_ID,
+                "pacing": "self" if self_paced else "instructor",
+                "end": end_date.isoformat() if end_date else None,
+            },
         )
 
         # Grades API course_grades response
@@ -531,11 +531,11 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
                     "courses/{course}/?username={user}".format(course=testcase.course_id,
                                                                user=user.username)),
             match_querystring=True,
-            json=[dict(
-                username=user.username,
-                course_id=COURSE_ID,
-                passed=passed,
-            )],
+            json=[{
+                "username": user.username,
+                "course_id": COURSE_ID,
+                "passed": passed,
+            }],
         )
 
         # Enrollment API enrollment response
@@ -545,9 +545,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
                     "enrollment/{username},{course_id}".format(username=user.username,
                                                                course_id=testcase.course_id)),
             match_querystring=True,
-            json=dict(
-                mode="verified",
-            ),
+            json={"mode": "verified"},
         )
 
         # Certificates API course_grades response
@@ -1029,38 +1027,38 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
     @responses.activate
     @ddt.data(
         # Certificate marks course completion
-        (dict(enterprise_customer_slug=None), MOCK_PASSING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer_slug': None}, MOCK_PASSING_CERTIFICATE, False, None, False,
          CERTIFICATE_PASSING_COMPLETION),
-        (dict(enterprise_customer_slug=None), MOCK_FAILING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer_slug': None}, MOCK_FAILING_CERTIFICATE, False, None, False,
          CERTIFICATE_FAILING_COMPLETION),
 
         # enterprise_customer UUID gets filled in below
-        (dict(enterprise_customer=None, enterprise_customer_slug=None), MOCK_PASSING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer': None, 'enterprise_customer_slug': None}, MOCK_PASSING_CERTIFICATE, False, None, False,
          CERTIFICATE_PASSING_COMPLETION),
-        (dict(enterprise_customer=None, enterprise_customer_slug=None), MOCK_FAILING_CERTIFICATE, False, None, False,
+        ({'enterprise_customer': None, 'enterprise_customer_slug': None}, MOCK_FAILING_CERTIFICATE, False, None, False,
          CERTIFICATE_FAILING_COMPLETION),
 
         # Instructor-paced course with no certificates issued yet results in incomplete course data
-        (dict(enterprise_customer_slug=None), None, False, None, False,
-         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, False, None, False,
+         {'completed': 'false', 'timestamp': 'null', 'grade': 'In Progress', 'total_hours': 0.0}),
 
         # Self-paced course with no end date send grade=Pass, or grade=In Progress, depending on current grade.
-        (dict(enterprise_customer_slug=None), None, True, None, False,
-         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
-        (dict(enterprise_customer_slug=None), None, True, None, True,
-         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, True, None, False,
+         {'completed': 'false', 'timestamp': 'null', 'grade': 'In Progress', 'total_hours': 0.0}),
+        ({'enterprise_customer_slug': None}, None, True, None, True,
+         {'completed': 'true', 'timestamp': NOW_TIMESTAMP, 'grade': 'Pass', 'total_hours': 0.0}),
 
         # Self-paced course with future end date sends grade=Pass, or grade=In Progress, depending on current grade.
-        (dict(enterprise_customer_slug=None), None, True, FUTURE, False,
-         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
-        (dict(enterprise_customer_slug=None), None, True, FUTURE, True,
-         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, True, FUTURE, False,
+         {'completed': 'false', 'timestamp': 'null', 'grade': 'In Progress', 'total_hours': 0.0}),
+        ({'enterprise_customer_slug': None}, None, True, FUTURE, True,
+         {'completed': 'true', 'timestamp': NOW_TIMESTAMP, 'grade': 'Pass', 'total_hours': 0.0}),
 
         # Self-paced course with past end date sends grade=Pass, or grade=Fail, depending on current grade.
-        (dict(enterprise_customer_slug=None), None, True, PAST, False,
-         dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail', total_hours=0.0)),
-        (dict(enterprise_customer_slug=None), None, True, PAST, True,
-         dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass', total_hours=0.0)),
+        ({'enterprise_customer_slug': None}, None, True, PAST, False,
+         {'completed': 'false', 'timestamp': PAST_TIMESTAMP, 'grade': 'Fail', 'total_hours': 0.0}),
+        ({'enterprise_customer_slug': None}, None, True, PAST, True,
+         {'completed': 'true', 'timestamp': PAST_TIMESTAMP, 'grade': 'Pass', 'total_hours': 0.0}),
     )
     @ddt.unpack
     @skip(
@@ -1889,3 +1887,46 @@ class TestResetCsodRemoteDeletedAtManagementCommand(unittest.TestCase, Enterpris
         assert generic1.remote_deleted_at is not None
         assert csod1.remote_deleted_at is None
         assert csod2.remote_deleted_at is None
+
+
+@mark.django_db
+@ddt.ddt
+class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``mark_orphaned_content_metadata_audits`` management command.
+    """
+
+    def setUp(self):
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            name='Veridian Dynamics',
+        )
+        ContentMetadataItemTransmission.objects.all().delete()
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.enterprise_customer.enterprise_customer_catalogs.set([enterprise_catalog])
+        self.enterprise_customer.save()
+        self.customer_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            key='key',
+            secret='secret',
+            degreed_company_id='Degreed Company',
+            degreed_base_url='https://www.degreed.com/',
+        )
+        self.orphaned_content = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX',
+            enterprise_customer=self.enterprise_customer,
+            plugin_configuration_id=self.customer_config.id,
+            integrated_channel_code=self.customer_config.channel_code(),
+            channel_metadata={},
+            enterprise_customer_catalog_uuid=uuid.uuid4(),
+            remote_created_at=datetime.now()
+        )
+        super().setUp()
+
+    @override_settings(ALLOW_ORPHANED_CONTENT_REMOVAL=True)
+    def test_normal_run(self):
+        assert not OrphanedContentTransmissions.objects.all()
+        call_command('mark_orphaned_content_metadata_audits')
+        orphaned_content = OrphanedContentTransmissions.objects.first()
+        assert orphaned_content.content_id == self.orphaned_content.content_id

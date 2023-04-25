@@ -130,7 +130,7 @@ def _raise_client_error(url, message, **kwargs):
     """
     Emulate a client error raised by edx_rest_api_client.
     """
-    content = dict(message=message)
+    content = {"message": message}
     content.update(kwargs)
     raise HttpClientError(
         "Client Error 400: {}/{}".format(settings.ENTERPRISE_ENROLLMENT_API_URL, url),

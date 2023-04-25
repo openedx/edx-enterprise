@@ -1174,7 +1174,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     error_message = default_message
                 LOGGER.exception(
                     'Error while enrolling user %(user)s: %(message)s',
-                    dict(user=self.user_id, message=error_message)
+                    {'user': self.user_id, 'message': error_message},
                 )
 
             if succeeded:

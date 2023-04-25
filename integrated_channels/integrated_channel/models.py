@@ -45,6 +45,7 @@ class SoftDeletionQuerySet(QuerySet):
     """
     Soft deletion query set.
     """
+
     def delete(self):
         return super().update(deleted_at=localized_utcnow())
 
@@ -241,6 +242,22 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
                 }
             )
 
+    def fetch_orphaned_content_audits(self):
+        """
+        Helper method attached to customer configs to fetch all orphaned content metadata audits not linked to the
+        customer's catalogs.
+        """
+        enterprise_customer_catalogs = self.customer_catalogs_to_transmit or \
+            self.enterprise_customer.enterprise_customer_catalogs.all()
+
+        customer_catalog_uuids = enterprise_customer_catalogs.values_list('uuid', flat=True)
+        return ContentMetadataItemTransmission.objects.filter(
+            integrated_channel_code=self.channel_code(),
+            enterprise_customer=self.enterprise_customer,
+            remote_deleted_at__isnull=True,
+            remote_created_at__isnull=False,
+        ).exclude(enterprise_customer_catalog_uuid__in=customer_catalog_uuids)
+
     def update_content_synced_at(self, action_happened_at, was_successful):
         """
         Given the last time a Content record sync was attempted and status update the appropriate timestamps.
@@ -412,6 +429,7 @@ class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfi
     """
     A generic implementation of EnterpriseCustomerPluginConfiguration which can be instantiated
     """
+
     def __str__(self):
         """
         Return human-readable string representation.
@@ -551,12 +569,12 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         """
         Convert the audit record's fields into SAP SuccessFactors key/value pairs.
         """
-        return dict(
-            courseID=self.course_id,
-            courseCompleted="true" if self.course_completed else "false",
-            completedTimestamp=self.completed_timestamp,
-            grade=self.grade,
-        )
+        return {
+            'courseID': self.course_id,
+            'courseCompleted': 'true' if self.course_completed else 'false',
+            'completedTimestamp': self.completed_timestamp,
+            'grade': self.grade,
+        }
 
 
 class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
@@ -814,3 +832,22 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+class OrphanedContentTransmissions(TimeStampedModel):
+    """
+    A model to track content metadata transmissions that were successfully sent to the integrated channel but then
+    subsequently were orphaned by a removal of their associated catalog from the customer.
+    """
+    class Meta:
+        index_together = [('integrated_channel_code', 'plugin_configuration_id', 'resolved')]
+
+    integrated_channel_code = models.CharField(max_length=30)
+    plugin_configuration_id = models.PositiveIntegerField(blank=False, null=False)
+    content_id = models.CharField(max_length=255, blank=False, null=False)
+    transmission = models.ForeignKey(
+        ContentMetadataItemTransmission,
+        related_name='orphaned_record',
+        on_delete=models.CASCADE,
+    )
+    resolved = models.BooleanField(default=False)
