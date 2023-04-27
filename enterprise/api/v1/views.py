@@ -15,6 +15,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -149,6 +150,14 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     """
 
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
+
+
+class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, viewsets.GenericViewSet):
+    """
+    Base class for all write only Enterprise model view sets.
+    """
+
+    permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions)
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
@@ -1207,6 +1216,12 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
             )
             return Response("Error with updating branding configuration", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response("Branding was updated", status=status.HTTP_204_NO_CONTENT)
+
+
+class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
+    queryset = models.EnterpriseCustomerCatalog.objects.all()
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
 
 
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):

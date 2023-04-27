@@ -90,6 +90,7 @@ ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT = reverse(
 ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT = reverse(
     'enterprise-catalogs-program-detail', kwargs={'pk': FAKE_UUIDS[1], 'program_uuid': FAKE_UUIDS[3]}
 )
+ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT = reverse('enterprise_customer_catalog-list')
 ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollment-list')
 ENTERPRISE_CUSTOMER_BRANDING_LIST_ENDPOINT = reverse('enterprise-customer-branding-list')
 ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT = reverse('enterprise-customer-branding-detail', (TEST_SLUG,))
@@ -1661,6 +1662,59 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             assert enterprise_customer_user_2.linked is False
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerCatalogWriteViewSet
+    """
+    @ddt.data(
+        (False, 403),
+        (True, 201),
+    )
+    @ddt.unpack
+    def test_create_catalog(self, is_staff, expected_status_code):
+        """
+        Test that a catalog can be created
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = is_staff
+        self.user.save()
+        response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer.uuid),
+        }, format='json')
+        response_output = self.load_json(response.content)
+
+        assert response.status_code == expected_status_code
+        if expected_status_code == 201:
+            assert response_output['title'] == 'Test Catalog'
+            assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        if expected_status_code == 403:
+            assert response_output['detail'] == 'You do not have permission to perform this action.'
+
+    def test_create_catalog_incorrect_data(self):
+        """
+        Test that a catalog cannot be created with a non-existent customer uuid
+        """
+        enterprise_customer = {
+            'uuid': FAKE_UUIDS[0]
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer['uuid']))
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer['uuid']),
+        }, format='json')
+        response_output = self.load_json(response.content)
+        assert response.status_code == 400
+        if response.status_code == 400:
+            assert "Invalid pk" in response_output['enterprise_customer'][0]
 
 
 @ddt.ddt

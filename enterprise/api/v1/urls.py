@@ -39,6 +39,12 @@ router.register(
     views.EnterpriseCatalogQueryViewSet,
     "enterprise_catalog_query"
 )
+router.register(
+    "enterprise_customer_catalog",
+    views.EnterpriseCustomerCatalogWriteViewSet,
+    "enterprise_customer_catalog"
+)
+
 
 urlpatterns = [
     re_path(
