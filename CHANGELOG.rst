@@ -18,6 +18,14 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.61.16]
+---------
+feat: Q filtering to enterprise customer basic list
+
+[3.61.15]
+---------
+feat: Add customer catalog write only viewset
+
 [3.61.14]
 ---------
 fix: Integrated channels metadata exporter now considers failed update audits as existing records
