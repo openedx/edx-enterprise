@@ -498,6 +498,12 @@ class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSeri
             'enterprise_customer',
             'enterprise_catalog_query'
         )
+        extra_kwargs = {
+            'uuid': {'required': False},
+            'title': {'required': True},
+            'enterprise_customer': {'required': True},
+            'enterprise_catalog_query': {'required': False}
+        }
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):

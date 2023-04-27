@@ -1680,6 +1680,7 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         Test that a catalog can be created
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
         self.user.is_staff = is_staff
         self.user.save()
@@ -1687,12 +1688,18 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
             "title": "Test Catalog",
             "enterprise_customer": str(enterprise_customer.uuid),
         }, format='json')
+        response_output = self.load_json(response.content)
 
         assert response.status_code == expected_status_code
+        if expected_status_code == 201:
+            assert response_output['title'] == 'Test Catalog'
+            assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        if expected_status_code == 403:
+            assert response_output['detail'] == 'You do not have permission to perform this action.'
 
     def test_create_catalog_incorrect_data(self):
         """
-        Test that a catalog cannot be created with incorrect data
+        Test that a catalog cannot be created with a non-existent customer uuid
         """
         enterprise_customer = {
             'uuid': FAKE_UUIDS[0]
@@ -1704,7 +1711,10 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
             "title": "Test Catalog",
             "enterprise_customer": str(enterprise_customer['uuid']),
         }, format='json')
+        response_output = self.load_json(response.content)
         assert response.status_code == 400
+        if response.status_code == 400:
+            assert "Invalid pk" in response_output['enterprise_customer'][0]
 
 
 @ddt.ddt
