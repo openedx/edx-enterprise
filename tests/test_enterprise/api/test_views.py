@@ -1409,6 +1409,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         response = self.client.get(url, {'startswith': startswith})
         assert startswith_enterprise_customers == self.load_json(response.content)
 
+        # test name_or_uuid param
+        name_or_uuid = enterprise_customers[0]['name']
+        name_or_uuid_enterprise_customers = [
+            customer for customer in sorted_enterprise_customers if customer['name'] == name_or_uuid
+        ]
+        response = self.client.get(url, {'name_or_uuid': name_or_uuid})
+        assert name_or_uuid_enterprise_customers == self.load_json(response.content)
+
     @ddt.data(
         # Request missing required permissions query param.
         (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}),

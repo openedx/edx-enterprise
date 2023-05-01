@@ -193,11 +193,19 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def basic_list(self, request, *arg, **kwargs):
         """
         Enterprise Customer's Basic data list without pagination
+
+        Two query parameters are supported:
+        - name_or_uuid: filter by name or uuid substring search in a single query parameter.
+        Primarily used for frontend debounced input search.
+        - startswith: filter by name starting with the given string
         """
         startswith = request.GET.get('startswith')
+        name_or_uuid = request.GET.get('name_or_uuid')
         queryset = self.get_queryset().order_by('name')
         if startswith:
             queryset = queryset.filter(name__istartswith=startswith)
+        if name_or_uuid:
+            queryset = queryset.filter(Q(name__icontains=name_or_uuid) | Q(uuid__icontains=name_or_uuid))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
