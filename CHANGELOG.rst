@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.62.0]
+--------
+feat: Add 'auth_org_id' field to EnterpriseCustomer for Auth0 integration
+
 [3.61.16]
 ---------
 feat: Q filtering to enterprise customer basic list
