@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.62.1]
+--------
+feat: new management command to remove duplicate transmission audits
+
 [3.62.0]
 --------
 feat: Add 'auth_org_id' field to EnterpriseCustomer for Auth0 integration

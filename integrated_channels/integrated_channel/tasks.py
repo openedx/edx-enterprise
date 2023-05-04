@@ -9,6 +9,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from edx_django_utils.monitoring import set_code_owner_attribute
 
+from django.conf import settings
 from django.contrib import auth
 from django.core.cache import cache
 from django.utils import timezone
@@ -88,6 +89,45 @@ def _log_batch_task_finish(task_name, channel_code, job_user_id,
             duration_seconds=duration_seconds,
             details=extra_message
         ))
+
+
+@shared_task
+@set_code_owner_attribute
+def remove_duplicate_transmission_audits():
+    """
+    Task to remove duplicate transmission audits, keeping the most recently modified one.
+    """
+    start = time.time()
+    _log_batch_task_start('remove_duplicate_transsmision_audits', None, None, None)
+    unique_transmissions = ContentMetadataItemTransmission.objects.values_list(
+        'content_id',
+        'plugin_configuration_id',
+        'integrated_channel_code',
+    ).distinct()
+    duplicates_found = 0
+    for unique_transmission in unique_transmissions:
+        duplicates = ContentMetadataItemTransmission.objects.filter(
+            id__in=ContentMetadataItemTransmission.objects.filter(
+                content_id=unique_transmission[0],
+                plugin_configuration_id=unique_transmission[1],
+                integrated_channel_code=unique_transmission[2]
+            ).order_by('-modified').values_list('id', flat=True)[1:]
+        )
+        duplicates_found += len(duplicates)
+        if getattr(settings, "DISABLE_REMOVE_DUP_TRANSMISSION_AUDIT_DRY_RUN", False):
+            duplicates.delete()
+        else:
+            LOGGER.info(f"Duplicate content transmission found: {duplicates} during dry run")
+
+    duration_seconds = time.time() - start
+    _log_batch_task_finish(
+        'remove_duplicate_transsmision_audits',
+        channel_code=None,
+        job_user_id=None,
+        integrated_channel_full_config=None,
+        duration_seconds=duration_seconds,
+        extra_message=f"{duplicates_found} duplicates found"
+    )
 
 
 @shared_task
