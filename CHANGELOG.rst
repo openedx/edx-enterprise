@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.62.3]
+--------
+feat: Add idempotent catalog creation endpoint
+
 [3.62.2]
 --------
 fix: management command fix- reading queryset length in a mysql supported way 

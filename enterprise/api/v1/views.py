@@ -1227,9 +1227,54 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
 
 
 class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
+    """
+    API write only views for the ``enterprise-customer-catalog`` API endpoint.
+    """
     queryset = models.EnterpriseCustomerCatalog.objects.all()
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a new EnterpriseCustomerCatalog and returns the created object.
+
+        If an EnterpriseCustomerCatalog already exists for the given enterprise_customer and enterprise_catalog_query,
+        returns the existing object.
+
+        URL: /enterprise/api/v1/enterprise-customer-catalog/
+
+        Method: POST
+
+        Payload::
+
+          {
+            "title":  string - Title of the catalog,
+            "enterprise_customer": string - UUID of an existing enterprise customer,
+            "enterprise_catalog_query": string - id of an existing enterprise catalog query,
+          }
+
+        Returns 201 if a new EnterpriseCustomerCatalog was created, 200 if an existing EnterpriseCustomerCatalog was
+        """
+
+        enterprise_customer_uuid = request.data.get('enterprise_customer')
+        enterprise_catalog_query_id = request.data.get('enterprise_catalog_query')
+        enterprise_customer_catalog_list = models.EnterpriseCustomerCatalog.objects.filter(
+            enterprise_customer=enterprise_customer_uuid)
+        for catalog in enterprise_customer_catalog_list:
+            catalog_query = catalog.enterprise_catalog_query
+            if catalog_query is not None and catalog_query.id == int(enterprise_catalog_query_id):
+                seralized_customer_catalog = serializers.EnterpriseCustomerCatalogWriteOnlySerializer(
+                    catalog)
+                LOGGER.info(
+                    'EnterpriseCustomerCatalog already exists for enterprise_customer_uuid: %s '
+                    'and enterprise_catalog_query_id: %s, using existing catalog: %s',
+                    enterprise_customer_uuid, enterprise_catalog_query_id, catalog.uuid)
+                return Response(seralized_customer_catalog.data, status=status.HTTP_200_OK)
+        LOGGER.info(
+            'Creating new EnterpriseCustomerCatalog for enterprise_customer_uuid: %s '
+            'and enterprise_catalog_query_id: %s',
+            enterprise_customer_uuid, enterprise_catalog_query_id)
+        return super().create(request, *args, **kwargs)
 
 
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
