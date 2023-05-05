@@ -25,4 +25,4 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         try:
             remove_duplicate_transmission_audits.delay()
         except Exception as exc:  # pylint: disable=broad-except
-            LOGGER.exception(f'Failed to mark orphaned content metadata audits. Task failed with exception: {exc}')
+            LOGGER.exception(f'Failed to remove duplicate content metadata audits. Task failed with exception: {exc}')
