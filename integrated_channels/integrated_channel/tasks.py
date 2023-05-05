@@ -113,7 +113,7 @@ def remove_duplicate_transmission_audits():
                 integrated_channel_code=unique_transmission[2]
             ).order_by('-modified').values_list('id', flat=True)[1:]
         )
-        duplicates_found += len(duplicates)
+        duplicates_found += len(list(duplicates))
         if getattr(settings, "DISABLE_REMOVE_DUP_TRANSMISSION_AUDIT_DRY_RUN", False):
             duplicates.delete()
         else:
