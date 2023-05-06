@@ -150,7 +150,8 @@ def get_course_details(course_id):
         return None
 
 
-def enroll_user_in_course(user, course_id, mode, cohort=None, enterprise_uuid=None):
+def enroll_user_in_course(user, course_id, mode, cohort=None, enterprise_uuid=None, force_enrollment=False):  # pylint: disable=unused-argument
+
     """
     Fake implementation.
     """

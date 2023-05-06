@@ -1739,12 +1739,15 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
         user: The user model object who needs to be enrolled in the course
         course_mode: The string representation of the mode with which the enrollment should be created
         *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
-        kwargs: Should contain enrollment_client if it's already been instantiated and should be passed in.
+        kwargs: Contains optional params such as:
+            - enrollment_client, if it's already been instantiated and should be passed in
+            - force_enrollment, if the course is "Invite Only" and the "force_enrollment" is needed
 
     Returns:
         Boolean: Whether or not enrollment succeeded for all courses specified
     """
     enrollment_client = kwargs.pop('enrollment_client', None)
+    force_enrollment = kwargs.pop('force_enrollment', False)
     if not enrollment_client:
         from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
         enrollment_client = EnrollmentApiClient()
@@ -1759,7 +1762,8 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
                 user.username,
                 course_id,
                 course_mode,
-                enterprise_uuid=str(enterprise_customer_user.enterprise_customer.uuid)
+                enterprise_uuid=str(enterprise_customer_user.enterprise_customer.uuid),
+                force_enrollment=force_enrollment,
             )
         except HttpClientError as exc:
             # Check if user is already enrolled then we should ignore exception
@@ -2112,6 +2116,7 @@ def enroll_users_in_course(
         enrollment_reason=None,
         discount=0.0,
         sales_force_id=None,
+        force_enrollment=False,
 ):
     """
     Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -2125,6 +2130,7 @@ def enroll_users_in_course(
         enrollment_reason (str): A reason for enrollment.
         discount (Decimal): Percentage discount for enrollment.
         sales_force_id (str): Salesforce opportunity id.
+        force_enrollment (bool): Force enrollment into 'Invite Only' courses.
 
     Returns:
         successes: A list of users who were successfully enrolled in the course.
@@ -2141,7 +2147,7 @@ def enroll_users_in_course(
     failures = []
 
     for user in existing_users:
-        succeeded = enroll_user(enterprise_customer, user, course_mode, course_id)
+        succeeded = enroll_user(enterprise_customer, user, course_mode, course_id, force_enrollment=force_enrollment)
         if succeeded:
             successes.append(user)
             if enrollment_requester and enrollment_reason:

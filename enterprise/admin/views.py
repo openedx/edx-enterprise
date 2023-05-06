@@ -678,7 +678,8 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             notify=True,
             enrollment_reason=None,
             sales_force_id=None,
-            discount=0.0
+            discount=0.0,
+            force_enrollment=False,
     ):
         """
         Enroll the users with the given email addresses to the course.
@@ -691,6 +692,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             mode: The enrollment mode the users will be enrolled in the course with
             course_id: The ID of the course in which we want to enroll
             notify: Whether to notify (by email) the users that have been enrolled
+            force_enrollment: Force enrollment into "Invite Only" courses
         """
         pending_messages = []
         paid_modes = ['verified', 'professional']
@@ -704,6 +706,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             enrollment_reason=enrollment_reason,
             discount=discount,
             sales_force_id=sales_force_id,
+            force_enrollment=force_enrollment,
         )
         all_successes = succeeded + pending
         if notify:
@@ -820,6 +823,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             sales_force_id = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.SALES_FORCE_ID)
             course_mode = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE_MODE)
             course_id = None
+            force_enrollment = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.FORCE_ENROLLMENT)
 
             if not course_id_with_emails:
                 course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE) or {}
@@ -834,7 +838,8 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                         notify=notify,
                         enrollment_reason=manual_enrollment_reason,
                         sales_force_id=sales_force_id,
-                        discount=discount
+                        discount=discount,
+                        force_enrollment=force_enrollment,
                     )
             else:
                 for course_id, emails in course_id_with_emails.items():
@@ -849,7 +854,8 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                             notify=notify,
                             enrollment_reason=manual_enrollment_reason,
                             sales_force_id=sales_force_id,
-                            discount=discount
+                            discount=discount,
+                            force_enrollment=force_enrollment,
                         )
 
             # Redirect to GET if everything went smooth.
