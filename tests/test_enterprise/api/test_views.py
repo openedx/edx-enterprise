@@ -90,6 +90,7 @@ from test_utils.factories import (
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
+from test_utils.fake_enrollment_api import get_course_details
 from test_utils.fake_enterprise_api import get_default_branding_object
 
 Application = get_application_model()
@@ -3011,6 +3012,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             enable_autocohorting=True
         )
+        mock_enrollment_client.return_value.get_course_details = get_course_details
 
         # Make the call!
         response = self.client.post(
@@ -3208,7 +3210,8 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             get_course_enrollment=mock.Mock(
                 side_effect=[None, {'is_active': True, 'mode': VERIFIED_SUBSCRIPTION_COURSE_MODE}]
             ),
-            enroll_user_in_course=mock.Mock()
+            enroll_user_in_course=mock.Mock(),
+            get_course_details=get_course_details
         )
 
         # Set up catalog_contains_course response.
@@ -4152,6 +4155,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 1,
             'expected_events': [mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course')],
+            'expected_cea': 0,
         },
         # Validation failure cases
         {
@@ -4160,6 +4164,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_response': {'non_field_errors': ['Must include the `enrollment_info` parameter in request.']},
             'expected_num_pending_licenses': 0,
             'expected_events': None,
+            'expected_cea': 0,
         },
         {
             'body': {
@@ -4171,6 +4176,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
+            'expected_cea': 0,
         },
         {
             'body': {
@@ -4188,6 +4194,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
+            'expected_cea': 0,
         },
         {
             'body': {
@@ -4213,6 +4220,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
+            'expected_cea': 0,
         },
         {
             'body': {
@@ -4231,6 +4239,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
+            'expected_cea': 0,
         },
         {
             'body': {
@@ -4246,6 +4255,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 0,
             'expected_events': None,
+            'expected_cea': 0,
         },
         # Single learner, single course success
         {
@@ -4269,6 +4279,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             },
             'expected_num_pending_licenses': 1,
             'expected_events': [mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course')],
+            'expected_cea': 0,
         },
         # Multi-learner, single course success
         {
@@ -4309,6 +4320,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_events': [
                 mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
             ],
+            'expected_cea': 0,
         },
         # Multi-learner, multi-course success
         {
@@ -4326,12 +4338,12 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     },
                     {
                         'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
                     {
                         'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                     },
                 ]
@@ -4354,13 +4366,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     },
                     {
                         'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'created': True,
                         'activation_link': None,
                     },
                     {
                         'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'created': True,
                         'activation_link': None,
                     }
@@ -4370,8 +4382,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_num_pending_licenses': 4,
             'expected_events': [
                 mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
-                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:EnterpriseX+Training+2017')
             ],
+            'expected_cea': 2,
         },
         {
             'body': {
@@ -4388,12 +4401,12 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     },
                     {
                         'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
                     {
                         'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                     },
                 ]
@@ -4416,13 +4429,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     },
                     {
                         'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'created': True,
                         'activation_link': None,
                     },
                     {
                         'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:EnterpriseX+Training+2017',
                         'created': True,
                         'activation_link': None,
                     }
@@ -4432,16 +4445,19 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'expected_num_pending_licenses': 4,
             'expected_events': [
                 mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:edX+DemoX+Demo_Course'),
-                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v2:edX+DemoX+Second_Demo_Course')
+                mock.call(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, 1, 'course-v1:EnterpriseX+Training+2017')
             ],
+            'expected_cea': 2,
         },
     )
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment')
     @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
+    @mock.patch("enterprise.models.CourseEnrollmentAllowed")
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
+        mock_cea,
         mock_notify_task,
         mock_track_enroll,
         mock_get_course_mode,
@@ -4450,6 +4466,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         expected_response,
         expected_num_pending_licenses,
         expected_events,
+        expected_cea,
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
@@ -4466,11 +4483,17 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
-        response = self.client.post(
-            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
-            data=json.dumps(body),
-            content_type='application/json',
-        )
+
+        with mock.patch(
+            "enterprise.models.EnrollmentApiClient.get_course_details",
+            wraps=get_course_details
+        ):
+            response = self.client.post(
+                settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+                data=json.dumps(body),
+                content_type='application/json',
+            )
+
         self.assertEqual(response.status_code, expected_code)
         if expected_response:
             response_json = response.json()
@@ -4484,6 +4507,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             mock_track_enroll.assert_has_calls(expected_events[x] for x in range(len(expected_events) - 1))
         else:
             mock_track_enroll.assert_not_called()
+
+        self.assertEqual(mock_cea.objects.update_or_create.call_count, expected_cea)
 
         # no notifications to be sent unless 'notify' specifically asked for in payload
         mock_notify_task.assert_not_called()
@@ -4829,12 +4854,12 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     },
                     {
                         'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:HarvardX+CoolScience+2016',
                         'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
                     {
                         'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:HarvardX+CoolScience+2016',
                         'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                     },
                 ]
@@ -4857,13 +4882,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     },
                     {
                         'email': 'abc@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:HarvardX+CoolScience+2016',
                         'created': True,
                         'activation_link': None,
                     },
                     {
                         'email': 'xyz@test.com',
-                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_run_key': 'course-v1:HarvardX+CoolScience+2016',
                         'created': True,
                         'activation_link': None,
                     }
@@ -4908,13 +4933,14 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
 
-        response = self.client.post(
-            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
-            data=json.dumps(body),
-            content_type='application/json',
-        )
-        self.assertEqual(response.status_code, expected_code)
+        with mock.patch("enterprise.models.EnrollmentApiClient.get_course_details", wraps=get_course_details):
+            response = self.client.post(
+                settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+                data=json.dumps(body),
+                content_type='application/json',
+            )
 
+        self.assertEqual(response.status_code, expected_code)
         response_json = response.json()
         self.assertEqual(expected_response, response_json)
         self.assertEqual(len(PendingEnrollment.objects.all()), expected_num_pending_licenses)

@@ -99,7 +99,8 @@ def test_enroll_user_in_course():
         'mode': mode,
         'cohort': cohort,
         'is_active': True,
-        'enterprise_uuid': 'None'
+        'enterprise_uuid': 'None',
+        'force_enrollment': False
     }
     responses.add(
         responses.POST,
