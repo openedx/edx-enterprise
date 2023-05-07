@@ -1111,13 +1111,17 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         Test that a pending learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(
-            enterprise_catalog_client,
-            enrollment_client,
-            course_catalog_client,
-            track_enrollment,
-            False,
-        )
+        with mock.patch(
+            'enterprise.models.EnrollmentApiClient.get_course_details',
+            wraps=fake_enrollment_api.get_course_details,
+        ):
+            self._post_multi_enroll(
+                enterprise_catalog_client,
+                enrollment_client,
+                course_catalog_client,
+                track_enrollment,
+                False,
+            )
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
@@ -1771,8 +1775,10 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseEnrollmentAllowed")
     def test_post_link_and_enroll(
             self,
+            mock_cea,
             enterprise_catalog_client,
             enrollment_client,
             course_catalog_client,
@@ -1805,7 +1811,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         course_id = "course-v1:EnterpriseX+Training+2017"
         course_mode = "professional"
 
-        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
+        with mock.patch(
+            'enterprise.models.EnrollmentApiClient.get_course_details',
+            wraps=fake_enrollment_api.get_course_details,
+        ):
+            response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
         enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
@@ -1830,13 +1840,16 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert pending_enrollment.sales_force_id == sales_force_id
         num_messages = len(mail.outbox)
         assert num_messages == 2
+        mock_cea.objects.update_or_create.assert_called_once()
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseEnrollmentAllowed")
     def test_post_link_and_enroll_no_course_details(
             self,
+            mock_cea,
             enterprise_catalog_client,
             enrollment_client,
             course_catalog_client,
@@ -1861,7 +1874,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         course_id = "course-v1:EnterpriseX+Training+2017"
         course_mode = "professional"
 
-        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
+        with mock.patch(
+            'enterprise.models.EnrollmentApiClient.get_course_details',
+            wraps=fake_enrollment_api.get_course_details,
+        ):
+            response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
         enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
@@ -1883,12 +1900,15 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         num_messages = len(mail.outbox)
         assert num_messages == 0
+        mock_cea.objects.update_or_create.assert_called_once()
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseEnrollmentAllowed")
     def test_post_link_and_enroll_no_notification(
             self,
+            mock_cea,
             enterprise_catalog_client,
             enrollment_client,
             track_enrollment,
@@ -1910,7 +1930,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         course_id = "course-v1:EnterpriseX+Training+2017"
         course_mode = "professional"
 
-        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode, notify=False)
+        with mock.patch(
+            'enterprise.models.EnrollmentApiClient.get_course_details',
+            wraps=fake_enrollment_api.get_course_details,
+        ):
+            response = self._perform_request(columns, data, course=course_id, course_mode=course_mode, notify=False)
 
         enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
@@ -1931,6 +1955,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         num_messages = len(mail.outbox)
         assert num_messages == 0
+        mock_cea.objects.update_or_create.assert_called_once()
 
 
 @mark.django_db
