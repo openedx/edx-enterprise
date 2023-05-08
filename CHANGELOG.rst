@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.62.4]
+--------
+fix: duplicate records reading queryset length then splicing
+
 [3.62.3]
 --------
 feat: Add idempotent catalog creation endpoint
