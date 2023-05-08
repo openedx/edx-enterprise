@@ -184,7 +184,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomer
         fields = (
-            'uuid', 'name', 'slug', 'active', 'site', 'enable_data_sharing_consent',
+            'uuid', 'name', 'slug', 'active', 'auth_org_id', 'site', 'enable_data_sharing_consent',
             'enforce_data_sharing_consent', 'branding_configuration',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
