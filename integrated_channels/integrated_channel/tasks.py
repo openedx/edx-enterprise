@@ -106,18 +106,26 @@ def remove_duplicate_transmission_audits():
     ).distinct()
     duplicates_found = 0
     for unique_transmission in unique_transmissions:
+        content_id = unique_transmission[0]
         duplicates = ContentMetadataItemTransmission.objects.filter(
             id__in=ContentMetadataItemTransmission.objects.filter(
-                content_id=unique_transmission[0],
+                content_id=content_id,
                 plugin_configuration_id=unique_transmission[1],
                 integrated_channel_code=unique_transmission[2]
-            ).order_by('-modified').values_list('id', flat=True)[1:]
-        )
-        duplicates_found += len(list(duplicates))
+            ).values_list('id', flat=True)
+        ).order_by('-modified')
+        # Subtract one because we're keeping the most recently modified one
+        num_duplicates = duplicates.count() - 1
+        duplicates_found += num_duplicates
+        # Mysql doesn't support taking the count of a sliced queryset
+        duplicates_to_delete = duplicates[1:]
         if getattr(settings, "DISABLE_REMOVE_DUP_TRANSMISSION_AUDIT_DRY_RUN", False):
-            duplicates.delete()
+            for duplicate in duplicates_to_delete:
+                duplicate.delete()
         else:
-            LOGGER.info(f"Duplicate content transmission found: {duplicates} during dry run")
+            LOGGER.info(
+                f"Found {num_duplicates} duplicate content transmission audits for course: {content_id}"
+            )
 
     duration_seconds = time.time() - start
     _log_batch_task_finish(
