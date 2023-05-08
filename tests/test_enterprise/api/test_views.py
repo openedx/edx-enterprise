@@ -1688,22 +1688,63 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         Test that a catalog can be created
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory()
 
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
         self.user.is_staff = is_staff
         self.user.save()
+
         response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
             "title": "Test Catalog",
             "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
         }, format='json')
         response_output = self.load_json(response.content)
 
         assert response.status_code == expected_status_code
+
         if expected_status_code == 201:
             assert response_output['title'] == 'Test Catalog'
             assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
         if expected_status_code == 403:
             assert response_output['detail'] == 'You do not have permission to perform this action.'
+
+    def test_create_existing_catalog(self):
+        """
+        Test that a catalog cannot be created if it already exists and returns an existing catalog
+        This is to prevent duplicate catalogs from being created using an idempotent strategy
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory()
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = True
+        self.user.save()
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        response_output = self.load_json(response.content)
+
+        duplicate_response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog 2",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        duplicate_response_output = self.load_json(duplicate_response.content)
+
+        response_all = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT)
+        response_all_output = self.load_json(response_all.content)
+
+        assert len(response_all_output) == 1
+        assert response.status_code == 201
+        assert response_output['title'] == 'Test Catalog'
+        assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        assert duplicate_response.status_code == 200
+        assert duplicate_response_output['title'] == 'Test Catalog'
+        assert duplicate_response_output['enterprise_customer'] == str(enterprise_customer.uuid)
 
     def test_create_catalog_incorrect_data(self):
         """
