@@ -140,6 +140,17 @@ function loadPage() {
        programEnrollment.$control.oldValue = null;
     });
 
+    $("#id_bulk_upload_csv").change(function(e) {
+        if (e.target.value) {
+            var force_enrollment = $("#id_force_enrollment");
+            force_enrollment.parent().show();
+            force_enrollment.siblings(".helptext")[0].innerHTML = gettext(
+                "If any of the courses in the CSV file are marked 'Invite Only', " +
+                "this should be enabled for the enrollments to go through in those courses."
+            );
+        }
+    });
+
     if (courseEnrollment.$control.val()) {
         courseEnrollment.$control.trigger("input");
     } else if (programEnrollment.$control.val()) {

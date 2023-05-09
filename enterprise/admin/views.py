@@ -852,7 +852,8 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                             notify=notify,
                             enrollment_reason=manual_enrollment_reason,
                             sales_force_id=sales_force_id,
-                            discount=discount
+                            discount=discount,
+                            force_enrollment=force_enrollment,
                         )
 
             # Redirect to GET if everything went smooth.
