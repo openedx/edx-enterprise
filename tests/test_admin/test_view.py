@@ -894,7 +894,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 2
 
-    def _enroll_user_request(self, user, mode, course_id="", notify=True, reason="tests", discount=0.0):
+    def _enroll_user_request(self, user, mode, course_id="", notify=True, reason="tests", discount=0.0, force_enrollment=False):
         """
         Perform post request to log in and submit the form to enroll a user.
         """
@@ -919,6 +919,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                     ManageLearnersForm.Fields.NOTIFY: notify,
                     ManageLearnersForm.Fields.REASON: reason,
                     ManageLearnersForm.Fields.DISCOUNT: discount,
+                    ManageLearnersForm.Fields.FORCE_ENROLLMENT: force_enrollment,
                 })
         return response
 
@@ -977,7 +978,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         if enrollment_exists:
             track_enrollment.assert_not_called()
@@ -1050,7 +1052,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                     user.username,
                     course_id,
                     mode,
-                    enterprise_uuid=str(self.enterprise_customer.uuid)
+                    enterprise_uuid=str(self.enterprise_customer.uuid),
+                    force_enrollment=False,
                 )
                 track_enrollment.assert_called_with('admin-enrollment', user.id, course_id)
                 self._assert_django_messages(response, {
@@ -1150,7 +1153,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         self._assert_django_messages(response, {
@@ -1166,6 +1170,51 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
         num_messages = len(mail.outbox)
         assert num_messages == 0
+
+    @mock.patch("enterprise.utils.track_enrollment")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @ddt.data(True, False)
+    def test_post_enroll_force_enrollment(
+            self,
+            force_enrollment,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {}
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, mode, course_id=course_id, force_enrollment=force_enrollment)
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
+            user.username,
+            course_id,
+            mode,
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=force_enrollment
+        )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
+        self._assert_django_messages(response, {
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
+        })
+        all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
+        num_enterprise_enrollments = len(all_enterprise_enrollments)
+        assert num_enterprise_enrollments == 1
+        enrollment = all_enterprise_enrollments[0]
+        assert enrollment.enterprise_customer_user.user == user
+        assert enrollment.course_id == course_id
+        assert enrollment.source is not None
+        assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
@@ -1215,7 +1264,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
 
     @mock.patch("enterprise.utils.track_enrollment")
@@ -1249,7 +1299,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_not_called()
         self._assert_django_messages(response, {
@@ -1290,7 +1341,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_not_called()
         self._assert_django_messages(response, {
@@ -1335,7 +1387,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             user.username,
             course_id,
             mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         self._assert_django_messages(response, {
@@ -1681,6 +1734,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 enrollment_requester=ANY,
                 enterprise_customer=ANY,
                 sales_force_id=ANY,
+                force_enrollment=ANY,
             )
             enroll_users_in_course_mock.assert_any_call(
                 course_id=second_course_id,
@@ -1691,6 +1745,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 enrollment_requester=ANY,
                 enterprise_customer=ANY,
                 sales_force_id=ANY,
+                force_enrollment=ANY,
             )
         else:
             enroll_users_in_course_mock.assert_not_called()
@@ -1821,7 +1876,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             user.username,
             course_id,
             course_mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         pending_user_message = (
@@ -1884,7 +1940,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             user.username,
             course_id,
             course_mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         pending_user_message = (
@@ -1940,7 +1997,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             user.username,
             course_id,
             course_mode,
-            enterprise_uuid=str(self.enterprise_customer.uuid)
+            enterprise_uuid=str(self.enterprise_customer.uuid),
+            force_enrollment=False
         )
         track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         pending_user_message = (

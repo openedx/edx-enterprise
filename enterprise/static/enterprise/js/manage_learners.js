@@ -9,7 +9,7 @@ function makeOption(name, value) {
     return $("<option></option>").text(name).val(value);
 }
 
-function fillModeDropdown(data) {
+function updateCourseData(data) {
     /*
      Given a set of data fetched from the enrollment API, populate the Course Mode
      dropdown with those options that are valid for the course entered in the
@@ -19,6 +19,12 @@ function fillModeDropdown(data) {
     var previous_value = $course_mode.val();
     applyModes(data.course_modes);
     $course_mode.val(previous_value);
+    /*
+     * If the course is invite-only, show the force enrollment box.
+     */
+    if (data.invite_only) {
+        $("#id_force_enrollment").parent().show();
+    }
 }
 
 function applyModes(modes) {
@@ -43,7 +49,7 @@ function loadCourseModes(success, failure) {
             return;
         }
         $.ajax({method: 'get', url: enrollmentApiRoot + "course/" + courseId})
-            .done(success || fillModeDropdown)
+            .done(success || updateCourseData)
             .fail(failure || function (err, jxHR, errstat) { disableMode(disableReason); });
     });
 }
@@ -139,6 +145,10 @@ function loadPage() {
     } else if (programEnrollment.$control.val()) {
         programEnrollment.$control.trigger("input");
     }
+
+    // hide the force_invite_only checkbox by default
+    $("#id_force_enrollment").parent().hide();
+
     $("#learner-management-form").submit(addCheckedLearnersToEnrollBox);
 }
 
