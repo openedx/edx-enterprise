@@ -119,13 +119,20 @@ def remove_duplicate_transmission_audits():
         duplicates_found += num_duplicates
         # Mysql doesn't support taking the count of a sliced queryset
         duplicates_to_delete = duplicates[1:]
-        if getattr(settings, "DISABLE_REMOVE_DUP_TRANSMISSION_AUDIT_DRY_RUN", False):
-            for duplicate in duplicates_to_delete:
-                duplicate.delete()
-        else:
+
+        dry_run_flag = getattr(settings, "DRY_RUN_MODE_REMOVE_DUP_TRANSMISSION_AUDIT", True)
+        LOGGER.info(
+            f"remove_duplicate_transmission_audits task dry run mode set to: {dry_run_flag}"
+        )
+        if dry_run_flag:
             LOGGER.info(
                 f"Found {num_duplicates} duplicate content transmission audits for course: {content_id}"
             )
+        else:
+            LOGGER.info(f'Beginning to delete duplicate content transmission audits for course: {content_id}')
+            for duplicate in duplicates_to_delete:
+                LOGGER.info(f"Deleting duplicate transmission audit: {duplicate.id}")
+                duplicate.delete()
 
     duration_seconds = time.time() - start
     _log_batch_task_finish(
