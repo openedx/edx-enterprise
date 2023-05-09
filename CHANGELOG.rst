@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.62.6]
+--------
+chore: adding better logging to the remove dup audit management command
+
 [3.62.5]
 --------
 feat: include auth_org_id in enterprise customer api

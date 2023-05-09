@@ -1974,7 +1974,7 @@ class TestRemoveDuplicateContentMetadataAuditsManageCommand(unittest.TestCase, E
             content_id='DemoX'
         ).count() == self.test_duplicate_number + 1
 
-    @override_settings(DISABLE_REMOVE_DUP_TRANSMISSION_AUDIT_DRY_RUN=True)
+    @override_settings(DRY_RUN_MODE_REMOVE_DUP_TRANSMISSION_AUDIT=False)
     def test_successful_run(self):
         assert ContentMetadataItemTransmission.objects.filter(
             content_id='DemoX'
