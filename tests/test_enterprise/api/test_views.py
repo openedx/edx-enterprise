@@ -1118,7 +1118,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             itemgetter('uuid'),
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'active': True, 'enable_data_sharing_consent': True,
+                'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment', 'enable_audit_data_reporting': True,
                 'site__domain': 'example.com', 'site__name': 'example.com',
                 'contact_email': 'fake@example.com', 'sender_alias': 'Test Sender Alias',
@@ -1127,7 +1129,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
@@ -1177,13 +1181,16 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
             }],
             [{
                 'id': 1, 'user_id': 0, 'user': None, 'active': True, 'created': '2021-10-20T19:01:31Z',
                 'invite_key': None, 'role_assignments': [], 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                    'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                    'admin_users': [], 'active': True,
+                    'auth_org_id': 'asdf3e2wdas',
+                    'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                     'enable_audit_enrollment': False, 'identity_provider': None,
@@ -1248,10 +1255,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
                 'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
@@ -1308,10 +1318,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
                 'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False,
@@ -1498,6 +1511,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'reply_to': 'fake_reply@example.com',
             'hide_labor_market_data': False,
             'modified': '2021-10-20T19:32:12Z',
+            'auth_org_id': 'a34awed234'
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
 
@@ -1556,6 +1570,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_labor_market_data': False,
                 'enterprise_notification_banner': {'text': '', 'title': ''},
                 'modified': '2021-10-20T19:32:12Z',
+                'auth_org_id': enterprise_customer_data.get('auth_org_id'),
             }
         else:
             assert response == expected_error
