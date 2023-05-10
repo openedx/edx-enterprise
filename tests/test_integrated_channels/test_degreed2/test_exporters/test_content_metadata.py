@@ -369,5 +369,5 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "uuid": "3580463a-6f9c-48ed-ae8d-b5a012860d75",
             "advertised_course_run_uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
         }
-        transformed_items = exporter._transform_item(content_metadata_item)
-        assert 'obsolete' in transformed_items and transformed_items['obsolete'] is False
+        transformed_item = exporter._transform_item(content_metadata_item)
+        assert 'obsolete' in transformed_item and transformed_item['obsolete'] is False
