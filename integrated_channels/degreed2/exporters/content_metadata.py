@@ -148,7 +148,7 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         """
         return content_metadata_item['uuid']
 
-    def transform_obsolete(self, content_metadata_item): # pylint: disable=unused-argument
+    def transform_obsolete(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Always set obsolete to false to fix externally deleted courses.
         """
