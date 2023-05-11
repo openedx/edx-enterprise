@@ -353,3 +353,20 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "weeks_to_complete": 10,
         }
         assert exporter.transform_duration(content_metadata_item) == 0
+
+    def test_transform_obsolete(self):
+        """
+        ensure obselete attribute is false
+        """
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        content_metadata_item = {
+            "aggregation_key": "course:edX+0089786",
+            "content_type": "course",
+            "full_description": "<p>sdf</p>",
+            "key": "edX+0089786",
+            "short_description": "<p>ssdf</p>",
+            "title": "using exporter to set participation type",
+            "uuid": "3580463a-6f9c-48ed-ae8d-b5a012860d75",
+            "advertised_course_run_uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
+        }
+        assert exporter.transform_obsolete(content_metadata_item) is False
