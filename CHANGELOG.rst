@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.62.7]
+--------
+feat: include obsolete attribute in degreed content transmissions
+
 [3.62.6]
 --------
 chore: adding better logging to the remove dup audit management command
@@ -36,7 +40,7 @@ feat: Add idempotent catalog creation endpoint
 
 [3.62.2]
 --------
-fix: management command fix- reading queryset length in a mysql supported way 
+fix: management command fix- reading queryset length in a mysql supported way
 
 [3.62.1]
 --------
