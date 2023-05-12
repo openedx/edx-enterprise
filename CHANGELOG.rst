@@ -15,8 +15,11 @@ Change Log
 
 Unreleased
 ----------
-* Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
-  deprecated
+* Nothing
+
+[4.0.0]
+-------
+feat!: upgraded to Node v18, added .nvmrc and updated workflows.
 
 [3.62.7]
 --------
