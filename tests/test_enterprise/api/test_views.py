@@ -68,8 +68,8 @@ from test_utils import (
     update_program_with_enterprise_context,
 )
 from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
-from test_utils.fake_enterprise_api import get_default_branding_object
 from test_utils.fake_enrollment_api import get_course_details
+from test_utils.fake_enterprise_api import get_default_branding_object
 
 fake = Faker()
 
@@ -4305,10 +4305,10 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
 
-        with mock.patch("enterprise.models.EnrollmentApiClient.get_course_details", wraps=get_course_details) as mock_client:
-            # mock_client = mock.Mock(
-            #     get_course_details=get_course_details
-            # )
+        with mock.patch(
+            "enterprise.models.EnrollmentApiClient.get_course_details",
+            wraps=get_course_details
+        ):
             response = self.client.post(
                 settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
                 data=json.dumps(body),

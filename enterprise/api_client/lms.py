@@ -128,7 +128,15 @@ class EnrollmentApiClient(BackendServiceAPIClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
-    def enroll_user_in_course(self, username, course_id, mode, cohort=None, enterprise_uuid=None, force_enrollment=False):
+    def enroll_user_in_course(
+        self,
+        username,
+        course_id,
+        mode,
+        cohort=None,
+        enterprise_uuid=None,
+        force_enrollment=False,
+    ):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
 

@@ -1702,7 +1702,7 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
         *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
         kwargs: Contains optional params such as:
             - enrollment_client, if it's already been instantiated and should be passed in
-            - force_enrollment, if the course is "Invite Only" and the "force_enrollment" is needed 
+            - force_enrollment, if the course is "Invite Only" and the "force_enrollment" is needed
 
     Returns:
         Boolean: Whether or not enrollment succeeded for all courses specified

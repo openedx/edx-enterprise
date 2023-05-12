@@ -894,7 +894,16 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 2
 
-    def _enroll_user_request(self, user, mode, course_id="", notify=True, reason="tests", discount=0.0, force_enrollment=False):
+    def _enroll_user_request(
+        self,
+        user,
+        mode,
+        course_id="",
+        notify=True,
+        reason="tests",
+        discount=0.0,
+        force_enrollment=False
+    ):
         """
         Perform post request to log in and submit the form to enroll a user.
         """
