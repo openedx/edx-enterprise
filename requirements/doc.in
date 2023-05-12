@@ -4,7 +4,7 @@
 -r test-master.txt
 
 doc8                      # reStructuredText style checker
-edx_sphinx_theme          # edX theme for Sphinx output
+sphinx-book-theme         # Common theme for all Open edX projects
 readme_renderer           # Validates README.rst for usage on PyPI
 Sphinx                    # Documentation builder
 docutils

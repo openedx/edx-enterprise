@@ -36,6 +36,7 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         'external-id': 'key',
         'duration': 'duration',
         'duration-type': 'duration_type',
+        'obsolete': 'obsolete',
     }
 
     def transform_duration_type(self, content_metadata_item):  # pylint: disable=unused-argument
@@ -146,3 +147,9 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         Return the identifier of the program content item.
         """
         return content_metadata_item['uuid']
+
+    def transform_obsolete(self, content_metadata_item):  # pylint: disable=unused-argument
+        """
+        Always set obsolete to false to fix externally deleted courses.
+        """
+        return False

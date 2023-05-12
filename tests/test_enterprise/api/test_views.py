@@ -90,6 +90,7 @@ ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT = reverse(
 ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT = reverse(
     'enterprise-catalogs-program-detail', kwargs={'pk': FAKE_UUIDS[1], 'program_uuid': FAKE_UUIDS[3]}
 )
+ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT = reverse('enterprise_customer_catalog-list')
 ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollment-list')
 ENTERPRISE_CUSTOMER_BRANDING_LIST_ENDPOINT = reverse('enterprise-customer-branding-list')
 ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT = reverse('enterprise-customer-branding-detail', (TEST_SLUG,))
@@ -1117,7 +1118,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             itemgetter('uuid'),
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'active': True, 'enable_data_sharing_consent': True,
+                'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment', 'enable_audit_data_reporting': True,
                 'site__domain': 'example.com', 'site__name': 'example.com',
                 'contact_email': 'fake@example.com', 'sender_alias': 'Test Sender Alias',
@@ -1126,7 +1129,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
@@ -1176,13 +1181,16 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
             }],
             [{
                 'id': 1, 'user_id': 0, 'user': None, 'active': True, 'created': '2021-10-20T19:01:31Z',
                 'invite_key': None, 'role_assignments': [], 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                    'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                    'admin_users': [], 'active': True,
+                    'auth_org_id': 'asdf3e2wdas',
+                    'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                     'enable_audit_enrollment': False, 'identity_provider': None,
@@ -1247,10 +1255,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
                 'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
@@ -1307,10 +1318,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__reply_to': 'fake_reply@example.com',
                 'enterprise_customer__hide_labor_market_data': False,
                 'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'admin_users': [], 'active': True, 'enable_data_sharing_consent': True,
+                'admin_users': [], 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False,
@@ -1408,6 +1422,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         response = self.client.get(url, {'startswith': startswith})
         assert startswith_enterprise_customers == self.load_json(response.content)
 
+        # test name_or_uuid param
+        name_or_uuid = enterprise_customers[0]['name']
+        name_or_uuid_enterprise_customers = [
+            customer for customer in sorted_enterprise_customers if customer['name'] == name_or_uuid
+        ]
+        response = self.client.get(url, {'name_or_uuid': name_or_uuid})
+        assert name_or_uuid_enterprise_customers == self.load_json(response.content)
+
     @ddt.data(
         # Request missing required permissions query param.
         (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}),
@@ -1489,6 +1511,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'reply_to': 'fake_reply@example.com',
             'hide_labor_market_data': False,
             'modified': '2021-10-20T19:32:12Z',
+            'auth_org_id': 'a34awed234'
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
 
@@ -1547,6 +1570,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_labor_market_data': False,
                 'enterprise_notification_banner': {'text': '', 'title': ''},
                 'modified': '2021-10-20T19:32:12Z',
+                'auth_org_id': enterprise_customer_data.get('auth_org_id'),
             }
         else:
             assert response == expected_error
@@ -1661,6 +1685,100 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             assert enterprise_customer_user_2.linked is False
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerCatalogWriteViewSet
+    """
+    @ddt.data(
+        (False, 403),
+        (True, 201),
+    )
+    @ddt.unpack
+    def test_create_catalog(self, is_staff, expected_status_code):
+        """
+        Test that a catalog can be created
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory()
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = is_staff
+        self.user.save()
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        response_output = self.load_json(response.content)
+
+        assert response.status_code == expected_status_code
+
+        if expected_status_code == 201:
+            assert response_output['title'] == 'Test Catalog'
+            assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        if expected_status_code == 403:
+            assert response_output['detail'] == 'You do not have permission to perform this action.'
+
+    def test_create_existing_catalog(self):
+        """
+        Test that a catalog cannot be created if it already exists and returns an existing catalog
+        This is to prevent duplicate catalogs from being created using an idempotent strategy
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory()
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = True
+        self.user.save()
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        response_output = self.load_json(response.content)
+
+        duplicate_response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog 2",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        duplicate_response_output = self.load_json(duplicate_response.content)
+
+        response_all = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT)
+        response_all_output = self.load_json(response_all.content)
+
+        assert len(response_all_output) == 1
+        assert response.status_code == 201
+        assert response_output['title'] == 'Test Catalog'
+        assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        assert duplicate_response.status_code == 200
+        assert duplicate_response_output['title'] == 'Test Catalog'
+        assert duplicate_response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+
+    def test_create_catalog_incorrect_data(self):
+        """
+        Test that a catalog cannot be created with a non-existent customer uuid
+        """
+        enterprise_customer = {
+            'uuid': FAKE_UUIDS[0]
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer['uuid']))
+        self.user.is_staff = True
+        self.user.save()
+        response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer['uuid']),
+        }, format='json')
+        response_output = self.load_json(response.content)
+        assert response.status_code == 400
+        if response.status_code == 400:
+            assert "Invalid pk" in response_output['enterprise_customer'][0]
 
 
 @ddt.ddt

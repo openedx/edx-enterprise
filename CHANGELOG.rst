@@ -15,7 +15,48 @@ Change Log
 
 Unreleased
 ----------
-* Nothing
+* Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
+  deprecated
+
+[3.62.7]
+--------
+feat: include obsolete attribute in degreed content transmissions
+
+[3.62.6]
+--------
+chore: adding better logging to the remove dup audit management command
+
+[3.62.5]
+--------
+feat: include auth_org_id in enterprise customer api
+
+[3.62.4]
+--------
+fix: duplicate records reading queryset length then splicing
+
+[3.62.3]
+--------
+feat: Add idempotent catalog creation endpoint
+
+[3.62.2]
+--------
+fix: management command fix- reading queryset length in a mysql supported way
+
+[3.62.1]
+--------
+feat: new management command to remove duplicate transmission audits
+
+[3.62.0]
+--------
+feat: Add 'auth_org_id' field to EnterpriseCustomer for Auth0 integration
+
+[3.61.16]
+---------
+feat: Q filtering to enterprise customer basic list
+
+[3.61.15]
+---------
+feat: Add customer catalog write only viewset
 
 [3.61.14]
 ---------

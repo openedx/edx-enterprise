@@ -384,6 +384,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         fields = (
             "name",
             "slug",
+            "auth_org_id",
             "country",
             "active",
             "customer_type",

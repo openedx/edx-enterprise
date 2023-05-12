@@ -162,6 +162,12 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
         self.assertCountEqual(enterprise_customer_1_admin_users, expected_enterprise_customer_1_admin_users)
         self.assertCountEqual(enterprise_customer_2_admin_users, expected_enterprise_customer_2_admin_users)
 
+    def test_serialize_auth_org_id(self):
+        serializer = EnterpriseCustomerSerializer(self.enterprise_customer_1)
+        expected_auth_org_id = self.enterprise_customer_1.auth_org_id
+        serialized_auth_org_id = serializer.data['auth_org_id']
+        self.assertEqual(serialized_auth_org_id, expected_auth_org_id)
+
 
 @ddt.ddt
 @mark.django_db
