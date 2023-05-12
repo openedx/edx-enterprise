@@ -677,7 +677,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             enrollment_reason=None,
             sales_force_id=None,
             discount=0.0,
-            force_enrollment=False
+            force_enrollment=False,
     ):
         """
         Enroll the users with the given email addresses to the course.

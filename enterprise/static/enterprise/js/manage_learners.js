@@ -19,9 +19,8 @@ function updateCourseData(data) {
     var previous_value = $course_mode.val();
     applyModes(data.course_modes);
     $course_mode.val(previous_value);
-    /*
-     * If the course is invite-only, show the force enrollment box.
-     */
+
+    // If the course is invite-only, show the force enrollment box.
     if (data.invite_only) {
         $("#id_force_enrollment").parent().show();
     }
@@ -140,6 +139,18 @@ function loadPage() {
        programEnrollment.$control.oldValue = null;
     });
 
+    // NOTE: As the course details won't be fetched for course id in the CSV
+    // file, this has a potential side-effect of enrolling learners into the courses
+    // which might be marked as closed for reasons other then being "Invite Only".
+    //
+    // This is considered as a reasonable tradeoff at the time of this addition.
+    // Currently, the EnrollmentListView does not support invitation only courses.
+    // This problem does not happen in the Instructor Dashboard because it doesn't 
+    // invoke access checks when calling the enroll method. Modifying the enroll method
+    // is a high-risk change, and it seems that the API will need some changes in
+    // the near future anyway - when the Instructor Dashboard is converted into an
+    // MFE (it could be an excellent opportunity to eliminate many legacy behaviors
+    // there, too).
     $("#id_bulk_upload_csv").change(function(e) {
         if (e.target.value) {
             var force_enrollment = $("#id_force_enrollment");

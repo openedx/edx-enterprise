@@ -18,6 +18,11 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.66.0]
+--------
+feat: enable enrolling leaners to invite_only courses via manage learners view
+
+
 [3.65.2]
 --------
 feat: extending the enterprise fulfillment api serializer to contain more info
