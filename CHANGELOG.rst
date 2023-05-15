@@ -18,6 +18,11 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.63.0]
+--------
+feat: Hooking enterprise enrollments up to platform signals to write unenrollment records. 
+      New field `unenrolled` on enterprise enrollments to track enrollment status, defaults to `None`.
+
 [3.62.7]
 --------
 feat: include obsolete attribute in degreed content transmissions

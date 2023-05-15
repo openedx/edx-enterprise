@@ -7,19 +7,10 @@ from logging import getLogger
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from enterprise import roles_api
+from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
-from enterprise.models import (
-    EnterpriseCatalogQuery,
-    EnterpriseCustomer,
-    EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerCatalog,
-    EnterpriseCustomerUser,
-    PendingEnterpriseCustomerAdminUser,
-    PendingEnterpriseCustomerUser,
-)
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -30,8 +21,11 @@ from enterprise.utils import (
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
+    from openedx_events.learning.signals import COURSE_UNENROLLMENT_COMPLETED
+
 except ImportError:
     CourseEnrollment = None
+    COURSE_UNENROLLMENT_COMPLETED = None
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -64,7 +58,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     if user_instance is None:
         return  # should never happen, but better safe than 500 error
 
-    pending_ecus = PendingEnterpriseCustomerUser.objects.filter(user_email=user_instance.email)
+    pending_ecus = models.PendingEnterpriseCustomerUser.objects.filter(user_email=user_instance.email)
 
     # link PendingEnterpriseCustomerUser to the EnterpriseCustomer and fulfill pending enrollments
     for pending_ecu in pending_ecus:
@@ -75,13 +69,13 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         pending_ecu.fulfill_pending_course_enrollments(enterprise_customer_user)
         pending_ecu.delete()
 
-    enterprise_customer_users = EnterpriseCustomerUser.objects.filter(user_id=user_instance.id)
+    enterprise_customer_users = models.EnterpriseCustomerUser.objects.filter(user_id=user_instance.id)
     for enterprise_customer_user in enterprise_customer_users:
         # activate admin permissions for an existing EnterpriseCustomerUser(s), if applicable
         activate_admin_permissions(enterprise_customer_user)
 
 
-@receiver(pre_save, sender=EnterpriseCustomer)
+@receiver(pre_save, sender=models.EnterpriseCustomer)
 def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     Update the language preference of all the learners belonging to the enterprise customer.
@@ -90,14 +84,14 @@ def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: dis
     # Unset the language preference when a new learner is linked with the enterprise customer.
     # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
     if instance.default_language:
-        prev_state = EnterpriseCustomer.objects.filter(uuid=instance.uuid).first()
+        prev_state = models.EnterpriseCustomer.objects.filter(uuid=instance.uuid).first()
         if prev_state is None or prev_state.default_language != instance.default_language:
             # Unset the language preference of all the learners linked with the enterprise customer.
             # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
             unset_language_of_all_enterprise_learners(instance)
 
 
-@receiver(pre_save, sender=EnterpriseCustomerBrandingConfiguration)
+@receiver(pre_save, sender=models.EnterpriseCustomerBrandingConfiguration)
 def skip_saving_logo_file(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     To avoid saving the logo image at an incorrect path, skip saving it.
@@ -107,7 +101,7 @@ def skip_saving_logo_file(sender, instance, **kwargs):     # pylint: disable=unu
         instance.logo = None
 
 
-@receiver(post_save, sender=EnterpriseCustomerBrandingConfiguration)
+@receiver(post_save, sender=models.EnterpriseCustomerBrandingConfiguration)
 def save_logo_file(sender, instance, **kwargs):            # pylint: disable=unused-argument
     """
     Now that the object is instantiated and instance.id exists, save the image at correct path and re-save the model.
@@ -118,7 +112,7 @@ def save_logo_file(sender, instance, **kwargs):            # pylint: disable=unu
         instance.save()
 
 
-@receiver(post_save, sender=EnterpriseCustomerCatalog, dispatch_uid='default_content_filter')
+@receiver(post_save, sender=models.EnterpriseCustomerCatalog, dispatch_uid='default_content_filter')
 def default_content_filter(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Set default value for `EnterpriseCustomerCatalog.content_filter` if not already set.
@@ -128,7 +122,7 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
         instance.save()
 
 
-@receiver(post_delete, sender=EnterpriseCustomerUser)
+@receiver(post_delete, sender=models.EnterpriseCustomerUser)
 def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Delete the associated enterprise admin role assignment record when deleting an EnterpriseCustomerUser record.
@@ -140,7 +134,7 @@ def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # p
         )
 
 
-@receiver(post_save, sender=EnterpriseCustomerUser)
+@receiver(post_save, sender=models.EnterpriseCustomerUser)
 def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Assign or delete enterprise_learner role for EnterpriseCustomerUser when created or updated.
@@ -171,7 +165,7 @@ def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # 
             )
 
 
-@receiver(post_delete, sender=EnterpriseCustomerUser)
+@receiver(post_delete, sender=models.EnterpriseCustomerUser)
 def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Delete the associated enterprise learner role assignment record when deleting an EnterpriseCustomerUser record.
@@ -185,7 +179,7 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
     )
 
 
-@receiver(post_save, sender=EnterpriseCustomerUser)
+@receiver(post_save, sender=models.EnterpriseCustomerUser)
 def update_learner_language_preference(sender, instance, created, **kwargs):     # pylint: disable=unused-argument
     """
     Update the language preference of the learner.
@@ -197,29 +191,29 @@ def update_learner_language_preference(sender, instance, created, **kwargs):    
         unset_enterprise_learner_language(instance)
 
 
-@receiver(post_save, sender=PendingEnterpriseCustomerAdminUser)
+@receiver(post_save, sender=models.PendingEnterpriseCustomerAdminUser)
 def create_pending_enterprise_admin_user(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     Creates a PendingEnterpriseCustomerUser when a PendingEnterpriseCustomerAdminUser is created.
     """
-    PendingEnterpriseCustomerUser.objects.get_or_create(
+    models.PendingEnterpriseCustomerUser.objects.get_or_create(
         enterprise_customer=instance.enterprise_customer,
         user_email=instance.user_email,
     )
 
 
-@receiver(post_delete, sender=PendingEnterpriseCustomerAdminUser)
+@receiver(post_delete, sender=models.PendingEnterpriseCustomerAdminUser)
 def delete_pending_enterprise_admin_user(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     Deletes a PendingEnterpriseCustomerUser when its associated PendingEnterpriseCustomerAdminUser is removed.
     """
-    PendingEnterpriseCustomerUser.objects.filter(
+    models.PendingEnterpriseCustomerUser.objects.filter(
         enterprise_customer=instance.enterprise_customer,
         user_email=instance.user_email,
     ).delete()
 
 
-@receiver(post_save, sender=EnterpriseCatalogQuery)
+@receiver(post_save, sender=models.EnterpriseCatalogQuery)
 def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Sync data changes from Enterprise Catalog Query to the Enterprise Customer Catalog.
@@ -243,7 +237,7 @@ def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: d
         catalog.save()  # This save will trigger the update_enterprise_catalog_data() receiver below
 
 
-@receiver(post_save, sender=EnterpriseCustomerCatalog)
+@receiver(post_save, sender=models.EnterpriseCustomerCatalog)
 def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Send data changes to Enterprise Catalogs to the Enterprise Catalog Service.
@@ -305,7 +299,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
         catalog_client.refresh_catalogs([instance])
 
 
-@receiver(post_delete, sender=EnterpriseCustomerCatalog)
+@receiver(post_delete, sender=models.EnterpriseCustomerCatalog)
 def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Send deletions of Enterprise Catalogs to the Enterprise Catalog Service.
@@ -321,6 +315,24 @@ def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
         )
 
 
+def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=unused-argument
+    """
+    Mark the EnterpriseCourseEnrollment object as unenrolled when a user unenrolls from a course.
+    """
+    enrollment = kwargs.get('enrollment')
+    enterprise_enrollment = models.EnterpriseCourseEnrollment.objects.filter(
+        course_id=enrollment.course.course_key,
+        enterprise_customer_user__user_id=enrollment.user.id,
+    ).first()
+    if enterprise_enrollment:
+        logger.info(
+            f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.user} and "
+            f"course {enrollment.course.course_key}"
+        )
+        enterprise_enrollment.unenrolled = True
+        enterprise_enrollment.save()
+
+
 def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Watches for post_save signal for creates on the CourseEnrollment table.
@@ -330,7 +342,7 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
     if kwargs.get('created') and instance.user:
         user_id = instance.user.id
         # NOTE: there should be _at most_ 1 EnterpriseCustomerUser record  with `active=True`
-        active_ecus_for_user = EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True)
+        active_ecus_for_user = models.EnterpriseCustomerUser.objects.filter(user_id=user_id, active=True)
         ecu = active_ecus_for_user.first()
         if not ecu:
             # nothing to do here
@@ -357,3 +369,6 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
 # Don't connect this receiver if we dont have access to CourseEnrollment model
 if CourseEnrollment is not None:
     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
+
+if COURSE_UNENROLLMENT_COMPLETED is not None:
+    COURSE_UNENROLLMENT_COMPLETED.connect(enterprise_unenrollment_receiver)
