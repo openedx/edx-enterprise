@@ -178,7 +178,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     ordering_fields = FIELDS
 
     def get_permissions(self):
-        if self.action == 'partial_update':
+        if self.action == 'create':
+            return [permissions.IsAuthenticated()]
+        elif self.action == 'partial_update':
             return [permissions.IsAuthenticated()]
         else:
             return [permission() for permission in self.permission_classes]
@@ -208,6 +210,13 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             queryset = queryset.filter(Q(name__icontains=name_or_uuid) | Q(uuid__icontains=name_or_uuid))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def create(self, request, *args, **kwargs):
+        """
+        POST /enterprise/api/v1/enterprise-customer/
+        """
+        return super().create(request, *args, **kwargs)
 
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, pk: pk)
     def partial_update(self, request, *args, **kwargs):
