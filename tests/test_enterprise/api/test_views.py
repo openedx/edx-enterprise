@@ -1613,6 +1613,82 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         assert expected_item == response
 
     @ddt.data(
+        # Note that for admins, the specific enterprise_uuid_for_role is irrelevant because creation is allowed for
+        # anybody that is admin for at least one enterprise customer.
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], 201),
+        (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[1], 201),
+        # But of course, learners should not have access.
+        (ENTERPRISE_LEARNER_ROLE, FAKE_UUIDS[0], 403),
+    )
+    @ddt.unpack
+    def test_create(self, enterprise_role, enterprise_uuid_for_role, expected_status_code):
+        """
+        Test that ``EnterpriseCustomer`` can be created by admins of the enterprise.
+        """
+        self.set_jwt_cookie(enterprise_role, str(enterprise_uuid_for_role))
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+        }, format='json')
+
+        assert response.status_code == expected_status_code
+
+        if expected_status_code == 201:
+            # First, smoke check the response body:
+            assert response.json()['name'] == 'Test Create Customer'
+            assert response.json()['slug'] == 'test-create-customer'
+            assert response.json()['site'] == {'domain': 'example.com', 'name': 'example.com'}
+            # Then, look in the database to confirm the customer was created:
+            enterprise_customer = EnterpriseCustomer.objects.get(slug='test-create-customer')
+            assert enterprise_customer.name == 'Test Create Customer'
+
+    def test_create_missing_site(self):
+        """
+        Test creating an ``EnterpriseCustomer`` with missing/invalid site argument.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(FAKE_UUIDS[0]))
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+        }, format='json')
+
+        assert response.status_code == 400
+        assert response.json() == {'site': ['This field is required.']}
+
+    def test_create_missing_site_domain(self):
+        """
+        Test creating an ``EnterpriseCustomer`` with missing/invalid site argument.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(FAKE_UUIDS[0]))
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'foo': 'bar'},
+        }, format='json')
+
+        assert response.status_code == 400
+        assert response.json() == {'site': {'domain': 'This field is required.'}}
+
+    def test_create_non_existent_site(self):
+        """
+        Test creating an ``EnterpriseCustomer`` with a non-existent site.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(FAKE_UUIDS[0]))
+
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'does.not.exist'},
+        }, format='json')
+
+        assert response.status_code == 400
+        assert response.json() == {'site': {'domain': 'No Site with the provided domain was found.'}}
+
+    @ddt.data(
         (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], 200),
         (ENTERPRISE_LEARNER_ROLE, FAKE_UUIDS[0], 403),
         (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[1], 403)
