@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.64.0]
+--------
+feat: Updated course_run_url for Executive Education courses
+
 [3.63.0]
 --------
 feat: Hooking enterprise enrollments up to platform signals to write unenrollment records. 

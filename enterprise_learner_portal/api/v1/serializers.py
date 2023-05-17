@@ -1,11 +1,17 @@
 """
 enterprise_learner_portal serializer
 """
+from logging import getLogger
 
+from opaque_keys.edx.keys import CourseKey
 from rest_framework import serializers
 
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext as _
 
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from enterprise.constants import EXEC_ED_COURSE_TYPE
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise_learner_portal.utils import get_course_run_status
 
@@ -17,6 +23,8 @@ except ImportError:
     get_certificate_for_user = None
     get_course_run_url = None
     get_emails_enabled = None
+
+LOGGER = getLogger(__name__)
 
 
 class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: disable=abstract-method
@@ -62,7 +70,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['start_date'] = course_overview['start']
         representation['end_date'] = course_overview['end']
         representation['display_name'] = course_overview['display_name_with_default']
-        representation['course_run_url'] = get_course_run_url(request, course_run_id)
+        representation['course_run_url'] = self._get_course_run_url(request, course_run_id)
         representation['due_dates'] = []
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
@@ -81,3 +89,20 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                 return overview
 
         return None
+
+    def _get_course_run_url(self, request, course_run_id):
+        """
+        Get the appropriate course url while incorporating Executive Education content.
+        """
+        course_key = CourseKey.from_string(course_run_id)
+        course_key_str = '{}+{}'.format(course_key.org, course_key.course)
+        try:
+            course_data = get_course_catalog_api_service_client().get_course_details(course_key_str)
+            if course_data:
+                course_type = course_data.get("course_type")
+                if course_type == EXEC_ED_COURSE_TYPE:
+                    return request.build_absolute_uri(settings.EXEC_ED_LANDING_PAGE)
+        except ImproperlyConfigured:
+            LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
+
+        return get_course_run_url(request, course_run_id)
