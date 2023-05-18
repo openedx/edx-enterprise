@@ -1849,6 +1849,16 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         on_delete=models.SET_NULL
     )
 
+    unenrolled = models.BooleanField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "Specifies whether the enterprise course enrollment's course enrollment object was unenrolled."
+        ),
+        db_index=True,
+    )
+
     @property
     def audit_reporting_disabled(self):
         """
