@@ -605,7 +605,7 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
         (EnrollmentModificationException): If something goes wrong while updating the platform CourseEnrollment object.
     """
 
-    def get_queryset(self):
+    def get_subsidy_fulfillment_queryset(self):
         """
         Return the queryset for this view. Queries across subsidy types until it finds a match for the provided uuid.
         Returns a 404 if no subsidy fulfillment record is found.
@@ -613,21 +613,29 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
         enterprise_customer_uuid = get_enterprise_customer_from_user_id(self.request.user.id)
         fulfillment_source_uuid = self.kwargs.get('fulfillment_source_uuid')
 
+        # Get learner credit enrollments under the supplied fulfillment source uuid.
+        learner_credit_enrollments = models.LearnerCreditEnterpriseCourseEnrollment.objects.filter(
+            uuid=fulfillment_source_uuid
+        )
+
+        # Filters to match fulfillment enrollments' and entitlements' enterprise customer uuid to the requesting
+        # user's enterprise customer uuid.
         subsidy_fulfillment_filter = Q(
             enterprise_course_enrollment__enterprise_customer_user__enterprise_customer__uuid=enterprise_customer_uuid
         )
         subsidy_fulfillment_filter |= Q(
             enterprise_course_entitlement__enterprise_customer_user__enterprise_customer__uuid=enterprise_customer_uuid
         )
-        learner_credit_enrollments = models.LearnerCreditEnterpriseCourseEnrollment.objects.filter(
-            uuid=fulfillment_source_uuid
-        )
+
+        # If the requester isn't staff, apply the filters
         if not self.request.user.is_staff:
             learner_credit_enrollments = learner_credit_enrollments.filter(subsidy_fulfillment_filter)
 
+        # Return if we get any hits
         if learner_credit_enrollments:
             return learner_credit_enrollments
 
+        # Get licensed enrollments under the supplied fulfillment source uuid and repeat the same process.
         licensed_enrollments = models.LicensedEnterpriseCourseEnrollment.objects.filter(
             uuid=fulfillment_source_uuid
         )
@@ -636,10 +644,9 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
 
         if licensed_enrollments:
             return licensed_enrollments
-
         raise ValidationError('No enrollment found for the given fulfillment source uuid.', code=HTTP_404_NOT_FOUND)
 
-    def get_serializer_class(self):
+    def get_subsidy_fulfillment_serializer_class(self):
         """
         Fetch the correct serializer class based on the subsidy type.
         """
@@ -649,7 +656,7 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
             uuid=fulfillment_source_uuid
         )
         if len(learner_credit_enrollments):
-            return serializers.LearnerCreditEnterpriseCourseenrollmentReadOnlySerializer
+            return serializers.LearnerCreditEnterpriseCourseEnrollmentReadOnlySerializer
         licensed_enrollments = models.LicensedEnterpriseCourseEnrollment.objects.filter(
             uuid=fulfillment_source_uuid
         )
@@ -657,6 +664,55 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
             return serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
 
         raise ValidationError('No enrollment found for the given fulfillment source uuid.', code=HTTP_404_NOT_FOUND)
+
+    def get_unenrolled_fulfillment_queryset(self):
+        """
+        Return the queryset for unenrolled subsidy fulfillment records. Applies a modified timestamp filter to fetch
+        records modified after if provided from query params.
+        """
+        # Adding licensed enrollment support for future implementations
+        if self.request.query_params.get('retrieve_licensed_enrollments'):
+            enrollment_table = models.LicensedEnterpriseCourseEnrollment
+        else:
+            enrollment_table = models.LearnerCreditEnterpriseCourseEnrollment
+
+        unenrolled_queryset = enrollment_table.objects.filter(
+            enterprise_course_enrollment__unenrolled=True,
+        )
+        # Apply a modified filter if one is provided via query params
+        if self.request.query_params.get('modified'):
+            unenrolled_queryset = unenrolled_queryset.filter(
+                enterprise_course_enrollment__modified__gte=self.request.query_params.get('modified')
+            )
+        return unenrolled_queryset
+
+    def get_unenrolled_fulfillment_serializer_class(self):
+        """
+        Fetch the correct recently unenrolled serializer class based on provided querysets.
+        """
+        if self.request.query_params.get('retrieve_licensed_enrollments'):
+            return serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
+        else:
+            return serializers.LearnerCreditEnterpriseCourseEnrollmentReadOnlySerializer
+
+    @permission_required(
+        'enterprise.can_manage_enterprise_fulfillments',
+        fn=lambda request: get_enterprise_customer_from_user_id(request.user.id)
+    )
+    def unenrolled(self, request, *args, **kwargs):
+        """
+        List all unenrolled subsidy fulfillments.
+            /enterprise/api/v1/operator/enterprise-subsidy-fulfillment/unenrolled/
+
+        Args:
+            modified (str): A datetime string. Only return enrollments modified after this time.
+            retrieve_licensed_enrollments (bool): If true, return data related to licensed enrollments instead of
+                learner credit
+        """
+        queryset = self.get_unenrolled_fulfillment_queryset()
+        serializer_class = self.get_unenrolled_fulfillment_serializer_class()
+        serializer = serializer_class(queryset, many=True)
+        return Response(serializer.data)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
@@ -668,9 +724,9 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
             /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/
         """
         try:
-            queryset = self.get_queryset()
+            queryset = self.get_subsidy_fulfillment_queryset()
             fulfillment = get_object_or_404(queryset, uuid=fulfillment_source_uuid)
-            serializer_class = self.get_serializer_class()
+            serializer_class = self.get_subsidy_fulfillment_serializer_class()
             serialized_object = serializer_class(fulfillment)
         except ValidationError as exc:
             return Response(
@@ -691,7 +747,7 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
         """
         try:
             enrollment = get_object_or_404(
-                self.get_queryset(), uuid=fulfillment_source_uuid
+                self.get_subsidy_fulfillment_queryset(), uuid=fulfillment_source_uuid
             )
             if enrollment.is_revoked:
                 return Response(
@@ -712,9 +768,10 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
                 is_active=False,
             )
             enrollment.revoke()
+            enrollment.enterprise_course_enrollment.unenrolled = True
         except Exception as exc:  # pylint: disable=broad-except
             msg = (
-                f'Subsized enrollment terminationss error: unable to unenroll User {username}'
+                f'Subsidized enrollment terminations error: unable to unenroll User {username}'
                 f'from Course {enrollment.course_id}  because: {str(exc)}'
             )
             LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))

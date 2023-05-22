@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.65.0]
+--------
+feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments 
+
 [3.64.1]
 --------
 fix: Reverted course_run_url for Executive Education courses
