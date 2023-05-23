@@ -176,6 +176,30 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'text')
 
 
+class SiteField(serializers.Field):
+    """
+    Custom Site field to facilitate with creation of parent objects, while also keeping output pretty.
+
+    When used in a ModelSerializer, the site field can be provided to the create() REST API endpoint as follows, which
+    performs a lookup for a site with the domain "example.com"::
+
+      "site": {"domain": "example.com"}
+
+    Output serializations render sites with all Site fields.
+    """
+
+    def to_representation(self, value):
+        return SiteSerializer(value).data
+
+    def to_internal_value(self, data):
+        try:
+            return Site.objects.get(domain=data["domain"])
+        except (AttributeError, KeyError, TypeError) as exc:
+            raise serializers.ValidationError({"domain": "This field is required."}) from exc
+        except Site.DoesNotExist as exc:
+            raise serializers.ValidationError({"domain": "No Site with the provided domain was found."}) from exc
+
+
 class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomer model.
@@ -199,7 +223,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
-    site = SiteSerializer()
+    site = SiteField(required=True)
     branding_configuration = serializers.SerializerMethodField()
     enterprise_customer_catalogs = serializers.SerializerMethodField()
     enterprise_notification_banner = serializers.SerializerMethodField()

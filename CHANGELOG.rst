@@ -21,6 +21,19 @@ Unreleased
 -------
 feat!: upgraded to Node v18, added .nvmrc and updated workflows.
 
+[3.64.1]
+--------
+fix: Reverted course_run_url for Executive Education courses
+
+[3.64.0]
+--------
+feat: Updated course_run_url for Executive Education courses
+ 
+[3.63.0]
+--------
+feat: Hooking enterprise enrollments up to platform signals to write unenrollment records. 
+      New field `unenrolled` on enterprise enrollments to track enrollment status, defaults to `None`.
+
 [3.62.7]
 --------
 feat: include obsolete attribute in degreed content transmissions
