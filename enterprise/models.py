@@ -192,6 +192,12 @@ class EnterpriseCustomer(TimeStampedModel):
             'Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"'
         )
     )
+    auth_org_id = models.CharField(
+        max_length=80, blank=True, null=True,
+        help_text=(
+            "Enterprise Customer auth organization id"
+        )
+    )
     active = models.BooleanField(default=True)
     country = CountryField(null=True)
     hide_course_original_price = models.BooleanField(

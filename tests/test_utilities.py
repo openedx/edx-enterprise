@@ -134,6 +134,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "uuid",
                 "name",
                 "slug",
+                "auth_org_id",
                 "active",
                 "country",
                 "invite_keys",

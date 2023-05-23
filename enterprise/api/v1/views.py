@@ -15,6 +15,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -151,6 +152,14 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
 
 
+class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, viewsets.GenericViewSet):
+    """
+    Base class for all write only Enterprise model view sets.
+    """
+
+    permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions)
+
+
 class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
@@ -184,11 +193,19 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def basic_list(self, request, *arg, **kwargs):
         """
         Enterprise Customer's Basic data list without pagination
+
+        Two query parameters are supported:
+        - name_or_uuid: filter by name or uuid substring search in a single query parameter.
+        Primarily used for frontend debounced input search.
+        - startswith: filter by name starting with the given string
         """
         startswith = request.GET.get('startswith')
+        name_or_uuid = request.GET.get('name_or_uuid')
         queryset = self.get_queryset().order_by('name')
         if startswith:
             queryset = queryset.filter(name__istartswith=startswith)
+        if name_or_uuid:
+            queryset = queryset.filter(Q(name__icontains=name_or_uuid) | Q(uuid__icontains=name_or_uuid))
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -1207,6 +1224,57 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadWriteModelVie
             )
             return Response("Error with updating branding configuration", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response("Branding was updated", status=status.HTTP_204_NO_CONTENT)
+
+
+class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
+    """
+    API write only views for the ``enterprise-customer-catalog`` API endpoint.
+    """
+    queryset = models.EnterpriseCustomerCatalog.objects.all()
+    permission_classes = (permissions.IsAdminUser,)
+    serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a new EnterpriseCustomerCatalog and returns the created object.
+
+        If an EnterpriseCustomerCatalog already exists for the given enterprise_customer and enterprise_catalog_query,
+        returns the existing object.
+
+        URL: /enterprise/api/v1/enterprise-customer-catalog/
+
+        Method: POST
+
+        Payload::
+
+          {
+            "title":  string - Title of the catalog,
+            "enterprise_customer": string - UUID of an existing enterprise customer,
+            "enterprise_catalog_query": string - id of an existing enterprise catalog query,
+          }
+
+        Returns 201 if a new EnterpriseCustomerCatalog was created, 200 if an existing EnterpriseCustomerCatalog was
+        """
+
+        enterprise_customer_uuid = request.data.get('enterprise_customer')
+        enterprise_catalog_query_id = request.data.get('enterprise_catalog_query')
+        enterprise_customer_catalog_list = models.EnterpriseCustomerCatalog.objects.filter(
+            enterprise_customer=enterprise_customer_uuid)
+        for catalog in enterprise_customer_catalog_list:
+            catalog_query = catalog.enterprise_catalog_query
+            if catalog_query is not None and catalog_query.id == int(enterprise_catalog_query_id):
+                seralized_customer_catalog = serializers.EnterpriseCustomerCatalogWriteOnlySerializer(
+                    catalog)
+                LOGGER.info(
+                    'EnterpriseCustomerCatalog already exists for enterprise_customer_uuid: %s '
+                    'and enterprise_catalog_query_id: %s, using existing catalog: %s',
+                    enterprise_customer_uuid, enterprise_catalog_query_id, catalog.uuid)
+                return Response(seralized_customer_catalog.data, status=status.HTTP_200_OK)
+        LOGGER.info(
+            'Creating new EnterpriseCustomerCatalog for enterprise_customer_uuid: %s '
+            'and enterprise_catalog_query_id: %s',
+            enterprise_customer_uuid, enterprise_catalog_query_id)
+        return super().create(request, *args, **kwargs)
 
 
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):

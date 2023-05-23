@@ -9,6 +9,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from edx_django_utils.monitoring import set_code_owner_attribute
 
+from django.conf import settings
 from django.contrib import auth
 from django.core.cache import cache
 from django.utils import timezone
@@ -88,6 +89,60 @@ def _log_batch_task_finish(task_name, channel_code, job_user_id,
             duration_seconds=duration_seconds,
             details=extra_message
         ))
+
+
+@shared_task
+@set_code_owner_attribute
+def remove_duplicate_transmission_audits():
+    """
+    Task to remove duplicate transmission audits, keeping the most recently modified one.
+    """
+    start = time.time()
+    _log_batch_task_start('remove_duplicate_transsmision_audits', None, None, None)
+    unique_transmissions = ContentMetadataItemTransmission.objects.values_list(
+        'content_id',
+        'plugin_configuration_id',
+        'integrated_channel_code',
+    ).distinct()
+    duplicates_found = 0
+    for unique_transmission in unique_transmissions:
+        content_id = unique_transmission[0]
+        duplicates = ContentMetadataItemTransmission.objects.filter(
+            id__in=ContentMetadataItemTransmission.objects.filter(
+                content_id=content_id,
+                plugin_configuration_id=unique_transmission[1],
+                integrated_channel_code=unique_transmission[2]
+            ).values_list('id', flat=True)
+        ).order_by('-modified')
+        # Subtract one because we're keeping the most recently modified one
+        num_duplicates = duplicates.count() - 1
+        duplicates_found += num_duplicates
+        # Mysql doesn't support taking the count of a sliced queryset
+        duplicates_to_delete = duplicates[1:]
+
+        dry_run_flag = getattr(settings, "DRY_RUN_MODE_REMOVE_DUP_TRANSMISSION_AUDIT", True)
+        LOGGER.info(
+            f"remove_duplicate_transmission_audits task dry run mode set to: {dry_run_flag}"
+        )
+        if dry_run_flag:
+            LOGGER.info(
+                f"Found {num_duplicates} duplicate content transmission audits for course: {content_id}"
+            )
+        else:
+            LOGGER.info(f'Beginning to delete duplicate content transmission audits for course: {content_id}')
+            for duplicate in duplicates_to_delete:
+                LOGGER.info(f"Deleting duplicate transmission audit: {duplicate.id}")
+                duplicate.delete()
+
+    duration_seconds = time.time() - start
+    _log_batch_task_finish(
+        'remove_duplicate_transsmision_audits',
+        channel_code=None,
+        job_user_id=None,
+        integrated_channel_full_config=None,
+        duration_seconds=duration_seconds,
+        extra_message=f"{duplicates_found} duplicates found"
+    )
 
 
 @shared_task

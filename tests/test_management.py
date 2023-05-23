@@ -1930,3 +1930,59 @@ class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, 
         call_command('mark_orphaned_content_metadata_audits')
         orphaned_content = OrphanedContentTransmissions.objects.first()
         assert orphaned_content.content_id == self.orphaned_content.content_id
+
+
+@mark.django_db
+@ddt.ddt
+class TestRemoveDuplicateContentMetadataAuditsManageCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``remove_duplicate_content_metadata_audits`` management command.
+    """
+
+    def setUp(self):
+        self.test_duplicate_number = 50
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            name='Veridian Dynamics',
+        )
+        self.customer_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        for _ in range(50):
+            factories.ContentMetadataItemTransmissionFactory(
+                content_id='DemoX',
+                enterprise_customer=self.enterprise_customer,
+                plugin_configuration_id=self.customer_config.id,
+                integrated_channel_code=self.customer_config.channel_code(),
+                modified=datetime.now() - timedelta(days=1)
+            )
+
+        self.true_transmission_item = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX',
+            enterprise_customer=self.enterprise_customer,
+            plugin_configuration_id=self.customer_config.id,
+            integrated_channel_code=self.customer_config.channel_code(),
+            modified=datetime.now()
+        )
+        super().setUp()
+
+    def test_successful_dry_run(self):
+        assert ContentMetadataItemTransmission.objects.filter(
+            content_id='DemoX'
+        ).count() == self.test_duplicate_number + 1
+        call_command('remove_duplicate_transmission_audits')
+        assert ContentMetadataItemTransmission.objects.filter(
+            content_id='DemoX'
+        ).count() == self.test_duplicate_number + 1
+
+    @override_settings(DRY_RUN_MODE_REMOVE_DUP_TRANSMISSION_AUDIT=False)
+    def test_successful_run(self):
+        assert ContentMetadataItemTransmission.objects.filter(
+            content_id='DemoX'
+        ).count() == self.test_duplicate_number + 1
+        call_command('remove_duplicate_transmission_audits')
+        assert ContentMetadataItemTransmission.objects.filter(
+            content_id='DemoX'
+        ).count() == 1
+        assert ContentMetadataItemTransmission.objects.filter(
+            id=self.true_transmission_item.id
+        ).exists()

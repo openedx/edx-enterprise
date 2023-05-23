@@ -116,6 +116,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     sender_alias = factory.LazyAttribute(lambda x: FAKER.word())
     reply_to = factory.LazyAttribute(lambda x: FAKER.email())
     hide_labor_market_data = False
+    auth_org_id = factory.LazyAttribute(lambda x: FAKER.lexify(text='??????????'))
 
 
 class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFactory):
