@@ -12,6 +12,7 @@ from django.contrib.sites.models import Site
 from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
+from enterprise.constants import FulfillmentTypes
 from enterprise.models import (
     AdminNotification,
     EnrollmentNotificationEmailTemplate,
@@ -376,6 +377,7 @@ class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactor
     license_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     enterprise_course_enrollment = factory.SubFactory(EnterpriseCourseEnrollmentFactory)
     is_revoked = False
+    fulfillment_type = FulfillmentTypes.LICENSE
 
 
 class LearnerCreditEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
@@ -393,6 +395,7 @@ class LearnerCreditEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelF
     transaction_id = factory.LazyAttribute(lambda x: FAKER.uuid4())
     enterprise_course_enrollment = factory.SubFactory(EnterpriseCourseEnrollmentFactory)
     is_revoked = False
+    fulfillment_type = FulfillmentTypes.LEARNER_CREDIT
 
 
 class EnterpriseCatalogQueryFactory(factory.django.DjangoModelFactory):

@@ -2083,13 +2083,27 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         Marks this object as revoked and marks the associated EnterpriseCourseEnrollment
         as "saved for later".  This object and the associated EnterpriseCourseEnrollment are both saved.
-        """
-        self.is_revoked = True
-        self.enterprise_course_enrollment.saved_for_later = True
-        self.enterprise_course_enrollment.unenrolled = True
-        self.enterprise_course_enrollment.save()
 
-        # TODO revoke entitlements as well?
+        TODO: revoke entitlements as well?
+        """
+        if self.enterprise_course_enrollment:
+            self.enterprise_course_enrollment.saved_for_later = True
+            self.enterprise_course_enrollment.unenrolled = True
+            self.enterprise_course_enrollment.save()
+
+        self.is_revoked = True
+        self.save()
+
+    def reactivate(self, **kwargs):
+        """
+        Idmpotently reactivates this enterprise fulfillment source.
+        """
+        if self.enterprise_course_enrollment:
+            self.enterprise_course_enrollment.saved_for_later = False
+            self.enterprise_course_enrollment.unenrolled = False
+            self.enterprise_course_enrollment.save()
+
+        self.is_revoked = False
         self.save()
 
     def __str__(self):
@@ -2110,6 +2124,22 @@ class LearnerCreditEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
 
     .. no_pii:
     """
+
+    def reactivate(self, transaction_id=None, **kwargs):
+        """
+        Idmpotently reactivates this LearnerCreditEnterpriseCourseEnrollment.
+
+        Args:
+          transaction_id (str): New ledgered transaction UUID to associate with this learner credit fulfillment.
+        """
+        if self.transaction_id == UUID(transaction_id):
+            LOGGER.warning(
+                f"Reactivating {str(self)} using the same transaction_id as before: {transaction_id}.  This is "
+                f"probably a bug because the old transaction was likely reversed, which would result in an enterprise "
+                f"getting this enrollment for free."
+            )
+        self.transaction_id = transaction_id
+        super().reactivate()
 
     transaction_id = models.UUIDField(
         primary_key=False,

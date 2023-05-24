@@ -746,10 +746,10 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
             /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/cancel-enrollment/
         """
         try:
-            enrollment = get_object_or_404(
+            subsidy_fulfillment = get_object_or_404(
                 self.get_subsidy_fulfillment_queryset(), uuid=fulfillment_source_uuid
             )
-            if enrollment.is_revoked:
+            if subsidy_fulfillment.is_revoked:
                 return Response(
                     status=HTTP_400_BAD_REQUEST,
                     data={'detail': 'Enrollment is already canceled.'}
@@ -761,19 +761,19 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
             )
 
         try:
-            username = enrollment.enterprise_course_enrollment.enterprise_customer_user.username
+            username = subsidy_fulfillment.enterprise_course_enrollment.enterprise_customer_user.username
             enrollment_api.update_enrollment(
                 username,
-                enrollment.enterprise_course_enrollment.course_id,
+                subsidy_fulfillment.enterprise_course_enrollment.course_id,
                 is_active=False,
             )
-            enrollment.revoke()
+            subsidy_fulfillment.revoke()
         except Exception as exc:  # pylint: disable=broad-except
             msg = (
-                f'Subsidized enrollment terminations error: unable to unenroll User {username}'
-                f'from Course {enrollment.course_id}  because: {str(exc)}'
+                f'Subsidized enrollment terminations error: unable to unenroll User {username} '
+                f'from Course {subsidy_fulfillment.enterprise_course_enrollment.course_id} because: {str(exc)}'
             )
-            LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
+            LOGGER.error(msg)
             return Response(msg, status=HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(status=HTTP_200_OK)
 

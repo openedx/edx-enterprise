@@ -3,6 +3,7 @@ Tests for the `edx-enterprise` api module.
 """
 
 import json
+import logging
 import uuid
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -17,6 +18,7 @@ from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
+from testfixtures import LogCapture
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -3932,21 +3934,21 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     Test bulk enrollment (EnterpriseCustomerViewSet)
     """
 
-    def _create_user_and_enterprise_customer(self, username, password):
+    def _create_user_and_enterprise_customer(self, email, password):
         """
         Helper method to create the User and Enterprise Customer used in tests.
         """
-        user = factories.UserFactory(email=username, is_active=True, is_staff=False)
+        user = factories.UserFactory(email=email, is_active=True, is_staff=False)
         user.set_password(password)
         user.save()
 
         enterprise_customer = factories.EnterpriseCustomerFactory()
-        factories.EnterpriseCustomerUserFactory(
+        enterprise_user = factories.EnterpriseCustomerUserFactory(
             user_id=user.id,
             enterprise_customer=enterprise_customer,
         )
 
-        return user, enterprise_customer
+        return user, enterprise_user, enterprise_customer
 
     @ddt.data(
         # enrollment_info usage
@@ -4457,6 +4459,107 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
     @ddt.data(
         {
+            'old_transaction_id': FAKE_UUIDS[4],
+            'new_transaction_id': FAKE_UUIDS[4],
+        },
+        {
+            'old_transaction_id': str(uuid.uuid4()),
+            'new_transaction_id': str(uuid.uuid4()),
+        },
+    )
+    @ddt.unpack
+    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch("enterprise.utils.lms_enroll_user_in_course")
+    def test_bulk_enrollment_enroll_after_cancel(
+        self,
+        mock_platform_enrollment,
+        mock_get_course_mode,
+        mock_enrollment_api,
+        old_transaction_id,
+        new_transaction_id,
+    ):
+        """
+        Test that even after a cancelled enterprise enrollment, an attempt to re-enroll the same learner in content
+        results in expected state and payload.
+        """
+        mock_platform_enrollment.return_value = True
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        # Needed for the cancel endpoint:
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+
+        user, enterprise_user, enterprise_customer = \
+            self._create_user_and_enterprise_customer('abc@test.com', 'test_password')
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        user.user_permissions.add(permission)
+
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_user,
+            course_id=course_id,
+        )
+        learner_credit_course_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=enterprise_course_enrollment,
+            transaction_id=old_transaction_id,
+        )
+        learner_credit_fulfillment_url = reverse(
+            'enterprise-subsidy-fulfillment',
+            kwargs={'fulfillment_source_uuid': str(learner_credit_course_enrollment.uuid)}
+        )
+        cancel_url = learner_credit_fulfillment_url + '/cancel-fulfillment'
+        enrollment_url = reverse(
+            'enterprise-customer-enroll-learners-in-courses',
+            (str(enterprise_customer.uuid),)
+        )
+        enroll_body = {
+            'notify': 'true',
+            'enrollments_info': [
+                {
+                    'email': user.email,
+                    'course_run_key': course_id,
+                    'transaction_id': new_transaction_id,
+                },
+            ]
+        }
+        with mock.patch('enterprise.api.v1.views.track_enrollment'):
+            with mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners"):
+                cancel_response = self.client.post(settings.TEST_SERVER + cancel_url)
+                with LogCapture(level=logging.WARNING) as warn_logs:
+                    second_enroll_response = self.client.post(
+                        settings.TEST_SERVER + enrollment_url,
+                        data=json.dumps(enroll_body),
+                        content_type='application/json',
+                    )
+
+        assert cancel_response.status_code == status.HTTP_200_OK
+        assert second_enroll_response.status_code == status.HTTP_201_CREATED
+
+        if old_transaction_id == new_transaction_id:
+            assert any(
+                'using the same transaction_id as before'
+                in log_record.getMessage() for log_record in warn_logs.records
+            )
+
+        # First, check that the bulk enrollment response looks good:
+        response_json = second_enroll_response.json()
+        assert len(response_json.get('successes')) == 1
+        assert response_json['successes'][0]['user_id'] == user.id
+        assert response_json['successes'][0]['email'] == user.email
+        assert response_json['successes'][0]['course_run_key'] == course_id
+        assert response_json['successes'][0]['created'] is True
+        assert uuid.UUID(response_json['successes'][0]['enterprise_fufillment_source_uuid']) == \
+            learner_credit_course_enrollment.uuid
+
+        # Then, check that the db records related to the enrollment look good:
+        enterprise_course_enrollment.refresh_from_db()
+        learner_credit_course_enrollment.refresh_from_db()
+        assert enterprise_course_enrollment.unenrolled is False
+        assert enterprise_course_enrollment.saved_for_later is False
+        assert learner_credit_course_enrollment.is_revoked is False
+        assert learner_credit_course_enrollment.transaction_id == uuid.UUID(new_transaction_id)
+
+    @ddt.data(
+        {
             'body': {
                 'notify': 'true',
                 'enrollments_info': [
@@ -4499,7 +4602,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         """
         mock_platform_enrollment.return_value = True
 
-        user, enterprise_customer = self._create_user_and_enterprise_customer(
+        user, _, enterprise_customer = self._create_user_and_enterprise_customer(
             body.get('enrollments_info')[0].get('email'), 'test_password'
         )
 
@@ -4514,7 +4617,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         with mock.patch('enterprise.api.v1.views.track_enrollment'):
             with mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners"):
                 response = self.client.post(
-                    settings.TEST_SERVER + enrollment_url, data=json.dumps(body), content_type='application/json',
+                    settings.TEST_SERVER + enrollment_url,
+                    data=json.dumps(body),
+                    content_type='application/json',
                 )
 
         self.assertEqual(response.status_code, 201)
