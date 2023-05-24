@@ -89,7 +89,12 @@ class EnterpriseCourseEnrollmentView(APIView):
         data = EnterpriseCourseEnrollmentSerializer(
             filtered_enterprise_enrollments,
             many=True,
-            context={'request': request, 'course_overviews': course_overviews},
+            context={
+                'request': request,
+                'course_overviews': course_overviews,
+                'enterprise_customer_user_id': enterprise_customer_user.id,
+                'enterprise_customer_id': enterprise_customer_id
+            },
         ).data
 
         if request.query_params.get('is_active'):

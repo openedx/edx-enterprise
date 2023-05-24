@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.64.2]
+--------
+feat: Course metadata overrides
+
 [3.64.1]
 --------
 fix: Reverted course_run_url for Executive Education courses
@@ -25,10 +29,10 @@ fix: Reverted course_run_url for Executive Education courses
 [3.64.0]
 --------
 feat: Updated course_run_url for Executive Education courses
- 
+
 [3.63.0]
 --------
-feat: Hooking enterprise enrollments up to platform signals to write unenrollment records. 
+feat: Hooking enterprise enrollments up to platform signals to write unenrollment records.
       New field `unenrolled` on enterprise enrollments to track enrollment status, defaults to `None`.
 
 [3.62.7]
