@@ -258,7 +258,7 @@ class CourseCatalogApiClient(UserAPIClient):
 
         return course, course_run
 
-    def get_course_details(self, course_id):
+    def get_course_details(self, course_id, cache_key=None):
         """
         Return the details of a single course by id - not a course run id.
 
@@ -272,7 +272,9 @@ class CourseCatalogApiClient(UserAPIClient):
         return self._load_data(
             self.COURSES_ENDPOINT,
             resource_id=course_id,
-            many=False
+            many=False,
+            cache_key=cache_key,
+            long_term_cache=bool(cache_key),
         )
 
     def get_course_run(self, course_run_id):

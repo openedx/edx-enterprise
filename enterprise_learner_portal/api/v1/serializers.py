@@ -2,10 +2,14 @@
 enterprise_learner_portal serializer
 """
 
+from opaque_keys.edx.keys import CourseKey
 from rest_framework import serializers
 
+from django.conf import settings
 from django.utils.translation import gettext as _
 
+from enterprise import utils
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise_learner_portal.utils import get_course_run_status
 
@@ -58,11 +62,23 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
             certificate_info,
             instance
         )
+
+        cache_key = utils.get_cache_key(
+            resource='courses',
+            course_run_id=course_run_id,
+            user_id=user.id,
+            enterprise_customer_user_id=self.context['enterprise_customer_user_id'],
+            enterprise_customer_id=self.context['enterprise_customer_id'],
+        )
+        course_metadata_overrides = self._course_metadata_overrides(course_run_id, cache_key)
+        course_run_url = course_metadata_overrides.get('course_run_url') or get_course_run_url(request, course_run_id)
+        representation['course_run_url'] = course_run_url
+        representation['start_date'] = course_metadata_overrides.get('start_date') or course_overview['start']
+        representation['end_date'] = course_metadata_overrides.get('end_date') or course_overview['end']
+        representation['enroll_by'] = course_metadata_overrides.get('enroll_by')
+
         representation['created'] = instance.created.isoformat()
-        representation['start_date'] = course_overview['start']
-        representation['end_date'] = course_overview['end']
         representation['display_name'] = course_overview['display_name_with_default']
-        representation['course_run_url'] = get_course_run_url(request, course_run_id)
         representation['due_dates'] = []
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
@@ -81,3 +97,43 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                 return overview
 
         return None
+
+    def _course_metadata_overrides(self, course_run_key, cache_key):
+        """
+        Override course metadata values.
+        """
+        if not settings.COURSE_HOME_URL_OVERRIDES_FOR_EXTERNAL_COURSES:
+            return {}
+
+        course_locator = CourseKey.from_string(course_run_key)
+        course_key_str = '{}+{}'.format(course_locator.org, course_locator.course)
+        course_data = get_course_catalog_api_service_client().get_course_details(course_key_str, cache_key)
+        if not course_data:
+            return {}
+
+        course_type = course_data.get('course_type')
+        product_source = course_data.get('product_source')
+        product_source_slug = product_source.get('slug') if product_source else None
+
+        for override in settings.COURSE_HOME_URL_OVERRIDES_FOR_EXTERNAL_COURSES:
+            override_course_type = override.get('course_type')
+            override_product_source = override.get('product_source')
+
+            if override_course_type == course_type and override_product_source == product_source_slug:
+                course_run_url = override.get('course_run_url')
+
+                if override.get('uses_additional_metadata'):
+                    additional_metadata = course_data.get('additional_metadata')
+                    if additional_metadata:
+                        start_date = additional_metadata.get('start_date')
+                        end_date = additional_metadata.get('end_date')
+                        registration_deadline = additional_metadata.get('registration_deadline')
+
+                return {
+                    'course_run_url': course_run_url,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'enroll_by': registration_deadline,
+                }
+
+        return {}
