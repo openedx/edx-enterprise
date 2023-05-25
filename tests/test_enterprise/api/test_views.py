@@ -1232,10 +1232,12 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             [{
                 'enterprise_customer_user__id': 1,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
+                'modified': '2021-10-20T19:01:31Z',
             }],
             [{
                 'enterprise_customer_user': 1,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
+                'modified': '2021-10-20T19:01:31Z',
             }],
         ),
         (
@@ -3399,18 +3401,24 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             OrderedDict([
                 ('enterprise_course_enrollment', OrderedDict([
                     ('enterprise_customer_user', lc_ent_user_1),
-                    ('course_id', self.learner_credit_course_enrollment.enterprise_course_enrollment.course_id)
+                    ('course_id', self.learner_credit_course_enrollment.enterprise_course_enrollment.course_id),
+                    ('modified', self.learner_credit_course_enrollment.modified.strftime("%Y-%m-%dT%H:%M:%SZ")),
                 ])),
-                ('transaction_id', self.learner_credit_course_enrollment.transaction_id)
+                ('transaction_id', self.learner_credit_course_enrollment.transaction_id),
+                ('uuid', str(self.learner_credit_course_enrollment.uuid)),
             ]),
             OrderedDict([
                 ('enterprise_course_enrollment', OrderedDict(
                     [
                         ('enterprise_customer_user', lc_ent_user_2),
-                        ('course_id', second_lc_enrollment.enterprise_course_enrollment.course_id)
+                        ('course_id', second_lc_enrollment.enterprise_course_enrollment.course_id),
+                        ('modified', second_lc_enrollment.enterprise_course_enrollment.modified.strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )),
                     ]
                 )),
-                ('transaction_id', second_lc_enrollment.transaction_id)
+                ('transaction_id', second_lc_enrollment.transaction_id),
+                ('uuid', str(second_lc_enrollment.uuid)),
             ])
         ]
 
@@ -3440,14 +3448,17 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         )
 
         ent_user = old_learner_credit_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
-
         assert response.data == [
             OrderedDict([
                 ('enterprise_course_enrollment', OrderedDict([
                     ('enterprise_customer_user', ent_user),
-                    ('course_id', old_learner_credit_enrollment.enterprise_course_enrollment.course_id)
+                    ('course_id', old_learner_credit_enrollment.enterprise_course_enrollment.course_id),
+                    ('modified', old_learner_credit_enrollment.enterprise_course_enrollment.modified.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ"
+                    )),
                 ])),
-                ('transaction_id', old_learner_credit_enrollment.transaction_id)
+                ('transaction_id', old_learner_credit_enrollment.transaction_id),
+                ('uuid', str(old_learner_credit_enrollment.uuid)),
             ]),
         ]
 
@@ -3466,9 +3477,13 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             OrderedDict([
                 ('enterprise_course_enrollment', OrderedDict([
                     ('enterprise_customer_user', ent_user),
-                    ('course_id', self.licensed_course_enrollment.enterprise_course_enrollment.course_id)
+                    ('course_id', self.licensed_course_enrollment.enterprise_course_enrollment.course_id),
+                    ('modified', self.licensed_course_enrollment.enterprise_course_enrollment.modified.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ"
+                    )),
                 ])),
-                ('license_uuid', str(self.licensed_course_enrollment.license_uuid))
+                ('license_uuid', str(self.licensed_course_enrollment.license_uuid)),
+                ('uuid', str(self.licensed_course_enrollment.uuid)),
             ]),
         ]
 
@@ -3486,7 +3501,9 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'enterprise_course_enrollment': {
                 'enterprise_customer_user': self.enterprise_user.id,
                 'course_id': self.enterprise_course_enrollment.course_id,
-            }
+                'modified': self.enterprise_course_enrollment.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'uuid': str(self.licensed_course_enrollment.uuid),
         }
 
     def test_successful_retrieve_learner_credit_enrollment(self):
@@ -3504,7 +3521,9 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'enterprise_course_enrollment': {
                 'enterprise_customer_user': self.enterprise_user.id,
                 'course_id': self.enterprise_course_enrollment.course_id,
-            }
+                'modified': self.enterprise_course_enrollment.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'uuid': str(self.learner_credit_course_enrollment.uuid),
         }
 
     def test_retrieve_nonexistent_enrollment(self):

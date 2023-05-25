@@ -349,7 +349,7 @@ class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCourseEnrollment
         fields = (
-            'enterprise_customer_user', 'course_id'
+            'enterprise_customer_user', 'course_id', 'modified',
         )
 
 
@@ -417,7 +417,7 @@ class LearnerCreditEnterpriseCourseEnrollmentReadOnlySerializer(serializers.Mode
     class Meta:
         model = models.LearnerCreditEnterpriseCourseEnrollment
         fields = (
-            'enterprise_course_enrollment', 'transaction_id'
+            'enterprise_course_enrollment', 'transaction_id', 'uuid',
         )
 
 
@@ -431,7 +431,7 @@ class LicensedEnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSeri
     class Meta:
         model = models.LicensedEnterpriseCourseEnrollment
         fields = (
-            'enterprise_course_enrollment', 'license_uuid'
+            'enterprise_course_enrollment', 'license_uuid', 'uuid',
         )
 
 
