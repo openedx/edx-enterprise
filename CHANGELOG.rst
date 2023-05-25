@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.65.1]
+--------
+fix: making sure unenrollment is saved while revoking fulfillment
+
 [3.65.0]
 --------
 feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments 
