@@ -12,9 +12,27 @@ from enterprise.constants import (
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+    ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
+
+
+@rules.predicate
+def has_implicit_access_to_fulfillments(user, obj):  # pylint: disable=unused-argument
+    """
+    Check if a requesting user has implicit access to the `ENTERPRISE_FULFILLMENT_OPERATOR_ROLE` feature role.
+
+    Params:
+        user: An ``auth.User`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
+
+    Returns:
+        boolean: whether the request user has access or not
+    """
+    request = crum.get_current_request()
+    decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
+    return request_user_has_implicit_access_via_jwt(decoded_jwt, ENTERPRISE_FULFILLMENT_OPERATOR_ROLE, obj)
 
 
 @rules.predicate
@@ -177,3 +195,5 @@ rules.add_perm('enterprise.can_enroll_learners',
 
 rules.add_perm('enterprise.can_manage_reporting_config',
                has_implicit_access_to_reporting_api | has_explicit_access_to_reporting_api)
+
+rules.add_perm('enterprise.can_manage_enterprise_fulfillments', has_implicit_access_to_fulfillments)
