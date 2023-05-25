@@ -768,7 +768,6 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
                 is_active=False,
             )
             enrollment.revoke()
-            enrollment.enterprise_course_enrollment.unenrolled = True
         except Exception as exc:  # pylint: disable=broad-except
             msg = (
                 f'Subsidized enrollment terminations error: unable to unenroll User {username}'
