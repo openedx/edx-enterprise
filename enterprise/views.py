@@ -227,7 +227,7 @@ def get_global_context(request, enterprise_customer=None):
             "PLATFORM_DESCRIPTION",
             settings.PLATFORM_DESCRIPTION,
         ),
-        'LMS_ROOT_URL': settings.LMS_ROOT_URL,
+        'LMS_ROOT_URL': get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
         'platform_name': platform_name,
         'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
         'welcome_text': constants.WELCOME_TEXT.format(platform_name=platform_name),
@@ -787,6 +787,12 @@ class GrantDataSharingPermissions(View):
         """
         Render a form to collect user input about data sharing consent.
         """
+        # We need to override this constant here, because it's calculated at load time and there's no
+        # Site context at load time.
+        LMS_DASHBOARD_URL = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            '/dashboard',
+        )
         enterprise_customer_uuid = request.GET.get('enterprise_customer_uuid')
         success_url = request.GET.get('next')
         failure_url = request.GET.get('failure_url')
@@ -1170,6 +1176,21 @@ class HandleConsentEnrollment(View):
         will be either redirected to LMS dashboard for audit modes or
         redirected to ecommerce basket flow for payment of premium modes.
         """
+        # We need to override these constants here, because they are calculated at load time and there's no
+        # Site context at load time.
+        lms_root_url = get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL)
+        LMS_DASHBOARD_URL = urljoin(
+            lms_root_url,
+            '/dashboard',
+        )
+        LMS_COURSEWARE_URL = urljoin(
+            lms_root_url,
+            '/courses/{course_id}/courseware',
+        )
+        LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(
+            lms_root_url,
+            '/verify_student/start-flow/{course_id}/',
+        )
         enrollment_course_mode = request.GET.get('course_mode')
         enterprise_catalog_uuid = request.GET.get('catalog')
 
@@ -1621,6 +1642,17 @@ class CourseEnrollmentView(NonAtomicView):
         """
         Process a submitted track selection form for the enterprise.
         """
+        # We need to override these constants here, because they are calculated at load time and there's no
+        # Site context at load time.
+        lms_root_url = get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL)
+        LMS_COURSEWARE_URL = urljoin(
+            lms_root_url,
+            '/courses/{course_id}/courseware',
+        )
+        LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(
+            lms_root_url,
+            '/verify_student/start-flow/{course_id}/',
+        )
         enterprise_customer, course, course_run, course_modes = self.get_base_details(
             request, enterprise_uuid, course_id
         )
@@ -1804,6 +1836,12 @@ class CourseEnrollmentView(NonAtomicView):
             * No course is found in database against the provided `course_id`.
 
         """
+        # We need to override this constant here, because it's calculated at load time and there's no
+        # Site context at load time.
+        LMS_COURSEWARE_URL = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            '/courses/{course_id}/courseware',
+        )
         # Check to see if access to the course run is restricted for this user.
         embargo_url = EmbargoApiClient.redirect_if_blocked(
             request=request,
@@ -2363,6 +2401,12 @@ class RouterView(NonAtomicView):
 
         - Look to see whether a request is eligible for direct audit enrollment, and if so, directly enroll the user.
         """
+        # We need to override this constant here, because it's calculated at load time and there's no
+        # Site context at load time.
+        LMS_COURSEWARE_URL = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            '/courses/{course_id}/courseware',
+        )
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
         if course_key:
