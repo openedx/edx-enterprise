@@ -21,6 +21,14 @@ Unreleased
 -------
 feat!: upgraded to Node v18, added .nvmrc and updated workflows.
 
+[3.65.1]
+--------
+fix: making sure unenrollment is saved while revoking fulfillment
+
+[3.65.0]
+--------
+feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments 
+
 [3.64.1]
 --------
 fix: Reverted course_run_url for Executive Education courses

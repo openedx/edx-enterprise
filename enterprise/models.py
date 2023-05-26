@@ -2086,6 +2086,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         self.is_revoked = True
         self.enterprise_course_enrollment.saved_for_later = True
+        self.enterprise_course_enrollment.unenrolled = True
         self.enterprise_course_enrollment.save()
 
         # TODO revoke entitlements as well?

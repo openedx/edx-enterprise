@@ -408,7 +408,7 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
             track_enrollment('rest-api-enrollment', self.enterprise_customer_user.user_id, course_id)
 
 
-class LearnerCreditEnterpriseCourseenrollmentReadOnlySerializer(serializers.ModelSerializer):
+class LearnerCreditEnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for LearnerCreditEnterpriseCourseEnrollment model.
     """

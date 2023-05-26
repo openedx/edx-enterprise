@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` api module.
 
 import json
 import uuid
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from operator import itemgetter
 from smtplib import SMTPException
@@ -3325,10 +3326,14 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
 
         self.client = APIClient()
         self.client.login(username='test_user', password='test_password')
-        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer.uuid))
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, str(self.enterprise_customer.uuid))
 
+        self.modified_since_filter = f'?modified={str(datetime.now() - timedelta(hours=24))}'
+
+        self.course_id = 'course-v1:edX+DemoX+Demo_Course'
         self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_user,
+            course_id=self.course_id,
         )
         self.licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=self.enterprise_course_enrollment,
@@ -3362,9 +3367,114 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             enterprise_customer=self.enterprise_customer,
         )
 
+    def test_requested_recently_unenrolled_subsidy_fulfillment(self):
+        """
+        Test that we can successfully retrieve recently unenrolled subsidized enrollments.
+        """
+        second_enterprise_customer = factories.EnterpriseCustomerFactory()
+        second_enterprise_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=second_enterprise_customer,
+        )
+        second_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=second_enterprise_user,
+            course_id=self.course_id,
+            unenrolled=True,
+        )
+        # Have a second enrollment that is under a different enterprise customer than the requesting
+        # user. Because the requesting user is a staff user, they should be able to see this enrollment.
+        second_lc_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=second_enterprise_course_enrollment,
+        )
+
+        self.enterprise_course_enrollment.unenrolled = True
+        # This will also update the `modified` field
+        self.enterprise_course_enrollment.save()
+        response = self.client.get(
+            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.modified_since_filter
+        )
+
+        lc_ent_user_1 = self.learner_credit_course_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
+        lc_ent_user_2 = second_lc_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
+        assert response.data == [
+            OrderedDict([
+                ('enterprise_course_enrollment', OrderedDict([
+                    ('enterprise_customer_user', lc_ent_user_1),
+                    ('course_id', self.learner_credit_course_enrollment.enterprise_course_enrollment.course_id)
+                ])),
+                ('transaction_id', self.learner_credit_course_enrollment.transaction_id)
+            ]),
+            OrderedDict([
+                ('enterprise_course_enrollment', OrderedDict(
+                    [
+                        ('enterprise_customer_user', lc_ent_user_2),
+                        ('course_id', second_lc_enrollment.enterprise_course_enrollment.course_id)
+                    ]
+                )),
+                ('transaction_id', second_lc_enrollment.transaction_id)
+            ])
+        ]
+
+    def test_recently_unenrolled_fulfillment_endpoint_can_filter_for_modified_after(self):
+        """
+        Test that unenrolled fulfillments older than 24 hours are not surfaced.
+        """
+        # You can force the modified date to be older than 24 hours by initializing the value
+        old_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_user,
+            course_id=self.course_id + '2',
+            unenrolled=True,
+            modified=timezone.now() - timedelta(hours=25),
+        )
+        old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=old_enterprise_course_enrollment,
+        )
+        response = self.client.get(
+            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.modified_since_filter
+        )
+        assert response.data == []
+
+        response = self.client.get(
+            reverse(
+                'enterprise-subsidy-fulfillment-unenrolled'
+            ) + f'?modified={str(datetime.now() - timedelta(hours=28))}'
+        )
+
+        ent_user = old_learner_credit_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
+
+        assert response.data == [
+            OrderedDict([
+                ('enterprise_course_enrollment', OrderedDict([
+                    ('enterprise_customer_user', ent_user),
+                    ('course_id', old_learner_credit_enrollment.enterprise_course_enrollment.course_id)
+                ])),
+                ('transaction_id', old_learner_credit_enrollment.transaction_id)
+            ]),
+        ]
+
+    def test_recently_unenrolled_licensed_fulfillment_object(self):
+        """
+        Test that the correct licensed fulfillment object is returned.
+        """
+        self.enterprise_course_enrollment.unenrolled = True
+        self.enterprise_course_enrollment.save()
+        response = self.client.get(
+            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.modified_since_filter
+            + '&retrieve_licensed_enrollments=True'
+        )
+        ent_user = self.licensed_course_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
+        assert response.data == [
+            OrderedDict([
+                ('enterprise_course_enrollment', OrderedDict([
+                    ('enterprise_customer_user', ent_user),
+                    ('course_id', self.licensed_course_enrollment.enterprise_course_enrollment.course_id)
+                ])),
+                ('license_uuid', str(self.licensed_course_enrollment.license_uuid))
+            ]),
+        ]
+
     def test_successful_retrieve_licensed_enrollment(self):
         """
-        Test that we can sucessfully retrieve a licensed enrollment.
+        Test that we can successfully retrieve a licensed enrollment.
         """
         response = self.client.get(
             settings.TEST_SERVER + self.licensed_fulfillment_url,
@@ -3381,7 +3491,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
 
     def test_successful_retrieve_learner_credit_enrollment(self):
         """
-        Test that we can sucessfully retrieve a learner credit enrollment.
+        Test that we can successfully retrieve a learner credit enrollment.
         """
         response = self.client.get(
             settings.TEST_SERVER + self.learner_credit_fulfillment_url,

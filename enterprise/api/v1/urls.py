@@ -58,6 +58,11 @@ urlpatterns = [
         name='enterprise-subsidy-fulfillment-cancel-enrollment'
     ),
     re_path(
+        r'operator/enterprise-subsidy-fulfillment/unenrolled/?$',
+        views.EnterpriseSubsidyFulfillmentViewSet.as_view({'get': 'unenrolled'}),
+        name='enterprise-subsidy-fulfillment-unenrolled'
+    ),
+    re_path(
         r'^read_notification$',
         views.NotificationReadView.as_view(),
         name='read-notification'
