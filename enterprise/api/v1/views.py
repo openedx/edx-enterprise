@@ -278,7 +278,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
         Creates a set of enterprise enrollments for specified learners by bulk enrolling them in provided courses.
         This endpoint is not transactional, in that any one or more failures will not affect other successful
-        enrollments smade within the same request.
+        enrollments made within the same request.
 
         Parameters:
             enrollments_info (list of dicts): an array of dictionaries, each containing the necessary information to

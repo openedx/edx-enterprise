@@ -21,6 +21,10 @@ Unreleased
 -------
 feat!: upgraded to Node v18, added .nvmrc and updated workflows.
 
+[3.65.2]
+--------
+feat: extending the enterprise fulfillment api serializer to contain more info
+
 [3.65.1]
 --------
 fix: making sure unenrollment is saved while revoking fulfillment
