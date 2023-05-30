@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.65.4]
+--------
+fix: swapping enterprise unenrolled bool to timestamp and minor code cleanup
+
 [3.65.2]
 --------
 feat: extending the enterprise fulfillment api serializer to contain more info

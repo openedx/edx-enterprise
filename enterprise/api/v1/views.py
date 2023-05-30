@@ -591,13 +591,34 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
             /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/
         * Cancel a subsidy fulfillment enrollment record by uuid.
             /enterprise/api/v1/subsidy-fulfillment/{fulfillment_source_uuid}/cancel-enrollment/
+        * Fetch all unenrolled subsidy fulfillment records.
+            /enterprise/api/v1/operator/subsidy-fulfillment/unenrolled/
 
-    Requires a fulfillment source uuid query parameter. Supports both fetch and cancel operations.
+    Cancel and fetch endpoints require a fulfillment source uuid query parameter. Fetching unenrollments supports
+    an optional ``unenrolled_after`` query parameter to filter the returned queryset down to only enterprise
+    enrollments unenrolled after the supplied datetime.
 
-    Arguments:
+    Arguments (Fetch & Cancel):
         fulfillment_source_uuid (str): The uuid of the subsidy fulfillment record.
+    Arguments (Unenrolled):
+        unenrolled_after (str): A datetime string. Only return enrollments unenrolled after this time.
     Returns (Fetch):
         (Response): JSON response containing the subsidy fulfillment record.
+    Returns (Unenrolled):
+        (Response): JSON list response containing the unenrolled subsidy fulfillment records.
+            Example:
+                [
+                    {
+                        enterprise_course_enrollment: {
+                            enterprise_customer_user: <user_id>,
+                            course_id: <course_id>,
+                            unenrolled: <datetime>
+                            created: <datetime>
+                        }
+                        license_uuid/transaction_id: <uuid>,
+                        uuid: <uuid>,
+                    },
+                ]
     Raises
         (Http404): If the subsidy fulfillment record does not exist or if subsidy fulfillment exists under a separate
         enterprise.
@@ -676,14 +697,17 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
         else:
             enrollment_table = models.LearnerCreditEnterpriseCourseEnrollment
 
-        unenrolled_queryset = enrollment_table.objects.filter(
-            enterprise_course_enrollment__unenrolled=True,
-        )
         # Apply a modified filter if one is provided via query params
-        if self.request.query_params.get('modified'):
-            unenrolled_queryset = unenrolled_queryset.filter(
-                enterprise_course_enrollment__modified__gte=self.request.query_params.get('modified')
+        if self.request.query_params.get('unenrolled_after'):
+            unenrolled_queryset = enrollment_table.objects.filter(
+                enterprise_course_enrollment__unenrolled_at__gte=self.request.query_params.get('unenrolled_after')
             )
+            return unenrolled_queryset
+
+        unenrolled_queryset = enrollment_table.objects.filter(
+            enterprise_course_enrollment__unenrolled_at__isnull=False,
+        )
+
         return unenrolled_queryset
 
     def get_unenrolled_fulfillment_serializer_class(self):
@@ -1204,7 +1228,7 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
 
 class PendingEnterpriseCustomerUserEnterpriseAdminViewSet(PendingEnterpriseCustomerUserViewSet):
     """
-    Viewset for allowing enterpise admins to create linked learners
+    Viewset for allowing enterprise admins to create linked learners
     Endpoint url: link_pending_enterprise_users/(?P<enterprise_uuid>[A-Za-z0-9-]+)/?$
     Admin must be an administrator for the enterprise in question
     """
