@@ -1779,6 +1779,7 @@ def customer_admin_enroll_user_with_status(
         enrollment_source: Source of enrollment, used for tracking enrollments
         license_uuid: UUID of associated license with the enrollment, used to create a mapping between licenses and
             enrollments
+        transaction_id: UUID of associated ledgered transaction if this enrollment is subsidized via learner credit 2.
 
     Returns:
         succeeded (Boolean): Whether or not the enrollment succeeded for the course specified
@@ -1822,10 +1823,13 @@ def customer_admin_enroll_user_with_status(
             }
         )
         if transaction_id:
-            subsidy_enrollment_obj, __ = subsidized_enterprise_course_enrollment_model().objects.get_or_create(
-                transaction_id=transaction_id,
-                enterprise_course_enrollment=obj,
-            )
+            subsidy_enrollment_obj, subsidy_enrollment_created = \
+                subsidized_enterprise_course_enrollment_model().objects.get_or_create(
+                    enterprise_course_enrollment=obj,
+                    defaults={"transaction_id": transaction_id},
+                )
+            if not subsidy_enrollment_created:
+                subsidy_enrollment_obj.reactivate(transaction_id=transaction_id)
             enterprise_fufillment_source_uuid = subsidy_enrollment_obj.uuid
         if license_uuid:
             licensed_enrollment_obj, __ = licensed_enterprise_course_enrollment_model().objects.get_or_create(
