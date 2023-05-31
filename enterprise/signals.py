@@ -15,6 +15,7 @@ from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_default_catalog_content_filter,
+    localized_utcnow,
     unset_enterprise_learner_language,
     unset_language_of_all_enterprise_learners,
 )
@@ -329,7 +330,7 @@ def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=un
             f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.user} and "
             f"course {enrollment.course.course_key}"
         )
-        enterprise_enrollment.unenrolled = True
+        enterprise_enrollment.unenrolled_at = localized_utcnow()
         enterprise_enrollment.save()
 
 
