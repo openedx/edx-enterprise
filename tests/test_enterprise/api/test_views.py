@@ -1235,12 +1235,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             [{
                 'enterprise_customer_user__id': 1,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
-                'modified': '2021-10-20T19:01:31Z',
+                'created': '2021-10-20T19:01:31Z',
+                'unenrolled_at': None,
             }],
             [{
                 'enterprise_customer_user': 1,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
-                'modified': '2021-10-20T19:01:31Z',
+                'created': '2021-10-20T19:01:31Z',
+                'unenrolled_at': None,
             }],
         ),
         (
@@ -3335,7 +3337,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         self.client.login(username='test_user', password='test_password')
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, str(self.enterprise_customer.uuid))
 
-        self.modified_since_filter = f'?modified={str(datetime.now() - timedelta(hours=24))}'
+        self.unenrolled_after_filter = f'?unenrolled_after={str(datetime.now() - timedelta(hours=24))}'
 
         self.course_id = 'course-v1:edX+DemoX+Demo_Course'
         self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
@@ -3385,47 +3387,54 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         second_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=second_enterprise_user,
             course_id=self.course_id,
-            unenrolled=True,
+            unenrolled_at=localized_utcnow(),
         )
         # Have a second enrollment that is under a different enterprise customer than the requesting
-        # user. Because the requesting user is a staff user, they should be able to see this enrollment.
+        # user. Because the requesting user is an operator user, they should be able to see this enrollment.
         second_lc_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=second_enterprise_course_enrollment,
         )
 
-        self.enterprise_course_enrollment.unenrolled = True
-        # This will also update the `modified` field
+        self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
         self.enterprise_course_enrollment.save()
         response = self.client.get(
-            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.modified_since_filter
+            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
         )
 
         lc_ent_user_1 = self.learner_credit_course_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
         lc_ent_user_2 = second_lc_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
-        assert response.data == [
-            OrderedDict([
-                ('enterprise_course_enrollment', OrderedDict([
-                    ('enterprise_customer_user', lc_ent_user_1),
-                    ('course_id', self.learner_credit_course_enrollment.enterprise_course_enrollment.course_id),
-                    ('modified', self.learner_credit_course_enrollment.modified.strftime("%Y-%m-%dT%H:%M:%SZ")),
-                ])),
-                ('transaction_id', self.learner_credit_course_enrollment.transaction_id),
-                ('uuid', str(self.learner_credit_course_enrollment.uuid)),
-            ]),
-            OrderedDict([
-                ('enterprise_course_enrollment', OrderedDict(
-                    [
-                        ('enterprise_customer_user', lc_ent_user_2),
-                        ('course_id', second_lc_enrollment.enterprise_course_enrollment.course_id),
-                        ('modified', second_lc_enrollment.enterprise_course_enrollment.modified.strftime(
-                            "%Y-%m-%dT%H:%M:%SZ"
-                        )),
-                    ]
+        lc_unenrolled_date = self.learner_credit_course_enrollment.enterprise_course_enrollment.unenrolled_at.strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        assert OrderedDict([
+            ('enterprise_course_enrollment', OrderedDict([
+                ('enterprise_customer_user', lc_ent_user_1),
+                ('course_id', self.learner_credit_course_enrollment.enterprise_course_enrollment.course_id),
+                ('unenrolled_at', lc_unenrolled_date),
+                ('created', self.learner_credit_course_enrollment.enterprise_course_enrollment.created.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ"
                 )),
-                ('transaction_id', second_lc_enrollment.transaction_id),
-                ('uuid', str(second_lc_enrollment.uuid)),
-            ])
-        ]
+            ])),
+            ('transaction_id', self.learner_credit_course_enrollment.transaction_id),
+            ('uuid', str(self.learner_credit_course_enrollment.uuid)),
+        ]) in response.data
+        assert OrderedDict([
+            ('enterprise_course_enrollment', OrderedDict(
+                [
+                    ('enterprise_customer_user', lc_ent_user_2),
+                    ('course_id', second_lc_enrollment.enterprise_course_enrollment.course_id),
+                    ('unenrolled_at', second_lc_enrollment.enterprise_course_enrollment.modified.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ"
+                    )),
+                    ('created', second_lc_enrollment.enterprise_course_enrollment.created.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ"
+                    )),
+                ]
+            )),
+            ('transaction_id', second_lc_enrollment.transaction_id),
+            ('uuid', str(second_lc_enrollment.uuid)),
+        ]) in response.data
+        assert len(response.data) == 2
 
     def test_recently_unenrolled_fulfillment_endpoint_can_filter_for_modified_after(self):
         """
@@ -3435,30 +3444,33 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         old_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_user,
             course_id=self.course_id + '2',
-            unenrolled=True,
-            modified=timezone.now() - timedelta(hours=25),
+            unenrolled_at=localized_utcnow() - timedelta(days=5),
         )
         old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=old_enterprise_course_enrollment,
         )
         response = self.client.get(
-            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.modified_since_filter
+            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
         )
         assert response.data == []
-
+        long_ago_filter = str((localized_utcnow() - timedelta(days=10)).strftime("%Y-%m-%dT%H:%M:%SZ"))
         response = self.client.get(
             reverse(
                 'enterprise-subsidy-fulfillment-unenrolled'
-            ) + f'?modified={str(datetime.now() - timedelta(hours=28))}'
+            ) + f'?unenrolled_after={long_ago_filter}'
         )
 
         ent_user = old_learner_credit_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
+        lc_unenrolled_at = old_learner_credit_enrollment.enterprise_course_enrollment.unenrolled_at.strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
         assert response.data == [
             OrderedDict([
                 ('enterprise_course_enrollment', OrderedDict([
                     ('enterprise_customer_user', ent_user),
                     ('course_id', old_learner_credit_enrollment.enterprise_course_enrollment.course_id),
-                    ('modified', old_learner_credit_enrollment.enterprise_course_enrollment.modified.strftime(
+                    ('unenrolled_at', lc_unenrolled_at),
+                    ('created', old_learner_credit_enrollment.enterprise_course_enrollment.created.strftime(
                         "%Y-%m-%dT%H:%M:%SZ"
                     )),
                 ])),
@@ -3471,19 +3483,23 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         """
         Test that the correct licensed fulfillment object is returned.
         """
-        self.enterprise_course_enrollment.unenrolled = True
+        self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
         self.enterprise_course_enrollment.save()
         response = self.client.get(
-            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.modified_since_filter
+            reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
             + '&retrieve_licensed_enrollments=True'
         )
         ent_user = self.licensed_course_enrollment.enterprise_course_enrollment.enterprise_customer_user.id
+        licensed_unenrolled_at = self.licensed_course_enrollment.enterprise_course_enrollment.unenrolled_at.strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
         assert response.data == [
             OrderedDict([
                 ('enterprise_course_enrollment', OrderedDict([
                     ('enterprise_customer_user', ent_user),
                     ('course_id', self.licensed_course_enrollment.enterprise_course_enrollment.course_id),
-                    ('modified', self.licensed_course_enrollment.enterprise_course_enrollment.modified.strftime(
+                    ('unenrolled_at', licensed_unenrolled_at),
+                    ('created', self.licensed_course_enrollment.enterprise_course_enrollment.created.strftime(
                         "%Y-%m-%dT%H:%M:%SZ"
                     )),
                 ])),
@@ -3506,7 +3522,8 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'enterprise_course_enrollment': {
                 'enterprise_customer_user': self.enterprise_user.id,
                 'course_id': self.enterprise_course_enrollment.course_id,
-                'modified': self.enterprise_course_enrollment.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'unenrolled_at': self.enterprise_course_enrollment.unenrolled_at,
+                'created': self.enterprise_course_enrollment.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
             },
             'uuid': str(self.licensed_course_enrollment.uuid),
         }
@@ -3526,7 +3543,8 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'enterprise_course_enrollment': {
                 'enterprise_customer_user': self.enterprise_user.id,
                 'course_id': self.enterprise_course_enrollment.course_id,
-                'modified': self.enterprise_course_enrollment.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                'unenrolled_at': self.enterprise_course_enrollment.unenrolled_at,
+                'created': self.enterprise_course_enrollment.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
             },
             'uuid': str(self.learner_credit_course_enrollment.uuid),
         }
@@ -3664,9 +3682,9 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
-class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
+class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
     """
-    Test LicensedEnterpriseCourseEnrollemntViewset
+    Test LicensedEnterpriseCourseEnrollmentViewset
     """
 
     def test_validate_license_revoke_data_valid_data(self):
@@ -4394,7 +4412,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                     'created': True,
                     'activation_link': None,
-                    'enterprise_fufillment_source_uuid': str(EnterpriseCourseEnrollment.objects.filter(
+                    'enterprise_fulfillment_source_uuid': str(EnterpriseCourseEnrollment.objects.filter(
                         enterprise_customer_user__user_id=user_one.id
                     ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid)
                 },
@@ -4404,7 +4422,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
                     'created': True,
                     'activation_link': None,
-                    'enterprise_fufillment_source_uuid': str(EnterpriseCourseEnrollment.objects.filter(
+                    'enterprise_fulfillment_source_uuid': str(EnterpriseCourseEnrollment.objects.filter(
                         enterprise_customer_user__user_id=user_two.id
                     ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid)
                 },
@@ -4572,13 +4590,13 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         assert response_json['successes'][0]['email'] == user.email
         assert response_json['successes'][0]['course_run_key'] == course_id
         assert response_json['successes'][0]['created'] is True
-        assert uuid.UUID(response_json['successes'][0]['enterprise_fufillment_source_uuid']) == \
+        assert uuid.UUID(response_json['successes'][0]['enterprise_fulfillment_source_uuid']) == \
             learner_credit_course_enrollment.uuid
 
         # Then, check that the db records related to the enrollment look good:
         enterprise_course_enrollment.refresh_from_db()
         learner_credit_course_enrollment.refresh_from_db()
-        assert enterprise_course_enrollment.unenrolled is False
+        assert enterprise_course_enrollment.unenrolled_at is None
         assert enterprise_course_enrollment.saved_for_later is False
         assert learner_credit_course_enrollment.is_revoked is False
         assert learner_credit_course_enrollment.transaction_id == uuid.UUID(new_transaction_id)
@@ -4653,7 +4671,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         self.assertEqual(len(response_json.get('successes')), 1)
         self.assertEqual(
             str(fulfillment_source.objects.first().uuid),
-            response_json.get('successes')[0].get('enterprise_fufillment_source_uuid')
+            response_json.get('successes')[0].get('enterprise_fulfillment_source_uuid')
         )
 
     @ddt.data(

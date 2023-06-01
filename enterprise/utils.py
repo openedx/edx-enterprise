@@ -1795,7 +1795,7 @@ def customer_admin_enroll_user_with_status(
     )
     succeeded = False
     new_enrollment = False
-    enterprise_fufillment_source_uuid = None
+    enterprise_fulfillment_source_uuid = None
     try:
         # enrolls a user in a course per LMS flow, but this method does not create enterprise records yet so we need to
         # create it immediately after calling lms_enroll_user_in_course. lms_enroll_user_in_course can return None if
@@ -1834,20 +1834,20 @@ def customer_admin_enroll_user_with_status(
                 )
             if not subsidy_enrollment_created:
                 subsidy_enrollment_obj.reactivate(transaction_id=transaction_id)
-            enterprise_fufillment_source_uuid = subsidy_enrollment_obj.uuid
+            enterprise_fulfillment_source_uuid = subsidy_enrollment_obj.uuid
         if license_uuid:
             licensed_enrollment_obj, __ = licensed_enterprise_course_enrollment_model().objects.get_or_create(
                 license_uuid=license_uuid,
                 enterprise_course_enrollment=obj,
             )
-            enterprise_fufillment_source_uuid = licensed_enrollment_obj.uuid
+            enterprise_fulfillment_source_uuid = licensed_enrollment_obj.uuid
         if created:
             # Note: this tracking event only caters to bulk enrollment right now.
             track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
 
     # If new_enrollment is None then the enrollment already existed
     created = bool(new_enrollment)
-    return succeeded, created, enterprise_fufillment_source_uuid
+    return succeeded, created, enterprise_fulfillment_source_uuid
 
 
 def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id, enrollment_source=None):
@@ -2027,7 +2027,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     }
 
                     if source_uuid:
-                        success_dict['enterprise_fufillment_source_uuid'] = source_uuid
+                        success_dict['enterprise_fulfillment_source_uuid'] = source_uuid
                     results['successes'].append(success_dict)
                 else:
                     results['failures'].append(

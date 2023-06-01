@@ -22,6 +22,9 @@ Unreleased
 --------
 feat: enable enrolling leaners to invite_only courses via manage learners view
 
+[3.65.4]
+--------
+fix: swapping enterprise unenrolled bool to timestamp and minor code cleanup
 
 [3.65.2]
 --------

@@ -1874,6 +1874,16 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         db_index=True,
     )
 
+    unenrolled_at = models.DateTimeField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "Specifies when an enterprise course enrollment's course enrollment object was unenrolled."
+        ),
+        db_index=True,
+    )
+
     @property
     def audit_reporting_disabled(self):
         """
@@ -2103,7 +2113,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = True
-            self.enterprise_course_enrollment.unenrolled = True
+            self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
             self.enterprise_course_enrollment.save()
 
         self.is_revoked = True
@@ -2111,11 +2121,11 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
 
     def reactivate(self, **kwargs):
         """
-        Idmpotently reactivates this enterprise fulfillment source.
+        Idempotently reactivates this enterprise fulfillment source.
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = False
-            self.enterprise_course_enrollment.unenrolled = False
+            self.enterprise_course_enrollment.unenrolled_at = None
             self.enterprise_course_enrollment.save()
 
         self.is_revoked = False
