@@ -624,7 +624,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'course_id',
         'saved_for_later',
-        'unenrolled',
+        'unenrolled_at',
     )
 
     change_list_template = "enterprise/admin/enterprise_course_enrollments_list.html"

@@ -182,7 +182,7 @@ class TestUtils(unittest.TestCase):
                     'user': self.user,
                     'created': True,
                     'activation_link': None,
-                    'enterprise_fufillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
+                    'enterprise_fulfillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
                 }],
                 'failures': [{
                     'user_id': failure_user.id,
@@ -229,7 +229,7 @@ class TestUtils(unittest.TestCase):
                     'user': self.user,
                     'created': True,
                     'activation_link': None,
-                    'enterprise_fufillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
+                    'enterprise_fulfillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
                 }],
                 'failures': []
             },
@@ -286,7 +286,7 @@ class TestUtils(unittest.TestCase):
                         'user': self.user,
                         'created': True,
                         'activation_link': None,
-                        'enterprise_fufillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
                             enterprise_customer_user__user_id=self.user.id
                         ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
                     },
@@ -297,7 +297,7 @@ class TestUtils(unittest.TestCase):
                         'user': another_user,
                         'created': True,
                         'activation_link': None,
-                        'enterprise_fufillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
                             enterprise_customer_user__user_id=another_user.id
                         ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
                     }

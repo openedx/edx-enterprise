@@ -349,7 +349,7 @@ class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCourseEnrollment
         fields = (
-            'enterprise_customer_user', 'course_id', 'modified',
+            'enterprise_customer_user', 'course_id', 'unenrolled_at', 'created',
         )
 
 

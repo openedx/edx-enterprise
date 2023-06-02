@@ -21,6 +21,10 @@ Unreleased
 -------
 feat!: upgraded to Node v18, added .nvmrc and updated workflows.
 
+[3.65.4]
+--------
+fix: swapping enterprise unenrolled bool to timestamp and minor code cleanup
+
 [3.65.2]
 --------
 feat: extending the enterprise fulfillment api serializer to contain more info
