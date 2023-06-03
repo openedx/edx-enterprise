@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.66.0]
+--------
+feat: Added org_id for executive education courses landing page
+
 [3.65.4]
 --------
 fix: swapping enterprise unenrolled bool to timestamp and minor code cleanup
