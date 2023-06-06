@@ -1,7 +1,7 @@
 """
 enterprise_learner_portal serializer
 """
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 from rest_framework import serializers
 
@@ -96,6 +96,6 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
             params = {'org_id': ''}
             if active_enterprise_customer:
                 params = {'org_id': active_enterprise_customer.enterprise_customer.auth_org_id}
-            course_run_url = quote("{}?{}".format(exec_ed_base_url, urlencode(params)))
+            course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
 
         return course_run_url
