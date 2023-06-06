@@ -4,7 +4,7 @@ Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal ap
 
 from collections import OrderedDict
 from unittest import mock
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 import ddt
 from pytest import mark
@@ -74,7 +74,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         if is_exec_ed_course:
             exec_ed_landing_page = getattr(settings, 'EXEC_ED_LANDING_PAGE', None)
             params = {'org_id': self.enterprise_customer_user.enterprise_customer.auth_org_id}
-            expected_course_run_url = quote("{}?{}".format(exec_ed_landing_page, urlencode(params)))
+            expected_course_run_url = '{}?{}'.format(exec_ed_landing_page, urlencode(params))
 
         mock_get_course_run_url.return_value = course_run_url
         mock_get_emails_enabled.return_value = True
