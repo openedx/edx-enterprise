@@ -2297,3 +2297,12 @@ def logo_path(instance, filename):
     fullname = os.path.join("enterprise/branding/" + str(instance.enterprise_customer.uuid) +
                             "/logo_" + generated_uuid + extension)
     return fullname
+
+
+def get_default_invite_key_expiration_date():
+    """
+    Returns the default expiration date for an invite key.
+
+    The default expiration date is 365 days from the current date.
+    """
+    return localized_utcnow() + datetime.timedelta(days=365)

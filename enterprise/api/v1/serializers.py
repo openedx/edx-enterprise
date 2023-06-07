@@ -1378,7 +1378,7 @@ class EnterpriseCustomerInviteKeyWriteSerializer(BaseEnterpriseCustomerInviteKey
     uuid = serializers.UUIDField(read_only=True)
     enterprise_customer_uuid = serializers.UUIDField()
     usage_limit = serializers.IntegerField(required=False)
-    expiration_date = serializers.DateTimeField()
+    expiration_date = serializers.DateTimeField(required=False)
     is_active = serializers.BooleanField(read_only=True)
 
     def validate_enterprise_customer_uuid(self, value):
