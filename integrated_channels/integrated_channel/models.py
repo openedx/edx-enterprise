@@ -616,6 +616,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     """
     class Meta:
         index_together = [('enterprise_customer', 'integrated_channel_code', 'plugin_configuration_id', 'content_id')]
+        unique_together = (('integrated_channel_code', 'plugin_configuration_id', 'content_id'),)
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
     integrated_channel_code = models.CharField(max_length=30)

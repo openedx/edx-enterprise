@@ -90,7 +90,7 @@ class ContentSyncStatusViewSetTests(APITest):
         """
         # Same content ID as self.content_metadata_item but a different content_title
         factories.ContentMetadataItemTransmissionFactory(
-            content_id='DemoX',
+            content_id='DemoX_X',
             content_title='B',
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code='GENERIC',
@@ -210,7 +210,7 @@ class ContentSyncStatusViewSetTests(APITest):
         query param is not specified
         """
         factories.ContentMetadataItemTransmissionFactory(
-            content_id='Demo X',
+            content_id='Demo test_view_default_sorts_by_status_code 1',
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code='GENERIC',
             plugin_configuration_id=1,
@@ -219,7 +219,7 @@ class ContentSyncStatusViewSetTests(APITest):
         )
 
         factories.ContentMetadataItemTransmissionFactory(
-            content_id='Demo X',
+            content_id='Demo test_view_default_sorts_by_status_code 2',
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code='GENERIC',
             plugin_configuration_id=1,
