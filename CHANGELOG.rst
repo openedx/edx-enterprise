@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.66.2]
+--------
+chore: unique constraint on transmission audits to prevent duplicates
+
 [3.66.1]
 --------
 fix: Fixed url encoding issue with org_id in executive education course url
