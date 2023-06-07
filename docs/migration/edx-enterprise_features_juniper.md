@@ -14,6 +14,9 @@ Adds the capability to make a site-aware redirect when the course purchase workf
 - Ecommerce and Discovery partners must match.
 - LMS site should be configured as follows: `{"COURSE_CATALOG_API_URL":"http://<discovery-url>:18381/api/v1/" "ECOMMERCE_API_URL":"http://<ecommerce-url>:18130", "SESSION_COOKIE_DOMAIN":"<principal-domain>" "LMS_ROOT_URL":"<lms-url>:18000", "ECOMMERCE_PUBLIC_URL_ROOT":"http://<ecommerce-url>:18130"}`
 - Synchronize course metadata in Discovery https://edx-discovery.readthedocs.io/en/latest/introduction.html#data-loading.
-- Go to an Enterprise enrollment URL, e.g.` <LMS-HOST>/enterprise/<enterprise-customer-id>/course/<course-id>/enroll/`
+- Check that user enterprise_worker is created if not create it with the command: `./manage.py lms manage_user enterprise_worker enterprise_worker@example.com --staff --unusable-password`.
+- Create necessary aplications with: `./manage.py lms create_dot_application --grant-type client-credentials --client-id "enterprise-backend-service-key" --client-secret "enterprise-backend-service-secret" enterprise-backend-service enterprise_worker`.
+- Verify if setting `ENTERPRISE_LEARNER_PORTAL_BASE_URL` is already configured (Right now you could set this setting to a dummy value).
+- Go to an Enterprise enrollment URL, e.g.`<LMS-HOST>/enterprise/<enterprise-customer-uuid>/course/<course-id>/enroll/`.
 - Select a verified seat if you want to buy the course, you should be redirected to the desired ecommerce site.
 - You should be redirected with the correct LMS_ROOT_URL.
