@@ -93,9 +93,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         exec_ed_base_url = getattr(settings, 'EXEC_ED_LANDING_PAGE', None)
         if exec_ed_base_url and exec_ed_base_url == course_run_url:
             active_enterprise_customer = EnterpriseCustomerUser.get_active_enterprise_users(request.user.id).first()
-            params = {'org_id': ''}
-            if active_enterprise_customer:
+            if active_enterprise_customer and active_enterprise_customer.enterprise_customer.auth_org_id:
                 params = {'org_id': active_enterprise_customer.enterprise_customer.auth_org_id}
-            course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
+                course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
 
         return course_run_url
