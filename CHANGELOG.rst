@@ -18,9 +18,22 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
-[3.66.0]
+[3.67.0]
 --------
 feat: enable enrolling leaners to invite_only courses via manage learners view
+
+[3.66.2]
+--------
+chore: unique constraint on transmission audits to prevent duplicates
+
+[3.66.1]
+--------
+fix: Fixed url encoding issue with org_id in executive education course url
+
+[3.66.0]
+--------
+feat: Added org_id for executive education courses landing page
+
 
 [3.65.4]
 --------
