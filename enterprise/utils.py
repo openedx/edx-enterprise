@@ -1679,12 +1679,12 @@ def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
         if enrollments and course_mode == enrollments.get('mode'):
             return True
     except HttpClientError as exc:
-        logging.error(
+        LOGGER.error(
             'Error while checking enrollment status of user %(user)s: %(message)s',
             {'user': user.username, 'message': str(exc)},
         )
     except KeyError as exc:
-        logging.warning(
+        LOGGER.warning(
             'Error while parsing enrollment data of user %(user)s: %(message)s',
             {'user': user.username, 'message': str(exc)},
         )
@@ -1733,7 +1733,7 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
                     error_message = json.loads(exc.content.decode()).get('message', default_message)
                 except ValueError:
                     error_message = default_message
-                logging.error(
+                LOGGER.error(
                     'Error while enrolling user %(user)s: %(message)s',
                     {'user': user.username, 'message': error_message},
                 )
@@ -1804,8 +1804,9 @@ def customer_admin_enroll_user_with_status(
             is_active=True,
         )
         succeeded = True
+        LOGGER.info("Successfully enrolled user %s in course %s", user.id, course_id)
     except (CourseEnrollmentError, CourseUserGroup.DoesNotExist) as error:
-        logging.exception("Failed to enroll user %s in course %s", user.id, course_id, exc_info=error)
+        LOGGER.exception("Failed to enroll user %s in course %s", user.id, course_id, exc_info=error)
     if succeeded:
         # If we have a provided enrollment source, use that. Otherwise default to manual.
         if enrollment_source:
@@ -1828,6 +1829,10 @@ def customer_admin_enroll_user_with_status(
                     enterprise_course_enrollment=obj,
                     defaults={"transaction_id": transaction_id},
                 )
+            LOGGER.info(
+                "Transaction reference record %s fetched for transaction %s, was_created=%s",
+                subsidy_enrollment_obj.uuid, transaction_id, subsidy_enrollment_created,
+            )
             if not subsidy_enrollment_created:
                 subsidy_enrollment_obj.reactivate(transaction_id=transaction_id)
             enterprise_fulfillment_source_uuid = subsidy_enrollment_obj.uuid
@@ -1836,11 +1841,16 @@ def customer_admin_enroll_user_with_status(
                 license_uuid=license_uuid,
                 enterprise_course_enrollment=obj,
             )
+            LOGGER.info(
+                "Licensed enrollment reference record %s fetched for license %s",
+                licensed_enrollment_obj.uuid, license_uuid,
+            )
             enterprise_fulfillment_source_uuid = licensed_enrollment_obj.uuid
         if created:
             # Note: this tracking event only caters to bulk enrollment right now.
             track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
-
+    else:
+        LOGGER.warning("Failed to enroll user %s in course %s", user.id, course_id)
     # If new_enrollment is None then the enrollment already existed
     created = bool(new_enrollment)
     return succeeded, created, enterprise_fulfillment_source_uuid
@@ -2048,6 +2058,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     'activation_link': activation_link,
                 })
         except utils.IntegrityError:
+            LOGGER.exception("IntegrityError enrolling user %s in course run %s", user_id, course_run_key)
             results['failures'].append({'user_id': user_id, 'email': user_email, 'course_run_key': course_run_key})
             continue
 

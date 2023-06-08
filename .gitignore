@@ -39,6 +39,7 @@ pii_report/
 
 # IDEs and text editors
 *~
+.projectile
 *.swp
 .idea/
 .project
