@@ -53,7 +53,7 @@ from enterprise.api.filters import (
     EnterpriseLinkedUserFilterBackend,
     UserFilterBackend,
 )
-from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.api.throttles import HighServiceUserThrottle, ServiceUserThrottle
 from enterprise.api.utils import (
     create_message_body,
     get_ent_cust_from_enterprise_customer_key,
@@ -164,7 +164,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
     """
-
+    throttle_classes = (HighServiceUserThrottle, )
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
     filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
