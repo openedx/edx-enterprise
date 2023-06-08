@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.66.3]
+--------
+fix: prevent org_id param addition to exec-ed course home url when auth_org_id is not present
+
 [3.66.2]
 --------
 chore: unique constraint on transmission audits to prevent duplicates
