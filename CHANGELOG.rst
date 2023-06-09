@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.66.5]
+--------
+chore: set default expiration_date for EnterpriseCustomerInviteKey
+
 [3.66.4]
 --------
 feat: add more logging in the bulk enrollment flow

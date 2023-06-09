@@ -345,16 +345,11 @@ class TestEnterpriseCustomer(unittest.TestCase):
         # Toggle to True creates with no date, does not create a new link
         enterprise_customer.toggle_universal_link(True)
         assert enterprise_customer.enable_universal_link
-        # No links should have been made since a date was not passed
-        assert EnterpriseCustomerInviteKey.objects.filter(
-            enterprise_customer=enterprise_customer,
-            is_active=True,
-        ).count() == 0
         # Toggle to False
         enterprise_customer.toggle_universal_link(False)
         assert not enterprise_customer.enable_universal_link
         # Toggle to True, with date passed, link should be generated
-        enterprise_customer.toggle_universal_link(True, localized_utcnow() + timedelta(seconds=1))
+        enterprise_customer.toggle_universal_link(True)
         assert EnterpriseCustomerInviteKey.objects.filter(
             enterprise_customer=enterprise_customer,
             is_active=True,
@@ -365,6 +360,37 @@ class TestEnterpriseCustomer(unittest.TestCase):
             enterprise_customer=enterprise_customer,
             is_active=True,
         ).count() == 0
+
+    def test_create_universal_link_up_to_limit(self):
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        for _ in range(100):
+            invite_key = EnterpriseCustomerInviteKey(
+                enterprise_customer=enterprise_customer,
+                usage_limit=1000,
+                expiration_date=localized_utcnow() + timedelta(days=1),
+            )
+            invite_key.save()
+        self.assertEqual(EnterpriseCustomerInviteKey.objects.count(), 100)
+
+    def test_cannot_create_over_limit(self):
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        for _ in range(100):
+            invite_key = EnterpriseCustomerInviteKey(
+                enterprise_customer=enterprise_customer,
+                usage_limit=1000,
+                expiration_date=localized_utcnow() + timedelta(days=1),
+            )
+            invite_key.save()
+
+        with self.assertRaises(ValueError):
+            invite_key = EnterpriseCustomerInviteKey(
+                enterprise_customer=enterprise_customer,
+                usage_limit=1000,
+                expiration_date=localized_utcnow() + timedelta(days=1),
+            )
+            invite_key.save()
+
+        self.assertEqual(EnterpriseCustomerInviteKey.objects.count(), 100)
 
 
 @mark.django_db

@@ -2,6 +2,6 @@
 Your project description goes here.
 """
 
-__version__ = "3.66.4"
+__version__ = "3.66.5"
 
 default_app_config = "enterprise.apps.EnterpriseConfig"
