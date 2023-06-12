@@ -18,6 +18,10 @@ Unreleased
 * Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
   deprecated
 
+[3.66.6]
+--------
+feat: increase the throttle limit of service users for EnterpriseCustomerViewSet
+
 [3.66.5]
 --------
 chore: set default expiration_date for EnterpriseCustomerInviteKey

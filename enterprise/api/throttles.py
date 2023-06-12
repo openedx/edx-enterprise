@@ -7,11 +7,12 @@ from rest_framework.throttling import UserRateThrottle
 from enterprise.api.utils import get_service_usernames
 
 SERVICE_USER_SCOPE = 'service_user'
+HIGH_SERVICE_USER_SCOPE = 'high_service_user'
 
 
-class ServiceUserThrottle(UserRateThrottle):
+class BaseThrottle(UserRateThrottle):
     """
-    A throttle allowing the service user to override rate limiting.
+    Base throttle class with common functionality.
     """
 
     def allow_request(self, request, view):
@@ -22,30 +23,68 @@ class ServiceUserThrottle(UserRateThrottle):
         defaults to UserRateThrottle's configured setting otherwise.
 
         Updated throttling rate comes from `DEFAULT_THROTTLE_RATES` key in `REST_FRAMEWORK`
-        setting. service user throttling is specified in `DEFAULT_THROTTLE_RATES` by `service_user` key
-
-        Example Setting::
-
+        setting. specific user throttling is specified in `DEFAULT_THROTTLE_RATES` by it's corresponding key
+        Example Setting:
             REST_FRAMEWORK = {
                 ...
                 'DEFAULT_THROTTLE_RATES': {
                     ...
-                    'service_user': '50/day'
+                    'service_user': '50/day',
+                    'high_service_user': '2000/minute',
                 }
             }
         """
         service_users = get_service_usernames()
 
-        # User service user throttling rates for service user.
+        # Update throttle scope if the request user is a service user.
         if request.user.username in service_users:
             self.update_throttle_scope()
 
         return super().allow_request(request, view)
 
+    def get_scope(self):
+        """
+        Get the scope of the throttle.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
+        raise NotImplementedError("Subclasses must implement get_scope.")
+
     def update_throttle_scope(self):
         """
-        Update throttle scope so that service user throttle rates are applied.
+        Update throttle scope based on the specific subclass.
         """
-        self.scope = SERVICE_USER_SCOPE
+        self.scope = self.get_scope()
         self.rate = self.get_rate()
         self.num_requests, self.duration = self.parse_rate(self.rate)
+
+
+class ServiceUserThrottle(BaseThrottle):
+    """
+    A throttle allowing the service user to override rate limiting.
+    """
+
+    def get_scope(self):
+        """
+        Get the scope of the throttle.
+
+        Returns:
+            str: The scope of the throttle.
+        """
+        return SERVICE_USER_SCOPE
+
+
+class HighServiceUserThrottle(BaseThrottle):
+    """
+    A throttle for high service users.
+    """
+
+    def get_scope(self):
+        """
+        Get the scope of the throttle.
+
+        Returns:
+            str: The scope of the throttle.
+        """
+        return HIGH_SERVICE_USER_SCOPE
