@@ -15,12 +15,16 @@ Change Log
 
 Unreleased
 ----------
-* Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
-  deprecated
+
+[3.66.7]
+--------
+feat: optional x-request-id logging
 
 [3.66.6]
 --------
-feat: increase the throttle limit of service users for EnterpriseCustomerViewSet
+* feat: increase the throttle limit of service users for EnterpriseCustomerViewSet
+* Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
+  deprecated
 
 [3.66.5]
 --------

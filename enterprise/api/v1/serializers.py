@@ -6,7 +6,6 @@ import copy
 import datetime
 from collections import defaultdict
 from collections.abc import Iterable
-from logging import getLogger
 
 import pytz
 from edx_rest_api_client.exceptions import HttpClientError
@@ -23,6 +22,7 @@ from enterprise import models, utils
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_PERMISSION_GROUPS, DefaultColors
+from enterprise.logging import getEnterpriseLogger
 from enterprise.models import (
     AdminNotification,
     AdminNotificationRead,
@@ -40,7 +40,7 @@ from enterprise.utils import (
 )
 from enterprise.validators import validate_pgp_key
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 User = auth.get_user_model()
 
 
