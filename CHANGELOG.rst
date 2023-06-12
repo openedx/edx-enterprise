@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.66.8]
+--------
+fix: optional x-request-id logging
+
 [3.66.7]
 --------
 feat: optional x-request-id logging
