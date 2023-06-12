@@ -6,7 +6,6 @@ import collections
 import itertools
 import json
 from decimal import Decimal
-from logging import getLogger
 from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
@@ -53,6 +52,7 @@ from enterprise.constants import (
     json_serialized_course_modes,
 )
 from enterprise.errors import LinkUserToEnterpriseError
+from enterprise.logging import getEnterpriseLogger
 from enterprise.tasks import send_enterprise_email_notification
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
@@ -89,7 +89,7 @@ try:
 except ImportError:
     CourseEntitlement = None
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 User = auth.get_user_model()
 mark_safe_lazy = lazy(mark_safe, str)
 

@@ -2,7 +2,6 @@
 Views for enterprise api version 1 endpoint.
 """
 
-from logging import getLogger
 from smtplib import SMTPException
 from time import time
 from urllib.parse import quote_plus, unquote
@@ -71,6 +70,7 @@ from enterprise.errors import (
     LinkUserToEnterpriseError,
     UnlinkUserFromEnterpriseError,
 )
+from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_subsidy_users_in_courses,
@@ -96,7 +96,7 @@ except ImportError:
     CourseMode = None
     enrollment_api = None
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 User = auth.get_user_model()
 

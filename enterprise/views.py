@@ -6,7 +6,6 @@ import datetime
 import json
 import re
 from collections import namedtuple
-from logging import getLogger
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 from uuid import UUID
 
@@ -52,6 +51,7 @@ from enterprise.forms import (
     EnterpriseLoginForm,
     EnterpriseSelectionForm,
 )
+from enterprise.logging import getEnterpriseLogger
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
@@ -104,7 +104,7 @@ try:
 except ImportError:
     get_provider_login_url = None
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 BASKET_URL = urljoin(settings.ECOMMERCE_PUBLIC_URL_ROOT, '/basket/add/')
 LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_PROGRAMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard/programs/{uuid}')

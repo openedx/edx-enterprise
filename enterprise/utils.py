@@ -3,7 +3,6 @@ Utility functions for enterprise app.
 """
 import datetime
 import json
-import logging
 import os
 import re
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
@@ -44,6 +43,7 @@ from enterprise.constants import (
     PROGRAM_TYPE_DESCRIPTION,
     CourseModes,
 )
+from enterprise.logging import getEnterpriseLogger
 
 try:
     from openedx.features.enterprise_support.enrollments.utils import lms_enroll_user_in_course
@@ -104,7 +104,7 @@ except ImportError:
 SELF_ENROLL_EMAIL_TEMPLATE_TYPE = 'SELF_ENROLL'
 ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE = 'ADMIN_ENROLL'
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 User = auth.get_user_model()
 
