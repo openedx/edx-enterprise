@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.67.0]
+--------
+fix: compare lowered input email address to lowered auth user record email address during bulk enrollment.
+
 [3.66.8]
 --------
 fix: optional x-request-id logging
