@@ -1996,7 +1996,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
             user = User.objects.filter(id=subsidy_user_info['user_id']).first()
             # If either the provided user_id does not match an existing user, or the provided email does not match that
             # of the existing user, fail.
-            if not user or user_email != user.email:
+            if not user or not user.email or user_email != user.email.lower():
                 results['failures'].append({'user_id': user_id, 'email': user_email, 'course_run_key': course_run_key})
                 continue
         elif user_id and not user_email:
