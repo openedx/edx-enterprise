@@ -61,6 +61,8 @@ except ImportError:
     create_manual_enrollment_audit = None
 User = auth.get_user_model()
 
+LOG = logging.getLogger(__name__)
+
 
 class TemplatePreviewView(View):
     """
@@ -810,7 +812,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                 manual_enrollment_reason = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.REASON)
             else:
                 manual_enrollment_reason = None
-                logging.exception(
+                LOG.exception(
                     "To create enrollment audits for enterprise learners, "
                     "this package must be installed in an Open edX environment."
                 )

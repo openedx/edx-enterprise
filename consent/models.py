@@ -2,7 +2,6 @@
 Models for edX Enterprise's Consent application.
 """
 
-import logging
 
 from simple_history.models import HistoricalRecords
 
@@ -17,10 +16,11 @@ from model_utils.models import TimeStampedModel
 from consent.errors import InvalidProxyConsent
 from consent.mixins import ConsentModelMixin
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from enterprise.logging import getEnterpriseLogger
 from enterprise.models import EnterpriseCustomer
 
 mark_safe_lazy = lazy(mark_safe, str)
-LOGGER = logging.getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 
 class DataSharingConsentQuerySet(models.query.QuerySet):

@@ -6,7 +6,6 @@ import collections
 import itertools
 import json
 from decimal import Decimal
-from logging import getLogger
 from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
@@ -47,11 +46,13 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
     ENTERPRISE_OPERATOR_ROLE,
+    MAX_INVITE_KEYS,
     DefaultColors,
     FulfillmentTypes,
     json_serialized_course_modes,
 )
 from enterprise.errors import LinkUserToEnterpriseError
+from enterprise.logging import getEnterpriseLogger
 from enterprise.tasks import send_enterprise_email_notification
 from enterprise.utils import (
     ADMIN_ENROLL_EMAIL_TEMPLATE_TYPE,
@@ -60,6 +61,7 @@ from enterprise.utils import (
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
     get_configuration_value,
+    get_default_invite_key_expiration_date,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
     get_platform_logo_url,
@@ -88,7 +90,7 @@ try:
 except ImportError:
     CourseEntitlement = None
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 User = auth.get_user_model()
 mark_safe_lazy = lazy(mark_safe, str)
 
@@ -765,19 +767,18 @@ class EnterpriseCustomer(TimeStampedModel):
         )
         send_enterprise_email_notification.delay(self.uuid, admin_enrollment, email_items)
 
-    def toggle_universal_link(self, enable_universal_link, link_expiration_date=None):
+    def toggle_universal_link(self, enable_universal_link):
         """
         Sets enable_universal_link
 
         If there is no change to be made, return.
 
         When enable_universal_link changes to:
-            - True: a new EnterpriseCustomerInviteKey is created
+            - True: a new EnterpriseCustomerInviteKey is created, if total count is less than 100
             - False: all EnterpriseCustomerInviteKey are deactivated
 
         Args:
             enable_universal_link: new value
-            link_expiration_date: if passed when enable_universal_link is true new link will be created
 
         """
         if self.enable_universal_link == enable_universal_link:
@@ -793,12 +794,10 @@ class EnterpriseCustomer(TimeStampedModel):
                 enterprise_customer=self,
                 is_active=True,
             ).update(is_active=False)
-        # If universal link is being enabled and a date is passed
-        elif link_expiration_date:
+        else:
             # Create a new EnterpriseCustomerInviteKey
             EnterpriseCustomerInviteKey.objects.create(
-                enterprise_customer=self,
-                expiration_date=link_expiration_date
+                enterprise_customer=self
             )
 
 
@@ -3535,6 +3534,7 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
     expiration_date = models.DateTimeField(
         blank=False,
         null=False,
+        default=get_default_invite_key_expiration_date,
         help_text=_(
             "The key will no longer be valid after this date."
         )
@@ -3587,6 +3587,12 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
 
         Prevents is_active from being updated once it's set to False.
         """
+        if self._state.adding:
+            total_invite_keys_per_customer = EnterpriseCustomerInviteKey.objects.filter(
+                enterprise_customer=self.enterprise_customer,
+            ).count()
+            if total_invite_keys_per_customer >= MAX_INVITE_KEYS:
+                raise ValueError("Cannot create more than 100 invite keys per customer.")
 
         if not self._state.adding:
             if self.is_active and not self._loaded_values['is_active']:  # pylint: disable=no-member

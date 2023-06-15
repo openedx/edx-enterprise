@@ -22,6 +22,7 @@ from testfixtures import LogCapture
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
+from django.core.cache import cache
 from django.test import override_settings
 from django.utils import timezone
 
@@ -3970,6 +3971,14 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         )
 
         return user, enterprise_user, enterprise_customer
+
+    def tearDown(self):
+        """
+        Clears the Django cache, which means that throttle limits
+        will be reset between test runs.
+        """
+        super().tearDown()
+        cache.clear()
 
     @ddt.data(
         # enrollment_info usage

@@ -1447,7 +1447,6 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         })
 
-    @mock.patch('enterprise.admin.views.logging.error')
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
@@ -1458,7 +1457,6 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             enrollment_client,
             course_catalog_client,
             reverse_mock,
-            logging_mock,
     ):
         reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
         catalog_instance = course_catalog_client.return_value
@@ -1478,10 +1476,6 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        logging_mock.assert_called_with(
-            'Error while enrolling user %(user)s: %(message)s',
-            {'user': user.username, 'message': 'No error message provided'}
-        )
         self._assert_django_messages(response, {
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         })

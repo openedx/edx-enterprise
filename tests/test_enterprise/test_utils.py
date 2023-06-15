@@ -2,6 +2,7 @@
 Tests for the `edx-enterprise` utils module.
 """
 import unittest
+from datetime import timedelta
 from unittest import mock
 from urllib.parse import quote, urlencode
 
@@ -14,9 +15,11 @@ from django.forms.models import model_to_dict
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
+    get_default_invite_key_expiration_date,
     get_idiff_list,
     get_platform_logo_url,
     is_pending_user,
+    localized_utcnow,
     parse_lms_api_datetime,
     serialize_notification_content,
 )
@@ -492,3 +495,10 @@ class TestUtils(unittest.TestCase):
 
         expected_email_items = [expected_email_item(user, activation_links) for user in users]
         assert email_items == expected_email_items
+
+    def test_get_default_invite_key_expiration_date(self):
+        current_time = localized_utcnow()
+
+        expiration_date = get_default_invite_key_expiration_date()
+        expected_expiration_date = current_time + timedelta(days=365)
+        self.assertEqual(expiration_date.date(), expected_expiration_date.date())

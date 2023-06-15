@@ -32,6 +32,8 @@ ENTERPRISE_WELCOME_TEXT = _(
 
 COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
 
+MAX_INVITE_KEYS = 100
+
 
 class DefaultColors:
     """
