@@ -15,11 +15,48 @@ Change Log
 
 Unreleased
 ----------
-* Nothing
 
-[4.0.0]
--------
-feat!: upgraded to Node v18, added .nvmrc and updated workflows.
+[3.67.0]
+--------
+fix: compare lowered input email address to lowered auth user record email address during bulk enrollment.
+
+[3.66.8]
+--------
+fix: optional x-request-id logging
+
+[3.66.7]
+--------
+feat: optional x-request-id logging
+
+[3.66.6]
+--------
+* feat: increase the throttle limit of service users for EnterpriseCustomerViewSet
+* Switch from ``edx-sphinx-theme`` to ``sphinx-book-theme`` since the former is
+  deprecated
+
+[3.66.5]
+--------
+chore: set default expiration_date for EnterpriseCustomerInviteKey
+
+[3.66.4]
+--------
+feat: add more logging in the bulk enrollment flow
+
+[3.66.3]
+--------
+fix: prevent org_id param addition to exec-ed course home url when auth_org_id is not present
+
+[3.66.2]
+--------
+chore: unique constraint on transmission audits to prevent duplicates
+
+[3.66.1]
+--------
+fix: Fixed url encoding issue with org_id in executive education course url
+
+[3.66.0]
+--------
+feat: Added org_id for executive education courses landing page
 
 [3.65.4]
 --------

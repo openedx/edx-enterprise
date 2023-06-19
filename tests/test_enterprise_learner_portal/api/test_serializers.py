@@ -4,9 +4,12 @@ Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal ap
 
 from collections import OrderedDict
 from unittest import mock
+from urllib.parse import urlencode
 
+import ddt
 from pytest import mark
 
+from django.conf import settings
 from django.test import RequestFactory, TestCase
 
 from enterprise.utils import NotConnectedToOpenEdX
@@ -15,6 +18,7 @@ from test_utils import factories
 
 
 @mark.django_db
+@ddt.ddt
 class TestEnterpriseCourseEnrollmentSerializer(TestCase):
     """
     EnterpriseCourseEnrollmentSerializer tests.
@@ -27,6 +31,11 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         self.factory = RequestFactory()
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory.create(user_id=self.user.id)
 
+    @ddt.data(
+        ('example.com', False),
+        (settings.EXEC_ED_LANDING_PAGE, True),
+    )
+    @ddt.unpack
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_emails_enabled')
@@ -34,6 +43,8 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user')
     def test_serializer_representation(
             self,
+            course_run_url,
+            is_exec_ed_course,
             mock_get_cert,
             mock_get_course_run_url,
             mock_get_emails_enabled,
@@ -59,7 +70,13 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             'is_passing': True,
             'created': 'a datetime object',
         }
-        mock_get_course_run_url.return_value = 'example.com'
+        expected_course_run_url = course_run_url
+        if is_exec_ed_course:
+            exec_ed_landing_page = getattr(settings, 'EXEC_ED_LANDING_PAGE', None)
+            params = {'org_id': self.enterprise_customer_user.enterprise_customer.auth_org_id}
+            expected_course_run_url = '{}?{}'.format(exec_ed_landing_page, urlencode(params))
+
+        mock_get_course_run_url.return_value = course_run_url
         mock_get_emails_enabled.return_value = True
         mock_get_course_run_status.return_value = 'completed'
 
@@ -88,7 +105,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('start_date', 'a datetime object'),
             ('end_date', 'a datetime object'),
             ('display_name', 'a default name'),
-            ('course_run_url', 'example.com'),
+            ('course_run_url', expected_course_run_url),
             ('due_dates', []),
             ('pacing', 'instructor'),
             ('org_name', 'my university'),

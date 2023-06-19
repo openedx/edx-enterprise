@@ -158,6 +158,7 @@ DEFAULT_FROM_EMAIL = 'course_staff@example.com'
 
 USER_THROTTLE_RATE = '190/minute'
 SERVICE_USER_THROTTLE_RATE = '200/minute'
+SERVICE_USER_HIGH_THROTTLE_RATE = '200/minute'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
@@ -168,6 +169,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': USER_THROTTLE_RATE,
         'service_user': SERVICE_USER_THROTTLE_RATE,
+        'high_service_user': SERVICE_USER_HIGH_THROTTLE_RATE,
     },
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%SZ',
 }
@@ -337,7 +339,8 @@ LOGIN_REDIRECT_WHITELIST = [
     'failure.url',
     'google.com',
     'facebook.com'
-    ]
+]
 
 ENTERPRISE_PLOTLY_SECRET = "I am a secret"
 ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS = ['12aacfee8ffa4cb3bed1059565a57f06',]
+EXEC_ED_LANDING_PAGE = 'https://www.edx-external.com/account'

@@ -2,7 +2,6 @@
 Views for enterprise api version 1 endpoint.
 """
 
-from logging import getLogger
 from smtplib import SMTPException
 from time import time
 from urllib.parse import quote_plus, unquote
@@ -53,7 +52,7 @@ from enterprise.api.filters import (
     EnterpriseLinkedUserFilterBackend,
     UserFilterBackend,
 )
-from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.api.throttles import HighServiceUserThrottle, ServiceUserThrottle
 from enterprise.api.utils import (
     create_message_body,
     get_ent_cust_from_enterprise_customer_key,
@@ -71,6 +70,7 @@ from enterprise.errors import (
     LinkUserToEnterpriseError,
     UnlinkUserFromEnterpriseError,
 )
+from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_subsidy_users_in_courses,
@@ -96,7 +96,7 @@ except ImportError:
     CourseMode = None
     enrollment_api = None
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 User = auth.get_user_model()
 
@@ -164,7 +164,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
     """
-
+    throttle_classes = (HighServiceUserThrottle, )
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
     filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
@@ -502,15 +502,13 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-        enable_universal_link = serializer.data.get('enable_universal_link')
-        link_expiration_date = serializer.data.get('expiration_date')
+        enable_universal_link = serializer.validated_data.get('enable_universal_link')
 
         if enterprise_customer.enable_universal_link == enable_universal_link:
             return Response({"detail": "No changes"}, status=HTTP_200_OK)
 
         enterprise_customer.toggle_universal_link(
             enable_universal_link,
-            link_expiration_date,
         )
 
         response_body = {"enable_universal_link": enable_universal_link}
