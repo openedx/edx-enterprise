@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
  
+[3.67.2]
+--------
+fix: fixing name of table used by model fetching method
+
 [3.67.1]
 --------
 chore: more orphaned content transmission logging
