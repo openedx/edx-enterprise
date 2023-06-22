@@ -3,8 +3,10 @@ Django admin integration for configuring moodle app to communicate with Moodle s
 """
 
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
+from django_object_actions import DjangoObjectActions
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
@@ -31,7 +33,7 @@ class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
 
 
 @admin.register(MoodleEnterpriseCustomerConfiguration)
-class MoodleEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for MoodleEnterpriseCustomerConfiguration.
     """
@@ -41,6 +43,29 @@ class MoodleEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     form = MoodleEnterpriseCustomerConfigurationForm
+    change_actions = ('update_modified_time',)
+
+    def update_modified_time(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try: 
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                'The moodle enterprise customer modified time '
+                '“<MoodleEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
+                'was saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+        except:
+            messages.error(
+                request,
+                'The moodle enterprise customer modified time '
+                '“<MoodleEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
+                'was not saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+        return HttpResponseRedirect('/admin/moodle/moodleenterprisecustomerconfiguration')
+    update_modified_time.label = 'Update Customer Modified Time'
+    update_modified_time.short_description = 'Update modified time for this Enterprise Customer to retransmit courses metadata'
 
 
 @admin.register(MoodleLearnerDataTransmissionAudit)

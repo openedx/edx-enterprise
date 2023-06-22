@@ -4,7 +4,9 @@ Django admin integration for configuring cornerstone ondemand app to communicate
 
 from config_models.admin import ConfigurationModelAdmin
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
+from django_object_actions import DjangoObjectActions
 
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
@@ -31,7 +33,7 @@ class CornerstoneGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
 
 @admin.register(CornerstoneEnterpriseCustomerConfiguration)
-class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class CornerstoneEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for CornerstoneEnterpriseCustomerConfiguration.
     """
@@ -53,8 +55,8 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("active",)
-
     search_fields = ("enterprise_customer_name",)
+    change_actions = ('update_modified_time',)
 
     class Meta:
         model = CornerstoneEnterpriseCustomerConfiguration
@@ -68,6 +70,28 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         return obj.enterprise_customer.name
+
+    def update_modified_time(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try: 
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                'The cornerstone enterprise customer modified time '
+                '“<CornerstoneEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
+                'was saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+        except:
+            messages.error(
+                request,
+                'The cornerstone enterprise customer modified time '
+                '“<CornerstoneEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
+                'was not saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+        return HttpResponseRedirect('/admin/cornerstone/cornerstoneenterprisecustomerconfiguration')
+    update_modified_time.label = 'Update Customer Modified Time'
+    update_modified_time.short_description = 'Update modified time for this Enterprise Customer to retransmit courses metadata'
 
 
 @admin.register(CornerstoneLearnerDataTransmissionAudit)

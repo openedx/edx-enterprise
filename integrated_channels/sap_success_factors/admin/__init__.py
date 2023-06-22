@@ -5,7 +5,9 @@ Django admin integration for configuring sap_success_factors app to communicate 
 from config_models.admin import ConfigurationModelAdmin
 from requests import RequestException
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
+from django_object_actions import DjangoObjectActions
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
@@ -35,7 +37,7 @@ class SAPSuccessFactorsGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
 
 @admin.register(SAPSuccessFactorsEnterpriseCustomerConfiguration)
-class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for SAPSuccessFactorsEnterpriseCustomerConfiguration.
     """
@@ -78,6 +80,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
     list_filter = ('active',)
     search_fields = ('enterprise_customer__name',)
+    change_actions = ('update_modified_time',)
 
     class Meta:
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -118,6 +121,28 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
 
     has_access_token.boolean = True
     has_access_token.short_description = 'Has Access Token?'
+
+    def update_modified_time(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try: 
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                'The sap success factors enterprise customer modified time '
+                '“<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
+                'was saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+        except:
+            messages.error(
+                request,
+                'The sap success factors enterprise customer modified time '
+                '“<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
+                'was not saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+        return HttpResponseRedirect('/admin/sap_success_factors/sapsuccessfactorsenterprisecustomerconfiguration')
+    update_modified_time.label = 'Update Customer Modified Time'
+    update_modified_time.short_description = 'Update modified time for this Enterprise Customer to retransmit courses metadata'
 
 
 @admin.register(SapSuccessFactorsLearnerDataTransmissionAudit)
