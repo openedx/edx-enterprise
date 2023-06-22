@@ -318,11 +318,11 @@ class ContentMetadataExporter(Exporter):
             # 2) swap the catalog uuid of the transmission audit associated with the orphaned record, and 3) mark the
             # orphaned record resolved
             if orphaned_content:
-                ContentMetadataTransmissionAudit = apps.get_model(
+                ContentMetadataItemTransmission = apps.get_model(
                     'integrated_channel',
-                    'ContentMetadataTransmissionAudit'
+                    'ContentMetadataItemTransmission',
                 )
-                ContentMetadataTransmissionAudit.objects.filter(
+                ContentMetadataItemTransmission.objects.filter(
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     plugin_configuration_id=self.enterprise_configuration.id,
                     content_id=content_key

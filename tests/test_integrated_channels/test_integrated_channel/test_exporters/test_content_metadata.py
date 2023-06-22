@@ -58,6 +58,42 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         }
         super().setUp()
 
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_exporter_get_catalog_diff_works_with_orphaned_content(
+        self,
+        mock_get_catalog_diff,
+    ):
+        """
+        Test that the exporter _get_catalog_diff function properly marks orphaned content that is requested to be
+        created by another, linked catalog as resolved.
+        """
+        transmission_audit = factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=self.config.id,
+            integrated_channel_code=self.config.channel_code(),
+            remote_created_at=datetime.datetime.utcnow(),
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+        )
+        orphaned_content = factories.OrphanedContentTransmissionsFactory(
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+            content_id=FAKE_COURSE_RUN['key'],
+            transmission=transmission_audit,
+            resolved=False,
+        )
+        mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
+
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        # pylint: disable=protected-access
+        _, __, ___ = exporter._get_catalog_diff(
+            enterprise_catalog=self.enterprise_customer_catalog,
+            content_keys=FAKE_COURSE_RUN['key'],
+            force_retrieve_all_catalogs=False,
+            max_item_count=10000000,
+        )
+        orphaned_content.refresh_from_db()
+        assert orphaned_content.resolved
+
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
     def test_exporter_considers_failed_updates_as_existing_content(
