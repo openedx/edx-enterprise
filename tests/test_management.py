@@ -11,6 +11,7 @@ from unittest import mock, skip
 
 import ddt
 import factory
+import pytz
 import responses
 from faker import Factory as FakerFactory
 from freezegun import freeze_time
@@ -1930,3 +1931,77 @@ class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, 
         call_command('mark_orphaned_content_metadata_audits')
         orphaned_content = OrphanedContentTransmissions.objects.first()
         assert orphaned_content.content_id == self.orphaned_content.content_id
+
+
+@mark.django_db
+@ddt.ddt
+class TestUpdateConfigLastErroredAt(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``update_config_last_errored_at`` management command.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer_1 = factories.EnterpriseCustomerFactory(
+            name='Wonka Factory',
+        )
+        self.enterprise_customer_2 = factories.EnterpriseCustomerFactory(
+            name='Hershey LLC',
+        )
+
+    def test_valid_audits(self):
+        """
+        Verify that non-error audits and audits outside of the time range do not clear
+        out the error states
+        """
+        old_timestamp = datetime.now() - timedelta(days=5)
+        csod_config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer_1,
+            last_sync_errored_at=old_timestamp,
+            last_content_sync_errored_at=old_timestamp,
+            last_learner_sync_errored_at=old_timestamp,
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer_1,
+            plugin_configuration_id=csod_config.id,
+            integrated_channel_code=csod_config.channel_code(),
+            api_response_status_code=400,
+            # this one is not in the time frame and should not be counted
+            remote_created_at=timezone.now().date() - timedelta(days=5)
+        )
+        call_command(
+            'update_config_last_errored_at',
+        )
+        csod_config.refresh_from_db()
+        assert csod_config.last_sync_errored_at is None
+        assert csod_config.last_content_sync_errored_at is None
+        assert csod_config.last_learner_sync_errored_at is None
+
+    def test_invalid_audits(self):
+        """
+        Verify that the management command runs when all records have the same subdomain
+        """
+        old_timestamp = datetime.now() - timedelta(days=5)
+        print('before ', old_timestamp)
+        old_timestamp = old_timestamp.replace(tzinfo=pytz.UTC)
+        print('after ', old_timestamp)
+        moodle_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer_2,
+            last_sync_errored_at=old_timestamp,
+            last_content_sync_errored_at=old_timestamp,
+            last_learner_sync_errored_at=old_timestamp,
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer_2,
+            plugin_configuration_id=moodle_config.id,
+            integrated_channel_code=moodle_config.channel_code(),
+            api_response_status_code=400,
+            remote_created_at=datetime.now()
+        )
+        call_command(
+            'update_config_last_errored_at',
+        )
+        moodle_config.refresh_from_db()
+        assert moodle_config.last_sync_errored_at == old_timestamp
+        assert moodle_config.last_content_sync_errored_at == old_timestamp
+        assert moodle_config.last_learner_sync_errored_at is None
