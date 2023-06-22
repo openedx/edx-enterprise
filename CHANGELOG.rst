@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+ 
+[3.67.1]
+--------
+chore: more orphaned content transmission logging
 
 [3.67.0]
 --------
