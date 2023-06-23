@@ -3,7 +3,10 @@ Admin integration for configuring Blackboard app to communicate with Blackboard 
 """
 from config_models.admin import ConfigurationModelAdmin
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
+from django_object_actions import DjangoObjectActions
 from django.utils.html import format_html
 
 from integrated_channels.blackboard.models import (
@@ -29,7 +32,7 @@ class BlackboardGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
 
 @admin.register(BlackboardEnterpriseCustomerConfiguration)
-class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class BlackboardEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for BlackEnterpriseCustomerConfiguration.
     """
@@ -51,6 +54,7 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     search_fields = ("enterprise_customer_name",)
+    change_actions = ("update_modified_time",)
 
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration
@@ -77,6 +81,39 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
             return format_html((f'<a href="{obj.oauth_authorization_url}">Authorize Link</a>'))
         else:
             return None
+
+    def update_modified_time(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try:
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                "The blackboard enterprise customer modified time "
+                "“<BlackboardEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
+                "was saved successfully.".format(
+                    enterprise_name=obj.enterprise_customer.name
+                ),
+            )
+        except ValidationError:
+            messages.error(
+                request,
+                "The blackboard enterprise customer modified time "
+                "“<BlackboardEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
+                "was not saved successfully.".format(
+                    enterprise_name=obj.enterprise_customer.name
+                ),
+            )
+        return HttpResponseRedirect(
+            "/admin/blackboard/blackboardenterprisecustomerconfiguration"
+        )
+    update_modified_time.label = "Update Customer Modified Time"
+    update_modified_time.short_description = (
+        "Update modified time for this Enterprise Customer "
+    )
+    "to retransmit courses metadata"
 
 
 @admin.register(BlackboardLearnerDataTransmissionAudit)
