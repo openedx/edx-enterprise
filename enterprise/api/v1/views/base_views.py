@@ -1,21 +1,19 @@
-from logging import getLogger
+"""
+Base API views for the enterprise app.
+"""
 
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from rest_framework import filters, generics, permissions, status, viewsets
+from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import NotFound
 from rest_framework.mixins import CreateModelMixin
 
+from enterprise.api.filters import UserFilterBackend
 from enterprise.api.throttles import ServiceUserThrottle
-from enterprise.api.filters import (
-    EnterpriseCustomerInviteKeyFilterBackend,
-    EnterpriseCustomerUserFilterBackend,
-    EnterpriseLinkedUserFilterBackend,
-    UserFilterBackend,
-)
+from enterprise.logging import getEnterpriseLogger
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 
 class EnterpriseViewSet:

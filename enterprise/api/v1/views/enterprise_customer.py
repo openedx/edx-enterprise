@@ -2,7 +2,6 @@
 Views for the ``enterprise-customer`` API endpoint.
 """
 
-from logging import getLogger
 from urllib.parse import quote_plus, unquote
 
 from edx_rbac.decorators import permission_required
@@ -18,26 +17,23 @@ from rest_framework.status import (
     HTTP_409_CONFLICT,
 )
 
+from django.contrib import auth
 from django.core import exceptions
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
 
 from enterprise import models
-from enterprise.api.filters import (
-    EnterpriseLinkedUserFilterBackend,
-)
+from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
+from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
-from enterprise.errors import (
-    LinkUserToEnterpriseError,
-    UnlinkUserFromEnterpriseError,
-)
+from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
+from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
     get_best_mode_from_course_key,
@@ -45,14 +41,16 @@ from enterprise.utils import (
     validate_email_to_link,
 )
 
-LOGGER = getLogger(__name__)
+User = auth.get_user_model()
+
+LOGGER = getEnterpriseLogger(__name__)
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
     """
-
+    throttle_classes = (HighServiceUserThrottle, )
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
     filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
@@ -390,15 +388,13 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-        enable_universal_link = serializer.data.get('enable_universal_link')
-        link_expiration_date = serializer.data.get('expiration_date')
+        enable_universal_link = serializer.validated_data.get('enable_universal_link')
 
         if enterprise_customer.enable_universal_link == enable_universal_link:
             return Response({"detail": "No changes"}, status=HTTP_200_OK)
 
         enterprise_customer.toggle_universal_link(
             enable_universal_link,
-            link_expiration_date,
         )
 
         response_body = {"enable_universal_link": enable_universal_link}

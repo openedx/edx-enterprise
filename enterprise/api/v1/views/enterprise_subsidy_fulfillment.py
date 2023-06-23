@@ -2,19 +2,12 @@
 Views for the Enterprise Subsidy Fulfillment API.
 """
 
-from logging import getLogger
-
 from edx_rbac.decorators import permission_required
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework.status import (
-    HTTP_200_OK,
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_500_INTERNAL_SERVER_ERROR,
-)
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -25,10 +18,8 @@ from enterprise import models
 from enterprise.api.utils import get_enterprise_customer_from_user_id
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseWrapperApiViewSet
-from enterprise.utils import (
-    NotConnectedToOpenEdX,
-    get_request_value,
-)
+from enterprise.logging import getEnterpriseLogger
+from enterprise.utils import NotConnectedToOpenEdX, get_request_value
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
 
 try:
@@ -44,7 +35,7 @@ except ImportError:
     CourseMode = None
     enrollment_api = None
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 
 class EnrollmentModificationException(Exception):

@@ -1,3 +1,6 @@
+"""
+Views for the ``enterprise-course-enrollment`` API endpoint.
+"""
 from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet

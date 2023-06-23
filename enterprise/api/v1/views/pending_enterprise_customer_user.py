@@ -1,7 +1,6 @@
 """
 Views for the ``pending-enterprise-customer-user`` API endpoint.
 """
-from logging import getLogger
 
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
@@ -10,11 +9,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 
-from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise import models
 from enterprise.api.v1 import serializers
+from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
+from enterprise.logging import getEnterpriseLogger
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 
 class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):

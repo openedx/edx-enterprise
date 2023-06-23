@@ -1,7 +1,6 @@
 """
 Write views for the ``enterprise-customer-catalog`` API endpoint.
 """
-from logging import getLogger
 from urllib.parse import quote_plus, unquote
 
 from edx_rbac.decorators import permission_required
@@ -9,7 +8,6 @@ from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-
 from rest_framework_xml.renderers import XMLRenderer
 
 from django.conf import settings
@@ -19,16 +17,13 @@ from django.utils.translation import gettext as _
 
 from enterprise import models
 from enterprise.api.utils import get_enterprise_customer_from_catalog_id
-
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
-from enterprise.api.v1.views.base_views import (
-    EnterpriseWriteOnlyModelViewSet,
-    EnterpriseReadOnlyModelViewSet,
-)
+from enterprise.api.v1.views.base_views import EnterpriseReadOnlyModelViewSet, EnterpriseWriteOnlyModelViewSet
 from enterprise.constants import COURSE_KEY_URL_PATTERN
+from enterprise.logging import getEnterpriseLogger
 
-LOGGER = getLogger(__name__)
+LOGGER = getEnterpriseLogger(__name__)
 
 
 class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):

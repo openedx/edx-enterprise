@@ -4,10 +4,11 @@ Views for the ``enterprise-customer-user`` API endpoint.
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 
-from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend
 from enterprise.api.v1 import serializers
+from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
+
 
 class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
