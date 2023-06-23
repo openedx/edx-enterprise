@@ -38,7 +38,7 @@ class CanvasEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
 
     search_fields = ("enterprise_customer_name",)
 
-    change_actions = ('retransmit_courses_metadata',)
+    change_actions = ('update_modified_time',)
 
     class Meta:
         model = CanvasEnterpriseCustomerConfiguration
@@ -66,27 +66,27 @@ class CanvasEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
         else:
             return None
 
-    def retransmit_courses_metadata(self, request, obj):
+    def update_modified_time(self, request, obj):
         """
-        Updates the modified time of the customer record to re-sync courses metadata
+        Updates the modified time of the customer record to retransmit courses metadata
         and redirects to configuration view with success or error message.
         """
         try: 
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                'The canvas enterprise customer courses metadata '
+                'The canvas enterprise customer modified time '
                 '“<CanvasEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
-                'was retransmitted successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+                'was saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
         except:
             messages.error(
                 request,
-                'The canvas enterprise customer courses metadata '
+                'The canvas enterprise customer modified time '
                 '“<CanvasEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” '
-                'was not retransmitted successfully.'.format(enterprise_name=obj.enterprise_customer.name))
+                'was not saved successfully.'.format(enterprise_name=obj.enterprise_customer.name))
         return HttpResponseRedirect('/admin/canvas/canvasenterprisecustomerconfiguration')
-    retransmit_courses_metadata.label = 'Retransmit Courses Metadata'
-    retransmit_courses_metadata.short_description = 'Retransmit courses metadata for this Enterprise Customer'
+    update_modified_time.label = 'Update Customer Modified Time'
+    update_modified_time.short_description = 'Update modified time for this Enterprise Customer to retransmit courses metadata'
 
 
 @admin.register(CanvasLearnerDataTransmissionAudit)
