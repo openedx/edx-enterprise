@@ -75,26 +75,26 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             has_learner_errors, has_content_errors = True, True
             yesterday = datetime.now() - timedelta(days=1)
             for channel_code, (ConfigModel, LearnerAuditModel) in MODELS.items():
-                configs = ConfigModel.objects.all().filter()
+                configs = ConfigModel.objects.all()
                 for config in configs:
                     if config.last_sync_errored_at is None:
                         continue
-                    customer_uuid = config.enterprise_customer.uuid
+                    customer = config.enterprise_customer
                     plugin_id = config.id
-
+                    # learner audits
                     errored_learner_audits = LearnerAuditModel.objects.filter(
                         created__date__gt=yesterday,
                         status__gt=299,
-                        enterprise_customer_uuid=customer_uuid,
+                        enterprise_customer_uuid=customer.uuid,
                         plugin_configuration_id=plugin_id,
                     )
                     if not errored_learner_audits:
                         config.last_learner_sync_errored_at = None
                         has_learner_errors = False
-
+                    # content metadata audits
                     errored_content_audits = ContentMetadataItemTransmission.objects.filter(
                         remote_created_at__gt=yesterday,
-                        enterprise_customer=config.enterprise_customer,
+                        enterprise_customer=customer,
                         integrated_channel_code=channel_code,
                         plugin_configuration_id=plugin_id,
                         api_response_status_code__gt=299
@@ -102,16 +102,25 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                     if not errored_content_audits:
                         config.last_content_sync_errored_at = None
                         has_content_errors = False
-
                     if not has_learner_errors and not has_content_errors:
                         config.last_sync_errored_at = None
+                    if not has_learner_errors or not has_content_errors:
+                        LOGGER.info(
+                            'Config with id {}, channel code {}, enterprise customer {}'
+                            ' error information has been updated'.format(
+                            config.id, channel_code, config.enterprise_customer.uuid
+                            )
+                        )
                     config.save()
         except Exception as exc:
-            LOGGER.exception('backfill_missing_foreign_keys failed', exc_info=exc)
+            LOGGER.exception('update_config_last_errored_at', exc_info=exc)
             raise exc
 
     def handle(self, *args, **options):
         """
         Set error state for configurations.
         """
+        LOGGER.info('Begin nulling out outdated last_sync_errored_at in configs')
         self.update_config_last_errored_at()
+        LOGGER.info('Finished nulling out outdated last_sync_errored_at in configs')
+

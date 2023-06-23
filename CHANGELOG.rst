@@ -15,7 +15,10 @@ Change Log
 
 Unreleased
 ----------
- 
+[3.67.3]
+--------
+feat: adding managent command to clear error state 
+
 [3.67.2]
 --------
 fix: fixing name of table used by model fetching method

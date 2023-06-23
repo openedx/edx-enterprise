@@ -1982,9 +1982,7 @@ class TestUpdateConfigLastErroredAt(unittest.TestCase, EnterpriseMockMixin):
         Verify that the management command runs when all records have the same subdomain
         """
         old_timestamp = datetime.now() - timedelta(days=5)
-        print('before ', old_timestamp)
         old_timestamp = old_timestamp.replace(tzinfo=pytz.UTC)
-        print('after ', old_timestamp)
         moodle_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer_2,
             last_sync_errored_at=old_timestamp,
