@@ -3,12 +3,12 @@ Django admin integration for configuring sap_success_factors app to communicate 
 """
 
 from config_models.admin import ConfigurationModelAdmin
+from django_object_actions import DjangoObjectActions
 from requests import RequestException
 
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django_object_actions import DjangoObjectActions
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin

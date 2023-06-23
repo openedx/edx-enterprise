@@ -2,10 +2,11 @@
 Django admin integration for xAPI.
 """
 
+from django_object_actions import DjangoObjectActions
+
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django_object_actions import DjangoObjectActions
 
 from integrated_channels.xapi.models import XAPILRSConfiguration
 

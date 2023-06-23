@@ -1,10 +1,11 @@
 """
 Admin integration for configuring Canvas app to communicate with Canvas systems.
 """
+from django_object_actions import DjangoObjectActions
+
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django_object_actions import DjangoObjectActions
 from django.utils.html import format_html
 
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasLearnerDataTransmissionAudit

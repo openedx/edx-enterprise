@@ -3,10 +3,11 @@
 Django admin integration for configuring degreed app to communicate with Degreed systems.
 """
 
+from django_object_actions import DjangoObjectActions
+
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django_object_actions import DjangoObjectActions
 
 from integrated_channels.degreed2.models import (
     Degreed2EnterpriseCustomerConfiguration,

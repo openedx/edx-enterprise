@@ -2,11 +2,12 @@
 Django admin integration for configuring moodle app to communicate with Moodle systems.
 """
 
+from django_object_actions import DjangoObjectActions
+
 from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
-from django_object_actions import DjangoObjectActions
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
