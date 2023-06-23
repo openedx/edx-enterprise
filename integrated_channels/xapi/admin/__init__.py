@@ -37,7 +37,7 @@ class XAPILRSConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     ordering = ("enterprise_customer__name",)
     list_filter = ("active",)
     search_fields = ("enterprise_customer__name",)
-    change_actions = ("update_modified_time",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = XAPILRSConfiguration
@@ -52,7 +52,7 @@ class XAPILRSConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
         """
         return obj.enterprise_customer.name
 
-    def update_modified_time(self, request, obj):
+    def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
         and redirects to configuration view with success or error message.
@@ -61,24 +61,23 @@ class XAPILRSConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                "The xapilrs enterprise customer modified time "
+                "The xapilrs enterprise customer content metadata "
                 "“<XAPILRSConfiguration for Enterprise {enterprise_name}>” "
-                "was saved successfully.".format(
+                "was updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         except ValidationError:
             messages.error(
                 request,
-                "The xapilrs enterprise customer modified time "
+                "The xapilrs enterprise customer content metadata "
                 "“<XAPILRSConfiguration for Enterprise {enterprise_name}>” "
-                "was not saved successfully.".format(
+                "was not updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         return HttpResponseRedirect("/admin/xapi/xapilrsconfiguration/")
-    update_modified_time.label = "Update Customer Modified Time"
-    update_modified_time.short_description = (
-        "Update modified time for this Enterprise Customer "
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
     )
-    "to retransmit courses metadata"

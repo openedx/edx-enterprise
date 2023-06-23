@@ -61,7 +61,7 @@ class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mod
 
     list_filter = ("active",)
     search_fields = ("enterprise_customer_name",)
-    change_actions = ("update_modified_time",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = DegreedEnterpriseCustomerConfiguration
@@ -76,7 +76,7 @@ class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mod
         """
         return obj.enterprise_customer.name
 
-    def update_modified_time(self, request, obj):
+    def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
         and redirects to configuration view with success or error message.
@@ -85,18 +85,18 @@ class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mod
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                "The degreed enterprise customer modified time "
+                "The degreed enterprise customer content metadata "
                 "“<DegreedEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was saved successfully.".format(
+                "was updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         except ValidationError:
             messages.error(
                 request,
-                "The degreed enterprise customer modified time "
+                "The degreed enterprise customer content metadata "
                 "“<DegreedEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was not saved successfully.".format(
+                "was not updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
@@ -104,11 +104,10 @@ class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mod
             "/admin/degreed/degreedenterprisecustomerconfiguration"
         )
 
-    update_modified_time.label = "Update Customer Modified Time"
-    update_modified_time.short_description = (
-        "Update modified time for this Enterprise Customer "
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
     )
-    "to retransmit courses metadata"
 
 
 @admin.register(DegreedLearnerDataTransmissionAudit)

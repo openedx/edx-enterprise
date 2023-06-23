@@ -54,7 +54,7 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.
     )
 
     search_fields = ("enterprise_customer_name",)
-    change_actions = ("update_modified_time",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration
@@ -82,7 +82,7 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.
         else:
             return None
 
-    def update_modified_time(self, request, obj):
+    def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
         and redirects to configuration view with success or error message.
@@ -91,29 +91,28 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                "The blackboard enterprise customer modified time "
+                "The blackboard enterprise customer content metadata "
                 "“<BlackboardEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was saved successfully.".format(
+                "was updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         except ValidationError:
             messages.error(
                 request,
-                "The blackboard enterprise customer modified time "
+                "The blackboard enterprise customer content metadata "
                 "“<BlackboardEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was not saved successfully.".format(
+                "was not updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         return HttpResponseRedirect(
             "/admin/blackboard/blackboardenterprisecustomerconfiguration"
         )
-    update_modified_time.label = "Update Customer Modified Time"
-    update_modified_time.short_description = (
-        "Update modified time for this Enterprise Customer "
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
     )
-    "to retransmit courses metadata"
 
 
 @admin.register(BlackboardLearnerDataTransmissionAudit)

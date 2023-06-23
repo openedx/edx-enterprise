@@ -77,7 +77,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
 
     list_filter = ("active",)
     search_fields = ("enterprise_customer__name",)
-    change_actions = ("update_modified_time",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -119,7 +119,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
     has_access_token.boolean = True
     has_access_token.short_description = "Has Access Token?"
 
-    def update_modified_time(self, request, obj):
+    def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
         and redirects to configuration view with success or error message.
@@ -128,29 +128,28 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                "The sap success factors enterprise customer modified time "
+                "The sap success factors enterprise customer content metadata "
                 "“<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was saved successfully.".format(
+                "was updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         except ValidationError:
             messages.error(
                 request,
-                "The sap success factors enterprise customer modified time "
+                "The sap success factors enterprise customer content metadata "
                 "“<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was not saved successfully.".format(
+                "was not updated successfully.".format(
                     enterprise_name=obj.enterprise_customer.name
                 ),
             )
         return HttpResponseRedirect(
             "/admin/sap_success_factors/sapsuccessfactorsenterprisecustomerconfiguration"
         )
-    update_modified_time.label = "Update Customer Modified Time"
-    update_modified_time.short_description = (
-        "Update modified time for this Enterprise Customer "
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
     )
-    "to retransmit courses metadata"
 
 
 @admin.register(SapSuccessFactorsLearnerDataTransmissionAudit)
