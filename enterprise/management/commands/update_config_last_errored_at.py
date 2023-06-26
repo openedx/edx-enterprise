@@ -73,7 +73,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         """
         try:
             has_learner_errors, has_content_errors = True, True
-            yesterday = datetime.now() - timedelta(days=1)
+            yesterday = datetime.utcnow() - timedelta(days=1)
             for channel_code, (ConfigModel, LearnerAuditModel) in MODELS.items():
                 configs = ConfigModel.objects.all()
                 for config in configs:
@@ -108,7 +108,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                         LOGGER.info(
                             'Config with id {}, channel code {}, enterprise customer {}'
                             ' error information has been updated'.format(
-                            config.id, channel_code, config.enterprise_customer.uuid
+                                config.id, channel_code, config.enterprise_customer.uuid
                             )
                         )
                     config.save()
@@ -123,4 +123,3 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         LOGGER.info('Begin nulling out outdated last_sync_errored_at in configs')
         self.update_config_last_errored_at()
         LOGGER.info('Finished nulling out outdated last_sync_errored_at in configs')
-
