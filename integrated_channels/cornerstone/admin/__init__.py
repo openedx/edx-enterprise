@@ -3,8 +3,11 @@ Django admin integration for configuring cornerstone ondemand app to communicate
 """
 
 from config_models.admin import ConfigurationModelAdmin
+from django_object_actions import DjangoObjectActions
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
 
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
@@ -31,7 +34,7 @@ class CornerstoneGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
 
 @admin.register(CornerstoneEnterpriseCustomerConfiguration)
-class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class CornerstoneEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for CornerstoneEnterpriseCustomerConfiguration.
     """
@@ -53,8 +56,8 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     list_filter = ("active",)
-
     search_fields = ("enterprise_customer_name",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = CornerstoneEnterpriseCustomerConfiguration
@@ -68,6 +71,34 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         return obj.enterprise_customer.name
+
+    def force_content_metadata_transmission(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try:
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                f'''The cornerstone enterprise customer content metadata
+                “<CornerstoneEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was updated successfully.''',
+            )
+        except ValidationError:
+            messages.error(
+                request,
+                f'''The cornerstone enterprise customer content metadata
+                “<CornerstoneEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was not updated successfully.''',
+            )
+        return HttpResponseRedirect(
+            "/admin/cornerstone/cornerstoneenterprisecustomerconfiguration"
+        )
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
+    )
 
 
 @admin.register(CornerstoneLearnerDataTransmissionAudit)
