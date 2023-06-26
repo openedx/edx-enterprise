@@ -24,7 +24,9 @@ class BaseThrottle(UserRateThrottle):
 
         Updated throttling rate comes from `DEFAULT_THROTTLE_RATES` key in `REST_FRAMEWORK`
         setting. specific user throttling is specified in `DEFAULT_THROTTLE_RATES` by it's corresponding key
-        Example Setting:
+
+        Example Setting::
+
             REST_FRAMEWORK = {
                 ...
                 'DEFAULT_THROTTLE_RATES': {
