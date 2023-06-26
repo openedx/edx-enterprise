@@ -85,20 +85,16 @@ class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mod
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                "The degreed enterprise customer content metadata "
-                "“<DegreedEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was updated successfully.".format(
-                    enterprise_name=obj.enterprise_customer.name
-                ),
+                f'''The degreed enterprise customer content metadata
+                “<DegreedEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was updated successfully.''',
             )
         except ValidationError:
             messages.error(
                 request,
-                "The degreed enterprise customer content metadata "
-                "“<DegreedEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was not updated successfully.".format(
-                    enterprise_name=obj.enterprise_customer.name
-                ),
+                f'''The degreed enterprise customer content metadata
+                “<DegreedEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was not updated successfully.''',
             )
         return HttpResponseRedirect(
             "/admin/degreed/degreedenterprisecustomerconfiguration"

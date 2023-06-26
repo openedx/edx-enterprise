@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.67.4]
+--------
+feat: add button to update customer modified time
+
 [3.67.3]
 --------
 feat: adding managent command to clear error state 

@@ -55,20 +55,16 @@ class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
             obj.enterprise_customer.save()
             messages.success(
                 request,
-                "The moodle enterprise customer content metadata "
-                "“<MoodleEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was updated successfully.".format(
-                    enterprise_name=obj.enterprise_customer.name
-                ),
+                f'''The moodle enterprise customer content metadata
+                “<MoodleEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was updated successfully.''',
             )
         except ValidationError:
             messages.error(
                 request,
-                "The moodle enterprise customer content metadata "
-                "“<MoodleEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>” "
-                "was not updated successfully.".format(
-                    enterprise_name=obj.enterprise_customer.name
-                ),
+                f'''The moodle enterprise customer content metadata
+                “<MoodleEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was not updated successfully.''',
             )
         return HttpResponseRedirect(
             "/admin/moodle/moodleenterprisecustomerconfiguration"
