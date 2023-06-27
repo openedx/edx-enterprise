@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.67.7]
+--------
+feat: marking orphaned content audits when catalogs are deleted
+
 [3.67.6]
 --------
 chore: fixing doc string linter errors
