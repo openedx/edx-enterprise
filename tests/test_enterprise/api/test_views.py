@@ -27,7 +27,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.views import LicensedEnterpriseCourseEnrollmentViewSet
+from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
@@ -3578,7 +3578,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         )
         assert update_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_successful_cancel_fulfillment(self, mock_enrollment_api):
         """
         Test that we can successfully cancel both licensed and learner credit fulfillments.
@@ -3654,7 +3654,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    @mock.patch("enterprise.api.v1.views.enrollment_api")
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_staff_can_cancel_fulfillments_not_belonging_to_them(self, mock_enrollment_api):
         """
         Test that a staff user can cancel a fulfillment belonging to a different enterprise.
@@ -3710,8 +3710,8 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
         CourseRunProgressStatuses.COMPLETED,
         CourseRunProgressStatuses.SAVED_FOR_LATER,
     )
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.get_course_run_status')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_run_status')
     def test_revoke_has_user_completed_course_run(self, progress_status, mock_course_run_status, mock_cert_for_user):
         enrollment = mock.Mock()
         course_overview = {'id': 'some-course'}
@@ -3742,10 +3742,10 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
             )
 
     def test_post_license_revoke_invalid_data(self):
-        with mock.patch('enterprise.api.v1.views.CourseMode'), \
-                mock.patch('enterprise.api.v1.views.get_course_overviews'), \
-                mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-                mock.patch('enterprise.api.v1.views.enrollment_api'):
+        with mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode'), \
+                mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews'), \
+                mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user'), \
+                mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api'):
 
             post_data = {
                 'user_id': 'bob',
@@ -3757,10 +3757,10 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
             self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_post_license_revoke_403(self):
-        with mock.patch('enterprise.api.v1.views.CourseMode'), \
-                mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
-                mock.patch('enterprise.api.v1.views.get_course_overviews'), \
-                mock.patch('enterprise.api.v1.views.enrollment_api'):
+        with mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode'), \
+                mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user'), \
+                mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews'), \
+                mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api'):
 
             enterprise_customer = factories.EnterpriseCustomerFactory()
             self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
@@ -3781,10 +3781,10 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
         {'is_course_completed': True, 'has_audit_mode': False},
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.enrollment_api')
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews')
     def test_post_license_revoke_all_successes(
             self,
             mock_get_overviews,
@@ -3872,10 +3872,10 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
         {'has_audit_mode': False}
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.enrollment_api')
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews')
     def test_post_license_revoke_all_errors(
             self,
             mock_get_overviews,
@@ -4285,8 +4285,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         },
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
-    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment')
     @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
     def test_bulk_enrollment_in_bulk_courses_pending_licenses(
         self,
@@ -4336,8 +4336,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         # no notifications to be sent unless 'notify' specifically asked for in payload
         mock_notify_task.assert_not_called()
 
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
-    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment')
     @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
     @mock.patch('enterprise.utils.lms_enroll_user_in_course')
     def test_bulk_enrollment_in_bulk_courses_existing_users(
@@ -4423,8 +4423,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         # no notifications to be sent unless 'notify' specifically asked for in payload
         mock_notify_task.assert_not_called()
 
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
-    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment')
     @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
     def test_bulk_enrollment_in_bulk_courses_nonexisting_user_id(
         self,
@@ -4495,8 +4495,10 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         },
     )
     @ddt.unpack
-    @mock.patch("enterprise.api.v1.views.enrollment_api")
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
+    @mock.patch(
+        'enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key'
+    )
     @mock.patch("enterprise.utils.lms_enroll_user_in_course")
     def test_bulk_enrollment_enroll_after_cancel(
         self,
@@ -4548,7 +4550,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 },
             ]
         }
-        with mock.patch('enterprise.api.v1.views.track_enrollment'):
+        with mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment'):
             with mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners"):
                 cancel_response = self.client.post(settings.TEST_SERVER + cancel_url)
                 with LogCapture(level=logging.WARNING) as warn_logs:
@@ -4614,7 +4616,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         },
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
     @mock.patch("enterprise.utils.lms_enroll_user_in_course")
     def test_bulk_enrollment_includes_fulfillment_source_uuid(
         self,
@@ -4641,7 +4643,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'enterprise-customer-enroll-learners-in-courses',
             (str(enterprise_customer.uuid),)
         )
-        with mock.patch('enterprise.api.v1.views.track_enrollment'):
+        with mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment'):
             with mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners"):
                 response = self.client.post(
                     settings.TEST_SERVER + enrollment_url,
@@ -4724,8 +4726,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         },
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
-    @mock.patch('enterprise.api.v1.views.track_enrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment')
     @mock.patch("enterprise.models.EnterpriseCustomer.notify_enrolled_learners")
     def test_bulk_enrollment_with_notification(
         self,
@@ -4797,8 +4799,8 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         mock_notify_task.assert_has_calls(mock_calls, any_order=True)
 
-    @mock.patch('enterprise.api.v1.views.enroll_subsidy_users_in_courses')
-    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.enroll_subsidy_users_in_courses')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
     def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user):
         """
         Tests that bulk users bulk enrollment endpoint properly handles partial failures.
@@ -4887,11 +4889,11 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
         {'is_course_completed': True, 'has_audit_mode': False},
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
-    @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.enrollment_api')
-    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments(
             self,
             mock_get_overviews,
@@ -4952,11 +4954,11 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
             assert not enterprise_course_enrollment.saved_for_later
             assert not licensed_course_enrollment.is_revoked
 
-    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
-    @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.enrollment_api')
-    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments_no_license_ids(
             self,
             *_
@@ -4973,11 +4975,11 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
-    @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.enrollment_api')
-    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments_ignore_enrollments_modified_after(
             self,
             mock_get_overviews,
@@ -5032,11 +5034,11 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
         assert not licensed_course_enrollment.is_revoked
         assert mock_enrollment_api.update_enrollment.call_count == 0
 
-    @mock.patch('enterprise.api.v1.views.CourseEnrollment')
-    @mock.patch('enterprise.api.v1.views.CourseMode')
-    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
-    @mock.patch('enterprise.api.v1.views.enrollment_api')
-    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseEnrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.CourseMode')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api')
+    @mock.patch('enterprise.api.v1.views.enterprise_subsidy_fulfillment.get_course_overviews')
     def test_unenroll_expired_licensed_enrollments_bad_ignore_enrollments_modified_after(
             self,
             *_
