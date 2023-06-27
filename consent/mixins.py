@@ -7,6 +7,11 @@ from django.contrib import auth
 
 from enterprise.models import EnterpriseCourseEnrollment
 
+try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
+
 LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
 
@@ -36,6 +41,12 @@ class ConsentModelMixin:
         """
         Return a boolean value indicating whether a consent action must be taken.
         """
+
+        # If enterprise-catalog is not enabled it is necessary disable data sharing consent
+        # for enterprise customers.
+        if configuration_helpers.get_value('DISABLE_DATA_SHARING_CONSENT', False):
+            return False
+
         children = getattr(self, '_child_consents', [])
         if children:
             return any(child.consent_required() for child in children)
