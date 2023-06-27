@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.0.0]
+-------
+feat!: upgraded to Node v18, added .nvmrc and updated workflows.
+
 [3.67.0]
 --------
 fix: compare lowered input email address to lowered auth user record email address during bulk enrollment.
