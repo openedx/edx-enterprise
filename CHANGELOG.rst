@@ -15,6 +15,21 @@ Change Log
 
 Unreleased
 ----------
+[3.67.4]
+--------
+feat: add button to update customer modified time
+
+[3.67.3]
+--------
+feat: adding managent command to clear error state 
+
+[3.67.2]
+--------
+fix: fixing name of table used by model fetching method
+
+[3.67.1]
+--------
+chore: more orphaned content transmission logging
 
 [4.0.0]
 -------

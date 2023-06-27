@@ -3,9 +3,12 @@ Django admin integration for configuring sap_success_factors app to communicate 
 """
 
 from config_models.admin import ConfigurationModelAdmin
+from django_object_actions import DjangoObjectActions
 from requests import RequestException
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
@@ -35,49 +38,46 @@ class SAPSuccessFactorsGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
 
 @admin.register(SAPSuccessFactorsEnterpriseCustomerConfiguration)
-class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for SAPSuccessFactorsEnterpriseCustomerConfiguration.
     """
     fields = (
-        'enterprise_customer',
-        'idp_id',
-        'active',
-        'sapsf_base_url',
-        'sapsf_company_id',
-        'key',
-        'secret',
-        'sapsf_user_id',
-        'user_type',
-        'has_access_token',
-        'prevent_self_submit_grades',
-        'show_course_price',
-        'disable_learner_data_transmissions',
-        'transmit_total_hours',
-        'transmission_chunk_size',
-        'additional_locales',
-        'catalogs_to_transmit',
-        'display_name',
+        "enterprise_customer",
+        "idp_id",
+        "active",
+        "sapsf_base_url",
+        "sapsf_company_id",
+        "key",
+        "secret",
+        "sapsf_user_id",
+        "user_type",
+        "has_access_token",
+        "prevent_self_submit_grades",
+        "show_course_price",
+        "disable_learner_data_transmissions",
+        "transmit_total_hours",
+        "transmission_chunk_size",
+        "additional_locales",
+        "catalogs_to_transmit",
+        "display_name",
     )
 
     list_display = (
-        'enterprise_customer_name',
-        'active',
-        'sapsf_base_url',
-        'modified',
+        "enterprise_customer_name",
+        "active",
+        "sapsf_base_url",
+        "modified",
     )
-    ordering = ('enterprise_customer__name',)
+    ordering = ("enterprise_customer__name",)
 
-    readonly_fields = (
-        'has_access_token',
-    )
+    readonly_fields = ("has_access_token",)
 
-    raw_id_fields = (
-        'enterprise_customer',
-    )
+    raw_id_fields = ("enterprise_customer",)
 
-    list_filter = ('active',)
-    search_fields = ('enterprise_customer__name',)
+    list_filter = ("active",)
+    search_fields = ("enterprise_customer__name",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -117,14 +117,45 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         return bool(access_token and expires_at)
 
     has_access_token.boolean = True
-    has_access_token.short_description = 'Has Access Token?'
+    has_access_token.short_description = "Has Access Token?"
+
+    def force_content_metadata_transmission(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try:
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                f'''The sap success factors enterprise customer content metadata
+                “<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was updated successfully.''',
+            )
+        except ValidationError:
+            messages.error(
+                request,
+                f'''The sap success factors enterprise customer content metadata
+                “<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was not updated successfully.''',
+            )
+        return HttpResponseRedirect(
+            "/admin/sap_success_factors/sapsuccessfactorsenterprisecustomerconfiguration"
+        )
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
+    )
 
 
 @admin.register(SapSuccessFactorsLearnerDataTransmissionAudit)
-class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
+class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(
+    BaseLearnerDataTransmissionAuditAdmin
+):
     """
     Django admin model for SapSuccessFactorsLearnerDataTransmissionAudit.
     """
+
     list_display = (
         "enterprise_course_enrollment_id",
         "course_id",

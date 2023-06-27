@@ -2,9 +2,12 @@
 Django admin integration for configuring moodle app to communicate with Moodle systems.
 """
 
+from django_object_actions import DjangoObjectActions
+
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
@@ -31,7 +34,7 @@ class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
 
 
 @admin.register(MoodleEnterpriseCustomerConfiguration)
-class MoodleEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for MoodleEnterpriseCustomerConfiguration.
     """
@@ -41,6 +44,35 @@ class MoodleEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     form = MoodleEnterpriseCustomerConfigurationForm
+    change_actions = ('force_content_metadata_transmission',)
+
+    def force_content_metadata_transmission(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try:
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                f'''The moodle enterprise customer content metadata
+                “<MoodleEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was updated successfully.''',
+            )
+        except ValidationError:
+            messages.error(
+                request,
+                f'''The moodle enterprise customer content metadata
+                “<MoodleEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was not updated successfully.''',
+            )
+        return HttpResponseRedirect(
+            "/admin/moodle/moodleenterprisecustomerconfiguration"
+        )
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
+    )
 
 
 @admin.register(MoodleLearnerDataTransmissionAudit)
