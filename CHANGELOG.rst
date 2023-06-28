@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.67.6]
+--------
+chore: fixing doc string linter errors
+
 [3.67.5]
 --------
 chore: better formatting of the enterprise api views
