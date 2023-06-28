@@ -85,11 +85,6 @@ from enterprise.utils import (
 from integrated_channels.cornerstone.utils import create_cornerstone_learner_data
 
 try:
-    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-except ImportError:
-    configuration_helpers = None
-
-try:
     from openedx.core.djangoapps.catalog.utils import get_localized_price_text
 except ImportError:
     get_localized_price_text = None
@@ -1709,17 +1704,11 @@ class CourseEnrollmentView(NonAtomicView):
                 data_sharing_consent
             )
 
-        # If enterprise-catalog is not enabled it is necessary disable data sharing consent
-        # for enterprise customers.
         user_consent_needed = get_data_sharing_consent(
             enterprise_customer_user.username,
             enterprise_customer.uuid,
             course_id=course_id,
-        ).consent_required() if not configuration_helpers.get_value(
-            'DISABLE_DATA_SHARING_CONSENT',
-            False,
-        ) else False
-
+        ).consent_required()
         if not selected_course_mode.get('premium') and not user_consent_needed:
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
