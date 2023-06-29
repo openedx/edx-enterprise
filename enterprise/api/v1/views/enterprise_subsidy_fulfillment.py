@@ -63,25 +63,31 @@ class EnterpriseSubsidyFulfillmentViewSet(EnterpriseWrapperApiViewSet):
 
     Arguments (Fetch & Cancel):
         fulfillment_source_uuid (str): The uuid of the subsidy fulfillment record.
+
     Arguments (Unenrolled):
         unenrolled_after (str): A datetime string. Only return enrollments unenrolled after this time.
+
     Returns (Fetch):
         (Response): JSON response containing the subsidy fulfillment record.
+
     Returns (Unenrolled):
         (Response): JSON list response containing the unenrolled subsidy fulfillment records.
-            Example:
-                [
-                    {
-                        enterprise_course_enrollment: {
-                            enterprise_customer_user: <user_id>,
-                            course_id: <course_id>,
-                            unenrolled: <datetime>
-                            created: <datetime>
-                        }
-                        license_uuid/transaction_id: <uuid>,
-                        uuid: <uuid>,
-                    },
-                ]
+
+        .. code-block::
+
+            api_response = [
+                {
+                    enterprise_course_enrollment: {
+                        enterprise_customer_user: <user_id>,
+                        course_id: <course_id>,
+                        unenrolled: <datetime>
+                        created: <datetime>
+                    }
+                    license_uuid/transaction_id: <uuid>,
+                    uuid: <uuid>,
+                },
+            ]
+
     Raises
         (Http404): If the subsidy fulfillment record does not exist or if subsidy fulfillment exists under a separate
         enterprise.
