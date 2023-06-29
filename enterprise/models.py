@@ -216,12 +216,11 @@ class EnterpriseCustomer(TimeStampedModel):
     def get_default_site():
         """
         Get default site id to use when creating a new EnterpriseCustomer model.
-        The default value depending on what environment the person is in. 
-        In production, it should be 'courses.edx.org'. 
+        The default value depending on what environment the person is in.
+        In production, it should be 'courses.edx.org'.
         It stage it should be 'courses.stage.edx.org'.
         """
-
-        ENVIRONMENT = os.getenv('DJANGO_ENVIRONMENT', 'development')    
+        ENVIRONMENT = os.getenv('DJANGO_ENVIRONMENT', 'development')
         if ENVIRONMENT == 'production':
             value = 'courses.edx.org'
         else:
@@ -248,7 +247,7 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
         help_text=_(
             "Enables data sharing consent prompt for learners each time they enroll in a course. "
-            "If left unchecked, the prompt will not appear and relevant data will not be shared.  "
+            "If left unchecked, the prompt will not appear and relevant data will not be shared."
         )
     )
 
@@ -268,7 +267,7 @@ class EnterpriseCustomer(TimeStampedModel):
         "Enable audit enrollment for learning platform learners",
         default=False,
         help_text=_(
-            "Allows learners enrolling through learning latforms to select the audit track."
+            "Allows learners enrolling through learning platforms to select the audit track."
         )
     )
 
@@ -339,7 +338,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     enable_learner_portal = models.BooleanField(
         default=True,
-        help_text=_("Automatically enabled. If unchecked, learners won’t have access to the learner portal. ")
+        help_text=_("Automatically enabled. If unchecked, learners won't have access to the learner portal.")
     )
 
     enable_learner_portal_offers = models.BooleanField(
@@ -394,7 +393,7 @@ class EnterpriseCustomer(TimeStampedModel):
         "Customer admin contact email:",
         null=True,
         blank=True,
-        help_text = _("Email address presented on learner portal as public point of contact from customer organization.")
+        help_text=_("Email address presented on learner portal as public point of contact from customer organization.")
     )
 
     default_contract_discount = models.DecimalField(
@@ -416,7 +415,7 @@ class EnterpriseCustomer(TimeStampedModel):
         blank=True,
         choices=AVAILABLE_LANGUAGES,
         default=None,
-        help_text = _(
+        help_text=_(
             "Specifies the default language for learners of the organization."
         )
     )
@@ -441,19 +440,18 @@ class EnterpriseCustomer(TimeStampedModel):
     def get_default_site():
         """
         Get default site id to use when creating a new EnterpriseCustomer model.
-        The default value depending on what environment the person is in. 
-        In production, it should be 'courses.edx.org'. 
+        The default value depending on what environment the person is in.
+        In production, it should be 'courses.edx.org'.
         It stage it should be 'courses.stage.edx.org'.
         """
 
-        ENVIRONMENT = os.getenv('DJANGO_ENVIRONMENT', 'development')    
+        ENVIRONMENT = os.getenv('DJANGO_ENVIRONMENT', 'development')
         if ENVIRONMENT == 'production':
             value = 'courses.edx.org'
         else:
             value = 'courses.stage.edx.org'
         site, __ = Site.objects.get_or_create(name=value)
         return site.id
-
 
     @property
     def enterprise_customer_identity_provider(self):
@@ -826,6 +824,7 @@ class EnterpriseCustomer(TimeStampedModel):
             EnterpriseCustomerInviteKey.objects.create(
                 enterprise_customer=self
             )
+
 
 class EnterpriseCustomerUserManager(models.Manager):
     """

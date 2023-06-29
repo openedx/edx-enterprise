@@ -194,18 +194,17 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             'fields': ('name', 'active', 'slug', 'auth_org_id', 'country')
         }),
         ('Subsidy management screens ', {
-            'fields': ('enable_portal_learner_credit_management_screen', 'enable_portal_subscription_management_screen', 
-                       'enable_portal_code_management_screen'),
-            'description': ('Select the check boxes below to enable specific subsidy management screens '
-                            'on the organizations’ administrator portal. If an option is left unchecked, '
-                            ' the customer administrator will not see the screen in their portal  '
-                            'and will not be able to apply the associated configurations via self-service.')
+            'fields': ('enable_portal_learner_credit_management_screen', 'enable_portal_subscription_management_screen', 'enable_portal_code_management_screen'),
+            'description': ("Select the check boxes below to enable specific subsidy management screens"
+                            "on the organization's administrator portal. If an option is left unchecked,"
+                            "the customer administrator will not see the screen in their portal"
+                            "and will not be able to apply the associated configurations via self-service.")
         }),
         ('Subsidy settings', {
             'fields': ('enable_browse_and_request', 'enable_universal_link'),
-            'description': ('Select the check boxes below to enable specific subsidy management settings '
-                            'for the administrator portal for subscription and codes customers. '
-                            'These should not be selected for customers that only have learner credit. ')
+            'description': ('Select the check boxes below to enable specific subsidy management settings'
+                            'for the administrator portal for subscription and codes customers.'
+                            'These should not be selected for customers that only have learner credit.')
         }),
         ('Data sharing consent', {
             'fields': ('enable_data_sharing_consent', 'enforce_data_sharing_consent')
@@ -217,15 +216,13 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             'fields': ('enable_portal_reporting_config_screen',)
         }),
         ('Integration and learning platform settings', {
-            'fields': ('enable_portal_lms_configurations_screen', 'enable_portal_saml_configuration_screen', 
-                       'enable_slug_login', 'replace_sensitive_sso_username', 'hide_course_original_price')
+            'fields': ('enable_portal_lms_configurations_screen', 'enable_portal_saml_configuration_screen', 'enable_slug_login', 'replace_sensitive_sso_username', 'hide_course_original_price')
         }),
         ('Recommended default settings for all enterprise customers', {
-            'fields': ('site', 'customer_type', 'enable_learner_portal', 'enable_integrated_customer_learner_portal_search', 
-                       'enable_analytics_screen', 'enable_audit_enrollment', 'enable_audit_data_reporting', 
-                       'enable_learner_portal_offers','enable_executive_education_2U_fulfillment'),
-            'description': ('The following default settings should be the same for the majority of enterprise customers, '
-                           'and are either rarely used, unlikely to be sold, or unlikely to be changed from the default. ')
+            'fields': ('site', 'customer_type', 'enable_learner_portal', 'enable_integrated_customer_learner_portal_search',
+                       'enable_analytics_screen', 'enable_audit_enrollment', 'enable_audit_data_reporting', 'enable_learner_portal_offers', 'enable_executive_education_2U_fulfillment'),
+            'description': ('The following default settings should be the same for the majority of enterprise customers,'
+                            'and are either rarely used, unlikely to be sold, or unlikely to be changed from the default.')
         }),
     )
 
