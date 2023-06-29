@@ -19,6 +19,14 @@ from enterprise.utils import (
     unset_enterprise_learner_language,
     unset_language_of_all_enterprise_learners,
 )
+from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
+from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
+from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
+from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.integrated_channel.tasks import mark_orphaned_content_metadata_audit
+from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
+from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
@@ -30,6 +38,15 @@ except ImportError:
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
+INTEGRATED_CHANNELS = [
+    BlackboardEnterpriseCustomerConfiguration,
+    CanvasEnterpriseCustomerConfiguration,
+    CornerstoneEnterpriseCustomerConfiguration,
+    DegreedEnterpriseCustomerConfiguration,
+    Degreed2EnterpriseCustomerConfiguration,
+    MoodleEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+]
 
 
 @disable_for_loaddata
@@ -314,6 +331,16 @@ def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
             'Unable to delete Enterprise Catalog {}'.format(str(catalog_uuid)),
             exc_info=exc
         )
+
+    customer = instance.enterprise_customer
+    for channel in INTEGRATED_CHANNELS:
+        if channel.objects.filter(enterprise_customer=customer, active=True).exists():
+            logger.info(
+                f"Catalog {catalog_uuid} deletion is linked to an active integrated channels config, running the mark"
+                f"orphan content audits task"
+            )
+            mark_orphaned_content_metadata_audit.delay()
+            break
 
 
 def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=unused-argument
