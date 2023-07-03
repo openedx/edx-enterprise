@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` models module.
 
 import unittest
 from collections import OrderedDict
+from datetime import datetime
 from unittest import mock
 
 import ddt
@@ -24,8 +25,10 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
+from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
 from test_utils import EmptyCacheMixin
 from test_utils.factories import (
+    ContentMetadataItemTransmissionFactory,
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
@@ -33,6 +36,7 @@ from test_utils.factories import (
     PendingEnrollmentFactory,
     PendingEnterpriseCustomerAdminUserFactory,
     PendingEnterpriseCustomerUserFactory,
+    SAPSuccessFactorsEnterpriseCustomerConfigurationFactory,
     SystemWideEnterpriseUserRoleAssignmentFactory,
     UserFactory,
 )
@@ -876,6 +880,45 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         # Verify the API was called correctly and the catalog was deleted
         api_client_mock.return_value.delete_enterprise_catalog.assert_called_with(enterprise_catalog_uuid)
         self.assertFalse(EnterpriseCustomerCatalog.objects.exists())
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_delete_catalog_cleaning_up_orphaned_content_transmission_items(self, api_client_mock):
+        """
+        Tests that when an EnterpriseCustomerCatalog is deleted, any associated
+        Integrated Channels content metadata records are also marked as orphaned.
+        """
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
+        customer = EnterpriseCustomerFactory()
+        enterprise_catalog_to_be_deleted = EnterpriseCustomerCatalogFactory(enterprise_customer=customer)
+        enterprise_catalog_to_be_kept = EnterpriseCustomerCatalogFactory(enterprise_customer=customer)
+
+        customer.enterprise_customer_catalogs.set([enterprise_catalog_to_be_deleted, enterprise_catalog_to_be_kept])
+        customer.save()
+        integrated_channels_config = SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=customer,
+        )
+        # A record that would be orphaned if the test catalog is deleted
+        orphaned_content_transmission_item = ContentMetadataItemTransmissionFactory(
+            integrated_channel_code=integrated_channels_config.channel_code(),
+            enterprise_customer=customer,
+            plugin_configuration_id=integrated_channels_config.id,
+            enterprise_customer_catalog_uuid=enterprise_catalog_to_be_deleted.uuid,
+            remote_deleted_at=None,
+            remote_created_at=datetime.now(),
+        )
+        # A normal record that is unaffected by the test catalog deletion
+        ContentMetadataItemTransmissionFactory(
+            integrated_channel_code=integrated_channels_config.channel_code(),
+            enterprise_customer=customer,
+            plugin_configuration_id=integrated_channels_config.id,
+            enterprise_customer_catalog_uuid=enterprise_catalog_to_be_kept.uuid,
+            remote_deleted_at=None,
+            remote_created_at=datetime.now(),
+        )
+        enterprise_catalog_to_be_deleted.delete()
+
+        assert OrphanedContentTransmissions.objects.all().count() == 1
+        assert OrphanedContentTransmissions.objects.filter(id=orphaned_content_transmission_item.id).exists()
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_create_catalog(self, api_client_mock):

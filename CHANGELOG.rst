@@ -15,6 +15,18 @@ Change Log
 
 Unreleased
 ----------
+[3.67.7]
+--------
+feat: marking orphaned content audits when catalogs are deleted
+
+[3.67.6]
+--------
+chore: fixing doc string linter errors
+
+[3.67.5]
+--------
+chore: better formatting of the enterprise api views
+
 [3.67.4]
 --------
 feat: add button to update customer modified time
