@@ -1598,8 +1598,7 @@ class CourseEnrollmentView(NonAtomicView):
                     'course_modes': course_modes,
                     'premium_modes': premium_modes,
                     'catalog': enterprise_catalog_uuid,
-                    'hide_course_original_price': enterprise_customer.hide_course_original_price,
-                    'hide_course_price_when_zero': enterprise_customer.hide_course_price_when_zero
+                    'hide_course_original_price': enterprise_customer.hide_course_original_price
                 }
             )
 
