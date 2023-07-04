@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.68.0]
+--------
+feat: add more metadata into `EnterpriseCourseEnrollmentView`
+
 [3.67.7]
 --------
 feat: marking orphaned content audits when catalogs are deleted
@@ -33,7 +37,7 @@ feat: add button to update customer modified time
 
 [3.67.3]
 --------
-feat: adding managent command to clear error state 
+feat: adding managent command to clear error state
 
 [3.67.2]
 --------
@@ -99,7 +103,7 @@ fix: making sure unenrollment is saved while revoking fulfillment
 
 [3.65.0]
 --------
-feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments 
+feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments
 
 [3.64.1]
 --------
@@ -108,10 +112,10 @@ fix: Reverted course_run_url for Executive Education courses
 [3.64.0]
 --------
 feat: Updated course_run_url for Executive Education courses
- 
+
 [3.63.0]
 --------
-feat: Hooking enterprise enrollments up to platform signals to write unenrollment records. 
+feat: Hooking enterprise enrollments up to platform signals to write unenrollment records.
       New field `unenrolled` on enterprise enrollments to track enrollment status, defaults to `None`.
 
 [3.62.7]
