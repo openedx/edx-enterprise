@@ -2382,3 +2382,29 @@ def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
         was_truncated = True
         return (truncated_string, was_truncated)
     return (string, was_truncated)
+
+
+def hide_price_when_zero(enterprise_customer, course_modes):
+    """
+    Adds a "hide_price" flag to the course modes if price is zero and "Hide course price when zero" flag is set.
+
+    Arguments:
+        enterprise_customer: The EnterpriseCustomer that the enrollemnt is being done.
+        course_modes: iterable with dictionaries containing a required 'final_price' key
+    """
+    if not enterprise_customer.hide_course_price_when_zero:
+        return course_modes
+
+    for mode in course_modes:
+        mode['hide_price'] = False
+        try:
+            numbers = re.findall(r'\d+', mode['final_price'])
+            mode['hide_price'] = int(''.join(numbers)) == 0
+        except ValueError:
+            LOGGER.warn(
+                'hide_price_when_zero: Could not convert price of course mode "%s" to int.',
+                mode['title']
+            )
+    return course_modes
+
+    

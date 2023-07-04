@@ -76,6 +76,7 @@ from enterprise.utils import (
     get_enterprise_customer_user,
     get_platform_logo_url,
     get_program_type_description,
+    hide_price_when_zero,
     is_course_run_enrollable,
     localized_utcnow,
     track_enrollment,
@@ -1542,6 +1543,9 @@ class CourseEnrollmentView(NonAtomicView):
             # Filter audit course modes.
             course_modes = filter_audit_course_modes(enterprise_customer, course_modes)
 
+            # Set a flag to hide the $0 when the customer doesn't want it to be shown
+            course_modes = hide_price_when_zero(enterprise_customer, course_modes)
+
             # Allows automatic assignment to a cohort upon enrollment.
             cohort = request.GET.get('cohort')
             # Add a message to the message display queue if the learner
@@ -1594,7 +1598,8 @@ class CourseEnrollmentView(NonAtomicView):
                     'course_modes': course_modes,
                     'premium_modes': premium_modes,
                     'catalog': enterprise_catalog_uuid,
-                    'hide_course_original_price': enterprise_customer.hide_course_original_price
+                    'hide_course_original_price': enterprise_customer.hide_course_original_price,
+                    'hide_course_price_when_zero': enterprise_customer.hide_course_price_when_zero
                 }
             )
 

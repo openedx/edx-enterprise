@@ -19,6 +19,7 @@ from enterprise.utils import (
     get_default_invite_key_expiration_date,
     get_idiff_list,
     get_platform_logo_url,
+    hide_price_when_zero,
     is_pending_user,
     localized_utcnow,
     parse_lms_api_datetime,
@@ -536,3 +537,30 @@ class TestUtils(unittest.TestCase):
         (truncated_string, was_truncated) = truncate_string(test_string_2)
         self.assertTrue(was_truncated)
         self.assertEqual(len(truncated_string), MAX_ALLOWED_TEXT_LENGTH)
+
+    @ddt.data(True, False)
+    def test_hide_course_price_when_zero(self, hide_price):
+        customer = factories.EnterpriseCustomerFactory()
+        zero_modes = [
+            {"final_price": "$0"},
+            {"final_price": "$0.000"},
+            {"final_price": "Rs. 0.00"},
+            {"final_price": "0.00 EURO"},
+        ]
+        non_zero_modes = [
+            {"final_price": "$100"},
+            {"final_price": "$73.50"},
+            {"final_price": "Rs.8000.00"},
+            {"final_price": "4000 Euros"},
+        ]
+        customer.hide_course_price_when_zero = hide_price
+
+        processed_zero_modes = hide_price_when_zero(customer, zero_modes)
+        processed_non_zero_modes = hide_price_when_zero(customer, non_zero_modes)
+
+        if hide_price:
+            self.assertTrue(all(mode["hide_price"] for mode in processed_zero_modes))
+            self.assertFalse(all(mode["hide_price"] for mode in processed_non_zero_modes))
+        else:
+            self.assertEqual(zero_modes, processed_zero_modes)
+            self.assertEqual(non_zero_modes, processed_non_zero_modes)
