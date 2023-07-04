@@ -2371,3 +2371,28 @@ def camelCase(string):
     """
     output = ''.join(x for x in string.title() if x.isalnum())
     return output[0].lower() + output[1:]
+
+
+def hide_price_when_zero(enterprise_customer, course_modes):
+    """
+    Adds a "hide_price" flag to the course modes if price is zero and "Hide course price when zero" flag is set.
+
+    Arguments:
+        enterprise_customer: The EnterpriseCustomer that the enrollemnt is being done.
+        course_modes: iterable with dictionaries containing a required 'final_price' key
+    """
+    if not enterprise_customer.hide_course_price_when_zero:
+        return course_modes
+
+    for mode in course_modes:
+        mode['hide_price'] = False
+        try:
+            numbers = re.findall(r'\d+', mode['final_price'])
+            mode['hide_price'] = int(''.join(numbers)) == 0
+        except ValueError:
+            LOGGER.warning(
+                'hide_price_when_zero: Could not convert price "%s" of course mode "%s" to int.',
+                mode['final_price'],
+                mode['title']
+            )
+    return course_modes

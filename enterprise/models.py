@@ -476,6 +476,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Email address that will receive learner replies to automated edX emails.")
     )
 
+    hide_course_price_when_zero = models.BooleanField(
+        default=False,
+        help_text=_("Specify whether course cost should be hidden in the landing page when the final price is zero.")
+    )
+
     enable_generation_of_api_credentials = models.BooleanField(
         verbose_name="Allow generation of API credentials",
         default=False,
