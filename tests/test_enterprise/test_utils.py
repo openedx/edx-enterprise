@@ -24,6 +24,7 @@ from enterprise.utils import (
     serialize_notification_content,
 )
 from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
+from test_utils.fake_enrollment_api import get_course_details
 
 LMS_BASE_URL = 'https://lms.base.url'
 
@@ -404,11 +405,12 @@ class TestUtils(unittest.TestCase):
         )
         licensed_users_info = [{
             'email': 'pending-user-email@example.com',
-            'course_run_key': 'course-key-v1',
+            'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
             'course_mode': 'verified',
             'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
         }]
-        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        with mock.patch("enterprise.models.EnrollmentApiClient.get_course_details", wraps=get_course_details):
+            result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
 
         self.assertEqual(result['pending'][0]['email'], 'pending-user-email@example.com')
         self.assertFalse(result['successes'])

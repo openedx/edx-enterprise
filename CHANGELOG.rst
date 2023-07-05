@@ -15,6 +15,8 @@ Change Log
 
 Unreleased
 ----------
+feat: enable enrolling leaners to invite_only courses via manage learners view
+
 [3.68.1]
 --------
 fix: pick first object from CourseDetails
@@ -92,6 +94,7 @@ fix: Fixed url encoding issue with org_id in executive education course url
 [3.66.0]
 --------
 feat: Added org_id for executive education courses landing page
+
 
 [3.65.4]
 --------

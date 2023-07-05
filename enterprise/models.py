@@ -80,9 +80,10 @@ from enterprise.validators import (
 )
 
 try:
-    from common.djangoapps.student.models import CourseEnrollment
+    from common.djangoapps.student.models import CourseEnrollment, CourseEnrollmentAllowed
 except ImportError:
     CourseEnrollment = None
+    CourseEnrollmentAllowed = None
 
 try:
     from common.djangoapps.entitlements.models import CourseEntitlement
@@ -675,7 +676,21 @@ class EnterpriseCustomer(TimeStampedModel):
             license_uuid = None
 
         new_enrollments = {}
+        enrollment_api_client = EnrollmentApiClient()
+
         for course_id in course_ids:
+            # Check if the course is "Invite Only" and add CEA if it is.
+            course_details = enrollment_api_client.get_course_details(course_id)
+
+            if course_details["invite_only"]:
+                if not CourseEnrollmentAllowed:
+                    raise NotConnectedToOpenEdX()
+
+                CourseEnrollmentAllowed.objects.update_or_create(
+                    email=email,
+                    course_id=course_id
+                )
+
             __, created = PendingEnrollment.objects.update_or_create(
                 user=pending_ecu,
                 course_id=course_id,
