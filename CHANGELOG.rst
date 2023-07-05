@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.68.1]
+--------
+fix: pick first object from CourseDetails
+
 [3.68.0]
 --------
 feat: add more metadata into `EnterpriseCourseEnrollmentView`

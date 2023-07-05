@@ -79,7 +79,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['mode'] = instance.mode
 
         if CourseDetails:
-            course_details = CourseDetails.objects.filter(id=course_run_id)
+            course_details = CourseDetails.objects.filter(id=course_run_id).first()
             if course_details:
                 representation['course_type'] = course_details.course_type
                 representation['product_source'] = course_details.product_source
