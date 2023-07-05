@@ -17,7 +17,6 @@ Unreleased
 ----------
 feat: enable enrolling leaners to invite_only courses via manage learners view
 
-=======
 [3.68.1]
 --------
 fix: pick first object from CourseDetails
