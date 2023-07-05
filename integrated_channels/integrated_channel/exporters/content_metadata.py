@@ -318,11 +318,11 @@ class ContentMetadataExporter(Exporter):
             # 2) swap the catalog uuid of the transmission audit associated with the orphaned record, and 3) mark the
             # orphaned record resolved
             if orphaned_content:
-                ContentMetadataTransmissionAudit = apps.get_model(
+                ContentMetadataItemTransmission = apps.get_model(
                     'integrated_channel',
-                    'ContentMetadataTransmissionAudit'
+                    'ContentMetadataItemTransmission',
                 )
-                ContentMetadataTransmissionAudit.objects.filter(
+                ContentMetadataItemTransmission.objects.filter(
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     plugin_configuration_id=self.enterprise_configuration.id,
                     content_id=content_key
@@ -436,8 +436,16 @@ class ContentMetadataExporter(Exporter):
         ) & content_query
 
         # Grab orphaned content metadata items for the customer, ordered by oldest to newest
-        return OrphanedContentTransmissions.objects.filter(base_query).order_by('created')[:max_set_count]
+        orphaned_content = OrphanedContentTransmissions.objects.filter(base_query)
+        num_records = len(orphaned_content)
+        self._log_info(
+            f'Found {num_records} orphaned content records for customer: '
+            f'{self.enterprise_customer.uuid}. Returning {min(max_set_count, num_records)} records.'
+        )
+        ordered_and_chunked_orphaned_content = orphaned_content.order_by('created')[:max_set_count]
+        return ordered_and_chunked_orphaned_content
 
+    # pylint: disable=too-many-statements
     def export(self, **kwargs):
         """
         Export transformed content metadata if there has been an update to the consumer's catalogs
@@ -529,8 +537,20 @@ class ContentMetadataExporter(Exporter):
                 delete_payload[key] = item
 
         # If we're not at the max payload count, we can check for orphaned content and shove it in the delete payload
-        current_payload_count = len(items_to_create) + len(items_to_update) + len(items_to_delete)
+        current_payload_count = len(create_payload) + len(update_payload) + len(delete_payload)
+
+        self._log_info(
+            f'Exporter finished iterating over catalogs for customer: {self.enterprise_customer.uuid},'
+            f'with a current payload count of: {current_payload_count}. Is there room for orphaned content'
+            f'in the exporter payload?: {current_payload_count < max_payload_count}'
+        )
+
         if current_payload_count < max_payload_count:
+            self._log_info(
+                f'Exporter has {max_payload_count - current_payload_count} slots left in the payload for customer: '
+                f'{self.enterprise_customer.uuid}, searching for orphaned content to append'
+            )
+
             space_left_in_payload = max_payload_count - current_payload_count
             orphaned_content_to_delete = self._get_customer_config_orphaned_content(
                 max_set_count=space_left_in_payload,

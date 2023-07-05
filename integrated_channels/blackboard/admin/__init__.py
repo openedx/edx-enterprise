@@ -2,8 +2,11 @@
 Admin integration for configuring Blackboard app to communicate with Blackboard systems.
 """
 from config_models.admin import ConfigurationModelAdmin
+from django_object_actions import DjangoObjectActions
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
 from django.utils.html import format_html
 
 from integrated_channels.blackboard.models import (
@@ -29,7 +32,7 @@ class BlackboardGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
 
 @admin.register(BlackboardEnterpriseCustomerConfiguration)
-class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
+class BlackboardEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for BlackEnterpriseCustomerConfiguration.
     """
@@ -51,6 +54,7 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     )
 
     search_fields = ("enterprise_customer_name",)
+    change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration
@@ -77,6 +81,34 @@ class BlackboardEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
             return format_html((f'<a href="{obj.oauth_authorization_url}">Authorize Link</a>'))
         else:
             return None
+
+    def force_content_metadata_transmission(self, request, obj):
+        """
+        Updates the modified time of the customer record to retransmit courses metadata
+        and redirects to configuration view with success or error message.
+        """
+        try:
+            obj.enterprise_customer.save()
+            messages.success(
+                request,
+                f'''The blackboard enterprise customer content metadata
+                “<BlackboardEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was updated successfully.''',
+            )
+        except ValidationError:
+            messages.error(
+                request,
+                f'''The blackboard enterprise customer content metadata
+                “<BlackboardEnterpriseCustomerConfiguration for Enterprise
+                {obj.enterprise_customer.name}>” was not updated successfully.''',
+            )
+        return HttpResponseRedirect(
+            "/admin/blackboard/blackboardenterprisecustomerconfiguration"
+        )
+    force_content_metadata_transmission.label = "Force content metadata transmission"
+    force_content_metadata_transmission.short_description = (
+        "Force content metadata transmission for this Enterprise Customer"
+    )
 
 
 @admin.register(BlackboardLearnerDataTransmissionAudit)

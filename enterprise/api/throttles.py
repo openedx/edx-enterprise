@@ -19,16 +19,16 @@ class BaseThrottle(UserRateThrottle):
         """
         Modify throttling for service users.
 
-        Updates throttling rate if the request is coming from the service user, and
-        defaults to UserRateThrottle's configured setting otherwise.
+        Updates throttling rate if the request is coming from the service user, and defaults to UserRateThrottle's
+        configured setting otherwise.
 
-        Updated throttling rate comes from `DEFAULT_THROTTLE_RATES` key in `REST_FRAMEWORK`
-        setting. specific user throttling is specified in `DEFAULT_THROTTLE_RATES` by it's corresponding key
-        Example Setting:
+        Updated throttling rate comes from `DEFAULT_THROTTLE_RATES` key in `REST_FRAMEWORK` setting. specific user
+        throttling is specified in `DEFAULT_THROTTLE_RATES` by it's corresponding key.
+
+        .. code-block::
+
             REST_FRAMEWORK = {
-                ...
                 'DEFAULT_THROTTLE_RATES': {
-                    ...
                     'service_user': '50/day',
                     'high_service_user': '2000/minute',
                 }

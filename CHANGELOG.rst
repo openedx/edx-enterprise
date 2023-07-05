@@ -17,6 +17,42 @@ Unreleased
 ----------
 feat: enable enrolling leaners to invite_only courses via manage learners view
 
+=======
+[3.68.1]
+--------
+fix: pick first object from CourseDetails
+
+[3.68.0]
+--------
+feat: add more metadata into `EnterpriseCourseEnrollmentView`
+
+[3.67.7]
+--------
+feat: marking orphaned content audits when catalogs are deleted
+
+[3.67.6]
+--------
+chore: fixing doc string linter errors
+
+[3.67.5]
+--------
+chore: better formatting of the enterprise api views
+
+[3.67.4]
+--------
+feat: add button to update customer modified time
+
+[3.67.3]
+--------
+feat: adding managent command to clear error state
+
+[3.67.2]
+--------
+fix: fixing name of table used by model fetching method
+
+[3.67.1]
+--------
+chore: more orphaned content transmission logging
 
 [3.67.0]
 --------
@@ -75,7 +111,7 @@ fix: making sure unenrollment is saved while revoking fulfillment
 
 [3.65.0]
 --------
-feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments 
+feat: new enterprise endpoint to surface filterable unenrolled subsidized enrollments
 
 [3.64.1]
 --------
@@ -84,10 +120,10 @@ fix: Reverted course_run_url for Executive Education courses
 [3.64.0]
 --------
 feat: Updated course_run_url for Executive Education courses
- 
+
 [3.63.0]
 --------
-feat: Hooking enterprise enrollments up to platform signals to write unenrollment records. 
+feat: Hooking enterprise enrollments up to platform signals to write unenrollment records.
       New field `unenrolled` on enterprise enrollments to track enrollment status, defaults to `None`.
 
 [3.62.7]

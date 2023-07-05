@@ -21,6 +21,11 @@ except ImportError:
     get_course_run_url = None
     get_emails_enabled = None
 
+try:
+    from federated_content_connector.models import CourseDetails
+except ImportError:
+    CourseDetails = None
+
 
 class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
@@ -72,6 +77,15 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['is_revoked'] = instance.license.is_revoked if instance.license else False
         representation['is_enrollment_active'] = instance.is_active
         representation['mode'] = instance.mode
+
+        if CourseDetails:
+            course_details = CourseDetails.objects.filter(id=course_run_id).first()
+            if course_details:
+                representation['course_type'] = course_details.course_type
+                representation['product_source'] = course_details.product_source
+                representation['start_date'] = course_details.start_date or representation['start_date']
+                representation['end_date'] = course_details.end_date or representation['end_date']
+                representation['enroll_by'] = course_details.enroll_by
 
         return representation
 
