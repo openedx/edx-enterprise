@@ -454,7 +454,7 @@ class ContentMetadataExporter(Exporter):
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
         # a maximum number of changes/payloads to export at once
-        # default to something huge to simplifly logic, the max system int size
+        # default to something huge to simplify logic, the max system int size
         max_payload_count = kwargs.get('max_payload_count', sys.maxsize)
 
         self._log_info(
@@ -571,6 +571,69 @@ class ContentMetadataExporter(Exporter):
             f'{create_payload}, update_payload: {update_payload}, delete_payload: {delete_payload}'
         )
 
+        # Above ^ ensure skill metadata persists in the 3 payloads after fetching content metadata 
+
+        # Buckets returned
+
+        # ----*skills*----
+        # create skills
+            # - list of skill audits, marked for create
+        # update skills
+            # - list of skill audits, marked for update
+        # delete skills
+            # - list of skill audits, marked for delete
+
+        # ----*skill relations*----
+        # add relation between content and skill
+            # - dict { skill_name : [content_key, ... ] }
+        # remove relation between content and skill
+            # - dict { skill_name : [content_key, ... ] }
+
+        # Block work if config/channel doesn't support skills?
+
+        # For each item in update_payload
+        # - Grab all skill audits associated with the item's content key
+        #   - for each found skill audit, 
+        #       - look for it in the metadata of the item_to_update item
+        #       - if not there 
+        #           - add skill name/content key to the remove skill relations payload
+        #           - if the skill audit's associated content keys len is 1
+        #               - add the skill to the delete payload
+        #               - mark for delete
+        #       - if there
+        #           - update the skill audit record with the item's metadata
+        #               - if change add the skill audit to the update skills payload
+        #           - remember the skill name of the found update payload
+        #   - for each skill in the item's metadata that wasn't found in the skill audit records 
+        #      - create the skill audit
+        #       - add the skill audit to the create skill payload 
+        #      - add the skill/content key to the add relations payload
+         
+        # Iterate over items_to_create and get_or_create a skills audit under the config + customer config and write the content
+        # key to the audit's list of linked skills
+        # For each item in create payload
+        # - Grab all skills listed in the item's metadata
+        # - for each skill audit
+        #   - add the skill name/content key to the add relations payload
+        # - for any skills listed in the item's metadata that weren't found in the skill audits
+        #   - create a new skill audit record, 
+        #   - add the audit to the create skill payload
+        #   - mark for create
+
+        # Iterate over items_to_delete and filter for skill audits that contain the item's content key within the records associated
+        # content keys set.
+        # For each item in delete payload
+        # - Grab all audits associated with the item's content key
+        #   - for each found skill audit
+        #       - if the skill audit's content keys set is 1
+        #           - add the skill audit to the delete payload
+        #           - mark for delete
+        #       - add the skill/content key to the remove skill relations payload
+
+
+        # Below add the skill metadata related payloads to the list of returned objects (either as one combined object or 3 separate)
+        # { create : create_payload, update : update_payload, delete : delete_payload }, { add : relations_add_payload, remove : relations_remove_payload }
+ 
         # collections of ContentMetadataItemTransmission objects
         return create_payload, update_payload, delete_payload
 
