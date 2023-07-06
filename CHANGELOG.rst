@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.68.2]
+--------
+feat: remove content transmission audits without a catalog uuid
+
 [3.68.1]
 --------
 fix: pick first object from CourseDetails
