@@ -2031,6 +2031,7 @@ class TestRemoveNullCatalogTransmissionAuditsManagementCommand(unittest.TestCase
     def test_normal_run(self):
         assert ContentMetadataItemTransmission.objects.all().count() == 2
         call_command('remove_null_catalog_transmission_audits')
+        assert ContentMetadataItemTransmission.objects.all().count() == 1
         assert ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=None
         ).count() == 0
