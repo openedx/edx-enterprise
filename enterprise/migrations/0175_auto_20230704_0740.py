@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='enterprisecustomer',
             name='hide_course_price_when_zero',
-            field=models.BooleanField(default=False, help_text="Hides the course's price from the enrollment page when it is Zero, either by itself or due to a discount."),
+            field=models.BooleanField(default=False, help_text='Specify whether course cost should be hidden in the landing page when the final price is zero.'),
         ),
         migrations.AddField(
             model_name='historicalenterprisecustomer',
             name='hide_course_price_when_zero',
-            field=models.BooleanField(default=False, help_text="Hides the course's price from the enrollment page when it is Zero, either by itself or due to a discount."),
+            field=models.BooleanField(default=False, help_text='Specify whether course cost should be hidden in the landing page when the final price is zero.'),
         ),
     ]
