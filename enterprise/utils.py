@@ -2401,7 +2401,7 @@ def hide_price_when_zero(enterprise_customer, course_modes):
             numbers = re.findall(r'\d+', mode['final_price'])
             mode['hide_price'] = int(''.join(numbers)) == 0
         except ValueError:
-            LOGGER.warn(
+            LOGGER.warning(
                 'hide_price_when_zero: Could not convert price of course mode "%s" to int.',
                 mode['title']
             )
