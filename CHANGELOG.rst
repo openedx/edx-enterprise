@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.69.0]
+--------
+refactor: Replaced the deprecated `NullBooleanField` with `BooleanField(null=True)`
+
 [3.68.1]
 --------
 fix: pick first object from CourseDetails
