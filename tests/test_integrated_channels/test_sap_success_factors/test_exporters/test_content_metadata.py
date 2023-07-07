@@ -8,6 +8,7 @@ import ddt
 import responses
 from pytest import mark
 
+from enterprise.constants import IC_DELETE_ACTION
 from enterprise.utils import parse_lms_api_datetime
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from integrated_channels.utils import parse_datetime_to_epoch_millis
@@ -29,6 +30,56 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         )
 
         super().setUp()
+
+    def test_exporter_delete_transform(self):
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
+        # pylint: disable=protected-access
+        transformed_delete_metadata = exporter._transform_item({
+            "aggregation_key": "course:NYIF+BOPC.4x",
+            "content_type": "course",
+            "full_description": "ayylmao",
+            "key": 'ayylmao',
+            "title": "Brokerage Operations Professional Certificate Examination",
+            "course_runs": [
+                {
+                    "key": "course-v1:NYIF+BOPC.4x+3T2017",
+                    "uuid": "69b38e2f-e041-4634-b537-fc8d8e12c87e",
+                    "title": "Brokerage Operations Professional Certificate Examination",
+                    "short_description": "ayylmao",
+                    "availability": "Archived",
+                    "pacing_type": "self_paced",
+                    "seats": [
+                        {
+                            "type": "professional",
+                            "price": "500.00",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "upgrade_deadline_override": None,
+                            "credit_provider": None,
+                            "credit_hours": None,
+                            "sku": "0C1BF31",
+                            "bulk_sku": "668527E"
+                        }
+                    ],
+                    "start": "2017-09-07T00:00:00Z",
+                    # A none value here will cause the sanitization to remove the schedule blob
+                    "end": None,
+                }
+            ],
+            "uuid": "bbbf059e-b9fb-4ad7-a53e-4c6f85f47f4e",
+            "end_date": "2019-09-07T00:00:00Z",
+            "course_ends": "Future",
+            "entitlements": [],
+            "modified": "2023-07-10T04:29:38.934204Z",
+            "additional_information": None,
+            "course_run_keys": [
+                "course-v1:NYIF+BOPC.4x+3T2017",
+                "course-v1:NYIF+BOPC.4x+1T2017"
+            ],
+            "enrollment_url": "https://foobar.com"
+        }, action=IC_DELETE_ACTION)
+        assert transformed_delete_metadata['status'] == 'INACTIVE'
+        assert transformed_delete_metadata['schedule'] == []
 
     @ddt.data(
         (

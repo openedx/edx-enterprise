@@ -1932,6 +1932,15 @@ class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, 
         orphaned_content = OrphanedContentTransmissions.objects.first()
         assert orphaned_content.content_id == self.orphaned_content.content_id
 
+    @override_settings(ALLOW_ORPHANED_CONTENT_REMOVAL=True)
+    def test_orphaned_content_without_catalog_uuids(self):
+        self.orphaned_content.enterprise_customer_catalog_uuid = None
+        self.orphaned_content.save()
+        assert not OrphanedContentTransmissions.objects.all()
+        call_command('mark_orphaned_content_metadata_audits')
+        num_orphaned_content = OrphanedContentTransmissions.objects.count()
+        assert num_orphaned_content == 1
+
 
 @mark.django_db
 @ddt.ddt

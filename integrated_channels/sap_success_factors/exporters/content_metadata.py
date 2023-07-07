@@ -6,6 +6,7 @@ from logging import getLogger
 
 from django.utils.translation import gettext_lazy as _
 
+from enterprise.constants import IC_DELETE_ACTION
 from enterprise.utils import (
     get_advertised_course_run,
     get_closest_course_run,
@@ -52,12 +53,12 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         """
         return self.enterprise_configuration.provider_id
 
-    def transform_status(self, content_metadata_item):
+    def transform_for_action_status(self, _content_metadata_item, action):
         """
         Return the status of the content item.
         """
         # lets not overwrite something we've already tried to set INACTIVE
-        if content_metadata_item.get('status') == 'INACTIVE':
+        if action == IC_DELETE_ACTION:
             return 'INACTIVE'
         else:
             return 'ACTIVE'
