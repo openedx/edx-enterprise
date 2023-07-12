@@ -209,7 +209,7 @@ class Consent(TimeStampedModel):
         null=False,
         help_text=_("Name of the user whose consent state is stored.")
     )
-    granted = models.NullBooleanField(help_text=_("Whether consent is granted."))
+    granted = models.BooleanField(null=True, help_text=_("Whether consent is granted."))
 
     @property
     def _exists(self):
