@@ -59,6 +59,10 @@ fix: fixing name of table used by model fetching method
 --------
 chore: more orphaned content transmission logging
 
+[4.0.0]
+-------
+feat!: upgraded to Node v18, added .nvmrc and updated workflows.
+
 [3.67.0]
 --------
 fix: compare lowered input email address to lowered auth user record email address during bulk enrollment.
