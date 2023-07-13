@@ -5,7 +5,6 @@ Database models for enterprise.
 import collections
 import itertools
 import json
-import os
 from decimal import Decimal
 from urllib.parse import urljoin
 from uuid import UUID, uuid4
@@ -196,43 +195,23 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
     auth_org_id = models.CharField(
-        "Third Party Auth Org ID:",
         max_length=80, blank=True, null=True,
         help_text=(
-            "Enterprise customer's authentication ID "
-            "if leveraging a third party platform such as Auth0 for authentication."
+            "Enterprise Customer auth organization id"
         )
     )
-    active = models.BooleanField("Active admin portal", default=True)
+    active = models.BooleanField(default=True)
     country = CountryField(null=True)
     hide_course_original_price = models.BooleanField(
-        "Hide course price on learning platform",
         default=False,
         help_text=_(
-            "Hides course price on learning platform course confirmation screen."
+            "Specify whether display the course original price on enterprise course landing page or not."
         )
     )
     history = HistoricalRecords()
-
-    def get_default_site(self):
-        """
-        Get default site id to use when creating a new EnterpriseCustomer model.
-        The default value depending on what environment the person is in.
-        In production, it should be 'courses.edx.org'.
-        It stage it should be 'courses.stage.edx.org'.
-        """
-        ENVIRONMENT = os.getenv('DJANGO_ENVIRONMENT', 'development')
-        if ENVIRONMENT == 'production':
-            value = 'courses.edx.org'
-        else:
-            value = 'courses.stage.edx.org'
-        site, __ = Site.objects.get_or_create(domain=value, name=value)
-        return site.id
-
     site = models.ForeignKey(
         Site,
         related_name="enterprise_customers",
-        default=get_default_site,
         on_delete=models.deletion.CASCADE
     )
 
@@ -244,44 +223,41 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     enable_data_sharing_consent = models.BooleanField(
-        "Activate data sharing consent prompt",
         default=False,
         help_text=_(
-            "Enables data sharing consent prompt for learners each time they enroll in a course. "
-            "If left unchecked, the prompt will not appear and relevant data will not be shared."
+            "Specifies whether data sharing consent is enabled or disabled "
+            "for learners signing in through this enterprise customer. If "
+            "disabled, consent will not be requested, and eligible data will "
+            "not be shared."
         )
     )
 
     enforce_data_sharing_consent = models.CharField(
-        "Data sharing consent enforcement:",
         max_length=25,
         blank=False,
         choices=DATA_SHARING_CONSENT_CHOICES,
         default=AT_ENROLLMENT,
         help_text=_(
-            "Setting to either require learners to accept data sharing consent at course enrollment, "
-            "or through an external process."
+            "Specifies whether data sharing consent is optional, is required "
+            "at login, or is required at enrollment."
         )
     )
 
     enable_audit_enrollment = models.BooleanField(
-        "Enable audit enrollment for learning platform learners",
         default=False,
         help_text=_(
-            "Allows learners enrolling through learning platforms to select the audit track."
+            "Specifies whether the audit track enrollment option will be displayed in the course enrollment view."
         )
     )
 
     enable_audit_data_reporting = models.BooleanField(
-        "Enable audit enrollment data reporting for learning platform learners",
         default=False,
         help_text=_(
-            "Enables transmission of audit enrollment data from learning platform learners."
+            "Specifies whether to pass-back audit track enrollment data through an integrated channel."
         )
     )
 
     replace_sensitive_sso_username = models.BooleanField(
-        "Replace sensitive SSO username",
         default=False,
         help_text=_(
             "Specifies whether to replace the display of potentially sensitive SSO usernames "
@@ -302,92 +278,90 @@ class EnterpriseCustomer(TimeStampedModel):
         EnterpriseCustomerType,
         verbose_name=_('Customer Type'),
         default=get_default_customer_type,
-        on_delete=models.CASCADE
+        help_text=_(
+            'Specifies enterprise customer type.'
+        ), on_delete=models.CASCADE
     )
 
     enable_portal_code_management_screen = models.BooleanField(
-        "Display code management screen",
         default=False,
+        help_text=_("Specifies whether to allow access to the code management screen in the admin portal.")
     )
 
     enable_portal_reporting_config_screen = models.BooleanField(
-        "Display enterprise reporting page",
         default=False,
-        help_text=_("Enables the scheduled reporting configurations screen on the administrator portal.")
+        help_text=_("Specifies whether to allow access to the reporting configurations screen in the admin portal.")
     )
 
     enable_portal_subscription_management_screen = models.BooleanField(
-        "Display subscription management screen",
         default=False,
+        help_text=_("Specifies whether to allow access to the subscription management screen in the admin portal.")
     )
 
     enable_portal_saml_configuration_screen = models.BooleanField(
-        "Display SSO configuration screen",
         default=False,
-        help_text=_("Enables the Single Sign On (SSO) configuration screen on the administrator portal. ")
+        help_text=_("Specifies whether to allow access to the saml configuration screen in the admin portal")
     )
 
     enable_universal_link = models.BooleanField(
-        "Display universal link settings",
         default=False,
+        help_text=_(
+            "Specifies whether universal link generation is enabled for customer. "
+            "Managed via admin portal settings UI."
+        )
     )
 
     enable_browse_and_request = models.BooleanField(
-        "Display browse and request management settings",
         default=False,
+        help_text=_(
+            "Specifies whether browse and request is enabled for this customer. "
+            "Managed via admin portal settings UI."
+        )
     )
 
     enable_learner_portal = models.BooleanField(
-        default=True,
-        help_text=_("Automatically enabled. If unchecked, learners won't have access to the learner portal.")
+        default=False,
+        help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
     )
 
     enable_learner_portal_offers = models.BooleanField(
-        "Enable learner credit in the learner portal",
+        "Enable Learner Credit in the Learner Portal",
         default=False,
-        help_text=_("Specifies whether enterprise offers will be made known to learners in the learner portal "
-                    "This only applies to customers with “offers”, the old version of learner credit.")
+        help_text=_("Specifies whether enterprise offers will be made known to learners in the learner portal.")
     )
 
     enable_portal_learner_credit_management_screen = models.BooleanField(
-        "Display learner credit management screen",
         default=False,
+        help_text=_("Specifies whether to allow access to the learner credit management screen in the admin portal.")
     )
 
     hide_labor_market_data = models.BooleanField(
-        "Hide labor market data on skill features",
         default=False,
-        help_text=_('Hides labor market data from learners (populated by features using Lightcast integration). ')
+        help_text=_("Specifies whether the labor market data should be made known to the learner in learner portal.")
     )
 
     enable_integrated_customer_learner_portal_search = models.BooleanField(
-        "Allow course discovery within the learner portal",
+        "Enable learner portal search for LMS customers",
         default=True,
         help_text=_(
-            "Automatically enabled. "
-            "If unchecked, the learners won't be able to search for a course on the learner portal."
+            "Checked by default. When unchecked, learners in organizations with an integrated channel (LMS) will "
+            "not see the \"Find a Course\" option in the enterprise learner portal."
         )
     )
 
     enable_analytics_screen = models.BooleanField(
-        "Display analytics page",
-        default=True,
-        help_text=_("Automatically enabled. "
-                    "Displays advanced analytics page on the administrator portal, "
-                    "which includes skill and labor market data.")
+        default=False,
+        help_text=_("Specifies whether to allow access to the analytics screen in the admin portal.")
     )
 
     enable_portal_lms_configurations_screen = models.BooleanField(
-        "Display learning platform configuration screen",
         default=False,
-        help_text=_("Enables the learning platform configuration screen on the administrator portal.")
+        help_text=_("Specifies whether to allow access to the external LMS configuration screen in the admin portal.")
     )
 
     enable_slug_login = models.BooleanField(
-        "Allow slug login for SSO",
         default=False,
-        help_text=_("Allows a learner to input customer slug to identify their org in the SSO process. "
-                    "Should be enabled for customers that leverage SSO.")
+        help_text=_("Specifies whether the learner should be able to login through enterprise's slug login")
     )
 
     enable_executive_education_2U_fulfillment = models.BooleanField(
@@ -396,10 +370,9 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     contact_email = models.EmailField(
-        "Customer admin contact email:",
         null=True,
         blank=True,
-        help_text=_("Email address presented on learner portal as public point of contact from customer organization.")
+        help_text=_("Email to be displayed as public point of contact for enterprise.")
     )
 
     default_contract_discount = models.DecimalField(
@@ -415,32 +388,29 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     default_language = models.CharField(
-        "Learner default language",
         max_length=25,
         null=True,
         blank=True,
         choices=AVAILABLE_LANGUAGES,
         default=None,
         help_text=_(
-            "Specifies the default language for learners of the organization."
+            "Specifies the default language for all the learners of this enterprise customer."
         )
     )
 
     sender_alias = models.CharField(
-        "Automated email sender alias",
         max_length=255,
         null=True,
         blank=True,
         help_text=_(
-            "Specifies the sender alias for automated emails from the edX system."
+            "Specifies enterprise customized sender alias."
         )
     )
 
     reply_to = models.EmailField(
-        "Customer “reply to” email:",
         null=True,
         blank=True,
-        help_text=_("Email address that will receive learner replies to automated edX emails.")
+        help_text=_("The email address where learner's reply to enterprise emails will be delivered.")
     )
 
     @property
