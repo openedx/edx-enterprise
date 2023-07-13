@@ -14,6 +14,7 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 from django.utils.http import http_date
 
+from enterprise.constants import IC_CREATE_ACTION
 from enterprise.utils import get_enterprise_worker_user
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from test_utils import APITest, factories
@@ -85,7 +86,10 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             )
             worker_user = get_enterprise_worker_user()
             exporter = self.config.get_content_metadata_exporter(worker_user)
-            transformed_item = exporter._transform_item(content_item.channel_metadata)  # pylint: disable=protected-access
+            transformed_item = exporter._transform_item(  # pylint: disable=protected-access
+                content_item.channel_metadata,
+                action=IC_CREATE_ACTION,
+            )
             content_item.channel_metadata = transformed_item
             content_item.save()
 
@@ -126,7 +130,10 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             )
             worker_user = get_enterprise_worker_user()
             exporter = self.config.get_content_metadata_exporter(worker_user)
-            transformed_item = exporter._transform_item(content_item.channel_metadata)  # pylint: disable=protected-access
+            transformed_item = exporter._transform_item(  # pylint: disable=protected-access
+                content_item.channel_metadata,
+                action=IC_CREATE_ACTION,
+            )
             content_item.channel_metadata = transformed_item
             content_item.save()
 
@@ -173,7 +180,10 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             )
             worker_user = get_enterprise_worker_user()
             exporter = self.config.get_content_metadata_exporter(worker_user)
-            transformed_item = exporter._transform_item(content_item.channel_metadata)  # pylint: disable=protected-access
+            transformed_item = exporter._transform_item(  # pylint: disable=protected-access
+                content_item.channel_metadata,
+                action=IC_CREATE_ACTION,
+            )
             content_item.channel_metadata = transformed_item
             content_item.save()
 
@@ -211,7 +221,10 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             )
             worker_user = get_enterprise_worker_user()
             exporter = self.config.get_content_metadata_exporter(worker_user)
-            transformed_item = exporter._transform_item(content_item.channel_metadata)  # pylint: disable=protected-access
+            transformed_item = exporter._transform_item(  # pylint: disable=protected-access
+                content_item.channel_metadata,
+                action=IC_CREATE_ACTION,
+            )
             content_item.channel_metadata = transformed_item
             content_item.save()
 

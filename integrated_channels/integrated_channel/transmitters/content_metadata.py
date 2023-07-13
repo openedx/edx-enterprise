@@ -136,7 +136,7 @@ class ContentMetadataTransmitter(Transmitter):
             self.enterprise_configuration.channel_code()
         )
 
-        # If we're deleting, fetch all orphaned, uneresolved content transmissions
+        # If we're deleting, fetch all orphaned, unresolved content transmissions
         is_delete_action = action_name == 'delete'
         if is_delete_action:
             OrphanedContentTransmissions = apps.get_model(

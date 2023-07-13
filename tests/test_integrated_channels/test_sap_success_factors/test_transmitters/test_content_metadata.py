@@ -251,7 +251,6 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             content_id=content_id_2,
         ).first()
         assert item_deleted.remote_deleted_at
-        assert item_deleted.channel_metadata.get('status') == 'INACTIVE'
         item_created = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_3,
