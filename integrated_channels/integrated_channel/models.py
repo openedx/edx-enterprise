@@ -251,12 +251,16 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
         customer_catalog_uuids = enterprise_customer_catalogs.values_list('uuid', flat=True)
+
+        non_existent_catalogs_filter = Q(enterprise_customer_catalog_uuid__in=customer_catalog_uuids)
+        null_catalogs_filter = Q(enterprise_customer_catalog_uuid__isnull=True)
+
         return ContentMetadataItemTransmission.objects.filter(
             integrated_channel_code=self.channel_code(),
             enterprise_customer=self.enterprise_customer,
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
-        ).exclude(enterprise_customer_catalog_uuid__in=customer_catalog_uuids)
+        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)
 
     def update_content_synced_at(self, action_happened_at, was_successful):
         """

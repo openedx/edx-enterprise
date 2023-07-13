@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.69.1]
+--------
+fix: content metadata exporter sanitizing content to delete
+
 [3.69.0]
 --------
 refactor: Replaced the deprecated `NullBooleanField` with `BooleanField(null=True)`

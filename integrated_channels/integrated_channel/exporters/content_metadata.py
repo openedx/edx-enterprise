@@ -14,7 +14,14 @@ from django.conf import settings
 from django.db.models import Q
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.constants import EXEC_ED_CONTENT_DESCRIPTION_TAG, EXEC_ED_COURSE_TYPE, TRANSMISSION_MARK_CREATE
+from enterprise.constants import (
+    EXEC_ED_CONTENT_DESCRIPTION_TAG,
+    EXEC_ED_COURSE_TYPE,
+    IC_CREATE_ACTION,
+    IC_DELETE_ACTION,
+    IC_UPDATE_ACTION,
+    TRANSMISSION_MARK_CREATE,
+)
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 from integrated_channels.utils import generate_formatted_log, truncate_item_dicts
@@ -445,7 +452,19 @@ class ContentMetadataExporter(Exporter):
         ordered_and_chunked_orphaned_content = orphaned_content.order_by('created')[:max_set_count]
         return ordered_and_chunked_orphaned_content
 
-    # pylint: disable=too-many-statements
+    def _sanitize_and_set_item_metadata(self, item, metadata, action):
+        """
+        Helper method to sanitize and set the metadata of an audit record according to
+        the provided action being performed on the item.
+        """
+        metadata_transformed_for_exec_ed = self._transform_exec_ed_content(metadata)
+        transformed_item = self._transform_item(metadata_transformed_for_exec_ed, action=action)
+
+        item.channel_metadata = transformed_item
+        item.content_title = transformed_item.get('title')
+        item.content_last_changed = transformed_item.get('content_last_modified')
+        item.save()
+
     def export(self, **kwargs):
         """
         Export transformed content metadata if there has been an update to the consumer's catalogs
@@ -454,7 +473,7 @@ class ContentMetadataExporter(Exporter):
             self.enterprise_customer.enterprise_customer_catalogs.all()
 
         # a maximum number of changes/payloads to export at once
-        # default to something huge to simplifly logic, the max system int size
+        # default to something huge to simplify logic, the max system int size
         max_payload_count = kwargs.get('max_payload_count', sys.maxsize)
 
         self._log_info(
@@ -492,48 +511,37 @@ class ContentMetadataExporter(Exporter):
             self._log_info(f'diff items_to_update: {items_to_update}')
             self._log_info(f'diff items_to_delete: {items_to_delete}')
 
-            # We only need to fetch content metadata if there are items to update or create
-            if items_to_create or items_to_update:
-                items_create_keys = list(items_to_create.keys())
-                items_update_keys = list(items_to_update.keys())
-                content_keys_filter = items_create_keys + items_update_keys
+            content_keys_filter = list(items_to_create.keys()) + list(items_to_update.keys()) + \
+                list(items_to_delete.keys())
+            if content_keys_filter:
                 content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                     self.enterprise_customer,
                     [enterprise_customer_catalog],
                     content_keys_filter,
                 )
-                for item in content_metadata_items:
-                    key = get_content_metadata_item_id(item)
+                key_to_content_metadata_mapping = {
+                    get_content_metadata_item_id(item): item for item in content_metadata_items
+                }
+            for key, item in items_to_create.items():
+                self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_CREATE_ACTION)
+                # Sanity check
+                item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
+                item.save()
 
-                    # Ensure executive education content is properly tagged before transforming the content to
-                    # the channel specific, expected form
-                    item = self._transform_exec_ed_content(item)
+                create_payload[key] = item
+            for key, item in items_to_update.items():
+                self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_UPDATE_ACTION)
+                # Sanity check
+                item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
+                item.save()
 
-                    # transform the content metadata into the channel specific format
-                    transformed_item = self._transform_item(item)
-                    if key in items_create_keys:
-                        existing_record = items_to_create.get(key)
-                        existing_record.channel_metadata = transformed_item
-                        existing_record.content_title = item.get('title')
-                        existing_record.content_last_changed = item.get('content_last_modified')
-                        # Sanity check
-                        existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
-                        existing_record.save()
-                        create_payload[key] = existing_record
-                    elif key in items_update_keys:
-                        existing_record = items_to_update.get(key)
-                        existing_record.content_title = item.get('title')
-                        # Sanity check
-                        existing_record.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
-                        existing_record.save()
-                        # Intentionally setting the channel_metadata and content_last_changed
-                        # fields post-save to clarify what data has been transmitted
-                        # and so that untransmitted courses will get picked up again in subsequent runs
-                        existing_record.content_last_changed = item.get('content_last_modified')
-                        existing_record.channel_metadata = transformed_item
-                        update_payload[key] = existing_record
-
+                update_payload[key] = item
             for key, item in items_to_delete.items():
+                self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_DELETE_ACTION)
+                # Sanity check
+                item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
+                item.save()
+
                 delete_payload[key] = item
 
         # If we're not at the max payload count, we can check for orphaned content and shove it in the delete payload
@@ -586,7 +594,7 @@ class ContentMetadataExporter(Exporter):
                 content['full_description'] = EXEC_ED_CONTENT_DESCRIPTION_TAG + description
         return content
 
-    def _transform_item(self, content_metadata_item):
+    def _transform_item(self, content_metadata_item, action):
         """
         Transform the provided content metadata item to the schema expected by the integrated channel.
         """
@@ -596,25 +604,21 @@ class ContentMetadataExporter(Exporter):
             # Look for transformer functions defined on subclasses.
             # Favor content type-specific functions.
             transformer = (
-                getattr(
-                    self,
-                    'transform_{content_type}_{edx_data_schema_key}'.format(
-                        content_type=content_metadata_type,
-                        edx_data_schema_key=edx_data_schema_key
-                    ),
-                    None
-                )
+                getattr(self, f'transform_{content_metadata_type}_{edx_data_schema_key}', None)
                 or
-                getattr(
-                    self,
-                    'transform_{edx_data_schema_key}'.format(
-                        edx_data_schema_key=edx_data_schema_key
-                    ),
-                    None
-                )
+                getattr(self, f'transform_{edx_data_schema_key}', None)
             )
+
+            transformer_for_action = (
+                getattr(self, f'transform_for_action_{content_metadata_type}_{edx_data_schema_key}', None)
+                or
+                getattr(self, f'transform_for_action_{edx_data_schema_key}', None)
+            )
+
             if transformer:
                 transformed_value = transformer(content_metadata_item)
+            elif transformer_for_action:
+                transformed_value = transformer_for_action(content_metadata_item, action)
             else:
                 # The concrete subclass does not define an override for the given field,
                 # so just use the data key to index the content metadata item dictionary.
