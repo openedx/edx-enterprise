@@ -63,6 +63,7 @@ from enterprise.utils import (
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
     clean_html_for_template_rendering,
+    ensure_course_enrollment_is_allowed,
     filter_audit_course_modes,
     format_price,
     get_active_course_runs,
@@ -1223,6 +1224,14 @@ class HandleConsentEnrollment(View):
                 'granted': True
             },
         )
+        
+        # Ensure we have CourseEnrollmentAllowed objects are created before
+        # attempting enrollment if the course is marked invite-only
+        ensure_course_enrollment_is_allowed(
+            course_id,
+            request.user.email,
+            enrollment_api_client
+        )
 
         audit_modes = getattr(
             settings,
@@ -1677,12 +1686,15 @@ class CourseEnrollmentView(NonAtomicView):
             enterprise_customer.uuid,
             course_id=course_id
         ).consent_required()
+
         if not selected_course_mode.get('premium') and not user_consent_needed:
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
             # client and redirect the learner to LMS courseware page.
             succeeded = True
             client = EnrollmentApiClient()
+            # Make sure a enrollment is allowed if the course is marked "invite-only"
+            ensure_course_enrollment_is_allowed(course_id, request.user.email, client)
             try:
                 client.enroll_user_in_course(
                     request.user.username,
@@ -1773,6 +1785,14 @@ class CourseEnrollmentView(NonAtomicView):
                     )
                 )
             )
+
+        # Setup CourseEnrollmentAllowed object before starting the LMS flow
+        # for invite-only courses
+        ensure_course_enrollment_is_allowed(
+            course_id,
+            request.user.email,
+            EnrollmentApiClient()
+        )
 
         # For the premium course modes (Verified, Prof Ed) where DSC is
         # not required, redirect the enterprise learner to the ecommerce
