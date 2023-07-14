@@ -15,6 +15,7 @@ from django.forms.models import model_to_dict
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
+    ensure_course_enrollment_is_allowed,
     get_default_invite_key_expiration_date,
     get_idiff_list,
     get_platform_logo_url,
@@ -546,3 +547,23 @@ class TestUtils(unittest.TestCase):
         else:
             self.assertEqual(zero_modes, processed_zero_modes)
             self.assertEqual(non_zero_modes, processed_non_zero_modes)
+
+    @ddt.data(True, False)
+    @mock.patch("enterprise.utils.CourseEnrollmentAllowed")
+    def test_ensure_course_enrollment_is_allowed(self, invite_only, mock_cea):
+        """
+        Test that the CourseEnrollmentAllowed is created only for the "invite_only" courses.
+        """
+        self.create_user()
+        mock_enrollment_api = mock.Mock()
+        mock_enrollment_api.get_course_details.return_value = {"invite_only": invite_only}
+
+        ensure_course_enrollment_is_allowed("test-course-id", self.user.email, mock_enrollment_api)
+
+        if invite_only:
+            mock_cea.objects.update_or_create.assert_called_with(
+                course_id="test-course-id",
+                email=self.user.email
+            )
+        else:
+            mock_cea.objects.update_or_create.assert_not_called()
