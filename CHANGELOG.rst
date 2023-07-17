@@ -15,6 +15,14 @@ Change Log
 
 Unreleased
 ----------
+[4.0.1]
+--------
+chore: upgrade course_enrollment from audit to verified
+
+[4.0.0]
+--------
+chore: upgrade node from version 16 to version 18
+
 [3.69.1]
 --------
 fix: content metadata exporter sanitizing content to delete
