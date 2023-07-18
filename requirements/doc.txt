@@ -32,7 +32,7 @@ babel==2.12.1
     #   sphinx
 beautifulsoup4==4.12.2
     # via pydata-sphinx-theme
-billiard==3.6.4.0
+billiard==4.1.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -40,7 +40,7 @@ bleach[css]==6.0.0
     # via
     #   -r requirements/test-master.txt
     #   readme-renderer
-celery==5.0.4
+celery==5.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
@@ -60,7 +60,7 @@ charset-normalizer==2.0.12
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-click==7.1.2
+click==8.1.5
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -213,7 +213,7 @@ jsondiff==2.0.0
     # via -r requirements/test-master.txt
 jsonfield==3.1.0
     # via -r requirements/test-master.txt
-kombu==5.2.4
+kombu==5.3.1
     # via
     #   -r requirements/test-master.txt
     #   celery
