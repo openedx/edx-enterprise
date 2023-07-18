@@ -208,6 +208,59 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert len(responses.calls) == 2
 
     @responses.activate
+    def test_rate_limited_errors(self):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        expected_error_json = {'Error': 'An error has occurred.'}
+        expected_error_status_code = 503
+        responses.add(
+            responses.POST,
+            self.url_base + self.completion_status_api_path,
+            json=expected_error_json,
+            status=expected_error_status_code
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+
+        try:
+            sap_client.create_course_completion(self.user_type, json.dumps(self.completion_payload))
+        except ClientError as client_error:
+            assert False, f" Should not raise client error in case of rate limiting {client_error}"
+        assert len(responses.calls) == 2
+
+    @responses.activate
+    @ddt.data('create_content_metadata', 'update_content_metadata', 'delete_content_metadata')
+    def test_content_import_rate_limited(self, client_method):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        expected_error_json = {'Error': 'An error has occurred.'}
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            json=expected_error_json,
+            status=503
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        try:
+            getattr(sap_client, client_method)(self.content_payload)
+        except ClientError as client_error:
+            assert False, f" Should not raise client error in case of rate limiting {client_error}"
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
+        assert responses.calls[1].request.url == self.url_base + self.course_api_path
+
+    @responses.activate
     @ddt.data('create_content_metadata', 'update_content_metadata', 'delete_content_metadata')
     def test_content_import(self, client_method):
         responses.add(
