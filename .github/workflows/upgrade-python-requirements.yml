@@ -10,15 +10,24 @@ on:
          required: true
          default: 'master'
 jobs:
-   call-upgrade-python-requirements-workflow:
-    with:
-       branch: ${{ github.event.inputs.branch }}
-       team_reviewers: "business-enterprise-team"
-       email_address: enterprise-integrations@edx.org 
-       send_success_notification: false
-    secrets:
-       requirements_bot_github_token: ${{ secrets.REQUIREMENTS_BOT_GITHUB_TOKEN }}
-       requirements_bot_github_email: ${{ secrets.REQUIREMENTS_BOT_GITHUB_EMAIL }}
-       edx_smtp_username: ${{ secrets.EDX_SMTP_USERNAME }}
-       edx_smtp_password: ${{ secrets.EDX_SMTP_PASSWORD }}
+  checkout:
     uses: openedx/.github/.github/workflows/upgrade-python-requirements.yml@master
+    with:
+      branch: ${{ github.event.inputs.branch }}
+      team_reviewers: "business-enterprise-team"
+      email_address: enterprise-integrations@edx.org
+      send_success_notification: false
+    secrets:
+      requirements_bot_github_token: ${{ secrets.REQUIREMENTS_BOT_GITHUB_TOKEN }}
+      requirements_bot_github_email: ${{ secrets.REQUIREMENTS_BOT_GITHUB_EMAIL }}
+      edx_smtp_username: ${{ secrets.EDX_SMTP_USERNAME }}
+      edx_smtp_password: ${{ secrets.EDX_SMTP_PASSWORD }}
+  call-upgrade-python-requirements-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install pip-tools
+        run: python -m pip install pip-tools
+      - name: upgrade python requirements
+        uses: openedx/.github/.github/workflows/upgrade-python-requirements.yml@master
+
+
