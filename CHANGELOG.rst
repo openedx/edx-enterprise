@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.8]
+-------
+fix: reorganizing enterprise customer django admin portal
+
 [4.0.7]
 --------
 feat: add grade value to learner transmission for degreed v2
