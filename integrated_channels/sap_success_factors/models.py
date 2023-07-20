@@ -121,7 +121,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         verbose_name="Additional Locales",
         help_text=_("A comma-separated list of additional locales.")
     )
-    show_course_price = models.BooleanField(default=False)
     transmit_total_hours = models.BooleanField(
         default=False,
         verbose_name=_("Transmit Total Hours"),
