@@ -47,6 +47,21 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         'price': 'price',
     }
 
+    def _apply_delete_transformation(self, metadata):
+        """
+        Specific transformations required for "deleting" a course on a SAP external service.
+        """
+        # Applying the metadata payload update to "delete" the course on SAP instances
+        metadata['status'] = 'INACTIVE'
+
+        # Sanity check as we've seen issues with schedule structure
+        metadata_schedule = metadata.get('schedule')
+        if metadata_schedule:
+            schedule = metadata_schedule[0]
+            if not schedule.get('startDate') or not schedule.get('endDate'):
+                metadata['schedule'] = []
+        return metadata
+
     def transform_provider_id(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Return the provider ID from the integrated channel configuration.
