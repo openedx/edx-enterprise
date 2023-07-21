@@ -454,7 +454,7 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
                     }
                 ]
             },
-            0.0,
+            0,
             True
         ),
         (
@@ -472,7 +472,7 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
                     }
                 ]
             },
-            0.0,
+            0,
             False
         ),
         (
@@ -489,13 +489,13 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
                     }
                 ]
             },
-            0.0,
+            0,
             True
         ),
         (
             # no course run data, return 0
             {'course_runs': []},
-            0.0,
+            0,
             True
         )
     )
@@ -518,7 +518,7 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
         }
         assert exporter.transform_level_type(content_metadata_item) == 'Introductory'
 
-    def test_transform_video(self):
+    def test_transform_video_url(self):
         exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
         content_metadata_item = {
             "content_type": "course",
@@ -528,4 +528,4 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
                 "image": None
             },
         }
-        assert exporter.transform_level_type(content_metadata_item) == 'Introductory'
+        assert exporter.transform_video_url(content_metadata_item) == 'http://www.youtube.com/watch?v=3_yD_cEKoCk'
