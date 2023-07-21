@@ -166,9 +166,9 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             assert not item_not_created.remote_created_at
 
     @responses.activate
-    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.delete_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
     def test_transmit_content_metadata_updates_records(
         self,
         create_content_metadata_mock,
@@ -240,25 +240,32 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             content_id_2: past_transmission_to_delete
         }
         transmitter.transmit(create_payload, update_payload, delete_payload)
+        item_deleted = ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            content_id=content_id_2,
+        ).first()
+        assert item_deleted.remote_deleted_at
+
+        assert delete_content_metadata_mock.call_count == 1
+        assert create_content_metadata_mock.call_count == 0
+        assert update_content_metadata_mock.call_count == 0
+
+        transmitter.transmit(create_payload, update_payload, {})
         item_updated = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_1,
         ).first()
         assert item_updated.remote_updated_at
         assert item_updated.channel_metadata == new_channel_metadata
-        item_deleted = ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
-            content_id=content_id_2,
-        ).first()
-        assert item_deleted.remote_deleted_at
+        assert update_content_metadata_mock.call_count == 1
+
+        transmitter.transmit(create_payload, {}, {})
         item_created = ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             content_id=content_id_3,
         ).first()
         assert item_created.remote_created_at
         assert create_content_metadata_mock.call_count == 1
-        assert update_content_metadata_mock.call_count == 1
-        assert delete_content_metadata_mock.call_count == 1
 
     @responses.activate
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_content_metadata')
