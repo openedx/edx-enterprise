@@ -7,7 +7,7 @@ from logging import getLogger
 
 from enterprise.utils import (
     get_advertised_course_run,
-    get_closest_course_run, 
+    get_closest_course_run,
     get_course_run_duration_info,
     is_course_run_active
 )
@@ -181,27 +181,26 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
 
         return price
 
-    def transform_currency(self, content_metadata_item):
+    def transform_currency(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Return the price unit type.
         """
         return 'USD'
-    
-    def transform_level_type(self, content_metadata_item): # pylint: disable=unused-argument
+
+    def transform_level_type(self, content_metadata_item):
         """
         Return the level type of the content item.
         """
         return content_metadata_item.get('level_type')
-    
-    def transform_video_url(self, content_metadata_item): # pylint: disable=unused-argument
+
+    def transform_video_url(self, content_metadata_item):
         """
         Return the video url of the content item.
         """
         video_url = None
         video = content_metadata_item.get('video')
-        
+
         if video:
             video_url = video.get('src')
 
         return video_url
-        
