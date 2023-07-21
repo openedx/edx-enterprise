@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.6]
+--------
+fix: variable name conflicts in monthly_impact_report command
+
 [4.0.5]
 --------
 feat: incorporate additional attributes to degreed v2
