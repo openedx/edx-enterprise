@@ -1544,11 +1544,10 @@ def get_fake_catalog_diff_create_w_program():
     Returns a fake response from the EnterpriseCatalogApiClient.get_catalog_diff where two courses and a program are to
     be created
     """
-    # items_to_create, items_to_delete, matched_items
     return [
-        {'content_key': FAKE_COURSE_RUN_TO_CREATE['key']},
-        {'content_key': FAKE_COURSE_TO_CREATE['key']},
-        {'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1_TO_CREATE['uuid']}
+        {'content_key': FAKE_COURSE_RUN['key']},
+        {'content_key': FAKE_COURSE['key']},
+        {'content_key': FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']}
     ], [], []
 
 

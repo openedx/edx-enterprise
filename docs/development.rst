@@ -146,7 +146,7 @@ as an example) and run migrations:
 
 .. code-block:: bash
 
-    $ paver update_db
+    $ make migrate
     # Or use a more down-to-the-root command (replace aws with your version of config)
     $ ./manage.py lms migrate --settings=devstack
 

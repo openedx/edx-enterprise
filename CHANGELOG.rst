@@ -15,9 +15,30 @@ Change Log
 
 Unreleased
 ----------
-[3.68.2]
+
+[4.0.3]
 --------
 feat: remove content transmission audits without a catalog uuid
+
+[4.0.2]
+-------
+fix: removing items to delete dependency on the catalog service
+
+[4.0.1]
+--------
+chore: upgrade course_enrollment from audit to verified
+
+[4.0.0]
+--------
+chore: upgrade node from version 16 to version 18
+
+[3.69.1]
+--------
+fix: content metadata exporter sanitizing content to delete
+
+[3.69.0]
+--------
+refactor: Replaced the deprecated `NullBooleanField` with `BooleanField(null=True)`
 
 [3.68.1]
 --------
@@ -54,6 +75,10 @@ fix: fixing name of table used by model fetching method
 [3.67.1]
 --------
 chore: more orphaned content transmission logging
+
+[4.0.0]
+-------
+feat!: upgraded to Node v18, added .nvmrc and updated workflows.
 
 [3.67.0]
 --------

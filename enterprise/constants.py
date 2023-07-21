@@ -204,6 +204,10 @@ HTTP_STATUS_STRINGS = {
     503: 'The server is temporarily unavailable.',
 }
 
+IC_CREATE_ACTION = 'create'
+IC_UPDATE_ACTION = 'update'
+IC_DELETE_ACTION = 'delete'
+
 
 class FulfillmentTypes:
     LICENSE = 'license'

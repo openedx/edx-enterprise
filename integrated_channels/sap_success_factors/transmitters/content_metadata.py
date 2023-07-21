@@ -19,16 +19,6 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             client=client
         )
 
-    def _transmit_action(self, content_metadata_item_map, client_method, action_name):
-        """
-        Set status to INACTIVE for items that should be deleted.
-        """
-        if action_name == 'delete':
-            for _, item in content_metadata_item_map.items():
-                item.channel_metadata['status'] = 'INACTIVE'
-                item.save()
-        return super()._transmit_action(content_metadata_item_map, client_method, action_name)
-
     def _prepare_items_for_transmission(self, channel_metadata_items):
         return {
             'ocnCourses': channel_metadata_items

@@ -17,6 +17,9 @@ MAINTAINER sre@edx.org
 
 # python3-pip; install pip to install application requirements.txt files
 
+# pkg-config
+#     mysqlclient>=2.2.0 requires this (https://github.com/PyMySQL/mysqlclient/issues/620)
+
 # libmysqlclient-dev; to install header files needed to use native C implementation for
 # MySQL-python for performance gains.
 
@@ -33,6 +36,7 @@ RUN apt-get update && apt-get -qy install --no-install-recommends \
  python3.8 \
  python3-pip \
  python3.8-venv \
+ pkg-config \
  libmysqlclient-dev \
  libssl-dev \
  python3-dev \
@@ -80,7 +84,7 @@ RUN pip install nodeenv
 # Must be done after Python requirements, since nodeenv is installed
 # via pip.
 # The node environment is already 'activated' because its .../bin was put on $PATH.
-RUN nodeenv /edx/app/nodeenv --node=16.15.1 --prebuilt
+RUN nodeenv /edx/app/nodeenv --node=18.15.0 --prebuilt
 
 RUN mkdir -p /edx/var/log
 

@@ -6,6 +6,7 @@ from logging import getLogger
 
 from django.utils.translation import gettext_lazy as _
 
+from enterprise.constants import IC_DELETE_ACTION
 from enterprise.utils import (
     get_advertised_course_run,
     get_closest_course_run,
@@ -46,18 +47,33 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         'price': 'price',
     }
 
+    def _apply_delete_transformation(self, metadata):
+        """
+        Specific transformations required for "deleting" a course on a SAP external service.
+        """
+        # Applying the metadata payload update to "delete" the course on SAP instances
+        metadata['status'] = 'INACTIVE'
+
+        # Sanity check as we've seen issues with schedule structure
+        metadata_schedule = metadata.get('schedule')
+        if metadata_schedule:
+            schedule = metadata_schedule[0]
+            if not schedule.get('startDate') or not schedule.get('endDate'):
+                metadata['schedule'] = []
+        return metadata
+
     def transform_provider_id(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Return the provider ID from the integrated channel configuration.
         """
         return self.enterprise_configuration.provider_id
 
-    def transform_status(self, content_metadata_item):
+    def transform_for_action_status(self, _content_metadata_item, action):
         """
         Return the status of the content item.
         """
         # lets not overwrite something we've already tried to set INACTIVE
-        if content_metadata_item.get('status') == 'INACTIVE':
+        if action == IC_DELETE_ACTION:
             return 'INACTIVE'
         else:
             return 'ACTIVE'

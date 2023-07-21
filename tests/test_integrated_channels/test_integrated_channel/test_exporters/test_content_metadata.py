@@ -17,6 +17,7 @@ from enterprise.constants import EXEC_ED_COURSE_TYPE
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
+from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
 from test_utils.factories import ContentMetadataItemTransmissionFactory
 from test_utils.fake_catalog_api import (
@@ -58,11 +59,123 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         }
         super().setUp()
 
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
-    def test_exporter_get_catalog_diff_works_with_orphaned_content(
+    def test_exporter_transforms_metadata_of_items_to_be_deleted(
         self,
         mock_get_catalog_diff,
+        mock_get_content_metadata,
     ):
+        """
+        Test that the exporter properly transforms the metadata of items that are to be deleted.
+        """
+        sap_config = factories.SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+        )
+
+        # Existing audit metadata, needs to be updated/transformed.
+        # According to the SAP channel, upon deletion we need to set each content metadata blob's status to `INACTIVE`.
+        # Additionally, according to the mocked catalog metadata, the transformed mappings of the record need ot be
+        # updated. We will assert that both of these transformations are applied by the exporter.
+        channel_metadata = {
+            "courseID": "NYIF+BOPC.4x",
+            "providerID": "EDX",
+            # This status should be transformed to `INACTIVE` by the exporter
+            "status": "ACTIVE",
+            "title": [{
+                "locale": "English",
+                "value": "Brokerage Operations Professional Certificate Examination"
+            }],
+            "content": [
+                {
+                    "providerID": "EDX",
+                    "contentTitle": "Brokerage Operations Professional Certificate Examination",
+                    "contentID": "NYIF+BOPC.4x",
+                    "launchType": 3,
+                    "mobileEnabled": True,
+                }
+            ],
+            "schedule": [
+                {
+                    "startDate": "",
+                    "endDate": "",
+                    "active": False,
+                    "duration": "0 days"
+                }
+            ],
+            "price": [
+                {
+                    "currency": "USD",
+                    "value": 0.0
+                }
+            ]
+        }
+        content_id = "NYIF+BOPC.4x"
+        mock_metadata = {
+            "aggregation_key": "course:NYIF+BOPC.4x",
+            "content_type": "course",
+            "full_description": "ayylmao",
+            "key": content_id,
+            "title": "Brokerage Operations Professional Certificate Examination",
+            "course_runs": [
+                {
+                    "key": "course-v1:NYIF+BOPC.4x+3T2017",
+                    "uuid": "69b38e2f-e041-4634-b537-fc8d8e12c87e",
+                    "title": "Brokerage Operations Professional Certificate Examination",
+                    "short_description": "ayylmao",
+                    "availability": "Archived",
+                    "pacing_type": "self_paced",
+                    "seats": [
+                        {
+                            "type": "professional",
+                            "price": "500.00",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "upgrade_deadline_override": None,
+                            "credit_provider": None,
+                            "credit_hours": None,
+                            "sku": "0C1BF31",
+                            "bulk_sku": "668527E"
+                        }
+                    ],
+                    "start": "2017-09-07T00:00:00Z",
+                    # A none value here will cause the sanitization to remove the schedule blob
+                    "end": None,
+                }
+            ],
+            "uuid": "bbbf059e-b9fb-4ad7-a53e-4c6f85f47f4e",
+            "end_date": "2019-09-07T00:00:00Z",
+            "course_ends": "Future",
+            "entitlements": [],
+            "modified": "2023-07-10T04:29:38.934204Z",
+            "additional_information": None,
+            "course_run_keys": [
+                "course-v1:NYIF+BOPC.4x+3T2017",
+                "course-v1:NYIF+BOPC.4x+1T2017"
+            ],
+            "enrollment_url": "https://foobar.com"
+        }
+        # Create the transmission audit with the out of date channel metadata
+        transmission_audit = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id,
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=sap_config.id,
+            integrated_channel_code=sap_config.channel_code(),
+            channel_metadata=channel_metadata,
+            remote_created_at=datetime.datetime.utcnow(),
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+        )
+        # Mock the catalog service to return the metadata of the content to be deleted
+        mock_get_content_metadata.return_value = [mock_metadata]
+        # Mock the catalog service to return the content to be deleted in the delete payload
+        mock_get_catalog_diff.return_value = ([], [{'content_key': transmission_audit.content_id}], [])
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', sap_config)
+        _, _, delete_payload = exporter.export()
+        assert delete_payload[transmission_audit.content_id].channel_metadata.get('schedule') == []
+        assert delete_payload[transmission_audit.content_id].channel_metadata.get('status') == 'INACTIVE'
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_exporter_get_catalog_diff_works_with_orphaned_content(self, mock_get_catalog_diff):
         """
         Test that the exporter _get_catalog_diff function properly marks orphaned content that is requested to be
         created by another, linked catalog as resolved.
@@ -149,6 +262,14 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
+        ContentMetadataExporter.DATA_TRANSFORM_MAPPING = {
+            'contentId': 'key',
+            'title': 'title',
+            'description': 'description',
+            'imageUrl': 'image',
+            'url': 'enrollment_url',
+            'language': 'content_language'
+        }
         mock_get_content_metadata.return_value = get_fake_content_metadata()
         mock_get_catalog_diff.return_value = get_fake_catalog_diff_create()
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -160,8 +281,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert mock_get_content_metadata.get(FAKE_COURSE_RUN['key'])
 
         for key in create_payload:
-            assert key in ['edX+DemoX', 'course-v1:edX+DemoX+Demo_Course', FAKE_UUIDS[3]]
-
+            assert key in [FAKE_COURSE['key'], FAKE_COURSE_RUN.get('key'), FAKE_UUIDS[3]]
         cmit = ContentMetadataItemTransmission.objects.get(content_id=FAKE_COURSE['key'])
         assert cmit.content_title is not None
 
@@ -244,13 +364,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_delete_items = [{'content_key': FAKE_COURSE_RUN['key']}]
         mock_matched_items = []
         mock_get_catalog_diff.return_value = mock_create_items, mock_delete_items, mock_matched_items
+        mock_get_content_metadata.return_value = [FAKE_COURSE_RUN]
         exporter = ContentMetadataExporter('fake-user', self.config)
         create_payload, update_payload, delete_payload = exporter.export()
         assert not create_payload
         assert not update_payload
         assert delete_payload.get(FAKE_COURSE_RUN['key']) == past_transmission
-        # Sanity check
-        mock_get_content_metadata.assert_not_called()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
@@ -329,6 +448,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             [FAKE_COURSE_RUN['key']]
         )
 
+        mock_api_client.return_value.get_catalog_diff.reset_mock()
+        mock_api_client.return_value.get_content_metadata.reset_mock()
+
         past_transmission_to_update.content_last_changed = datetime.datetime.now()
         past_transmission_to_update.save()
 
@@ -353,8 +475,10 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert not update_payload
         assert not create_payload
         assert delete_payload.get(FAKE_COURSE_RUN2['key']) == past_transmission_to_delete
-        assert mock_api_client.return_value.get_catalog_diff.call_count == 2
-        assert mock_api_client.return_value.get_content_metadata.call_count == 1
+        # get_catalog_diff is called once per customer catalog
+        assert mock_api_client.return_value.get_catalog_diff.call_count == 1
+        # get_content_metadata isn't called for the item to delete
+        assert mock_api_client.return_value.get_content_metadata.call_count == 0
 
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_content_exporter_update_not_needed_export(self, mock_api_client):
@@ -417,9 +541,10 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         ``ContentMetadataExporter``'s ``export`` raises an exception when DATA_TRANSFORM_MAPPING is invalid.
         """
-        content_id = 'course:DemoX'
+        fake_content_metadata = get_fake_content_metadata()
+        content_id = fake_content_metadata[0].get('key')
 
-        mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata()
+        mock_api_client.return_value.get_content_metadata.return_value = fake_content_metadata
         mock_create_items = [{'content_key': content_id}]
         mock_delete_items = {}
         mock_matched_items = []
