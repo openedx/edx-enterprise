@@ -57,6 +57,7 @@ jobs:
         pip install --no-binary mysqlclient mysqlclient
         pip uninstall -y xmlsec
         pip install --no-binary xmlsec xmlsec
+        pip install backports.zoneinfo
     - name: Initiate Services
       run: |
         sudo /etc/init.d/mysql start

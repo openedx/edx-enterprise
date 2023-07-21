@@ -18,7 +18,6 @@ from enterprise.constants import (
     EXEC_ED_CONTENT_DESCRIPTION_TAG,
     EXEC_ED_COURSE_TYPE,
     IC_CREATE_ACTION,
-    IC_DELETE_ACTION,
     IC_UPDATE_ACTION,
     TRANSMISSION_MARK_CREATE,
 )
@@ -511,8 +510,7 @@ class ContentMetadataExporter(Exporter):
             self._log_info(f'diff items_to_update: {items_to_update}')
             self._log_info(f'diff items_to_delete: {items_to_delete}')
 
-            content_keys_filter = list(items_to_create.keys()) + list(items_to_update.keys()) + \
-                list(items_to_delete.keys())
+            content_keys_filter = list(items_to_create.keys()) + list(items_to_update.keys())
             if content_keys_filter:
                 content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                     self.enterprise_customer,
@@ -537,11 +535,9 @@ class ContentMetadataExporter(Exporter):
 
                 update_payload[key] = item
             for key, item in items_to_delete.items():
-                self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_DELETE_ACTION)
-                # Sanity check
-                item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
+                metadata = self._apply_delete_transformation(item.channel_metadata)
+                item.channel_metadata = metadata
                 item.save()
-
                 delete_payload[key] = item
 
         # If we're not at the max payload count, we can check for orphaned content and shove it in the delete payload
@@ -581,6 +577,14 @@ class ContentMetadataExporter(Exporter):
 
         # collections of ContentMetadataItemTransmission objects
         return create_payload, update_payload, delete_payload
+
+    def _apply_delete_transformation(self, metadata):
+        """
+        Base implementation of a delete transformation method. This method is designed to be a NOOP as it is up to the
+        individual channel to define specific transformations for the channel metadata payload of transmissions
+        intended for deletion.
+        """
+        return metadata
 
     def _transform_exec_ed_content(self, content):
         """

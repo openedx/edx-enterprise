@@ -105,7 +105,7 @@ check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platfo
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: check_pins  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+upgrade: requirements check_pins  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/doc.txt requirements/doc.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test.txt requirements/test.in

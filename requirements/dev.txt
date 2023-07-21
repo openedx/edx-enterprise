@@ -55,7 +55,7 @@ beautifulsoup4==4.12.2
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
-billiard==3.6.4.0
+billiard==4.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -69,7 +69,7 @@ bleach[css]==6.0.0
     #   readme-renderer
 build==0.10.0
     # via pip-tools
-celery==5.0.4
+celery==5.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
@@ -101,7 +101,7 @@ charset-normalizer==2.0.12
     #   -r requirements/test.txt
     #   requests
     #   snowflake-connector-python
-click==7.1.2
+click==8.1.5
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -389,7 +389,7 @@ jsonfield==3.1.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-kombu==5.2.4
+kombu==5.3.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -460,7 +460,7 @@ pillow==9.5.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pip-tools==6.10.0
+pip-tools==7.0.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/dev.in
