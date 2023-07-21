@@ -1225,13 +1225,14 @@ class HandleConsentEnrollment(View):
             },
         )
         
-        # Ensure we have CourseEnrollmentAllowed objects are created before
-        # attempting enrollment if the course is marked invite-only
-        ensure_course_enrollment_is_allowed(
-            course_id,
-            request.user.email,
-            enrollment_api_client
-        )
+        if enterprise_customer.allow_enrollment_in_invite_only_courses:
+            # Ensure we have CourseEnrollmentAllowed objects are created before
+            # attempting enrollment if the course is marked invite-only
+            ensure_course_enrollment_is_allowed(
+                course_id,
+                request.user.email,
+                enrollment_api_client
+            )
 
         audit_modes = getattr(
             settings,
@@ -1693,8 +1694,9 @@ class CourseEnrollmentView(NonAtomicView):
             # client and redirect the learner to LMS courseware page.
             succeeded = True
             client = EnrollmentApiClient()
-            # Make sure a enrollment is allowed if the course is marked "invite-only"
-            ensure_course_enrollment_is_allowed(course_id, request.user.email, client)
+            if enterprise_customer.allow_enrollment_in_invite_only_courses:
+                # Make sure a enrollment is allowed if the course is marked "invite-only"
+                ensure_course_enrollment_is_allowed(course_id, request.user.email, client)
             try:
                 client.enroll_user_in_course(
                     request.user.username,
@@ -1786,13 +1788,14 @@ class CourseEnrollmentView(NonAtomicView):
                 )
             )
 
-        # Setup CourseEnrollmentAllowed object before starting the LMS flow
-        # for invite-only courses
-        ensure_course_enrollment_is_allowed(
-            course_id,
-            request.user.email,
-            EnrollmentApiClient()
-        )
+        if enterprise_customer.allow_enrollment_in_invite_only_courses:
+            # Setup CourseEnrollmentAllowed object before starting the LMS flow
+            # for invite-only courses
+            ensure_course_enrollment_is_allowed(
+                course_id,
+                request.user.email,
+                EnrollmentApiClient()
+            )
 
         # For the premium course modes (Verified, Prof Ed) where DSC is
         # not required, redirect the enterprise learner to the ecommerce
