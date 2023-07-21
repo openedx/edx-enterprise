@@ -221,9 +221,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
         response_status_code, response_body = self._call_post_with_session(url, serialized_data)
 
-        # since the SAP endpoint is rate limited, we don't want to generate unnecessary
-        # log noise if we run into that 503 error (https://2u-internal.atlassian.net/browse/ENT-7054)
-        if response_status_code >= 400 and response_status_code != 503:
+        if response_status_code >= 400:
             LOGGER.error(
                 generate_formatted_log(
                     self.enterprise_configuration.channel_code(),
@@ -268,7 +266,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             }
         )
 
-        if response.status_code >= 400 and response.status_code != 503:
+        if response.status_code >= 400:
             raise ClientError(
                 'SAPSuccessFactorsAPIClient request failed with status {status_code}: {message}'.format(
                     status_code=response.status_code,
@@ -287,7 +285,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         """
         self._create_session()
         response = self.session.post(url, data=payload)
-        if response.status_code >= 400 and response.status_code != 503:
+        if response.status_code >= 400:
             LOGGER.error(
                 generate_formatted_log(
                     self.enterprise_configuration.channel_code(),
