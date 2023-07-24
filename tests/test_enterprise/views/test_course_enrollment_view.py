@@ -1618,6 +1618,59 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             fetch_redirect_response=False
         )
 
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.get_data_sharing_consent')
+    @mock.patch('enterprise.utils.Registry')
+    @mock.patch('enterprise.utils.CourseEnrollmentAllowed')
+    def test_post_course_specific_enrollment_view_invite_only_courses(
+            self,
+            mock_cea,
+            registry_mock,
+            get_data_sharing_consent_mock,
+            enrollment_api_client_mock,
+            catalog_api_client_mock,
+            *args
+    ):
+        course_id = self.demo_course_id
+        get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=False))
+        setup_course_catalog_api_client_mock(catalog_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enrollment_api_client_mock.return_value.get_course_details.return_value = {"invite_only": True}
+
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=False,
+            enable_audit_enrollment=False,
+            allow_enrollment_in_invite_only_courses=True,
+        )
+        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+        self._login()
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_run_enrollment_page',
+                args=[enterprise_customer.uuid, course_id],
+            )
+        )
+        enterprise_catalog_uuid = str(enterprise_customer.enterprise_customer_catalogs.first().uuid)
+
+        response = self.client.post(
+            course_enrollment_page_url, {
+                'course_mode': 'professional',
+                'catalog': enterprise_catalog_uuid
+
+            }
+        )
+
+        mock_cea.objects.update_or_create.assert_called_with(
+            course_id=course_id,
+            email=self.user.email
+        )
+        assert response.status_code == 302
+
     @mock.patch('enterprise.api_client.ecommerce.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')

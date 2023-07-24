@@ -1224,15 +1224,6 @@ class HandleConsentEnrollment(View):
                 'granted': True
             },
         )
-        
-        if enterprise_customer.allow_enrollment_in_invite_only_courses:
-            # Ensure we have CourseEnrollmentAllowed objects are created before
-            # attempting enrollment if the course is marked invite-only
-            ensure_course_enrollment_is_allowed(
-                course_id,
-                request.user.email,
-                enrollment_api_client
-            )
 
         audit_modes = getattr(
             settings,
@@ -1688,15 +1679,16 @@ class CourseEnrollmentView(NonAtomicView):
             course_id=course_id
         ).consent_required()
 
+        client = EnrollmentApiClient()
+        if enterprise_customer.allow_enrollment_in_invite_only_courses:
+            # Make sure a enrollment is allowed if the course is marked "invite-only"
+            ensure_course_enrollment_is_allowed(course_id, request.user.email, client)
+
         if not selected_course_mode.get('premium') and not user_consent_needed:
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
             # client and redirect the learner to LMS courseware page.
             succeeded = True
-            client = EnrollmentApiClient()
-            if enterprise_customer.allow_enrollment_in_invite_only_courses:
-                # Make sure a enrollment is allowed if the course is marked "invite-only"
-                ensure_course_enrollment_is_allowed(course_id, request.user.email, client)
             try:
                 client.enroll_user_in_course(
                     request.user.username,
@@ -1741,60 +1733,12 @@ class CourseEnrollmentView(NonAtomicView):
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
         if user_consent_needed:
-            # For the audit course modes (audit, honor) or for the premium
-            # course modes (Verified, Prof Ed) where DSC is required, redirect
-            # the learner to course specific DSC with enterprise UUID from
-            # there the learner will be directed to the ecommerce flow after
-            # providing DSC.
-            query_string_params = {
-                'course_mode': selected_course_mode_name,
-            }
-            if enterprise_catalog_uuid:
-                query_string_params.update({'catalog': enterprise_catalog_uuid})
-
-            next_url = '{handle_consent_enrollment_url}?{query_string}'.format(
-                handle_consent_enrollment_url=reverse(
-                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-                ),
-                query_string=urlencode(query_string_params)
-            )
-
-            failure_url = reverse('enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id])
-            if request.META['QUERY_STRING']:
-                # Preserve all querystring parameters in the request to build
-                # failure url, so that learner views the same enterprise course
-                # enrollment page (after redirect) as for the first time.
-                # Since this is a POST view so use `request.META` to get
-                # querystring instead of `request.GET`.
-                # https://docs.djangoproject.com/en/1.11/ref/request-response/#django.http.HttpRequest.META
-                failure_url = '{course_enrollment_url}?{query_string}'.format(
-                    course_enrollment_url=reverse(
-                        'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
-                    ),
-                    query_string=request.META['QUERY_STRING']
-                )
-
-            return redirect(
-                '{grant_data_sharing_url}?{params}'.format(
-                    grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
-                    params=urlencode(
-                        {
-                            'next': next_url,
-                            'failure_url': failure_url,
-                            'enterprise_customer_uuid': enterprise_customer.uuid,
-                            'course_id': course_id,
-                        }
-                    )
-                )
-            )
-
-        if enterprise_customer.allow_enrollment_in_invite_only_courses:
-            # Setup CourseEnrollmentAllowed object before starting the LMS flow
-            # for invite-only courses
-            ensure_course_enrollment_is_allowed(
+            return self._handle_user_consent_flow(
+                request,
+                enterprise_customer,
+                enterprise_catalog_uuid,
                 course_id,
-                request.user.email,
-                EnrollmentApiClient()
+                selected_course_mode_name
             )
 
         # For the premium course modes (Verified, Prof Ed) where DSC is
@@ -1808,6 +1752,56 @@ class CourseEnrollmentView(NonAtomicView):
             )
 
         return redirect(premium_flow)
+
+    def _handle_user_consent_flow(self, request, enterprise_customer, enterprise_catalog_uuid, course_id, course_mode):
+        """
+        For the audit course modes (audit, honor) or for the premium
+        course modes (Verified, Prof Ed) where DSC is required, redirect
+        the learner to course specific DSC with enterprise UUID from
+        there the learner will be directed to the ecommerce flow after
+        providing DSC.
+        """
+        query_string_params = {
+            'course_mode': course_mode,
+        }
+        if enterprise_catalog_uuid:
+            query_string_params.update({'catalog': enterprise_catalog_uuid})
+
+        next_url = '{handle_consent_enrollment_url}?{query_string}'.format(
+            handle_consent_enrollment_url=reverse(
+                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+            ),
+            query_string=urlencode(query_string_params)
+        )
+
+        failure_url = reverse('enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id])
+        if request.META['QUERY_STRING']:
+            # Preserve all querystring parameters in the request to build
+            # failure url, so that learner views the same enterprise course
+            # enrollment page (after redirect) as for the first time.
+            # Since this is a POST view so use `request.META` to get
+            # querystring instead of `request.GET`.
+            # https://docs.djangoproject.com/en/1.11/ref/request-response/#django.http.HttpRequest.META
+            failure_url = '{course_enrollment_url}?{query_string}'.format(
+                course_enrollment_url=reverse(
+                    'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                ),
+                query_string=request.META['QUERY_STRING']
+            )
+
+        return redirect(
+            '{grant_data_sharing_url}?{params}'.format(
+                grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
+                params=urlencode(
+                    {
+                        'next': next_url,
+                        'failure_url': failure_url,
+                        'enterprise_customer_uuid': enterprise_customer.uuid,
+                        'course_id': course_id,
+                    }
+                )
+            )
+        )
 
     @method_decorator(enterprise_login_required)
     @method_decorator(force_fresh_session)

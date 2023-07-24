@@ -487,7 +487,7 @@ class EnterpriseCustomer(TimeStampedModel):
     allow_enrollment_in_invite_only_courses = models.BooleanField(
         default=False,
         help_text=_(
-            "Specifies if learners are allowed to enroll into courses marked as 'invitation-only', " 
+            "Specifies if learners are allowed to enroll into courses marked as 'invitation-only', "
             "when they attempt to enroll from the landing page."
         )
     )
