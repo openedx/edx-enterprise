@@ -93,6 +93,31 @@ def _log_batch_task_finish(task_name, channel_code, job_user_id,
 
 @shared_task
 @set_code_owner_attribute
+def remove_null_catalog_transmission_audits():
+    """
+    Task to remove content transmission audit records that do not contain a catalog UUID.
+    """
+    start = time.time()
+
+    _log_batch_task_start('remove_null_catalog_transmission_audits', None, None, None)
+
+    deleted_null_catalog_uuids = ContentMetadataItemTransmission.objects.filter(
+        enterprise_customer_catalog_uuid=None
+    ).delete()
+
+    duration_seconds = time.time() - start
+    _log_batch_task_finish(
+        'remove_null_catalog_transmission_audits',
+        channel_code=None,
+        job_user_id=None,
+        integrated_channel_full_config=None,
+        duration_seconds=duration_seconds,
+        extra_message=f"{deleted_null_catalog_uuids[0]} transmission audits with no catalog UUIDs removed"
+    )
+
+
+@shared_task
+@set_code_owner_attribute
 def remove_duplicate_transmission_audits():
     """
     Task to remove duplicate transmission audits, keeping the most recently modified one.
