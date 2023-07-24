@@ -15,6 +15,14 @@ Change Log
 
 Unreleased
 ----------
+[4.0.4]
+--------
+feat: remove content transmission audits without a catalog uuid
+
+[4.0.3]
+-------
+fix: changing sap transmit metadata flow to account for rate limiting
+
 [4.0.2]
 -------
 fix: removing items to delete dependency on the catalog service

@@ -2012,3 +2012,35 @@ class TestUpdateConfigLastErroredAt(unittest.TestCase, EnterpriseMockMixin):
         assert moodle_config.last_sync_errored_at == old_timestamp
         assert moodle_config.last_content_sync_errored_at == old_timestamp
         assert moodle_config.last_learner_sync_errored_at is None
+
+
+@mark.django_db
+@ddt.ddt
+class TestRemoveNullCatalogTransmissionAuditsManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``remove_null_catalog_transmission_audits`` management command.
+    """
+    def setUp(self):
+        self.enterprise_customer_1 = factories.EnterpriseCustomerFactory(
+            name='Wonka Factory',
+        )
+        self.enterprise_customer_2 = factories.EnterpriseCustomerFactory(
+            name='Hershey LLC',
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer_1,
+            enterprise_customer_catalog_uuid=None
+        )
+        factories.ContentMetadataItemTransmissionFactory(
+            enterprise_customer=self.enterprise_customer_2,
+            enterprise_customer_catalog_uuid="d9efab41-5e09-4094-977a-96313b3dca08"
+        )
+        super().setUp()
+
+    def test_normal_run(self):
+        assert ContentMetadataItemTransmission.objects.all().count() == 2
+        call_command('remove_null_catalog_transmission_audits')
+        assert ContentMetadataItemTransmission.objects.all().count() == 1
+        assert ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer_catalog_uuid=None
+        ).count() == 0
