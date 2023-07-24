@@ -395,6 +395,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_audit_data_reporting",
             "replace_sensitive_sso_username",
             "hide_course_original_price",
+            "allow_enrollment_in_invite_only_courses",
             "enable_portal_code_management_screen",
             "enable_portal_subscription_management_screen",
             "enable_learner_portal",
