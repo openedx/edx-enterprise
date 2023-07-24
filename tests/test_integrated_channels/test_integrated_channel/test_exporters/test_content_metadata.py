@@ -477,8 +477,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert delete_payload.get(FAKE_COURSE_RUN2['key']) == past_transmission_to_delete
         # get_catalog_diff is called once per customer catalog
         assert mock_api_client.return_value.get_catalog_diff.call_count == 1
-        # get_content_metadata is called once for the single item to delete
-        assert mock_api_client.return_value.get_content_metadata.call_count == 1
+        # get_content_metadata isn't called for the item to delete
+        assert mock_api_client.return_value.get_content_metadata.call_count == 0
 
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_content_exporter_update_not_needed_export(self, mock_api_client):
