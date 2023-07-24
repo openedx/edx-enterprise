@@ -1661,7 +1661,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             course_enrollment_page_url, {
                 'course_mode': 'professional',
                 'catalog': enterprise_catalog_uuid
-
             }
         )
 
