@@ -11,7 +11,6 @@ from pytest import mark
 
 from django.conf import settings
 from django.forms.models import model_to_dict
-from django.test import override_settings
 
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
@@ -101,12 +100,8 @@ class TestUtils(unittest.TestCase):
     @mock.patch('enterprise.utils.CourseEnrollmentError', new_callable=lambda: StubException)
     @mock.patch('enterprise.utils.CourseUserGroup', new_callable=lambda: StubModel)
     @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
-    @mock.patch('enterprise.utils.lms_enroll_user_in_course')
-    @ddt.data(True, False)
     def test_enroll_subsidy_users_in_courses_fails(
         self,
-        setting_value,
-        mock_enroll_user_in_course,
         mock_update_or_create_enrollment,
         mock_model,
         mock_error,
@@ -115,50 +110,40 @@ class TestUtils(unittest.TestCase):
         Test that `enroll_subsidy_users_in_courses` properly handles failure cases where something goes wrong with the
         user enrollment.
         """
-        if setting_value:
-            mock_customer_admin_enroll_user_with_status = mock_update_or_create_enrollment
-        else:
-            mock_customer_admin_enroll_user_with_status = mock_enroll_user_in_course
-
-        with override_settings(ENABLE_ENTERPRISE_BACKEND_EMET_AUTO_UPGRADE_ENROLLMENT_MODE=setting_value):
-            self.create_user()
-            ent_customer = factories.EnterpriseCustomerFactory(
-                uuid=FAKE_UUIDS[0],
-                name="test_enterprise"
-            )
-            mock_model.DoesNotExist = Exception
-            mock_customer_admin_enroll_user_with_status.side_effect = [mock_error('mocked error')]
-            licensed_users_info = [{
-                'email': self.user.email,
-                'course_run_key': 'course-key-v1',
-                'course_mode': 'verified',
-                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
-            }]
-            result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
-            self.assertEqual(
-                {
-                    "successes": [],
-                    "failures": [
-                        {
-                            "user_id": self.user.id,
-                            "email": self.user.email,
-                            "course_run_key": "course-key-v1",
-                        }
-                    ],
-                    "pending": [],
-                },
-                result,
-            )
+        self.create_user()
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        mock_model.DoesNotExist = Exception
+        mock_update_or_create_enrollment.side_effect = [mock_error('mocked error')]
+        licensed_users_info = [{
+            'email': self.user.email,
+            'course_run_key': 'course-key-v1',
+            'course_mode': 'verified',
+            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+        }]
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                "successes": [],
+                "failures": [
+                    {
+                        "user_id": self.user.id,
+                        "email": self.user.email,
+                        "course_run_key": "course-key-v1",
+                    }
+                ],
+                "pending": [],
+            },
+            result,
+        )
 
     @mock.patch('enterprise.utils.CourseEnrollmentError', new_callable=lambda: StubException)
     @mock.patch('enterprise.utils.CourseUserGroup', new_callable=lambda: StubModel)
     @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
-    @mock.patch('enterprise.utils.lms_enroll_user_in_course')
-    @ddt.data(True, False)
     def test_enroll_subsidy_users_in_courses_partially_fails(
         self,
-        setting_value,
-        mock_enroll_user_in_course,
         mock_update_or_create_enrollment,
         mock_model,
         mock_error,
@@ -167,294 +152,262 @@ class TestUtils(unittest.TestCase):
         Test that `enroll_subsidy_users_in_courses` properly handles partial failure states and still creates
         enrollments for the users that succeed.
         """
-        if setting_value:
-            mock_customer_admin_enroll_user_with_status = mock_update_or_create_enrollment
-        else:
-            mock_customer_admin_enroll_user_with_status = mock_enroll_user_in_course
-        with override_settings(ENABLE_ENTERPRISE_BACKEND_EMET_AUTO_UPGRADE_ENROLLMENT_MODE=setting_value):
-            self.create_user()
-            failure_user = factories.UserFactory()
+        self.create_user()
+        failure_user = factories.UserFactory()
 
-            ent_customer = factories.EnterpriseCustomerFactory(
-                uuid=FAKE_UUIDS[0],
-                name="test_enterprise"
-            )
-            factories.EnterpriseCustomerUserFactory(
-                user_id=self.user.id,
-                enterprise_customer=ent_customer,
-            )
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=ent_customer,
+        )
 
-            licensed_users_info = [
-                {
+        licensed_users_info = [
+            {
+                'email': self.user.email,
+                'course_run_key': 'course-key-v1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+            },
+            {
+                'email': failure_user.email,
+                'course_run_key': 'course-key-v1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+            }
+        ]
+        mock_model.DoesNotExist = Exception
+        mock_update_or_create_enrollment.side_effect = [True, mock_error('mocked error'), None]
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [{
+                    'user_id': self.user.id,
                     'email': self.user.email,
                     'course_run_key': 'course-key-v1',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
-                },
-                {
+                    'user': self.user,
+                    'created': True,
+                    'activation_link': None,
+                    'enterprise_fulfillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
+                }],
+                'failures': [{
+                    'user_id': failure_user.id,
                     'email': failure_user.email,
                     'course_run_key': 'course-key-v1',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
-                }
-            ]
-            mock_model.DoesNotExist = Exception
-            mock_customer_admin_enroll_user_with_status.side_effect = [True, mock_error('mocked error'), None]
-            result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
-            self.assertEqual(
-                {
-                    'pending': [],
-                    'successes': [{
-                        'user_id': self.user.id,
-                        'email': self.user.email,
-                        'course_run_key': 'course-key-v1',
-                        'user': self.user,
-                        'created': True,
-                        'activation_link': None,
-                        'enterprise_fulfillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
-                    }],
-                    'failures': [{
-                        'user_id': failure_user.id,
-                        'email': failure_user.email,
-                        'course_run_key': 'course-key-v1',
-                    }],
-                },
-                result
-            )
-            self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
+                }],
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
 
     @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
-    @mock.patch('enterprise.utils.lms_enroll_user_in_course')
-    @ddt.data(True, False)
     def test_enroll_subsidy_users_in_courses_succeeds(
         self,
-        setting_value,
-        mock_enroll_user_in_course,
         mock_update_or_create_enrollment,
     ):
         """
         Test that users that already exist are enrolled by enroll_subsidy_users_in_courses and returned under the
         `succeeded` field.
         """
-        if setting_value:
-            mock_customer_admin_enroll_user = mock_update_or_create_enrollment
-        else:
-            mock_customer_admin_enroll_user = mock_enroll_user_in_course
-        with override_settings(ENABLE_ENTERPRISE_BACKEND_EMET_AUTO_UPGRADE_ENROLLMENT_MODE=setting_value):
-            self.create_user()
+        self.create_user()
 
-            ent_customer = factories.EnterpriseCustomerFactory(
-                uuid=FAKE_UUIDS[0],
-                name="test_enterprise"
-            )
-            factories.EnterpriseCustomerUserFactory(
-                user_id=self.user.id,
-                enterprise_customer=ent_customer,
-            )
-            licensed_users_info = [{
-                'email': self.user.email,
-                'course_run_key': 'course-key-v1',
-                'course_mode': 'verified',
-                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
-            }]
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=ent_customer,
+        )
+        licensed_users_info = [{
+            'email': self.user.email,
+            'course_run_key': 'course-key-v1',
+            'course_mode': 'verified',
+            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+        }]
 
-            mock_customer_admin_enroll_user.return_value = True
-            result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
-            self.assertEqual(
-                {
-                    'pending': [],
-                    'successes': [{
-                        'user_id': self.user.id,
-                        'email': self.user.email,
-                        'course_run_key': 'course-key-v1',
-                        'user': self.user,
-                        'created': True,
-                        'activation_link': None,
-                        'enterprise_fulfillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
-                    }],
-                    'failures': []
-                },
-                result
-            )
-            self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
+        mock_update_or_create_enrollment.return_value = True
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [{
+                    'user_id': self.user.id,
+                    'email': self.user.email,
+                    'course_run_key': 'course-key-v1',
+                    'user': self.user,
+                    'created': True,
+                    'activation_link': None,
+                    'enterprise_fulfillment_source_uuid': LicensedEnterpriseCourseEnrollment.objects.first().uuid,
+                }],
+                'failures': []
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
 
     @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
-    @mock.patch('enterprise.utils.lms_enroll_user_in_course')
-    @ddt.data(True, False)
     def test_enroll_subsidy_users_in_courses_with_user_id_succeeds(
         self,
-        setting_value,
-        mock_enroll_user_in_course,
         mock_update_or_create_enrollment,
     ):
         """
         Test that users that already exist are enrolled by enroll_subsidy_users_in_courses and returned under the
         ``succeeded`` field.  Specifically test when a ``user_id`` is supplied.
         """
-        if setting_value:
-            mock_customer_admin_enroll_user = mock_update_or_create_enrollment
-        else:
-            mock_customer_admin_enroll_user = mock_enroll_user_in_course
-        with override_settings(ENABLE_ENTERPRISE_BACKEND_EMET_AUTO_UPGRADE_ENROLLMENT_MODE=setting_value):
-            self.create_user()
-            another_user = factories.UserFactory(is_active=True)
+        self.create_user()
+        another_user = factories.UserFactory(is_active=True)
 
-            ent_customer = factories.EnterpriseCustomerFactory(
-                uuid=FAKE_UUIDS[0],
-                name="test_enterprise"
-            )
-            factories.EnterpriseCustomerUserFactory(
-                user_id=self.user.id,
-                enterprise_customer=ent_customer,
-            )
-            licensed_users_info = [
-                {
-                    # Should succeed with only a user_id supplied.
-                    'user_id': self.user.id,
-                    'course_run_key': 'course-key-1',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                },
-                {
-                    # Should succeed even with both a user_id and email supplied.
-                    'user_id': another_user.id,
-                    'email': another_user.email,
-                    'course_run_key': 'course-key-2',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                },
-            ]
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=ent_customer,
+        )
+        licensed_users_info = [
+            {
+                # Should succeed with only a user_id supplied.
+                'user_id': self.user.id,
+                'course_run_key': 'course-key-1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+            {
+                # Should succeed even with both a user_id and email supplied.
+                'user_id': another_user.id,
+                'email': another_user.email,
+                'course_run_key': 'course-key-2',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+        ]
 
-            mock_customer_admin_enroll_user.return_value = True
+        mock_update_or_create_enrollment.return_value = True
 
-            result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
-            self.assertEqual(
-                {
-                    'pending': [],
-                    'successes': [
-                        {
-                            'user_id': self.user.id,
-                            'email': self.user.email,
-                            'course_run_key': 'course-key-1',
-                            'user': self.user,
-                            'created': True,
-                            'activation_link': None,
-                            'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
-                                enterprise_customer_user__user_id=self.user.id
-                            ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
-                        },
-                        {
-                            'user_id': another_user.id,
-                            'email': another_user.email,
-                            'course_run_key': 'course-key-2',
-                            'user': another_user,
-                            'created': True,
-                            'activation_link': None,
-                            'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
-                                enterprise_customer_user__user_id=another_user.id
-                            ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
-                        }
-                    ],
-                    'failures': [],
-                },
-                result
-            )
-            self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 2)
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [
+                    {
+                        'user_id': self.user.id,
+                        'email': self.user.email,
+                        'course_run_key': 'course-key-1',
+                        'user': self.user,
+                        'created': True,
+                        'activation_link': None,
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=self.user.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
+                    },
+                    {
+                        'user_id': another_user.id,
+                        'email': another_user.email,
+                        'course_run_key': 'course-key-2',
+                        'user': another_user,
+                        'created': True,
+                        'activation_link': None,
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=another_user.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
+                    }
+                ],
+                'failures': [],
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 2)
 
     @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
-    @mock.patch('enterprise.utils.lms_enroll_user_in_course')
-    @ddt.data(True, False)
     def test_enroll_subsidy_users_in_courses_user_identifier_failures(
         self,
-        setting_value,
-        mock_enroll_user_in_course,
         mock_update_or_create_enrollment,
 
     ):
         """
         """
-        if setting_value:
-            mock_customer_admin_enroll_user = mock_update_or_create_enrollment
-        else:
-            mock_customer_admin_enroll_user = mock_enroll_user_in_course
-        with override_settings(ENABLE_ENTERPRISE_BACKEND_EMET_AUTO_UPGRADE_ENROLLMENT_MODE=setting_value):
-            self.create_user()
-            another_user = factories.UserFactory(is_active=True)
+        self.create_user()
+        another_user = factories.UserFactory(is_active=True)
 
-            ent_customer = factories.EnterpriseCustomerFactory(
-                uuid=FAKE_UUIDS[0],
-                name="test_enterprise"
-            )
-            factories.EnterpriseCustomerUserFactory(
-                user_id=self.user.id,
-                enterprise_customer=ent_customer,
-            )
-            licensed_users_info = [
-                {
-                    # Should fail due to the user_id not matching the email of the same user.
-                    'user_id': self.user.id,
-                    'email': another_user.email,
-                    'course_run_key': 'course-key-1',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                },
-                {
-                    # Should fail due to the user_id not matching the email of the same user.  Special case where the
-                    # user_id does not exist.
-                    'user_id': self.user.id + 1000,
-                    'email': self.user.email,
-                    'course_run_key': 'course-key-2',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                },
-                {
-                    # Should fail due to the user_id not matching the email of the same user.  Special case where the
-                    # email does not exist.
-                    'user_id': self.user.id,
-                    'email': 'wrong+' + self.user.email,
-                    'course_run_key': 'course-key-3',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                },
-                {
-                    # Should fail due to providing neither `user_id` nor `email`.
-                    'course_run_key': 'course-key-4',
-                    'course_mode': 'verified',
-                    'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
-                },
-            ]
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=ent_customer,
+        )
+        licensed_users_info = [
+            {
+                # Should fail due to the user_id not matching the email of the same user.
+                'user_id': self.user.id,
+                'email': another_user.email,
+                'course_run_key': 'course-key-1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+            {
+                # Should fail due to the user_id not matching the email of the same user.  Special case where the
+                # user_id does not exist.
+                'user_id': self.user.id + 1000,
+                'email': self.user.email,
+                'course_run_key': 'course-key-2',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+            {
+                # Should fail due to the user_id not matching the email of the same user.  Special case where the
+                # email does not exist.
+                'user_id': self.user.id,
+                'email': 'wrong+' + self.user.email,
+                'course_run_key': 'course-key-3',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+            {
+                # Should fail due to providing neither `user_id` nor `email`.
+                'course_run_key': 'course-key-4',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+        ]
 
-            mock_customer_admin_enroll_user.return_value = True
+        mock_update_or_create_enrollment.return_value = True
 
-            result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
-            self.assertEqual(
-                {
-                    'pending': [],
-                    'successes': [],
-                    'failures': [
-                        {
-                            'user_id': self.user.id,
-                            'email': another_user.email,
-                            'course_run_key': 'course-key-1',
-                        },
-                        {
-                            'user_id': self.user.id + 1000,
-                            'email': self.user.email,
-                            'course_run_key': 'course-key-2',
-                        },
-                        {
-                            'user_id': self.user.id,
-                            'email': 'wrong+' + self.user.email,
-                            'course_run_key': 'course-key-3',
-                        },
-                        {
-                            'course_run_key': 'course-key-4',
-                        },
-                    ],
-                },
-                result
-            )
-            self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 0)
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [],
+                'failures': [
+                    {
+                        'user_id': self.user.id,
+                        'email': another_user.email,
+                        'course_run_key': 'course-key-1',
+                    },
+                    {
+                        'user_id': self.user.id + 1000,
+                        'email': self.user.email,
+                        'course_run_key': 'course-key-2',
+                    },
+                    {
+                        'user_id': self.user.id,
+                        'email': 'wrong+' + self.user.email,
+                        'course_run_key': 'course-key-3',
+                    },
+                    {
+                        'course_run_key': 'course-key-4',
+                    },
+                ],
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 0)
 
     def test_enroll_pending_licensed_users_in_courses_succeeds(self):
         """
