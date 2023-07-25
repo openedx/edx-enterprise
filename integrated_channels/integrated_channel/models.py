@@ -141,6 +141,13 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("Is this configuration in dry-run mode? (experimental)"),
     )
 
+    show_course_price = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("Displays course price"),
+    )
+
     transmission_chunk_size = models.IntegerField(
         default=500,
         help_text=_("The maximum number of data items to transmit to the integrated channel with each request.")

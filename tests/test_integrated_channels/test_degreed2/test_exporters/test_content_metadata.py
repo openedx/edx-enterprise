@@ -370,3 +370,162 @@ class TestDegreed2ContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin
             "advertised_course_run_uuid": "7d238cc5-88e4-4831-a28e-4193ae4b2618",
         }
         assert exporter.transform_obsolete(content_metadata_item) is False
+
+    @ddt.data(
+        (
+            # advertised course run has price, use it
+            {
+                "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
+                "course_runs": [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 100,
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    },
+                    {
+                        'uuid': '28e2d4c2-a020-4959-b461-6f879bbe1391',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 50,
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    }
+                ]
+            },
+            100,
+            True,
+        ),
+        (
+            # advertised course run has no price, fall back to another active course
+            {
+                "advertised_course_run_uuid": "dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f",
+                "course_runs": [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    },
+                    {
+                        'uuid': '28e2d4c2-a020-4959-b461-6f879bbe1391',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 50,
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    }
+                ]
+            },
+            50,
+            True,
+        ),
+        (
+            # no advertised course run, use active course run
+            {
+                "course_runs": [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True,
+                        'first_enrollable_paid_seat_price': 100
+                    }
+                ]
+            },
+            100,
+            True
+        ),
+        (
+            # no advertised course run and no active course run, return 0
+            {
+                'course_runs': [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'unpublished',
+                        'is_enrollable': False,
+                        'is_marketable': False,
+                        'first_enrollable_paid_seat_price': 100
+                    }
+                ]
+            },
+            0,
+            True
+        ),
+        (
+            # show_course_price false, return 0
+            {
+                'advertised_course_run_uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                'course_runs': [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True,
+                        'first_enrollable_paid_seat_price': 100
+                    }
+                ]
+            },
+            0,
+            False
+        ),
+        (
+            # no price data, return 0
+            {
+                'advertised_course_run_uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                'course_runs': [
+                    {
+                        'uuid': 'dd7bb3e4-56e9-4639-9296-ea9c2fb99c7f',
+                        'title': 'edX Demonstration Course',
+                        'status': 'published',
+                        'is_enrollable': True,
+                        'is_marketable': True
+                    }
+                ]
+            },
+            0,
+            True
+        ),
+        (
+            # no course run data, return 0
+            {'course_runs': []},
+            0,
+            True
+        )
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_price(self, course_run, expected_price, show_price):
+        """
+        Transforming a price of a current course run.
+        """
+        self.config.show_course_price = show_price
+        self.config.save()
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_price(course_run) == expected_price
+
+    def test_transform_level_type(self):
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        content_metadata_item = {
+            "content_type": "course",
+            "level_type": 'Introductory',
+        }
+        assert exporter.transform_level_type(content_metadata_item) == 'Introductory'
+
+    def test_transform_video_url(self):
+        exporter = Degreed2ContentMetadataExporter('fake-user', self.config)
+        content_metadata_item = {
+            "content_type": "course",
+            "video": {
+                "src": "http://www.youtube.com/watch?v=3_yD_cEKoCk",
+                "description": None,
+                "image": None
+            },
+        }
+        assert exporter.transform_video_url(content_metadata_item) == 'http://www.youtube.com/watch?v=3_yD_cEKoCk'

@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.5]
+--------
+feat: incorporate additional attributes to degreed v2
+
 [4.0.4]
 --------
 feat: remove content transmission audits without a catalog uuid

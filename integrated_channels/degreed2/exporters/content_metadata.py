@@ -5,7 +5,12 @@ Content metadata exporter for Degreed.
 
 from logging import getLogger
 
-from enterprise.utils import get_closest_course_run, get_course_run_duration_info
+from enterprise.utils import (
+    get_advertised_course_run,
+    get_closest_course_run,
+    get_course_run_duration_info,
+    is_course_run_active,
+)
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
     generate_formatted_log,
@@ -37,6 +42,10 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         'duration': 'duration',
         'duration-type': 'duration_type',
         'obsolete': 'obsolete',
+        'cost-units': 'price',
+        'cost-unit-type': 'currency',
+        'difficulty': 'level_type',
+        'video-url': 'video_url',
     }
 
     def transform_duration_type(self, content_metadata_item):  # pylint: disable=unused-argument
@@ -153,3 +162,45 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
         Always set obsolete to false to fix externally deleted courses.
         """
         return False
+
+    def transform_price(self, content_metadata_item):
+        """
+        Return the current course run's price.
+        """
+        price = 0
+
+        if self.enterprise_configuration.show_course_price:
+            advertised_course_run = get_advertised_course_run(content_metadata_item)
+            if advertised_course_run and 'first_enrollable_paid_seat_price' in advertised_course_run:
+                price = advertised_course_run.get('first_enrollable_paid_seat_price') or 0
+            else:
+                for course_run in content_metadata_item.get('course_runs', []):
+                    if 'first_enrollable_paid_seat_price' in course_run and is_course_run_active(course_run):
+                        price = course_run.get('first_enrollable_paid_seat_price') or 0
+                        break
+
+        return price
+
+    def transform_currency(self, content_metadata_item):  # pylint: disable=unused-argument
+        """
+        Return the price unit type.
+        """
+        return 'USD'
+
+    def transform_level_type(self, content_metadata_item):
+        """
+        Return the level type of the content item.
+        """
+        return content_metadata_item.get('level_type')
+
+    def transform_video_url(self, content_metadata_item):
+        """
+        Return the video url of the content item.
+        """
+        video_url = None
+        video = content_metadata_item.get('video')
+
+        if video:
+            video_url = video.get('src')
+
+        return video_url
