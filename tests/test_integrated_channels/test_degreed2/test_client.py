@@ -132,6 +132,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
                     "content-id-type": "externalId",
                     "content-type": "course",
                     "completed-at": NOW_TIMESTAMP_FORMATTED,
+                    "percentile": 80,
                 }
             }
         }
