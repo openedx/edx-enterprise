@@ -82,7 +82,7 @@ celery==5.3.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-certifi==2023.5.7
+certifi==2023.7.22
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -142,7 +142,7 @@ click-repl==0.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-code-annotations==1.3.0
+code-annotations==1.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -172,7 +172,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
 diff-cover==7.7.0
     # via -r requirements/test.txt
-dill==0.3.6
+dill==0.3.7
     # via pylint
 distlib==0.3.7
     # via virtualenv
@@ -200,7 +200,7 @@ django-cache-memoize==0.1.10
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-config-models==2.3.0
+django-config-models==2.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -250,7 +250,7 @@ django-object-actions==4.1.0
     #   -r requirements/test.txt
 django-simple-history==3.0.0
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
@@ -290,7 +290,7 @@ drf-jwt==1.19.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.5.0
+edx-django-utils==5.6.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -530,7 +530,7 @@ pygments==2.15.1
     #   pydata-sphinx-theme
     #   readme-renderer
     #   sphinx
-pyjwt[crypto]==2.7.0
+pyjwt[crypto]==2.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -608,7 +608,7 @@ pytz==2022.7.1
     #   djangorestframework
     #   edx-tincan-py35
     #   snowflake-connector-python
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -691,9 +691,8 @@ soupsieve==2.4.1
     # via
     #   -r requirements/doc.txt
     #   beautifulsoup4
-sphinx==5.3.0
+sphinx==6.2.1
     # via
-    #   -c requirements/common_constraints.txt
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
     #   sphinx-book-theme
@@ -819,7 +818,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.24.1
+virtualenv==20.24.2
     # via tox
 wcwidth==0.2.6
     # via
@@ -833,7 +832,7 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-wheel==0.40.0
+wheel==0.41.0
     # via
     #   -r requirements/dev.in
     #   pip-tools
