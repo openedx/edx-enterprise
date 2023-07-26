@@ -32,3 +32,6 @@ celery>=5.2.2,<6.0.0
 
 # tox>=4.4.11 require filelock>=3.10.7, which is not yet compatible.
 tox<4
+
+# upgrading django-simple-history
+django-simple-history<=3.1.1

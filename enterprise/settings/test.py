@@ -344,3 +344,7 @@ LOGIN_REDIRECT_WHITELIST = [
 ENTERPRISE_PLOTLY_SECRET = "I am a secret"
 ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS = ['12aacfee8ffa4cb3bed1059565a57f06',]
 EXEC_ED_LANDING_PAGE = 'https://www.edx-external.com/account'
+
+
+# disable indexing on history_date. Otherwise it will add new alter migrations.
+SIMPLE_HISTORY_DATE_INDEX = False
