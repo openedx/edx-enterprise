@@ -329,7 +329,6 @@ django-sekizai==4.1.0
     #   openedx-django-wiki
 django-ses==3.5.0
     # via -r requirements/edx/bundled.in
-django-simple-history==3.0.0
     # via
     #   -c requirements/edx/../common_constraints.txt
     #   -r requirements/edx/kernel.in
@@ -647,7 +646,9 @@ lazy==1.5
     #   ora2
     #   xblock
 libsass==0.10.0
-    # via -r requirements/edx/paver.txt
+    # via
+    #   -c requirements/edx/../constraints.txt
+    #   -r requirements/edx/paver.txt
 loremipsum==1.0.5
     # via ora2
 lti-consumer-xblock==9.5.5
