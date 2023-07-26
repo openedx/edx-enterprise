@@ -105,7 +105,7 @@ check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platfo
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: check_pins  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+upgrade: requirements check_pins ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	sed '/^django-simple-history==/d' requirements/common_constraints.txt > requirements/common_constraints.tmp
 	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
