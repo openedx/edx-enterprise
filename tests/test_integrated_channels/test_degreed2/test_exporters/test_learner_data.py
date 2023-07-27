@@ -63,12 +63,12 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
         super().setUp()
 
     @ddt.data(
-        (None,),
-        (NOW,),
+        (None, None,),
+        (NOW, .83),
     )
     @ddt.unpack
     @freeze_time(NOW)
-    def test_get_learner_data_record(self, completed_date):
+    def test_get_learner_data_record(self, completed_date, grade_percent):
         """
         The base ``get_learner_data_record`` method returns a ``LearnerDataTransmissionAudit`` with appropriate values.
         """
@@ -80,6 +80,7 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
         learner_data_records = exporter.get_learner_data_records(
             enterprise_course_enrollment,
             completed_date=completed_date,
+            grade_percent=grade_percent,
         )
         assert len(learner_data_records) == 2
         assert learner_data_records[0].course_id == self.course_key
@@ -91,6 +92,7 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
             assert learner_data_record.degreed_completed_timestamp == (
                 self.NOW.strftime('%Y-%m-%dT%H:%M:%S') if completed_date is not None else None
             )
+            assert learner_data_record.grade == (grade_percent * 100 if grade_percent else None)
 
     def test_no_remote_id(self):
         """

@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.7]
+--------
+feat: add grade value to learner transmission for degreed v2
+
 [4.0.6]
 --------
 fix: variable name conflicts in monthly_impact_report command

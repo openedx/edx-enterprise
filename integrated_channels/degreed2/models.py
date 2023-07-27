@@ -217,6 +217,7 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
                     "content-id-type": "externalId",
                     "content-type": "course",
                     "completed-at": self.degreed_completed_timestamp,
+                    "percentile": self.grade,
                 }
             }
         }
