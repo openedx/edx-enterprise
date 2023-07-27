@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.6]
+--------
+feat: add grade value to learner transmission for degreed v2
+
 [4.0.5]
 --------
 feat: incorporate additional attributes to degreed v2
