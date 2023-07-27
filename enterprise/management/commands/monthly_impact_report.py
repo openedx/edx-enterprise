@@ -176,9 +176,9 @@ QUERY = '''
         on
             s.id=cs.skill_id
         WHERE
-            enterprise_enrollment_created >=(SELECT two_months_ago_start_range FROM dynamic_dates)
+            enterprise_enrollment_created_at >=(SELECT two_months_ago_start_range FROM dynamic_dates)
         AND
-             enterprise_enrollment_created <= (SELECT two_months_ago_end_range FROM dynamic_dates)
+             enterprise_enrollment_created_at <= (SELECT two_months_ago_end_range FROM dynamic_dates)
         GROUP BY
             1,2
         ORDER BY
@@ -493,9 +493,9 @@ QUERY = '''
         on
             s.id=cs.skill_id
         WHERE
-            enterprise_enrollment_created >= (SELECT last_month_start_range FROM dynamic_dates)
+            enterprise_enrollment_created_at >= (SELECT last_month_start_range FROM dynamic_dates)
         AND
-            enterprise_enrollment_created <= (SELECT last_month_end_range FROM dynamic_dates)
+            enterprise_enrollment_created_at <= (SELECT last_month_end_range FROM dynamic_dates)
         GROUP BY
             1,2
         ORDER BY
