@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.7]
+--------
+fix: upgrade django-simple-history to 3.1.1
+
 [4.0.6]
 --------
 fix: variable name conflicts in monthly_impact_report command
