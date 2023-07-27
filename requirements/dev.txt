@@ -44,6 +44,7 @@ astroid==2.15.6
     #   pylint-celery
 attrs==23.1.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
 babel==2.12.1
@@ -82,7 +83,7 @@ celery==5.3.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-certifi==2023.5.7
+certifi==2023.7.22
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -142,7 +143,7 @@ click-repl==0.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-code-annotations==1.3.0
+code-annotations==1.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -172,7 +173,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
 diff-cover==7.7.0
     # via -r requirements/test.txt
-dill==0.3.6
+dill==0.3.7
     # via pylint
 distlib==0.3.7
     # via virtualenv
@@ -188,6 +189,7 @@ django==3.2.20
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   edx-django-utils
@@ -200,7 +202,7 @@ django-cache-memoize==0.1.10
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-config-models==2.3.0
+django-config-models==2.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -254,7 +256,7 @@ django-simple-history==3.0.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -290,7 +292,7 @@ drf-jwt==1.19.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.5.0
+edx-django-utils==5.6.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -332,9 +334,11 @@ edx-tincan-py35==1.0.0
 factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
 faker==19.2.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   factory-boy
 filelock==3.12.2
@@ -366,6 +370,7 @@ importlib-metadata==6.8.0
     #   sphinx
 iniconfig==2.0.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
 isort==5.12.0
@@ -471,6 +476,7 @@ platformdirs==3.9.1
     #   virtualenv
 pluggy==1.2.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   diff-cover
     #   pytest
@@ -491,6 +497,7 @@ psutil==5.9.5
     #   edx-django-utils
 py==1.11.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
     #   tox
@@ -530,7 +537,7 @@ pygments==2.15.1
     #   pydata-sphinx-theme
     #   readme-renderer
     #   sphinx
-pyjwt[crypto]==2.7.0
+pyjwt[crypto]==2.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -539,7 +546,7 @@ pyjwt[crypto]==2.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==2.17.4
+pylint==2.17.5
     # via
     #   edx-lint
     #   pylint-celery
@@ -576,6 +583,7 @@ pyproject-hooks==1.0.0
 pytest==6.2.5
     # via
     #   -c requirements/constraints.txt
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
@@ -608,7 +616,7 @@ pytz==2022.7.1
     #   djangorestframework
     #   edx-tincan-py35
     #   snowflake-connector-python
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -752,6 +760,7 @@ text-unidecode==1.3
     #   python-slugify
 toml==0.10.2
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
 tomli==2.0.1
@@ -765,7 +774,7 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   tox
-tomlkit==0.11.8
+tomlkit==0.12.1
     # via pylint
 tox==3.28.0
     # via
@@ -819,7 +828,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.24.1
+virtualenv==20.24.2
     # via tox
 wcwidth==0.2.6
     # via
@@ -833,7 +842,7 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-wheel==0.40.0
+wheel==0.41.0
     # via
     #   -r requirements/dev.in
     #   pip-tools
