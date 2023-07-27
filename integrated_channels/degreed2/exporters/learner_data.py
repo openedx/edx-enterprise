@@ -32,7 +32,7 @@ class Degreed2LearnerExporter(LearnerExporter):
 
         If no remote ID can be found, return None.
         """
-        percent_grade = kwargs.get('grade_percent', None)
+        percent_grade = kwargs.get('grade_percent') * 100 if kwargs.get('grade_percent') else None
         # Degreed expects completion dates of the form 'yyyy-mm-ddTHH:MM:SS'.
         degreed_completed_timestamp = completed_date.strftime('%Y-%m-%dT%H:%M:%S') if isinstance(
             completed_date, datetime

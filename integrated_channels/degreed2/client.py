@@ -114,7 +114,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Returns: status_code, response_text
         """
         json_payload = json.loads(payload)
-        json_payload['data']['attributes']['percentile'] = json_payload['data']['attributes']['percentile'] * 100
         LOGGER.info(self.make_log_msg(
             json_payload.get('data').get('attributes').get('content-id'),
             f'Attempting find course via url: {self.get_completions_url()}'),
