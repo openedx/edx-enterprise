@@ -52,6 +52,9 @@ class XAPILRSConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
         """
         return obj.enterprise_customer.name
 
+    @admin.action(
+        description="Force content metadata transmission for this Enterprise Customer"
+    )
     def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
@@ -74,6 +77,3 @@ class XAPILRSConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
             )
         return HttpResponseRedirect("/admin/xapi/xapilrsconfiguration/")
     force_content_metadata_transmission.label = "Force content metadata transmission"
-    force_content_metadata_transmission.short_description = (
-        "Force content metadata transmission for this Enterprise Customer"
-    )

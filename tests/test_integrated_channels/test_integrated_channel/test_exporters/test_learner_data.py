@@ -44,7 +44,7 @@ class TestLearnerExporter(unittest.TestCase):
     """
 
     # Use these tz-aware datetimes in tests
-    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
     NOW_TIMESTAMP = 1483326245000
     TOMORROW = NOW + datetime.timedelta(days=1)
     YESTERDAY = NOW + datetime.timedelta(days=-1)

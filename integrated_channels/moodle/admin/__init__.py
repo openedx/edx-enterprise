@@ -46,6 +46,9 @@ class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
     form = MoodleEnterpriseCustomerConfigurationForm
     change_actions = ('force_content_metadata_transmission',)
 
+    @admin.action(
+        description="Force content metadata transmission for this Enterprise Customer"
+    )
     def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
@@ -70,9 +73,6 @@ class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
             "/admin/moodle/moodleenterprisecustomerconfiguration"
         )
     force_content_metadata_transmission.label = "Force content metadata transmission"
-    force_content_metadata_transmission.short_description = (
-        "Force content metadata transmission for this Enterprise Customer"
-    )
 
 
 @admin.register(MoodleLearnerDataTransmissionAudit)

@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.1.8]
+--------
+Added support for Django 4.2
+
 [4.1.7]
 -------
 fix: enterprise api credentials endpoint cleanup.

@@ -139,13 +139,14 @@ class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
         'get_admin_registration_url',
     )
 
+    @admin.display(
+        description='Admin Registration Link'
+    )
     def get_admin_registration_url(self, obj):
         """
         Formats the ``admin_registration_url`` model property as an HTML link.
         """
         return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
-
-    get_admin_registration_url.short_description = 'Admin Registration Link'
 
 
 @admin.register(EnterpriseCustomerType)
@@ -288,6 +289,10 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         form.user = request.user
         return form
 
+    @admin.display(
+        description='Enable DSC',
+        boolean=True,
+    )
     def enable_dsc(self, instance):
         """
         Return True if data sharing consent is enabled for EnterpriseCustomer.
@@ -297,9 +302,10 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         """
         return instance.enable_data_sharing_consent
 
-    enable_dsc.boolean = True
-    enable_dsc.short_description = 'Enable DSC'
-
+    @admin.display(
+        description='Logo',
+        boolean=True,
+    )
     def has_logo(self, instance):
         """
         Return True if EnterpriseCustomer has a logo.
@@ -313,9 +319,10 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
         return has_logo
 
-    has_logo.boolean = True
-    has_logo.short_description = 'Logo'
-
+    @admin.display(
+        description='Identity provider',
+        boolean=True,
+    )
     def has_identity_provider(self, instance):
         """
         Return True if EnterpriseCustomer has related identity provider.
@@ -325,9 +332,9 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         """
         return instance.has_identity_providers
 
-    has_identity_provider.boolean = True
-    has_identity_provider.short_description = 'Identity provider'
-
+    @admin.action(
+        description="Clear Data Sharing Consent for a Learner."
+    )
     def manage_learners_data_sharing_consent(self, request, obj):
         """
         Object tool handler method - redirects to "Clear Learners Data Sharing Consent" view
@@ -336,8 +343,10 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return HttpResponseRedirect(reverse("admin:" + UrlNames.MANAGE_LEARNERS_DSC, args=(obj.uuid,)))
 
     manage_learners_data_sharing_consent.label = "Clear Data Sharing Consent"
-    manage_learners_data_sharing_consent.short_description = "Clear Data Sharing Consent for a Learner."
 
+    @admin.action(
+        description="Allows managing learners for this Enterprise Customer"
+    )
     def manage_learners(self, request, obj):
         """
         Object tool handler method - redirects to "Manage Learners" view
@@ -347,8 +356,10 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return HttpResponseRedirect(manage_learners_url)
 
     manage_learners.label = "Manage Learners"
-    manage_learners.short_description = "Allows managing learners for this Enterprise Customer"
 
+    @admin.action(
+        description='Transmit courses metadata for this Enterprise Customer'
+    )
     def transmit_courses_metadata(self, request, obj):
         """
         Object tool handler method - redirects to `Transmit Courses Metadata` view.
@@ -358,7 +369,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return HttpResponseRedirect(transmit_courses_metadata_url)
 
     transmit_courses_metadata.label = 'Transmit Courses Metadata'
-    transmit_courses_metadata.short_description = 'Transmit courses metadata for this Enterprise Customer'
 
     def get_urls(self):
         """
@@ -419,12 +429,14 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'user_email', 'get_enterprise_customer')
     search_fields = ('user_id',)
 
+    @admin.display(
+        description='Enterprise Customer'
+    )
     def get_enterprise_customer(self, obj):
         """
         Returns the name of enterprise customer linked with the enterprise customer user.
         """
         return obj.enterprise_customer.name
-    get_enterprise_customer.short_description = 'Enterprise Customer'
 
     def get_search_results(self, request, queryset, search_term):
         search_term = search_term.strip()
@@ -577,21 +589,23 @@ class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
         'enterprise_customer__name',
     )
 
+    @admin.display(
+        description='Enterprise Customer'
+    )
     def get_enterprise_customer(self, obj):
         """
         Returns the name of the associated EnterpriseCustomer.
         """
         return obj.enterprise_customer.name
 
-    get_enterprise_customer.short_description = 'Enterprise Customer'
-
+    @admin.display(
+        description='Admin Registration Link'
+    )
     def get_admin_registration_url(self, obj):
         """
         Formats the ``admin_registration_url`` model property as an HTML link.
         """
         return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
-
-    get_admin_registration_url.short_description = 'Admin Registration Link'
 
 
 @admin.register(EnrollmentNotificationEmailTemplate)
@@ -625,6 +639,11 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         preview_url = reverse("admin:" + UrlNames.PREVIEW_EMAIL_TEMPLATE, args=(obj.pk, preview_type))
         return HttpResponseRedirect(preview_url)
 
+    @admin.action(
+        description=_(
+            "Preview the HTML template rendered in the context of a course enrollment."
+        )
+    )
     def preview_as_course(self, request, obj):
         """
         Redirect to preview the HTML template in the context of a course.
@@ -632,10 +651,12 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         return self.preview(obj, 'course')
 
     preview_as_course.label = _("Preview (course)")
-    preview_as_course.short_description = _(
-        "Preview the HTML template rendered in the context of a course enrollment."
-    )
 
+    @admin.action(
+        description=_(
+            "Preview the HTML template rendered in the context of a program enrollment."
+        )
+    )
     def preview_as_program(self, request, obj):
         """
         Redirect to preview the HTML template in the context of a program.
@@ -643,9 +664,6 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         return self.preview(obj, 'program')
 
     preview_as_program.label = _("Preview (program)")
-    preview_as_program.short_description = _(
-        "Preview the HTML template rendered in the context of a program enrollment."
-    )
 
 
 @admin.register(EnterpriseCourseEnrollment)
@@ -780,6 +798,9 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
         'include_exec_ed_2u_courses',
     )
 
+    @admin.display(
+        description='Preview Catalog Courses'
+    )
     def discovery_query_url(self, obj):
         """
         Return discovery url for preview.
@@ -794,8 +815,6 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
         return False
 
     readonly_fields = ('discovery_query_url', 'uuid')
-    discovery_query_url.allow_tags = True
-    discovery_query_url.short_description = 'Preview Catalog Courses'
 
 
 @admin.register(EnterpriseCustomerCatalog)
@@ -835,6 +854,9 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'publish_audit_enrollment_urls',
     )
 
+    @admin.display(
+        description='Preview Catalog Courses'
+    )
     def preview_catalog_url(self, obj):
         """
         Return enterprise catalog url for preview.
@@ -847,14 +869,15 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         )
 
     readonly_fields = ('preview_catalog_url',)
-    preview_catalog_url.short_description = 'Preview Catalog Courses'
 
+    @admin.display(
+        description='UUID'
+    )
     def uuid_nowrap(self, obj):
         """
         Inject html for disabling wrap for uuid
         """
         return format_html('<span style="white-space: nowrap;">{uuid}</span>'.format(uuid=obj.uuid))
-    uuid_nowrap.short_description = 'UUID'
 
     def get_form(self, request, obj=None, change=False, **kwargs):
         form = super().get_form(request, obj, change, **kwargs)

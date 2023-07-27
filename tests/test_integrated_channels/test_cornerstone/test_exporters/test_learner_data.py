@@ -14,7 +14,6 @@ from pytest import mark
 from requests.compat import urljoin
 
 from django.core.management import call_command
-from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
@@ -32,7 +31,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     Tests of CornerstoneLearnerExporter class.
     """
 
-    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
 
     def setUp(self):
         self.user = factories.UserFactory()
