@@ -72,6 +72,9 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin
         """
         return obj.enterprise_customer.name
 
+    @admin.action(
+        description="Force content metadata transmission for this Enterprise Customer"
+    )
     def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
@@ -96,9 +99,6 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin
             "/admin/cornerstone/cornerstoneenterprisecustomerconfiguration"
         )
     force_content_metadata_transmission.label = "Force content metadata transmission"
-    force_content_metadata_transmission.short_description = (
-        "Force content metadata transmission for this Enterprise Customer"
-    )
 
 
 @admin.register(CornerstoneLearnerDataTransmissionAudit)

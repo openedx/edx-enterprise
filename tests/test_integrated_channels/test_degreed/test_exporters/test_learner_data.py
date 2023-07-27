@@ -25,7 +25,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
     Tests of DegreedLearnerExporter class.
     """
 
-    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
     NOW_TIMESTAMP = 1483326245000
 
     def setUp(self):

@@ -2,7 +2,7 @@
 URL definitions for enterprise_learner_portal API endpoint.
 """
 
-from django.conf.urls import include
+from django.urls import include
 from django.urls import path
 
 urlpatterns = [

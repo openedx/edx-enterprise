@@ -94,12 +94,22 @@ class DataSharingConsentTextOverridesAdmin(DjangoObjectActions, SimpleHistoryAdm
         url = reverse('grant_data_sharing_permissions') + '?{}'.format(urlencode(params))
         return HttpResponseRedirect(url)
 
+    @admin.action(
+        description=_(
+                "Preview the data sharing consent page rendered in the context of a course enrollment."
+            )
+    )
     def preview_as_course(self, request, consent_page):
         """
         Renders data sharing consent page in course context
         """
         return self.preview(consent_page, course_id='course-v1:edX+TestX+Test_Course')
 
+    @admin.action(
+        description=_(
+                "Preview the data sharing consent page rendered in the context of a program enrollment."
+            )
+    )
     def preview_as_program(self, request, consent_page):
         """
         Renders data sharing consent page in program context
@@ -107,13 +117,7 @@ class DataSharingConsentTextOverridesAdmin(DjangoObjectActions, SimpleHistoryAdm
         return self.preview(consent_page, program_uuid='25c10a26-0b00-0000-bd06-7813546c29eb')
 
     preview_as_course.label = _("Preview (course)")
-    preview_as_course.short_description = _(
-        "Preview the data sharing consent page rendered in the context of a course enrollment."
-    )
     preview_as_program.label = _("Preview (program)")
-    preview_as_program.short_description = _(
-        "Preview the data sharing consent page rendered in the context of a program enrollment."
-    )
 
     class Meta:
         """

@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+
+[4.1.0]
+--------
+Added support for Django 4.2
+
 [4.0.6]
 --------
 fix: variable name conflicts in monthly_impact_report command

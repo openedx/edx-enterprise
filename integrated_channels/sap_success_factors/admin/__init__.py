@@ -92,6 +92,10 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
         """
         return obj.enterprise_customer.name
 
+    @admin.display(
+        description="Has Access Token?",
+        boolean=True,
+    )
     def has_access_token(self, obj):
         """
         Confirms the presence and validity of the access token for the SAP SuccessFactors client instance
@@ -116,9 +120,10 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
             return False
         return bool(access_token and expires_at)
 
-    has_access_token.boolean = True
-    has_access_token.short_description = "Has Access Token?"
 
+    @admin.action(
+        description="Force content metadata transmission for this Enterprise Customer"
+    )
     def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
@@ -143,9 +148,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
             "/admin/sap_success_factors/sapsuccessfactorsenterprisecustomerconfiguration"
         )
     force_content_metadata_transmission.label = "Force content metadata transmission"
-    force_content_metadata_transmission.short_description = (
-        "Force content metadata transmission for this Enterprise Customer"
-    )
 
 
 @admin.register(SapSuccessFactorsLearnerDataTransmissionAudit)

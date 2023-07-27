@@ -56,6 +56,9 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mo
         """
         return obj.enterprise_customer.name
 
+    @admin.action(
+        description="Force content metadata transmission for this Enterprise Customer"
+    )
     def force_content_metadata_transmission(self, request, obj):
         """
         Updates the modified time of the customer record to retransmit courses metadata
@@ -78,9 +81,6 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mo
             )
         return HttpResponseRedirect('/admin/degreed2/degreed2enterprisecustomerconfiguration')
     force_content_metadata_transmission.label = "Force content metadata transmission"
-    force_content_metadata_transmission.short_description = (
-        "Force content metadata transmission for this Enterprise Customer"
-    )
 
 
 @admin.register(Degreed2LearnerDataTransmissionAudit)

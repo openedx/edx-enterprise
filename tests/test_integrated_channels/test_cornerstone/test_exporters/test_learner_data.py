@@ -32,7 +32,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     Tests of CornerstoneLearnerExporter class.
     """
 
-    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
 
     def setUp(self):
         self.user = factories.UserFactory()

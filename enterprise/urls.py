@@ -3,7 +3,7 @@ URLs for enterprise.
 """
 
 from django.conf import settings
-from django.conf.urls import include
+from django.urls import include, path
 from django.urls import re_path
 
 from enterprise.constants import COURSE_KEY_URL_PATTERN
@@ -48,10 +48,10 @@ urlpatterns = [
         ENTERPRISE_ROUTER,
         name='enterprise_course_run_enrollment_page'
     ),
-    re_path(r'^enterprise/(?P<enterprise_uuid>[^/]+)/program/(?P<program_uuid>[^/]+)/enroll/$', ENTERPRISE_ROUTER,
+    path('enterprise/<str:enterprise_uuid>/program/<str:program_uuid>/enroll/', ENTERPRISE_ROUTER,
             name='enterprise_program_enrollment_page'
             ),
-    re_path(r'^enterprise/api/', include('enterprise.api.urls'),
+    path('enterprise/api/', include('enterprise.api.urls'),
             name='enterprise_api'
             ),
     re_path(r'^enterprise/heartbeat/', heartbeat,
@@ -61,21 +61,21 @@ urlpatterns = [
 
 # Because ROOT_URLCONF points here, we are including the urls from the other apps here for now.
 urlpatterns += [
-    re_path('', include('consent.urls'),
+    path('', include('consent.urls'),
             name='consent'
             ),
-    re_path(r'^cornerstone/', include('integrated_channels.cornerstone.urls'),
+    path('cornerstone/', include('integrated_channels.cornerstone.urls'),
             name='cornerstone'
             ),
-    re_path(r'^canvas/', include('integrated_channels.canvas.urls'),
+    path('canvas/', include('integrated_channels.canvas.urls'),
             name='canvas',
             ),
-    re_path(r'^blackboard/', include('integrated_channels.blackboard.urls'),
+    path('blackboard/', include('integrated_channels.blackboard.urls'),
             name='blackboard',
             ),
-    re_path(r'^enterprise_learner_portal/', include('enterprise_learner_portal.urls'),
+    path('enterprise_learner_portal/', include('enterprise_learner_portal.urls'),
             name='enterprise_learner_portal_api'
             ),
-    re_path(r'^integrated_channels/api/', include('integrated_channels.api.urls')
+    path('integrated_channels/api/', include('integrated_channels.api.urls')
             ),
 ]
