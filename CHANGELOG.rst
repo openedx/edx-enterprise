@@ -15,9 +15,14 @@ Change Log
 
 Unreleased
 ----------
+
+[4.0.8]
+fix: upgrade django-simple-history to 3.1.1
+
 [4.0.7]
 --------
-fix: upgrade django-simple-history to 3.1.1
+
+feat: add grade value to learner transmission for degreed v2
 
 [4.0.6]
 --------
