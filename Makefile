@@ -181,6 +181,12 @@ isort: ## call isort on packages/files that are checked in quality tests
 test-shell: ## Run a shell, as root, on the specified service container
 	docker-compose run -u 0 test-shell env TERM=$(TERM) /bin/bash
 
+dev.up.keycloak:
+	docker-compose up --detach keycloak
+
+dev.stop.keycloak:
+	docker-compose stop keycloak
+
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements test test-all upgrade validate isort \
 	static static.dev static.watch
