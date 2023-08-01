@@ -470,7 +470,7 @@ pip-tools==7.1.0
     # via -r requirements/dev.in
 pkginfo==1.9.6
     # via twine
-platformdirs==3.9.1
+platformdirs==3.10.0
     # via
     #   pylint
     #   virtualenv
@@ -507,7 +507,7 @@ pyasn1==0.5.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   pgpy
-pycodestyle==2.10.0
+pycodestyle==2.11.0
     # via -r requirements/dev.in
 pycparser==2.21
     # via
