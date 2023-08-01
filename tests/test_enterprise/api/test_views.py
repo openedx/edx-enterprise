@@ -1990,7 +1990,8 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         )
         factories.EnterpriseCustomerCatalogFactory(
             uuid=FAKE_UUIDS[1],
-            enterprise_customer=enterprise_customer
+            enterprise_customer=enterprise_customer,
+            title='All Content',
         )
         if not is_staff:
             self.user.is_staff = False
@@ -2007,7 +2008,6 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         )
         response = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT)
         response = self.load_json(response.content)
-
         self.assertDictEqual(response, expected_result)
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -2021,6 +2021,7 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
             name="test_enterprise"
         )
         factories.EnterpriseCustomerCatalogFactory(
+            title='All Content',
             uuid=FAKE_UUIDS[1],
             enterprise_customer=enterprise_customer
         )
@@ -2046,7 +2047,6 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
             add_utm_info=False,
             count=2,
         )
-
         assert response == expected_result
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -2060,6 +2060,7 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
             name="test_enterprise"
         )
         factories.EnterpriseCustomerCatalogFactory(
+            title='All Content',
             uuid=FAKE_UUIDS[1],
             enterprise_customer=enterprise_customer
         )
@@ -2083,7 +2084,6 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
             add_utm_info=False,
             count=5,
         )
-
         assert response == expected_result
 
     @ddt.data(

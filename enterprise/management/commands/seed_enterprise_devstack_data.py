@@ -249,7 +249,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Entry point for managment command execution.
+        Entry point for management command execution.
         """
         enterprise_name = options['enterprise-name']
         slug = slugify(enterprise_name)

@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.9]
+-------
+feat: customizable management command to generate local enterprise data
+
 [4.0.8]
 -------
 fix: reorganizing enterprise customer django admin portal
