@@ -150,30 +150,6 @@ class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFacto
     template_type = SELF_ENROLL_EMAIL_TEMPLATE_TYPE
 
 
-class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
-    """
-    EnterpriseCustomerUser factory.
-
-    Creates an instance of EnterpriseCustomerUser with minimal boilerplate - uses this class' attributes as default
-    parameters for EnterpriseCustomerUser constructor.
-    """
-
-    class Meta:
-        """
-        Meta for EnterpriseCustomerFactory.
-        """
-
-        model = EnterpriseCustomerUser
-        django_get_or_create = ('enterprise_customer', 'user_id',)
-
-    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
-    active = True
-    linked = True
-    is_relinkable = True
-    invite_key = None
-
-
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     """
     PendingEnterpriseCustomerUser factory.
@@ -265,6 +241,30 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_staff = False
     is_active = False
     date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
+
+
+class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerUser factory.
+
+    Creates an instance of EnterpriseCustomerUser with minimal boilerplate - uses this class' attributes as default
+    parameters for EnterpriseCustomerUser constructor.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCustomerFactory.
+        """
+
+        model = EnterpriseCustomerUser
+        django_get_or_create = ('enterprise_customer', 'user_id',)
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    user_id = factory.LazyAttribute(lambda x: UserFactory.create().id)
+    active = True
+    linked = True
+    is_relinkable = True
+    invite_key = None
 
 
 class AnonymousUserFactory(factory.Factory):
@@ -430,6 +430,7 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCustomerCatalog
 
+    title = factory.Faker('sentence', nb_words=4)
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     enterprise_catalog_query = factory.SubFactory(EnterpriseCatalogQueryFactory)

@@ -37,7 +37,7 @@ bleach==6.0.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
-certifi==2023.5.7
+certifi==2023.7.22
     # via
     #   -r requirements/test-master.txt
     #   requests
@@ -73,7 +73,7 @@ click-plugins==1.1.1
     # via
     #   -r requirements/test-master.txt
     #   celery
-code-annotations==1.3.0
+code-annotations==1.5.0
     # via -r requirements/test-master.txt
 coverage[toml]==7.2.7
     # via pytest-cov
@@ -102,6 +102,7 @@ diff-cover==7.7.0
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   edx-django-utils
@@ -110,7 +111,7 @@ diff-cover==7.7.0
     #   jsonfield
 django-cache-memoize==0.1.10
     # via -r requirements/test-master.txt
-django-config-models==2.3.0
+django-config-models==2.4.0
     # via -r requirements/test-master.txt
 django-countries==7.5.1
     # via -r requirements/test-master.txt
@@ -138,7 +139,7 @@ django-simple-history==3.0.0
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -155,7 +156,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==5.5.0
+edx-django-utils==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -270,7 +271,7 @@ pycryptodomex==3.18.0
     #   snowflake-connector-python
 pygments==2.15.1
     # via diff-cover
-pyjwt[crypto]==2.7.0
+pyjwt[crypto]==2.8.0
     # via
     #   -r requirements/test-master.txt
     #   drf-jwt
@@ -316,7 +317,7 @@ pytz==2022.7.1
     #   djangorestframework
     #   edx-tincan-py35
     #   snowflake-connector-python
-pyyaml==6.0
+pyyaml==6.0.1
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
