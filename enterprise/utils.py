@@ -2388,7 +2388,7 @@ def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
 
 def ensure_course_enrollment_is_allowed(course_id, email, enrollment_api_client):
     """
-    Creates a CourseEnrollmentAllowed object for initiation only courses.
+    Create a CourseEnrollmentAllowed object for invitation-only courses.
 
     Arguments:
         course_id (str): ID of the course to allow enrollment
