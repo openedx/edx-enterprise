@@ -33,7 +33,6 @@ from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
-from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import (
     ALLOWED_TAGS,
     BEST_MODE_ORDER,
@@ -2391,9 +2390,9 @@ def ensure_course_enrollment_is_allowed(course_id: str, email: str, enrollment_a
     Create a CourseEnrollmentAllowed object for invitation-only courses.
 
     Arguments:
-        course_id: ID of the course to allow enrollment
-        email: email of the user whose enrollment should be allowed
-        enrollment_api_client: Enrollment API Client
+        course_id (str): ID of the course to allow enrollment
+        email (str): email of the user whose enrollment should be allowed
+        enrollment_api_client (:class:`enterprise.api_client.lms.EnrollmentApiClient`): Enrollment API Client
     """
     if not CourseEnrollmentAllowed:
         raise NotConnectedToOpenEdX()
