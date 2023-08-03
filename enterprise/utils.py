@@ -33,6 +33,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
+from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import (
     ALLOWED_TAGS,
     BEST_MODE_ORDER,
@@ -2354,7 +2355,6 @@ def get_md5_hash(content):
     Get the MD5 hash digest of the given content.
 
     Arguments:
-        content (str): Content in string format for calculating MD5 hash digest.
 
     Returns:
         (str): MD5 hash digest.
@@ -2386,14 +2386,14 @@ def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
     return (string, was_truncated)
 
 
-def ensure_course_enrollment_is_allowed(course_id, email, enrollment_api_client):
+def ensure_course_enrollment_is_allowed(course_id: str, email: str, enrollment_api_client: EnrollmentApiClient):
     """
     Create a CourseEnrollmentAllowed object for invitation-only courses.
 
     Arguments:
-        course_id (str): ID of the course to allow enrollment
-        email (str): email of the user whose enrollment should be allowed
-        enrollment_api_client (:class:`enterprise.api_client.lms.EnrollmentApiClient`): Enrollment API Client
+        course_id: ID of the course to allow enrollment
+        email: email of the user whose enrollment should be allowed
+        enrollment_api_client: Enrollment API Client
     """
     if not CourseEnrollmentAllowed:
         raise NotConnectedToOpenEdX()
