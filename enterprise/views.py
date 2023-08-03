@@ -1753,7 +1753,8 @@ class CourseEnrollmentView(NonAtomicView):
 
         return redirect(premium_flow)
 
-    def _handle_user_consent_flow(self, request, enterprise_customer, enterprise_catalog_uuid, course_id, course_mode):
+    @staticmethod
+    def _handle_user_consent_flow(request, enterprise_customer, enterprise_catalog_uuid, course_id, course_mode):
         """
         For the audit course modes (audit, honor) or for the premium
         course modes (Verified, Prof Ed) where DSC is required, redirect
