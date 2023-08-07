@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.0.10]
+--------
+chore: fixing import path error in management command
+
 [4.0.9]
 -------
 feat: customizable management command to generate local enterprise data
