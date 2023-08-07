@@ -19,7 +19,7 @@ from django.db import connections
 # incase other consumers of the command do not have the same factories installed.
 # For example:
 try:
-    import common.djangoapps.student.test.factories  # pylint: disable=unused-import
+    import common.djangoapps.student.tests.factories  # pylint: disable=unused-import
 
     from test_utils import factories  # pylint: disable=unused-import
 except ImportError:
