@@ -16,8 +16,17 @@ Change Log
 Unreleased
 ----------
 
+[4.0.10]
+--------
+chore: fixing import path error in management command
+
+[4.0.9]
+-------
+feat: customizable management command to generate local enterprise data
+
 [4.0.8]
-fix: upgrade django-simple-history to 3.1.1
+-------
+fix: reorganizing enterprise customer django admin portal
 
 [4.0.7]
 --------

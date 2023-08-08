@@ -196,6 +196,7 @@ django==3.2.20
     #   django-statici18n
     #   django-storages
     #   django-user-tasks
+    #   django-waffle
     #   djangorestframework
     #   done-xblock
     #   drf-jwt
@@ -237,6 +238,7 @@ django==3.2.20
     #   openedx-django-wiki
     #   openedx-events
     #   openedx-filters
+    #   openedx-learning
     #   ora2
     #   skill-tagging
     #   super-csv
@@ -351,7 +353,7 @@ django-storages==1.9.1
     #   edxval
 django-user-tasks==3.1.0
     # via -r requirements/edx/kernel.in
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -r requirements/edx/kernel.in
     #   edx-django-utils
@@ -383,6 +385,7 @@ djangorestframework==3.14.0
     #   edx-proctoring
     #   edx-submissions
     #   openedx-blockstore
+    #   openedx-learning
     #   ora2
     #   super-csv
 djangorestframework-xml==2.0.0
@@ -416,20 +419,20 @@ edx-auth-backends==4.1.0
     #   openedx-blockstore
 edx-braze-client==0.1.7
     # via -r requirements/edx/bundled.in
-edx-bulk-grades==1.0.1
+edx-bulk-grades==1.0.2
     # via
     #   -r requirements/edx/kernel.in
     #   staff-graded-xblock
 edx-ccx-keys==1.2.1
     # via -r requirements/edx/kernel.in
-edx-celeryutils==1.2.2
+edx-celeryutils==1.2.3
     # via
     #   -r requirements/edx/kernel.in
     #   edx-name-affirmation
     #   super-csv
 edx-codejail==3.3.3
     # via -r requirements/edx/kernel.in
-edx-completion==4.2.1
+edx-completion==4.3.0
     # via -r requirements/edx/kernel.in
 edx-django-release-util==1.2.0
     # via
@@ -465,7 +468,7 @@ edx-drf-extensions==8.8.0
     #   edx-rbac
     #   edx-when
     #   edxval
-edx-enterprise==4.0.5
+edx-enterprise==4.0.6
     # via
     #   -c requirements/edx/../constraints.txt
     #   -r requirements/edx/kernel.in
@@ -755,6 +758,8 @@ openedx-filters==1.4.0
     #   -r requirements/edx/kernel.in
     #   lti-consumer-xblock
     #   skill-tagging
+openedx-learning==0.1.0
+    # via -r requirements/edx/kernel.in
 openedx-mongodbproxy==0.2.0
     # via -r requirements/edx/kernel.in
 optimizely-sdk==4.1.1
@@ -989,6 +994,7 @@ rules==3.3
     #   -r requirements/edx/kernel.in
     #   edx-enterprise
     #   edx-proctoring
+    #   openedx-learning
 s3transfer==0.1.13
     # via boto3
 sailthru-client==2.2.3

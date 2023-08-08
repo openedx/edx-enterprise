@@ -19,6 +19,26 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: enterprise.settings.test
 
+  keycloak:
+    container_name: "edx.devstack.keycloak"
+    hostname: keycloak.devstack.edx
+    image: quay.io/keycloak/keycloak:22.0.1
+    command: start-dev
+    networks:
+      default:
+        aliases:
+          - edx.devstack.keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
 networks:
   devstack_default:
     external: true
+
+volumes:
+  keycloak_data:

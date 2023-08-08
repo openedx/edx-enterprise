@@ -44,6 +44,7 @@ astroid==2.15.6
     #   pylint-celery
 attrs==23.1.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
 babel==2.12.1
@@ -188,6 +189,7 @@ django==3.2.20
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   edx-django-utils
@@ -254,7 +256,7 @@ django-simple-history==3.1.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -332,9 +334,11 @@ edx-tincan-py35==1.0.0
 factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
 faker==19.2.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   factory-boy
 filelock==3.12.2
@@ -366,6 +370,7 @@ importlib-metadata==6.8.0
     #   sphinx
 iniconfig==2.0.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
 isort==5.12.0
@@ -471,6 +476,7 @@ platformdirs==3.9.1
     #   virtualenv
 pluggy==1.2.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   diff-cover
     #   pytest
@@ -491,6 +497,7 @@ psutil==5.9.5
     #   edx-django-utils
 py==1.11.0
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
     #   tox
@@ -576,6 +583,7 @@ pyproject-hooks==1.0.0
 pytest==6.2.5
     # via
     #   -c requirements/constraints.txt
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
@@ -751,6 +759,7 @@ text-unidecode==1.3
     #   python-slugify
 toml==0.10.2
     # via
+    #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
 tomli==2.0.1
@@ -764,7 +773,7 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   tox
-tomlkit==0.11.8
+tomlkit==0.12.1
     # via pylint
 tox==3.28.0
     # via

@@ -102,6 +102,7 @@ diff-cover==7.7.0
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   edx-django-utils
@@ -138,7 +139,7 @@ django-simple-history==3.1.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils

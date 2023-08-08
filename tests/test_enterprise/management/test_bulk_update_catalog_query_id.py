@@ -1,5 +1,5 @@
 """
-Tests for the djagno management command `create_enterprise_course_enrollments`.
+Tests for the Django management command `create_enterprise_course_enrollments`.
 """
 
 import ddt

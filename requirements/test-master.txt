@@ -95,6 +95,7 @@ django==3.2.20
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   edx-django-utils
@@ -148,7 +149,7 @@ django-simple-history==3.1.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
-django-waffle==3.0.0
+django-waffle==4.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
