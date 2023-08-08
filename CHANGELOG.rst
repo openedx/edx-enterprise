@@ -16,6 +16,9 @@ Change Log
 Unreleased
 ----------
 
+[4.0.11]
+fix: upgrade django-simple-history to 3.1.1
+
 [4.0.10]
 --------
 chore: fixing import path error in management command
