@@ -17,7 +17,7 @@ Unreleased
 ----------
 
 [4.0.11]
-fix: upgrade django-simple-history to 3.1.1
+feat: upgrade django-simple-history to 3.1.1
 
 [4.0.10]
 --------
