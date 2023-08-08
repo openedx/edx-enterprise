@@ -144,9 +144,9 @@ django-multi-email-field==0.7.0
     # via -r requirements/test-master.txt
 django-object-actions==4.1.0
     # via -r requirements/test-master.txt
-django-simple-history==3.0.0
+django-simple-history==3.1.1
     # via
-    #   -c requirements/common_constraints.txt
+    #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
 django-waffle==4.0.0
     # via

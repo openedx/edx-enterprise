@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+
+[4.0.11]
+feat: upgrade django-simple-history to 3.1.1
+
 [4.0.10]
 --------
 chore: fixing import path error in management command
@@ -29,6 +33,7 @@ fix: reorganizing enterprise customer django admin portal
 
 [4.0.7]
 --------
+
 feat: add grade value to learner transmission for degreed v2
 
 [4.0.6]
