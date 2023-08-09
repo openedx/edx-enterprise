@@ -272,7 +272,7 @@ django-crum==0.7.9
     #   super-csv
 django-environ==0.10.0
     # via openedx-blockstore
-django-fernet-fields==0.6
+django-fernet-fields-v2==0.9
 django-filter==23.2
     # via
     #   -r requirements/edx/kernel.in
@@ -387,7 +387,7 @@ djangorestframework==3.14.0
     #   ora2
     #   super-csv
 djangorestframework-xml==2.0.0
-djfernet==0.8.1
+django-fernet-fields-v2==0.9
     # via edxval
 docutils==0.19
     # via

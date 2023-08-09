@@ -16,13 +16,17 @@ Change Log
 Unreleased
 ----------
 
+[4.0.15]
+--------
+feat: Replace deprecated `django-fernet-fields` with its forked `django-fernet-fields-v2`.
+
 [4.0.14]
 --------
 bug: swapping grades api grade_percent return value type from string to float
 
 [4.0.13]
 --------
-fix: more flexible default site 
+fix: more flexible default site
 
 [4.0.12]
 --------
