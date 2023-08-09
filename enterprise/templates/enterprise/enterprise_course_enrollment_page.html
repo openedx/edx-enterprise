@@ -9,10 +9,7 @@
 {% block contents %}
   <div class="enterprise-container">
     <div class="row no-gutters">
-      <div class="col-3">
-        {% include "enterprise/_enterprise_customer_sidebar.html" %}
-      </div>
-      <div class="col-7 border-left">
+      <div class="col-8">
 
         {# Display success, error, warning or info messages #}
         {% alert_messages messages %}
@@ -77,20 +74,6 @@
 
                 <label for="radio{{ forloop.counter0 }}">
                   <strong class="title">{{ course_mode.title }}</strong>
-                  <span class="price">
-                    {{ price_text }}:
-                    {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
-                      {% if hide_course_original_price %}
-                        {{ course_mode.final_price }}
-                      {% else %}
-                        <strike>{{ course_mode.original_price }}</strike> {{ course_mode.final_price }}
-                        <div>{{discount_text|safe }}</div>
-                      {% endif %}
-                    {% else %}
-                      {{ course_mode.original_price }}
-                    {% endif %}
-                  </span>
-                  <span class="description">{{ course_mode.description }}</span>
                 </label>
               </div>
               {% endfor %}

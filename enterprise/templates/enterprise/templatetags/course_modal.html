@@ -23,30 +23,6 @@
         </header>
         <div class="details">
           <ul class="details-list">
-            {% if premium_modes|length > 0 %}
-              {% with course_mode=premium_modes.0 %}
-                {% if course_mode.original_price %}
-                  <li>
-                    <div class="detail-container">
-                      <div class="detail-title-container">
-                        <span class="icon fa fa-tag" aria-hidden="true"></span>
-                        <span class="title">{{ price_text }}</span>
-                      </div>
-                      <div class="detail-value-container">
-                        <span class="text">
-                          {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
-                            <strike>{{ course_mode.original_price }}</strike>
-                            <span class="discount">{{ course_mode.final_price }}</span>
-                          {% else %}
-                            {{ course_mode.original_price }}
-                          {% endif %}
-                        </span>
-                      </div>
-                    </div>
-                  </li>
-                {% endif %}
-              {% endwith %}
-            {% endif %}
             {% if course_level_type %}
               <li>
                 <div class="detail-container">
