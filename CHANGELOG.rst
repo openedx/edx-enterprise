@@ -16,6 +16,9 @@ Change Log
 Unreleased
 ----------
 
+[4.0.12]
+feat: Replace deprecated `django-fernet-fields` with its forked djfernet.
+
 [4.0.11]
 feat: upgrade django-simple-history to 3.1.1
 

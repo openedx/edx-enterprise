@@ -10,7 +10,7 @@ django-cache-memoize
 django-config-models
 django-countries
 django-crum
-django-fernet-fields
+djfernet
 django-filter
 django-ipware
 django-model-utils
