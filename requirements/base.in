@@ -41,5 +41,6 @@ stevedore
 testfixtures
 unicodecsv
 PGPy
+openai
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.

@@ -2,6 +2,7 @@
 Utility functions for enterprise app.
 """
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -2323,3 +2324,16 @@ def get_default_invite_key_expiration_date():
     The default expiration date is 365 days from the current date.
     """
     return localized_utcnow() + datetime.timedelta(days=365)
+
+
+def get_md5_hash(content):
+    """
+    Get the MD5 hash digest of the given content.
+
+    Arguments:
+        content (str): Content in string format for calculating MD5 hash digest.
+
+    Returns:
+        (str): MD5 hash digest.
+    """
+    return hashlib.md5(content.encode('utf-8')).hexdigest()
