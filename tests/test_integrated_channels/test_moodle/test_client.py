@@ -91,12 +91,12 @@ class TestMoodleApiClient(unittest.TestCase):
             grade_assignment_name='edX Grade Test'
         )
 
-    def test_get_api_url(self):
+    def test_api_url(self):
         moodle_api_client = MoodleAPIClient(self.enterprise_config)
         moodle_api_client_with_sub_dir = MoodleAPIClient(self.enterprise_custom_config)
 
-        assert moodle_api_client._get_api_url() == 'http://testing/webservice/rest/server.php'
-        assert moodle_api_client_with_sub_dir._get_api_url() == 'http://testing/subdir/webservice/rest/server.php'
+        assert moodle_api_client.api_url == 'http://testing/webservice/rest/server.php'
+        assert moodle_api_client_with_sub_dir.api_url == 'http://testing/subdir/webservice/rest/server.php'
 
     def test_moodle_config_is_set(self):
         """
@@ -113,7 +113,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client = MoodleAPIClient(self.enterprise_config)
         responses.add(
             responses.GET,
-            client._get_api_url(),
+            client.api_url,
             json={'courses': [{'id': 2}]},
             status=200
         )
@@ -240,7 +240,7 @@ class TestMoodleApiClient(unittest.TestCase):
         """Test that we properly raise exceptions if the client receives a 404 from Moodle"""
         with responses.RequestsMock() as rsps:
             client = MoodleAPIClient(self.enterprise_config)
-            moodle_api_path = client._get_api_url()
+            moodle_api_path = client.api_url
             moodle_get_courses_query = 'wstoken={}&wsfunction=core_course_get_courses_by_field&field=idnumber' \
                                        '&value={}&moodlewsrestformat=json'.format(self.token, self.moodle_course_id)
             request_url = '{}?{}'.format(moodle_api_path, moodle_get_courses_query)
