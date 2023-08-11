@@ -75,7 +75,7 @@ cryptography==38.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-    #   django-fernet-fields
+    #   djfernet
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -91,7 +91,6 @@ django==3.2.20
     #   -r requirements/base.in
     #   django-config-models
     #   django-crum
-    #   django-fernet-fields
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
@@ -106,7 +105,7 @@ django-cache-memoize==0.1.10
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-config-models==2.4.0
+django-config-models==2.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -120,10 +119,6 @@ django-crum==0.7.9
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-rbac
-djfernet==0.8.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
 django-filter==23.2
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -166,11 +161,15 @@ djangorestframework-xml==2.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
+djfernet==0.8.1
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   -r requirements/base.in
 drf-jwt==1.19.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==5.6.0
+edx-django-utils==5.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -182,12 +181,12 @@ edx-drf-extensions==8.8.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.3.0
+edx-opaque-keys[django]==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-drf-extensions
-edx-rbac==1.7.0
+edx-rbac==1.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

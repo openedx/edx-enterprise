@@ -93,7 +93,7 @@ code-annotations==1.5.0
 cryptography==38.0.4
     # via
     #   -r requirements/test-master.txt
-    #   django-fernet-fields
+    #   djfernet
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -108,7 +108,6 @@ django==3.2.20
     #   -r requirements/test-master.txt
     #   django-config-models
     #   django-crum
-    #   django-fernet-fields
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
@@ -121,7 +120,7 @@ django==3.2.20
     #   jsonfield
 django-cache-memoize==0.1.10
     # via -r requirements/test-master.txt
-django-config-models==2.4.0
+django-config-models==2.5.0
     # via -r requirements/test-master.txt
 django-countries==7.5.1
     # via -r requirements/test-master.txt
@@ -130,8 +129,6 @@ django-crum==0.7.9
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
-djfernet==0.8.1
-    # via -r requirements/test-master.txt
 django-filter==23.2
     # via -r requirements/test-master.txt
 django-ipware==4.0.2
@@ -161,6 +158,8 @@ djangorestframework==3.14.0
     #   edx-drf-extensions
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
+djfernet==0.8.1
+    # via -r requirements/test-master.txt
 doc8==1.1.1
     # via -r requirements/doc.in
 docutils==0.19
@@ -175,7 +174,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==5.6.0
+edx-django-utils==5.7.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -185,11 +184,11 @@ edx-drf-extensions==8.8.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.3.0
+edx-opaque-keys[django]==2.4.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-rbac==1.7.0
+edx-rbac==1.8.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.5.2
     # via -r requirements/test-master.txt
@@ -199,7 +198,7 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==19.2.0
+faker==19.3.0
     # via factory-boy
 filelock==3.12.2
     # via
@@ -288,7 +287,7 @@ pycryptodomex==3.18.0
     #   snowflake-connector-python
 pydata-sphinx-theme==0.13.3
     # via sphinx-book-theme
-pygments==2.15.1
+pygments==2.16.1
     # via
     #   accessible-pygments
     #   doc8
