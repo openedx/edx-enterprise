@@ -4,7 +4,6 @@ Tests for clients in integrated_channels.
 
 import random
 import unittest
-from urllib.parse import urljoin
 
 import pytest
 import responses
@@ -64,11 +63,11 @@ class TestMoodleApiClient(unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.moodle_base_url = 'http://testing/'
+        self.custom_moodle_base_url = 'http://testing/subdir/'
         self.token = 'token'
         self.password = 'pass'
         self.user = 'user'
         self.user_email = 'testemail@example.com'
-        self.moodle_api_path = '/webservice/rest/server.php'
         self.moodle_course_id = random.randint(1, 1000)
         self._get_courses_response = bytearray('{{"courses": [{{"id": {}}}]}}'.format(self.moodle_course_id), 'utf-8')
         self.empty_get_courses_response = bytearray('{"courses": []}', 'utf-8')
@@ -84,13 +83,20 @@ class TestMoodleApiClient(unittest.TestCase):
             token=self.token,
         )
         self.enterprise_custom_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
-            moodle_base_url=self.moodle_base_url,
+            moodle_base_url=self.custom_moodle_base_url,
             username=self.user,
             password=self.password,
             token=self.token,
             grade_scale=10,
             grade_assignment_name='edX Grade Test'
         )
+
+    def test_api_url(self):
+        moodle_api_client = MoodleAPIClient(self.enterprise_config)
+        moodle_api_client_with_sub_dir = MoodleAPIClient(self.enterprise_custom_config)
+
+        assert moodle_api_client.api_url == 'http://testing/webservice/rest/server.php'
+        assert moodle_api_client_with_sub_dir.api_url == 'http://testing/subdir/webservice/rest/server.php'
 
     def test_moodle_config_is_set(self):
         """
@@ -107,7 +113,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client = MoodleAPIClient(self.enterprise_config)
         responses.add(
             responses.GET,
-            urljoin(self.enterprise_config.moodle_base_url, self.moodle_api_path),
+            client.api_url,
             json={'courses': [{'id': 2}]},
             status=200
         )
@@ -233,10 +239,8 @@ class TestMoodleApiClient(unittest.TestCase):
     def test_course_completion_with_no_course(self):
         """Test that we properly raise exceptions if the client receives a 404 from Moodle"""
         with responses.RequestsMock() as rsps:
-            moodle_api_path = urljoin(
-                self.enterprise_config.moodle_base_url,
-                self.moodle_api_path,
-            )
+            client = MoodleAPIClient(self.enterprise_config)
+            moodle_api_path = client.api_url
             moodle_get_courses_query = 'wstoken={}&wsfunction=core_course_get_courses_by_field&field=idnumber' \
                                        '&value={}&moodlewsrestformat=json'.format(self.token, self.moodle_course_id)
             request_url = '{}?{}'.format(moodle_api_path, moodle_get_courses_query)
@@ -246,7 +250,7 @@ class TestMoodleApiClient(unittest.TestCase):
                 body=b'{}',
                 status=200
             )
-            client = MoodleAPIClient(self.enterprise_config)
+
             with pytest.raises(ClientError) as client_error:
                 client.create_course_completion(self.user_email, self.learner_data_payload)
 

@@ -109,7 +109,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         - Customer's Moodle service short name
     """
 
-    MOODLE_API_PATH = '/webservice/rest/server.php'
+    MOODLE_API_PATH = 'webservice/rest/server.php'
 
     def __init__(self, enterprise_configuration):
         """
@@ -122,6 +122,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('moodle')
         self.token = enterprise_configuration.token or self._get_access_token()
+        self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
 
     def _post(self, additional_params):
         """
@@ -137,10 +138,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params.update(additional_params)
 
         response = requests.post(
-            url=urljoin(
-                self.enterprise_configuration.moodle_base_url,
-                self.MOODLE_API_PATH,
-            ),
+            url=self.api_url,
             data=params,
             headers=headers
         )
@@ -166,7 +164,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         response = requests.post(
             urljoin(
                 self.enterprise_configuration.moodle_base_url,
-                '/login/token.php',
+                'login/token.php',
             ),
             params=querystring,
             headers={
@@ -236,10 +234,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'moodlewsrestformat': 'json'
         }
         response = requests.get(
-            urljoin(
-                self.enterprise_configuration.moodle_base_url,
-                self.MOODLE_API_PATH,
-            ),
+            self.api_url,
             params=params
         )
         return response
@@ -286,10 +281,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'moodlewsrestformat': 'json'
         }
         response = requests.get(
-            urljoin(
-                self.enterprise_configuration.moodle_base_url,
-                self.MOODLE_API_PATH,
-            ),
+            self.api_url,
             params=params
         )
         return response
