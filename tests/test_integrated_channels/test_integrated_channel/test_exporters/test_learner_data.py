@@ -657,6 +657,71 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.completed_timestamp == expected_completion
             assert report.grade == expected_grade
 
+    @ddt.data(
+        ('A-', None),
+        ('0.72', 72.0),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseEnrollment')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_persistent_grade')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_completion_summary')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.is_course_completed')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_learner_data_grade_typing(
+            self,
+            grade_value,
+            expected_grade,
+            mock_course_catalog_api,
+            mock_is_course_completed,
+            mock_get_completion_summary,
+            mock_get_course_details,
+            mock_get_persistent_grade,
+            mock_get_single_user_grade,
+            mock_get_course_certificate,
+            mock_course_enrollment_class
+    ):
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        # Return a mock certificate with a grade value to be transformed by the exporter
+        certificate = {
+            'username': self.user,
+            'course_id': self.course_id,
+            'certificate_type': 'professional',
+            'status': 'downloadable',
+            'is_passing': True,
+            'grade': grade_value,
+        }
+
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_completion_summary.return_value = {'complete_count': 1, 'incomplete_count': 0, 'locked_count': 0}
+        mock_is_course_completed.return_value = True
+        mock_get_course_certificate.return_value = certificate
+        mock_get_persistent_grade.return_value = mock_persistent_course_grade(
+            user_id='a-user-id',
+            course_id=self.course_id,
+            passed_timestamp=self.NOW_TIMESTAMP,
+        )
+        mock_get_course_details.return_value = mock_course_overview(pacing='self', end=None)
+        mock_get_single_user_grade.return_value = mock_single_learner_grade(
+            passing=True,
+        )
+        mock_course_enrollment_class.objects.get.return_value.mode = 'verified'
+
+        # Collect the learner data, with time set to NOW
+        with freeze_time(self.NOW):
+            self.config = factories.Degreed2EnterpriseCustomerConfigurationFactory(
+                enterprise_customer=self.enterprise_customer,
+            )
+            self.exporter = self.config.get_learner_data_exporter('test')
+            learner_data = list(self.exporter.export())
+
+        assert learner_data[0].grade == expected_grade
+
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
