@@ -16,6 +16,9 @@ Change Log
 Unreleased
 ----------
 
+[4.0.12]
+fix: allow sub directories in moodle base URLs
+
 [4.0.11]
 feat: upgrade django-simple-history to 3.1.1
 
