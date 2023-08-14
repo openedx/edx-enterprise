@@ -16,6 +16,9 @@ Change Log
 Unreleased
 ----------
 
+[4.0.13]
+fix: more flexible default site 
+
 [4.0.12]
 fix: allow sub directories in moodle base URLs
 
