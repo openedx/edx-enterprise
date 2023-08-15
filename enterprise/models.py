@@ -165,7 +165,7 @@ def get_default_site():
     In stage it should be 'courses.stage.edx.org'.
     """
     value = settings.LMS_BASE
-    site, __ = Site.objects.get_or_create(domain=value, name=value)
+    site, __ = Site.objects.get_or_create(domain=value, defaults={"name": value})
     return site.id
 
 
