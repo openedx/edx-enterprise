@@ -259,7 +259,7 @@ feat: added enterprise fulfillment viewset
 
 [3.61.7]
 --------
-feat: surfacing subsided enrollment uuid value in the bulk enrollment endpoint
+feat: surfacing subsidized enrollment uuid value in the bulk enrollment endpoint
 
 [3.61.6]
 --------
