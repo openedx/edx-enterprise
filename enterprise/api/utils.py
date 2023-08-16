@@ -2,16 +2,27 @@
 Utility functions for the Enterprise API.
 """
 
+
 from django.conf import settings
+from django.contrib import auth
 from django.utils.translation import gettext as _
 
+from enterprise.constants import (
+    ENTERPRISE_CATALOG_ADMIN_ROLE,
+    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+)
 from enterprise.models import (
+    EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    EnterpriseFeatureRole,
+    EnterpriseFeatureUserRoleAssignment,
 )
 
+User = auth.get_user_model()
 SERVICE_USERNAMES = (
     'ECOMMERCE_SERVICE_WORKER_USERNAME',
     'ENTERPRISE_SERVICE_WORKER_USERNAME'
@@ -98,3 +109,38 @@ def get_ent_cust_from_enterprise_customer_key(enterprise_customer_key):
         return str(EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key).enterprise_customer_id)
     except EnterpriseCustomerInviteKey.DoesNotExist:
         return None
+
+
+def set_application_name_from_user_id(user_id):
+    """
+    Get the enterprise customer user's name given a user id.
+    """
+    try:
+        user = User.objects.get(id=user_id)
+        return f"{user.username}'s Enterprise Credentials"
+    except User.DoesNotExist:
+        return None
+
+
+def has_api_credentials_enabled(enterprise_uuid):
+    """
+    Check whether the enterprise customer can access to api credentials or not
+    """
+    try:
+        return (EnterpriseCustomer
+                .objects.get(uuid=enterprise_uuid)
+                .enable_generation_of_api_credentials)
+    except EnterpriseCustomer.DoesNotExist:
+        return False
+
+
+def assign_feature_roles(user):
+    """
+    Add the ENTERPRISE_DASHBOARD_ADMIN_ROLE, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE, ENTERPRISE_CATALOG_ADMIN_ROLE
+    feature roles if the user does not already have them
+    """
+    roles_name = [ENTERPRISE_DASHBOARD_ADMIN_ROLE, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+                  ENTERPRISE_CATALOG_ADMIN_ROLE]
+    for role_name in roles_name:
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(name=role_name)
+        EnterpriseFeatureUserRoleAssignment.objects.get_or_create(user=user, role=feature_role_object)

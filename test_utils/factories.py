@@ -6,6 +6,7 @@ from uuid import UUID
 
 import factory
 from faker import Factory as FakerFactory
+from oauth2_provider.models import get_application_model
 
 from django.contrib import auth
 from django.contrib.sites.models import Site
@@ -66,6 +67,7 @@ from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XA
 
 FAKER = FakerFactory.create()
 User = auth.get_user_model()
+Application = get_application_model()
 
 
 # pylint: disable=no-member
@@ -110,6 +112,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
     enable_audit_enrollment = False
     enable_audit_data_reporting = False
+    enable_generation_of_api_credentials = False
     hide_course_original_price = False
     country = 'US'
     contact_email = factory.LazyAttribute(lambda x: FAKER.email())
@@ -1011,3 +1014,25 @@ class EnterpriseCustomerReportingConfigurationFactory(factory.django.DjangoModel
     report_type = 'json'
     frequency = 'daily'
     hour_of_day = 1
+
+
+class EnterpriseCustomerApiCredentialsFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerApiCredentials factory.
+
+    Creates an instance of EnterpriseCustomerApiCredentials with minimal boilerplate.
+    """
+    class Meta:
+        """
+        Meta for Application
+        """
+
+        model = Application
+
+    user = factory.SubFactory(UserFactory)
+    authorization_grant_type = 'client-credentials'
+    client_type = 'confidential'
+    redirect_uris = factory.LazyAttribute(lambda x: FAKER.url())
+    name = factory.LazyAttribute(lambda x: FAKER.company())
+    client_id = factory.LazyAttribute(lambda x: FAKER.word())
+    client_secret = factory.LazyAttribute(lambda x: FAKER.word())

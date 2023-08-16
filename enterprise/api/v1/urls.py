@@ -11,6 +11,7 @@ from enterprise.api.v1.views import (
     enterprise_catalog_query,
     enterprise_course_enrollment,
     enterprise_customer,
+    enterprise_customer_api_credentials,
     enterprise_customer_branding_configuration,
     enterprise_customer_catalog,
     enterprise_customer_invite_key,
@@ -118,7 +119,28 @@ urlpatterns = [
         enterprise_customer_branding_configuration.EnterpriseCustomerBrandingConfigurationViewSet.as_view(
             {'patch': 'update_branding'}
         ),
-        name='enterprise-customer-update-branding')
+        name='enterprise-customer-update-branding'),
+    re_path(
+        r'^enterprise_customer_api_credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/$',
+        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
+            {'get': 'list', 'post': 'create'}
+        ),
+        name='enterprise_customer_api_credentials_list'
+    ),
+    re_path(
+        r'^enterprise_customer_api_credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/regenerate_credentials/$',
+        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
+            {'patch': 'regenerate_credentials'}
+        ),
+        name='regenerate_api_credentials'
+    ),
+    re_path(
+        r'^enterprise_customer_api_credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/(?P<user>\d+)/$',
+        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
+            {'get': 'retrieve', 'delete': 'destroy', 'put': 'update'}
+        ),
+        name='enterprise_customer_api_credentials_detail'
+    ),
 ]
 
 urlpatterns += router.urls

@@ -112,6 +112,7 @@ django==3.2.20
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-oauth-toolkit
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
@@ -141,6 +142,8 @@ django-model-utils==4.3.1
     #   -r requirements/test-master.txt
     #   edx-rbac
 django-multi-email-field==0.7.0
+    # via -r requirements/test-master.txt
+django-oauth-toolkit==1.3.2
     # via -r requirements/test-master.txt
 django-object-actions==4.1.0
     # via -r requirements/test-master.txt
@@ -237,6 +240,10 @@ newrelic==8.10.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
+oauthlib==3.0.1
+    # via
+    #   -r requirements/test-master.txt
+    #   django-oauth-toolkit
 oscrypto==1.3.0
     # via
     #   -r requirements/test-master.txt
@@ -349,6 +356,7 @@ readme-renderer==40.0
 requests==2.31.0
     # via
     #   -r requirements/test-master.txt
+    #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   slumber
