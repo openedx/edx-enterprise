@@ -123,6 +123,7 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAu
         "content_title",
         "enterprise_customer_name",
         "friendly_status_message",
+        "api_record",
     )
 
     class Meta:
