@@ -75,7 +75,7 @@ cryptography==38.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -91,7 +91,7 @@ django==3.2.20
     #   -r requirements/base.in
     #   django-config-models
     #   django-crum
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
@@ -121,9 +121,7 @@ django-crum==0.7.9
     #   edx-django-utils
     #   edx-rbac
 django-fernet-fields-v2==0.9
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
+    # via -r requirements/base.in
 django-filter==23.2
     # via
     #   -c requirements/edx-platform-constraints.txt

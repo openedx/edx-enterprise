@@ -272,7 +272,7 @@ django-crum==0.7.9
     #   super-csv
 django-environ==0.10.0
     # via openedx-blockstore
-django-fernet-fields-v2==0.9
+django-fernet-fields==0.6
 django-filter==23.2
     # via
     #   -r requirements/edx/kernel.in
@@ -387,7 +387,7 @@ djangorestframework==3.14.0
     #   ora2
     #   super-csv
 djangorestframework-xml==2.0.0
-django-fernet-fields-v2==0.9
+djfernet==0.8.1
     # via edxval
 docutils==0.19
     # via
@@ -760,7 +760,7 @@ openedx-mongodbproxy==0.2.0
     # via -r requirements/edx/kernel.in
 optimizely-sdk==4.1.1
     # via -r requirements/edx/bundled.in
-ora2==5.2.3
+ora2==5.2.4
     # via -r requirements/edx/bundled.in
 oscrypto==1.3.0
     # via snowflake-connector-python

@@ -80,7 +80,7 @@ coverage[toml]==7.3.0
 cryptography==38.0.4
     # via
     #   -r requirements/test-master.txt
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -98,7 +98,7 @@ diff-cover==7.7.0
     #   -r requirements/test-master.txt
     #   django-config-models
     #   django-crum
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field

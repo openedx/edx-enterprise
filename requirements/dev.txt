@@ -158,7 +158,7 @@ cryptography==38.0.4
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -185,7 +185,7 @@ django==3.2.20
     #   -r requirements/test.txt
     #   django-config-models
     #   django-crum
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
