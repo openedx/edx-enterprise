@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.0.17]
+--------
+chore: restoring licensed enrollment table if it does not exist
+
 [4.0.16]
 --------
 feat: Replace deprecated `django-fernet-fields` with its forked `django-fernet-fields-v2`.
