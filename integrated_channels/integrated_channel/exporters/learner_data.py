@@ -332,6 +332,21 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                     f' Passed timestamp: {passed_timestamp}'
                 ))
 
+        # In the past we have been inconsistent about the format/source/typing of the grade_percent value.
+        # Initial investigations have lead us to believe that grade percents from the source are seemingly more
+        # accurate now, so we're enforcing float typing. To account for the chance that old documentation is
+        # right and grade percents are reported as letter grade values, the float conversion is wrapped in a try/except
+        # in order to both not blow up and also log said instance of letter grade values.
+        try:
+            if grade_percent is not None:
+                grade_percent = float(grade_percent)
+        except ValueError as exc:
+            LOGGER.error(generate_formatted_log(
+                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
+                f'Grade percent is not a valid float: {grade_percent}. Failed with exc: {exc}'
+            ))
+            grade_percent = None
+
         return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp
 
     def get_incomplete_content_count(self, enterprise_enrollment, channel_name):

@@ -98,7 +98,7 @@ cffi==1.15.1
     #   cryptography
     #   pynacl
     #   snowflake-connector-python
-chardet==5.1.0
+chardet==5.2.0
     # via
     #   -r requirements/test.txt
     #   diff-cover
@@ -149,7 +149,7 @@ code-annotations==1.5.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-lint
-coverage[toml]==7.2.7
+coverage[toml]==7.3.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -202,7 +202,7 @@ django-cache-memoize==0.1.10
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-config-models==2.4.0
+django-config-models==2.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -219,7 +219,7 @@ django-crum==0.7.9
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
+django-fernet-fields-v2==0.9
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -292,7 +292,7 @@ drf-jwt==1.19.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-django-utils==5.6.0
+edx-django-utils==5.7.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -306,17 +306,17 @@ edx-drf-extensions==8.8.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
-edx-i18n-tools==1.0.0
+edx-i18n-tools==1.1.0
     # via -r requirements/dev.in
 edx-lint==5.3.4
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.3.0
+edx-opaque-keys[django]==2.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-edx-rbac==1.7.0
+edx-rbac==1.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -336,7 +336,7 @@ factory-boy==3.3.0
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==19.2.0
+faker==19.3.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -466,11 +466,11 @@ pillow==9.5.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pip-tools==7.1.0
+pip-tools==7.3.0
     # via -r requirements/dev.in
 pkginfo==1.9.6
     # via twine
-platformdirs==3.9.1
+platformdirs==3.10.0
     # via
     #   pylint
     #   virtualenv
@@ -507,7 +507,7 @@ pyasn1==0.5.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   pgpy
-pycodestyle==2.10.0
+pycodestyle==2.11.0
     # via -r requirements/dev.in
 pycparser==2.21
     # via
@@ -527,7 +527,7 @@ pydata-sphinx-theme==0.13.3
     #   sphinx-book-theme
 pydocstyle==6.3.0
     # via -r requirements/dev.in
-pygments==2.15.1
+pygments==2.16.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -783,7 +783,7 @@ tox==3.28.0
     #   tox-battery
 tox-battery==0.6.1
     # via -r requirements/dev.in
-tqdm==4.65.0
+tqdm==4.66.1
     # via twine
 twine==1.11.0
     # via -r requirements/dev.in
@@ -827,7 +827,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.24.2
+virtualenv==20.24.3
     # via tox
 wcwidth==0.2.6
     # via
@@ -841,7 +841,7 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-wheel==0.41.0
+wheel==0.41.1
     # via
     #   -r requirements/dev.in
     #   pip-tools

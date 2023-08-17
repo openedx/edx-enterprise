@@ -106,7 +106,7 @@ django-cache-memoize==0.1.10
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-config-models==2.4.0
+django-config-models==2.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -120,7 +120,7 @@ django-crum==0.7.9
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
+django-fernet-fields-v2==0.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -170,7 +170,7 @@ drf-jwt==1.19.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==5.6.0
+edx-django-utils==5.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -182,12 +182,12 @@ edx-drf-extensions==8.8.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.3.0
+edx-opaque-keys[django]==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-drf-extensions
-edx-rbac==1.7.0
+edx-rbac==1.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

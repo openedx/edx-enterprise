@@ -129,6 +129,7 @@ class BlackboardLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAud
         "content_title",
         "enterprise_customer_name",
         "friendly_status_message",
+        "api_record",
     )
 
     list_per_page = 1000
