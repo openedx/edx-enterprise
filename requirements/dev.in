@@ -9,7 +9,6 @@ futures; python_version == "2.7" # Used by caniusepython3, only needed for Pytho
 edx-lint                  # edX pylint rules and plugins
 edx-i18n-tools            # For i18n_tool dummy
 isort                     # to standardize order of imports
-openedx-events>=8.3.0     # Open edX Events from Hooks Extension Framework (OEP-50)
 pip-tools                 # Requirements file management
 pycodestyle               # PEP 8 compliance validation
 pydocstyle                # PEP 257 compliance validation
