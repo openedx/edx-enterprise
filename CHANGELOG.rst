@@ -16,13 +16,32 @@ Change Log
 Unreleased
 ----------
 
+[4.0.17]
+--------
+chore: restoring licensed enrollment table if it does not exist
+
+[4.0.16]
+--------
+feat: Replace deprecated `django-fernet-fields` with its forked `django-fernet-fields-v2`.
+
+[4.0.15]
+--------
+fix: make api-record in lms admin read only
+
+[4.0.14]
+--------
+bug: swapping grades api grade_percent return value type from string to float
+
 [4.0.13]
-fix: more flexible default site 
+--------
+fix: more flexible default site
 
 [4.0.12]
+--------
 fix: allow sub directories in moodle base URLs
 
 [4.0.11]
+--------
 feat: upgrade django-simple-history to 3.1.1
 
 [4.0.10]
@@ -104,7 +123,7 @@ feat: add button to update customer modified time
 
 [3.67.3]
 --------
-feat: adding managent command to clear error state
+feat: adding management command to clear error state
 
 [3.67.2]
 --------
@@ -247,7 +266,7 @@ feat: include owners and longer descriptions for degreed2 content metadata trans
 
 [3.61.10]
 ---------
-feat: new tagging orphaned content tast for integrated channels
+feat: new tagging orphaned content test for integrated channels
 
 [3.61.9]
 --------
@@ -259,7 +278,7 @@ feat: added enterprise fulfillment viewset
 
 [3.61.7]
 --------
-feat: surfacing subsized enrollment uuid value in the bulk enrollment endpoint
+feat: surfacing subsidized enrollment uuid value in the bulk enrollment endpoint
 
 [3.61.6]
 --------
@@ -271,7 +290,7 @@ fix: Ensure `EnterpriseCustomerBrandingConfigurationSerializer` returns correct 
 
 [3.61.4]
 --------
-fix: impoved admin screen for system wide enterprise role assignments
+fix: improved admin screen for system wide enterprise role assignments
 
 [3.61.3]
 --------
@@ -287,7 +306,7 @@ fix: allowing for uuid column migration to be non-unique
 
 [3.61.0]
 --------
-feat: enterprise entitlements and subsidy based fulfillment models heirarchy rework
+feat: enterprise entitlements and subsidy based fulfillment models hierarchy rework
 
 [3.60.21]
 ---------
@@ -299,7 +318,7 @@ fix: changing api client to parse grades api response body
 
 [3.60.19]
 ---------
-fix: applied validatoins on report delivery_method
+fix: applied validations on report delivery_method
 
 [3.60.18]
 ---------
@@ -339,7 +358,7 @@ fix: making moodle client return value match other channels
 
 [3.60.9]
 --------
-fix: memoize synced_at datimes on config record
+fix: memoize synced_at datetimes on config record
 
 [3.60.8]
 --------
@@ -435,7 +454,7 @@ feat: integration sync reporting viewset improvements
 
 [3.58.7]
 --------
-feat: populate freindly_status_message in content and learner metadata api
+feat: populate friendly_status_message in content and learner metadata api
 
 [3.58.6]
 --------
@@ -475,7 +494,7 @@ feat: Added POST support for catalog query preview
 
 [3.57.1]
 --------
-fix: impoving transmission records by moving response body to new table
+fix: improving transmission records by moving response body to new table
 
 [3.57.0]
 ---------
@@ -534,7 +553,7 @@ fix: properly pass SAP client status back to content transmission records
 
 [3.56.4]
 --------
-fix: open redirect url whitelisting for data sharing conseent and change enterprise page
+fix: open redirect url whitelisting for data sharing consent and change enterprise page
 
 [3.56.3]
 --------
@@ -770,7 +789,7 @@ feat: add admin_users to ``EnterpriseCustomerSerializer``
 
 [3.41.13]
 ---------
-fix: remove backfill managment command arguments
+fix: remove backfill management command arguments
 
 [3.41.12]
 ---------
@@ -1521,7 +1540,7 @@ fix: properly weight blackboard grades
 
 [3.23.6]
 ---------
-* Optimised handling of conditions defining the absence of a DSC.
+* Optimized handling of conditions defining the absence of a DSC.
 
 [3.23.5]
 ---------
@@ -1625,7 +1644,7 @@ fix: properly weight blackboard grades
 [3.21.4]
 --------
 * allow searching of enterprise customer records with hyphenated uuid
-* add typeahead search dropdown to imporve enterprise customer search on
+* add typeahead search dropdown to improve enterprise customer search on
   enterprise reporting configuration
 
 [3.21.3]
@@ -1962,7 +1981,7 @@ fix: properly weight blackboard grades
 [3.17.3]
 --------
 
-* Fixed unnessary integrated channel signal transmission on course completion to inactive customers by adding guard condition.
+* Fixed unnecessary integrated channel signal transmission on course completion to inactive customers by adding guard condition.
 
 [3.17.2]
 --------
@@ -2173,7 +2192,7 @@ fix: properly weight blackboard grades
 [3.10.3]
 --------
 
-* Fix timout on update.
+* Fix timeout on update.
 
 [3.10.2]
 --------
@@ -2310,12 +2329,12 @@ fix: properly weight blackboard grades
 [3.8.34]
 --------
 
-* Implementing Blackboard completion data tranmission.
+* Implementing Blackboard completion data transmission.
 
 [3.8.33]
 --------
 
-* During license revocation, if no audit track exists for the course, attempt to unenroll the learer from it.
+* During license revocation, if no audit track exists for the course, attempt to unenroll the learner from it.
 
 [3.8.32]
 --------
@@ -2878,7 +2897,7 @@ fix: properly weight blackboard grades
 [3.2.15] - 2020-05-26
 ---------------------
 
-* Improve EnterpriseRoleAssigment exception messaging
+* Improve EnterpriseRoleAssignment exception messaging
 
 
 [3.2.14] - 2020-05-19
@@ -2978,7 +2997,7 @@ fix: properly weight blackboard grades
 [3.1.3] - 2020-04-23
 --------------------
 
-* Revised "end date" window for determinine course active/inactive status in catalog API responses.
+* Revised "end date" window for determining course active/inactive status in catalog API responses.
 
 
 [3.1.2] - 2020-04-21
@@ -3098,7 +3117,7 @@ fix: properly weight blackboard grades
 [2.5.5] - 2020-03-13
 --------------------
 
-* Add field for enabling subscription managment screen in the admin portal to EnterpriseCustomer.
+* Add field for enabling subscription management screen in the admin portal to EnterpriseCustomer.
 
 [2.5.4] - 2020-03-12
 --------------------
@@ -3407,7 +3426,7 @@ fix: properly weight blackboard grades
 [2.0.16] - 2019-11-07
 ---------------------
 
-* Address defect ENT-2463. Add protection within EnterpriseCustomerUser model in enroll method during coure enrollments.
+* Address defect ENT-2463. Add protection within EnterpriseCustomerUser model in enroll method during course enrollments.
 
 [2.0.15] - 2019-11-07
 ---------------------
@@ -3524,7 +3543,7 @@ fix: properly weight blackboard grades
 
 [1.10.3] - 2019-09-19
 ---------------------
-* Add enable_portal_reoprting_config_screen field to EnterpriseCustomer model.
+* Add enable_portal_reporting_config_screen field to EnterpriseCustomer model.
 * Add enable_portal_reporting_config_screen to EnterpriseCustomerSerializer.
 
 

@@ -72,7 +72,7 @@ def call_command(command_name, *args, **options):
     def get_actions(parser):
         # Parser actions and actions from sub-parser choices.
         for opt in parser._actions:  # pylint: disable=protected-access
-            if isinstance(opt, _SubParsersAction):  # pylint: disable=protected-access
+            if isinstance(opt, _SubParsersAction):
                 for sub_opt in opt.choices.values():
                     yield from get_actions(sub_opt)
             else:

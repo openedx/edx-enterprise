@@ -221,7 +221,7 @@ django-crum==0.7.9
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
+django-fernet-fields-v2==0.9
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -318,7 +318,6 @@ edx-opaque-keys[django]==2.4.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-    #   openedx-events
 edx-rbac==1.8.0
     # via
     #   -r requirements/doc.txt
@@ -477,7 +476,7 @@ pip-tools==7.3.0
     # via -r requirements/dev.in
 pkginfo==1.9.6
     # via twine
-platformdirs==3.8.1
+platformdirs==3.9.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -843,7 +842,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.24.1
+virtualenv==20.24.2
     # via tox
 wcwidth==0.2.6
     # via

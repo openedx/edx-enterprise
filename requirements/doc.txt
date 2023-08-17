@@ -130,7 +130,7 @@ django-crum==0.7.9
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
+django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
 django-filter==23.2
     # via -r requirements/test-master.txt

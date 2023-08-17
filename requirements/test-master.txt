@@ -120,8 +120,10 @@ django-crum==0.7.9
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-rbac
-django-fernet-fields==0.6
-    # via -r requirements/base.in
+django-fernet-fields-v2==0.9
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   -r requirements/base.in
 django-filter==23.2
     # via
     #   -c requirements/edx-platform-constraints.txt
