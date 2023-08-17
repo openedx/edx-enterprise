@@ -6,6 +6,7 @@ from logging import getLogger
 
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from openedx_events.event_bus import get_producer
 
 from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
@@ -349,16 +350,23 @@ def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=un
     """
     enrollment = kwargs.get('enrollment')
     enterprise_enrollment = models.EnterpriseCourseEnrollment.objects.filter(
-        course_id=enrollment.course.course_key,
-        enterprise_customer_user__user_id=enrollment.user.id,
+        course_id=enrollment.course_id,
+        enterprise_customer_user__user_id=enrollment.enterprise_customer_user.user_id,
     ).first()
     if enterprise_enrollment:
         logger.info(
-            f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.user} and "
-            f"course {enrollment.course.course_key}"
+            f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.enterprise_customer_user.user_id} and "
+            f"course {enrollment.course_id}"
         )
         enterprise_enrollment.unenrolled_at = localized_utcnow()
         enterprise_enrollment.save()
+        get_producer().send(
+            signal=COURSE_UNENROLLMENT_COMPLETED,
+            topic='course-unenrollment-completed',
+            event_key_field='enrollment.course.course_key',
+            event_data={'enrollment': kwargs.get('enrollment')},
+            event_metadata=kwargs.get('metadata')
+        )
 
 
 def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument

@@ -217,7 +217,7 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
     @classmethod
     def __init_subclass__(cls, **kwargs):
         """
-        Finds every subclass and wires up the signal reciever to set default display name when blank
+        Finds every subclass and wires up the signal receiver to set default display name when blank
         """
         super().__init_subclass__(**kwargs)
         models.signals.post_save.connect(set_default_display_name, sender=cls)
