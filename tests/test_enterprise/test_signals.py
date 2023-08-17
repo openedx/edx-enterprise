@@ -4,10 +4,13 @@ Tests for the `edx-enterprise` models module.
 
 import unittest
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest import mock
+from uuid import uuid4
 
 import ddt
+from openedx_events.data import EventsMetadata
+from openedx_events.learning.signals import COURSE_UNENROLLMENT_COMPLETED
 from pytest import mark
 
 from django.db import transaction
@@ -24,12 +27,17 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
+from enterprise.signals import (
+    create_enterprise_enrollment_receiver,
+    enterprise_unenrollment_receiver,
+    handle_user_post_save,
+)
 from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
 from test_utils import EmptyCacheMixin
 from test_utils.factories import (
     ContentMetadataItemTransmissionFactory,
     EnterpriseCatalogQueryFactory,
+    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -735,7 +743,7 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
         )
         self.assertTrue(enterprise_customer_user.exists())
 
-        # Delete the role assignment record for tesing purposes.
+        # Delete the role assignment record for testing purposes.
         learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             user=self.learner_user,
             role=self.enterprise_learner_role
@@ -1041,3 +1049,43 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+@mark.django_db
+class UnenrollmentEventBusTests(unittest.TestCase):
+    """
+    Tests for Certificate events that interact with the event bus.
+    """
+
+    @override_settings(COURSE_UNENROLLMENT_COMPLETED=COURSE_UNENROLLMENT_COMPLETED)
+    @mock.patch('enterprise.signals.get_producer', autospec=True)
+    def test_event_enabled(self, mock_producer):
+        """
+        Test to verify that we push `COURSE_UNENROLLMENT_COMPLETED` events to the event bus.
+        """
+        user = UserFactory()
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user.id)
+        enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+        )
+
+        event_metadata = EventsMetadata(
+            event_type=COURSE_UNENROLLMENT_COMPLETED.event_type,
+            id=uuid4(),
+            minorversion=0,
+            source='openedx/lms/web',
+            sourcehost='lms.test',
+            time=datetime.now(timezone.utc)
+        )
+
+        event_kwargs = {
+            'enrollment': enrollment,
+            'metadata': event_metadata
+        }
+
+        enterprise_unenrollment_receiver(None, **event_kwargs)
+        # verify that the data sent to the event bus matches what we expect
+        data = mock_producer.return_value.send.call_args.kwargs
+        assert data['event_data']['enrollment'] == enrollment
+        assert data['topic'] == 'course-unenrollment-completed'
+        assert data['event_key_field'] == 'enrollment.course.course_key'
