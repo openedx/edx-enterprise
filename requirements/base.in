@@ -29,6 +29,7 @@ edx-tincan-py35
 edx-rbac
 jsondiff
 jsonfield
+openedx-events>=8.3.0
 path.py
 pillow
 python-dateutil
