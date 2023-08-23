@@ -8,9 +8,10 @@ from rest_framework import serializers
 from django.conf import settings
 from django.utils.translation import gettext as _
 
+from enterprise.constants import EXEC_ED_COURSE_TYPE, PRODUCT_SOURCE_2U
 from enterprise.models import EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise_learner_portal.utils import get_course_run_status
+from enterprise_learner_portal.utils import get_course_run_status, get_exec_ed_course_run_status
 
 try:
     from lms.djangoapps.bulk_email.api import get_emails_enabled
@@ -86,6 +87,14 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                 representation['start_date'] = course_details.start_date or representation['start_date']
                 representation['end_date'] = course_details.end_date or representation['end_date']
                 representation['enroll_by'] = course_details.enroll_by
+
+                if (course_details.product_source == PRODUCT_SOURCE_2U and
+                        course_details.course_type == EXEC_ED_COURSE_TYPE):
+                    representation['course_run_status'] = get_exec_ed_course_run_status(
+                        course_details,
+                        certificate_info,
+                        instance
+                    )
 
         return representation
 

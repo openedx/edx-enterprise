@@ -77,6 +77,7 @@ COURSE_MODE_SORT_ORDER = [
 ]
 
 EXEC_ED_COURSE_TYPE = "executive-education-2u"
+PRODUCT_SOURCE_2U = "2u"
 EXEC_ED_CONTENT_DESCRIPTION_TAG = ("This instructor-led Executive Education course is "
                                    "presented by GetSmarter, an edX partner. ")
 

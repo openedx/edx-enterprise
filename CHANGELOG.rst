@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.0.18]
+--------
+fix: enrolled course card grouping behavior for exec-ed courses
+
 [4.0.17]
 --------
 chore: restoring licensed enrollment table if it does not exist
