@@ -995,7 +995,7 @@ s3transfer==0.1.13
     # via boto3
 sailthru-client==2.2.3
     # via edx-ace
-scipy==1.7.3
+scipy==1.10.0
     # via
     #   -c requirements/edx/../constraints.txt
     #   chem
