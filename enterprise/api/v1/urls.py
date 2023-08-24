@@ -7,6 +7,7 @@ from rest_framework.routers import DefaultRouter
 from django.urls import re_path
 
 from enterprise.api.v1.views import (
+    analytics_summary,
     coupon_codes,
     enterprise_catalog_query,
     enterprise_course_enrollment,
@@ -118,7 +119,13 @@ urlpatterns = [
         enterprise_customer_branding_configuration.EnterpriseCustomerBrandingConfigurationViewSet.as_view(
             {'patch': 'update_branding'}
         ),
-        name='enterprise-customer-update-branding')
+        name='enterprise-customer-update-branding',
+    ),
+    re_path(
+        r'^analytics-summary/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        analytics_summary.AnalyticsSummaryView.as_view(),
+        name='analytics-summary'
+    ),
 ]
 
 urlpatterns += router.urls

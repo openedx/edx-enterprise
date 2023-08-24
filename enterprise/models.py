@@ -42,6 +42,7 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_c
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
+from enterprise.api_client.open_ai import chat_completion
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
@@ -64,6 +65,7 @@ from enterprise.utils import (
     get_default_invite_key_expiration_date,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
+    get_md5_hash,
     get_platform_logo_url,
     get_user_valid_idp,
     localized_utcnow,
@@ -3608,3 +3610,71 @@ class EnterpriseCustomerInviteKey(TimeStampedModel, SoftDeletableModel):
                 raise ValueError("Cannot reactivate an inactive invite key.")
 
         super().save(*args, **kwargs)
+
+
+class ChatGPTResponse(TimeStampedModel):
+    """
+    Stores ChatGPT prompts and their responses for each enterprise customer.
+
+    .. no_pii:
+    """
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='chat_gpt_prompts',
+        on_delete=models.CASCADE,
+        help_text=_(
+            'The enterprise that can be linked using this key.'
+        )
+    )
+
+    prompt = models.TextField(help_text=_('ChatGPT prompt.'))
+    prompt_hash = models.CharField(max_length=32, editable=False)
+    response = models.TextField(help_text=_('ChatGPT response.'))
+
+    def save(self, *args, **kwargs):
+        """
+        Set the value of prompt_hash before saving.
+        """
+        self.prompt_hash = get_md5_hash(self.prompt)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_or_create(cls, prompt, role, enterprise_customer):
+        """
+        Get or create ChatGPT response against given prompt.
+
+        This method will first check and return the entry against the given prompt exist in the current table,
+        if no such entry exists, it will call OpenAI API and save and return the entry.
+
+        Arguments:
+            prompt (str): OpenAI prompt.
+            role (str): ChatGPT role to assume for the prompt.
+            enterprise_customer (EnterpriseCustomer): Enterprise customer UUId making the request.
+
+        Returns:
+            (str): Response against the given prompt.
+        """
+        instance = cls.objects.filter(prompt_hash=get_md5_hash(prompt), enterprise_customer=enterprise_customer).first()
+        if instance is None:
+            response = chat_completion(prompt, role)
+            cls.objects.create(
+                enterprise_customer=enterprise_customer,
+                prompt=prompt,
+                response=response,
+            )
+            return response
+        else:
+            return instance.response
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return f'<ChatGPTResponse uuid={self.uuid}>'
+
+    def __repr__(self):
+        return str(self)

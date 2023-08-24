@@ -1478,3 +1478,46 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
 
     # Parses from a dictionary to JSON
     content_filter = serializers.JSONField(required=False)
+
+
+class AnalyticsSummarySerializer(serializers.Serializer):
+    """
+    Serializer for the payload data of analytics summary endpoint.
+    """
+    class LearnerProgressSerializer(serializers.Serializer):
+        """
+        Serializer for the learner progress data in the analytics summary endpoint.
+        """
+        enterprise_customer_uuid = serializers.UUIDField(required=True)
+        enterprise_customer_name = serializers.CharField(required=True)
+        active_subscription_plan = serializers.BooleanField(required=True)
+        assigned_licenses = serializers.IntegerField(required=True)
+        activated_licenses = serializers.IntegerField(required=True)
+        assigned_licenses_percentage = serializers.FloatField(required=True)
+        activated_licenses_percentage = serializers.FloatField(required=True)
+        active_enrollments = serializers.IntegerField(required=True)
+        at_risk_enrollment_less_than_one_hour = serializers.IntegerField(required=True)
+        at_risk_enrollment_end_date_soon = serializers.IntegerField(required=True)
+        at_risk_enrollment_dormant = serializers.IntegerField(required=True)
+        created_at = serializers.DateTimeField(required=True)
+
+    class LearnerEngagementSerializer(serializers.Serializer):
+        """
+        Serializer for the summary related data in the analytics summary endpoint.
+        """
+        enterprise_customer_uuid = serializers.UUIDField(required=True)
+        enterprise_customer_name = serializers.CharField(required=True)
+        enrolls = serializers.IntegerField(required=True)
+        enrolls_prior = serializers.IntegerField(required=True)
+        passed = serializers.IntegerField(required=True)
+        passed_prior = serializers.IntegerField(required=True)
+        engage = serializers.IntegerField(required=True)
+        engage_prior = serializers.IntegerField(required=True)
+        hours = serializers.IntegerField(required=True)
+        hours_prior = serializers.IntegerField(required=True)
+        active_contract = serializers.BooleanField(required=True)
+        contract_end_date = serializers.DateTimeField(required=True)
+        created_at = serializers.DateTimeField(required=True)
+
+    learner_progress = LearnerProgressSerializer()
+    learner_engagement = LearnerEngagementSerializer()

@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.0]
+-------
+feat: Added the ability to get AI generated learner engagement and learner progress summary.
+
 [4.0.18]
 --------
 fix: enrolled course card grouping behavior for exec-ed courses

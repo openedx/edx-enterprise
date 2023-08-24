@@ -2,6 +2,7 @@
 Tests for the `edx-enterprise` api module.
 """
 
+import copy
 import json
 import logging
 import uuid
@@ -38,6 +39,7 @@ from enterprise.constants import (
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
+    ChatGPTResponse,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerInviteKey,
@@ -68,7 +70,13 @@ from test_utils import (
     update_course_with_enterprise_context,
     update_program_with_enterprise_context,
 )
-from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
+from test_utils.factories import (
+    FAKER,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerUserFactory,
+    UserFactory,
+)
 from test_utils.fake_enterprise_api import get_default_branding_object
 
 fake = Faker()
@@ -6664,3 +6672,196 @@ class TestPlotlyAuthView(APITest):
         response = self.client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+
+@mark.django_db
+class TestAnalyticsSummaryView(APITest):
+    """
+    Test AnalyticsSummaryView
+    """
+
+    ANALYTICS_SUMMARY_ENDPOINT = 'analytics-summary'
+
+    def setUp(self):
+        """
+        Common setup for all tests.
+        """
+        super().setUp()
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+        self.enterprise_uuid = fake.uuid4()
+        self.enterprise_uuid2 = fake.uuid4()
+        self.url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': self.enterprise_uuid}
+        )
+
+        self.learner_progress = {
+            'enterprise_customer_uuid': '288e94c6-2565-4e8d-a7f2-57df437d6052',
+            'enterprise_customer_name': 'test enterprise',
+            'active_subscription_plan': True,
+            'assigned_licenses': 10,
+            'activated_licenses': 5,
+            'assigned_licenses_percentage': 0.6,
+            'activated_licenses_percentage': 0.5,
+            'active_enrollments': 4,
+            'at_risk_enrollment_less_than_one_hour': 3,
+            'at_risk_enrollment_end_date_soon': 2,
+            'at_risk_enrollment_dormant': 2,
+            'created_at': '2023-08-10T12:39:35.388936Z'
+        }
+
+        self.learner_engagement = {
+            'enterprise_customer_uuid': '288e94c6-2565-4e8d-a7f2-57df437d6052',
+            'enterprise_customer_name': 'test enterprise',
+            'enrolls': 100,
+            'enrolls_prior': 70,
+            'passed': 30,
+            'passed_prior': 50,
+            'engage': 40,
+            'engage_prior': 50,
+            'hours': 2000,
+            'hours_prior': 3000,
+            'contract_end_date': '2023-12-10T12:39:28.792421Z',
+            'active_contract': True,
+            'created_at': '2023-08-11T13:25:40.197061Z'
+        }
+
+        self.payload = {
+            'learner_progress': self.learner_progress,
+            'learner_engagement': self.learner_engagement,
+        }
+
+    def test_view_with_normal_user(self):
+        """
+        Verify that a user without having `enterprise.can_access_admin_dashboard` role can't access the view.
+        """
+        response = self.client.post(self.url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+    def test_view_with_admin_user_tries(self):
+        """
+        Verify that an enterprise admin can access this view only for itself.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+
+        url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': self.enterprise_uuid2}
+        )
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view_with_admin_user(self, mock_chat_completion):
+        """
+        Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid)
+
+        response = self.client.post(self.url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_404_if_enterprise_customer_does_not_exist(self, mock_chat_completion):
+        """
+        Verify that an 404 is returned if the enterprise customer specified in the URL does not exist in the database.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        # call the endpoint without creation enterprise customer in the database.
+        response = self.client.post(self.url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view_returns_error_when_payload_is_not_valid(self, mock_chat_completion):
+        """
+        Verify that the endpoint returns an error response in case of invalid/missing data.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid)
+
+        response = self.client.post(self.url, data={}, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'errors' in response.json()
+
+        errors = response.json()['errors']
+        assert 'learner_progress' in errors
+        assert 'learner_engagement' in errors
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view(self, mock_chat_completion):
+        """
+        Verify the behavior of the endpoint.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        enterprise_customer = EnterpriseCustomerFactory.create()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.uuid)
+        url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': enterprise_customer.uuid}
+        )
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        # Make sure the 2 entries were added. one for learner progress and another for learner engagement
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+        # Make sure further request with the same payload does not create another instance.
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view_with_inactive_contracts(self, mock_chat_completion):
+        """
+        Verify the behavior of the endpoint.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        payload = copy.deepcopy(self.payload)
+        payload['learner_progress']['active_subscription_plan'] = False
+        payload['learner_engagement']['active_contract'] = False
+        enterprise_customer = EnterpriseCustomerFactory.create()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.uuid)
+        url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': enterprise_customer.uuid}
+        )
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        # Make sure the 2 entries were added. one for learner progress and another for learner engagement
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+        # Make sure further request with the same payload does not create another instance.
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
