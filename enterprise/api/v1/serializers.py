@@ -509,6 +509,23 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         return representation
 
 
+class EnterpriseCustomerSsoConfiguration(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCustomerSsoConfiguration`` model.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerSsoConfiguration
+        fields = '__all__'
+
+    is_pending_configuration = serializers.SerializerMethodField()
+
+    def get_is_pending_configuration(self, obj):
+        """
+        Return whether the SSO configuration is pending configuration.
+        """
+        return obj.is_pending_configuration()
+
+
 class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSerializer):
     """
     Serializer for the ``EnterpriseCustomerCatalog`` model which includes

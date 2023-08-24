@@ -147,6 +147,7 @@ ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'
 ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 ENTERPRISE_FULFILLMENT_OPERATOR_ROLE = 'fulfillment_operator'
+ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE = 'sso_orchestrator_operator'
 
 # Tracking related
 PATHWAY_CUSTOMER_ADMIN_ENROLLMENT = 'customer-admin-enrollment'

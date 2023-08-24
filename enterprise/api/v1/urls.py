@@ -17,6 +17,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_catalog,
     enterprise_customer_invite_key,
     enterprise_customer_reporting,
+    enterprise_customer_sso_configuration,
     enterprise_customer_user,
     enterprise_subsidy_fulfillment,
     notifications,
@@ -147,6 +148,13 @@ urlpatterns = [
             {'get': 'retrieve', 'delete': 'destroy', 'put': 'update', 'post': 'create'}
         ),
         name='enterprise-customer-api-credentials'
+    ),
+    re_path(
+        r'^enterprise_customer_sso_configuration/(?P<configuration_uuid>[A-Za-z0-9-]+)/sso_orchestration_complete/?$',
+        enterprise_customer_sso_configuration.EnterpriseCustomerSsoConfigurationViewSet.as_view(
+            {'post': 'oauth_orchestration_complete'}
+        ),
+        name='enterprise-customer-sso-configuration'
     ),
 ]
 

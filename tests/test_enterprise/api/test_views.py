@@ -75,6 +75,7 @@ from test_utils import (
 from test_utils.factories import (
     FAKER,
     EnterpriseCustomerFactory,
+    EnterpriseCustomerSsoConfigurationFactory,
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
@@ -7131,3 +7132,73 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
             data=put_data,
         )
         assert response.status_code == expected_status_code
+
+
+@mark.django_db
+class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
+    """
+    Test EnterpriseCustomerSsoConfigurationViewSet
+    """
+    ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT = 'enterprise-customer-sso-configuration'
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name="test_enterprise")
+        self.user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        self.user.set_password(TEST_PASSWORD)
+        self.user.save()
+
+        self.client = APIClient()
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+    def test_sso_configuration_oauth_orchestration_complete_permissioning(self):
+        """
+        Verify that the oauth_orchestration_complete endpoint adheres to the enterprise
+        can_manage_enterprise_orchestration_configs permission rule.
+        """
+        config_pk = uuid.uuid4()
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        response = self.client.post(url)
+        assert response.status_code == 403
+
+    def test_sso_configuration_oauth_orhcestration_complete_not_found(self):
+        """
+        Verify that the endpoint returns 404 when the configuration is not found.
+        """
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        response = self.client.post(url)
+        assert response.status_code == 404
+
+    def test_sso_configuration_oauth_orchestration_complete(self):
+        """
+        Verify that the endpoint returns the correct response when the oauth orchestration is complete.
+        """
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            submitted_at=localized_utcnow(),
+        )
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        assert enterprise_sso_orchestration_config.is_pending_configuration()
+        response = self.client.post(url)
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.configured_at is not None
+        assert enterprise_sso_orchestration_config.is_pending_configuration() is False
+        assert response.status_code == status.HTTP_200_OK
