@@ -34,6 +34,12 @@ class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
     permission_classes = (permissions.IsAdminUser,)
     serializer_class = serializers.EnterpriseCustomerCatalogWriteOnlySerializer
 
+    def has_enterprise_customer_catalog(self, uuid):
+        try:
+            return models.EnterpriseCustomerCatalog.objects.get(pk=uuid)
+        except models.EnterpriseCustomerCatalog.DoesNotExist:
+            return False
+
     def create(self, request, *args, **kwargs):
         """
         Creates a new EnterpriseCustomerCatalog and returns the created object.
@@ -75,6 +81,32 @@ class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
             'and enterprise_catalog_query_id: %s',
             enterprise_customer_uuid, enterprise_catalog_query_id)
         return super().create(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        Partially updates only the title in EnterpriseCustomerCatalog and returns the updated object.
+
+        URL: /enterprise/api/v1/enterprise-customer-catalog/
+
+        Method: PATCH
+
+        Payload::
+          {
+            "uuid": string - UUID of an existing enterprise customer catalog
+            "title":  string - Title of the catalog,
+          }
+
+        Returns 200 along with the updated object.
+        """
+        enterprise_customer_catalog_uuid = request.data.get('uuid')
+        found_catalog = self.has_enterprise_customer_catalog(enterprise_customer_catalog_uuid)
+        if not found_catalog:
+            return Response({'detail': 'Could not find catalog uuid'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(found_catalog, data=request.data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):

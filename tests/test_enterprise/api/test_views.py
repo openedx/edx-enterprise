@@ -1876,6 +1876,33 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         if response.status_code == 400:
             assert "Invalid pk" in response_output['enterprise_customer'][0]
 
+    def test_partially_update_enterprise_customer_catalog(self, is_staff, expected_status_code):
+        """
+        Test that a catalog can be partially updated
+        """
+        enterprise_customer_catalog_uuid = {
+            'uuid': FAKE_UUIDS[0]
+        }
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = is_staff
+        self.user.save()
+
+        response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test title update",
+            "uuid": str(enterprise_customer_catalog_uuid['uuid']),
+        }, format='json')
+        response_output = self.load_json(response.content)
+
+        assert response.status_code == expected_status_code
+
+        if expected_status_code == 200:
+            assert response_output['title'] == 'Test title update'
+            assert response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+            assert response_output['uuid'] == str(enterprise_customer_catalog_uuid['uuid'])
+        if expected_status_code == 404:
+            assert response_output['detail'] == 'Could not find catalog uuid'
+
 
 @ddt.ddt
 @mark.django_db

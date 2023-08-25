@@ -7,7 +7,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthenticat
 from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import NotFound
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 
 from enterprise.api.filters import UserFilterBackend
 from enterprise.api.throttles import ServiceUserThrottle
@@ -67,7 +67,7 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
 
 
-class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, viewsets.GenericViewSet):
+class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, UpdateModelMixin, viewsets.GenericViewSet):
     """
     Base class for all write only Enterprise model view sets.
     """
