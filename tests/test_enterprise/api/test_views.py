@@ -1876,10 +1876,61 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         if response.status_code == 400:
             assert "Invalid pk" in response_output['enterprise_customer'][0]
 
+    def test_partial_update_enterprise_customer_catalog(self):
+        """
+        Test that a catalog can be partially updated
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory()
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = True
+        self.user.save()
+
+        post_response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        post_response_output = self.load_json(post_response.content)
+        enterprise_customer_catalog_uuid = post_response_output['uuid']
+
+        assert post_response_output['title'] == 'Test Catalog'
+
+        patch_response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test title update",
+            "uuid": enterprise_customer_catalog_uuid,
+        }, format='json')
+        patch_response_output = self.load_json(patch_response.content)
+
+        assert patch_response.status_code == 200
+        assert patch_response_output['title'] == 'Test title update'
+        assert patch_response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        assert patch_response_output['uuid'] == enterprise_customer_catalog_uuid
+
+    def test_partial_update_enterprise_customer_catalog_incorrect_data(self):
+        """
+        Test that a catalog cannot be partially updated with incorrect UUID
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        catalog_uuid = str(FAKE_UUIDS[0])
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = True
+        self.user.save()
+
+        patch_response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test title update",
+            "uuid": catalog_uuid,
+        }, format='json')
+        patch_response_output = self.load_json(patch_response.content)
+
+        assert patch_response.status_code == 404
+        assert f'Could not find catalog uuid {catalog_uuid}' in patch_response_output['detail']
+
 
 @ddt.ddt
 @mark.django_db
-class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
     """
     Test EnterpriseCustomerCatalogViewSet
     """

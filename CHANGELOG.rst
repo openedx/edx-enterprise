@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.1]
+-------
+feat: Added patch endpoint to update an enterprise customer catalog.
+
 [4.1.0]
 -------
 feat: Added the ability to get AI generated learner engagement and learner progress summary.
