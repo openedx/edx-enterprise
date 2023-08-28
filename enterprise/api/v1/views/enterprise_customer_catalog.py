@@ -99,6 +99,7 @@ class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
 
         Returns 200 along with the updated object.
         """
+
         enterprise_customer_catalog_uuid = request.data.get('uuid')
         found_catalog = self.has_enterprise_customer_catalog(enterprise_customer_catalog_uuid)
         if not found_catalog:
