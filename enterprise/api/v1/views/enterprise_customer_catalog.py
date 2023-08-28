@@ -91,8 +91,9 @@ class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
         Method: PATCH
 
         Payload::
+
           {
-            "uuid": string - UUID of an existing enterprise customer catalog
+            "uuid": string - UUID of an existing enterprise customer catalog,
             "title":  string - Title of the catalog,
           }
 
