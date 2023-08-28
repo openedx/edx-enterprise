@@ -1895,6 +1895,8 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         post_response_output = self.load_json(post_response.content)
         enterprise_customer_catalog_uuid = post_response_output['uuid']
 
+        assert post_response_output['title'] == 'Test Catalog'
+
         patch_response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
             "title": "Test title update",
             "uuid": enterprise_customer_catalog_uuid,
@@ -1911,19 +1913,19 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         Test that a catalog cannot be partially updated with incorrect UUID
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
-
+        catalog_uuid = str(FAKE_UUIDS[0])
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
         self.user.is_staff = True
         self.user.save()
 
         patch_response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
             "title": "Test title update",
-            "uuid": str(FAKE_UUIDS[0]),
+            "uuid": catalog_uuid,
         }, format='json')
         patch_response_output = self.load_json(patch_response.content)
 
         assert patch_response.status_code == 404
-        assert "Could not find catalog uuid" in patch_response_output['detail']
+        assert f'Could not find catalog uuid {catalog_uuid}' in patch_response_output['detail']
 
 
 @ddt.ddt

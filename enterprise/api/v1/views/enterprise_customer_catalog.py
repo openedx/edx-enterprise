@@ -101,7 +101,10 @@ class EnterpriseCustomerCatalogWriteViewSet(EnterpriseWriteOnlyModelViewSet):
         enterprise_customer_catalog_uuid = request.data.get('uuid')
         found_catalog = self.has_enterprise_customer_catalog(enterprise_customer_catalog_uuid)
         if not found_catalog:
-            return Response({'detail': 'Could not find catalog uuid'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'detail': f'Could not find catalog uuid {enterprise_customer_catalog_uuid}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = self.get_serializer(found_catalog, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
