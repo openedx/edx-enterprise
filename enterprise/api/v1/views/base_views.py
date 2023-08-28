@@ -67,7 +67,12 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
 
 
-class EnterpriseWriteOnlyModelViewSet(EnterpriseModelViewSet, CreateModelMixin, UpdateModelMixin, viewsets.GenericViewSet):
+class EnterpriseWriteOnlyModelViewSet(
+    EnterpriseModelViewSet,
+    CreateModelMixin,
+    UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     Base class for all write only Enterprise model view sets.
     """
