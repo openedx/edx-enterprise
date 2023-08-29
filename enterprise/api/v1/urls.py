@@ -74,6 +74,13 @@ router.register(
 
 urlpatterns = [
     re_path(
+        r'^enterprise_customer_catalog/',
+        enterprise_customer_catalog.EnterpriseCustomerCatalogWriteViewSet.as_view(
+            {'patch': 'partial_update', 'post': 'create'},
+        ),
+        name='create_or_update'
+    ),
+    re_path(
         r'enterprise-subsidy-fulfillment/(?P<fulfillment_source_uuid>[A-Za-z0-9-]+)/?$',
         enterprise_subsidy_fulfillment.EnterpriseSubsidyFulfillmentViewSet.as_view({'get': 'retrieve'}),
         name='enterprise-subsidy-fulfillment'

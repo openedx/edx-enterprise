@@ -14,7 +14,12 @@ from django.test import RequestFactory
 
 from enterprise.models import EnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_enterprise_customer_for_running_pipeline, handle_enterprise_logistration
-from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerSsoConfigurationFactory,
+    UserFactory,
+)
 
 
 @ddt.ddt
@@ -279,3 +284,31 @@ class TestTpaPipeline(unittest.TestCase):
             provider = mock.MagicMock(provider_id=None)
             fake_registry.get_from_pipeline.return_value = provider
             assert get_enterprise_customer_for_running_pipeline(self.request, 'pipeline') is None
+
+    def test_enterprise_logistration_validates_sso_orchestration_config(self):
+        """
+        Test that an enterprise logistration flow validates the customer's sso integration config.
+        """
+        backend = self.get_mocked_sso_backend()
+        self.user = UserFactory(is_active=True)
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
+            with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
+                enterprise_customer = EnterpriseCustomerFactory(
+                    enable_data_sharing_consent=False
+                )
+                customer_sso_integration_config = EnterpriseCustomerSsoConfigurationFactory(
+                    enterprise_customer=enterprise_customer,
+                    validated_at=None,
+                )
+                customer_sso_integration_config.save()
+                EnterpriseCustomerUser.objects.create(
+                    enterprise_customer=enterprise_customer,
+                    user_id=self.user.id,
+                    active=True,
+                )
+                fake_get_ec.return_value = enterprise_customer
+                fake_get_sso_provider.return_value = 'test-sso-provider-id'
+
+                assert handle_enterprise_logistration(backend, self.user) is None
+                customer_sso_integration_config.refresh_from_db()
+                assert customer_sso_integration_config.validated_at is not None

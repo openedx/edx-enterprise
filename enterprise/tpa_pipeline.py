@@ -62,11 +62,18 @@ def validate_provider_config(enterprise_customer, sso_provider_id):
     """
     Helper method to ensure that a customer's provider config is validated
     """
+    enterprise_orchestration_config = enterprise_customer.sso_orchestration_records.filter(
+        active=True
+    )
+    if enterprise_orchestration_config.exists():
+        enterprise_orchestration_config.update(validated_at=datetime.now())
+
     # With a successful SSO login, validate the enterprise customer's IDP config if it hasn't already been validated
     enterprise_provider_config = enterprise_customer.identity_providers.filter(provider_id=sso_provider_id).first()
-    if not enterprise_provider_config.identity_provider.was_valid_at:
-        enterprise_provider_config.identity_provider.was_valid_at = datetime.now()
-        enterprise_provider_config.identity_provider.save()
+    if enterprise_customer.identity_providers.exists():
+        if not enterprise_provider_config.identity_provider.was_valid_at:
+            enterprise_provider_config.identity_provider.was_valid_at = datetime.now()
+            enterprise_provider_config.identity_provider.save()
 
 
 @partial

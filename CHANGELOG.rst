@@ -16,6 +16,18 @@ Change Log
 Unreleased
 ----------
 
+[4.1.3]
+-------
+fix: bringing changelog and version number back in sync (re-release of 4.1.2).
+
+[4.1.2]
+-------
+feat: implementing sso enterprise sso orchestrator config table
+
+[4.1.1]
+-------
+feat: Added patch endpoint to update an enterprise customer catalog.
+
 [4.1.0]
 -------
 feat: Added the ability to get AI generated learner engagement and learner progress summary.
