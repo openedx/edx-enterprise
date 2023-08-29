@@ -69,6 +69,7 @@ INSTALLED_APPS = (
     "integrated_channels.xapi",
     "edx_rbac",
     "rules.apps.AutodiscoverRulesConfig",
+    "oauth2_provider",
 )
 
 MIDDLEWARE_CLASSES = [

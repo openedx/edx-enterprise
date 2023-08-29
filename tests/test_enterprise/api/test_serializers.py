@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` serializer module.
 import json
 
 import ddt
+from oauth2_provider.models import get_application_model
 from pytest import mark
 from rest_framework.reverse import reverse
 
@@ -13,6 +14,7 @@ from django.contrib.auth.models import Permission
 from django.test import TestCase
 
 from enterprise.api.v1.serializers import (
+    EnterpriseCustomerApiCredentialSerializer,
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
@@ -21,6 +23,8 @@ from enterprise.api.v1.serializers import (
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
 from test_utils import FAKE_UUIDS, TEST_PGP_KEY, TEST_USERNAME, APITest, factories
+
+Application = get_application_model()
 
 
 @mark.django_db
@@ -355,3 +359,45 @@ class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):
             str(error_message[0]),
             'Compression can only be disabled for the following data types: catalog and delivery method: sftp'
         )
+
+
+@mark.django_db
+class TestEnterpriseCustomerAPICredentialsSerializer(APITest):
+    """
+    Tests for EnterpriseCustomerAPICredentialsSerializer.
+    """
+
+    def setUp(self):
+        """
+        Perform operations common for all tests.
+        Populate database for api testing.
+        """
+        super().setUp()
+        self.user = factories.UserFactory()
+        self.data = {
+            "name": "New Name",
+            "authorization_grant_type": "client-credentials",
+            "client_type": "confidential",
+            "redirect_uris": "https://example.com/callback",
+        }
+        self.instance = Application.objects.create(
+            name='Old Name',
+            authorization_grant_type='client_credentials',
+            client_type='confidential',
+            redirect_uris='',
+            user=self.user
+        )
+        self.validated_data = self.data
+
+    def test_update(self):
+        """
+        Test ``update`` method of EnterpriseCustomerAPICredentialsSerializer.
+        Verify that ``update`` for EnterpriseCustomerAPICredentialsSerializer returns successfully
+        """
+        serializer = EnterpriseCustomerApiCredentialSerializer(self.instance, data=self.data)
+        assert serializer.is_valid()
+        updated_instance = serializer.save()
+        self.assertEqual(updated_instance.name, self.data['name'])
+        self.assertEqual(updated_instance.authorization_grant_type, self.data['authorization_grant_type'])
+        self.assertEqual(updated_instance.client_type, self.data['client_type'])
+        self.assertEqual(updated_instance.redirect_uris, self.data['redirect_uris'])
