@@ -6938,7 +6938,9 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
         user = factories.UserFactory(is_active=True)
         user.set_password(TEST_PASSWORD)
         user.save()
-        enterprise_customer = factories.EnterpriseCustomerFactory.create(enable_generation_of_api_credentials=is_enabled)
+        enterprise_customer = factories.EnterpriseCustomerFactory.create(
+            enable_generation_of_api_credentials=is_enabled,
+        )
         enterprise_customer.save()
         ent_customer_user = factories.EnterpriseCustomerUserFactory.create(
             user_id=user.id,

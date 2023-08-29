@@ -4,7 +4,6 @@ Views for the Enterprise Customer API Credentials.
 from oauth2_provider.generators import generate_client_id, generate_client_secret
 from oauth2_provider.models import get_application_model
 from rest_framework import permissions, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from enterprise.api.utils import assign_feature_roles, has_api_credentials_enabled, set_application_name_from_user_id
