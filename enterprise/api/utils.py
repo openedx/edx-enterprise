@@ -11,7 +11,6 @@ from enterprise.constants import (
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
 )
-
 from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
