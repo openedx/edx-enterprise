@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.3]
+-------
+fix: bringing changelog and version number back in sync (re-release of 4.1.2).
+
 [4.1.2]
 -------
 feat: implementing sso enterprise sso orchestrator config table
