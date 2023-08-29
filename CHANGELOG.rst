@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.2]
+-------
+feat: implementing sso enterprise sso orchestrator config table
+
 [4.1.1]
 -------
 feat: Added patch endpoint to update an enterprise customer catalog.

@@ -24,6 +24,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
+    EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
@@ -1011,3 +1012,26 @@ class EnterpriseCustomerReportingConfigurationFactory(factory.django.DjangoModel
     report_type = 'json'
     frequency = 'daily'
     hour_of_day = 1
+
+
+class EnterpriseCustomerSsoConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerSsoConfiguration factory.
+
+    Creates an instance of EnterpriseCustomerSsoConfiguration with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCustomerSsoConfiguration.
+        """
+
+        model = EnterpriseCustomerSsoConfiguration
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    identity_provider = factory.LazyAttribute(lambda x: FAKER.name())
+    metadata_url = factory.LazyAttribute(lambda x: FAKER.url())
+    entity_id = factory.LazyAttribute(lambda x: FAKER.url())
+    update_from_metadata = True

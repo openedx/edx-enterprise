@@ -49,6 +49,7 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
+    EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
     LicensedEnterpriseCourseEnrollment,
     PendingEnterpriseCustomerUser,
@@ -2633,3 +2634,40 @@ class TestEnterpriseCustomerInviteKey(unittest.TestCase):
             enterprise_customer_key = EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key.uuid)
             enterprise_customer_key.is_active = True
             enterprise_customer_key.save()
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerSsoConfiguration(unittest.TestCase):
+    """
+    Tests for the EnterpriseCustomerSsoConfiguration model.
+    """
+    def test_sso_configuration_soft_delete(self):
+        """
+        Test ``EnterpriseCustomerSsoConfiguration`` soft deletion property.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        sso_configuration = factories.EnterpriseCustomerSsoConfigurationFactory(
+            enterprise_customer=enterprise_customer
+        )
+        assert EnterpriseCustomerSsoConfiguration.all_objects.count() == 1
+        assert EnterpriseCustomerSsoConfiguration.available_objects.count() == 1
+        sso_configuration.delete()
+        assert EnterpriseCustomerSsoConfiguration.all_objects.count() == 1
+        assert EnterpriseCustomerSsoConfiguration.available_objects.count() == 0
+
+    def test_sso_configuration_locking_during_configuration(self):
+        """
+        Test ``EnterpriseCustomerSsoConfiguration``'s locking protocol during the configuration process
+        with the SSO orchestrator.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        sso_configuration = factories.EnterpriseCustomerSsoConfigurationFactory(
+            enterprise_customer=enterprise_customer,
+            submitted_at=localized_utcnow(),
+            configured_at=None,
+        )
+
+        with raises(ValidationError):
+            sso_configuration.metadata_url = 'ayylmao'
+            sso_configuration.save()

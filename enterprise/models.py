@@ -3678,3 +3678,272 @@ class ChatGPTResponse(TimeStampedModel):
 
     def __repr__(self):
         return str(self)
+
+
+class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
+    """
+    Stores records of individual customer integrations with the SSO orchestration api.
+    """
+    all_objects = models.Manager()
+
+    fields_locked_while_configuring = (
+        'metadata_url',
+        'metadata_xml',
+        'entity_id',
+        'user_id_attribute',
+        'full_name_attribute',
+        'last_name_attribute',
+        'email_attribute',
+        'username_attribute',
+        'country_attribute',
+        'active',
+        'update_from_metadata',
+        'odata_api_timeout_interval',
+        'odata_api_root_url',
+        'odata_company_id',
+        'sapsf_oauth_root_url',
+        'odata_api_request_timeout',
+        'sapsf_private_key',
+        'odata_client_id',
+        'oauth_user_id',
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Enterprise Customer SSO Configuration')
+        verbose_name_plural = _('Enterprise Customer SSO Configurations')
+
+    # ---------------------------- base configurations ---------------------------- #
+
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name="sso_orchestration_records",
+        on_delete=models.CASCADE,
+        help_text=_(
+            "The enterprise that can be linked using this key."
+        )
+    )
+
+    active = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_(
+            "Specifies whether the integration with the SSO orchestration is active."
+        )
+    )
+
+    identity_provider = models.CharField(
+        blank=False,
+        null=False,
+        max_length=255,
+        help_text=_(
+            "The identity provider integrated with by the SSO orchestrator ."
+        )
+    )
+
+    metadata_url = models.CharField(
+        blank=False,
+        null=False,
+        max_length=255,
+        help_text=_(
+            "The metadata url of the identity provider."
+        )
+    )
+
+    metadata_xml = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The metadata xml of the identity provider."
+        )
+    )
+
+    entity_id = models.CharField(
+        blank=False,
+        null=False,
+        max_length=255,
+        help_text=_(
+            "The entity id of the identity provider."
+        )
+    )
+
+    update_from_metadata = models.BooleanField(
+        blank=False,
+        null=False,
+        default=True,
+        help_text=_(
+            "Specifies whether the integration with the customer's identity provider should auto update metadata."
+        ),
+    )
+
+    # ---------------------------- General attribute mappings ---------------------------- #
+
+    user_id_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    full_name_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    last_name_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    email_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    username_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    country_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    # ---------------------------- configuration statuses ---------------------------- #
+
+    submitted_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The date and time when the configuration was submitted to the SSO orchestration."
+        )
+    )
+
+    configured_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The date and time when the configuration was completed by the SSO orchestration."
+        )
+    )
+
+    validated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The date and time when the configuration was validated and used for the first time."
+        )
+    )
+
+    # ---------------------------- SAP Success Factors attribute mappings ---------------------------- #
+
+    odata_api_timeout_interval = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "SAP specific configuration: the timeout interval for the OData API in seconds."
+        ),
+        default=29
+    )
+
+    odata_api_root_url = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "SAP specific configuration: the root url of the OData API."
+        )
+    )
+
+    odata_company_id = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "SAP specific configuration: the company id of the OData API."
+        )
+    )
+
+    sapsf_oauth_root_url = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "SAP specific configuration: the root url of the SAP SuccessFactors OAuth API."
+        )
+    )
+
+    odata_api_request_timeout = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "SAP specific configuration: the timeout interval for the OData API in seconds."
+        ),
+        default=29
+    )
+
+    sapsf_private_key = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "SAP specific configuration: the private key used to sign the SAML assertion."
+        )
+    )
+
+    odata_client_id = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "SAP specific configuration: the client id of the OData API."
+        )
+    )
+
+    oauth_user_id = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "SAP specific configuration: the user id of the OAuth API."
+        )
+    )
+
+    # ---------------------------- history ---------------------------- #
+
+    history = HistoricalRecords()
+
+    def save(self, *args, **kwargs):
+        """
+        Override the save method to ensure that the configuration is locked once submitted and not completed by the
+        SSO orchestration api.
+        """
+        old_instance = EnterpriseCustomerSsoConfiguration.objects.filter(pk=self.pk).first()
+        # If we're not creating a record and the record has been submitted but not completed configuration
+        # ensure we lock configurable fields within the table.
+        if old_instance and self.is_pending_configuration():
+            for field in self.fields_locked_while_configuring:
+                if getattr(old_instance, field) != getattr(self, field):
+                    raise ValidationError(
+                        {
+                            field: _(
+                                "Field is locked as the configuration has already been submitted."
+                            )
+                        }
+                    )
+        return super().save(*args, **kwargs)
+
+    def is_pending_configuration(self):
+        """
+        Returns True if the configuration has been submitted but not completed configuration.
+        """
+        return self.submitted_at and not self.configured_at
