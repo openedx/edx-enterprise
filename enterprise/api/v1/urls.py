@@ -12,6 +12,7 @@ from enterprise.api.v1.views import (
     enterprise_catalog_query,
     enterprise_course_enrollment,
     enterprise_customer,
+    enterprise_customer_api_credentials,
     enterprise_customer_branding_configuration,
     enterprise_customer_catalog,
     enterprise_customer_invite_key,
@@ -125,6 +126,27 @@ urlpatterns = [
         r'^analytics-summary/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         analytics_summary.AnalyticsSummaryView.as_view(),
         name='analytics-summary'
+    ),
+    re_path(
+        r'^enterprise-customer-api-credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
+            {'get': 'list', 'post': 'create'}
+        ),
+        name='enterprise-customer-api-credentials-list'
+    ),
+    re_path(
+        r'^enterprise-customer-api-credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/regenerate_credentials$',
+        enterprise_customer_api_credentials.APICredentialsRegenerateViewSet.as_view(
+            {'put': 'update'}
+        ),
+        name='regenerate-api-credentials'
+    ),
+    re_path(
+        r'^enterprise-customer-api-credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
+            {'get': 'retrieve', 'delete': 'destroy', 'put': 'update'}
+        ),
+        name='enterprise-customer-api-credentials-detail'
     ),
 ]
 

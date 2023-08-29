@@ -169,6 +169,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "reply_to",
                 "hide_labor_market_data",
                 "chat_gpt_prompts",
+                "enable_generation_of_api_credentials",
             ]
         ),
         (
