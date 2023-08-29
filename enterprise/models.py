@@ -439,6 +439,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Email address that will receive learner replies to automated edX emails.")
     )
 
+    enable_generation_of_api_credentials = models.BooleanField(
+        verbose_name="Allow generation of API credentials",
+        default=False,
+    )
+
     @property
     def enterprise_customer_identity_provider(self):
         """

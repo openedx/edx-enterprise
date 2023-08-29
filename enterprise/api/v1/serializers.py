@@ -9,6 +9,7 @@ from collections.abc import Iterable
 
 import pytz
 from edx_rest_api_client.exceptions import HttpClientError
+from oauth2_provider.generators import generate_client_id, generate_client_secret
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.settings import api_settings
@@ -1521,3 +1522,46 @@ class AnalyticsSummarySerializer(serializers.Serializer):
 
     learner_progress = LearnerProgressSerializer()
     learner_engagement = LearnerEngagementSerializer()
+
+
+class EnterpriseCustomerApiCredentialSerializer(serializers.Serializer):
+    """
+    Serializer for the ``EnterpriseCustomerApiCredential``
+    """
+    class Meta:
+        lookup_field = 'user'
+
+    id = serializers.IntegerField(required=False, read_only=True)
+    name = serializers.CharField(required=False)
+
+    client_id = serializers.CharField(read_only=True, default=generate_client_id())
+    client_secret = serializers.CharField(read_only=True, default=generate_client_secret())
+    authorization_grant_type = serializers.CharField(required=False)
+    client_type = serializers.CharField(required=False)
+    created = serializers.DateTimeField(required=False, read_only=True)
+    updated = serializers.DateTimeField(required=False, read_only=True)
+    redirect_uris = serializers.CharField(required=False)
+    user = UserSerializer(read_only=True)
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.authorization_grant_type = validated_data.get('authorization_grant_type',
+                                                               instance.authorization_grant_type)
+        instance.client_type = validated_data.get('client_type', instance.client_type)
+        instance.redirect_uris = validated_data.get('redirect_uris', instance.redirect_uris)
+        instance.save()
+        return instance
+
+
+class EnterpriseCustomerApiCredentialRegeneratePatchSerializer(serializers.Serializer):
+    """
+    Serializer for the ``EnterpriseCustomerApiCredential``
+    """
+    class Meta:
+        lookup_field = 'user'
+
+    name = serializers.CharField(required=False)
+    client_id = serializers.CharField(read_only=True, default=generate_client_id())
+    client_secret = serializers.CharField(read_only=True, default=generate_client_secret())
+    redirect_uris = serializers.CharField(required=False)
+    updated = serializers.DateTimeField(required=False, read_only=True)

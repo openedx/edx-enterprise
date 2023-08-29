@@ -118,6 +118,7 @@ diff-cover==7.7.0
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
+    #   django-oauth-toolkit
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
@@ -149,6 +150,8 @@ django-model-utils==4.3.1
     #   edx-rbac
 django-multi-email-field==0.7.0
     # via -r requirements/test-master.txt
+django-oauth-toolkit==1.4.1
+    # via -r requirements/test-master.txt
 django-object-actions==4.1.0
     # via -r requirements/test-master.txt
 django-simple-history==3.1.1
@@ -178,11 +181,11 @@ edx-django-utils==5.7.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==8.9.0
+edx-drf-extensions==8.9.1
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.4.0
+edx-opaque-keys[django]==2.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -196,7 +199,7 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==19.3.0
+faker==19.3.1
     # via factory-boy
 filelock==3.12.2
     # via
@@ -244,11 +247,15 @@ multidict==6.0.4
     #   -r requirements/test-master.txt
     #   aiohttp
     #   yarl
-newrelic==8.10.0
+newrelic==8.10.1
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-openai==0.27.8
+oauthlib==3.2.2
+    # via
+    #   -r requirements/test-master.txt
+    #   django-oauth-toolkit
+openai==0.27.9
     # via -r requirements/test-master.txt
 oscrypto==1.3.0
     # via
@@ -277,7 +284,7 @@ platformdirs==3.8.1
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pluggy==1.2.0
+pluggy==1.3.0
     # via
     #   diff-cover
     #   pytest
@@ -357,6 +364,7 @@ pyyaml==6.0.1
 requests==2.31.0
     # via
     #   -r requirements/test-master.txt
+    #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   openai
@@ -428,6 +436,7 @@ typing-extensions==4.7.1
     #   -r requirements/test-master.txt
     #   asgiref
     #   django-countries
+    #   edx-opaque-keys
     #   faker
     #   kombu
     #   snowflake-connector-python

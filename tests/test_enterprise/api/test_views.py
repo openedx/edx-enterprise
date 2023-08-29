@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
 from faker import Faker
+from oauth2_provider.models import get_application_model
 from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -32,6 +33,7 @@ from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnter
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
@@ -79,6 +81,7 @@ from test_utils.factories import (
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
+Application = get_application_model()
 fake = Faker()
 
 MOCK_ENTERPRISE_CUSTOMER_MODIFIED = str(datetime.now())
@@ -6916,3 +6919,215 @@ class TestAnalyticsSummaryView(APITest):
         assert 'learner_engagement' in response.json()
 
         assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test APICredentialsViewSet
+    """
+    ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT = 'enterprise-customer-api-credentials'
+    ENTERPRISE_CUSTOMER_API_CREDENTIALS_REGENERATION_ENDPOINT = 'regenerate-api-credentials'
+
+    def _create_user_and_enterprise_customer(self, is_enabled):
+        """
+        Helper method for creating user, customer, application, client and logging the user in.
+        """
+        user = factories.UserFactory(is_active=True)
+        user.set_password(TEST_PASSWORD)
+        user.save()
+        enterprise_customer = factories.EnterpriseCustomerFactory.create(
+            enable_generation_of_api_credentials=is_enabled,
+        )
+        enterprise_customer.save()
+        ent_customer_user = factories.EnterpriseCustomerUserFactory.create(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        ent_customer_user.save()
+
+        creds = factories.EnterpriseCustomerApiCredentialsFactory.create(user=user)
+        creds.save()
+        return user, enterprise_customer
+
+    def tearDown(self):
+        self.client.logout()
+        super().tearDown()
+        cache.clear()
+
+    @ddt.data(
+        # get a 201 when successfully create api credentials.
+        (True, True, 201, True),
+        # # get a 403 when having no access to api credentials generation
+        (False, True, 403, True),
+        # # # get a 409 when trying to create api credentials but one already has one
+        (True, False, 409, True),
+        # # get a 404 when having no permissions
+        (True, True, 401, False),
+    )
+    @ddt.unpack
+    def test_api_credentials_create_success(self, has_enabled_api_credentials_generation,
+                                            delete_existing_data, expected_status_code, is_login):
+        """
+        Test POST endpoint
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer(
+            is_enabled=has_enabled_api_credentials_generation
+        )
+        if is_login:
+            self.client.login(username=user.username, password=TEST_PASSWORD)
+            self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        else:
+            self.client.logout()
+
+        if delete_existing_data:
+            Application.objects.all().delete()
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            )
+        )
+
+        if expected_status_code == 201:
+            assert Application.objects.get(
+                user=user,
+                authorization_grant_type="client-credentials",
+                client_type="confidential"
+            )
+            roles_name = [
+                ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+                ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+                ENTERPRISE_CATALOG_ADMIN_ROLE
+            ]
+            for role_name in roles_name:
+                feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(name=role_name)
+                assert EnterpriseFeatureUserRoleAssignment.objects.get(user=user, role=feature_role_object)
+
+        assert response.status_code == expected_status_code
+
+    @ddt.data(
+        # get a 200 when successfully regenerate api credentials.
+        (True, False, 200, True),
+        # get a 405 when having no access to api credentials generation
+        (False, False, 403, True),
+        # get a 404 when trying to regenerate for a nonexistent api credentials
+        (True, True, 404, True),
+        # get a 401 when having no permissions
+        (True, False, 401, False),
+    )
+    @ddt.unpack
+    def test_api_credentials_regenerate(self, has_enabled_api_credentials_generation,
+                                        delete_existing_data, expected_status_code, is_login):
+        """
+        Test regeneration endpoint
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer(
+            is_enabled=has_enabled_api_credentials_generation
+        )
+
+        if is_login:
+            self.client.login(username=user.username, password=TEST_PASSWORD)
+            self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        else:
+            self.client.logout()
+
+        if delete_existing_data:
+            Application.objects.all().delete()
+
+        response = self.client.put(
+            settings.TEST_SERVER +
+            reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_REGENERATION_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            ),
+            data={'redirect_uris': 'www.example.com'},
+        )
+        assert response.status_code == expected_status_code
+
+    def test_api_credentials_update_200(self):
+        """
+        Test that we get 200 when successfully updating api credentials.
+        """
+        put_data = {
+            "name": "Cox Inc",
+            "authorization_grant_type": "client-credentials",
+            "client_type": "confidential",
+            "redirect_uris": "www.example.com",
+        }
+        user, enterprise_customer = self._create_user_and_enterprise_customer(is_enabled=True)
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        response = self.client.put(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            ),
+            data=put_data,
+        )
+
+        assert response.status_code == 200
+
+    def test_api_credentials_update_400(self):
+        """
+        Test that we get a 400 if any field to update is not a part of the Application model.
+        """
+        put_data = {
+            "client": "uwvtRHZALdWh64",
+        }
+        user, enterprise_customer = self._create_user_and_enterprise_customer(is_enabled=True)
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        response = self.client.put(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            ),
+            data=put_data,
+        )
+        assert response.status_code == 400
+
+    @ddt.data(
+        # get a 405 when having no access to api credentials generation
+        (False, False, 403, True),
+        # get a 404 when trying to update for a nonexistent api credentials
+        (True, True, 404, True),
+        # get a 401 when having no permissions
+        (True, False, 401, False),
+    )
+    @ddt.unpack
+    def test_api_credentials_update_error_code(self,
+                                               has_enabled_api_credentials_generation,
+                                               delete_existing_data, expected_status_code, is_login):
+        """
+        Test that we get error status for update endpoint
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer(
+            is_enabled=has_enabled_api_credentials_generation
+        )
+
+        if is_login:
+            self.client.login(username=user.username, password=TEST_PASSWORD)
+            self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        else:
+            self.client.logout()
+
+        if delete_existing_data:
+            Application.objects.all().delete()
+
+        put_data = {
+            "name": "updated company",
+            "authorization_grant_type": "client-credentials",
+            "client_type": "confidential",
+            "redirect_uris": ""
+        }
+        response = self.client.put(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            ),
+            data=put_data,
+        )
+        assert response.status_code == expected_status_code
