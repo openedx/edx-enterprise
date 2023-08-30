@@ -1179,7 +1179,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'modified': '2021-10-20T19:01:31Z',
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
-                'admin_users': []
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }],
         ),
         (
@@ -1232,6 +1233,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'hide_labor_market_data': False, 'modified': '2021-10-20T19:01:31Z',
                     'enable_universal_link': False, 'enable_browse_and_request': False,
                     'admin_users': [],
+                    'enable_generation_of_api_credentials': False,
                 },
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
@@ -1316,6 +1318,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
                 'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }],
         ),
         (
@@ -1376,6 +1379,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
                 'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }],
         ),
         (
@@ -1594,7 +1598,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'modified': '2021-10-20T19:32:12Z',
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
-                'admin_users': []
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }
         else:
             assert response == expected_error
