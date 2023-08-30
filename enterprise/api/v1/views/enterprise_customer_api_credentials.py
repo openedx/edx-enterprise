@@ -49,7 +49,7 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
 
         Method: POST
 
-        URL: /enterprise/api/v1/enterprise_customer_api_credentials/{enterprise_uuid}
+        URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
 
         Returns 201 if a new API application credentials was created.
         If an application already exists for the user, throw a 409.
@@ -94,7 +94,7 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
         """
         Method: DELETE
 
-        URL: /enterprise/api/v1/enterprise_customer_api_credentials/{enterprise_uuid}
+        URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
         enterprise_uuid = kwargs['enterprise_uuid']
         if not enterprise_uuid:
@@ -112,7 +112,7 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
         """
         Method: GET
 
-        URL: /enterprise/api/v1/enterprise_customer_api_credentials/{enterprise_uuid}
+        URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
         enterprise_uuid = kwargs['enterprise_uuid']
         if not enterprise_uuid:
@@ -130,7 +130,7 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
         """
         Method: PUT
 
-        URL: /enterprise/api/v1/enterprise_customer_api_credentials/{enterprise_uuid}
+        URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
         # Verifies the requesting user is connected to an enterprise that has API credentialing bool set to True
         user = request.user
@@ -182,7 +182,7 @@ class APICredentialsRegenerateViewSet(APICredentialsViewSet):
         """
         Method: PUT
 
-        URL: /enterprise/api/v1/enterprise_customer_api_credentials/{enterprise_uuid}/regenerate_credentials
+        URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}/regenerate_credentials
         """
         enterprise_uuid = kwargs['enterprise_uuid']
 
