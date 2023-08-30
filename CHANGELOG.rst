@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.5]
+-------
+feat: implementing sso enterprise sso orchestrator config table
+
 [4.1.4]
 -------
 feat: enterprise API Credentials generation endpoints
