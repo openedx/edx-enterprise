@@ -45,6 +45,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerInviteKey,
+    EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
     EnterpriseFeatureRole,
@@ -7182,7 +7183,55 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
     """
     Test EnterpriseCustomerSsoConfigurationViewSet
     """
-    ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT = 'enterprise-customer-sso-configuration'
+    SSO_CONFIGURATION_COMPLETE_ENDPOINT = 'enterprise-customer-sso-configuration-orchestration-complete'
+    SSO_CONFIGURATION_EXISTING_RECORD_ENDPOINTS = 'enterprise-customer-sso-configuration'
+    SSO_CONFIGURATION_BASE_ENDPOINTS = 'enterprise-customer-sso-configuration-base'
+
+    def list_sso_configurations(self, enterprise_customer=None):
+        """Helper method to hit the list endpoint for sso configurations."""
+        url = settings.TEST_SERVER + reverse(
+            self.SSO_CONFIGURATION_BASE_ENDPOINTS,
+        )
+        if enterprise_customer:
+            url += f'?enterprise_customer={str(enterprise_customer.uuid)}'
+        return self.client.get(url)
+
+    def post_new_sso_configuration(self, data):
+        """Helper method to hit the post endpoint for sso configurations."""
+        url = settings.TEST_SERVER + reverse(
+            self.SSO_CONFIGURATION_BASE_ENDPOINTS,
+        )
+        return self.client.post(url, data=data)
+
+    def post_sso_configuration_complete(self, config_pk):
+        """Helper method to hit the configuration complete endpoint for sso configurations."""
+        url = settings.TEST_SERVER + reverse(
+            self.SSO_CONFIGURATION_COMPLETE_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        return self.client.post(url)
+
+    def _get_existing_sso_record_url(self, config_pk):
+        """Helper method to get the url for an existing sso configuration endpoint."""
+        return settings.TEST_SERVER + reverse(
+            self.SSO_CONFIGURATION_EXISTING_RECORD_ENDPOINTS,
+            kwargs={'configuration_uuid': config_pk}
+        )
+
+    def fetch_sso_configuration(self, config_pk):
+        """Helper method to hit the fetch endpoint for sso configurations."""
+        url = self._get_existing_sso_record_url(config_pk)
+        return self.client.get(url)
+
+    def delete_sso_configuration(self, config_pk):
+        """Helper method to hit the delete endpoint for sso configurations."""
+        url = self._get_existing_sso_record_url(config_pk)
+        return self.client.delete(url)
+
+    def update_sso_configuration(self, config_pk, data):
+        """Helper method to hit the update endpoint for sso configurations."""
+        url = self._get_existing_sso_record_url(config_pk)
+        return self.client.put(url, data=data)
 
     def setUp(self):
         super().setUp()
@@ -7194,6 +7243,8 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         self.user.set_password(TEST_PASSWORD)
         self.user.save()
 
+        EnterpriseCustomerUserFactory(user_id=self.user.id, enterprise_customer=self.enterprise_customer)
+
         self.client = APIClient()
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
 
@@ -7203,24 +7254,16 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         can_manage_enterprise_orchestration_configs permission rule.
         """
         config_pk = uuid.uuid4()
-        url = settings.TEST_SERVER + reverse(
-            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
-            kwargs={'configuration_uuid': config_pk}
-        )
-        response = self.client.post(url)
+        response = self.post_sso_configuration_complete(config_pk)
         assert response.status_code == 403
 
-    def test_sso_configuration_oauth_orhcestration_complete_not_found(self):
+    def test_sso_configuration_oauth_orchestration_complete_not_found(self):
         """
         Verify that the endpoint returns 404 when the configuration is not found.
         """
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
         config_pk = uuid.uuid4()
-        url = settings.TEST_SERVER + reverse(
-            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
-            kwargs={'configuration_uuid': config_pk}
-        )
-        response = self.client.post(url)
+        response = self.post_sso_configuration_complete(config_pk)
         assert response.status_code == 404
 
     def test_sso_configuration_oauth_orchestration_complete(self):
@@ -7235,13 +7278,329 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
             configured_at=None,
             submitted_at=localized_utcnow(),
         )
-        url = settings.TEST_SERVER + reverse(
-            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
-            kwargs={'configuration_uuid': config_pk}
-        )
         assert enterprise_sso_orchestration_config.is_pending_configuration()
-        response = self.client.post(url)
+        response = self.post_sso_configuration_complete(config_pk)
         enterprise_sso_orchestration_config.refresh_from_db()
         assert enterprise_sso_orchestration_config.configured_at is not None
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
+
+    # -------------------------- retrieve test suite --------------------------
+
+    def test_sso_configuration_retrieve(self):
+        """
+        Test expected response when successfully retrieving an existing sso configuration.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        response = self.fetch_sso_configuration(config_pk)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['uuid'] == str(enterprise_sso_orchestration_config.uuid)
+        assert response.data['is_pending_configuration'] == \
+            enterprise_sso_orchestration_config.is_pending_configuration()
+        assert response.data['active'] == enterprise_sso_orchestration_config.active
+        assert response.data['metadata_url'] == enterprise_sso_orchestration_config.metadata_url
+
+    def test_sso_configuration_retrieve_permissioning(self):
+        """
+        Test expected response when retrieving an existing sso configuration without required permissions.
+        """
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        response = self.fetch_sso_configuration(config_pk)
+        assert response.status_code == 403
+        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+    def test_sso_configuration_retrieve_not_found(self):
+        """
+        Test expected response when retrieving an existing sso configuration that does not exist.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        response = self.fetch_sso_configuration(config_pk)
+        assert response.status_code == 404
+
+    def test_sso_configuration_retrieve_not_found_wrong_customer(self):
+        """
+        Test that non-staff users can only access configurations associated with their customer org.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=EnterpriseCustomerFactory(),
+        )
+        response = self.fetch_sso_configuration(config_pk)
+        assert response.status_code == 404
+
+    # -------------------------- list test suite --------------------------
+
+    def test_sso_configuration_list(self):
+        """
+        Test expected response when successfully listing existing sso configurations.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        some_other_enterprise = factories.EnterpriseCustomerFactory(uuid=uuid.uuid4(), name="some_other_enterprise")
+        EnterpriseCustomerSsoConfigurationFactory(
+            enterprise_customer=some_other_enterprise,
+        )
+        response = self.list_sso_configurations()
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data) == 1
+        assert response.data[0]['uuid'] == str(enterprise_sso_orchestration_config.uuid)
+
+    def test_sso_configuration_list_permissioning(self):
+        """
+        Test expected response when listing existing sso configurations without required permissions.
+        """
+        response = self.list_sso_configurations()
+        assert response.status_code == 403
+        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+    def test_sso_configuration_list_customer_filtering(self):
+        """
+        Test expected response when successfully listing existing sso configurations with customer filtering.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        # Create a config to be found
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        # Create a config linked to the user but not to be found
+        second_customer = EnterpriseCustomerFactory()
+        EnterpriseCustomerUserFactory(user_id=self.user.id, enterprise_customer=second_customer)
+        EnterpriseCustomerSsoConfigurationFactory(
+            enterprise_customer=second_customer,
+        )
+        response = self. list_sso_configurations(self.enterprise_customer)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 1
+        assert response.json()[0].get('uuid') == str(enterprise_sso_orchestration_config.uuid)
+
+    def test_sso_configuration_list_customer_filtering_while_staff(self):
+        """
+        Test that the sso config list endpoint returns all configs when the user is staff. Not just records under the
+        requesting user's customer org.
+        """
+        config_pk = uuid.uuid4()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, '*')
+        self.user.is_staff = True
+        self.user.save()
+        # Create a config to be found
+        new_customer = EnterpriseCustomerFactory()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=new_customer,
+        )
+        response = self. list_sso_configurations(new_customer)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 1
+        assert response.json()[0].get('uuid') == str(enterprise_sso_orchestration_config.uuid)
+
+    # -------------------------- create test suite --------------------------
+
+    def test_sso_configuration_create(self):
+        """
+        Test expected response when successfully creating a new sso configuration.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+            "active": False,
+            "enterprise_customer": str(self.enterprise_customer.uuid),
+            "identity_provider": "cornerstone"
+        }
+        assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 0
+        response = self.post_new_sso_configuration(data)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 1
+        created_record = EnterpriseCustomerSsoConfiguration.objects.all().first().uuid
+        assert response.data['data'] == created_record
+
+    def test_sso_configuration_create_permissioning(self):
+        """
+        Test expected response when creating a new sso configuration without required permissions.
+        """
+        response = self.post_new_sso_configuration({})
+        assert response.status_code == 403
+
+    def test_sso_configuration_create_bad_provided_customer(self):
+        """
+        Test expected response when creating a new sso configuration with a non existent provided customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+            "enterprise_customer": str(uuid.uuid4()),
+            "identity_provider": "cornerstone"
+        }
+        response = self.post_new_sso_configuration(data)
+        assert response.status_code == 403
+
+    def test_sso_configuration_create_wrong_customer(self):
+        """
+        Test expected response when creating a new sso configuration with provided customer that the user does not
+        have access to.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+
+        wrong_customer = EnterpriseCustomerFactory(uuid=uuid.uuid4())
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+            "active": False,
+            "enterprise_customer": str(wrong_customer.uuid),
+            "identity_provider": "cornerstone"
+        }
+        response = self.post_new_sso_configuration(data)
+        assert response.status_code == 403
+
+    def test_sso_configuration_create_bad_data_format(self):
+        """
+        Test expected response when creating a new sso configuration with bad data format.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        data = {
+            "somewhackyvalue": "ayylmao",
+            'enterprise_customer': str(self.enterprise_customer.uuid),
+        }
+        assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 0
+        response = self.post_new_sso_configuration(data)
+        assert "somewhackyvalue" in response.json()['error']
+
+    # -------------------------- update test suite --------------------------
+
+    def test_sso_configuration_update(self):
+        """
+        Test expected response when successfully updating an existing sso configuration.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            submitted_at=localized_utcnow(),
+            metadata_url="before_value"
+        )
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()['uuid'] == str(enterprise_sso_orchestration_config.uuid)
+        assert response.json()['metadata_url'] == "https://example.com/metadata.xml"
+
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.metadata_url == "https://example.com/metadata.xml"
+
+    def test_sso_configuration_update_permissioning(self):
+        """
+        Test expected response when updating an existing sso configuration without required permissions.
+        """
+        config_pk = uuid.uuid4()
+        response = self.update_sso_configuration(config_pk, {})
+        assert response.status_code == 403
+
+    def test_sso_configuration_update_bad_value_to_update(self):
+        """
+        Test expected response when updating an existing sso configuration with a bad value to update.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        data = {"active": "foobar"}
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 400
+        assert 'foobar' in response.json().get('error')
+
+    def test_sso_configuration_update_bad_provided_customer(self):
+        """
+        Test expected response when updating an existing sso configuration with a provided customer that doeasn't
+        exist.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        data = {
+            "enterprise_customer": str(uuid.uuid4()),
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 403
+
+    def test_sso_configuration_update_wrong_provided_customer(self):
+        """
+        Test expected response when updating an existing sso configuration with a provided customer that the user
+        doesn't have access to.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        new_customer = EnterpriseCustomerFactory()
+        data = {
+            "enterprise_customer": str(new_customer.uuid),
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 403
+
+    # -------------------------- delete test suite --------------------------
+
+    def test_sso_configuration_delete(self):
+        """
+        Test expected response when successfully deleting an existing sso configuration, keeping in mind
+        the soft deletion.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 1
+        assert len(EnterpriseCustomerSsoConfiguration.all_objects.all()) == 1
+        response = self.delete_sso_configuration(config_pk)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 0
+        assert len(EnterpriseCustomerSsoConfiguration.all_objects.all()) == 1
+
+    def test_sso_configuration_delete_permissioning(self):
+        """
+        Test expected response when deleting an existing sso configuration without required permissions.
+        """
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        response = self.delete_sso_configuration(config_pk)
+        assert response.status_code == 403
+
+    def test_sso_configuration_delete_not_found(self):
+        """
+        Test expected response when deleting an existing sso configuration that doesn't exist.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        response = self.delete_sso_configuration(uuid.uuid4())
+        assert response.status_code == 404

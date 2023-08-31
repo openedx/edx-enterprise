@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.12]
+--------
+feat: enterprise sso orchestration record table api implementation
+
 [4.1.11]
 --------
 fix: adding api credential boolean into django

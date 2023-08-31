@@ -518,6 +518,13 @@ class EnterpriseCustomerSsoConfiguration(serializers.ModelSerializer):
         fields = '__all__'
 
     is_pending_configuration = serializers.SerializerMethodField()
+    enterprise_customer = serializers.SerializerMethodField()
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return a string representation of the associated enterprise customer's UUID.
+        """
+        return str(obj.enterprise_customer.uuid)
 
     def get_is_pending_configuration(self, obj):
         """
