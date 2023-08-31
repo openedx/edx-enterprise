@@ -217,7 +217,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_executive_education_2U_fulfillment', 'enable_portal_reporting_config_screen',
             'enable_portal_saml_configuration_screen', 'contact_email',
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
-            'enable_integrated_customer_learner_portal_search',
+            'enable_integrated_customer_learner_portal_search', 'enable_generation_of_api_credentials',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users'
