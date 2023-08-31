@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[4.1.6]
+-------
+fix: putting api_credentials bool in api response to access in admin portal
 
 [4.1.5]
 -------
