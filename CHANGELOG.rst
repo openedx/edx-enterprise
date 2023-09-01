@@ -15,6 +15,15 @@ Change Log
 
 Unreleased
 ----------
+
+[4.1.7]
+fix: Remove unnecessary default_app_config definitions.
+
+Django now detects this configuration automatically. You can remove
+default_app_config.  This removes 11 warnings from edx-platform startup
+and deals with something that's going to be fully ignored in django
+4.1
+
 [4.1.6]
 -------
 fix: putting api_credentials bool in api response to access in admin portal
