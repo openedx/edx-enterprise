@@ -6935,6 +6935,7 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
     """
     ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT = 'enterprise-customer-api-credentials'
     ENTERPRISE_CUSTOMER_API_CREDENTIALS_REGENERATION_ENDPOINT = 'regenerate-api-credentials'
+    creds = None
 
     def _create_user_and_enterprise_customer(self, is_enabled):
         """
@@ -6953,14 +6954,34 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
         )
         ent_customer_user.save()
 
-        creds = factories.EnterpriseCustomerApiCredentialsFactory.create(user=user)
-        creds.save()
+        self.creds = factories.EnterpriseCustomerApiCredentialsFactory.create(user=user)
+        self.creds.save()
         return user, enterprise_customer
 
     def tearDown(self):
         self.client.logout()
         super().tearDown()
         cache.clear()
+
+    def test_api_credentials_retrieve(self):
+        """
+        Test api credentials retrieve endpoint.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer(
+            is_enabled=True
+        )
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        response = self.client.get(
+            reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            )
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert 'client_id' in response.data
+        assert 'client_secret' in response.data
+        assert self.creds.id == response.data['id']
+        assert self.creds.client_id == response.data['client_id']
 
     @ddt.data(
         # get a 201 when successfully create api credentials.
@@ -7137,6 +7158,23 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
             data=put_data,
         )
         assert response.status_code == expected_status_code
+
+    def test_api_credentials_delete(self):
+        """
+        Test that we get 204 when successfully deleting api credentials.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer(is_enabled=True)
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        assert Application.objects.filter(user=user).exists()
+        response = self.client.delete(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            ),
+        )
+        assert response.status_code == 200
+        assert not Application.objects.filter(user=user).exists()
 
 
 @mark.django_db
