@@ -16,7 +16,9 @@ Change Log
 Unreleased
 ----------
 
+
 [4.1.7]
+-------
 fix: Remove unnecessary default_app_config definitions.
 
 Django now detects this configuration automatically. You can remove
