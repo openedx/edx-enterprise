@@ -8,3 +8,4 @@ recursive-include enterprise_learner_portal *.html *.png *.gif *js *.css *jpg *j
 recursive-include integrated_channels *.html *.png *.gif *js *.css *jpg *jpeg *svg *py *.txt
 recursive-include consent *.html *.png *.gif *js *.css *jpg *jpeg *svg *py *.txt
 recursive-include requirements *.txt *.in
+include requirements/constraints.txt
