@@ -39,6 +39,7 @@ class ContentSyncStatusSerializer(serializers.ModelSerializer):
         """
         Return a string representation of the sync status.
         """
+        sync_status = 'unknown'
         if obj.api_response_status_code is None:
             sync_status = 'pending'
         elif obj.api_response_status_code < 400:
@@ -91,6 +92,7 @@ class LearnerSyncStatusSerializer(serializers.ModelSerializer):
         """
         Return a string representation of the sync status.
         """
+        sync_status = 'unknown'
         if obj.status is None:
             sync_status = 'pending'
         elif not obj.status.isdigit() or int(obj.status) >= 400:

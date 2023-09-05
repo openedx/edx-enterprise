@@ -168,7 +168,9 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "system_wide_role_assignments",
                 "reply_to",
                 "hide_labor_market_data",
+                "chat_gpt_prompts",
                 "enable_generation_of_api_credentials",
+                "sso_orchestration_records",
             ]
         ),
         (

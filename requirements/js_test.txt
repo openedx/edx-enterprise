@@ -40,7 +40,7 @@ jaraco-collections==4.3.0
     #   cherrypy
 jaraco-context==4.3.0
     # via jaraco-text
-jaraco-functools==3.8.1
+jaraco-functools==3.9.0
     # via
     #   -r requirements/js_test.in
     #   cheroot
@@ -69,9 +69,9 @@ outcome==1.2.0
     # via trio
 portend==3.2.0
     # via cherrypy
-pydantic==2.1.1
+pydantic==2.3.0
     # via inflect
-pydantic-core==2.4.0
+pydantic-core==2.6.3
     # via pydantic
 pysocks==1.7.1
     # via urllib3
@@ -99,6 +99,7 @@ typing-extensions==4.7.1
     # via
     #   annotated-types
     #   inflect
+    #   jaraco-functools
     #   pydantic
     #   pydantic-core
 urllib3[socks]==2.0.4

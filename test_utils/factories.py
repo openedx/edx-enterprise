@@ -25,6 +25,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
+    EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
@@ -121,6 +122,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     reply_to = factory.LazyAttribute(lambda x: FAKER.email())
     hide_labor_market_data = False
     auth_org_id = factory.LazyAttribute(lambda x: FAKER.lexify(text='??????????'))
+    enable_generation_of_api_credentials = False
 
 
 class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFactory):
@@ -1019,7 +1021,6 @@ class EnterpriseCustomerReportingConfigurationFactory(factory.django.DjangoModel
 class EnterpriseCustomerApiCredentialsFactory(factory.django.DjangoModelFactory):
     """
     EnterpriseCustomerApiCredentials factory.
-
     Creates an instance of EnterpriseCustomerApiCredentials with minimal boilerplate.
     """
     class Meta:
@@ -1036,3 +1037,26 @@ class EnterpriseCustomerApiCredentialsFactory(factory.django.DjangoModelFactory)
     name = factory.LazyAttribute(lambda x: FAKER.company())
     client_id = factory.LazyAttribute(lambda x: FAKER.word())
     client_secret = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class EnterpriseCustomerSsoConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerSsoConfiguration factory.
+
+    Creates an instance of EnterpriseCustomerSsoConfiguration with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCustomerSsoConfiguration.
+        """
+
+        model = EnterpriseCustomerSsoConfiguration
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    identity_provider = factory.LazyAttribute(lambda x: FAKER.name())
+    metadata_url = factory.LazyAttribute(lambda x: FAKER.url())
+    entity_id = factory.LazyAttribute(lambda x: FAKER.url())
+    update_from_metadata = True

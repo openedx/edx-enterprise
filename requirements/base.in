@@ -41,6 +41,7 @@ stevedore
 testfixtures
 unicodecsv
 PGPy
+openai
 django-oauth-toolkit
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.

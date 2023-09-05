@@ -111,6 +111,96 @@ def get_ent_cust_from_enterprise_customer_key(enterprise_customer_key):
         return None
 
 
+def delta_format(current, prior):
+    """
+    Formate delta of the given numbers.
+
+    If the delta is positive, number is '+10'. If negative, change nothing, it will come through as '-10' by default.
+    """
+    delta = current - prior
+    if delta >= 0:
+        return f'+{delta}'
+    else:
+        return f'{delta}'
+
+
+def percentage_format(number):
+    """
+    Turn float representation of percentage into a cleaner format (0.89 -> 89%)
+
+    Arguments:
+        number (float): Floating point number to format.
+
+    Returns:
+        (str): String representation of the float in percentage form.
+    """
+    return f'{number * 100:.0f}%'
+
+
+def generate_prompt_for_learner_engagement_summary(engagement_data):
+    """
+    Generate an OpenAI prompt to get the summary of learner engagement from engagement data.
+
+    Arguments:
+         engagement_data (dict): A dictionary containing learner engagement numbers for some enterprise customer.
+
+    Returns:
+        (str): OpenAI prompt for getting engagement summary.
+    """
+    is_active = engagement_data['active_contract']
+    data = {
+        'enrolls': engagement_data['enrolls'],
+        'enrolls_delta': delta_format(current=engagement_data['enrolls'], prior=engagement_data['enrolls_prior']),
+        'engage': engagement_data['engage'],
+        'engage_delta': delta_format(current=engagement_data['engage'], prior=engagement_data['engage_prior']),
+        'hours': engagement_data['hours'],
+        'hours_delta': delta_format(current=engagement_data['hours'], prior=engagement_data['hours_prior']),
+        'passed': engagement_data['passed'],
+        'passed_delta': delta_format(current=engagement_data['hours'], prior=engagement_data['passed_prior']),
+    }
+
+    # If active contract (or unknown).
+    if is_active or is_active is None:
+        prompt = settings.LEARNER_ENGAGEMENT_PROMPT_FOR_ACTIVE_CONTRACT
+    else:
+        # if enterprise customer does not have an active contract
+        prompt = settings.LEARNER_ENGAGEMENT_PROMPT_FOR_NON_ACTIVE_CONTRACT
+
+    return prompt.format(**data)
+
+
+def generate_prompt_for_learner_progress_summary(progress_data):
+    """
+    Generate an OpenAI prompt to get the summary of learner progress from progress data.
+
+    Arguments:
+         progress_data (dict): A dictionary containing learner progress numbers for some enterprise customer.
+
+    Returns:
+        (str): OpenAI prompt for getting learner progress summary.
+    """
+    is_active = progress_data['active_subscription_plan']
+    data = {
+        'assigned_licenses': progress_data['assigned_licenses'],
+        'assigned_licenses_percentage': percentage_format(progress_data['assigned_licenses_percentage']),
+        'activated_licenses': progress_data['activated_licenses'],
+        'activated_licenses_percentage': percentage_format(progress_data['activated_licenses_percentage']),
+        'active_enrollments': progress_data['active_enrollments'],
+        'at_risk_enrollment_less_than_one_hour': progress_data['at_risk_enrollment_less_than_one_hour'],
+        'at_risk_enrollment_end_date_soon': progress_data['at_risk_enrollment_end_date_soon'],
+        'at_risk_enrollment_dormant': progress_data['at_risk_enrollment_dormant'],
+    }
+
+    # If active contract (or unknown).
+    if is_active or is_active is None:
+        prompt = settings.LEARNER_PROGRESS_PROMPT_FOR_ACTIVE_CONTRACT
+    else:
+        # if enterprise customer does not have an active contract
+        prompt = settings.LEARNER_PROGRESS_PROMPT_FOR_NON_ACTIVE_CONTRACT
+
+    return prompt.format(**data)
+
+
 def set_application_name_from_user_id(user_id):
     """
     Get the enterprise customer user's name given a user id.

@@ -2,6 +2,7 @@
 Tests for the `edx-enterprise` api module.
 """
 
+import copy
 import json
 import logging
 import uuid
@@ -40,6 +41,7 @@ from enterprise.constants import (
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
+    ChatGPTResponse,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerInviteKey,
@@ -70,7 +72,14 @@ from test_utils import (
     update_course_with_enterprise_context,
     update_program_with_enterprise_context,
 )
-from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
+from test_utils.factories import (
+    FAKER,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerSsoConfigurationFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerUserFactory,
+    UserFactory,
+)
 from test_utils.fake_enterprise_api import get_default_branding_object
 
 Application = get_application_model()
@@ -1171,7 +1180,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'modified': '2021-10-20T19:01:31Z',
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
-                'admin_users': []
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }],
         ),
         (
@@ -1224,6 +1234,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'hide_labor_market_data': False, 'modified': '2021-10-20T19:01:31Z',
                     'enable_universal_link': False, 'enable_browse_and_request': False,
                     'admin_users': [],
+                    'enable_generation_of_api_credentials': False,
                 },
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
@@ -1308,6 +1319,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
                 'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }],
         ),
         (
@@ -1368,6 +1380,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
                 'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }],
         ),
         (
@@ -1586,7 +1599,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'modified': '2021-10-20T19:32:12Z',
                 'enable_universal_link': False,
                 'enable_browse_and_request': False,
-                'admin_users': []
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
             }
         else:
             assert response == expected_error
@@ -1872,10 +1886,61 @@ class TestEnterpriseCustomerCatalogWriteViewSet(BaseTestEnterpriseAPIViews):
         if response.status_code == 400:
             assert "Invalid pk" in response_output['enterprise_customer'][0]
 
+    def test_partial_update_enterprise_customer_catalog(self):
+        """
+        Test that a catalog can be partially updated
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory()
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = True
+        self.user.save()
+
+        post_response = self.client.post(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test Catalog",
+            "enterprise_customer": str(enterprise_customer.uuid),
+            "enterprise_catalog_query": str(enterprise_catalog_query.id),
+        }, format='json')
+        post_response_output = self.load_json(post_response.content)
+        enterprise_customer_catalog_uuid = post_response_output['uuid']
+
+        assert post_response_output['title'] == 'Test Catalog'
+
+        patch_response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test title update",
+            "uuid": enterprise_customer_catalog_uuid,
+        }, format='json')
+        patch_response_output = self.load_json(patch_response.content)
+
+        assert patch_response.status_code == 200
+        assert patch_response_output['title'] == 'Test title update'
+        assert patch_response_output['enterprise_customer'] == str(enterprise_customer.uuid)
+        assert patch_response_output['uuid'] == enterprise_customer_catalog_uuid
+
+    def test_partial_update_enterprise_customer_catalog_incorrect_data(self):
+        """
+        Test that a catalog cannot be partially updated with incorrect UUID
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        catalog_uuid = str(FAKE_UUIDS[0])
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(enterprise_customer.uuid))
+        self.user.is_staff = True
+        self.user.save()
+
+        patch_response = self.client.patch(ENTERPRISE_CUSTOMER_CATALOG_ENDPOINT, {
+            "title": "Test title update",
+            "uuid": catalog_uuid,
+        }, format='json')
+        patch_response_output = self.load_json(patch_response.content)
+
+        assert patch_response.status_code == 404
+        assert f'Could not find catalog uuid {catalog_uuid}' in patch_response_output['detail']
+
 
 @ddt.ddt
 @mark.django_db
-class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
     """
     Test EnterpriseCustomerCatalogViewSet
     """
@@ -6670,71 +6735,263 @@ class TestPlotlyAuthView(APITest):
         assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
 
 
+@mark.django_db
+class TestAnalyticsSummaryView(APITest):
+    """
+    Test AnalyticsSummaryView
+    """
+
+    ANALYTICS_SUMMARY_ENDPOINT = 'analytics-summary'
+
+    def setUp(self):
+        """
+        Common setup for all tests.
+        """
+        super().setUp()
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+        self.enterprise_uuid = fake.uuid4()
+        self.enterprise_uuid2 = fake.uuid4()
+        self.url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': self.enterprise_uuid}
+        )
+
+        self.learner_progress = {
+            'enterprise_customer_uuid': '288e94c6-2565-4e8d-a7f2-57df437d6052',
+            'enterprise_customer_name': 'test enterprise',
+            'active_subscription_plan': True,
+            'assigned_licenses': 10,
+            'activated_licenses': 5,
+            'assigned_licenses_percentage': 0.6,
+            'activated_licenses_percentage': 0.5,
+            'active_enrollments': 4,
+            'at_risk_enrollment_less_than_one_hour': 3,
+            'at_risk_enrollment_end_date_soon': 2,
+            'at_risk_enrollment_dormant': 2,
+            'created_at': '2023-08-10T12:39:35.388936Z'
+        }
+
+        self.learner_engagement = {
+            'enterprise_customer_uuid': '288e94c6-2565-4e8d-a7f2-57df437d6052',
+            'enterprise_customer_name': 'test enterprise',
+            'enrolls': 100,
+            'enrolls_prior': 70,
+            'passed': 30,
+            'passed_prior': 50,
+            'engage': 40,
+            'engage_prior': 50,
+            'hours': 2000,
+            'hours_prior': 3000,
+            'contract_end_date': '2023-12-10T12:39:28.792421Z',
+            'active_contract': True,
+            'created_at': '2023-08-11T13:25:40.197061Z'
+        }
+
+        self.payload = {
+            'learner_progress': self.learner_progress,
+            'learner_engagement': self.learner_engagement,
+        }
+
+    def test_view_with_normal_user(self):
+        """
+        Verify that a user without having `enterprise.can_access_admin_dashboard` role can't access the view.
+        """
+        response = self.client.post(self.url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+    def test_view_with_admin_user_tries(self):
+        """
+        Verify that an enterprise admin can access this view only for itself.
+        """
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+
+        url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': self.enterprise_uuid2}
+        )
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view_with_admin_user(self, mock_chat_completion):
+        """
+        Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid)
+
+        response = self.client.post(self.url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_404_if_enterprise_customer_does_not_exist(self, mock_chat_completion):
+        """
+        Verify that an 404 is returned if the enterprise customer specified in the URL does not exist in the database.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        # call the endpoint without creation enterprise customer in the database.
+        response = self.client.post(self.url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view_returns_error_when_payload_is_not_valid(self, mock_chat_completion):
+        """
+        Verify that the endpoint returns an error response in case of invalid/missing data.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid)
+
+        response = self.client.post(self.url, data={}, format='json')
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'errors' in response.json()
+
+        errors = response.json()['errors']
+        assert 'learner_progress' in errors
+        assert 'learner_engagement' in errors
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view(self, mock_chat_completion):
+        """
+        Verify the behavior of the endpoint.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        enterprise_customer = EnterpriseCustomerFactory.create()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.uuid)
+        url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': enterprise_customer.uuid}
+        )
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        # Make sure the 2 entries were added. one for learner progress and another for learner engagement
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+        # Make sure further request with the same payload does not create another instance.
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+    @mock.patch('enterprise.models.chat_completion')
+    def test_view_with_inactive_contracts(self, mock_chat_completion):
+        """
+        Verify the behavior of the endpoint.
+        """
+        mock_chat_completion.return_value = 'Test Response.'
+        payload = copy.deepcopy(self.payload)
+        payload['learner_progress']['active_subscription_plan'] = False
+        payload['learner_engagement']['active_contract'] = False
+        enterprise_customer = EnterpriseCustomerFactory.create()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.uuid)
+        url = settings.TEST_SERVER + reverse(
+            self.ANALYTICS_SUMMARY_ENDPOINT, kwargs={'enterprise_uuid': enterprise_customer.uuid}
+        )
+
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        # Make sure the 2 entries were added. one for learner progress and another for learner engagement
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+        # Make sure further request with the same payload does not create another instance.
+        response = self.client.post(url, data=self.payload, format='json')
+        assert response.status_code == status.HTTP_200_OK
+        assert 'learner_progress' in response.json()
+        assert 'learner_engagement' in response.json()
+
+        assert ChatGPTResponse.objects.filter(enterprise_customer=enterprise_customer).count() == 2
+
+
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
     """
     Test APICredentialsViewSet
     """
-    ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT = 'enterprise_customer_api_credentials_list'
-    ENTERPRISE_CUSTOMER_API_CREDENTIALS_REGENERATION_ENDPOINT = 'regenerate_api_credentials'
-    ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT_DETAIL = 'enterprise_customer_api_credentials_detail'
+    ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT = 'enterprise-customer-api-credentials'
+    ENTERPRISE_CUSTOMER_API_CREDENTIALS_REGENERATION_ENDPOINT = 'regenerate-api-credentials'
+    creds = None
 
     def _create_user_and_enterprise_customer(self, is_enabled):
         """
         Helper method for creating user, customer, application, client and logging the user in.
         """
-        user = factories.UserFactory(username='test_user', is_active=True)
+        user = factories.UserFactory(is_active=True)
         user.set_password(TEST_PASSWORD)
         user.save()
-        enterprise_customer = factories.EnterpriseCustomerFactory(enable_generation_of_api_credentials=is_enabled)
-        factories.EnterpriseCustomerApiCredentialsFactory(user=user)
+        enterprise_customer = factories.EnterpriseCustomerFactory.create(
+            enable_generation_of_api_credentials=is_enabled,
+        )
+        enterprise_customer.save()
+        ent_customer_user = factories.EnterpriseCustomerUserFactory.create(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        ent_customer_user.save()
+
+        self.creds = factories.EnterpriseCustomerApiCredentialsFactory.create(user=user)
+        self.creds.save()
         return user, enterprise_customer
 
     def tearDown(self):
+        self.client.logout()
         super().tearDown()
         cache.clear()
 
-    @ddt.data(
-        # get a 200 when successfully get api credentials with api credentials generation access
-        (True, False, 200, True),
-        # get a 405 when having no access to api credentials generation
-        (False, False, 403, True),
-        # get a 404 when trying to get a nonexistent api credentials
-        (True, True, 404, True),
-        # get a 401 when having no permissions
-        (True, False, 401, False),
-    )
-    @ddt.unpack
-    def test_api_credentials_list(self, has_enabled_api_credentials_generation,
-                                  delete_existing_data, expected_status_code, is_login):
+    def test_api_credentials_retrieve(self):
         """
-        Test GET endpoint
+        Test api credentials retrieve endpoint.
         """
         user, enterprise_customer = self._create_user_and_enterprise_customer(
-            is_enabled=has_enabled_api_credentials_generation
+            is_enabled=True
         )
-        client = APIClient()
-        client.login(username=user.username, password=TEST_PASSWORD)
-        if not is_login:
-            client.logout()
-        if delete_existing_data:
-            Application.objects.all().delete()
-        response = client.get(
-            settings.TEST_SERVER + reverse(
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        response = self.client.get(
+            reverse(
                 self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
-                kwargs={'enterprise_uuid': enterprise_customer.uuid})
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            )
         )
-        assert response.status_code == expected_status_code
+        assert response.status_code == status.HTTP_200_OK
+        assert 'client_id' in response.data
+        assert 'client_secret' in response.data
+        assert self.creds.id == response.data['id']
+        assert self.creds.client_id == response.data['client_id']
 
     @ddt.data(
         # get a 201 when successfully create api credentials.
         (True, True, 201, True),
-        # get a 405 when having no access to api credentials generation
+        # # get a 403 when having no access to api credentials generation
         (False, True, 403, True),
-        # get a 409 when trying to create api credentials but one already has one
+        # # # get a 409 when trying to create api credentials but one already has one
         (True, False, 409, True),
-        # get a 401 when having no permissions
+        # # get a 404 when having no permissions
         (True, True, 401, False),
     )
     @ddt.unpack
@@ -6746,26 +7003,33 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
         user, enterprise_customer = self._create_user_and_enterprise_customer(
             is_enabled=has_enabled_api_credentials_generation
         )
-        client = APIClient()
-        client.login(username=user.username, password=TEST_PASSWORD)
-        if not is_login:
-            client.logout()
+        if is_login:
+            self.client.login(username=user.username, password=TEST_PASSWORD)
+            self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        else:
+            self.client.logout()
 
         if delete_existing_data:
             Application.objects.all().delete()
 
-        response = client.post(
+        response = self.client.post(
             settings.TEST_SERVER + reverse(
                 self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
-                kwargs={'enterprise_uuid': enterprise_customer.uuid})
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            )
         )
 
         if expected_status_code == 201:
-            assert Application.objects.get(user=user,
-                                           authorization_grant_type="client-credentials",
-                                           client_type="confidential")
-            roles_name = [ENTERPRISE_DASHBOARD_ADMIN_ROLE, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
-                          ENTERPRISE_CATALOG_ADMIN_ROLE]
+            assert Application.objects.get(
+                user=user,
+                authorization_grant_type="client-credentials",
+                client_type="confidential"
+            )
+            roles_name = [
+                ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+                ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+                ENTERPRISE_CATALOG_ADMIN_ROLE
+            ]
             for role_name in roles_name:
                 feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(name=role_name)
                 assert EnterpriseFeatureUserRoleAssignment.objects.get(user=user, role=feature_role_object)
@@ -6792,20 +7056,20 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
             is_enabled=has_enabled_api_credentials_generation
         )
 
-        client = APIClient()
-        client.login(username=user.username, password=TEST_PASSWORD)
+        if is_login:
+            self.client.login(username=user.username, password=TEST_PASSWORD)
+            self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        else:
+            self.client.logout()
 
         if delete_existing_data:
             Application.objects.all().delete()
 
-        if not is_login:
-            client.logout()
-
-        response = client.patch(
+        response = self.client.put(
             settings.TEST_SERVER +
             reverse(
                 self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_REGENERATION_ENDPOINT,
-                kwargs={'enterprise_uuid': enterprise_customer.uuid}
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
             ),
             data={'redirect_uris': 'www.example.com'},
         )
@@ -6822,16 +7086,16 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
             "redirect_uris": "www.example.com",
         }
         user, enterprise_customer = self._create_user_and_enterprise_customer(is_enabled=True)
-        client = APIClient()
-        client.login(username=user.username, password=TEST_PASSWORD)
-        response = client.put(
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        response = self.client.put(
             settings.TEST_SERVER + reverse(
-                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT_DETAIL,
-                kwargs={'enterprise_uuid': enterprise_customer.uuid, 'user': user.id}
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
             ),
             data=put_data,
         )
-        print(response.content)
+
         assert response.status_code == 200
 
     def test_api_credentials_update_400(self):
@@ -6842,17 +7106,15 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
             "client": "uwvtRHZALdWh64",
         }
         user, enterprise_customer = self._create_user_and_enterprise_customer(is_enabled=True)
-        client = APIClient()
-        client.login(username=user.username, password=TEST_PASSWORD)
-
-        response = client.put(
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        response = self.client.put(
             settings.TEST_SERVER + reverse(
-                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT_DETAIL,
-                kwargs={'enterprise_uuid': enterprise_customer.uuid, 'user': user.id}
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
             ),
             data=put_data,
         )
-        print(response.content)
         assert response.status_code == 400
 
     @ddt.data(
@@ -6873,11 +7135,12 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
         user, enterprise_customer = self._create_user_and_enterprise_customer(
             is_enabled=has_enabled_api_credentials_generation
         )
-        client = APIClient()
-        client.login(username=user.username, password=TEST_PASSWORD)
 
-        if not is_login:
-            client.logout()
+        if is_login:
+            self.client.login(username=user.username, password=TEST_PASSWORD)
+            self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        else:
+            self.client.logout()
 
         if delete_existing_data:
             Application.objects.all().delete()
@@ -6888,11 +7151,98 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
             "client_type": "confidential",
             "redirect_uris": ""
         }
-        response = client.put(
+        response = self.client.put(
             settings.TEST_SERVER + reverse(
-                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT_DETAIL,
-                kwargs={'enterprise_uuid': enterprise_customer.uuid, 'user': user.id}
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
             ),
             data=put_data,
         )
         assert response.status_code == expected_status_code
+
+    def test_api_credentials_delete(self):
+        """
+        Test that we get 204 when successfully deleting api credentials.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer(is_enabled=True)
+        self.client.login(username=user.username, password=TEST_PASSWORD)
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, enterprise_customer.pk)
+        assert Application.objects.filter(user=user).exists()
+        response = self.client.delete(
+            settings.TEST_SERVER + reverse(
+                self.ENTERPRISE_CUSTOMER_API_CREDENTIALS_ENDPOINT,
+                kwargs={'enterprise_uuid': enterprise_customer.uuid},
+            ),
+        )
+        assert response.status_code == 200
+        assert not Application.objects.filter(user=user).exists()
+
+
+@mark.django_db
+class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
+    """
+    Test EnterpriseCustomerSsoConfigurationViewSet
+    """
+    ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT = 'enterprise-customer-sso-configuration'
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name="test_enterprise")
+        self.user = factories.UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        self.user.set_password(TEST_PASSWORD)
+        self.user.save()
+
+        self.client = APIClient()
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+    def test_sso_configuration_oauth_orchestration_complete_permissioning(self):
+        """
+        Verify that the oauth_orchestration_complete endpoint adheres to the enterprise
+        can_manage_enterprise_orchestration_configs permission rule.
+        """
+        config_pk = uuid.uuid4()
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        response = self.client.post(url)
+        assert response.status_code == 403
+
+    def test_sso_configuration_oauth_orhcestration_complete_not_found(self):
+        """
+        Verify that the endpoint returns 404 when the configuration is not found.
+        """
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        response = self.client.post(url)
+        assert response.status_code == 404
+
+    def test_sso_configuration_oauth_orchestration_complete(self):
+        """
+        Verify that the endpoint returns the correct response when the oauth orchestration is complete.
+        """
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            submitted_at=localized_utcnow(),
+        )
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        assert enterprise_sso_orchestration_config.is_pending_configuration()
+        response = self.client.post(url)
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.configured_at is not None
+        assert enterprise_sso_orchestration_config.is_pending_configuration() is False
+        assert response.status_code == status.HTTP_200_OK

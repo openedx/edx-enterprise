@@ -217,7 +217,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_executive_education_2U_fulfillment', 'enable_portal_reporting_config_screen',
             'enable_portal_saml_configuration_screen', 'contact_email',
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
-            'enable_integrated_customer_learner_portal_search',
+            'enable_integrated_customer_learner_portal_search', 'enable_generation_of_api_credentials',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users'
@@ -507,6 +507,23 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         representation['results'] = search_results
 
         return representation
+
+
+class EnterpriseCustomerSsoConfiguration(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCustomerSsoConfiguration`` model.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerSsoConfiguration
+        fields = '__all__'
+
+    is_pending_configuration = serializers.SerializerMethodField()
+
+    def get_is_pending_configuration(self, obj):
+        """
+        Return whether the SSO configuration is pending configuration.
+        """
+        return obj.is_pending_configuration()
 
 
 class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSerializer):
@@ -1479,6 +1496,49 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
 
     # Parses from a dictionary to JSON
     content_filter = serializers.JSONField(required=False)
+
+
+class AnalyticsSummarySerializer(serializers.Serializer):
+    """
+    Serializer for the payload data of analytics summary endpoint.
+    """
+    class LearnerProgressSerializer(serializers.Serializer):
+        """
+        Serializer for the learner progress data in the analytics summary endpoint.
+        """
+        enterprise_customer_uuid = serializers.UUIDField(required=True)
+        enterprise_customer_name = serializers.CharField(required=True)
+        active_subscription_plan = serializers.BooleanField(required=True)
+        assigned_licenses = serializers.IntegerField(required=True)
+        activated_licenses = serializers.IntegerField(required=True)
+        assigned_licenses_percentage = serializers.FloatField(required=True)
+        activated_licenses_percentage = serializers.FloatField(required=True)
+        active_enrollments = serializers.IntegerField(required=True)
+        at_risk_enrollment_less_than_one_hour = serializers.IntegerField(required=True)
+        at_risk_enrollment_end_date_soon = serializers.IntegerField(required=True)
+        at_risk_enrollment_dormant = serializers.IntegerField(required=True)
+        created_at = serializers.DateTimeField(required=True)
+
+    class LearnerEngagementSerializer(serializers.Serializer):
+        """
+        Serializer for the summary related data in the analytics summary endpoint.
+        """
+        enterprise_customer_uuid = serializers.UUIDField(required=True)
+        enterprise_customer_name = serializers.CharField(required=True)
+        enrolls = serializers.IntegerField(required=True)
+        enrolls_prior = serializers.IntegerField(required=True)
+        passed = serializers.IntegerField(required=True)
+        passed_prior = serializers.IntegerField(required=True)
+        engage = serializers.IntegerField(required=True)
+        engage_prior = serializers.IntegerField(required=True)
+        hours = serializers.IntegerField(required=True)
+        hours_prior = serializers.IntegerField(required=True)
+        active_contract = serializers.BooleanField(required=True)
+        contract_end_date = serializers.DateTimeField(required=True)
+        created_at = serializers.DateTimeField(required=True)
+
+    learner_progress = LearnerProgressSerializer()
+    learner_engagement = LearnerEngagementSerializer()
 
 
 class EnterpriseCustomerApiCredentialSerializer(serializers.Serializer):

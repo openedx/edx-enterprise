@@ -2,9 +2,7 @@
 Django admin integration for enterprise app.
 """
 
-import json
 import logging
-from urllib.parse import urlencode
 
 from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
@@ -13,7 +11,6 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from django.conf import settings
 from django.contrib import admin, auth
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Q
@@ -48,6 +45,7 @@ from enterprise.models import (
     AdminNotification,
     AdminNotificationFilter,
     AdminNotificationRead,
+    ChatGPTResponse,
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
@@ -1062,3 +1060,14 @@ class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
             return readonly_fields + ('is_active',)
 
         return readonly_fields
+
+
+@admin.register(ChatGPTResponse)
+class ChatGPTResponseAdmin(admin.ModelAdmin):
+    """
+    Django admin for ChatGPTResponse model.
+    """
+
+    model = ChatGPTResponse
+    list_display = ('uuid', 'enterprise_customer', 'prompt_hash', )
+    readonly_fields = ('prompt', 'response', 'prompt_hash', )

@@ -17,6 +17,7 @@ from enterprise.constants import (
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
+    ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
 )
 
 
@@ -238,6 +239,7 @@ SYSTEM_TO_FEATURE_ROLE_MAPPING = {
         ENTERPRISE_CATALOG_ADMIN_ROLE,
         ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
         ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
+        ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
     ],
 }
 
@@ -349,3 +351,10 @@ EXEC_ED_LANDING_PAGE = 'https://www.edx-external.com/account'
 
 # disable indexing on history_date. Otherwise it will add new alter migrations.
 SIMPLE_HISTORY_DATE_INDEX = False
+
+OPENAI_API_KEY = ''
+
+LEARNER_ENGAGEMENT_PROMPT_FOR_ACTIVE_CONTRACT = 'Create learner engagement report for active contracts.'
+LEARNER_ENGAGEMENT_PROMPT_FOR_NON_ACTIVE_CONTRACT = 'Create learner engagement report for non active contracts.'
+LEARNER_PROGRESS_PROMPT_FOR_ACTIVE_CONTRACT = 'Create learner progress report for active contracts.'
+LEARNER_PROGRESS_PROMPT_FOR_NON_ACTIVE_CONTRACT = 'Create learner progress report for non active contracts.'

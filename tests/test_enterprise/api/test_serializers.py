@@ -370,7 +370,6 @@ class TestEnterpriseCustomerAPICredentialsSerializer(APITest):
     def setUp(self):
         """
         Perform operations common for all tests.
-
         Populate database for api testing.
         """
         super().setUp()
@@ -393,7 +392,6 @@ class TestEnterpriseCustomerAPICredentialsSerializer(APITest):
     def test_update(self):
         """
         Test ``update`` method of EnterpriseCustomerAPICredentialsSerializer.
-
         Verify that ``update`` for EnterpriseCustomerAPICredentialsSerializer returns successfully
         """
         serializer = EnterpriseCustomerApiCredentialSerializer(self.instance, data=self.data)

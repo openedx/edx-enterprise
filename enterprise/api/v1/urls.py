@@ -7,6 +7,7 @@ from rest_framework.routers import DefaultRouter
 from django.urls import re_path
 
 from enterprise.api.v1.views import (
+    analytics_summary,
     coupon_codes,
     enterprise_catalog_query,
     enterprise_course_enrollment,
@@ -16,6 +17,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_catalog,
     enterprise_customer_invite_key,
     enterprise_customer_reporting,
+    enterprise_customer_sso_configuration,
     enterprise_customer_user,
     enterprise_subsidy_fulfillment,
     notifications,
@@ -73,6 +75,13 @@ router.register(
 
 urlpatterns = [
     re_path(
+        r'^enterprise_customer_catalog/',
+        enterprise_customer_catalog.EnterpriseCustomerCatalogWriteViewSet.as_view(
+            {'patch': 'partial_update', 'post': 'create'},
+        ),
+        name='create_or_update'
+    ),
+    re_path(
         r'enterprise-subsidy-fulfillment/(?P<fulfillment_source_uuid>[A-Za-z0-9-]+)/?$',
         enterprise_subsidy_fulfillment.EnterpriseSubsidyFulfillmentViewSet.as_view({'get': 'retrieve'}),
         name='enterprise-subsidy-fulfillment'
@@ -119,27 +128,33 @@ urlpatterns = [
         enterprise_customer_branding_configuration.EnterpriseCustomerBrandingConfigurationViewSet.as_view(
             {'patch': 'update_branding'}
         ),
-        name='enterprise-customer-update-branding'),
-    re_path(
-        r'^enterprise_customer_api_credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/$',
-        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
-            {'get': 'list', 'post': 'create'}
-        ),
-        name='enterprise_customer_api_credentials_list'
+        name='enterprise-customer-update-branding',
     ),
     re_path(
-        r'^enterprise_customer_api_credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/regenerate_credentials/$',
-        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
-            {'patch': 'regenerate_credentials'}
-        ),
-        name='regenerate_api_credentials'
+        r'^analytics-summary/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        analytics_summary.AnalyticsSummaryView.as_view(),
+        name='analytics-summary'
     ),
     re_path(
-        r'^enterprise_customer_api_credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/(?P<user>\d+)/$',
-        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
-            {'get': 'retrieve', 'delete': 'destroy', 'put': 'update'}
+        r'^enterprise-customer-api-credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/regenerate_credentials$',
+        enterprise_customer_api_credentials.APICredentialsRegenerateViewSet.as_view(
+            {'put': 'update'}
         ),
-        name='enterprise_customer_api_credentials_detail'
+        name='regenerate-api-credentials'
+    ),
+    re_path(
+        r'^enterprise-customer-api-credentials/(?P<enterprise_uuid>[A-Za-z0-9-]+)/$',
+        enterprise_customer_api_credentials.APICredentialsViewSet.as_view(
+            {'get': 'retrieve', 'delete': 'destroy', 'put': 'update', 'post': 'create'}
+        ),
+        name='enterprise-customer-api-credentials'
+    ),
+    re_path(
+        r'^enterprise_customer_sso_configuration/(?P<configuration_uuid>[A-Za-z0-9-]+)/sso_orchestration_complete/?$',
+        enterprise_customer_sso_configuration.EnterpriseCustomerSsoConfigurationViewSet.as_view(
+            {'post': 'oauth_orchestration_complete'}
+        ),
+        name='enterprise-customer-sso-configuration'
     ),
 ]
 
