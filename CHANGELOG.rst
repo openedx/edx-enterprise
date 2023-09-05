@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.1.7]
+-------
+fix: enterprise api credentials endpoint cleanup.
+
 [4.1.6]
 -------
 fix: putting api_credentials bool in api response to access in admin portal
