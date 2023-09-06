@@ -460,9 +460,13 @@ class ContentMetadataExporter(Exporter):
         transformed_item = self._transform_item(metadata_transformed_for_exec_ed, action=action)
 
         item.channel_metadata = transformed_item
-        item.content_title = transformed_item.get('title')
-        item.content_last_changed = transformed_item.get('content_last_modified')
+        item.content_title = metadata.get('title')
+        item.content_last_changed = metadata.get('content_last_modified')
         item.save()
+        self._log_info(
+            f'_sanitize_and_set_item_metadata method updated item: {item} `content_last_changed`: '
+            f'{transformed_item.get("content_last_modified")}'
+        )
 
     def export(self, **kwargs):
         """
@@ -521,14 +525,32 @@ class ContentMetadataExporter(Exporter):
                     get_content_metadata_item_id(item): item for item in content_metadata_items
                 }
             for key, item in items_to_create.items():
-                self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_CREATE_ACTION)
+                try:
+                    self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_CREATE_ACTION)
+                except Exception as exc:
+                    self._log_exception(
+                        f'Failed to sanitize and set item metadata for item: {item}, with content key: '
+                        f'{key}, and content metadata: {key_to_content_metadata_mapping[key]}, action: '
+                        f'{IC_CREATE_ACTION}. Exception: {exc}'
+                    )
+                    raise exc
+
                 # Sanity check
                 item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
                 item.save()
 
                 create_payload[key] = item
             for key, item in items_to_update.items():
-                self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_UPDATE_ACTION)
+                try:
+                    self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_UPDATE_ACTION)
+                except Exception as exc:
+                    self._log_exception(
+                        f'Failed to sanitize and set item metadata for item: {item}, with content key: '
+                        f'{key}, and content metadata: {key_to_content_metadata_mapping[key]}, action: '
+                        f'{IC_UPDATE_ACTION}. Exception: {exc}'
+                    )
+                    raise exc
+
                 # Sanity check
                 item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
                 item.save()

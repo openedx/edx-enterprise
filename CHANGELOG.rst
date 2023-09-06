@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.10]
+--------
+chore: adding more logging to the _sanitize_and_set_item_metadata flow
+
 [4.1.9]
 --------
 Fixing typos
