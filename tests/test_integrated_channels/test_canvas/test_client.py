@@ -14,15 +14,13 @@ import responses
 from freezegun import freeze_time
 from requests.models import Response
 
-from django.utils import timezone
-
 from integrated_channels.canvas.client import MESSAGE_WHEN_COURSE_WAS_DELETED, CanvasAPIClient
 from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelHealthStatus
 from test_utils import factories
 
-NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 
 

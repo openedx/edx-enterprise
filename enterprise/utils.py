@@ -27,7 +27,6 @@ from django.forms.models import model_to_dict
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
 from django.utils.text import slugify
@@ -2289,7 +2288,7 @@ def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FOR
     # Note that if we're using the default LMS_API_DATETIME_FORMAT, it ends in 'Z',
     # which denotes UTC for ISO-8661.
     if date_time.tzinfo is None:
-        date_time = date_time.replace(tzinfo=timezone.utc)
+        date_time = date_time.replace(tzinfo=datetime.timezone.utc)
     return date_time
 
 

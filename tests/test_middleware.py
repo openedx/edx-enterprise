@@ -10,7 +10,6 @@ from pytest import mark
 
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test.client import Client, RequestFactory
-from django.utils.translation import LANGUAGE_SESSION_KEY
 
 from enterprise.middleware import EnterpriseLanguagePreferenceMiddleware
 from test_utils.factories import (
@@ -39,8 +38,9 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
         self.mock_imports()
 
         super().setUp()
-        self.middleware = EnterpriseLanguagePreferenceMiddleware()
-        self.session_middleware = SessionMiddleware()
+        self.mock_response = mock.Mock()
+        self.middleware = EnterpriseLanguagePreferenceMiddleware(self.mock_response)
+        self.session_middleware = SessionMiddleware(self.mock_response)
         self.user = UserFactory.create()
         self.anonymous_user = AnonymousUserFactory()
         self.request = RequestFactory().get('/somewhere')
@@ -82,7 +82,6 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
         self.middleware.process_request(self.request)
 
         assert getattr(self.request, '_anonymous_user_cookie_lang', None) == lang_pref_out
-        assert LANGUAGE_SESSION_KEY not in self.request.session
 
     def test_real_user_extracted_from_request(self):
         """
@@ -96,7 +95,6 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
 
         # Make sure the real user is used for setting the language cookie
         assert getattr(self.request, '_anonymous_user_cookie_lang', None) == self.enterprise_customer.default_language
-        assert LANGUAGE_SESSION_KEY not in self.request.session
 
     def test_cookie_not_set_for_anonymous_user(self):
         """
@@ -108,7 +106,6 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
 
         # Make sure the set cookie is not called for anonymous users
         assert getattr(self.request, '_anonymous_user_cookie_lang', None) is None
-        assert LANGUAGE_SESSION_KEY not in self.request.session
 
     def test_cookie_not_set_for_non_enterprise_learners(self):
         """
@@ -120,7 +117,6 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
 
         # Make sure the set cookie is not called for anonymous users
         assert getattr(self.request, '_anonymous_user_cookie_lang', None) is None
-        assert LANGUAGE_SESSION_KEY not in self.request.session
 
     def test_cookie_when_there_is_no_request_user(self):
         """
@@ -128,14 +124,14 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
         """
         # Hide the real user and masquerade as a fake user, fake user does not belong to any enterprise customer.
         request = RequestFactory().get('/somewhere')
-        session_middleware = SessionMiddleware()
+        self.mock_response = mock.Mock()
+        session_middleware = SessionMiddleware(self.mock_response)
         session_middleware.process_request(request)
 
         self.middleware.process_request(request)
 
         # Make sure the set cookie is not called for anonymous users
         assert getattr(self.request, '_anonymous_user_cookie_lang', None) is None
-        assert LANGUAGE_SESSION_KEY not in self.request.session
 
     def test_errors_are_handled(self):
         """
@@ -149,7 +145,6 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
             # Make sure the set cookie is not called for anonymous users
             # pylint: disable=protected-access,no-member
             assert self.request._anonymous_user_cookie_lang == self.enterprise_customer.default_language
-            assert LANGUAGE_SESSION_KEY not in self.request.session
 
     def test_cookie_not_set_for_mobile_requests(self):
         """
@@ -161,4 +156,3 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
 
             # Make sure the set cookie is not called for anonymous users
             assert getattr(self.request, '_anonymous_user_cookie_lang', None) is None
-            assert LANGUAGE_SESSION_KEY not in self.request.session
