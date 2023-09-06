@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+
+[4.1.9]
+--------
+Fixing typos
+
 [4.1.8]
 --------
 Added support for Django 4.2
