@@ -218,7 +218,8 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         }),
         ('Integration and learning platform settings', {
             'fields': ('enable_portal_lms_configurations_screen', 'enable_portal_saml_configuration_screen',
-                       'enable_slug_login', 'replace_sensitive_sso_username', 'hide_course_original_price')
+                       'enable_slug_login', 'replace_sensitive_sso_username', 'hide_course_original_price',
+                       'enable_generation_of_api_credentials')
         }),
         ('Recommended default settings for all enterprise customers', {
             'fields': ('site', 'customer_type', 'enable_learner_portal',
