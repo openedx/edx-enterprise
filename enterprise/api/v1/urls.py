@@ -154,7 +154,21 @@ urlpatterns = [
         enterprise_customer_sso_configuration.EnterpriseCustomerSsoConfigurationViewSet.as_view(
             {'post': 'oauth_orchestration_complete'}
         ),
+        name='enterprise-customer-sso-configuration-orchestration-complete'
+    ),
+    re_path(
+        r'^enterprise_customer_sso_configuration/(?P<configuration_uuid>[A-Za-z0-9-]+)/?$',
+        enterprise_customer_sso_configuration.EnterpriseCustomerSsoConfigurationViewSet.as_view(
+            {'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}
+        ),
         name='enterprise-customer-sso-configuration'
+    ),
+    re_path(
+        r'^enterprise_customer_sso_configuration/?$',
+        enterprise_customer_sso_configuration.EnterpriseCustomerSsoConfigurationViewSet.as_view(
+            {'get': 'list', 'post': 'create'}
+        ),
+        name='enterprise-customer-sso-configuration-base'
     ),
 ]
 
