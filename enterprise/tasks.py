@@ -170,7 +170,7 @@ def send_sso_configured_email(
     }
 
     try:
-        braze_client_instance = BrazeAPIClient.get_braze_client()  # pylint: disable=no-value-for-parameter
+        braze_client_instance = BrazeAPIClient.get_braze_client()
         braze_client_instance.send_campaign_message(
             braze_campaign_id,
             recipients=[contact_email],

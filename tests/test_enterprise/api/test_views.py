@@ -7185,7 +7185,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         response = self.client.post(url)
         assert response.status_code == 404
 
-    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
     def test_sso_configuration_oauth_orchestration_complete(self, mock_braze_client):
         """
         Verify that the endpoint returns the correct response when the oauth orchestration is complete.
@@ -7210,7 +7210,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
 
-    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
     def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
         """
         Assert sso configuration calls Braze API with the correct arguments.
