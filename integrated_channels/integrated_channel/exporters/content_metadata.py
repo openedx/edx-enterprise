@@ -465,7 +465,7 @@ class ContentMetadataExporter(Exporter):
         item.save()
         self._log_info(
             f'_sanitize_and_set_item_metadata method updated item: {item} `content_last_changed`: '
-            f'{transformed_item.get("content_last_modified")}'
+            f'{metadata.get("content_last_modified")}'
         )
 
     def export(self, **kwargs):
