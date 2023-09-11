@@ -95,9 +95,9 @@ bleach==6.0.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   readme-renderer
-build==0.10.0
+build==1.0.0
     # via pip-tools
-celery==5.3.1
+celery==5.3.4
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
@@ -327,7 +327,7 @@ edx-django-utils==5.7.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==8.9.1
+edx-drf-extensions==8.9.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -368,7 +368,7 @@ faker==19.3.1
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   factory-boy
-filelock==3.12.2
+filelock==3.12.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -402,6 +402,7 @@ imagesize==1.4.1
 importlib-metadata==6.8.0
     # via
     #   -r requirements/doc.txt
+    #   build
     #   sphinx
 iniconfig==2.0.0
     # via
@@ -430,7 +431,7 @@ jsonfield==3.1.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-kombu==5.3.1
+kombu==5.3.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -457,7 +458,7 @@ multidict==6.0.4
     #   -r requirements/test.txt
     #   aiohttp
     #   yarl
-newrelic==8.10.1
+newrelic==9.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -754,7 +755,7 @@ sortedcontainers==2.4.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-soupsieve==2.4.1
+soupsieve==2.5
     # via
     #   -r requirements/doc.txt
     #   beautifulsoup4
@@ -866,6 +867,7 @@ typing-extensions==4.7.1
     #   django-countries
     #   edx-opaque-keys
     #   faker
+    #   filelock
     #   kombu
     #   pydata-sphinx-theme
     #   pylint

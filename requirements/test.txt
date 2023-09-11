@@ -181,7 +181,7 @@ edx-django-utils==5.7.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==8.9.1
+edx-drf-extensions==8.9.2
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -201,7 +201,7 @@ factory-boy==3.3.0
     #   -r requirements/test.in
 faker==19.3.1
     # via factory-boy
-filelock==3.12.2
+filelock==3.12.3
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -247,7 +247,7 @@ multidict==6.0.4
     #   -r requirements/test-master.txt
     #   aiohttp
     #   yarl
-newrelic==8.10.1
+newrelic==9.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -438,6 +438,7 @@ typing-extensions==4.7.1
     #   django-countries
     #   edx-opaque-keys
     #   faker
+    #   filelock
     #   kombu
     #   snowflake-connector-python
 tzdata==2023.3
