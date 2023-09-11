@@ -7,12 +7,7 @@ from oauth2_provider.models import get_application_model
 from rest_framework import permissions, status
 from rest_framework.response import Response
 
-from enterprise.api.utils import (
-    assign_feature_roles,
-    get_enterprise_customer_from_user_id,
-    has_api_credentials_enabled,
-    set_application_name_from_user_id,
-)
+from enterprise.api.utils import assign_feature_roles, has_api_credentials_enabled, set_application_name_from_user_id
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
@@ -23,15 +18,22 @@ LOGGER = getEnterpriseLogger(__name__)
 Application = get_application_model()
 
 
+class APICredEnabledPermission(permissions.BasePermission):
+    """
+    Permission that checks to see if the request user matches the user indicated in the request body.
+    """
+
+    def has_permission(self, request, view):
+        return has_api_credentials_enabled(request.parser_context.get('kwargs', {}).get('enterprise_uuid'))
+
+
 class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer-api-credentials`` API endpoint.
     """
 
     # Verifies the requesting user has the appropriate API permissions
-    permission_classes = (permissions.IsAuthenticated,)
-    # Changes application's pk to be user's pk
-    lookup_field = 'user'
+    permission_classes = (permissions.IsAuthenticated, APICredEnabledPermission,)
 
     def get_queryset(self):
         return Application.objects.filter(user=self.request.user)  # only get current user's record
@@ -41,29 +43,23 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id)
+        fn=lambda request, *args, **kwargs: kwargs.get('enterprise_uuid')
     )
     def create(self, request, *args, **kwargs):
         """
-        Creates a new API application credentials and returns the created object.
+        Creates and returns a new enterprise API credential application record.
 
         Method: POST
 
-        URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
+        URL:
+            /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
 
-        Returns 201 if a new API application credentials was created.
-        If an application already exists for the user, throw a 409.
+        Returns:
+            201 if a new API application credentials was created. If an application already exists for the user, throw
+            a 409.
         """
-
         # Verifies the requesting user is connected to an enterprise that has API credentialing bool set to True
         user = request.user
-        enterprise_uuid = kwargs['enterprise_uuid']
-        if not enterprise_uuid:
-            return Response({'detail': "Invalid enterprise_uuid"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not has_api_credentials_enabled(enterprise_uuid):
-            return Response({'detail': 'Can not access API credential viewset.'}, status=status.HTTP_403_FORBIDDEN)
-
         # Fetches the application for the user
         # If an application already exists for the user, throw a 409.
         queryset = self.get_queryset().first()
@@ -88,59 +84,55 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id)
+        fn=lambda request, *args, **kwargs: kwargs.get('enterprise_uuid')
     )
     def destroy(self, request, *args, **kwargs):
         """
+        Removes the enterprise API application credentials for the requesting user.
+
         Method: DELETE
 
         URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
-        enterprise_uuid = kwargs['enterprise_uuid']
-        if not enterprise_uuid:
-            return Response({'detail': "Invalid enterprise_uuid"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not has_api_credentials_enabled(enterprise_uuid):
-            return Response({'detail': 'Can not access API credential viewset.'}, status=status.HTTP_403_FORBIDDEN)
-        return super().destroy(self, request, *args, **kwargs)
+        application = Application.objects.filter(user=request.user).first()
+        if not application:
+            return Response(
+                {'detail': 'Application does not exist for requesting user.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        application.delete()
+        return Response(status=status.HTTP_200_OK)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id)
+        fn=lambda request, *args, **kwargs: kwargs.get('enterprise_uuid')
     )
     def retrieve(self, request, *args, **kwargs):
         """
+        Returns the enterprise API application credentials details for the requesting user.
+
         Method: GET
 
         URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
-        enterprise_uuid = kwargs['enterprise_uuid']
-        if not enterprise_uuid:
-            return Response({'detail': "Invalid enterprise_uuid"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not has_api_credentials_enabled(enterprise_uuid):
-            return Response({'detail': 'Can not access API credential viewset.'}, status=status.HTTP_403_FORBIDDEN)
-        return super().retrieve(self, request, *args, **kwargs)
+        user_application = Application.objects.get(user=request.user)
+        serializer = self.get_serializer(instance=user_application)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id)
+        fn=lambda request, *args, **kwargs: kwargs.get('enterprise_uuid')
     )
     def update(self, request, *args, **kwargs):
         """
+        Updates the enterprise API application credentials details for the requesting user.
+
         Method: PUT
 
         URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
         # Verifies the requesting user is connected to an enterprise that has API credentialing bool set to True
         user = request.user
-        enterprise_uuid = kwargs['enterprise_uuid']
-        if not enterprise_uuid:
-            return Response({'detail': "Invalid enterprise_uuid"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not has_api_credentials_enabled(enterprise_uuid):
-            return Response({'detail': 'Can not access API credential viewset.'}, status=status.HTTP_403_FORBIDDEN)
-
         queryset = self.get_queryset().first()
         if not queryset:
             return Response({'detail': 'Could not find the Application.'}, status=status.HTTP_404_NOT_FOUND)
@@ -164,9 +156,7 @@ class APICredentialsRegenerateViewSet(APICredentialsViewSet):
     """
 
     # Verifies the requesting user has the appropriate API permissions
-    permission_classes = (permissions.IsAuthenticated,)
-    # Changes application's pk to be user's pk
-    lookup_field = 'user'
+    permission_classes = (permissions.IsAuthenticated, APICredEnabledPermission,)
 
     def get_queryset(self):
         return Application.objects.filter(user=self.request.user)  # only get current user's record
@@ -176,20 +166,17 @@ class APICredentialsRegenerateViewSet(APICredentialsViewSet):
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
-        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id)
+        fn=lambda request, *args, **kwargs: kwargs.get('enterprise_uuid')
     )
     def update(self, request, *args, **kwargs):
         """
+        Regenerates the API application credentials (client ID and secret) for the requesting user. Throws a 404 if the
+        user does not yet have any credentials.
+
         Method: PUT
 
         URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}/regenerate_credentials
         """
-        enterprise_uuid = kwargs['enterprise_uuid']
-
-        # Verifies the requesting user is connected to an enterprise that has API credentialing bool set to True
-        if not has_api_credentials_enabled(enterprise_uuid):
-            return Response({'detail': 'Can not access API credential viewset.'}, status=status.HTTP_403_FORBIDDEN)
-
         # Fetches the application for the user
         # Throws a 404 if Application record not found
         application = self.get_queryset().first()

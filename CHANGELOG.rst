@@ -15,6 +15,31 @@ Change Log
 
 Unreleased
 ----------
+
+[4.1.12]
+--------
+feat: enterprise sso orchestration record table api implementation
+
+[4.1.11]
+--------
+fix: adding api credential boolean into django
+
+[4.1.10]
+--------
+chore: adding more logging to the _sanitize_and_set_item_metadata flow
+
+[4.1.9]
+--------
+Fixing typos
+
+[4.1.8]
+--------
+Added support for Django 4.2
+
+[4.1.7]
+-------
+fix: enterprise api credentials endpoint cleanup.
+
 [4.1.6]
 -------
 fix: putting api_credentials bool in api response to access in admin portal

@@ -12,8 +12,6 @@ from freezegun import freeze_time
 from mock.mock import MagicMock
 from pytest import mark
 
-from django.utils import timezone
-
 from integrated_channels.degreed2.exporters.learner_data import Degreed2LearnerExporter
 from test_utils import factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
@@ -26,7 +24,7 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
     Tests of DegreedLearnerExporter class.
     """
 
-    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
     NOW_TIMESTAMP = 1483326245000
 
     def setUp(self):

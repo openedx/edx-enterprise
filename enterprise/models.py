@@ -341,7 +341,7 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_learner_portal_offers = models.BooleanField(
         verbose_name="Enable learner credit in the learner portal",
         default=False,
-        help_text=_("Specifies whether enterprise offers will be made known to learners in the learner portal "
+        help_text=_("Specifies whether enterprise offers will be made known to learners in the learner portal. "
                     "This only applies to customers with “offers”, the old version of learner credit.")
     )
 
