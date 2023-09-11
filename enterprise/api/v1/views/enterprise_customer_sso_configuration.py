@@ -13,6 +13,7 @@ from django.contrib import auth
 from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.logging import getEnterpriseLogger
+from enterprise.tasks import send_sso_configured_email
 from enterprise.utils import localized_utcnow
 
 User = auth.get_user_model()
@@ -51,7 +52,8 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 ' not been marked as submitted.'
             )
 
-        # TODO: send a notification email to the enterprise associated with the configuration record
+        # Send a notification email to the enterprise associated with the configuration record
+        send_sso_configured_email(sso_configuration_record.enterprise_customer.uuid)
 
         # Completing the orchestration process means the configuration record is now configured and can be considered
         # active

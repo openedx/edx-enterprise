@@ -4,6 +4,7 @@ Django tasks.
 
 from logging import getLogger
 
+from braze.exceptions import BrazeClientError
 from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
@@ -11,7 +12,8 @@ from django.apps import apps
 from django.core import mail
 from django.db import IntegrityError
 
-from enterprise.utils import send_email_notification_message
+from enterprise.api_client.braze import BrazeAPIClient
+from enterprise.utils import get_enterprise_customer, send_email_notification_message
 
 LOGGER = getLogger(__name__)
 
@@ -138,3 +140,46 @@ def enterprise_enrollment_source_model():
     This function is needed to avoid circular ref issues when model classes call tasks in this module.
     """
     return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')
+
+
+@shared_task
+@set_code_owner_attribute
+def send_sso_configured_email(
+    enterprise_customer_uuid,
+):
+    """
+    Send email notifications when SSO orchestration is complete.
+
+    Arguments:
+        * enterprise_customer_uuid (UUID)
+    """
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+    enterprise_slug = enterprise_customer.slug
+    enterprise_name = enterprise_customer.name
+    sender_alias = enterprise_customer.sender_alias
+    contact_email = enterprise_customer.contact_email
+
+    # getattr() default to none
+
+    braze_campaign_id = 'a5f10d46-8093-4ce1-bab7-6df018d03660'
+    braze_trigger_properties = {
+        'enterprise_customer_slug': enterprise_slug,
+        'enterprise_customer_name': enterprise_name,
+        'enterprise_sender_alias': sender_alias,
+        'enterprise_contact_email': contact_email,
+    }
+
+    try:
+        braze_client_instance = BrazeAPIClient.get_braze_client()  # pylint: disable=no-value-for-parameter
+        braze_client_instance.send_campaign_message(
+            braze_campaign_id,
+            recipients=[contact_email],
+            trigger_properties=braze_trigger_properties,
+        )
+    except BrazeClientError as exc:
+        message = (
+            'Enterprise oauth integration email sending received an '
+            f'exception for enterprise: {enterprise_name}.'
+        )
+        LOGGER.exception(message)
+        raise exc

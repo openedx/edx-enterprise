@@ -1,5 +1,5 @@
 """
-Base API clients to comunicate with edx services.
+Base API clients to communicate with edx services.
 """
 import logging
 from functools import wraps

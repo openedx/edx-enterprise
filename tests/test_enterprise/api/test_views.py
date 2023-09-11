@@ -7185,10 +7185,12 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         response = self.client.post(url)
         assert response.status_code == 404
 
-    def test_sso_configuration_oauth_orchestration_complete(self):
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
+    def test_sso_configuration_oauth_orchestration_complete(self, mock_braze_client):
         """
         Verify that the endpoint returns the correct response when the oauth orchestration is complete.
         """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
         config_pk = uuid.uuid4()
         enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
@@ -7207,3 +7209,41 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.configured_at is not None
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
+
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
+    def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
+        """
+        Assert sso configuration calls Braze API with the correct arguments.
+        """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
+        mock_send_campaign_message = mock_braze_client.return_value.send_campaign_message
+
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            submitted_at=localized_utcnow(),
+        )
+        url = settings.TEST_SERVER + reverse(
+            self.ENTERPRISE_CUSTOMER_SSO_CONFIGURATION_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        assert enterprise_sso_orchestration_config.is_pending_configuration()
+        self.client.post(url)
+
+        expected_trigger_properties = {
+            'enterprise_customer_slug': self.enterprise_customer.slug,
+            'enterprise_customer_name': self.enterprise_customer.name,
+            'enterprise_sender_alias': self.enterprise_customer.sender_alias,
+            'enterprise_contact_email': self.enterprise_customer.contact_email,
+        }
+
+        mock_send_campaign_message.assert_any_call(
+            'a5f10d46-8093-4ce1-bab7-6df018d03660',
+            recipients=[self.enterprise_customer.contact_email],
+            trigger_properties=expected_trigger_properties,
+        )
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.configured_at is not None
