@@ -43,7 +43,7 @@ class APIClientMixin:
 
 class BackendServiceAPIClient(APIClientMixin):
     """
-    API client based on OAuthAPIClient to cummunicate with edx services.
+    API client based on OAuthAPIClient to communicate with edx services.
 
     Uses the backend service user to make requests.
     """
@@ -58,7 +58,7 @@ class BackendServiceAPIClient(APIClientMixin):
 
 class UserAPIClient(APIClientMixin):
     """
-    API client based on requests.Session to cummunicate with edx services.
+    API client based on requests.Session to communicate with edx services.
 
     Requires user object to instantiate the client with the jwt token authentication.
     """
@@ -105,7 +105,7 @@ class UserAPIClient(APIClientMixin):
 
 class NoAuthAPIClient(APIClientMixin):
     """
-    API client based on requests.Session to cummunicate with edx services.
+    API client based on requests.Session to communicate with edx services.
 
     Used to call APIs which don't require authentication.
     """

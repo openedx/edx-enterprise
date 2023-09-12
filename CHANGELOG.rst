@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.15]
+--------
+feat: enterprise sso orchestrator api client implementation
+
 [4.1.14]
 --------
 feat: adding read only field to EnterpriseCustomerCatalogSerializer model

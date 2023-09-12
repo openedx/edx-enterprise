@@ -93,19 +93,22 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
         if not sso_configuration_record:
             return Response(status=HTTP_404_NOT_FOUND)
 
+        # Small validation logging to ensure data integrity
         if not sso_configuration_record.submitted_at:
             LOGGER.warning(
                 f'SSO configuration record {sso_configuration_record.pk} has received a completion callback but has'
                 ' not been marked as submitted.'
             )
 
-        # Send a notification email to the enterprise associated with the configuration record
-        send_sso_configured_email.delay(sso_configuration_record.enterprise_customer.uuid)
-
-        # Completing the orchestration process means the configuration record is now configured and can be considered
-        # active
         sso_configuration_record.configured_at = localized_utcnow()
-        sso_configuration_record.active = True
+        # Completing the orchestration process for the first time means the configuration record is now configured and
+        # can be considered active. However, subsequent configurations to update the record should not be reactivated,
+        # nor should the admins be renotified via email.
+        if not request.query_params.get('updating_existing_record'):
+            # Send a notification email to the enterprise associated with the configuration record
+            send_sso_configured_email.delay(sso_configuration_record.enterprise_customer.uuid)
+            sso_configuration_record.active = True
+
         sso_configuration_record.save()
         return Response(status=HTTP_200_OK)
 
@@ -179,6 +182,11 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
         except TypeError as e:
             LOGGER.error(f'{CONFIG_CREATE_ERROR}{e}')
             return Response({'error': f'{CONFIG_CREATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
+
+        # Wondering what to do here with error handling
+        # If we fail to submit for configuration (ie get a network error) should we rollback the created record?
+        new_record.submit_for_configuration()
+
         return Response({'data': new_record.pk}, status=HTTP_201_CREATED)
 
     @permission_required(
@@ -212,6 +220,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 sso_configuration_record.update(**request.data.dict())
+                sso_configuration_record.first().submit_for_configuration(updating_existing_record=True)
         except (TypeError, FieldDoesNotExist, ValidationError) as e:
             LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
             return Response({'error': f'{CONFIG_UPDATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
