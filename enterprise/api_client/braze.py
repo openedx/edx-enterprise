@@ -14,7 +14,8 @@ class BrazeAPIClient:
     """
     API client for calls to Braze.
     """
-    def get_braze_client():  # pylint: disable=no-method-argument
+    @classmethod
+    def get_braze_client(cls):
         """ Returns a Braze client. """
         if not BrazeClient:
             return None

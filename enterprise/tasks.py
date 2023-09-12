@@ -13,6 +13,7 @@ from django.core import mail
 from django.db import IntegrityError
 
 from enterprise.api_client.braze import BrazeAPIClient
+from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import get_enterprise_customer, send_email_notification_message
 
 LOGGER = getLogger(__name__)
@@ -159,9 +160,7 @@ def send_sso_configured_email(
     sender_alias = enterprise_customer.sender_alias
     contact_email = enterprise_customer.contact_email
 
-    # getattr() default to none
-
-    braze_campaign_id = 'a5f10d46-8093-4ce1-bab7-6df018d03660'
+    braze_campaign_id = SSO_BRAZE_CAMPAIGN_ID
     braze_trigger_properties = {
         'enterprise_customer_slug': enterprise_slug,
         'enterprise_customer_name': enterprise_name,

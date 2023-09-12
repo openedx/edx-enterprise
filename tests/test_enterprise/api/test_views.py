@@ -39,6 +39,7 @@ from enterprise.constants import (
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+    SSO_BRAZE_CAMPAIGN_ID,
 )
 from enterprise.models import (
     ChatGPTResponse,
@@ -7318,7 +7319,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         }
 
         mock_send_campaign_message.assert_any_call(
-            'a5f10d46-8093-4ce1-bab7-6df018d03660',
+            SSO_BRAZE_CAMPAIGN_ID,
             recipients=[self.enterprise_customer.contact_email],
             trigger_properties=expected_trigger_properties,
         )

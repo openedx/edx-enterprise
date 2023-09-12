@@ -216,3 +216,6 @@ class FulfillmentTypes:
     LEARNER_CREDIT = 'learner_credit'
     COUPON_CODE = 'coupon_code'
     CHOICES = [(choice, choice.capitalize().replace('_', ' ')) for choice in (LICENSE, LEARNER_CREDIT, COUPON_CODE)]
+
+
+SSO_BRAZE_CAMPAIGN_ID = 'a5f10d46-8093-4ce1-bab7-6df018d03660'
