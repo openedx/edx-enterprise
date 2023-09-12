@@ -100,7 +100,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             )
 
         # Send a notification email to the enterprise associated with the configuration record
-        send_sso_configured_email(sso_configuration_record.enterprise_customer.uuid)
+        send_sso_configured_email.delay(sso_configuration_record.enterprise_customer.uuid)
 
         # Completing the orchestration process means the configuration record is now configured and can be considered
         # active
