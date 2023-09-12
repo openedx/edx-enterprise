@@ -75,7 +75,7 @@ pydantic-core==2.6.3
     # via pydantic
 pysocks==1.7.1
     # via urllib3
-pytz==2023.3
+pytz==2023.3.post1
     # via tempora
 pyyaml==6.0.1
     # via jasmine
@@ -93,7 +93,7 @@ trio==0.22.2
     # via
     #   selenium
     #   trio-websocket
-trio-websocket==0.10.3
+trio-websocket==0.10.4
     # via selenium
 typing-extensions==4.7.1
     # via

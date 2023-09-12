@@ -39,6 +39,7 @@ from enterprise.constants import (
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+    SSO_BRAZE_CAMPAIGN_ID,
 )
 from enterprise.models import (
     ChatGPTResponse,
@@ -131,7 +132,7 @@ ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT = reverse('enterprise-customer-unlink-users', kwargs={'pk': FAKE_UUIDS[0]})
 PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
-LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
+LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-license-revoke'
 )
 EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
@@ -449,7 +450,7 @@ class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
 @mark.django_db
 class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     """
-    Test enteprise learner list endpoint
+    Test enterprise learner list endpoint
     """
 
     def test_get_enterprise_customer_user_contains_consent_records(self):
@@ -2608,9 +2609,9 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
+class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
     """
-    Test the Enteprise Customer course enrollments detail route
+    Test the Enterprise Customer course enrollments detail route
     """
 
     def test_enterprise_customer_course_enrollments_non_list_request(self):
@@ -3190,7 +3191,7 @@ class TestEnterpriseCatalogQueryViewSet(BaseTestEnterpriseAPIViews):
         response_json = self.client.get('/enterprise/api/v1/enterprise_catalog_query.json')
         self.assertEqual(response_json['content-type'], 'application/json')
 
-    def test_enteprise_catalog_query_list(self):
+    def test_enterprise_catalog_query_list(self):
         """
         ``enterprise_catalog_query``'s response when no catalog uuid is provided.
         """
@@ -3810,7 +3811,7 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
         }
         with self.assertRaises(NotConnectedToOpenEdX):
             self.client.post(
-                settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+                settings.TEST_SERVER + LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
                 data=post_data,
             )
 
@@ -3824,7 +3825,7 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
                 'user_id': 'bob',
             }
             response = self.client.post(
-                settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+                settings.TEST_SERVER + LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
                 data=post_data,
             )
             self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
@@ -3842,7 +3843,7 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
                 'enterprise_id': enterprise_customer.uuid,
             }
             response = self.client.post(
-                settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+                settings.TEST_SERVER + LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
                 data=post_data,
             )
             self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
@@ -3895,7 +3896,7 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
             'enterprise_id': enterprise_customer_user.enterprise_customer.uuid,
         }
         response = self.client.post(
-            settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+            settings.TEST_SERVER + LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
             data=post_data,
         )
 
@@ -3988,7 +3989,7 @@ class TestLicensedEnterpriseCourseEnrollmentViewset(BaseTestEnterpriseAPIViews):
             'enterprise_id': enterprise_customer_user.enterprise_customer.uuid,
         }
         response = self.client.post(
-            settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+            settings.TEST_SERVER + LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
             data=post_data,
         )
 
@@ -4726,7 +4727,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         fulfillment_source,
     ):
         """
-        Test that a successful bulk enrollmnet call to generate subsidy based enrollment records will return the newly
+        Test that a successful bulk enrollment call to generate subsidy based enrollment records will return the newly
         generated subsidized enrollment uuid value as part of the response payload.
         """
         if setting_value:
@@ -7266,10 +7267,12 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         response = self.post_sso_configuration_complete(config_pk)
         assert response.status_code == 404
 
-    def test_sso_configuration_oauth_orchestration_complete(self):
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
+    def test_sso_configuration_oauth_orchestration_complete(self, mock_braze_client):
         """
         Verify that the endpoint returns the correct response when the oauth orchestration is complete.
         """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
         config_pk = uuid.uuid4()
         enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
@@ -7284,6 +7287,44 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.configured_at is not None
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
+
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
+    def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
+        """
+        Assert sso configuration calls Braze API with the correct arguments.
+        """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
+        mock_send_campaign_message = mock_braze_client.return_value.send_campaign_message
+
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            submitted_at=localized_utcnow(),
+        )
+        url = settings.TEST_SERVER + reverse(
+            self.SSO_CONFIGURATION_COMPLETE_ENDPOINT,
+            kwargs={'configuration_uuid': config_pk}
+        )
+        assert enterprise_sso_orchestration_config.is_pending_configuration()
+        self.client.post(url)
+
+        expected_trigger_properties = {
+            'enterprise_customer_slug': self.enterprise_customer.slug,
+            'enterprise_customer_name': self.enterprise_customer.name,
+            'enterprise_sender_alias': self.enterprise_customer.sender_alias,
+            'enterprise_contact_email': self.enterprise_customer.contact_email,
+        }
+
+        mock_send_campaign_message.assert_any_call(
+            SSO_BRAZE_CAMPAIGN_ID,
+            recipients=[self.enterprise_customer.contact_email],
+            trigger_properties=expected_trigger_properties,
+        )
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.configured_at is not None
 
     # -------------------------- retrieve test suite --------------------------
 
@@ -7532,7 +7573,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
 
     def test_sso_configuration_update_bad_provided_customer(self):
         """
-        Test expected response when updating an existing sso configuration with a provided customer that doeasn't
+        Test expected response when updating an existing sso configuration with a provided customer that doesn't
         exist.
         """
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)

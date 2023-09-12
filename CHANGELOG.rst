@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.13]
+--------
+feat: adding braze email task to sso orchestration endpoint
+
 [4.1.12]
 --------
 feat: enterprise sso orchestration record table api implementation
