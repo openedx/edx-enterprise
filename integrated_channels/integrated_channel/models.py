@@ -404,6 +404,13 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         transmitter = self.get_content_metadata_transmitter()
         transmitter.transmit(*exporter.export())
 
+        # Instead of ^
+
+        # create, update, delete, skills_metadata, relations_metadata = exporter.export()
+        # transmitter.transmit(create, update, delete)
+        # transmitter.transmit_skills(skills_metadata)
+        # transmitter.transmit_skill_associations(relations_metadata)
+
     def transmit_single_subsection_learner_data(self, **kwargs):
         """
         Transmit a single subsection learner data record to the integrated channel.
@@ -614,6 +621,43 @@ class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         """
         return self.__str__()
 
+# class SkillMetadataItemTransmission(TimeStampedModel):
+#   (PK?)
+#   skill_name = models.CharField(...)   
+
+#   --------*Metadata*----------
+#   description = models.CharField(...)
+#   category = JSONField(...)
+#   subcategory = JSONField(...)
+
+#  --------*Relations*---------
+#   associated_catalog_keys = models.ManyToManyField(
+#       ContentMetadataItemTransmission
+#   )
+
+#  --------*Remote API*--------
+#   remote_deleted_at = models.DateTimeField(
+#       help_text='Date when the content transmission was deleted in the remote API',
+#       blank=True,
+#       null=True
+#   )
+#   remote_created_at = models.DateTimeField(
+#       help_text='Date when the content transmission was created in the remote API',
+#       blank=True,
+#       null=True
+#   )
+#   remote_updated_at = models.DateTimeField(
+#       help_text='Date when the content transmission was last updated in the remote API',
+#       blank=True,
+#       null=True
+#   )
+#   api_record = models.OneToOneField(
+#       ApiResponseRecord,
+#       blank=True,
+#       null=True,
+#       on_delete=models.CASCADE,
+#       help_text=_('Data pertaining to the transmissions API request response.')
+#   )
 
 class ContentMetadataItemTransmission(TimeStampedModel):
     """

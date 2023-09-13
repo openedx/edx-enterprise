@@ -37,6 +37,18 @@ class ContentMetadataTransmitter(Transmitter):
             enterprise_configuration=enterprise_configuration,
             client=client
         )
+        # self._transmit_skill_create = functools.partial(
+        #   ...
+        # self._transmit_skill_update = functools.partial(
+        #   ...
+        # self._transmit_skill_delete = functools.partial(
+        #   ...
+
+        # self._transmit_skill_association_create = functools.partial(
+        #   ...
+        # self._transmit_skill_association_delete = functools.partial(
+        #   ...
+
         self._transmit_create = functools.partial(
             self._transmit_action,
             client_method=self.client.create_content_metadata,
@@ -83,6 +95,15 @@ class ContentMetadataTransmitter(Transmitter):
                 course_or_course_run_key=content_id
             )
 
+    # def transmit_skills(self, skill_metadata):
+        # _transmit_skill_create(skill_metadata['create'])
+        # _transmit_skill_update(skill_metadata['update'])
+        # _transmit_skill_delete(skill_metadata['delete'])
+
+    # def transmit_skill_associations(self, relations_metadata):
+        # _transmit_skill_association_create(relations_metadata['create'])
+        # _transmit_skill_association_delete(relations_metadata['delete'])
+
     def transmit(self, create_payload, update_payload, delete_payload):
         """
         Transmit content metadata items to the integrated channel. Save or update content metadata records according to
@@ -124,6 +145,14 @@ class ContentMetadataTransmitter(Transmitter):
             self._prepare_items_for_transmission(channel_metadata_items),
             sort_keys=True
         ).encode('utf-8')
+
+    # def _transmit_skill_action(self, skill_payload, client_method, action_name):
+    #    - chunk payload
+    #    - serialize payload
+    #    - invoke client method
+    #    - capture client response
+    #    - update audit record with api response (text, status)
+    #    - remove mark
 
     def _transmit_action(self, content_metadata_item_map, client_method, action_name):  # pylint: disable=too-many-statements
         """
