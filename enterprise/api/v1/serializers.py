@@ -220,7 +220,8 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_integrated_customer_learner_portal_search', 'enable_generation_of_api_credentials',
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
-            'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users'
+            'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
+            'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message'
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)

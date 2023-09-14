@@ -122,6 +122,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     hide_labor_market_data = False
     auth_org_id = factory.LazyAttribute(lambda x: FAKER.lexify(text='??????????'))
     enable_generation_of_api_credentials = False
+    career_engagement_network_message = 'Test message'
 
 
 class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFactory):

@@ -1180,6 +1180,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
+                'enable_career_engagement_network_on_learner_portal': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1192,6 +1193,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
+                'career_engagement_network_message': 'Test message',
             }],
         ),
         (
@@ -1237,6 +1239,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_portal_subscription_management_screen': False,
                     'hide_course_original_price': False, 'enable_analytics_screen': True,
                     'enable_integrated_customer_learner_portal_search': True,
+                    'enable_career_engagement_network_on_learner_portal': False,
                     'enable_portal_lms_configurations_screen': False,
                     'sender_alias': 'Test Sender Alias', 'identity_providers': [],
                     'enterprise_customer_catalogs': [], 'reply_to': 'fake_reply@example.com',
@@ -1245,6 +1248,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_universal_link': False, 'enable_browse_and_request': False,
                     'admin_users': [],
                     'enable_generation_of_api_credentials': False,
+                    'career_engagement_network_message': 'Test message',
                 },
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
@@ -1313,6 +1317,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
+                'enable_career_engagement_network_on_learner_portal': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [
@@ -1330,6 +1335,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
+                'career_engagement_network_message': 'Test message',
             }],
         ),
         (
@@ -1379,6 +1385,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
+                'enable_career_engagement_network_on_learner_portal': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1391,6 +1398,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
+                'career_engagement_network_message': 'Test message',
             }],
         ),
         (
@@ -1611,6 +1619,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': False,
                 'enable_integrated_customer_learner_portal_search': True,
+                'enable_career_engagement_network_on_learner_portal': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1623,6 +1632,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
+                'career_engagement_network_message': 'Test message',
             }
         else:
             mock_empty_200_success_response = {
