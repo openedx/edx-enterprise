@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.1.14]
+--------
+feat: adding read only field to EnterpriseCustomerCatalogSerializer model
+
 [4.1.13]
 --------
 feat: adding braze email task to sso orchestration endpoint

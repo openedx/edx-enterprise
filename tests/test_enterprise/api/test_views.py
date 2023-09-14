@@ -1982,7 +1982,8 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
                 'results': [{
                     'uuid': catalog_uuid,
                     'title': catalog_title,
-                    'enterprise_customer': enterprise_customer.uuid
+                    'enterprise_customer': enterprise_customer.uuid,
+                    'enterprise_catalog_query': 1
                 }]
             }
         else:

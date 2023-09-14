@@ -444,7 +444,7 @@ class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerCatalog
         fields = (
-            'uuid', 'title', 'enterprise_customer',
+            'uuid', 'title', 'enterprise_customer', 'enterprise_catalog_query',
         )
 
 
