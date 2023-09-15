@@ -151,7 +151,8 @@ class EnterpriseMockMixin:
 
 # pylint: disable=dangerous-default-value
 def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], title='All Content',
-                                         enterprise_customer_uuid=FAKE_UUIDS[0], previous_url=None, next_url=None,
+                                         enterprise_customer_uuid=FAKE_UUIDS[0], enterprise_catalog_query=1,
+                                         previous_url=None, next_url=None,
                                          paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                                          include_enterprise_context=False, add_utm_info=True,
                                          count=None):
@@ -169,6 +170,7 @@ def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], 
         'title': title,
         'enterprise_customer': enterprise_customer_uuid,
         'results': paginated_content['results'],
+        'enterprise_catalog_query': enterprise_catalog_query,
     }
 
 
