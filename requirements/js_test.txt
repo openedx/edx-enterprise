@@ -95,7 +95,7 @@ trio==0.22.2
     #   trio-websocket
 trio-websocket==0.10.4
     # via selenium
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   annotated-types
     #   inflect
