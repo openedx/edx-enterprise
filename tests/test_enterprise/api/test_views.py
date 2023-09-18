@@ -14,6 +14,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
+import responses
 from faker import Faker
 from oauth2_provider.models import get_application_model
 from pytest import mark, raises
@@ -56,7 +57,12 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import NotConnectedToOpenEdX, localized_utcnow
+from enterprise.utils import (
+    NotConnectedToOpenEdX,
+    get_sso_orchestrator_api_base_url,
+    get_sso_orchestrator_configure_path,
+    localized_utcnow,
+)
 from enterprise_learner_portal.utils import CourseRunProgressStatuses
 from test_utils import (
     FAKE_UUIDS,
@@ -7455,10 +7461,16 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
 
     # -------------------------- create test suite --------------------------
 
-    def test_sso_configuration_create(self):
+    @responses.activate
+    def test_sso_configuration_create_x(self):
         """
         Test expected response when successfully creating a new sso configuration.
         """
+        responses.add(
+            responses.POST,
+            urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
+            json={},
+        )
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
         data = {
             "metadata_url": "https://example.com/metadata.xml",
@@ -7525,17 +7537,52 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
 
     # -------------------------- update test suite --------------------------
 
-    def test_sso_configuration_update(self):
+    @responses.activate
+    def test_sso_configurations_update_submitted_config(self):
         """
-        Test expected response when successfully updating an existing sso configuration.
+        Test the expected response when updating an sso configuration that's already been submitted for configuration.
         """
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
         config_pk = uuid.uuid4()
         enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
             uuid=config_pk,
             enterprise_customer=self.enterprise_customer,
-            configured_at=None,
-            submitted_at=localized_utcnow(),
+            submitted_at=localized_utcnow()
+        )
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 400
+        assert "Record has already been submitted for configuration." in response.data.get('error')
+
+        responses.add(
+            responses.POST,
+            urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
+            json={},
+        )
+        enterprise_sso_orchestration_config.configured_at = localized_utcnow()
+        enterprise_sso_orchestration_config.save()
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 200
+        sent_body_params = json.loads(responses.calls[0].request.body)
+        assert sent_body_params['requestIdentifier'] == str(config_pk)
+
+    @responses.activate
+    def test_sso_configuration_update(self):
+        """
+        Test expected response when successfully updating an existing sso configuration.
+        """
+        responses.add(
+            responses.POST,
+            urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
+            json={},
+        )
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
             metadata_url="before_value"
         )
         data = {

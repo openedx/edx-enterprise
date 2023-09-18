@@ -358,3 +358,8 @@ LEARNER_ENGAGEMENT_PROMPT_FOR_ACTIVE_CONTRACT = 'Create learner engagement repor
 LEARNER_ENGAGEMENT_PROMPT_FOR_NON_ACTIVE_CONTRACT = 'Create learner engagement report for non active contracts.'
 LEARNER_PROGRESS_PROMPT_FOR_ACTIVE_CONTRACT = 'Create learner progress report for active contracts.'
 LEARNER_PROGRESS_PROMPT_FOR_NON_ACTIVE_CONTRACT = 'Create learner progress report for non active contracts.'
+
+ENTERPRISE_SSO_ORCHESTRATOR_WORKER_USERNAME = 'username'
+ENTERPRISE_SSO_ORCHESTRATOR_WORKER_PASSWORD = 'password'
+ENTERPRISE_SSO_ORCHESTRATOR_BASE_URL = 'https://foobar.com'
+ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_PATH = 'configure'

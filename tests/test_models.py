@@ -10,9 +10,11 @@ import shutil
 import unittest
 from datetime import timedelta
 from unittest import mock
+from urllib.parse import urljoin
 from uuid import UUID
 
 import ddt
+import responses
 from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
 from freezegun.api import freeze_time
@@ -57,7 +59,13 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
-from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter, localized_utcnow
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    get_default_catalog_content_filter,
+    get_sso_orchestrator_api_base_url,
+    get_sso_orchestrator_configure_path,
+    localized_utcnow,
+)
 from test_utils import EmptyCacheMixin, assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 
@@ -2642,6 +2650,7 @@ class TestEnterpriseCustomerSsoConfiguration(unittest.TestCase):
     """
     Tests for the EnterpriseCustomerSsoConfiguration model.
     """
+
     def test_sso_configuration_soft_delete(self):
         """
         Test ``EnterpriseCustomerSsoConfiguration`` soft deletion property.
@@ -2671,3 +2680,33 @@ class TestEnterpriseCustomerSsoConfiguration(unittest.TestCase):
         with raises(ValidationError):
             sso_configuration.metadata_url = 'ayylmao'
             sso_configuration.save()
+
+    @responses.activate
+    def test_submitting_sso_config(self):
+        """
+        Test that submitting a valid SSO configuration will make an api request to the SSO orchestrator, updating
+        the records submitted_at field
+        """
+        responses.add(
+            responses.POST,
+            urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
+            json={},
+        )
+        sso_configuration = factories.EnterpriseCustomerSsoConfigurationFactory(
+            submitted_at=None,
+            configured_at=None,
+        )
+        sso_configuration.submit_for_configuration()
+        sent_body_params = json.loads(responses.calls[0].request.body)
+        assert sent_body_params['samlConfiguration']['uuid'] == str(sso_configuration.uuid)
+
+    def test_submitting_already_submitted_sso_config(self):
+        """
+        Test that submitting an already submitted SSO configuration will raise an error
+        """
+        sso_configuration = factories.EnterpriseCustomerSsoConfigurationFactory(
+            submitted_at=localized_utcnow(),
+            configured_at=None,
+        )
+        with raises(ValidationError):
+            sso_configuration.submit_for_configuration()

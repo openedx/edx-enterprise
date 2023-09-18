@@ -1529,6 +1529,34 @@ def get_language_code(language):
     return language_map.get(language, "en-US")
 
 
+def get_sso_orchestrator_api_base_url():
+    """
+    Return the SSO orchestrator api base url settings value.
+    """
+    return settings.ENTERPRISE_SSO_ORCHESTRATOR_BASE_URL
+
+
+def get_sso_orchestrator_basic_auth_username():
+    """
+    Return the SSO orchestrator auth username settings value.
+    """
+    return settings.ENTERPRISE_SSO_ORCHESTRATOR_WORKER_USERNAME
+
+
+def get_sso_orchestrator_basic_auth_password():
+    """
+    Return the SSO orchestrator auth password settings value.
+    """
+    return settings.ENTERPRISE_SSO_ORCHESTRATOR_WORKER_PASSWORD
+
+
+def get_sso_orchestrator_configure_path():
+    """
+    Return the SSO orchestrator configure path settings value.
+    """
+    return settings.ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_PATH
+
+
 def get_enterprise_worker_user():
     """
     Return the user object of enterprise worker user.
@@ -2336,3 +2364,11 @@ def get_md5_hash(content):
         (str): MD5 hash digest.
     """
     return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+
+def camelCase(string):
+    """
+    Convert a string to camelCase.
+    """
+    output = ''.join(x for x in string.title() if x.isalnum())
+    return output[0].lower() + output[1:]

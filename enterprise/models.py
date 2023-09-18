@@ -43,6 +43,7 @@ from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
 from enterprise.api_client.open_ai import chat_completion
+from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
@@ -3691,6 +3692,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     """
     all_objects = models.Manager()
 
+    SAP_SUCCESS_FACTORS = 'SAP_SUCCESS_FACTORS'
+
     fields_locked_while_configuring = (
         'metadata_url',
         'metadata_xml',
@@ -3711,6 +3714,33 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         'sapsf_private_key',
         'odata_client_id',
         'oauth_user_id',
+    )
+
+    sap_config_fields = (
+        'oauth_user_id',
+        'odata_api_request_timeout',
+        'odata_api_root_url',
+        'odata_api_timeout_interval',
+        'odata_client_id',
+        'odata_company_id',
+        'sapsf_oauth_root_url',
+        'sapsf_private_key',
+    )
+
+    base_saml_config_fields = (
+        'uuid',
+        'metadata_url',
+        'metadata_xml',
+        'entity_id',
+        'user_id_attribute',
+        'full_name_attribute',
+        'first_name_attribute',
+        'last_name_attribute',
+        'email_attribute',
+        'username_attribute',
+        'country_attribute',
+        'active',
+        'update_from_metadata',
     )
 
     class Meta:
@@ -3795,6 +3825,12 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     )
 
     full_name_attribute = models.CharField(
+        blank=True,
+        null=True,
+        max_length=128,
+    )
+
+    first_name_attribute = models.CharField(
         blank=True,
         null=True,
         max_length=128,
@@ -3937,7 +3973,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         # ensure we lock configurable fields within the table.
         if old_instance and self.is_pending_configuration():
             for field in self.fields_locked_while_configuring:
-                if getattr(old_instance, field) != getattr(self, field):
+                if str(getattr(old_instance, field)) != str(getattr(self, field)):
                     raise ValidationError(
                         {
                             field: _(
@@ -3952,3 +3988,41 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         Returns True if the configuration has been submitted but not completed configuration.
         """
         return self.submitted_at and not self.configured_at
+
+    def submit_for_configuration(self, updating_existing_record=False):
+        """
+        Submit the configuration to the SSO orchestration api.
+        """
+        if self.is_pending_configuration():
+            raise ValidationError(
+                {
+                    "is_pending_configuration": _(
+                        "Record has already been submitted for configuration."
+                    )
+                }
+            )
+        is_sap = False
+        sap_data = {}
+        if self.identity_provider == self.SAP_SUCCESS_FACTORS:
+            for field in self.sap_config_fields:
+                sap_data[utils.camelCase(field)] = getattr(self, field)
+            is_sap = True
+
+        config_data = {}
+        for field in self.base_saml_config_fields:
+            config_data[utils.camelCase(field)] = getattr(self, field)
+
+        EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
+            config_data=config_data,
+            config_pk=self.pk,
+            enterprise_data={
+                "name": self.enterprise_customer.name,
+                "slug": self.enterprise_customer.slug,
+                "uuid": str(self.enterprise_customer.uuid),
+            },
+            is_sap=is_sap,
+            updating_existing_record=updating_existing_record,
+            sap_config_data=sap_data,
+        )
+        self.submitted_at = localized_utcnow()
+        self.save()
