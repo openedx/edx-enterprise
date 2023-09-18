@@ -4,8 +4,40 @@ Pagination helpers for enterprise api.
 
 from collections import OrderedDict
 from urllib.parse import urlparse
-
+from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework.response import Response
+
+from enterprise.toggles import TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
+
+
+class PaginationWithFeatureFlags(DefaultPagination):
+    """
+    Adds a ``features`` dictionary to the default paginated response
+    provided by edx_rest_framework_extensions. The ``features`` dict
+    represents a collection of Waffle-based feature flags/samples/switches
+    that may be used to control whether certain aspects of the system are
+    enabled or disabled (e.g., feature flag turned on for all staff users but
+    not turned on for real customers/learners).
+    """
+
+    def get_paginated_response(self, data):
+        """
+        Modifies the default paginated response to include ``features`` dict.
+
+        Arguments:
+            self: PaginationWithFeatureFlags instance.
+            data (dict): Results for current page.
+
+        Returns:
+            (Response): DRF response object containing ``features`` dict.
+        """
+        paginated_response = super().get_paginated_response(data)
+        paginated_response.data.update({
+            'features': {
+                'top_down_assignment_real_time_lcm': TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM.is_enabled(),
+            },
+        })
+        return paginated_response
 
 
 def get_paginated_response(data, request):
