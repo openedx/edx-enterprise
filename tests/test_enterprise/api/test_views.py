@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
 import responses
+from edx_toggles.toggles.testutils import override_waffle_flag
 from faker import Faker
 from oauth2_provider.models import get_application_model
 from pytest import mark, raises
@@ -28,9 +29,7 @@ from django.contrib.auth.models import Permission
 from django.core.cache import cache
 from django.test import override_settings
 from django.utils import timezone
-from edx_toggles.toggles.testutils import override_waffle_flag
 
-from enterprise.toggles import TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
@@ -59,6 +58,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
+from enterprise.toggles import TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_sso_orchestrator_api_base_url,
