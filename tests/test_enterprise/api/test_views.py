@@ -1513,7 +1513,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
          None, False),
-        # Staff user with group permission filtering on slug with results, with top down assignment & real-time LCM feature enabled
+        # Staff user with group permission filtering on slug with results, with
+        # top down assignment & real-time LCM feature enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
          None, True),
@@ -1574,7 +1575,10 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
 
         client = APIClient()
         client.login(username='test_user', password='test_password')
-        with override_waffle_flag(TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM, active=is_top_down_assignment_real_time_lcm_enabled):
+        with override_waffle_flag(
+            TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
+            active=is_top_down_assignment_real_time_lcm_enabled
+        ):
             response = client.get(settings.TEST_SERVER +
                                 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT +
                                 '?' + urlencode(query_params, True))
@@ -1633,7 +1637,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
                 }
             }
-            assert response == expected_error or response == mock_empty_200_success_response
+            assert response in (expected_error, mock_empty_200_success_response)
 
     def test_enterprise_customer_branding_detail(self):
         """
