@@ -13,7 +13,7 @@ Enterprise typically uses environment configuration to control feature flags for
 
 By solely relying on environment configuration, we are unable to dynamically control feature flags in production based on the user's context. 
 
-For example, we may want to enable a feature for all staff users but keep it disabled for customers/users while it's in development. Similarly, we may want to enable a feature for a subset of specific users (e.g., members of a engineering squad) in production to QA before enabling it for all users. 
+For example, we may want to enable a feature for all staff users but keep it disabled for customers/users while it's in development. Similarly, we may want to enable a feature for a subset of specific users (e.g., members of a specific engineering squad) in production to QA before enabling it for all users. 
 
 However, neither of these are really possible with environment configuration.
 
