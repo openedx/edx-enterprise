@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework.response import Response
 
-from enterprise.toggles import TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
+from enterprise.toggles import top_down_assignment_real_time_lcm
 
 
 class PaginationWithFeatureFlags(DefaultPagination):
@@ -34,7 +34,7 @@ class PaginationWithFeatureFlags(DefaultPagination):
         paginated_response = super().get_paginated_response(data)
         paginated_response.data.update({
             'features': {
-                'top_down_assignment_real_time_lcm': TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM.is_enabled(),
+                'top_down_assignment_real_time_lcm': top_down_assignment_real_time_lcm(),
             },
         })
         return paginated_response

@@ -223,7 +223,19 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
             for key, value in self.enterprise_customer_data.items():
                 assert enterprise_customer_response[key] == value
         else:
-            assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}
+            mock_empty_200_success_response = {
+                'next': None,
+                'previous': None,
+                'count': 0,
+                'num_pages': 1,
+                'current_page': 1,
+                'start': 0,
+                'results': [],
+                'features': {
+                    'top_down_assignment_real_time_lcm': False
+                }
+            }
+            assert response == mock_empty_200_success_response
 
 
 @ddt.ddt
