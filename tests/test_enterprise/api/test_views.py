@@ -1132,6 +1132,20 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
+
+    mock_empty_200_success_response = {
+        'next': None, 
+        'previous': None, 
+        'count': 0, 
+        'num_pages': 1, 
+        'current_page': 1, 
+        'start': 0, 
+        'results': [], 
+        'features': {
+            'top_down_assignment_real_time_lcm': False
+        }
+    }
+
     """
     Test enterprise customer view set.
     """
@@ -1475,7 +1489,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
          {'detail': 'User is not allowed to access the view.'}),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         False, mock_empty_200_success_response),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
          {'detail': 'User is not allowed to access the view.'}),
@@ -1489,14 +1503,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         mock_empty_200_success_response),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True, None),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         mock_empty_200_success_response),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True, None),
@@ -1506,7 +1520,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         mock_empty_200_success_response),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
