@@ -9,7 +9,7 @@ Accepted (September 2023)
 Context
 -------
 
-Enterprise typically uses environment configuration to control feature flags for soft/dark releases. For micro-frontends, this control involves environment variables that are set at build time and used to compile JavaScript source or configuration settings derived from the runtime MFE configuration API in edx-platform. For backend APIs, this control typically either involves configuration settings or, on occassion, a Waffle flag.
+Enterprise typically uses environment configuration to control feature flags for soft/dark releases. For micro-frontends, this control involves environment variables that are set at build time and used to compile JavaScript source or configuration settings derived from the runtime MFE configuration API in edx-platform. For backend APIs, this control typically either involves configuration settings or, on occasion, a Waffle flag.
 
 By solely relying on environment configuration, we are unable to dynamically control feature flags in production based on the user's context. 
 
