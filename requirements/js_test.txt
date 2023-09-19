@@ -95,7 +95,7 @@ trio==0.22.2
     #   trio-websocket
 trio-websocket==0.10.4
     # via selenium
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   annotated-types
     #   inflect
@@ -108,7 +108,7 @@ wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1
     # via cherrypy
-zipp==3.16.2
+zipp==3.17.0
     # via importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
