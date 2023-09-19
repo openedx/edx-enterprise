@@ -1132,6 +1132,9 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise customer view set.
+    """
 
     mock_empty_200_success_response = {
         'next': None, 
@@ -1146,9 +1149,6 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         }
     }
 
-    """
-    Test enterprise customer view set.
-    """
     @ddt.data(
         (
             factories.EnterpriseCustomerFactory,
