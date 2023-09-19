@@ -1579,9 +1579,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
             active=is_top_down_assignment_real_time_lcm_enabled
         ):
-            response = client.get(settings.TEST_SERVER +
-                                ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT +
-                                '?' + urlencode(query_params, True))
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
         response = self.load_json(response.content)
         if has_access_to_enterprise:
             assert response['results'][0] == {
