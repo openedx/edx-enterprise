@@ -2,6 +2,9 @@
 Views for the ``enterprise-customer-sso-configuration`` API endpoint.
 """
 
+from xml.etree.ElementTree import fromstring
+
+import requests
 from edx_rbac.decorators import permission_required
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
@@ -41,6 +44,18 @@ class EnterpriseCustomerInactiveException(Exception):
     """
 
 
+class SsoConfigurationApiError(requests.exceptions.RequestException):
+    """
+    Exception raised when the Sso configuration api encounters an error while fetching provider metadata.
+    """
+
+
+class EntityIdNotFoundError(Exception):
+    """
+    Exception raised by the SSO configuration api when it fails to fetch a customer IDP's entity ID from the metadata.
+    """
+
+
 def check_user_part_of_customer(user, enterprise_customer):
     """
     Checks if a user is in an enterprise customer.
@@ -65,6 +80,28 @@ def fetch_configuration_record(kwargs):
     Fetches the configuration record for the given uuid.
     """
     return EnterpriseCustomerSsoConfiguration.all_objects.filter(pk=kwargs.get('configuration_uuid'))
+
+
+def get_metadata_xml_from_url(url):
+    """
+    Gets the metadata xml from the given url.
+    """
+    response = requests.get(url)
+    if response.status_code >= 300:
+        raise SsoConfigurationApiError(f'Error fetching metadata xml from provided url: {url}')
+    return response.text
+
+
+def fetch_entity_id_from_metadata_xml(metadata_xml):
+    """
+    Fetches the entity id from the metadata xml.
+    """
+    root = fromstring(metadata_xml)
+    if entity_id := root.get('entityID'):
+        return entity_id
+    if entity_descriptor_child := root.find('EntityDescriptor'):
+        return entity_descriptor_child.get('entityID')
+    raise EntityIdNotFoundError('Could not find entity ID in metadata xml')
 
 
 class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
@@ -177,6 +214,26 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             request_data['enterprise_customer'] = enterprise_customer
         else:
             return Response({'error': BAD_CUSTOMER_ERROR}, status=HTTP_400_BAD_REQUEST)
+
+        # Parse the request data to see if the metadata url or xml has changed and update the entity id if so
+        sso_config_metadata_xml = None
+        if request_metadata_url := request_data.get('metadata_url'):
+            # If the metadata url has changed, we need to update the metadata xml
+            try:
+                sso_config_metadata_xml = get_metadata_xml_from_url(request_metadata_url)
+            except SsoConfigurationApiError as e:
+                LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
+                return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+            request_data['metadata_xml'] = sso_config_metadata_xml
+        if sso_config_metadata_xml or (sso_config_metadata_xml := request_data.get('metadata_xml')):
+            try:
+                entity_id = fetch_entity_id_from_metadata_xml(sso_config_metadata_xml)
+            except (EntityIdNotFoundError) as e:
+                LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
+                return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+
+            request_data['entity_id'] = entity_id
+
         try:
             new_record = EnterpriseCustomerSsoConfiguration.objects.create(**request_data)
         except TypeError as e:
@@ -206,8 +263,32 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
         except EnterpriseCustomerInactiveException:
             return Response(status=HTTP_403_FORBIDDEN)
 
+        # Parse the request data to see if the metadata url or xml has changed and update the entity id if so
+        request_data = request.data.dict()
+        sso_config_metadata_xml = None
+        if request_metadata_url := request_data.get('metadata_url'):
+            sso_config_metadata_url = sso_configuration_record.first().metadata_url
+            if request_metadata_url != sso_config_metadata_url:
+                # If the metadata url has changed, we need to update the metadata xml
+                try:
+                    sso_config_metadata_xml = get_metadata_xml_from_url(request_metadata_url)
+                except SsoConfigurationApiError as e:
+                    LOGGER.error(f'{CONFIG_UPDATE_ERROR} {e}')
+                    return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+                request_data['metadata_xml'] = sso_config_metadata_xml
+        if request_metadata_xml := request_data.get('metadata_xml'):
+            if request_metadata_xml != sso_configuration_record.first().metadata_xml:
+                sso_config_metadata_xml = request_metadata_xml
+        if sso_config_metadata_xml:
+            try:
+                entity_id = fetch_entity_id_from_metadata_xml(sso_config_metadata_xml)
+                request_data['entity_id'] = entity_id
+            except (EntityIdNotFoundError) as e:
+                LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
+                return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+
         # If the request includes a customer uuid, ensure the new customer is valid
-        if new_customer := request.data.dict().get('enterprise_customer'):
+        if new_customer := request_data.get('enterprise_customer'):
             try:
                 enterprise_customer = EnterpriseCustomer.objects.get(uuid=new_customer)
             except EnterpriseCustomer.DoesNotExist:
@@ -219,7 +300,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 return Response(status=HTTP_403_FORBIDDEN)
         try:
             with transaction.atomic():
-                sso_configuration_record.update(**request.data.dict())
+                sso_configuration_record.update(**request_data)
                 sso_configuration_record.first().submit_for_configuration(updating_existing_record=True)
         except (TypeError, FieldDoesNotExist, ValidationError) as e:
             LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
