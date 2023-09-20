@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
 import responses
+from edx_toggles.toggles.testutils import override_waffle_flag
 from faker import Faker
 from oauth2_provider.models import get_application_model
 from pytest import mark, raises
@@ -57,6 +58,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
+from enterprise.toggles import TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_sso_orchestrator_api_base_url,
@@ -1135,6 +1137,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
     """
     Test enterprise customer view set.
     """
+
     @ddt.data(
         (
             factories.EnterpriseCustomerFactory,
@@ -1463,50 +1466,58 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
 
     @ddt.data(
         # Request missing required permissions query param.
-        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}),
+        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}),
+         {'detail': 'User is not allowed to access the view.'}, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None),
+         True, None, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}),
+         {'detail': 'User is not allowed to access the view.'}, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         False, None, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}),
+         {'detail': 'User is not allowed to access the view.'}, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None),
+         True, None, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None),
+         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         None, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True, None),
+         {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
+         None, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         None, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True, None),
+         {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
+         None, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True, None),
+         {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
+         None, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+         None, False),
+        # Staff user with group permission filtering on slug with results, with
+        # top down assignment & real-time LCM feature enabled
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
+         None, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -1518,6 +1529,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             query_params,
             has_access_to_enterprise,
             expected_error,
+            is_top_down_assignment_real_time_lcm_enabled,
             mock_get_logo_url,
     ):
         """
@@ -1563,10 +1575,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
 
         client = APIClient()
         client.login(username='test_user', password='test_password')
-
-        response = client.get(settings.TEST_SERVER +
-                              ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT +
-                              '?' + urlencode(query_params, True))
+        with override_waffle_flag(
+            TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
+            active=is_top_down_assignment_real_time_lcm_enabled
+        ):
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
         response = self.load_json(response.content)
         if has_access_to_enterprise:
             assert response['results'][0] == {
@@ -1610,7 +1625,19 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_generation_of_api_credentials': False,
             }
         else:
-            assert response == expected_error
+            mock_empty_200_success_response = {
+                'next': None,
+                'previous': None,
+                'count': 0,
+                'num_pages': 1,
+                'current_page': 1,
+                'start': 0,
+                'results': [],
+                'enterprise_features': {
+                    'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
+                }
+            }
+            assert response in (expected_error, mock_empty_200_success_response)
 
     def test_enterprise_customer_branding_detail(self):
         """

@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.2.0]
+--------
+feat: create generic ``PaginationWithFeatureFlags`` to add a ``features`` property to DRF's default pagination response containing Waffle-based feature flags.
+feat: integrate ``PaginationWithFeatureFlags`` with ``EnterpriseCustomerViewSet``.
+
 [4.1.15]
 --------
 feat: enterprise sso orchestrator api client implementation
