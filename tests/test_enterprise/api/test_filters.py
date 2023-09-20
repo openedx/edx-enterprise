@@ -231,7 +231,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                 'current_page': 1,
                 'start': 0,
                 'results': [],
-                'features': {
+                'enterprise_features': {
                     'top_down_assignment_real_time_lcm': False
                 }
             }

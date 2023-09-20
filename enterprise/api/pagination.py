@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework.response import Response
 
-from enterprise.toggles import top_down_assignment_real_time_lcm
+from enterprise.toggles import enterprise_features
 
 
 class PaginationWithFeatureFlags(DefaultPagination):
@@ -23,20 +23,18 @@ class PaginationWithFeatureFlags(DefaultPagination):
 
     def get_paginated_response(self, data):
         """
-        Modifies the default paginated response to include ``features`` dict.
+        Modifies the default paginated response to include ``enterprise_features`` dict.
 
         Arguments:
             self: PaginationWithFeatureFlags instance.
             data (dict): Results for current page.
 
         Returns:
-            (Response): DRF response object containing ``features`` dict.
+            (Response): DRF response object containing ``enterprise_features`` dict.
         """
         paginated_response = super().get_paginated_response(data)
         paginated_response.data.update({
-            'features': {
-                'top_down_assignment_real_time_lcm': top_down_assignment_real_time_lcm(),
-            },
+            'enterprise_features': enterprise_features(),
         })
         return paginated_response
 

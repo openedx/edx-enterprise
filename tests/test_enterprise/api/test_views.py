@@ -1633,7 +1633,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'current_page': 1,
                 'start': 0,
                 'results': [],
-                'features': {
+                'enterprise_features': {
                     'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
                 }
             }

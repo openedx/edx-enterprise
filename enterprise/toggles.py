@@ -25,3 +25,12 @@ def top_down_assignment_real_time_lcm():
     Returns whether top-down assignment and real time LCM feature flag is enabled.
     """
     return TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM.is_enabled()
+
+
+def enterprise_features():
+    """
+    Returns a dict of enterprise Waffle-based feature flags.
+    """
+    return {
+        'top_down_assignment_real_time_lcm': top_down_assignment_real_time_lcm(),
+    }
