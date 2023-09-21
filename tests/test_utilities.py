@@ -159,6 +159,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_portal_learner_credit_management_screen",
                 "enable_executive_education_2U_fulfillment",
                 "enable_integrated_customer_learner_portal_search",
+                "enable_career_engagement_network_on_learner_portal",
                 "enable_analytics_screen",
                 "enable_slug_login",
                 "contact_email",
@@ -170,6 +171,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "hide_labor_market_data",
                 "chat_gpt_prompts",
                 "enable_generation_of_api_credentials",
+                "career_engagement_network_message",
                 "sso_orchestration_records",
             ]
         ),

@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[4.3.0]
+--------
+feat: Added the ``enable_career_engagement_network_on_learner_portal`` field for EnterpriseCustomer
 
 [4.2.0]
 --------
