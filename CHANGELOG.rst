@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.3.1]
+--------
+chore: use lms_update_or_create_enrollment without feature flag
+
 [4.3.0]
 --------
 feat: Added the ``enable_career_engagement_network_on_learner_portal`` field for EnterpriseCustomer
