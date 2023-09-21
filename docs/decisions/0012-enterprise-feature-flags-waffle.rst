@@ -1,5 +1,5 @@
-Enterprise subsidy enrollments and entitlements
-===============================================
+Waffle-based feature flags for Enterprise
+=========================================
 
 Status
 ------
