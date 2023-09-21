@@ -141,6 +141,13 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("Is this configuration in dry-run mode? (experimental)"),
     )
 
+    dry_run_mode_enabled_content_metadata = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("Enables dry run mode for content metadata transmission."),
+    )
+
     show_course_price = models.BooleanField(
         blank=False,
         null=False,

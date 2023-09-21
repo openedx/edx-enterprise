@@ -16,7 +16,7 @@ from enterprise.utils import localized_utcnow
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
-from integrated_channels.utils import chunks, generate_formatted_log
+from integrated_channels.utils import chunks, encode_data_for_logging, generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -153,6 +153,19 @@ class ContentMetadataTransmitter(Transmitter):
         for chunk in islice(chunk_items, transmission_limit):
             json_payloads = [item.channel_metadata for item in list(chunk.values())]
             serialized_chunk = self._serialize_items(json_payloads)
+            if self.enterprise_configuration.dry_run_mode_enabled_content_metadata:
+                encoded_serialized_payload = encode_data_for_logging(serialized_chunk)
+                enterprise_customer_uuid = self.enterprise_configuration.enterprise_customer.uuid
+                LOGGER.info(generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    enterprise_customer_uuid,
+                    None,
+                    None,
+                    f'dry-run mode '
+                    f'skipping "{action_name}" action for content metadata transmission '
+                    f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
+                ))
+                continue
             response_status_code = None
             response_body = None
             try:
