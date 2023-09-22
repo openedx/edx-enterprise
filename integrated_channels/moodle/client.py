@@ -358,11 +358,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         try:
             moodle_course_id = self._get_course_id(serialized_data['courses[0][idnumber]'])
             # Course already exists but is hidden - make it visible
-            if(moodle_course_id):
+            if moodle_course_id:
                 LOGGER.info("Existing course found - updating it now")
                 serialized_data['courses[0][visible]'] = 1
                 return self.update_content_metadata(serialized_data)
-            else: # create a new course
+            else:  # create a new course
                 LOGGER.info("No existing course found - creating it now")
                 response = self._wrapped_post(serialized_data)
         except MoodleClientError as error:
@@ -412,7 +412,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params = {
             'wsfunction': 'core_course_update_courses',
             'courses[0][id]': moodle_course_id,
-            'courses[0][visible]': 0 # hide a course rather than doing a true delete
+            'courses[0][visible]': 0  # hide a course rather than doing a true delete
         }
         response = self._wrapped_post(params)
         return response.status_code, response.text

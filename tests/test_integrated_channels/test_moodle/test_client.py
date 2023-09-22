@@ -133,7 +133,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
         mock_response = Response()
         mock_response.status_code = 200
-        mock_response._content = self._get_courses_response_empty
+        mock_response._content = self._get_courses_response_empty  # pylint: disable=protected-access
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
@@ -151,7 +151,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
         mock_response = Response()
         mock_response.status_code = 200
-        mock_response._content = self._get_courses_response_empty
+        mock_response._content = self._get_courses_response_empty  # pylint: disable=protected-access
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
@@ -168,7 +168,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
         mock_response = Response()
         mock_response.status_code = 200
-        mock_response._content = self._get_courses_response_empty
+        mock_response._content = self._get_courses_response_empty  # pylint: disable=protected-access
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
@@ -186,7 +186,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
         mock_response = Response()
         mock_response.status_code = 200
-        mock_response._content = self._get_courses_response_empty
+        mock_response._content = self._get_courses_response_empty  # pylint: disable=protected-access
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         with self.assertRaises(MoodleClientError):
             client.create_content_metadata(MULTI_SERIALIZED_DATA)
@@ -199,13 +199,13 @@ class TestMoodleApiClient(unittest.TestCase):
         """
         expected_data = MULTI_SERIALIZED_DATA.copy()
         expected_data['wsfunction'] = 'core_course_create_courses'
- 
+
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=COURSEIDNUMBERTAKEN_RESPONSE)  # pylint: disable=protected-access
         client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
         mock_response = Response()
         mock_response.status_code = 200
-        mock_response._content = self._get_courses_response_empty
+        mock_response._content = self._get_courses_response_empty  # pylint: disable=protected-access
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         with self.assertRaises(MoodleClientError):
             client.create_content_metadata(MULTI_SERIALIZED_DATA)
@@ -232,7 +232,8 @@ class TestMoodleApiClient(unittest.TestCase):
         Test core logic for formatting a delete request to Moodle.
         Mark a course visible:0 rather than doing a true delete
         """
-        expected_data = {'wsfunction': 'core_course_update_courses', 'courses[0][id]': self.moodle_course_id, 'courses[0][visible]': 0}
+        expected_data = {'wsfunction': 'core_course_update_courses',
+                         'courses[0][id]': self.moodle_course_id, 'courses[0][visible]': 0}
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
@@ -389,14 +390,15 @@ class TestMoodleApiClient(unittest.TestCase):
         expected_data['wsfunction'] = 'core_course_update_courses'
         expected_data['courses[0][visible]'] = 1
         expected_data['courses[0][id]'] = self.moodle_course_id
-        
+
         client = MoodleAPIClient(self.enterprise_config)
-        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
-        client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
+        client._post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='_post', return_value=SUCCESSFUL_RESPONSE)
+        client._get_courses = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='_get_courses')
         mock_response = Response()
         mock_response.status_code = 200
-        mock_response._content = self._get_courses_response
-        
+        mock_response._content = self._get_courses_response  # pylint: disable=protected-access
         client._get_course_id = unittest.mock.MagicMock(name='_get_course_id')  # pylint: disable=protected-access
         client._get_course_id.return_value = self.moodle_course_id  # pylint: disable=protected-access
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
