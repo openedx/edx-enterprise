@@ -354,8 +354,17 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         # check to see if more than 1 course is being passed
         more_than_one_course = serialized_data.get('courses[1][shortname]')
         serialized_data['wsfunction'] = 'core_course_create_courses'
+        LOGGER.info("CREATING:")
         try:
-            response = self._wrapped_post(serialized_data)
+            moodle_course_id = self._get_course_id(serialized_data['courses[0][idnumber]'])
+            # Course already exists but is hidden - make it visible
+            if(moodle_course_id):
+                LOGGER.info("Existing course found - updating it now")
+                serialized_data['courses[0][visible]'] = 1
+                return self.update_content_metadata(serialized_data)
+            else: # create a new course
+                LOGGER.info("No existing course found - creating it now")
+                response = self._wrapped_post(serialized_data)
         except MoodleClientError as error:
             # treat duplicate as successful, but only if its a single course
             # set chunk size settings to 1 if youre seeing a lot of these errors
@@ -369,6 +378,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     def update_content_metadata(self, serialized_data):
         moodle_course_id = self._get_course_id(serialized_data['courses[0][idnumber]'])
+        LOGGER.info("UPDATING:")
+
         # if we cannot find the course, lets create it
         if moodle_course_id:
             serialized_data['courses[0][id]'] = moodle_course_id
@@ -381,6 +392,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
     def delete_content_metadata(self, serialized_data):
         response = self._get_courses(serialized_data['courses[0][idnumber]'])
         parsed_response = json.loads(response.text)
+        LOGGER.info("DELETING:")
         if not parsed_response.get('courses'):
             LOGGER.info(
                 generate_formatted_log(
@@ -398,8 +410,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             return rsp
         moodle_course_id = parsed_response['courses'][0]['id']
         params = {
-            'wsfunction': 'core_course_delete_courses',
-            'courseids[]': moodle_course_id
+            'wsfunction': 'core_course_update_courses',
+            'courses[0][id]': moodle_course_id,
+            'courses[0][visible]': 0 # hide a course rather than doing a true delete
         }
         response = self._wrapped_post(params)
         return response.status_code, response.text

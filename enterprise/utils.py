@@ -46,12 +46,8 @@ from enterprise.constants import (
 from enterprise.logging import getEnterpriseLogger
 
 try:
-    from openedx.features.enterprise_support.enrollments.utils import (
-        lms_enroll_user_in_course,
-        lms_update_or_create_enrollment,
-    )
+    from openedx.features.enterprise_support.enrollments.utils import lms_update_or_create_enrollment
 except ImportError:
-    lms_enroll_user_in_course = None
     lms_update_or_create_enrollment = None
 
 try:
@@ -1824,30 +1820,16 @@ def customer_admin_enroll_user_with_status(
     succeeded = False
     new_enrollment = False
     enterprise_fulfillment_source_uuid = None
-    emet_enable_auto_upgrade_enrollment_mode = getattr(
-        settings,
-        'ENABLE_ENTERPRISE_BACKEND_EMET_AUTO_UPGRADE_ENROLLMENT_MODE',
-        False,
-    )
     try:
         # enrolls a user in a course per LMS flow, but this method doesn't create enterprise records
         # yet so we need to create it immediately after calling lms_update_or_create_enrollment.
-        if emet_enable_auto_upgrade_enrollment_mode:
-            new_enrollment = lms_update_or_create_enrollment(
-                user.username,
-                course_id,
-                course_mode,
-                is_active=True,
-                enterprise_uuid=enterprise_customer.uuid,
-            )
-        else:
-            new_enrollment = lms_enroll_user_in_course(
-                user.username,
-                course_id,
-                course_mode,
-                enterprise_customer.uuid,
-                is_active=True,
-            )
+        new_enrollment = lms_update_or_create_enrollment(
+            user.username,
+            course_id,
+            course_mode,
+            is_active=True,
+            enterprise_uuid=enterprise_customer.uuid,
+        )
         succeeded = True
         LOGGER.info("Successfully enrolled user %s in course %s", user.id, course_id)
     except (CourseEnrollmentError, CourseUserGroup.DoesNotExist) as error:

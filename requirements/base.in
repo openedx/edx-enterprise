@@ -26,8 +26,9 @@ edx-django-utils>=3.12.0
 edx-drf-extensions
 edx-opaque-keys[django]
 edx-rest-api-client
-edx-tincan-py35
 edx-rbac
+edx-tincan-py35
+edx-toggles
 jsondiff
 jsonfield
 path.py

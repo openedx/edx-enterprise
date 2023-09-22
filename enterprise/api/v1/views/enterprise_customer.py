@@ -26,6 +26,7 @@ from django.utils.decorators import method_decorator
 
 from enterprise import models
 from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
+from enterprise.api.pagination import PaginationWithFeatureFlags
 from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
@@ -54,6 +55,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
     filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
+    pagination_class = PaginationWithFeatureFlags
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (

@@ -403,6 +403,8 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_executive_education_2U_fulfillment",
             "hide_labor_market_data",
             "enable_integrated_customer_learner_portal_search",
+            "enable_career_engagement_network_on_learner_portal",
+            "career_engagement_network_message",
             "enable_analytics_screen",
             "enable_portal_reporting_config_screen",
             "enable_portal_saml_configuration_screen",

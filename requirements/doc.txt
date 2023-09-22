@@ -60,7 +60,6 @@ billiard==4.1.0
     #   celery
 bleach==6.0.0
     # via -r requirements/test-master.txt
-    #   readme-renderer
 celery==5.3.4
     # via
     #   -c requirements/constraints.txt
@@ -104,11 +103,14 @@ click-repl==0.3.0
     #   -r requirements/test-master.txt
     #   celery
 code-annotations==1.5.0
-    # via -r requirements/test-master.txt
+    # via
+    #   -r requirements/test-master.txt
+    #   edx-toggles
 cryptography==38.0.4
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields-v2
+    #   jwcrypto
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -117,6 +119,10 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
+deprecated==1.2.14
+    # via
+    #   -r requirements/test-master.txt
+    #   jwcrypto
 django==3.2.21
     # via
     #   -c requirements/common_constraints.txt
@@ -134,6 +140,7 @@ django==3.2.21
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-rbac
+    #   edx-toggles
     #   jsonfield
 django-cache-memoize==0.1.10
     # via -r requirements/test-master.txt
@@ -146,11 +153,12 @@ django-crum==0.7.9
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
+    #   edx-toggles
 django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
 django-filter==23.2
     # via -r requirements/test-master.txt
-django-ipware==4.0.2
+django-ipware==5.0.0
     # via -r requirements/test-master.txt
 django-model-utils==4.3.1
     # via
@@ -158,9 +166,9 @@ django-model-utils==4.3.1
     #   edx-rbac
 django-multi-email-field==0.7.0
     # via -r requirements/test-master.txt
-django-oauth-toolkit==1.4.1
+django-oauth-toolkit==1.5.0
     # via -r requirements/test-master.txt
-django-object-actions==4.1.0
+django-object-actions==4.2.0
     # via -r requirements/test-master.txt
 django-simple-history==3.1.1
     # via
@@ -171,6 +179,7 @@ django-waffle==4.0.0
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-drf-extensions
+    #   edx-toggles
 djangorestframework==3.14.0
     # via
     #   -r requirements/test-master.txt
@@ -201,6 +210,7 @@ edx-django-utils==5.7.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   edx-toggles
 edx-drf-extensions==8.9.2
     # via
     #   -r requirements/test-master.txt
@@ -214,6 +224,8 @@ edx-rbac==1.8.0
 edx-rest-api-client==5.6.0
     # via -r requirements/test-master.txt
 edx-tincan-py35==1.0.0
+    # via -r requirements/test-master.txt
+edx-toggles==5.1.0
     # via -r requirements/test-master.txt
 factory-boy==3.3.0
     # via
@@ -251,6 +263,10 @@ jsondiff==2.0.0
     # via -r requirements/test-master.txt
 jsonfield==3.1.0
     # via -r requirements/test-master.txt
+jwcrypto==1.5.0
+    # via
+    #   -r requirements/test-master.txt
+    #   django-oauth-toolkit
 kombu==5.3.2
     # via
     #   -r requirements/test-master.txt
@@ -329,7 +345,7 @@ pycryptodomex==3.18.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pydata-sphinx-theme==0.13.3
+pydata-sphinx-theme==0.14.0
     # via sphinx-book-theme
 pygments==2.16.1
     # via
@@ -407,6 +423,7 @@ six==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
+    #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rbac
     #   python-dateutil
@@ -416,7 +433,7 @@ slumber==0.7.1
     #   edx-rest-api-client
 snowballstemmer==2.2.0
     # via sphinx
-snowflake-connector-python==3.1.1
+snowflake-connector-python==3.2.0
     # via -r requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
@@ -509,6 +526,10 @@ webencodings==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   bleach
+wrapt==1.15.0
+    # via
+    #   -r requirements/test-master.txt
+    #   deprecated
 yarl==1.9.2
     # via
     #   -r requirements/test-master.txt

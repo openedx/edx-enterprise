@@ -95,7 +95,6 @@ bleach==6.0.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
 build==1.0.3
-    #   readme-renderer
     # via pip-tools
 celery==5.3.4
     # via
@@ -170,6 +169,7 @@ code-annotations==1.5.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-lint
+    #   edx-toggles
 coverage[toml]==7.3.1
     # via
     #   -r requirements/test.txt
@@ -180,6 +180,7 @@ cryptography==38.0.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-fernet-fields-v2
+    #   jwcrypto
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -192,6 +193,12 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
+deprecated==1.2.14
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   jwcrypto
 diff-cover==7.7.0
     # via -r requirements/test.txt
 dill==0.3.7
@@ -218,6 +225,7 @@ django==3.2.21
     #   edx-drf-extensions
     #   edx-i18n-tools
     #   edx-rbac
+    #   edx-toggles
     #   jsonfield
 django-cache-memoize==0.1.10
     # via
@@ -241,6 +249,7 @@ django-crum==0.7.9
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-rbac
+    #   edx-toggles
 django-fernet-fields-v2==0.9
     # via
     #   -r requirements/doc.txt
@@ -251,7 +260,7 @@ django-filter==23.2
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-ipware==4.0.2
+django-ipware==5.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -267,12 +276,12 @@ django-multi-email-field==0.7.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-oauth-toolkit==1.4.1
+django-oauth-toolkit==1.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-object-actions==4.1.0
+django-object-actions==4.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -290,6 +299,7 @@ django-waffle==4.0.0
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-drf-extensions
+    #   edx-toggles
 djangorestframework==3.14.0
     # via
     #   -r requirements/doc.txt
@@ -332,13 +342,14 @@ edx-django-utils==5.7.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   edx-toggles
 edx-drf-extensions==8.9.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
-edx-i18n-tools==1.1.0
+edx-i18n-tools==1.2.0
     # via -r requirements/dev.in
 edx-lint==5.3.4
     # via -r requirements/dev.in
@@ -359,6 +370,11 @@ edx-rest-api-client==5.6.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
 edx-tincan-py35==1.0.0
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+edx-toggles==5.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -436,6 +452,12 @@ jsonfield==3.1.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+jwcrypto==1.5.0
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   django-oauth-toolkit
 kombu==5.3.2
     # via
     #   -r requirements/doc.txt
@@ -588,7 +610,7 @@ pycryptodomex==3.18.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-pydata-sphinx-theme==0.13.3
+pydata-sphinx-theme==0.14.0
     # via
     #   -r requirements/doc.txt
     #   sphinx-book-theme
@@ -734,6 +756,7 @@ six==1.16.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
+    #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-lint
     #   edx-rbac
@@ -753,7 +776,7 @@ snowballstemmer==2.2.0
     #   -r requirements/doc.txt
     #   pydocstyle
     #   sphinx
-snowflake-connector-python==3.1.1
+snowflake-connector-python==3.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -927,7 +950,12 @@ wheel==0.41.2
     #   -r requirements/dev.in
     #   pip-tools
 wrapt==1.15.0
-    # via astroid
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   astroid
+    #   deprecated
 yarl==1.9.2
     # via
     #   -r requirements/doc.txt
