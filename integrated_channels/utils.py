@@ -42,6 +42,21 @@ def encode_data_for_logging(data):
     return base64.urlsafe_b64encode(data.encode("utf-8")).decode('utf-8')
 
 
+def encode_binary_data_for_logging(data):
+    """
+    Converts binary input into URL-safe, utf-8 encoded, base64 encoded output.
+    If the input is binary (bytes), it is first decoded to utf-8, then dumped to JSON,
+    and finally, base64 encoded.
+    """
+    if not isinstance(data, str):
+        try:
+            data = json.dumps(data.decode('utf-8'))
+        except (UnicodeDecodeError, AttributeError):
+            # Handle decoding errors or attribute errors (e.g., if 'data' is not bytes)
+            data = json.dumps(data)
+    return base64.urlsafe_b64encode(data.encode("utf-8")).decode('utf-8')
+
+
 def parse_datetime_to_epoch(datestamp, magnitude=1.0):
     """
     Convert an ISO-8601 datetime string to a Unix epoch timestamp in some magnitude.
