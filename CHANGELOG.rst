@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[4.5.1]
+-------
+fix: fix how we determine the value of active flag within schedule for SAP
 
 [4.5.0]
 -------
