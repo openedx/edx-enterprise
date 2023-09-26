@@ -134,9 +134,9 @@ diff-cover==7.7.0
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-cache-memoize==0.1.10
+django-cache-memoize==0.2.0
     # via -r requirements/test-master.txt
-django-config-models==2.5.0
+django-config-models==2.5.1
     # via -r requirements/test-master.txt
 django-countries==7.5.1
     # via -r requirements/test-master.txt
@@ -148,7 +148,7 @@ django-crum==0.7.9
     #   edx-toggles
 django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/test-master.txt
 django-ipware==5.0.0
     # via -r requirements/test-master.txt
@@ -159,7 +159,7 @@ django-model-utils==4.3.1
     #   edx-rbac
 django-multi-email-field==0.7.0
     # via -r requirements/test-master.txt
-django-oauth-toolkit==1.5.0
+django-oauth-toolkit==1.6.2
     # via -r requirements/test-master.txt
 django-object-actions==4.2.0
     # via -r requirements/test-master.txt
@@ -194,11 +194,11 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.5.0
+edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -214,9 +214,9 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==19.6.1
+faker==19.6.2
     # via factory-boy
-filelock==3.12.3
+filelock==3.12.4
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -324,7 +324,7 @@ pycparser==2.21
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.18.0
+pycryptodomex==3.19.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -362,7 +362,6 @@ python-dateutil==2.8.2
     # via
     #   -r requirements/test-master.txt
     #   celery
-    #   edx-drf-extensions
     #   faker
     #   freezegun
 python-slugify==8.0.1
@@ -404,8 +403,6 @@ six==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
-    #   django-oauth-toolkit
-    #   edx-drf-extensions
     #   edx-rbac
     #   freezegun
     #   mock
@@ -431,7 +428,7 @@ stevedore==5.1.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==7.1.0
+testfixtures==7.2.0
     # via
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
@@ -451,14 +448,13 @@ tqdm==4.66.1
     # via
     #   -r requirements/test-master.txt
     #   openai
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/test-master.txt
     #   asgiref
     #   django-countries
     #   edx-opaque-keys
     #   faker
-    #   filelock
     #   kombu
     #   snowflake-connector-python
 tzdata==2023.3

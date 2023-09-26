@@ -50,7 +50,7 @@ asn1crypto==1.5.1
     #   -r requirements/test.txt
     #   oscrypto
     #   snowflake-connector-python
-astroid==2.15.6
+astroid==2.15.7
     # via
     #   pylint
     #   pylint-celery
@@ -227,12 +227,12 @@ django==3.2.21
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-cache-memoize==0.1.10
+django-cache-memoize==0.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-config-models==2.5.0
+django-config-models==2.5.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -255,7 +255,7 @@ django-fernet-fields-v2==0.9
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-filter==23.2
+django-filter==23.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -276,7 +276,7 @@ django-multi-email-field==0.7.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-oauth-toolkit==1.5.0
+django-oauth-toolkit==1.6.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -343,7 +343,7 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -353,7 +353,7 @@ edx-i18n-tools==1.2.0
     # via -r requirements/dev.in
 edx-lint==5.3.4
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.5.0
+edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -384,12 +384,12 @@ factory-boy==3.3.0
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==19.6.1
+faker==19.6.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   factory-boy
-filelock==3.12.3
+filelock==3.12.4
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -604,13 +604,13 @@ pycparser==2.21
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   cffi
-pycryptodomex==3.18.0
+pycryptodomex==3.19.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-pydata-sphinx-theme==0.14.0
+pydata-sphinx-theme==0.14.1
     # via
     #   -r requirements/doc.txt
     #   sphinx-book-theme
@@ -635,7 +635,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==2.17.5
+pylint==2.17.6
     # via
     #   edx-lint
     #   pylint-celery
@@ -686,7 +686,6 @@ python-dateutil==2.8.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-    #   edx-drf-extensions
     #   faker
     #   freezegun
 python-slugify==8.0.1
@@ -756,8 +755,6 @@ six==1.16.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-    #   django-oauth-toolkit
-    #   edx-drf-extensions
     #   edx-lint
     #   edx-rbac
     #   freezegun
@@ -837,7 +834,7 @@ stevedore==5.1.0
     #   doc8
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==7.1.0
+testfixtures==7.2.0
     # via
     #   -r requirements/dev.in
     #   -r requirements/doc.txt
@@ -889,7 +886,7 @@ tqdm==4.66.1
     #   twine
 twine==1.11.0
     # via -r requirements/dev.in
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -899,7 +896,6 @@ typing-extensions==4.7.1
     #   django-countries
     #   edx-opaque-keys
     #   faker
-    #   filelock
     #   kombu
     #   pydata-sphinx-theme
     #   pylint
@@ -962,7 +958,7 @@ yarl==1.9.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   aiohttp
-zipp==3.16.2
+zipp==3.17.0
     # via
     #   -r requirements/doc.txt
     #   importlib-metadata
