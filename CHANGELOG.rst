@@ -22,6 +22,7 @@ fix: enterprise sso orchestrator api cleanup
 [4.3.1]
 -------
 chore: use lms_update_or_create_enrollment without feature flag
+feat: upgrade Django to 4.2 & drop support for Django 3.2
 
 [4.3.0]
 -------
