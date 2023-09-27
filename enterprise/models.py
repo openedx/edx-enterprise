@@ -3765,6 +3765,15 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
 
     # ---------------------------- base configurations ---------------------------- #
 
+    display_name = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "The display name of the SSO configuration."
+        ),
+    )
+
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
     enterprise_customer = models.ForeignKey(
