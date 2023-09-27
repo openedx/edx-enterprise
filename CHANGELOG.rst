@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.3.3]
+-------
+chore: adding display name to the sso orchestrator table
+
 [4.3.2]
 -------
 fix: enterprise sso orchestrator api cleanup
