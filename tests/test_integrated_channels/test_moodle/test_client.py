@@ -235,7 +235,7 @@ class TestMoodleApiClient(unittest.TestCase):
         expected_data = SERIALIZED_DATA.copy()
         expected_data['wsfunction'] = 'core_course_update_courses'
         expected_data['courses[0][visible]'] = 0
-        expected_data['courses[0][id]'] = self.moodle_course_id                         
+        expected_data['courses[0][id]'] = self.moodle_course_id
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access

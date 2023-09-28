@@ -15,16 +15,24 @@ Change Log
 
 Unreleased
 ----------
+[4.3.3]
+-------
+chore: adding display name to the sso orchestrator table
+
+[4.3.2]
+-------
+fix: enterprise sso orchestrator api cleanup
+
 [4.3.1]
---------
+-------
 chore: use lms_update_or_create_enrollment without feature flag
 
 [4.3.0]
---------
+-------
 feat: Added the ``enable_career_engagement_network_on_learner_portal`` field for EnterpriseCustomer
 
 [4.2.0]
---------
+-------
 feat: create generic ``PaginationWithFeatureFlags`` to add a ``features`` property to DRF's default pagination response containing Waffle-based feature flags.
 feat: integrate ``PaginationWithFeatureFlags`` with ``EnterpriseCustomerViewSet``.
 

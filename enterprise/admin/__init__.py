@@ -20,7 +20,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from enterprise import constants
+from enterprise import constants, models
 from enterprise.admin.actions import export_as_csv_action, refresh_catalog
 from enterprise.admin.forms import (
     AdminNotificationForm,
@@ -41,29 +41,12 @@ from enterprise.admin.views import (
 )
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
-from enterprise.models import (
-    AdminNotification,
-    AdminNotificationFilter,
-    AdminNotificationRead,
-    ChatGPTResponse,
-    EnrollmentNotificationEmailTemplate,
-    EnterpriseCatalogQuery,
-    EnterpriseCourseEnrollment,
-    EnterpriseCustomer,
-    EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerCatalog,
-    EnterpriseCustomerIdentityProvider,
-    EnterpriseCustomerInviteKey,
-    EnterpriseCustomerReportingConfiguration,
-    EnterpriseCustomerType,
-    EnterpriseCustomerUser,
-    EnterpriseFeatureUserRoleAssignment,
-    PendingEnrollment,
-    PendingEnterpriseCustomerAdminUser,
-    PendingEnterpriseCustomerUser,
-    SystemWideEnterpriseUserRoleAssignment,
+from enterprise.utils import (
+    discovery_query_url,
+    get_all_field_names,
+    get_default_catalog_content_filter,
+    localized_utcnow,
 )
-from enterprise.utils import discovery_query_url, get_all_field_names, get_default_catalog_content_filter
 
 try:
     from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -88,7 +71,7 @@ class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
     https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
     """
 
-    model = EnterpriseCustomerBrandingConfiguration
+    model = models.EnterpriseCustomerBrandingConfiguration
     can_delete = False
 
 
@@ -100,7 +83,7 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
     https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
     """
 
-    model = EnterpriseCustomerIdentityProvider
+    model = models.EnterpriseCustomerIdentityProvider
     form = EnterpriseCustomerIdentityProviderAdminForm
     extra = 0
 
@@ -112,7 +95,7 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
     https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
     """
 
-    model = EnterpriseCustomerCatalog
+    model = models.EnterpriseCustomerCatalog
     form = EnterpriseCustomerCatalogAdminForm
     extra = 0
     can_delete = False
@@ -128,7 +111,7 @@ class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
     Django admin inline model for PendingEnterpriseCustomerAdminUser.
     """
 
-    model = PendingEnterpriseCustomerAdminUser
+    model = models.PendingEnterpriseCustomerAdminUser
     extra = 0
     fieldsets = (
         (None, {
@@ -149,14 +132,14 @@ class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
         return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
 
 
-@admin.register(EnterpriseCustomerType)
+@admin.register(models.EnterpriseCustomerType)
 class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCustomerType.
     """
 
     class Meta:
-        model = EnterpriseCustomerType
+        model = models.EnterpriseCustomerType
 
     fields = (
         'name',
@@ -166,7 +149,7 @@ class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
     search_fields = ('name', )
 
 
-@admin.register(EnterpriseCustomer)
+@admin.register(models.EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
     Django admin model for EnterpriseCustomer.
@@ -254,7 +237,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     form = EnterpriseCustomerAdminForm
 
     class Meta:
-        model = EnterpriseCustomer
+        model = models.EnterpriseCustomer
 
     def get_search_results(self, request, queryset, search_term):
         original_queryset = queryset
@@ -397,14 +380,14 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return customer_urls + super().get_urls()
 
 
-@admin.register(EnterpriseCustomerUser)
+@admin.register(models.EnterpriseCustomerUser)
 class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCustomerUser.
     """
 
     class Meta:
-        model = EnterpriseCustomerUser
+        model = models.EnterpriseCustomerUser
 
     fields = (
         'user_id',
@@ -446,7 +429,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         use_distinct = False
 
         if search_term:
-            queryset = EnterpriseCustomerUser.objects.filter(
+            queryset = models.EnterpriseCustomerUser.objects.filter(
                 user_id__in=User.objects.filter(
                     Q(email__icontains=search_term) | Q(username__icontains=search_term)
                 )
@@ -495,7 +478,9 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
             enterprise_customer_user: The instance of EnterpriseCustomerUser
                 being rendered with this admin form.
         """
-        enrollments = EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=enterprise_customer_user)
+        enrollments = models.EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user=enterprise_customer_user
+        )
         return [enrollment.course_id for enrollment in enrollments]
 
     def _get_all_enrollments(self, enterprise_customer_user):
@@ -540,14 +525,14 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         )
 
 
-@admin.register(PendingEnterpriseCustomerUser)
+@admin.register(models.PendingEnterpriseCustomerUser)
 class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
     """
     Django admin model for PendingEnterpriseCustomerUser
     """
 
     class Meta:
-        model = PendingEnterpriseCustomerUser
+        model = models.PendingEnterpriseCustomerUser
 
     fields = (
         'user_email',
@@ -562,14 +547,14 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(PendingEnterpriseCustomerAdminUser)
+@admin.register(models.PendingEnterpriseCustomerAdminUser)
 class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
     """
     Django admin model for PendingEnterpriseCustomerAdminUser
     """
 
     class Meta:
-        model = PendingEnterpriseCustomerAdminUser
+        model = models.PendingEnterpriseCustomerAdminUser
 
     fields = (
         'user_email',
@@ -611,7 +596,7 @@ class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
         return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
 
 
-@admin.register(EnrollmentNotificationEmailTemplate)
+@admin.register(models.EnrollmentNotificationEmailTemplate)
 class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin for EnrollmentNotificationEmailTemplate model
@@ -619,7 +604,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
     change_actions = ("preview_as_course", "preview_as_program")
 
     class Meta:
-        model = EnrollmentNotificationEmailTemplate
+        model = models.EnrollmentNotificationEmailTemplate
 
     def get_urls(self):
         """
@@ -669,14 +654,14 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
     preview_as_program.label = _("Preview (program)")
 
 
-@admin.register(EnterpriseCourseEnrollment)
+@admin.register(models.EnterpriseCourseEnrollment)
 class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCourseEnrollment
     """
 
     class Meta:
-        model = EnterpriseCourseEnrollment
+        model = models.EnterpriseCourseEnrollment
 
     readonly_fields = (
         'enterprise_customer_user',
@@ -737,14 +722,14 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         return custom_urls + super().get_urls()
 
 
-@admin.register(PendingEnrollment)
+@admin.register(models.PendingEnrollment)
 class PendingEnrollmentAdmin(admin.ModelAdmin):
     """
     Django admin model for PendingEnrollment
     """
 
     class Meta:
-        model = PendingEnrollment
+        model = models.PendingEnrollment
 
     readonly_fields = (
         'user',
@@ -773,14 +758,14 @@ class PendingEnrollmentAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(EnterpriseCatalogQuery)
+@admin.register(models.EnterpriseCatalogQuery)
 class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCatalogQuery.
     """
 
     class Meta:
-        model = EnterpriseCatalogQuery
+        model = models.EnterpriseCatalogQuery
 
     def get_urls(self):
         """
@@ -820,7 +805,7 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     readonly_fields = ('discovery_query_url', 'uuid')
 
 
-@admin.register(EnterpriseCustomerCatalog)
+@admin.register(models.EnterpriseCustomerCatalog)
 class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCustomerCatalog.
@@ -829,7 +814,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     actions = [refresh_catalog]
 
     class Meta:
-        model = EnterpriseCustomerCatalog
+        model = models.EnterpriseCustomerCatalog
 
     class Media:
         js = ('enterprise/admin/enterprise_customer_catalog.js',)
@@ -897,7 +882,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         return actions
 
 
-@admin.register(EnterpriseCustomerReportingConfiguration)
+@admin.register(models.EnterpriseCustomerReportingConfiguration)
 class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCustomerReportingConfiguration.
@@ -920,7 +905,7 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
     form = EnterpriseCustomerReportingConfigAdminForm
 
     class Meta:
-        model = EnterpriseCustomerReportingConfiguration
+        model = models.EnterpriseCustomerReportingConfiguration
 
     def get_fields(self, request, obj=None):
         """
@@ -968,7 +953,7 @@ class BigTableMysqlPaginator(Paginator):
         return self._whole_table_count
 
 
-@admin.register(SystemWideEnterpriseUserRoleAssignment)
+@admin.register(models.SystemWideEnterpriseUserRoleAssignment)
 class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     """
     Django admin model for SystemWideEnterpriseUserRoleAssignment.
@@ -994,10 +979,10 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     form = SystemWideEnterpriseUserRoleAssignmentForm
 
     class Meta:
-        model = SystemWideEnterpriseUserRoleAssignment
+        model = models.SystemWideEnterpriseUserRoleAssignment
 
 
-@admin.register(EnterpriseFeatureUserRoleAssignment)
+@admin.register(models.EnterpriseFeatureUserRoleAssignment)
 class EnterpriseFeatureUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     """
     Django admin model for EnterpriseFeatureUserRoleAssignment.
@@ -1006,45 +991,45 @@ class EnterpriseFeatureUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     form = EnterpriseFeatureUserRoleAssignmentForm
 
     class Meta:
-        model = EnterpriseFeatureUserRoleAssignment
+        model = models.EnterpriseFeatureUserRoleAssignment
 
 
 admin.site.register(UpdateRoleAssignmentsWithCustomersConfig, ConfigurationModelAdmin)
 
 
-@admin.register(AdminNotificationRead)
+@admin.register(models.AdminNotificationRead)
 class AdminNotificationReadAdmin(admin.ModelAdmin):
     """
     Django admin for AdminNotificationRead model.
     """
 
-    model = AdminNotificationRead
+    model = models.AdminNotificationRead
     list_display = ('id', 'enterprise_customer_user', 'admin_notification', 'is_read', 'created', 'modified')
 
 
-@admin.register(AdminNotification)
+@admin.register(models.AdminNotification)
 class AdminNotificationAdmin(admin.ModelAdmin):
     """
     Django admin for AdminNotification model.
     """
 
-    model = AdminNotification
+    model = models.AdminNotification
     form = AdminNotificationForm
     list_display = ('id', 'title', 'text', 'is_active', 'start_date', 'expiration_date', 'created', 'modified')
     filter_horizontal = ('admin_notification_filter',)
 
 
-@admin.register(AdminNotificationFilter)
+@admin.register(models.AdminNotificationFilter)
 class AdminNotificationFilterAdmin(admin.ModelAdmin):
     """
-    Django admin for AdminNotificationFilter model.
+    Django admin for models.AdminNotificationFilter model.
     """
 
-    model = AdminNotificationFilter
+    model = models.AdminNotificationFilter
     list_display = ('id', 'filter', 'created', 'modified')
 
 
-@admin.register(EnterpriseCustomerInviteKey)
+@admin.register(models.EnterpriseCustomerInviteKey)
 class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCustomerInviteKey.
@@ -1076,7 +1061,7 @@ class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
     )
 
     class Meta:
-        model = EnterpriseCustomerInviteKey
+        model = models.EnterpriseCustomerInviteKey
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj=obj)
@@ -1087,12 +1072,36 @@ class EnterpriseCustomerInviteKeyAdmin(admin.ModelAdmin):
         return readonly_fields
 
 
-@admin.register(ChatGPTResponse)
+@admin.register(models.ChatGPTResponse)
 class ChatGPTResponseAdmin(admin.ModelAdmin):
     """
     Django admin for ChatGPTResponse model.
     """
 
-    model = ChatGPTResponse
+    model = models.ChatGPTResponse
     list_display = ('uuid', 'enterprise_customer', 'prompt_hash', )
     readonly_fields = ('prompt', 'response', 'prompt_hash', )
+
+
+@admin.register(models.EnterpriseCustomerSsoConfiguration)
+class EnterpriseCustomerSsoConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
+    """
+    Django admin for models.EnterpriseCustomerSsoConfigurationAdmin model.
+    """
+
+    model = models.EnterpriseCustomerSsoConfiguration
+    list_display = ('uuid', 'enterprise_customer', 'active', 'identity_provider', 'created', 'configured_at')
+    change_actions = ['mark_configured']
+
+    @admin.action(
+        description="Allows for marking a config as configured. This is useful for testing while the SSO"
+        "orchestrator is under constructions.",
+    )
+    def mark_configured(self, request, obj):
+        """
+        Object tool handler method - marks the config as configured.
+        """
+        obj.configured_at = localized_utcnow()
+        obj.save()
+
+    mark_configured.label = "Mark as Configured"

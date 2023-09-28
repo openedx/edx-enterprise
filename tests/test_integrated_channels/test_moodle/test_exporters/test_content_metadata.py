@@ -175,6 +175,5 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             'title': 'edX Demonstration Course'
         }
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
-        transformed_metada_data = exporter._apply_delete_transformation(content_metadata_item)
+        transformed_metada_data = exporter._apply_delete_transformation(content_metadata_item)  # pylint: disable=protected-access
         assert transformed_metada_data['visible'] == 0
-
