@@ -2710,3 +2710,44 @@ class TestEnterpriseCustomerSsoConfiguration(unittest.TestCase):
         )
         with raises(ValidationError):
             sso_configuration.submit_for_configuration()
+
+    def test_sso_config_default_display_name(self):
+        """
+        Test the default naming functionality of the SSO orchestration config table
+        """
+        customer = factories.EnterpriseCustomerFactory()
+        # Confirm display name is generated correctly on creation if absent from the kwargs
+        sso_configuration, _ = EnterpriseCustomerSsoConfiguration.objects.get_or_create(
+            enterprise_customer=customer,
+            identity_provider='foobar',
+        )
+        assert sso_configuration.display_name == 'SSO-config-foobar-1'
+
+        # Confirm display name is not generated or effected by updating a record
+        sso_configuration.display_name = None
+        sso_configuration.save()
+        sso_configuration.metadata_url = 'ayylmao'
+        sso_configuration.save()
+        assert sso_configuration.display_name is None
+
+        # Confirm the display name is kept if specified during creation
+        second_sso_configuration, _ = EnterpriseCustomerSsoConfiguration.objects.get_or_create(
+            enterprise_customer=customer,
+            identity_provider='SAP',
+            display_name='im-a-display-name',
+        )
+        assert second_sso_configuration.display_name == 'im-a-display-name'
+
+        # Confirm the display name is generated based on how many records exist for the customer
+        third_sso_configuration, _ = EnterpriseCustomerSsoConfiguration.objects.get_or_create(
+            enterprise_customer=customer,
+            identity_provider='ayylmao',
+        )
+        assert third_sso_configuration.display_name == 'SSO-config-ayylmao-3'
+
+        # Confirm the display name default value is not effected by other customers' records
+        different_customer_sso_configuration, _ = EnterpriseCustomerSsoConfiguration.objects.get_or_create(
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            identity_provider='SAP',
+        )
+        assert different_customer_sso_configuration.display_name == 'SSO-config-SAP-1'
