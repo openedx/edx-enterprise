@@ -232,8 +232,10 @@ class TestMoodleApiClient(unittest.TestCase):
         Test core logic for formatting a delete request to Moodle.
         Mark a course visible:0 rather than doing a true delete
         """
-        expected_data = {'wsfunction': 'core_course_update_courses',
-                         'courses[0][id]': self.moodle_course_id, 'courses[0][visible]': 0}
+        expected_data = SERIALIZED_DATA.copy()
+        expected_data['wsfunction'] = 'core_course_update_courses'
+        expected_data['courses[0][visible]'] = 0
+        expected_data['courses[0][id]'] = self.moodle_course_id                         
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
@@ -244,7 +246,9 @@ class TestMoodleApiClient(unittest.TestCase):
         mock_response._content = self._get_courses_response  # pylint: disable=protected-access
 
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
-        client.delete_content_metadata(SERIALIZED_DATA)
+        serialized_data = SERIALIZED_DATA.copy()
+        serialized_data['courses[0][visible]'] = 0
+        client.delete_content_metadata(serialized_data)
 
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
