@@ -374,6 +374,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_pathways = models.BooleanField(
+        verbose_name="Display pathways screen",
+        default=True,
+        help_text=_(
+            "If checked, the learners will be able to see the pathways on the learner portal dashboard."
+        )
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,
