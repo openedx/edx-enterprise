@@ -173,6 +173,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_generation_of_api_credentials",
                 "career_engagement_network_message",
                 "sso_orchestration_records",
+                "enable_pathways"
             ]
         ),
         (

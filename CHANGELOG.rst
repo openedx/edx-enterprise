@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.4.0]
+-------
+feat: Add the ``enable_pathways`` field for EnterpriseCustomer
+
 [4.3.4]
 -------
 feat: add migrations for Django 4.2
