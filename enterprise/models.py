@@ -4055,7 +4055,13 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
             is_sap = True
         else:
             for field in self.base_saml_config_fields:
-                config_data[utils.camelCase(field)] = getattr(self, field)
+                if field == "active":
+                    if not updating_existing_record:
+                        config_data['enable'] = True
+                    else:
+                        config_data['enable'] = getattr(self, field)
+                else:
+                    config_data[utils.camelCase(field)] = getattr(self, field)
 
         EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
             config_data=config_data,

@@ -146,6 +146,10 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 ' not been marked as submitted.'
             )
 
+        # Mark the configuration record as active IFF this the record has never been configured.
+        if not sso_configuration_record.configured_at:
+            sso_configuration_record.active = True
+
         sso_configuration_record.configured_at = localized_utcnow()
         # Completing the orchestration process for the first time means the configuration record is now configured and
         # can be considered active. However, subsequent configurations to update the record should not be reactivated,
