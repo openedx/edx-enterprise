@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.5.0]
+-------
+feat: Add the ``enable_programs`` field for EnterpriseCustomer
+
 [4.4.0]
 -------
 feat: Add the ``enable_pathways`` field for EnterpriseCustomer

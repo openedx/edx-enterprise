@@ -211,7 +211,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'enable_audit_data_reporting', 'enable_learner_portal_offers',
                        'enable_executive_education_2U_fulfillment',
                        'enable_career_engagement_network_on_learner_portal',
-                       'career_engagement_network_message', 'enable_pathways'),
+                       'career_engagement_network_message', 'enable_pathways', 'enable_programs'),
             'description': ('The following default settings should be the same for '
                             'the majority of enterprise customers, '
                             'and are either rarely used, unlikely to be sold, '
