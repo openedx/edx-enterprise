@@ -382,6 +382,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_programs = models.BooleanField(
+        verbose_name="Display programs screen",
+        default=True,
+        help_text=_(
+            "If checked, the learners will be able to see the programs on the learner portal dashboard."
+        )
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,

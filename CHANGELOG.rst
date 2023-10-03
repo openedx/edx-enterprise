@@ -15,6 +15,13 @@ Change Log
 
 Unreleased
 ----------
+[4.5.1]
+-------
+fix: fix how we determine the value of active flag within schedule for SAP
+
+[4.5.0]
+-------
+feat: Add the ``enable_programs`` field for EnterpriseCustomer
 
 [4.4.0]
 -------
