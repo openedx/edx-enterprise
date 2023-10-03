@@ -69,7 +69,7 @@ certifi==2023.7.22
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   cryptography
@@ -142,9 +142,9 @@ django==3.2.21
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-cache-memoize==0.1.10
+django-cache-memoize==0.2.0
     # via -r requirements/test-master.txt
-django-config-models==2.5.0
+django-config-models==2.5.1
     # via -r requirements/test-master.txt
 django-countries==7.5.1
     # via -r requirements/test-master.txt
@@ -156,7 +156,7 @@ django-crum==0.7.9
     #   edx-toggles
 django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/test-master.txt
 django-ipware==5.0.0
     # via -r requirements/test-master.txt
@@ -166,7 +166,7 @@ django-model-utils==4.3.1
     #   edx-rbac
 django-multi-email-field==0.7.0
     # via -r requirements/test-master.txt
-django-oauth-toolkit==1.5.0
+django-oauth-toolkit==1.7.1
     # via -r requirements/test-master.txt
 django-object-actions==4.2.0
     # via -r requirements/test-master.txt
@@ -211,11 +211,11 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.10.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.5.0
+edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -231,9 +231,9 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==19.6.1
+faker==19.6.2
     # via factory-boy
-filelock==3.12.3
+filelock==3.12.4
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -280,7 +280,7 @@ multidict==6.0.4
     #   -r requirements/test-master.txt
     #   aiohttp
     #   yarl
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -290,13 +290,13 @@ oauthlib==3.2.2
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-openai==0.28.0
+openai==0.28.1
     # via -r requirements/test-master.txt
 oscrypto==1.3.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-packaging==23.1
+packaging==23.2
     # via
     #   -r requirements/test-master.txt
     #   pydata-sphinx-theme
@@ -341,11 +341,11 @@ pycparser==2.21
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.18.0
+pycryptodomex==3.19.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pydata-sphinx-theme==0.14.0
+pydata-sphinx-theme==0.14.1
     # via sphinx-book-theme
 pygments==2.16.1
     # via
@@ -381,7 +381,6 @@ python-dateutil==2.8.2
     # via
     #   -r requirements/test-master.txt
     #   celery
-    #   edx-drf-extensions
     #   faker
 python-slugify==8.0.1
     # via
@@ -423,8 +422,6 @@ six==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
-    #   django-oauth-toolkit
-    #   edx-drf-extensions
     #   edx-rbac
     #   python-dateutil
 slumber==0.7.1
@@ -471,7 +468,7 @@ stevedore==5.1.0
     #   doc8
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==7.1.0
+testfixtures==7.2.0
     # via -r requirements/test-master.txt
 text-unidecode==1.3
     # via
@@ -489,14 +486,13 @@ tqdm==4.66.1
     # via
     #   -r requirements/test-master.txt
     #   openai
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/test-master.txt
     #   asgiref
     #   django-countries
     #   edx-opaque-keys
     #   faker
-    #   filelock
     #   kombu
     #   pydata-sphinx-theme
     #   snowflake-connector-python
@@ -518,7 +514,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -r requirements/test-master.txt
     #   prompt-toolkit
@@ -534,5 +530,5 @@ yarl==1.9.2
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
-zipp==3.16.2
+zipp==3.17.0
     # via importlib-metadata
