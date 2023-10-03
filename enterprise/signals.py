@@ -394,6 +394,19 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
         )
 
 
+@receiver(pre_save, sender=models.EnterpriseCustomerSsoConfiguration)
+def generate_default_orchestration_record_display_name(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Ensure that the display_name field is populated with a default value if it is not provided while creating.
+    """
+    if not models.EnterpriseCustomerSsoConfiguration.objects.filter(pk=instance.pk).exists():
+        if instance.display_name is None:
+            num_records_for_customer = models.EnterpriseCustomerSsoConfiguration.objects.filter(
+                enterprise_customer=instance.enterprise_customer,
+            ).count()
+            instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
+
+
 # Don't connect this receiver if we dont have access to CourseEnrollment model
 if CourseEnrollment is not None:
     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)

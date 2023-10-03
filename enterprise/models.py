@@ -374,6 +374,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_pathways = models.BooleanField(
+        verbose_name="Display pathways screen",
+        default=True,
+        help_text=_(
+            "If checked, the learners will be able to see the pathways on the learner portal dashboard."
+        )
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,
@@ -3764,6 +3772,15 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         verbose_name_plural = _('Enterprise Customer SSO Configurations')
 
     # ---------------------------- base configurations ---------------------------- #
+
+    display_name = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "The display name of the SSO configuration."
+        ),
+    )
 
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 

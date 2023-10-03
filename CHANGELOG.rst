@@ -15,6 +15,19 @@ Change Log
 
 Unreleased
 ----------
+
+[4.4.0]
+-------
+feat: Add the ``enable_pathways`` field for EnterpriseCustomer
+
+[4.3.4]
+-------
+feat: add migrations for Django 4.2
+
+[4.3.3]
+-------
+chore: adding display name to the sso orchestrator table
+
 [4.3.2]
 -------
 fix: enterprise sso orchestrator api cleanup
