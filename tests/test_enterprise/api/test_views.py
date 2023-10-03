@@ -1195,6 +1195,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
+                'enable_programs': True,
             }],
         ),
         (
@@ -1251,6 +1252,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_generation_of_api_credentials': False,
                     'career_engagement_network_message': 'Test message',
                     'enable_pathways': True,
+                    'enable_programs': True,
                 },
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
@@ -1339,6 +1341,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
+                'enable_programs': True,
             }],
         ),
         (
@@ -1403,6 +1406,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
+                'enable_programs': True,
             }],
         ),
         (
@@ -1638,6 +1642,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
+                'enable_programs': True,
             }
         else:
             mock_empty_200_success_response = {

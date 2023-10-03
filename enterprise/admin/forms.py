@@ -406,6 +406,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_career_engagement_network_on_learner_portal",
             "career_engagement_network_message",
             "enable_pathways",
+            "enable_programs",
             "enable_analytics_screen",
             "enable_portal_reporting_config_screen",
             "enable_portal_saml_configuration_screen",

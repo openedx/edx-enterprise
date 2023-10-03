@@ -1196,6 +1196,19 @@ def get_course_run_duration_info(course_run):
     return duration_info
 
 
+def get_advertised_or_closest_course_run(content_metadata_item):
+    """
+    Returns advertised course run of a course. If the advertised run does not exist, it looks for the closest run.
+    """
+    course_run = get_advertised_course_run(content_metadata_item)
+    # get the closest run if advertised run doesn't exist
+    if not course_run:
+        course_runs = content_metadata_item.get('course_runs')
+        if course_runs:
+            course_run = get_closest_course_run(course_runs)
+    return course_run
+
+
 def get_duration_of_course_or_courserun(content_metadata_item):
     """
     Returns duration start, end dates given a piece of content_metadata item
@@ -1212,12 +1225,10 @@ def get_duration_of_course_or_courserun(content_metadata_item):
         start = content_metadata_item.get('start')
         end = content_metadata_item.get('end')
     elif content_metadata_item.get('content_type') == 'course':
-        course_runs = content_metadata_item.get('course_runs')
-        if course_runs:
-            course_run = get_closest_course_run(course_runs)
-            if course_run:
-                start = course_run.get('start')
-                end = course_run.get('end')
+        course_run = get_advertised_or_closest_course_run(content_metadata_item)
+        if course_run:
+            start = course_run.get('start')
+            end = course_run.get('end')
     if not start:
         return 0, None, None
     start_date = parse_datetime_handle_invalid(start)
@@ -1259,7 +1270,7 @@ def is_course_run_available_for_enrollment(course_run):
     Check if a course run is available for enrollment.
     """
     # If the course run is Archived, it's not available for enrollment
-    if course_run['availability'] not in ['Current', 'Starting Soon', 'Upcoming']:
+    if course_run.get('availability') not in ['Current', 'Starting Soon', 'Upcoming']:
         return False
 
     # If the course run is not "enrollable", it's not available for enrollment
