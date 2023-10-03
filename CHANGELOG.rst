@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.5.2]
+-------
+chore: adding a more flexible way of fetching api request data
+
 [4.5.1]
 -------
 fix: fix how we determine the value of active flag within schedule for SAP
