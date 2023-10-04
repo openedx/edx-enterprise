@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.5.3]
+-------
+feat: added dry run mode for content metadata transmission
+
 [4.5.2]
 -------
 chore: adding a more flexible way of fetching api request data
