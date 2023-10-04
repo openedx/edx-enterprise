@@ -374,6 +374,22 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_pathways = models.BooleanField(
+        verbose_name="Display pathways screen",
+        default=True,
+        help_text=_(
+            "If checked, the learners will be able to see the pathways on the learner portal dashboard."
+        )
+    )
+
+    enable_programs = models.BooleanField(
+        verbose_name="Display programs screen",
+        default=True,
+        help_text=_(
+            "If checked, the learners will be able to see the programs on the learner portal dashboard."
+        )
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,
@@ -3765,6 +3781,15 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
 
     # ---------------------------- base configurations ---------------------------- #
 
+    display_name = models.CharField(
+        blank=True,
+        null=True,
+        max_length=255,
+        help_text=_(
+            "The display name of the SSO configuration."
+        ),
+    )
+
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
     enterprise_customer = models.ForeignKey(
@@ -3797,8 +3822,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     )
 
     metadata_url = models.CharField(
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         max_length=255,
         help_text=_(
             "The metadata url of the identity provider."
@@ -3814,8 +3839,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     )
 
     entity_id = models.CharField(
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         max_length=255,
         help_text=_(
             "The entity id of the identity provider."
@@ -4002,7 +4027,12 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         """
         Returns True if the configuration has been submitted but not completed configuration.
         """
-        return self.submitted_at and not self.configured_at
+        if self.submitted_at:
+            if not self.configured_at:
+                return True
+            if self.submitted_at > self.configured_at:
+                return True
+        return False
 
     def submit_for_configuration(self, updating_existing_record=False):
         """
@@ -4018,14 +4048,14 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
             )
         is_sap = False
         sap_data = {}
+        config_data = {}
         if self.identity_provider == self.SAP_SUCCESS_FACTORS:
             for field in self.sap_config_fields:
                 sap_data[utils.camelCase(field)] = getattr(self, field)
             is_sap = True
-
-        config_data = {}
-        for field in self.base_saml_config_fields:
-            config_data[utils.camelCase(field)] = getattr(self, field)
+        else:
+            for field in self.base_saml_config_fields:
+                config_data[utils.camelCase(field)] = getattr(self, field)
 
         EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
             config_data=config_data,

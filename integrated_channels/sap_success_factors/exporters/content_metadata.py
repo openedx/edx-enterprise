@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from enterprise.constants import IC_DELETE_ACTION
 from enterprise.utils import (
     get_advertised_course_run,
+    get_advertised_or_closest_course_run,
     get_closest_course_run,
     get_duration_of_course_or_courserun,
     is_course_run_active,
@@ -169,6 +170,10 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         Return the schedule of the content item.
         """
         duration, start, end = get_duration_of_course_or_courserun(content_metadata_item)
+        if content_metadata_item.get('content_type') == 'course':
+            course_run = get_advertised_or_closest_course_run(content_metadata_item)
+            if course_run:
+                content_metadata_item = course_run
 
         # SAP will throw errors if we try to send an empty start or end date
         if (not start or not end):
@@ -177,7 +182,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):
         return [{
             'startDate': parse_datetime_to_epoch_millis(start) if start else '',
             'endDate': parse_datetime_to_epoch_millis(end) if end else '',
-            'active': current_time_is_in_interval(start, end) if start else False,
+            'active': is_course_run_available_for_enrollment(content_metadata_item),
             'duration': f"{duration} days",
         }]
 

@@ -15,16 +15,48 @@ Change Log
 
 Unreleased
 ----------
+[4.5.3]
+-------
+feat: added dry run mode for content metadata transmission
+
+[4.5.2]
+-------
+chore: adding a more flexible way of fetching api request data
+
+[4.5.1]
+-------
+fix: fix how we determine the value of active flag within schedule for SAP
+
+[4.5.0]
+-------
+feat: Add the ``enable_programs`` field for EnterpriseCustomer
+
+[4.4.0]
+-------
+feat: Add the ``enable_pathways`` field for EnterpriseCustomer
+
+[4.3.4]
+-------
+feat: add migrations for Django 4.2
+
+[4.3.3]
+-------
+chore: adding display name to the sso orchestrator table
+
+[4.3.2]
+-------
+fix: enterprise sso orchestrator api cleanup
+
 [4.3.1]
---------
+-------
 chore: use lms_update_or_create_enrollment without feature flag
 
 [4.3.0]
---------
+-------
 feat: Added the ``enable_career_engagement_network_on_learner_portal`` field for EnterpriseCustomer
 
 [4.2.0]
---------
+-------
 feat: create generic ``PaginationWithFeatureFlags`` to add a ``features`` property to DRF's default pagination response containing Waffle-based feature flags.
 feat: integrate ``PaginationWithFeatureFlags`` with ``EnterpriseCustomerViewSet``.
 

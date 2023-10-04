@@ -1194,6 +1194,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
             }],
         ),
         (
@@ -1249,6 +1251,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'admin_users': [],
                     'enable_generation_of_api_credentials': False,
                     'career_engagement_network_message': 'Test message',
+                    'enable_pathways': True,
+                    'enable_programs': True,
                 },
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
@@ -1336,6 +1340,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
             }],
         ),
         (
@@ -1399,6 +1405,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
             }],
         ),
         (
@@ -1633,6 +1641,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
                 'career_engagement_network_message': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
             }
         else:
             mock_empty_200_success_response = {
@@ -7467,10 +7477,19 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
     # -------------------------- create test suite --------------------------
 
     @responses.activate
-    def test_sso_configuration_create_x(self):
+    def test_sso_configuration_create(self):
         """
         Test expected response when successfully creating a new sso configuration.
         """
+        xml_metadata = """
+        <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://example.com">
+        </EntityDescriptor>
+        """
+        responses.add(
+            responses.GET,
+            "https://example.com/metadata.xml",
+            body=xml_metadata,
+        )
         responses.add(
             responses.POST,
             urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
@@ -7540,13 +7559,129 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         response = self.post_new_sso_configuration(data)
         assert "somewhackyvalue" in response.json()['error']
 
+    def test_sso_configuration_create_bad_xml_url(self):
+        """
+        Test expected response when creating a new sso configuration with a bad xml url.
+        """
+        responses.add(
+            responses.GET,
+            "https://example.com/metadata.xml",
+            json={'error': 'some error'},
+            status=400,
+        )
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+            "enterprise_customer": str(self.enterprise_customer.uuid),
+            "identity_provider": "cornerstone"
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 400
+        assert "Error fetching metadata xml" in response.json()['error']
+
+    @responses.activate
+    def test_sso_configuration_create_bad_xml_content(self):
+        """
+        Test expected response when creating a new sso configuration with an xml string that doesn't contain an entity
+        id.
+        """
+        xml_metadata = """
+        <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" foobar="https://example.com">
+        </EntityDescriptor>
+        """
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+            "enterprise_customer": str(self.enterprise_customer.uuid),
+            "identity_provider": "cornerstone"
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        data = {
+            "metadata_xml": xml_metadata,
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 400
+        assert "Could not find entity ID in metadata xml" in response.json()['error']
+
     # -------------------------- update test suite --------------------------
+
+    @responses.activate
+    def test_sso_configurations_update_bad_xml_content(self):
+        """
+        Test the expected response when updating an sso configuration with an xml string that doesn't contain an entity
+        id.
+        """
+        xml_metadata = """
+        <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" foobar="https://example.com">
+        </EntityDescriptor>
+        """
+        responses.add(
+            responses.GET,
+            "https://example.com/metadata.xml",
+            body=xml_metadata,
+        )
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 400
+
+    @responses.activate
+    def test_sso_configurations_update_bad_xml_url(self):
+        """
+        Test the expected response when updating an sso configuration with a bad xml url.
+        """
+        responses.add(
+            responses.GET,
+            "https://example.com/metadata.xml",
+            json={'error': 'some error'},
+            status=400,
+        )
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+        config_pk = uuid.uuid4()
+        EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+        )
+        data = {
+            "metadata_url": "https://example.com/metadata.xml",
+        }
+        response = self.update_sso_configuration(config_pk, data)
+        assert response.status_code == 400
+        assert "Error fetching metadata xml" in response.json()['error']
 
     @responses.activate
     def test_sso_configurations_update_submitted_config(self):
         """
         Test the expected response when updating an sso configuration that's already been submitted for configuration.
         """
+        xml_metadata = """
+        <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://example.com">
+        </EntityDescriptor>
+        """
+        responses.add(
+            responses.GET,
+            "https://example.com/metadata.xml",
+            body=xml_metadata,
+        )
+
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
         config_pk = uuid.uuid4()
         enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
@@ -7570,11 +7705,11 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         enterprise_sso_orchestration_config.save()
         response = self.update_sso_configuration(config_pk, data)
         assert response.status_code == 200
-        sent_body_params = json.loads(responses.calls[0].request.body)
+        sent_body_params = json.loads(responses.calls[2].request.body)
         assert sent_body_params['requestIdentifier'] == str(config_pk)
 
     @responses.activate
-    def test_sso_configuration_update(self):
+    def test_sso_configuration_update_x(self):
         """
         Test expected response when successfully updating an existing sso configuration.
         """
@@ -7583,6 +7718,16 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
             urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
             json={},
         )
+        xml_metadata = """
+        <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://example.com">
+        </EntityDescriptor>
+        """
+        responses.add(
+            responses.GET,
+            "https://example.com/metadata_update.xml",
+            body=xml_metadata,
+        )
+
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
         config_pk = uuid.uuid4()
         enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
@@ -7591,15 +7736,15 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
             metadata_url="before_value"
         )
         data = {
-            "metadata_url": "https://example.com/metadata.xml",
+            "metadata_url": "https://example.com/metadata_update.xml",
         }
         response = self.update_sso_configuration(config_pk, data)
         assert response.status_code == status.HTTP_200_OK
         assert response.json()['uuid'] == str(enterprise_sso_orchestration_config.uuid)
-        assert response.json()['metadata_url'] == "https://example.com/metadata.xml"
+        assert response.json()['metadata_url'] == "https://example.com/metadata_update.xml"
 
         enterprise_sso_orchestration_config.refresh_from_db()
-        assert enterprise_sso_orchestration_config.metadata_url == "https://example.com/metadata.xml"
+        assert enterprise_sso_orchestration_config.metadata_url == "https://example.com/metadata_update.xml"
 
     def test_sso_configuration_update_permissioning(self):
         """
