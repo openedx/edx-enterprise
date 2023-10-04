@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.5.4]
+-------
+feat: inactive moodle course instead of true delete
+
 [4.5.3]
 -------
 feat: added dry run mode for content metadata transmission
