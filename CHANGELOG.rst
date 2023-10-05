@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+
+[4.5.5]
+-------
+fix: clarify contact email helper text for enterprise customer
+
 [4.5.4]
 -------
 feat: inactive moodle course instead of true delete
