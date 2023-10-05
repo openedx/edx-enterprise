@@ -114,3 +114,10 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         if end_date:
             return int(parse(end_date).replace(tzinfo=timezone.utc).timestamp())
         return None
+
+    def _apply_delete_transformation(self, metadata):
+        """
+        Specific transformations required for "deleting/hiding" a course on a Moodle.
+        """
+        metadata['visible'] = 0  # hide a course on moodle - instead of true delete
+        return metadata

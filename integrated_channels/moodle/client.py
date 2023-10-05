@@ -355,7 +355,13 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         more_than_one_course = serialized_data.get('courses[1][shortname]')
         serialized_data['wsfunction'] = 'core_course_create_courses'
         try:
-            response = self._wrapped_post(serialized_data)
+            moodle_course_id = self._get_course_id(serialized_data['courses[0][idnumber]'])
+            # Course already exists but is hidden - make it visible
+            if moodle_course_id:
+                serialized_data['courses[0][visible]'] = 1
+                return self.update_content_metadata(serialized_data)
+            else:  # create a new course
+                response = self._wrapped_post(serialized_data)
         except MoodleClientError as error:
             # treat duplicate as successful, but only if its a single course
             # set chunk size settings to 1 if youre seeing a lot of these errors
@@ -397,11 +403,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             rsp._content = bytearray('{"result": "Course not found."}', 'utf-8')  # pylint: disable=protected-access
             return rsp
         moodle_course_id = parsed_response['courses'][0]['id']
-        params = {
-            'wsfunction': 'core_course_delete_courses',
-            'courseids[]': moodle_course_id
-        }
-        response = self._wrapped_post(params)
+        serialized_data['wsfunction'] = 'core_course_update_courses'
+        serialized_data['courses[0][id]'] = moodle_course_id
+        response = self._wrapped_post(serialized_data)
         return response.status_code, response.text
 
     def create_assessment_reporting(self, user_id, payload):
