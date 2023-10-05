@@ -416,6 +416,12 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the organization should have access to executive education 2U content.")
     )
 
+    enable_demo_data_for_analytics_and_lpr = models.BooleanField(
+        verbose_name="Enable demo data from analytics and lpr",
+        default=False,
+        help_text=_("Display Demo data from analyitcs and learner progress report for demo customer.")
+    )
+
     contact_email = models.EmailField(
         verbose_name="Customer admin contact email:",
         null=True,
