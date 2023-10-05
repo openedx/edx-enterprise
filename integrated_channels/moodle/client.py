@@ -13,7 +13,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import encode_data_for_logging, generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -333,6 +333,17 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             # The grade is exported as a decimal between [0-1]
             'grades[0][grade]': completion_data['grade'] * self.enterprise_configuration.grade_scale
         }
+
+        encoded_params = encode_data_for_logging(params)
+        LOGGER.info(generate_formatted_log(
+            self.enterprise_configuration.channel_code(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            user_id,
+            course_id,
+            'posting learner data to integrated channel '
+            f'integrated_channel_params_base64={encoded_params}'
+        ))
+
         return self._post(params)
 
     def create_content_metadata(self, serialized_data):
