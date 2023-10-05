@@ -79,15 +79,15 @@ class TestMoodleApiClient(unittest.TestCase):
         self.learner_data_payload = '{{"courseID": {}, "grade": {}}}'.format(self.moodle_course_id, self.grade)
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.moodle_base_url,
-            username=self.user,
-            password=self.password,
-            token=self.token,
+            decrypted_username=self.user,
+            decrypted_password=self.password,
+            decrypted_token=self.token,
         )
         self.enterprise_custom_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.custom_moodle_base_url,
-            username=self.user,
-            password=self.password,
-            token=self.token,
+            decrypted_username=self.user,
+            decrypted_password=self.password,
+            decrypted_token=self.token,
             grade_scale=10,
             grade_assignment_name='edX Grade Test'
         )
