@@ -164,3 +164,16 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         )
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_title(content_metadata_item) == expected_title
+
+    @responses.activate
+    def test_apply_delete_transformation(self):
+        """
+        `MoodleContentMetadataExporter``'s ``transform_title`` returns a str
+        featuring the title and partners/organizations
+        """
+        content_metadata_item = {
+            'title': 'edX Demonstration Course'
+        }
+        exporter = MoodleContentMetadataExporter('fake-user', self.config)
+        transformed_metada_data = exporter._apply_delete_transformation(content_metadata_item)  # pylint: disable=protected-access
+        assert transformed_metada_data['visible'] == 0
