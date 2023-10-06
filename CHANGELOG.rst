@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.5.7]
+-------
+fix: Fixed ChatGPT prompt and a few model modifications for better readability for admins.
+
 [4.5.6]
 -------
 feat: Added logs for learner completion data post request[moodle]

@@ -3655,6 +3655,12 @@ class ChatGPTResponse(TimeStampedModel):
 
     .. no_pii:
     """
+    LEARNER_PROGRESS = 'learner_progress'
+    LEARNER_ENGAGEMENT = 'learner_engagement'
+    PROMPT_TYPES = [
+        (LEARNER_PROGRESS, 'Learner progress'),
+        (LEARNER_ENGAGEMENT, 'Learner engagement'),
+    ]
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
     enterprise_customer = models.ForeignKey(
@@ -3671,6 +3677,12 @@ class ChatGPTResponse(TimeStampedModel):
     prompt = models.TextField(help_text=_('ChatGPT prompt.'))
     prompt_hash = models.CharField(max_length=32, editable=False)
     response = models.TextField(help_text=_('ChatGPT response.'))
+    prompt_type = models.CharField(choices=PROMPT_TYPES, help_text=_('Prompt type.'), max_length=32, null=True)
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('ChatGPT Response')
+        verbose_name_plural = _('ChatGPT Responses')
 
     def save(self, *args, **kwargs):
         """
@@ -3680,7 +3692,7 @@ class ChatGPTResponse(TimeStampedModel):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_or_create(cls, prompt, role, enterprise_customer):
+    def get_or_create(cls, prompt, role, enterprise_customer, prompt_type):
         """
         Get or create ChatGPT response against given prompt.
 
@@ -3691,6 +3703,7 @@ class ChatGPTResponse(TimeStampedModel):
             prompt (str): OpenAI prompt.
             role (str): ChatGPT role to assume for the prompt.
             enterprise_customer (EnterpriseCustomer): Enterprise customer UUId making the request.
+            prompt_type (str): Prompt type, e.g. learner_progress or learner_engagement etc.
 
         Returns:
             (str): Response against the given prompt.
@@ -3702,6 +3715,7 @@ class ChatGPTResponse(TimeStampedModel):
                 enterprise_customer=enterprise_customer,
                 prompt=prompt,
                 response=response,
+                prompt_type=prompt_type,
             )
             return response
         else:

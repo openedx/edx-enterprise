@@ -53,6 +53,10 @@ class AnalyticsSummaryView(generics.GenericAPIView):
         learner_engagement_prompt = generate_prompt_for_learner_engagement_summary(prompt_data['learner_engagement'])
 
         return Response(data={
-            'learner_progress': ChatGPTResponse.get_or_create(learner_progress_prompt, role, enterprise_customer),
-            'learner_engagement': ChatGPTResponse.get_or_create(learner_engagement_prompt, role, enterprise_customer),
+            'learner_progress': ChatGPTResponse.get_or_create(
+                learner_progress_prompt, role, enterprise_customer, ChatGPTResponse.LEARNER_PROGRESS,
+            ),
+            'learner_engagement': ChatGPTResponse.get_or_create(
+                learner_engagement_prompt, role, enterprise_customer, ChatGPTResponse.LEARNER_ENGAGEMENT,
+            ),
         })

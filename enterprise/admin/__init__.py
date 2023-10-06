@@ -1079,8 +1079,9 @@ class ChatGPTResponseAdmin(admin.ModelAdmin):
     """
 
     model = models.ChatGPTResponse
-    list_display = ('uuid', 'enterprise_customer', 'prompt_hash', )
-    readonly_fields = ('prompt', 'response', 'prompt_hash', )
+    list_display = ('uuid', 'prompt_type', 'enterprise_customer', 'prompt_hash', 'created', )
+    readonly_fields = ('prompt_type', 'prompt', 'response', 'prompt_hash', 'created', 'modified', )
+    list_filter = ('prompt_type', )
 
 
 @admin.register(models.EnterpriseCustomerSsoConfiguration)
