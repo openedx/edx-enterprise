@@ -155,7 +155,7 @@ def generate_prompt_for_learner_engagement_summary(engagement_data):
         'hours': engagement_data['hours'],
         'hours_delta': delta_format(current=engagement_data['hours'], prior=engagement_data['hours_prior']),
         'passed': engagement_data['passed'],
-        'passed_delta': delta_format(current=engagement_data['hours'], prior=engagement_data['passed_prior']),
+        'passed_delta': delta_format(current=engagement_data['passed'], prior=engagement_data['passed_prior']),
     }
 
     # If active contract (or unknown).
