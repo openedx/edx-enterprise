@@ -15,6 +15,14 @@ Change Log
 
 Unreleased
 ----------
+[4.5.6]
+-------
+feat: Added logs for learner completion data post request[moodle]
+
+[4.5.5]
+-------
+chore: sso orchestrator configs should start inactive and be activated upon successful configuration
+
 [4.5.4]
 -------
 feat: inactive moodle course instead of true delete
