@@ -1196,6 +1196,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
             }],
         ),
         (
@@ -1253,6 +1254,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'career_engagement_network_message': 'Test message',
                     'enable_pathways': True,
                     'enable_programs': True,
+                    'enable_demo_data_for_analytics_and_lpr': False,
                 },
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
@@ -1342,6 +1344,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
             }],
         ),
         (
@@ -1407,6 +1410,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
             }],
         ),
         (
@@ -1643,6 +1647,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'career_engagement_network_message': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
             }
         else:
             mock_empty_200_success_response = {

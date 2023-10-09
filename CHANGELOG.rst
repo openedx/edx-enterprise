@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.0]
+-------
+feat: Added enable_source_demo_data_for_analytics_and_lpr field to EnterpriseCustomer.
+
 [4.5.7]
 -------
 fix: Fixed ChatGPT prompt and a few model modifications for better readability for admins.
