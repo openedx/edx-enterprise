@@ -72,7 +72,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         help_text=_(
             "The encrypted API user's username used to obtain new tokens."),
-        null=True,
+        default="",
     )
 
     @property
@@ -113,7 +113,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         help_text=_(
             "The encrypted API user's password used to obtain new tokens."),
-        null=True,
+        default="",
     )
 
     @property
@@ -154,7 +154,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         help_text=_(
             "The encrypted API user's token used to obtain new tokens."),
-        null=True,
+        default="",
     )
 
     @property
