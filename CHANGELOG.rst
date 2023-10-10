@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.1]
+-------
+feat: Added the disable_subject_metadata_transmission flag to CornerstoneEnterpriseCustomerConfiguration.
+
 [4.6.0]
 -------
 feat: Added enable_source_demo_data_for_analytics_and_lpr field to EnterpriseCustomer.
