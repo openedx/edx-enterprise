@@ -211,7 +211,8 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'enable_audit_data_reporting', 'enable_learner_portal_offers',
                        'enable_executive_education_2U_fulfillment',
                        'enable_career_engagement_network_on_learner_portal',
-                       'career_engagement_network_message', 'enable_pathways', 'enable_programs'),
+                       'career_engagement_network_message', 'enable_pathways', 'enable_programs',
+                       'enable_demo_data_for_analytics_and_lpr'),
             'description': ('The following default settings should be the same for '
                             'the majority of enterprise customers, '
                             'and are either rarely used, unlikely to be sold, '
@@ -1079,8 +1080,9 @@ class ChatGPTResponseAdmin(admin.ModelAdmin):
     """
 
     model = models.ChatGPTResponse
-    list_display = ('uuid', 'enterprise_customer', 'prompt_hash', )
-    readonly_fields = ('prompt', 'response', 'prompt_hash', )
+    list_display = ('uuid', 'prompt_type', 'enterprise_customer', 'prompt_hash', 'created', )
+    readonly_fields = ('prompt_type', 'prompt', 'response', 'prompt_hash', 'created', 'modified', )
+    list_filter = ('prompt_type', )
 
 
 @admin.register(models.EnterpriseCustomerSsoConfiguration)
