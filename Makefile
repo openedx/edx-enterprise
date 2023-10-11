@@ -82,8 +82,6 @@ $(COMMON_CONSTRAINTS_TXT):
 	echo "$(COMMON_CONSTRAINTS_TEMP_COMMENT)" | cat - $(@) > temp && mv temp $(@)
 
 check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platform pins is accurate
-	sed 's/Django<2.3//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
-	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
 	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
 	# These requirement pins are removed because this is causing a deadlock in upgrading celery in both
@@ -106,6 +104,11 @@ check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platfo
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
 upgrade: requirements check_pins ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+	# temp solution to avoid django 3.2
+	sed 's/django==3.2.21//g' requirements/edx-platform-constraints.txt > requirements/edx-platform-constraints.tmp
+	mv requirements/edx-platform-constraints.tmp requirements/edx-platform-constraints.txt
+	sed 's/Django<4.0//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
+	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	sed '/^django-simple-history==/d' requirements/common_constraints.txt > requirements/common_constraints.tmp
 	mv requirements/common_constraints.tmp requirements/common_constraints.txt
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
