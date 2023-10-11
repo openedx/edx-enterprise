@@ -449,7 +449,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         auth header in oauth2 token format as required by blackboard doc
         """
-        app_key = self.enterprise_configuration.client_id
+        app_key = self.enterprise_configuration.decrypted_client_id
         if not app_key:
             if not self.global_blackboard_config.app_key:
                 raise ClientError(
@@ -457,7 +457,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     HTTPStatus.INTERNAL_SERVER_ERROR.value
                 )
             app_key = self.global_blackboard_config.app_key
-        app_secret = self.enterprise_configuration.client_secret
+        app_secret = self.enterprise_configuration.decrypted_client_secret
         if not app_secret:
             if not self.global_blackboard_config.app_secret:
                 raise ClientError(
