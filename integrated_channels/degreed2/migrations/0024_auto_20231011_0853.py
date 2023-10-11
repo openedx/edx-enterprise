@@ -16,6 +16,7 @@ def populate_decrypted_fields(apps, schema_editor):
         degreed2_enterprise_configuration.decrypted_client_secret = degreed2_enterprise_configuration.client_secret
         degreed2_enterprise_configuration.save()
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
