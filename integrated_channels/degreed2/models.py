@@ -49,8 +49,8 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         default='',
         verbose_name="API Client ID encrypted at db level",
         help_text=(
-            "The API Client ID (encrypted at db level) provided to edX by the enterprise customer to be used to make API "
-            "calls to Degreed on behalf of the customer."
+            "The API Client ID (encrypted at db level) provided to edX by the enterprise customer to be "
+            "used to make API calls to Degreed on behalf of the customer."
         )
     )
 
@@ -93,8 +93,8 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         default='',
         verbose_name="API Client Secret encrypted at db level",
         help_text=(
-            "The API Client Secret (encrypted at db level) provided to edX by the enterprise customer to be used to make API "
-            "calls to Degreed on behalf of the customer."
+            "The API Client Secret (encrypted at db level) provided to edX by the enterprise customer to be "
+            "used to make API calls to Degreed on behalf of the customer."
         ),
     )
 
