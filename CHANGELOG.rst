@@ -16,9 +16,13 @@ Change Log
 Unreleased
 ----------
 
-[4.6.1]
+[4.6.2]
 -------
 fix: clarify contact email helper text for enterprise customer
+
+[4.6.1]
+-------
+feat: Added the disable_subject_metadata_transmission flag to CornerstoneEnterpriseCustomerConfiguration.
 
 [4.6.0]
 -------

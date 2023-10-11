@@ -178,6 +178,8 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
         """
         Return the transformed version of the course subject list or default value if no subject found.
         """
+        if self.enterprise_configuration.disable_subject_metadata_transmission:
+            return None
         subjects = []
         course_subjects = get_subjects_from_content_metadata(content_metadata_item)
         CornerstoneGlobalConfiguration = apps.get_model(
