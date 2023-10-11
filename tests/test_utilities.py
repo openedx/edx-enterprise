@@ -175,6 +175,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "sso_orchestration_records",
                 "enable_pathways",
                 "enable_programs",
+                "enable_demo_data_for_analytics_and_lpr",
             ]
         ),
         (

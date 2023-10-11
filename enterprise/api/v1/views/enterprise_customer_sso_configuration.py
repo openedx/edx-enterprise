@@ -104,12 +104,21 @@ def fetch_entity_id_from_metadata_xml(metadata_xml):
     raise EntityIdNotFoundError('Could not find entity ID in metadata xml')
 
 
+def fetch_request_data_from_request(request):
+    """
+    Helper method to fetch the request data dictionary from the request object.
+    """
+    if hasattr(request.data, 'dict'):
+        return request.data.dict().copy()
+    return request.data.copy()
+
+
 class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
     """
     API views for the ``EnterpriseCustomerSsoConfiguration`` model.
     """
     permission_classes = (permissions.IsAuthenticated,)
-    queryset = models.EnterpriseCustomerSsoConfiguration.all_objects.all()
+    queryset = models.EnterpriseCustomerSsoConfiguration.objects.all()
 
     serializer_class = serializers.EnterpriseCustomerSsoConfiguration
 
@@ -136,6 +145,10 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 f'SSO configuration record {sso_configuration_record.pk} has received a completion callback but has'
                 ' not been marked as submitted.'
             )
+
+        # Mark the configuration record as active IFF this the record has never been configured.
+        if not sso_configuration_record.configured_at:
+            sso_configuration_record.active = True
 
         sso_configuration_record.configured_at = localized_utcnow()
         # Completing the orchestration process for the first time means the configuration record is now configured and
@@ -199,7 +212,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
     )
     def create(self, request, *args, **kwargs):
         # Force the enterprise customer to be the one associated with the user
-        request_data = request.data.dict().copy()
+        request_data = fetch_request_data_from_request(request)
         requesting_user_customer = request_data.get('enterprise_customer')
         if requesting_user_customer:
             try:
@@ -264,7 +277,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             return Response(status=HTTP_403_FORBIDDEN)
 
         # Parse the request data to see if the metadata url or xml has changed and update the entity id if so
-        request_data = request.data.dict()
+        request_data = fetch_request_data_from_request(request)
         sso_config_metadata_xml = None
         if request_metadata_url := request_data.get('metadata_url'):
             sso_config_metadata_url = sso_configuration_record.first().metadata_url

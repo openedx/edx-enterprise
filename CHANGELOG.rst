@@ -15,6 +15,38 @@ Change Log
 
 Unreleased
 ----------
+[4.6.1]
+-------
+feat: Added the disable_subject_metadata_transmission flag to CornerstoneEnterpriseCustomerConfiguration.
+
+[4.6.0]
+-------
+feat: Added enable_source_demo_data_for_analytics_and_lpr field to EnterpriseCustomer.
+
+[4.5.7]
+-------
+fix: Fixed ChatGPT prompt and a few model modifications for better readability for admins.
+
+[4.5.6]
+-------
+feat: Added logs for learner completion data post request[moodle]
+
+[4.5.5]
+-------
+chore: sso orchestrator configs should start inactive and be activated upon successful configuration
+
+[4.5.4]
+-------
+feat: inactive moodle course instead of true delete
+
+[4.5.3]
+-------
+feat: added dry run mode for content metadata transmission
+
+[4.5.2]
+-------
+chore: adding a more flexible way of fetching api request data
+
 [4.5.1]
 -------
 fix: fix how we determine the value of active flag within schedule for SAP

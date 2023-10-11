@@ -118,6 +118,14 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         )
     )
 
+    disable_subject_metadata_transmission = models.BooleanField(
+        default=False,
+        verbose_name="Disable Subject Content Metadata Transmission",
+        help_text=_(
+            "If checked, subjects will not be sent to Cornerstone"
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:
