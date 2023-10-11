@@ -31,7 +31,6 @@ class BlackboardEnterpriseCustomerConfigurationForm(forms.ModelForm):
         }
 
 
-
 @admin.register(BlackboardGlobalConfiguration)
 class BlackboardGlobalConfigurationAdmin(ConfigurationModelAdmin):
     """
