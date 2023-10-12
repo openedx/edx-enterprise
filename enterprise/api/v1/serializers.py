@@ -1526,7 +1526,6 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         at_risk_enrollment_less_than_one_hour = serializers.IntegerField(required=True)
         at_risk_enrollment_end_date_soon = serializers.IntegerField(required=True)
         at_risk_enrollment_dormant = serializers.IntegerField(required=True)
-        created_at = serializers.DateTimeField(required=True)
 
     class LearnerEngagementSerializer(serializers.Serializer):
         """
@@ -1543,8 +1542,6 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         hours = serializers.IntegerField(required=True)
         hours_prior = serializers.IntegerField(required=True)
         active_contract = serializers.BooleanField(required=True)
-        contract_end_date = serializers.DateTimeField(required=True)
-        created_at = serializers.DateTimeField(required=True)
 
     learner_progress = LearnerProgressSerializer()
     learner_engagement = LearnerEngagementSerializer()
