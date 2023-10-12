@@ -6795,7 +6795,6 @@ class TestAnalyticsSummaryView(APITest):
             'at_risk_enrollment_less_than_one_hour': 3,
             'at_risk_enrollment_end_date_soon': 2,
             'at_risk_enrollment_dormant': 2,
-            'created_at': '2023-08-10T12:39:35.388936Z'
         }
 
         self.learner_engagement = {
@@ -6809,9 +6808,7 @@ class TestAnalyticsSummaryView(APITest):
             'engage_prior': 50,
             'hours': 2000,
             'hours_prior': 3000,
-            'contract_end_date': '2023-12-10T12:39:28.792421Z',
             'active_contract': True,
-            'created_at': '2023-08-11T13:25:40.197061Z'
         }
 
         self.payload = {

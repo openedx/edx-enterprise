@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.6.3]
+-------
+fix: Remove not required fields
+
 [4.6.2]
 -------
 fix: clarify contact email helper text for enterprise customer
