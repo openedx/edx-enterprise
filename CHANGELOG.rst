@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[4.6.4]
+-------
+chore: updating sso orchestrator self service api endpoints
 
 [4.6.3]
 -------
