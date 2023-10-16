@@ -3947,6 +3947,14 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
     )
 
+    errored_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The date and time when the orchestrator encountered an error during configuration."
+        )
+    )
+
     # ---------------------------- SAP Success Factors attribute mappings ---------------------------- #
 
     odata_api_timeout_interval = models.PositiveIntegerField(
@@ -4051,6 +4059,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         if self.submitted_at:
             if not self.configured_at:
                 return True
+            if self.errored_at and self.errored_at > self.submitted_at:
+                return False
             if self.submitted_at > self.configured_at:
                 return True
         return False

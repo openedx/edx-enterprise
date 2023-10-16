@@ -355,12 +355,22 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'429 detected from {url}, backing-off before retrying, '
+                        f'[Degreed2Client]._get 429 detected from {url}, backing-off before retrying, '
                         f'sleeping {sleep_seconds} seconds...'
                     )
                 )
                 time.sleep(sleep_seconds)
             else:
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        '[Degreed2Client]._get - Exceeded retry attempts in:'
+                        f'URL:{url}'
+                    )
+                )
                 break
         return response.status_code, response.text
 
@@ -388,7 +398,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'[Degreed2Client] 429 detected from {url}, backing-off before retrying, '
+                        f'[Degreed2Client]._post 429 detected from {url}, backing-off before retrying, '
                         f'sleeping {sleep_seconds} seconds...'
                     )
                 )
@@ -400,7 +410,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        '[Degreed2Client] - Exceeded retry attempts:'
+                        '[Degreed2Client]._post - Exceeded retry attempts in:'
                         f'URL:{url}, DATA:{data}'
                     )
                 )
