@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.6]
+-------
+chore: orchestrator exception handling and submission refinements
+
 [4.6.5]
 -------
 feat: Added logs for Degreed2 client

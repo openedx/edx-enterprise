@@ -4082,7 +4082,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         config_data = {}
         if self.identity_provider == self.SAP_SUCCESS_FACTORS:
             for field in self.sap_config_fields:
-                sap_data[utils.camelCase(field)] = getattr(self, field)
+                if field_value := getattr(self, field):
+                    sap_data[utils.camelCase(field)] = field_value
             is_sap = True
         else:
             for field in self.base_saml_config_fields:
@@ -4091,8 +4092,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
                         config_data['enable'] = True
                     else:
                         config_data['enable'] = getattr(self, field)
-                else:
-                    config_data[utils.camelCase(field)] = getattr(self, field)
+                elif field_value := getattr(self, field):
+                    config_data[utils.camelCase(field)] = field_value
 
         EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
             config_data=config_data,

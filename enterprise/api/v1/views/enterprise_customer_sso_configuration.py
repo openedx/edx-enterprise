@@ -322,7 +322,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 sso_configuration_record.update(**request_data)
                 sso_configuration_record.first().submit_for_configuration(updating_existing_record=True)
-        except (TypeError, FieldDoesNotExist, ValidationError) as e:
+        except (TypeError, FieldDoesNotExist, ValidationError, SsoOrchestratorClientError) as e:
             LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
             return Response({'error': f'{CONFIG_UPDATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(sso_configuration_record.first())
