@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.5]
+-------
+feat: Added logs for Degreed2 client
+
 [4.6.4]
 -------
 chore: updating sso orchestrator self service api endpoints

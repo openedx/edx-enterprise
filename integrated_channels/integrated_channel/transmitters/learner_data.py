@@ -293,6 +293,14 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         # one by course key and one by course run id.
         # If the transmission with the course key succeeds, the next one will get skipped.
         # If it fails, the one with the course run id will be attempted and (presumably) succeed.
+        LOGGER.info(generate_formatted_log(
+            self.enterprise_configuration.channel_code(),
+            enterprise_customer_uuid,
+            None,
+            None,
+            f"Looping through learner data = {payload.export(**kwargs)}"
+        ))
+
         for learner_data in payload.export(**kwargs):
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
 
