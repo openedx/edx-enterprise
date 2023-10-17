@@ -13,7 +13,10 @@ from django.conf import settings
 from django.test import RequestFactory, TestCase
 
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise_learner_portal.api.v1.serializers import EnterpriseCourseEnrollmentSerializer
+from enterprise_learner_portal.api.v1.serializers import (
+    EnterpriseAssignedCoursesSerializer,
+    EnterpriseCourseEnrollmentSerializer,
+)
 from test_utils import factories
 
 
@@ -122,3 +125,61 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         """
         with self.assertRaises(NotConnectedToOpenEdX):
             EnterpriseCourseEnrollmentSerializer({})
+
+
+class TestEnterpriseAssignedCoursesSerializer(TestCase):
+    """
+    EnterpriseAssignedCoursesSerializer tests.
+    """
+
+    def setUp(self):
+        self.user = factories.UserFactory.create(is_staff=True, is_active=True)
+        self.factory = RequestFactory()
+
+        self.request = self.factory.get('/')
+        self.request.user = self.user
+
+        self.assigned_courses_overviews = [
+            {
+                'id': 'course-v1:edX+DemoX+Demo_Course',
+                'created': '2023-08-30T13:21:55',
+                'start': 'a datetime object',
+                'end': 'a datetime object',
+                'display_name': 'Demo Course',
+                'pacing': 'instructor',
+                'display_org_with_default': 'edX'
+            }
+        ]
+
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user')
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_url')
+    def test_serialized_data(self, mock_get_course_run_url, mock_get_course_run_status, mock_get_certificate_for_user):
+        """
+        Tests that the serialized data matches the expected data.
+        """
+
+        expected_data = {
+            'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+            'created': '2023-08-30T13:21:55',
+            'start_date': 'a datetime object',
+            'end_date': 'a datetime object',
+            'display_name': 'Demo Course',
+            'course_run_url': 'http://example/course/course-v1:edX+DemoX+Demo_Course/home',
+            'course_run_status': 'completed',
+            'pacing': 'instructor',
+            'org_name': 'edX',
+            'certificate_download_url': None
+        }
+
+        mock_get_course_run_url.return_value = 'http://example/course/course-v1:edX+DemoX+Demo_Course/home'
+        mock_get_course_run_status.return_value = 'completed'
+        mock_get_certificate_for_user.return_value = {'is_passing': True}
+
+        serialized_data = EnterpriseAssignedCoursesSerializer(
+            self.assigned_courses_overviews,
+            many=True,
+            context={'request': self.request}
+        ).data[0]
+
+        self.assertDictEqual(serialized_data, expected_data)

@@ -121,3 +121,62 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                 course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
 
         return course_run_url
+
+
+class EnterpriseAssignedCoursesSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    A serializer for assigned courses information.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = self.context.get('request')
+
+    def to_representation(self, instance):
+        course_run_id = instance['id']
+        certificate_info = get_certificate_for_user(self.request.user.username, course_run_id) or {}
+
+        representation = {
+            'course_run_id': course_run_id,
+            'created': instance['created'],
+            'start_date': instance['start'],
+            'end_date': instance['end'],
+            'display_name': instance['display_name'],
+            'course_run_url': self._get_course_run_url(self.request, course_run_id),
+            'course_run_status': get_course_run_status(instance, certificate_info, enterprise_enrollment=None),
+            'pacing': instance['pacing'],
+            'org_name': instance['display_org_with_default'],
+            'certificate_download_url': certificate_info.get('download_url'),
+        }
+
+        if CourseDetails:
+            course_details = CourseDetails.objects.filter(id=course_run_id).first()
+            if course_details:
+                representation['start_date'] = course_details.start_date or representation['start_date']
+                representation['end_date'] = course_details.end_date or representation['end_date']
+                representation['enroll_by'] = course_details.enroll_by
+                representation['course_type'] = course_details.course_type
+                representation['product_source'] = course_details.product_source
+
+                if (course_details.product_source == PRODUCT_SOURCE_2U and
+                        course_details.course_type == EXEC_ED_COURSE_TYPE):
+                    representation['course_run_status'] = get_exec_ed_course_run_status(
+                        course_details,
+                        certificate_info,
+                        enterprise_enrollment=None
+                    )
+
+        return representation
+
+    def _get_course_run_url(self, request, course_run_id):
+        """
+        Get the appropriate course url while incorporating Executive Education content.
+        """
+        course_run_url = get_course_run_url(request, course_run_id)
+        exec_ed_base_url = getattr(settings, 'EXEC_ED_LANDING_PAGE', None)
+        if exec_ed_base_url and exec_ed_base_url == course_run_url:
+            active_enterprise_customer = EnterpriseCustomerUser.get_active_enterprise_users(request.user.id).first()
+            if active_enterprise_customer and active_enterprise_customer.enterprise_customer.auth_org_id:
+                params = {'org_id': active_enterprise_customer.enterprise_customer.auth_org_id}
+                course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
+
+        return course_run_url

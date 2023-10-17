@@ -14,7 +14,10 @@ from django.utils.translation import gettext as _
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise_learner_portal.api.v1.serializers import EnterpriseCourseEnrollmentSerializer
+from enterprise_learner_portal.api.v1.serializers import (
+    EnterpriseAssignedCoursesSerializer,
+    EnterpriseCourseEnrollmentSerializer,
+)
 
 try:
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
@@ -148,6 +151,80 @@ class EnterpriseCourseEnrollmentView(APIView):
         data = EnterpriseCourseEnrollmentSerializer(
             enterprise_enrollment,
             context={'request': request, 'course_overviews': course_overviews},
+        ).data
+
+        return Response(data)
+
+
+class EnterpriseAssignedCoursesView(APIView):
+    """
+    View for returning information about given assigned courses.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
+
+    def get(self, request):
+        """
+        Returns details about given assigned courses.
+
+        Example response:
+
+        [
+            {
+                "course_run_id": "course-v1:edX+L153+2T2023",
+                "created": "2023-08-28T13:21:55.913099Z",
+                "start_date": "2023-10-19T10:46:36Z",
+                "end_date": "2023-12-30T10:46:44Z",
+                "display_name": "Works of Ivan Turgenev",
+                "course_run_url": "http://localhost:2000/course/course-v1:edX+L153+2T2023/home",
+                "course_run_status": "in_progress",
+                "pacing": "instructor",
+                "org_name": "edX",
+                "certificate_download_url": null,
+                "enroll_by": "2023-10-25T10:46:49Z",
+                "course_type": "executive-education-2u",
+                "product_source": "2u"
+            },
+            {
+                "course_run_id": "course-v1:edX+P315+2T2023",
+                "created": "2023-08-28T13:21:46.584659Z",
+                "start_date": "2023-08-30T13:21:46Z",
+                "end_date": "2023-10-17T13:21:46Z",
+                "display_name": "Quantum Entanglement",
+                "course_run_url": "http://localhost:2000/course/course-v1:edX+P315+2T2023/home",
+                "course_run_status": "completed",
+                "pacing": "instructor",
+                "org_name": "edX",
+                "certificate_download_url": null
+            }
+        ]
+
+        Query parameters:
+        - `course_ids` (List[str], required): A list of course IDs for which details are requested.
+        - The `course_ids` should be URL-encoded, replacing the '+' sign with '%2B'.
+        Example: course-v1:edX%2BL153%2B2T2023
+        """
+
+        if get_course_overviews is None:
+            raise NotConnectedToOpenEdX(
+                _('To use this endpoint, this package must be '
+                  'installed in an Open edX environment.')
+            )
+
+        course_ids = request.GET.getlist('course_ids')
+
+        if not course_ids:
+            return Response(
+                {'error': 'course_ids must be provided as query parameters'},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        assigned_courses_overviews = get_course_overviews(course_ids)
+
+        data = EnterpriseAssignedCoursesSerializer(
+            assigned_courses_overviews,
+            many=True,
+            context={'request': request}
         ).data
 
         return Response(data)
