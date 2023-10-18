@@ -114,6 +114,16 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Returns: status_code, response_text
         """
         json_payload = json.loads(payload)
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                user_id,
+                None,
+                '[Degreed2Client] - Attempting degreed2 create_course_completion,'
+                f'payload:{json_payload}'
+            )
+        )
         LOGGER.info(self.make_log_msg(
             json_payload.get('data').get('attributes').get('content-id'),
             f'Attempting find course via url: {self.get_completions_url()}'),
@@ -345,12 +355,22 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'429 detected from {url}, backing-off before retrying, '
+                        f'[Degreed2Client]._get 429 detected from {url}, backing-off before retrying, '
                         f'sleeping {sleep_seconds} seconds...'
                     )
                 )
                 time.sleep(sleep_seconds)
             else:
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        '[Degreed2Client]._get - Exceeded retry attempts in:'
+                        f'URL:{url}'
+                    )
+                )
                 break
         return response.status_code, response.text
 
@@ -378,13 +398,33 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'429 detected from {url}, backing-off before retrying, '
+                        f'[Degreed2Client]._post 429 detected from {url}, backing-off before retrying, '
                         f'sleeping {sleep_seconds} seconds...'
                     )
                 )
                 time.sleep(sleep_seconds)
             else:
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        '[Degreed2Client]._post - Exceeded retry attempts in:'
+                        f'URL:{url}, DATA:{data}'
+                    )
+                )
                 break
+        LOGGER.error(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                '[Degreed2Client] - Successfuly called:'
+                f'RESPONSE:{response}'
+            )
+        )
         return response.status_code, response.text
 
     def _patch(self, url, data, scope):

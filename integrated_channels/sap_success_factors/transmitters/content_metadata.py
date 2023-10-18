@@ -36,7 +36,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             filtered_response = json.dumps(parsed_response)
             return filtered_response
         except Exception as exc:  # pylint: disable=broad-except
-            LOGGER.error("Error filtering response from SAPSF: %s", exc)
+            LOGGER.exception("Error filtering response from SAPSF for Course: %s, %s", content_id, exc)
             return response
 
     def transmit(self, create_payload, update_payload, delete_payload):

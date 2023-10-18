@@ -2,10 +2,10 @@
 Tests for the SAP SuccessFactors content metadata transmitter.
 """
 
+import json
 import unittest
 from datetime import datetime
 from unittest import mock
-import json
 
 import responses
 from pytest import mark
@@ -329,7 +329,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             ).count() == 2
 
     @mock.patch('integrated_channels.sap_success_factors.transmitters.content_metadata.LOGGER')
-    def test_fiter_api_response_successful(self, logger_mock):
+    def test_filter_api_response_successful(self, logger_mock):
         """
         Test that the api response is successfully filtered
         """
@@ -337,10 +337,11 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         content_id = 'course:DemoX'
 
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+        # pylint: disable=protected-access
         filtered_response = transmitter._filter_api_response(response, content_id)
 
-        assert json.loads(filtered_response) == {"ocnCourses": [{"courseID": "course:DemoX2"}]}
-        assert logger_mock.error.call_count == 0
+        assert json.loads(filtered_response) == {"ocnCourses": [{"courseID": "course:DemoX"}]}
+        assert logger_mock.exception.call_count == 0
 
     @mock.patch('integrated_channels.sap_success_factors.transmitters.content_metadata.LOGGER')
     def test_filter_api_response_exception(self, logger_mock):
@@ -351,7 +352,8 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         content_id = 'course:DemoX'
 
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+        # pylint: disable=protected-access
         filtered_response = transmitter._filter_api_response(response, content_id)
 
         assert filtered_response == response
-        logger_mock.error.assert_called_once()
+        logger_mock.exception.assert_called_once()
