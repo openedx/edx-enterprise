@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.7]
+-------
+feat: filter courses from API Response of SAPSF to store in the APIResponseRecord table
+
 [4.6.6]
 -------
 chore: orchestrator exception handling and submission refinements

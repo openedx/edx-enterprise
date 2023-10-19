@@ -125,6 +125,14 @@ class ContentMetadataTransmitter(Transmitter):
             sort_keys=True
         ).encode('utf-8')
 
+    def _filter_api_response(self, response, content_id):  # pylint: disable=unused-argument
+        """
+        Filter the response from the integrated channel API client.
+        This can be overridden by subclasses to parse the response
+        expected by the integrated channel.
+        """
+        return response
+
     def _transmit_action(self, content_metadata_item_map, client_method, action_name):  # pylint: disable=too-many-statements
         """
         Do the work of calling the appropriate client method, saving the results, and updating
@@ -219,9 +227,9 @@ class ContentMetadataTransmitter(Transmitter):
                     )
                     transmission.api_response_status_code = response_status_code
                     was_successful = response_status_code < 300
-
+                    api_content_response = self._filter_api_response(response_body, content_id)
                     if transmission.api_record:
-                        transmission.api_record.body = response_body
+                        transmission.api_record.body = api_content_response
                         transmission.api_record.status_code = response_status_code
                         transmission.api_record.save()
                     else:
@@ -230,7 +238,7 @@ class ContentMetadataTransmitter(Transmitter):
                             'ApiResponseRecord'
                         )
                         transmission.api_record = ApiResponseRecord.objects.create(
-                            body=response_body, status_code=response_status_code
+                            body=api_content_response, status_code=response_status_code
                         )
                     if action_name == 'create':
                         transmission.remote_created_at = action_happened_at
