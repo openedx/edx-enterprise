@@ -108,6 +108,6 @@ class Degreed2LearnerExporter(LearnerExporter):
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.course_id,
-                'Degreed2 get_learner_data_records failed, possibly due to an invalid customer configuration. '
+                '[Degreed2Client] get_learner_data_records failed, possibly due to an invalid customer configuration. '
                 f'Error: {e}'
             ))

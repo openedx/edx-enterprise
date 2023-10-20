@@ -2,6 +2,7 @@
 Tests for the SAP SuccessFactors content metadata transmitter.
 """
 
+import json
 import unittest
 from datetime import datetime
 from unittest import mock
@@ -326,3 +327,33 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
                 plugin_configuration_id=self.enterprise_config.id,
                 integrated_channel_code=self.enterprise_config.channel_code(),
             ).count() == 2
+
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.content_metadata.LOGGER')
+    def test_filter_api_response_successful(self, logger_mock):
+        """
+        Test that the api response is successfully filtered
+        """
+        response = '{"ocnCourses": [{"courseID": "course:DemoX"}, {"courseID": "course:DemoX2"}]}'
+        content_id = 'course:DemoX'
+
+        transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+        # pylint: disable=protected-access
+        filtered_response = transmitter._filter_api_response(response, content_id)
+
+        assert json.loads(filtered_response) == {"ocnCourses": [{"courseID": "course:DemoX"}]}
+        assert logger_mock.exception.call_count == 0
+
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.content_metadata.LOGGER')
+    def test_filter_api_response_exception(self, logger_mock):
+        """
+        Test that the api response is not filtered if an exception occurs
+        """
+        response = 'Invalid JSON response'
+        content_id = 'course:DemoX'
+
+        transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+        # pylint: disable=protected-access
+        filtered_response = transmitter._filter_api_response(response, content_id)
+
+        assert filtered_response == response
+        logger_mock.exception.assert_called_once()
