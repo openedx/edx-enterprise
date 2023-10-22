@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.9]
+-------
+chore: returning SP metadata url from the sso orchestrator to the API caller
+
 [4.6.8]
 -------
 feat: truncate API Response before writing to the APIResponseRecord
