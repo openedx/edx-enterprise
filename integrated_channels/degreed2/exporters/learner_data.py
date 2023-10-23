@@ -46,19 +46,22 @@ class Degreed2LearnerExporter(LearnerExporter):
             f'percent_grade={percent_grade}, degreed_completed_timestamp={degreed_completed_timestamp}'
             f'completed_date={completed_date}, course_completed={course_completed}'
         ))
-        if enterprise_enrollment.enterprise_customer_user.get_remote_id(
-            self.enterprise_configuration.idp_id
-        ) is not None:
-            LOGGER.info(generate_formatted_log(
+        try:
+            remote_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
+                self.enterprise_configuration.idp_id
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            LOGGER.error(generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.course_id,
-                '[Degreed2Client] - Found remote id:'
-                f'percent_grade={percent_grade}, degreed_completed_timestamp={degreed_completed_timestamp}'
-                f'completed_date={completed_date}, course_completed={course_completed}'
-                f'course_id={get_course_id_for_enrollment(enterprise_enrollment)}'
+                '[Degreed2Client] get_learner_data_records failed, possibly due to an invalid customer configuration. '
+                f'Error: {e}'
             ))
+            return None
+
+        if remote_id is not None:
             Degreed2LearnerDataTransmissionAudit = apps.get_model(
                 'degreed2',
                 'Degreed2LearnerDataTransmissionAudit'
