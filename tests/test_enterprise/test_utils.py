@@ -22,7 +22,9 @@ from enterprise.utils import (
     localized_utcnow,
     parse_lms_api_datetime,
     serialize_notification_content,
+    truncate_string,
 )
+from enterprise.constants import MAX_ALLOWED_TEXT_LENGTH
 from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
 
 LMS_BASE_URL = 'https://lms.base.url'
@@ -516,3 +518,15 @@ class TestUtils(unittest.TestCase):
         expiration_date = get_default_invite_key_expiration_date()
         expected_expiration_date = current_time + timedelta(days=365)
         self.assertEqual(expiration_date.date(), expected_expiration_date.date())
+
+    def test_truncate_string(self):
+        """
+        Test that `truncate_string` returns the expected string.
+        """
+        test_string_1 = 'This is a test string'
+        self.assertEqual('This is a ', truncate_string(test_string_1, 10))
+        self.assertEqual('This is a test string', truncate_string(test_string_1, 100))
+
+        test_string_2 = ''.rjust(MAX_ALLOWED_TEXT_LENGTH + 10, 'x')
+        truncated_string = truncate_string(test_string_2)
+        self.assertEqual(len(truncated_string), MAX_ALLOWED_TEXT_LENGTH)

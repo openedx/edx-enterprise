@@ -42,6 +42,7 @@ from enterprise.constants import (
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
     PROGRAM_TYPE_DESCRIPTION,
     CourseModes,
+    MAX_ALLOWED_TEXT_LENGTH,
 )
 from enterprise.logging import getEnterpriseLogger
 
@@ -2365,3 +2366,13 @@ def camelCase(string):
     """
     output = ''.join(x for x in string.title() if x.isalnum())
     return output[0].lower() + output[1:]
+
+
+def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
+    """
+    Truncate a string to the specified max length.
+    If max length is not specified, it will be set to MAX_ALLOWED_TEXT_LENGTH.
+    """
+    if len(string) > max_length:
+        return string[:max_length]
+    return string

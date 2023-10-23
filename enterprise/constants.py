@@ -219,3 +219,6 @@ class FulfillmentTypes:
 
 
 SSO_BRAZE_CAMPAIGN_ID = 'a5f10d46-8093-4ce1-bab7-6df018d03660'
+
+# The maximum length of a text field in the database.
+MAX_ALLOWED_TEXT_LENGTH = 16_000_000
