@@ -39,7 +39,9 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         except Exception as exc:  # pylint: disable=broad-except
             log_exception(
                 self.enterprise_configuration,
-                f'Error filtering API response: {exc}'
+                f'Failed to filter the API response: '
+                f'{exc}',
+                content_id
             )
             return response
 
