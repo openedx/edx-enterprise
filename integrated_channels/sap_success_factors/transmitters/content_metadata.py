@@ -6,6 +6,7 @@ import logging
 
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.utils import log_exception
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +37,10 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             filtered_response = json.dumps(parsed_response)
             return filtered_response
         except Exception as exc:  # pylint: disable=broad-except
-            LOGGER.exception("Error filtering response from SAPSF for Course: %s, %s", content_id, exc)
+            log_exception(
+                self.enterprise_configuration,
+                f'Error filtering API response: {exc}'
+            )
             return response
 
     def transmit(self, create_payload, update_payload, delete_payload):
