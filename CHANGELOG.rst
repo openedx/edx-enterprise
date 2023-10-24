@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+[4.6.8]
+-------
+feat: truncate API Response before writing to the APIResponseRecord
+fix: initiate filtering the API Response only when a successful response is received
+
 [4.6.7]
 -------
 feat: filter courses from API Response of SAPSF to store in the APIResponseRecord table
