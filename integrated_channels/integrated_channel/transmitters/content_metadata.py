@@ -227,7 +227,9 @@ class ContentMetadataTransmitter(Transmitter):
                     )
                     transmission.api_response_status_code = response_status_code
                     was_successful = response_status_code < 300
-                    api_content_response = self._filter_api_response(response_body, content_id)
+                    api_content_response = response_body
+                    if was_successful:
+                        api_content_response = self._filter_api_response(api_content_response, content_id)
                     if transmission.api_record:
                         transmission.api_record.body = api_content_response
                         transmission.api_record.status_code = response_status_code
