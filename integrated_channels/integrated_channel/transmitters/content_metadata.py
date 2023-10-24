@@ -12,7 +12,7 @@ import requests
 from django.apps import apps
 from django.conf import settings
 
-from enterprise.utils import localized_utcnow
+from enterprise.utils import localized_utcnow, truncate_string
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
@@ -230,6 +230,13 @@ class ContentMetadataTransmitter(Transmitter):
                     api_content_response = response_body
                     if was_successful:
                         api_content_response = self._filter_api_response(api_content_response, content_id)
+                    (api_content_response, was_truncated) = truncate_string(api_content_response)
+                    if was_truncated:
+                        self._log_info(
+                            f'integrated_channel_content_transmission_id={transmission.id}, '
+                            f'api response truncated',
+                            course_or_course_run_key=content_id
+                        )
                     if transmission.api_record:
                         transmission.api_record.body = api_content_response
                         transmission.api_record.status_code = response_status_code

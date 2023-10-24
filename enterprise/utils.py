@@ -39,6 +39,7 @@ from enterprise.constants import (
     DEFAULT_CATALOG_CONTENT_FILTER,
     LMS_API_DATETIME_FORMAT,
     LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE,
+    MAX_ALLOWED_TEXT_LENGTH,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
     PROGRAM_TYPE_DESCRIPTION,
     CourseModes,
@@ -2365,3 +2366,19 @@ def camelCase(string):
     """
     output = ''.join(x for x in string.title() if x.isalnum())
     return output[0].lower() + output[1:]
+
+
+def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
+    """
+    Truncate a string to the specified max length.
+    If max length is not specified, it will be set to MAX_ALLOWED_TEXT_LENGTH.
+
+    Returns:
+        (tuple): (truncated_string, was_truncated)
+    """
+    was_truncated = False
+    if len(string) > max_length:
+        truncated_string = string[:max_length]
+        was_truncated = True
+        return (truncated_string, was_truncated)
+    return (string, was_truncated)
