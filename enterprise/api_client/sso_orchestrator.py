@@ -102,7 +102,7 @@ class EnterpriseSSOOrchestratorApiClient:
                 f"Failed to make SSO Orchestrator API request: {response.status_code}",
                 response=response,
             )
-        return response.status_code
+        return response.json()
 
     def configure_sso_orchestration_record(
         self,
@@ -131,4 +131,5 @@ class EnterpriseSSOOrchestratorApiClient:
         if is_sap or sap_config_data:
             request_data['sapsfConfiguration'] = sap_config_data
 
-        return self._post(self._get_orchestrator_configure_url(), data=request_data)
+        response = self._post(self._get_orchestrator_configure_url(), data=request_data)
+        return response.get('samlServiceProviderInformation', {}).get('spMetadataUrl', {})

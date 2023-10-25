@@ -7529,8 +7529,8 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         response = self.post_new_sso_configuration(data)
         assert response.status_code == status.HTTP_201_CREATED
         assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 1
-        created_record = EnterpriseCustomerSsoConfiguration.objects.all().first().uuid
-        assert response.data['data'] == created_record
+        created_record_uuid = EnterpriseCustomerSsoConfiguration.objects.all().first().uuid
+        assert response.data['record'] == created_record_uuid
 
     def test_sso_configuration_create_permissioning(self):
         """
@@ -7766,7 +7766,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert sent_body_params['requestIdentifier'] == str(config_pk)
 
     @responses.activate
-    def test_sso_configuration_update_x(self):
+    def test_sso_configuration_update_success(self):
         """
         Test expected response when successfully updating an existing sso configuration.
         """
@@ -7797,8 +7797,8 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         }
         response = self.update_sso_configuration(config_pk, data)
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()['uuid'] == str(enterprise_sso_orchestration_config.uuid)
-        assert response.json()['metadata_url'] == "https://example.com/metadata_update.xml"
+        assert response.json()['record']['uuid'] == str(enterprise_sso_orchestration_config.uuid)
+        assert response.json()['record']['metadata_url'] == "https://example.com/metadata_update.xml"
 
         enterprise_sso_orchestration_config.refresh_from_db()
         assert enterprise_sso_orchestration_config.metadata_url == "https://example.com/metadata_update.xml"
