@@ -426,7 +426,8 @@ class EnterpriseCustomer(TimeStampedModel):
         verbose_name="Customer admin contact email:",
         null=True,
         blank=True,
-        help_text=_("Email address presented on learner portal as public point of contact from customer organization.")
+        help_text=_("Email linked on learner portal as public point of contact, will default to all "
+                    "admin users associated with this customer if left blank.")
     )
 
     default_contract_discount = models.DecimalField(
@@ -1067,7 +1068,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     linked=False,
                 )
                 self.linked = True
-                # An existing record has been found so update auto primary key with primay key of existing record
+                # An existing record has been found so update auto primary key with primary key of existing record
                 self.pk = existing.pk
                 # Update the kwargs so that Django will update the existing record instead of creating a new one
                 kwargs = dict(kwargs, **{'force_insert': False, 'force_update': True})
@@ -1771,7 +1772,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     @property
     def sync_learner_profile_data(self):
         """
-        Return bool indicating if data received from the identity provider shoudl be synced to the edX profile.
+        Return bool indicating if data received from the identity provider should be synced to the edX profile.
         """
         identity_provider = self.identity_provider
         return identity_provider is not None and identity_provider.sync_learner_profile_data
@@ -2245,7 +2246,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
     Stores a re-usable catalog query.
 
     This stored catalog query used in `EnterpriseCustomerCatalog` objects to build catalog's content_filter field.
-    This is a saved instance of `content_filter` that can be re-used accross different catalogs.
+    This is a saved instance of `content_filter` that can be re-used across different catalogs.
 
     .. no_pii:
     """
@@ -3015,7 +3016,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         Check enable_compression flag is set as expected
 
         Arguments:
-            enable_compression (bool): file copression flag
+            enable_compression (bool): file compression flag
             data_type (str): report type
             delivery_method (str): delivery method for sending files
 
@@ -3946,6 +3947,14 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
     )
 
+    errored_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The date and time when the orchestrator encountered an error during configuration."
+        )
+    )
+
     # ---------------------------- SAP Success Factors attribute mappings ---------------------------- #
 
     odata_api_timeout_interval = models.PositiveIntegerField(
@@ -4050,6 +4059,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         if self.submitted_at:
             if not self.configured_at:
                 return True
+            if self.errored_at and self.errored_at > self.submitted_at:
+                return False
             if self.submitted_at > self.configured_at:
                 return True
         return False
@@ -4071,7 +4082,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         config_data = {}
         if self.identity_provider == self.SAP_SUCCESS_FACTORS:
             for field in self.sap_config_fields:
-                sap_data[utils.camelCase(field)] = getattr(self, field)
+                if field_value := getattr(self, field):
+                    sap_data[utils.camelCase(field)] = field_value
             is_sap = True
         else:
             for field in self.base_saml_config_fields:
@@ -4080,8 +4092,8 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
                         config_data['enable'] = True
                     else:
                         config_data['enable'] = getattr(self, field)
-                else:
-                    config_data[utils.camelCase(field)] = getattr(self, field)
+                elif field_value := getattr(self, field):
+                    config_data[utils.camelCase(field)] = field_value
 
         EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
             config_data=config_data,

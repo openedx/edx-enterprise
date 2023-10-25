@@ -24,6 +24,7 @@ from django.db import transaction
 from enterprise import models
 from enterprise.api.utils import get_enterprise_customer_from_user_id
 from enterprise.api.v1 import serializers
+from enterprise.api_client.sso_orchestrator import SsoOrchestratorClientError
 from enterprise.logging import getEnterpriseLogger
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerSsoConfiguration, EnterpriseCustomerUser
 from enterprise.tasks import send_sso_configured_email
@@ -146,6 +147,14 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 ' not been marked as submitted.'
             )
 
+        if error_msg := request.POST.get('error'):
+            LOGGER.error(
+                f'SSO configuration record {sso_configuration_record.pk} has failed to configure due to {error_msg}.'
+            )
+            sso_configuration_record.errored_at = localized_utcnow()
+            sso_configuration_record.save()
+            return Response(status=HTTP_200_OK)
+
         # Mark the configuration record as active IFF this the record has never been configured.
         if not sso_configuration_record.configured_at:
             sso_configuration_record.active = True
@@ -248,14 +257,12 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             request_data['entity_id'] = entity_id
 
         try:
-            new_record = EnterpriseCustomerSsoConfiguration.objects.create(**request_data)
-        except TypeError as e:
-            LOGGER.error(f'{CONFIG_CREATE_ERROR}{e}')
-            return Response({'error': f'{CONFIG_CREATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
-
-        # Wondering what to do here with error handling
-        # If we fail to submit for configuration (ie get a network error) should we rollback the created record?
-        new_record.submit_for_configuration()
+            with transaction.atomic():
+                new_record = EnterpriseCustomerSsoConfiguration.objects.create(**request_data)
+                new_record.submit_for_configuration()
+        except (TypeError, SsoOrchestratorClientError) as e:
+            LOGGER.error(f'{CONFIG_CREATE_ERROR} {e}')
+            return Response({'error': f'{CONFIG_CREATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
 
         return Response({'data': new_record.pk}, status=HTTP_201_CREATED)
 
@@ -315,7 +322,7 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 sso_configuration_record.update(**request_data)
                 sso_configuration_record.first().submit_for_configuration(updating_existing_record=True)
-        except (TypeError, FieldDoesNotExist, ValidationError) as e:
+        except (TypeError, FieldDoesNotExist, ValidationError, SsoOrchestratorClientError) as e:
             LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
             return Response({'error': f'{CONFIG_UPDATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(sso_configuration_record.first())

@@ -6795,7 +6795,6 @@ class TestAnalyticsSummaryView(APITest):
             'at_risk_enrollment_less_than_one_hour': 3,
             'at_risk_enrollment_end_date_soon': 2,
             'at_risk_enrollment_dormant': 2,
-            'created_at': '2023-08-10T12:39:35.388936Z'
         }
 
         self.learner_engagement = {
@@ -6809,9 +6808,7 @@ class TestAnalyticsSummaryView(APITest):
             'engage_prior': 50,
             'hours': 2000,
             'hours_prior': 3000,
-            'contract_end_date': '2023-12-10T12:39:28.792421Z',
             'active_contract': True,
-            'created_at': '2023-08-11T13:25:40.197061Z'
         }
 
         self.payload = {
@@ -7231,13 +7228,13 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         )
         return self.client.post(url, data=data)
 
-    def post_sso_configuration_complete(self, config_pk):
+    def post_sso_configuration_complete(self, config_pk, data=None):
         """Helper method to hit the configuration complete endpoint for sso configurations."""
         url = settings.TEST_SERVER + reverse(
             self.SSO_CONFIGURATION_COMPLETE_ENDPOINT,
             kwargs={'configuration_uuid': config_pk}
         )
-        return self.client.post(url)
+        return self.client.post(url, data=data)
 
     def _get_existing_sso_record_url(self, config_pk):
         """Helper method to get the url for an existing sso configuration endpoint."""
@@ -7293,6 +7290,27 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         config_pk = uuid.uuid4()
         response = self.post_sso_configuration_complete(config_pk)
         assert response.status_code == 404
+
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
+    def test_sso_configuration_oauth_orchestration_complete_error(self, mock_braze_client):
+        """
+        Verify that the endpoint is able to mark an sso config as errored.
+        """
+        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
+        config_pk = uuid.uuid4()
+        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
+            uuid=config_pk,
+            enterprise_customer=self.enterprise_customer,
+            configured_at=None,
+            submitted_at=localized_utcnow(),
+        )
+        assert enterprise_sso_orchestration_config.is_pending_configuration()
+        response = self.post_sso_configuration_complete(config_pk, data={'error': 'test error'})
+        enterprise_sso_orchestration_config.refresh_from_db()
+        assert enterprise_sso_orchestration_config.configured_at is None
+        assert enterprise_sso_orchestration_config.errored_at is not None
+        assert response.status_code == status.HTTP_200_OK
 
     @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
     def test_sso_configuration_oauth_orchestration_complete(self, mock_braze_client):
@@ -7563,6 +7581,40 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert len(EnterpriseCustomerSsoConfiguration.objects.all()) == 0
         response = self.post_new_sso_configuration(data)
         assert "somewhackyvalue" in response.json()['error']
+
+    @responses.activate
+    def test_sso_configuration_create_error_from_orchestrator(self):
+        """
+        Test that the sso orchestration create endpoint will rollback a created object if the submission for
+        configuration fails.
+        """
+        xml_metadata = """
+        <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://example.com">
+        </EntityDescriptor>
+        """
+        responses.add(
+            responses.GET,
+            "https://examples.com/metadata.xml",
+            body=xml_metadata,
+        )
+        responses.add(
+            responses.POST,
+            urljoin(get_sso_orchestrator_api_base_url(), get_sso_orchestrator_configure_path()),
+            json={'error': 'some error'},
+            status=400,
+        )
+        data = {
+            "metadata_url": "https://examples.com/metadata.xml",
+            "active": False,
+            "enterprise_customer": str(self.enterprise_customer.uuid),
+            "identity_provider": "cornerstone"
+        }
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
+
+        response = self.post_new_sso_configuration(data)
+
+        assert response.status_code == 400
+        assert EnterpriseCustomerSsoConfiguration.objects.all().count() == 0
 
     def test_sso_configuration_create_bad_xml_url(self):
         """

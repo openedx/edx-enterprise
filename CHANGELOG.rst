@@ -15,6 +15,35 @@ Change Log
 
 Unreleased
 ----------
+[4.6.8]
+-------
+feat: truncate API Response before writing to the APIResponseRecord
+fix: initiate filtering the API Response only when a successful response is received
+
+[4.6.7]
+-------
+feat: filter courses from API Response of SAPSF to store in the APIResponseRecord table
+
+[4.6.6]
+-------
+chore: orchestrator exception handling and submission refinements
+
+[4.6.5]
+-------
+feat: Added logs for Degreed2 client
+
+[4.6.4]
+-------
+chore: updating sso orchestrator self service api endpoints
+
+[4.6.3]
+-------
+fix: Remove not required fields
+
+[4.6.2]
+-------
+fix: clarify contact email helper text for enterprise customer
+
 [4.6.1]
 -------
 feat: Added the disable_subject_metadata_transmission flag to CornerstoneEnterpriseCustomerConfiguration.

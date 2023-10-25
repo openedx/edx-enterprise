@@ -12,6 +12,7 @@ from pytest import mark
 from django.conf import settings
 from django.forms.models import model_to_dict
 
+from enterprise.constants import MAX_ALLOWED_TEXT_LENGTH
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
@@ -22,6 +23,7 @@ from enterprise.utils import (
     localized_utcnow,
     parse_lms_api_datetime,
     serialize_notification_content,
+    truncate_string,
 )
 from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
 
@@ -516,3 +518,21 @@ class TestUtils(unittest.TestCase):
         expiration_date = get_default_invite_key_expiration_date()
         expected_expiration_date = current_time + timedelta(days=365)
         self.assertEqual(expiration_date.date(), expected_expiration_date.date())
+
+    def test_truncate_string(self):
+        """
+        Test that `truncate_string` returns the expected string.
+        """
+        test_string_1 = 'This is a test string'
+        (truncated_string_1, was_truncated_1) = truncate_string(test_string_1, 10)
+        self.assertTrue(was_truncated_1)
+        self.assertEqual('This is a ', truncated_string_1)
+
+        (truncated_string_2, was_truncated_2) = truncate_string(test_string_1, 100)
+        self.assertFalse(was_truncated_2)
+        self.assertEqual('This is a test string', truncated_string_2)
+
+        test_string_2 = ''.rjust(MAX_ALLOWED_TEXT_LENGTH + 10, 'x')
+        (truncated_string, was_truncated) = truncate_string(test_string_2)
+        self.assertTrue(was_truncated)
+        self.assertEqual(len(truncated_string), MAX_ALLOWED_TEXT_LENGTH)
