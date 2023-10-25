@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+[4.6.9]
+-------
+refactor: removing "null=true" constraint from encrypted fields
+feat: added fields for holding encrypted data in database (ENT 5613)
+
 [4.6.8]
 -------
 feat: truncate API Response before writing to the APIResponseRecord
