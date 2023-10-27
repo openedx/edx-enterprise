@@ -104,6 +104,12 @@ class CourseCatalogApiClient(UserAPIClient):
         Return results from the discovery service's search/all endpoint.
         """
         api_url = self.get_api_url(self.SEARCH_ALL_ENDPOINT)
+
+        # This change allows the key list to be sent as query parameters.
+        # This is a temporary change to support catalogues with specific courses.
+        if content_filter_query.get('key'):
+            query_params['key'] = content_filter_query.get('key')
+
         response = self.client.post(api_url, data=content_filter_query, params=query_params)
         response.raise_for_status()
         response = response.json()
