@@ -102,7 +102,9 @@ typing-extensions==4.7.1
     #   pydantic
     #   pydantic-core
 urllib3[socks]==2.0.4
-    # via selenium
+    # via
+    #   selenium
+    #   urllib3
 wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1

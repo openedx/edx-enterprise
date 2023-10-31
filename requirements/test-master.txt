@@ -27,7 +27,7 @@ backports-zoneinfo[tzdata]==0.2.1
     #   kombu
 billiard==4.1.0
     # via celery
-bleach==6.0.0
+bleach==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -40,7 +40,7 @@ certifi==2023.7.22
     #   -c requirements/edx-platform-constraints.txt
     #   requests
     #   snowflake-connector-python
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cryptography
@@ -75,7 +75,7 @@ cryptography==38.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -84,14 +84,14 @@ defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-django==3.2.20
+django==3.2.22
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   django-config-models
     #   django-crum
-    #   django-fernet-fields
+    #   django-fernet-fields-v2
     #   django-filter
     #   django-model-utils
     #   django-multi-email-field
@@ -102,11 +102,11 @@ django==3.2.20
     #   edx-drf-extensions
     #   edx-rbac
     #   jsonfield
-django-cache-memoize==0.1.10
+django-cache-memoize==0.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-config-models==2.5.0
+django-config-models==2.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -124,11 +124,11 @@ django-fernet-fields-v2==0.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-filter==23.2
+django-filter==23.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-ipware==4.0.2
+django-ipware==5.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -141,7 +141,7 @@ django-multi-email-field==0.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-object-actions==4.1.0
+django-object-actions==4.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -177,12 +177,12 @@ edx-django-utils==5.7.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==8.8.0
+edx-drf-extensions==8.12.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.4.0
+edx-opaque-keys[django]==2.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -191,7 +191,7 @@ edx-rbac==1.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-rest-api-client==5.5.2
+edx-rest-api-client==5.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -199,7 +199,7 @@ edx-tincan-py35==1.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-filelock==3.12.2
+filelock==3.12.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -226,7 +226,7 @@ markupsafe==2.1.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-newrelic==8.8.1
+newrelic==9.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -234,7 +234,7 @@ oscrypto==1.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-packaging==23.1
+packaging==23.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -258,6 +258,10 @@ pillow==9.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
+platformdirs==3.11.0
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   snowflake-connector-python
 prompt-toolkit==3.0.39
     # via click-repl
 psutil==5.9.5
@@ -272,7 +276,7 @@ pycparser==2.21
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cffi
-pycryptodomex==3.18.0
+pycryptodomex==3.19.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -282,6 +286,7 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   pyjwt
     #   snowflake-connector-python
 pymongo==3.13.0
     # via
@@ -300,7 +305,6 @@ python-dateutil==2.8.2
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   celery
-    #   edx-drf-extensions
 python-slugify==8.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -337,7 +341,6 @@ six==1.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
-    #   edx-drf-extensions
     #   edx-rbac
     #   python-dateutil
 slumber==0.7.1
@@ -345,7 +348,7 @@ slumber==0.7.1
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rest-api-client
-snowflake-connector-python==3.0.4
+snowflake-connector-python==3.2.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -364,7 +367,7 @@ stevedore==5.1.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==7.1.0
+testfixtures==7.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -372,11 +375,16 @@ text-unidecode==1.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   python-slugify
-typing-extensions==4.7.1
+tomlkit==0.12.1
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   snowflake-connector-python
+typing-extensions==4.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   asgiref
     #   django-countries
+    #   edx-opaque-keys
     #   kombu
     #   snowflake-connector-python
 tzdata==2023.3
@@ -388,7 +396,7 @@ unicodecsv==0.14.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-urllib3==1.26.16
+urllib3==1.26.17
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
@@ -398,7 +406,7 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   prompt-toolkit
