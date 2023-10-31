@@ -3,4 +3,3 @@
 -c constraints.txt
 
 tox                       # Virtualenv management for tests
-tox-battery==0.6.1        # Makes tox aware of requirements file changes

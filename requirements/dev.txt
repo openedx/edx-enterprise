@@ -877,9 +877,6 @@ tox==3.28.0
     #   -c requirements/common_constraints.txt
     #   -c requirements/constraints.txt
     #   -r requirements/dev.in
-    #   tox-battery
-tox-battery==0.6.1
-    # via -r requirements/dev.in
 tqdm==4.66.1
     # via
     #   -r requirements/doc.txt
