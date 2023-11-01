@@ -19,7 +19,7 @@ from django.contrib.sites.models import Site
 from django.core import exceptions as django_exceptions
 from django.utils.translation import gettext_lazy as _
 
-from enterprise import models, utils
+from enterprise import models, utils  # pylint: disable=cyclic-import
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_PERMISSION_GROUPS, DefaultColors
