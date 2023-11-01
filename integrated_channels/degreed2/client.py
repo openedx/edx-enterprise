@@ -6,6 +6,7 @@ Client for connecting to Degreed2.
 import json
 import logging
 import time
+from http import HTTPStatus
 
 import requests
 from six.moves.urllib.parse import urljoin
@@ -129,11 +130,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             f'Attempting find course via url: {self.get_completions_url()}'),
             user_id
         )
-        return self._post(
+        code, body = self._post(
             self.get_completions_url(),
             json_payload,
             self.ALL_DESIRED_SCOPES
         )
+        if code == HTTPStatus.BAD_REQUEST.value:
+            error_response = json.loads(body)
+            for error in error_response['errors']:
+                if 'detail' in error and 'Invalid user identifier' in error['detail']:
+                    raise ClientError(f'Degreed2 create_course_completion failed due to'
+                                      f'deleted user: {body}, code:{code}'
+                                      )
+        return code, body
 
     def delete_course_completion(self, user_id, payload):
         """

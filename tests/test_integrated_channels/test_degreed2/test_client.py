@@ -79,6 +79,18 @@ class TestDegreed2ApiClient(unittest.TestCase):
                 }
             ]
         }
+        self.user_deleted_response = {
+            "errors": [
+                {
+                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                    "code": "bad-request",
+                    "status": 400,
+                    "title": "Bad Request",
+                    "detail": "Invalid user identifier: test-learner@example.com",
+                    "source": "test-learner@example.com"
+                }
+            ]
+        }
 
     def test_calculate_backoff(self):
         """
@@ -141,6 +153,46 @@ class TestDegreed2ApiClient(unittest.TestCase):
         assert len(responses.calls) == 2
         assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
         assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
+
+    @responses.activate
+    def test_create_course_completion_for_deleted_user(self):
+        """
+        ``create_course_completion`` should handle exception for deleted users gracefully
+        """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
+        responses.add(
+            responses.POST,
+            degreed_api_client.get_oauth_url(),
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            degreed_api_client.get_completions_url(),
+            json=self.user_deleted_response,
+            status=400
+        )
+
+        payload = {
+            "data": {
+                "attributes": {
+                    "user-id": 'test-learner@example.com',
+                    "user-identifier-type": "Email",
+                    "content-id": 'DemoX',
+                    "content-id-type": "externalId",
+                    "content-type": "course",
+                    "completed-at": NOW_TIMESTAMP_FORMATTED,
+                    "percentile": 80,
+                }
+            }
+        }
+
+        with pytest.raises(ClientError):
+            output = degreed_api_client.create_course_completion('test-learner@example.com', json.dumps(payload))
+            assert output == (400, json.dumps(self.too_fast_response))
+            assert len(responses.calls) == 2
+            assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
+            assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
 
     @responses.activate
     def test_delete_course_completion(self):
