@@ -139,7 +139,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             error_response = json.loads(body)
             for error in error_response['errors']:
                 if 'detail' in error and 'Invalid user identifier' in error['detail']:
-                    raise ClientError(f'Degreed2 create_course_completion failed due to'
+                    raise ClientError(f'Degreed2 create_course_completion failed due to '
                                       f'deleted user: {body}, code:{code}'
                                       )
         return code, body

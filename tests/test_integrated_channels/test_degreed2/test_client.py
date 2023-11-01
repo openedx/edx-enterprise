@@ -187,9 +187,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
             }
         }
 
-        with pytest.raises(ClientError):
-            output = degreed_api_client.create_course_completion('test-learner@example.com', json.dumps(payload))
-            assert output == (400, json.dumps(self.too_fast_response))
+        with pytest.raises(ClientError, match="Degreed2 create_course_completion failed due to deleted user:"):
+            degreed_api_client.create_course_completion('test-learner@example.com', json.dumps(payload))
             assert len(responses.calls) == 2
             assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
             assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
