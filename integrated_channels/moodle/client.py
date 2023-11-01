@@ -250,6 +250,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         response = self._get_course_contents(course_id)
         course_module_id = None
+        module_name = None
         if isinstance(response.json(), list):
             for course in response.json():
                 if course.get('name') == 'General':
