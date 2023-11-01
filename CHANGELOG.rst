@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.10]
+--------
+chore: Update requirements
+
 [4.6.9]
 -------
 chore: returning SP metadata url from the sso orchestrator to the API caller
