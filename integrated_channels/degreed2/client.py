@@ -18,6 +18,7 @@ from django.http.request import QueryDict
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+from enterprise.models import EnterpriseCustomerUser
 
 LOGGER = logging.getLogger(__name__)
 
@@ -139,9 +140,34 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             error_response = json.loads(body)
             for error in error_response['errors']:
                 if 'detail' in error and 'Invalid user identifier' in error['detail']:
-                    raise ClientError(f'Degreed2 create_course_completion failed due to '
-                                      f'deleted user: {body}, code:{code}'
-                                      )
+                    try:
+                        enterprise_customer = self.enterprise_configuration.enterprise_customer
+                        LOGGER.info(
+                            generate_formatted_log(
+                                self.enterprise_configuration.channel_code(),
+                                self.enterprise_configuration.enterprise_customer.uuid,
+                                None,
+                                None,
+                                f'User {user_id} was deleted on degreed side,'
+                                f"so marking it as inactive and unlinking from enterprise"
+                            )
+                        )
+                        # Unlink user from related Enterprise Customer
+                        EnterpriseCustomerUser.objects.unlink_user(
+                            enterprise_customer=enterprise_customer,
+                            user_email=json_payload.get('data').get('attributes').get('user-id'),
+                        )
+                    except Exception as e:  # pylint: disable=broad-except
+                        LOGGER.error(
+                            generate_formatted_log(
+                                self.enterprise_configuration.channel_code(),
+                                self.enterprise_configuration.enterprise_customer.uuid,
+                                None,
+                                None,
+                                f'Error occurred while unlinking a degreed2 learner: {user_id}. '
+                                f'Payload: {json_payload}, Error: {e}'
+                            )
+                        )
         return code, body
 
     def delete_course_completion(self, user_id, payload):

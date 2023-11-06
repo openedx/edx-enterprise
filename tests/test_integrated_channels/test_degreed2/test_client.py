@@ -19,6 +19,9 @@ from django.apps.registry import apps
 from integrated_channels.degreed2.client import Degreed2APIClient
 from integrated_channels.exceptions import ClientError
 from test_utils import factories
+from enterprise.models import (
+    EnterpriseCustomerUser,
+)
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
@@ -158,6 +161,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
     def test_create_course_completion_for_deleted_user(self):
         """
         ``create_course_completion`` should handle exception for deleted users gracefully
+        by unlinking that user from enterprise
         """
         degreed_api_client = Degreed2APIClient(self.enterprise_config)
         responses.add(
@@ -186,12 +190,13 @@ class TestDegreed2ApiClient(unittest.TestCase):
                 }
             }
         }
-
-        with pytest.raises(ClientError, match="Degreed2 create_course_completion failed due to deleted user:"):
-            degreed_api_client.create_course_completion('test-learner@example.com', json.dumps(payload))
-            assert len(responses.calls) == 2
-            assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
-            assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
+        email = payload.get("data").get("attributes").get("user-id")
+        with mock.patch.object(EnterpriseCustomerUser.objects, 'unlink_user') as unlink_user_mock:
+            degreed_api_client.create_course_completion(email, json.dumps(payload))
+            unlink_user_mock.assert_called_once()
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
+        assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
 
     @responses.activate
     def test_delete_course_completion(self):
