@@ -13,7 +13,7 @@ from edx_rest_api_client.client import OAuthAPIClient
 from django.apps import apps
 from django.conf import settings
 
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX  # pylint: disable=cyclic-import
 
 try:
     from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder

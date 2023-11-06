@@ -9,16 +9,16 @@ import time
 from http import HTTPStatus
 
 import requests
+from six.moves.urllib.parse import urljoin
+
 from django.apps import apps
 from django.conf import settings
 from django.http.request import QueryDict
+
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.exceptions import ClientError
-from integrated_channels.integrated_channel.client import \
-    IntegratedChannelApiClient
-from integrated_channels.utils import (generate_formatted_log,
-                                       refresh_session_if_expired)
-from six.moves.urllib.parse import urljoin
+from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 

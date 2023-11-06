@@ -15,6 +15,18 @@ Change Log
 
 Unreleased
 ----------
+[4.6.12]
+--------
+feat: unlink degreed2 inactive user
+
+[4.6.11]
+--------
+chore: Aligning SAP naming conventions
+
+[4.6.10]
+--------
+chore: Update requirements
+
 [4.6.9]
 -------
 chore: returning SP metadata url from the sso orchestrator to the API caller

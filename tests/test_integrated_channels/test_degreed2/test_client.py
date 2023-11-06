@@ -11,12 +11,14 @@ import mock
 import pytest
 import requests
 import responses
-from django.apps.registry import apps
-from enterprise.models import EnterpriseCustomerUser
 from freezegun import freeze_time
+from six.moves.urllib.parse import urljoin
+
+from django.apps.registry import apps
+
+from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.degreed2.client import Degreed2APIClient
 from integrated_channels.exceptions import ClientError
-from six.moves.urllib.parse import urljoin
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
