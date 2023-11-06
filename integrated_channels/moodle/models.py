@@ -72,31 +72,8 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         help_text=_(
             "The encrypted API user's username used to obtain new tokens."),
-        default="",
+        null=True,
     )
-
-    @property
-    def encrypted_username(self):
-        """
-        Return encrypted username as a string.
-
-        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        decrypted_username field. This method will encrypt the username again before sending.
-        """
-        if self.decrypted_username:
-            return force_str(
-                self._meta.get_field('decrypted_username').fernet.encrypt(
-                    force_bytes(self.decrypted_username)
-                )
-            )
-        return self.decrypted_username
-
-    @encrypted_username.setter
-    def encrypted_username(self, value):
-        """
-        Set the encrypted username.
-        """
-        self.decrypted_username = value
 
     password = models.CharField(
         max_length=255,
@@ -113,31 +90,8 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         help_text=_(
             "The encrypted API user's password used to obtain new tokens."),
-        default="",
+        null=True,
     )
-
-    @property
-    def encrypted_password(self):
-        """
-        Return encrypted password as a string.
-
-        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        decrypted_password field. This method will encrypt the password again before sending.
-        """
-        if self.decrypted_password:
-            return force_str(
-                self._meta.get_field('decrypted_password').fernet.encrypt(
-                    force_bytes(self.decrypted_password)
-                )
-            )
-        return self.decrypted_password
-
-    @encrypted_password.setter
-    def encrypted_password(self, value):
-        """
-        Set the encrypted password.
-        """
-        self.decrypted_password = value
 
     token = models.CharField(
         max_length=255,
@@ -154,31 +108,8 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         blank=True,
         help_text=_(
             "The encrypted API user's token used to obtain new tokens."),
-        default="",
+        null=True,
     )
-
-    @property
-    def encrypted_token(self):
-        """
-        Return encrypted token as a string.
-
-        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        decrypted_token field. This method will encrypt the token again before sending.
-        """
-        if self.decrypted_token:
-            return force_str(
-                self._meta.get_field('decrypted_token').fernet.encrypt(
-                    force_bytes(self.decrypted_token)
-                )
-            )
-        return self.decrypted_token
-
-    @encrypted_token.setter
-    def encrypted_token(self, value):
-        """
-        Set the encrypted token.
-        """
-        self.decrypted_token = value
 
     transmission_chunk_size = models.IntegerField(
         default=1,

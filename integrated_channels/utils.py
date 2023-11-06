@@ -501,13 +501,3 @@ def get_enterprise_client_by_channel_code(channel_code):
         'canvas': CanvasAPIClient,
     }
     return _enterprise_client_model_by_channel_code[channel_code]
-
-
-def dummy_reverse(_apps, _schema_editor):
-    """
-    Reverse a data migration but do nothing.
-
-    :param _apps:
-    :param _schema_editor:
-    :return:
-    """
