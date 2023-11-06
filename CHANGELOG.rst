@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.11]
+--------
+chore: Aligning SAP naming conventions
+
 [4.6.10]
 --------
 chore: Update requirements

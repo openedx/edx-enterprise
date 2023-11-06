@@ -3744,7 +3744,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     """
     all_objects = models.Manager()
 
-    SAP_SUCCESS_FACTORS = 'SAP_SUCCESS_FACTORS'
+    SAP_SUCCESS_FACTORS = 'sap_success_factors'
 
     fields_locked_while_configuring = (
         'metadata_url',
