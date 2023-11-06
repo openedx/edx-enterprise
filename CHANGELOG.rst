@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.6.12]
+--------
+feat: unlink degreed2 inactive user
+
 [4.6.11]
 --------
 chore: Aligning SAP naming conventions
