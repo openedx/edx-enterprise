@@ -15,10 +15,17 @@ Change Log
 
 Unreleased
 ----------
+[4.6.11]
+-------
+feat: added fields for holding encrypted data in database (ENT 5613)
+
+[4.6.10]
+--------
+chore: Update requirements
+
 [4.6.9]
 -------
-refactor: removing "null=true" constraint from encrypted fields
-feat: added fields for holding encrypted data in database (ENT 5613)
+chore: returning SP metadata url from the sso orchestrator to the API caller
 
 [4.6.8]
 -------

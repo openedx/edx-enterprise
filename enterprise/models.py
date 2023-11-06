@@ -4095,7 +4095,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
                 elif field_value := getattr(self, field):
                     config_data[utils.camelCase(field)] = field_value
 
-        EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
+        sp_metadata_url = EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
             config_data=config_data,
             config_pk=self.pk,
             enterprise_data={
@@ -4109,3 +4109,4 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
         self.submitted_at = localized_utcnow()
         self.save()
+        return sp_metadata_url
