@@ -309,7 +309,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 enterprise_enrollment_id
             )
 
-            if not learner_data.course_completed:
+            if not learner_data.course_completed \
+            and not self.enterprise_configuration.enable_incomplete_progress_transmission:
                 # The user has not completed the course, so we shouldn't send a completion status call
                 remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
                 encoded_serialized_payload = encode_data_for_logging(serialized_payload)

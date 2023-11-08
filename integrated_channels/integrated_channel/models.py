@@ -174,6 +174,11 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         help_text=_("When set to True, the configured customer will no longer receive learner data transmissions, both"
                     " scheduled and signal based")
     )
+    enable_incomplete_progress_transmission = models.BooleanField(
+        help_text=_("When set to True, the configured customer will receive learner data transmissions, for incomplete"
+                    " courses as well"),
+        default=False,
+    )
     last_sync_attempted_at = models.DateTimeField(
         help_text='The DateTime of the most recent Content or Learner data record sync attempt',
         blank=True,
