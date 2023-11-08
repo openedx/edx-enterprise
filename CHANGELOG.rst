@@ -16,7 +16,7 @@ Change Log
 Unreleased
 ----------
 [4.6.13]
--------
+--------
 feat: added fields for holding encrypted data in database (ENT 5613)
 
 [4.6.12]
