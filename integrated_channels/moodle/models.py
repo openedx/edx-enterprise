@@ -9,7 +9,6 @@ from fernet_fields import EncryptedCharField
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils.encoding import force_bytes, force_str
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.integrated_channel.models import (
