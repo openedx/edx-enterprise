@@ -16,7 +16,7 @@ aiosignal==1.3.1
     #   aiohttp
 alabaster==0.7.13
     # via sphinx
-amqp==5.1.1
+amqp==5.2.0
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -50,12 +50,11 @@ babel==2.13.1
 backports-zoneinfo[tzdata]==0.2.1
     # via
     #   -r requirements/test-master.txt
-    #   backports-zoneinfo
     #   celery
     #   kombu
 beautifulsoup4==4.12.2
     # via pydata-sphinx-theme
-billiard==4.1.0
+billiard==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -107,6 +106,15 @@ code-annotations==1.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
+coreapi==2.3.3
+    # via
+    #   -r requirements/test-master.txt
+    #   drf-yasg
+coreschema==0.0.4
+    # via
+    #   -r requirements/test-master.txt
+    #   coreapi
+    #   drf-yasg
 cryptography==38.0.4
     # via
     #   -r requirements/test-master.txt
@@ -138,6 +146,8 @@ django==3.2.22
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-rbac
@@ -186,6 +196,8 @@ djangorestframework==3.14.0
     #   -r requirements/test-master.txt
     #   django-config-models
     #   drf-jwt
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-drf-extensions
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
@@ -203,6 +215,12 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
+drf-yasg==1.21.5
+    # via
+    #   -r requirements/test-master.txt
+    #   edx-api-doc-tools
+edx-api-doc-tools==1.7.0
+    # via -r requirements/test-master.txt
 edx-braze-client==0.1.8
     # via -r requirements/test-master.txt
 edx-django-utils==5.7.0
@@ -220,7 +238,6 @@ edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-    #   edx-opaque-keys
 edx-rbac==1.8.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.6.0
@@ -233,7 +250,7 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==19.12.1
+faker==19.13.0
     # via factory-boy
 filelock==3.12.4
     # via
@@ -254,12 +271,21 @@ imagesize==1.4.1
     # via sphinx
 importlib-metadata==6.8.0
     # via sphinx
+inflection==0.5.1
+    # via
+    #   -r requirements/test-master.txt
+    #   drf-yasg
 iniconfig==2.0.0
     # via pytest
+itypes==1.2.0
+    # via
+    #   -r requirements/test-master.txt
+    #   coreapi
 jinja2==3.1.2
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
+    #   coreschema
     #   sphinx
 jsondiff==2.0.0
     # via -r requirements/test-master.txt
@@ -269,7 +295,7 @@ jwcrypto==1.5.0
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-kombu==5.3.2
+kombu==5.3.3
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -301,6 +327,7 @@ oscrypto==1.3.0
 packaging==23.2
     # via
     #   -r requirements/test-master.txt
+    #   drf-yasg
     #   pydata-sphinx-theme
     #   pytest
     #   snowflake-connector-python
@@ -362,7 +389,6 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   snowflake-connector-python
 pymongo==3.13.0
     # via
@@ -395,6 +421,7 @@ pytz==2022.7.1
     #   babel
     #   django
     #   djangorestframework
+    #   drf-yasg
     #   edx-tincan-py35
     #   snowflake-connector-python
 pyyaml==6.0.1
@@ -406,6 +433,7 @@ readme-renderer==42.0
 requests==2.31.0
     # via
     #   -r requirements/test-master.txt
+    #   coreapi
     #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -415,6 +443,14 @@ requests==2.31.0
     #   sphinx
 restructuredtext-lint==1.4.0
     # via doc8
+ruamel-yaml==0.17.35
+    # via
+    #   -r requirements/test-master.txt
+    #   drf-yasg
+ruamel-yaml-clib==0.2.8
+    # via
+    #   -r requirements/test-master.txt
+    #   ruamel-yaml
 rules==3.3
     # via -r requirements/test-master.txt
 semantic-version==2.10.0
@@ -506,12 +542,17 @@ tzdata==2023.3
     #   celery
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
+uritemplate==4.1.1
+    # via
+    #   -r requirements/test-master.txt
+    #   coreapi
+    #   drf-yasg
 urllib3==1.26.17
     # via
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-vine==5.0.0
+vine==5.1.0
     # via
     #   -r requirements/test-master.txt
     #   amqp
