@@ -2385,7 +2385,7 @@ def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
     return (string, was_truncated)
 
 
-def ensure_course_enrollment_is_allowed(course_id: str, email: str, enrollment_api_client: EnrollmentApiClient):
+def ensure_course_enrollment_is_allowed(course_id, email, enrollment_api_client):
     """
     Create a CourseEnrollmentAllowed object for invitation-only courses.
 
