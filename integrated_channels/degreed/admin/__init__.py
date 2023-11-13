@@ -17,7 +17,6 @@ from integrated_channels.degreed.models import (
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 
 
-@admin.register(DegreedGlobalConfiguration)
 class DegreedGlobalConfigurationAdmin(ConfigurationModelAdmin):
     """
     Django admin model for DegreedGlobalConfiguration.
@@ -33,7 +32,6 @@ class DegreedGlobalConfigurationAdmin(ConfigurationModelAdmin):
         model = DegreedGlobalConfiguration
 
 
-@admin.register(DegreedEnterpriseCustomerConfiguration)
 class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.ModelAdmin):
     """
     Django admin model for DegreedEnterpriseCustomerConfiguration.
@@ -106,7 +104,6 @@ class DegreedEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mod
     force_content_metadata_transmission.label = "Force content metadata transmission"
 
 
-@admin.register(DegreedLearnerDataTransmissionAudit)
 class DegreedLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAdmin):
     """
     Django admin model for DegreedLearnerDataTransmissionAudit.

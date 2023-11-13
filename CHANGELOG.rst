@@ -17,6 +17,10 @@ Unreleased
 ----------
 Nothing unreleased.
 
+[4.7.1]
+--------
+chore: retire Degreed v1 code from the set of channels
+
 [4.7.0]
 --------
 feat: Add an ``api-docs`` page that lives at ``[LMS_ROOT_URL]/enterprise/api-docs/``
