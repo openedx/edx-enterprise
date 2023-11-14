@@ -70,7 +70,9 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         verbose_name="Encrypted Webservice Username",
         blank=True,
         help_text=_(
-            "The encrypted API user's username used to obtain new tokens."),
+            "The encrypted API user's username used to obtain new tokens."
+            " It will be encrypted when stored in the database."
+        ),
         null=True,
     )
 
@@ -88,7 +90,9 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         verbose_name="Encrypted Webservice Password",
         blank=True,
         help_text=_(
-            "The encrypted API user's password used to obtain new tokens."),
+            "The encrypted API user's password used to obtain new tokens."
+            " It will be encrypted when stored in the database."
+        ),
         null=True,
     )
 
@@ -106,7 +110,9 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         verbose_name="Encrypted Webservice Token",
         blank=True,
         help_text=_(
-            "The encrypted API user's token used to obtain new tokens."),
+            "The encrypted API user's token used to obtain new tokens."
+            " It will be encrypted when stored in the database."
+        ),
         null=True,
     )
 
