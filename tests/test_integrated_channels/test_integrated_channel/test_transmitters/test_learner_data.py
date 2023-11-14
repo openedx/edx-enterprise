@@ -205,7 +205,7 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         # Set feature flag to true
         self.enterprise_config.enable_incomplete_progress_transmission = True
 
-        self.learner_transmitter.client.create_course_completion = Mock()
+        self.learner_transmitter.client.create_course_completion = Mock(return_value=(200, 'success'))
 
         LearnerExporterMock = LearnerExporter
 
@@ -224,8 +224,15 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             LearnerExporterMock,
             remote_user_id='user_id'
         )
-        # with enable_incomplete_progress_transmission = True we shouldn't be able to call this method
-        assert not self.learner_transmitter.client.create_course_completion.called
+        # with enable_incomplete_progress_transmission = True we should be able to call this method
+        assert self.learner_transmitter.client.create_course_completion.called
+
+        # Set feature flag to false
+        self.enterprise_config.enable_incomplete_progress_transmission = False
+        self.learner_transmitter.transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
         mock_logger.info.assert_called_with(generate_formatted_log(
             self.enterprise_config.channel_code(),
             self.enterprise_config.enterprise_customer.uuid or None,
