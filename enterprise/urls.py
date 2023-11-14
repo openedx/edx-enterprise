@@ -2,8 +2,10 @@
 URLs for enterprise.
 """
 
+from edx_api_doc_tools import make_api_info, make_docs_urls
+
 from django.conf import settings
-from django.urls import include, re_path
+from django.urls import include, path, re_path
 
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.heartbeat.views import heartbeat
@@ -16,6 +18,12 @@ from enterprise.views import (
 )
 
 ENTERPRISE_ROUTER = RouterView.as_view()
+
+enterprise_rest_api_urls = re_path(
+    r'^enterprise/api/',
+    include('enterprise.api.urls'),
+    name='enterprise_api'
+)
 
 urlpatterns = [
     re_path(r'^enterprise/grant_data_sharing_permissions', GrantDataSharingPermissions.as_view(),
@@ -53,14 +61,10 @@ urlpatterns = [
         name='enterprise_program_enrollment_page'
     ),
     re_path(
-        r'^enterprise/api/',
-        include('enterprise.api.urls'),
-        name='enterprise_api'
-    ),
-    re_path(
         r'^enterprise/heartbeat/', heartbeat,
         name='enterprise_heartbeat',
     ),
+    enterprise_rest_api_urls,
 ]
 
 # Because ROOT_URLCONF points here, we are including the urls from the other apps here for now.
@@ -95,3 +99,16 @@ urlpatterns += [
         include('integrated_channels.api.urls')
     ),
 ]
+
+api_docs_urlpatterns = make_docs_urls(
+    make_api_info(
+        title='Enterprise API',
+        version='v1',
+        description='Docs for the edx-enterprise `/enterprise/api/v1` REST API.',
+    ),
+    api_url_patterns=[enterprise_rest_api_urls],
+)
+
+urlpatterns.append(
+    path('enterprise/', include(api_docs_urlpatterns)),
+)

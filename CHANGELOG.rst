@@ -15,9 +15,17 @@ Change Log
 
 Unreleased
 ----------
-[4.6.13]
+[4.7.2]
 --------
 feat: added fields for holding encrypted data in database (ENT 5613)
+
+[4.7.1]
+--------
+chore: retire Degreed v1 code from the set of channels
+
+[4.7.0]
+--------
+feat: Add an ``api-docs`` page that lives at ``[LMS_ROOT_URL]/enterprise/api-docs/``
 
 [4.6.12]
 --------

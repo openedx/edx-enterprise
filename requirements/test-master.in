@@ -5,3 +5,5 @@
 -c edx-platform-constraints.txt
 -c constraints.txt
 -r base.in
+
+edx-api-doc-tools  # for installing an api-docs page for enterprise
