@@ -5,6 +5,7 @@ Django admin integration for configuring degreed app to communicate with Degreed
 
 from django_object_actions import DjangoObjectActions
 
+from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
@@ -14,6 +15,19 @@ from integrated_channels.degreed2.models import (
     Degreed2LearnerDataTransmissionAudit,
 )
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
+
+
+class Degreed2EnterpriseCustomerConfigurationForm(forms.ModelForm):
+    """
+    Django admin form for MoodleEnterpriseCustomerConfiguration.
+    """
+    class Meta:
+        model = Degreed2EnterpriseCustomerConfiguration
+        fields = '__all__'
+        widgets = {
+            'decrypted_client_id': forms.widgets.PasswordInput(),
+            'decrypted_client_secret': forms.widgets.PasswordInput(),
+        }
 
 
 @admin.register(Degreed2EnterpriseCustomerConfiguration)
@@ -41,10 +55,22 @@ class Degreed2EnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mo
 
     list_filter = ("active",)
     search_fields = ("enterprise_customer_name",)
+    form = Degreed2EnterpriseCustomerConfigurationForm
     change_actions = ("force_content_metadata_transmission",)
 
     class Meta:
         model = Degreed2EnterpriseCustomerConfiguration
+    
+    def get_fields(self, request, obj=None):
+        """
+        Return the fields that should be displayed on the admin form.
+        """
+        fields = list(super().get_fields(request, obj))
+        if obj:
+            # Exclude password fields when we are editing an existing model.
+            return [f for f in fields if f not in {'decrypted_client_id', 'decrypted_client_secret'}]
+
+        return fields
 
     def enterprise_customer_name(self, obj):
         """
