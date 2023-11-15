@@ -14,31 +14,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='historicalmoodleenterprisecustomerconfiguration',
             name='decrypted_password',
-            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's password used to obtain new tokens.", max_length=255, null=True, verbose_name='Encrypted Webservice Password'),
+            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's password used to obtain new tokens. It will be encrypted when stored in the database.", max_length=255, null=True, verbose_name='Encrypted Webservice Password'),
         ),
         migrations.AddField(
             model_name='historicalmoodleenterprisecustomerconfiguration',
             name='decrypted_token',
-            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's token used to obtain new tokens.", max_length=255, null=True, verbose_name='Encrypted Webservice Token'),
+            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's token used to obtain new tokens. It will be encrypted when stored in the database.", max_length=255, null=True, verbose_name='Encrypted Webservice Token'),
         ),
         migrations.AddField(
             model_name='historicalmoodleenterprisecustomerconfiguration',
             name='decrypted_username',
-            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's username used to obtain new tokens.", max_length=255, null=True, verbose_name='Encrypted Webservice Username'),
+            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's username used to obtain new tokens. It will be encrypted when stored in the database.", max_length=255, null=True, verbose_name='Encrypted Webservice Username'),
         ),
         migrations.AddField(
             model_name='moodleenterprisecustomerconfiguration',
             name='decrypted_password',
-            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's password used to obtain new tokens.", max_length=255, null=True, verbose_name='Encrypted Webservice Password'),
+            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's password used to obtain new tokens. It will be encrypted when stored in the database.", max_length=255, null=True, verbose_name='Encrypted Webservice Password'),
         ),
         migrations.AddField(
             model_name='moodleenterprisecustomerconfiguration',
             name='decrypted_token',
-            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's token used to obtain new tokens.", max_length=255, null=True, verbose_name='Encrypted Webservice Token'),
+            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's token used to obtain new tokens. It will be encrypted when stored in the database.", max_length=255, null=True, verbose_name='Encrypted Webservice Token'),
         ),
         migrations.AddField(
             model_name='moodleenterprisecustomerconfiguration',
             name='decrypted_username',
-            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's username used to obtain new tokens.", max_length=255, null=True, verbose_name='Encrypted Webservice Username'),
+            field=fernet_fields.fields.EncryptedCharField(blank=True, help_text="The encrypted API user's username used to obtain new tokens. It will be encrypted when stored in the database.", max_length=255, null=True, verbose_name='Encrypted Webservice Username'),
         ),
     ]

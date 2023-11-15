@@ -17,7 +17,7 @@ Unreleased
 ----------
 [4.7.2]
 --------
-feat: added fields for holding encrypted data in database (ENT 5613)
+feat: added fields for holding encrypted data in database
 
 [4.7.1]
 --------
