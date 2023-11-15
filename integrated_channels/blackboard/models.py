@@ -7,11 +7,13 @@ import uuid
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
+from fernet_fields import EncryptedCharField
 from simple_history.models import HistoricalRecords
 from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models
+from django.utils.encoding import force_bytes, force_str
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
 from integrated_channels.blackboard.exporters.learner_data import BlackboardLearnerExporter
@@ -109,6 +111,39 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
         )
     )
 
+    decrypted_client_id = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="API Client ID encrypted at db level",
+        help_text=(
+            "The API Client ID (encrypted at db level) provided to edX by the enterprise customer to be used"
+            " to make API calls to Degreed on behalf of the customer."
+        )
+    )
+
+    @property
+    def encrypted_client_id(self):
+        """
+        Return encrypted client_id as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_client_id field. This method will encrypt the client_id again before sending.
+        """
+        if self.decrypted_client_id:
+            return force_str(
+                self._meta.get_field('decrypted_client_id').fernet.encrypt(
+                    force_bytes(self.decrypted_client_id)
+                )
+            )
+        return self.decrypted_client_id
+
+    @encrypted_client_id.setter
+    def encrypted_client_id(self, value):
+        """
+        Set the encrypted client_id.
+        """
+        self.decrypted_client_id = value
+
     client_secret = models.CharField(
         max_length=255,
         blank=True,
@@ -119,6 +154,39 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
             " API calls on behalf of the customer. Called Application Secret in Blackboard"
         )
     )
+
+    decrypted_client_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="API Client Secret encrypted at db level",
+        help_text=(
+            "The API Client Secret (encrypted at db level) provided to edX by the enterprise customer to be "
+            "used to make API calls to Degreed on behalf of the customer."
+        ),
+    )
+
+    @property
+    def encrypted_client_secret(self):
+        """
+        Return encrypted client_secret as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_client_secret field. This method will encrypt the client_secret again before sending.
+        """
+        if self.decrypted_client_secret:
+            return force_str(
+                self._meta.get_field('decrypted_client_secret').fernet.encrypt(
+                    force_bytes(self.decrypted_client_secret)
+                )
+            )
+        return self.decrypted_client_secret
+
+    @encrypted_client_secret.setter
+    def encrypted_client_secret(self, value):
+        """
+        Set the encrypted client_secret.
+        """
+        self.decrypted_client_secret = value
 
     blackboard_base_url = models.CharField(
         max_length=255,
