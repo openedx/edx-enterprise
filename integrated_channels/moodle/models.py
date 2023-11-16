@@ -102,6 +102,12 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
+    enable_incomplete_progress_transmission = models.BooleanField(
+        help_text=_("When set to True, the configured customer will receive learner data transmissions, for incomplete"
+                    " courses as well"),
+        default=False,
+    )
+
     history = HistoricalRecords()
 
     class Meta:
