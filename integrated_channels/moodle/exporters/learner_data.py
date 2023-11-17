@@ -68,16 +68,4 @@ class MoodleLearnerExporter(LearnerExporter):
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
             ),
-            MoodleLearnerDataTransmissionAudit(
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                moodle_user_email=enterprise_customer_user.user_email,
-                user_email=enterprise_customer_user.user_email,
-                course_id=enterprise_enrollment.course_id,
-                course_completed=course_completed,
-                grade=percent_grade,
-                completed_timestamp=completed_date,
-                moodle_completed_timestamp=moodle_completed_timestamp,
-                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
-                plugin_configuration_id=self.enterprise_configuration.id,
-            )
         ]
