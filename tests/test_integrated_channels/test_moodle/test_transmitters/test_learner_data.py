@@ -100,7 +100,9 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
         lms_user_id = LearnerExporterUtility.lms_user_id_for_ent_course_enrollment_id(
             learner_data_transmission_audit_mock.enterprise_course_enrollment_id
         )
-        serialized_payload = learner_data_transmission_audit_mock.serialize(enterprise_configuration=self.enterprise_config)
+        serialized_payload = learner_data_transmission_audit_mock.serialize(
+            enterprise_configuration=self.enterprise_config
+        )
         encoded_serialized_payload = encode_data_for_logging(serialized_payload)
         self.learner_transmitter.transmit(
             LearnerExporterMock,
