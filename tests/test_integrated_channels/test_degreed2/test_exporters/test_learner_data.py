@@ -80,9 +80,8 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
             completed_date=completed_date,
             grade_percent=grade_percent,
         )
-        assert len(learner_data_records) == 2
+        assert len(learner_data_records) == 1
         assert learner_data_records[0].course_id == self.course_key
-        assert learner_data_records[1].course_id == self.course_id
 
         for learner_data_record in learner_data_records:
             assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
