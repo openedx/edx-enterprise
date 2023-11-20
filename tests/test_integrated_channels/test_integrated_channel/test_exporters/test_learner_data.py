@@ -124,9 +124,9 @@ class TestLearnerExporter(unittest.TestCase):
             course_completed=expected_course_completed,
         )
 
-        learner_data_record = learner_data_records[1]
+        learner_data_record = learner_data_records[0]
         assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
-        assert learner_data_record.course_id == enterprise_course_enrollment.course_id
+        assert learner_data_record.course_id == self.course_key
         assert learner_data_record.course_completed == expected_course_completed
         assert learner_data_record.completed_timestamp == (self.NOW_TIMESTAMP if completed_date is not None else None)
         assert learner_data_record.grade == 'A+'
@@ -247,16 +247,14 @@ class TestLearnerExporter(unittest.TestCase):
         }
 
         learner_data = list(self.exporter.export())
-        assert len(learner_data) == 2
+        assert len(learner_data) == 1
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
 
-        for report in learner_data:
-            assert report.user_email == self.user.email
-            assert report.enterprise_course_enrollment_id == enrollment.id
-            assert not report.course_completed
-            assert report.completed_timestamp is None
-            assert report.grade == LearnerExporter.GRADE_INCOMPLETE
+        assert learner_data[0].user_email == self.user.email
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+        assert not learner_data[0].course_completed
+        assert learner_data[0].completed_timestamp is None
+        assert learner_data[0].grade == LearnerExporter.GRADE_INCOMPLETE
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')
@@ -359,17 +357,14 @@ class TestLearnerExporter(unittest.TestCase):
         }
 
         learner_data = list(self.exporter.export())
-        assert len(learner_data) == 2
+        assert len(learner_data) == 1
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
-
-        for report in learner_data:
-            assert report.enterprise_course_enrollment_id == enrollment.id
-            assert report.course_completed
-            assert report.completed_timestamp == self.NOW_TIMESTAMP
-            assert report.grade == LearnerExporter.GRADE_PASSING
-            assert report.progress_status == 'Passed'
-            assert report.content_title == 'Dogs and Cats: Star Crossed Lovers or Fated Foes'
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+        assert learner_data[0].course_completed
+        assert learner_data[0].completed_timestamp == self.NOW_TIMESTAMP
+        assert learner_data[0].grade == LearnerExporter.GRADE_PASSING
+        assert learner_data[0].progress_status == 'Passed'
+        assert learner_data[0].content_title == 'Dogs and Cats: Star Crossed Lovers or Fated Foes'
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_details')
@@ -423,15 +418,12 @@ class TestLearnerExporter(unittest.TestCase):
         }
 
         learner_data = list(self.exporter.export())
-        assert len(learner_data) == 2
+        assert len(learner_data) == 1
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
-
-        for report in learner_data:
-            assert report.enterprise_course_enrollment_id == enrollment.id
-            assert report.course_completed
-            assert report.completed_timestamp == self.NOW_TIMESTAMP
-            assert report.grade == LearnerExporter.GRADE_PASSING
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+        assert learner_data[0].course_completed
+        assert learner_data[0].completed_timestamp == self.NOW_TIMESTAMP
+        assert learner_data[0].grade == LearnerExporter.GRADE_PASSING
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
@@ -468,9 +460,8 @@ class TestLearnerExporter(unittest.TestCase):
         }
 
         learner_data = list(self.exporter.export())
-        assert len(learner_data) == 2
+        assert len(learner_data) == 1
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
 
         for report in learner_data:
             assert report.enterprise_course_enrollment_id == enrollment.id
@@ -556,9 +547,8 @@ class TestLearnerExporter(unittest.TestCase):
         with freeze_time(self.NOW):
             learner_data = list(self.exporter.export())
 
-        assert len(learner_data) == 2
+        assert len(learner_data) == 1
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
 
         for report in learner_data:
             assert report.enterprise_course_enrollment_id == enrollment.id
@@ -647,9 +637,8 @@ class TestLearnerExporter(unittest.TestCase):
         with freeze_time(self.NOW):
             learner_data = list(self.exporter.export())
 
-        assert len(learner_data) == 2
+        assert len(learner_data) == 1
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
 
         for report in learner_data:
             assert report.enterprise_course_enrollment_id == enrollment.id
@@ -866,41 +855,36 @@ class TestLearnerExporter(unittest.TestCase):
         with freeze_time(self.NOW):
             learner_data = list(self.exporter.export())
 
-        assert len(learner_data) == 6
+        assert len(learner_data) == 3
 
         assert learner_data[0].course_id == self.course_key
-        assert learner_data[1].course_id == self.course_id
         # note: the course_completed is a function of the mock_is_course_completed mock
-        for report1 in learner_data[0:1]:
-            assert report1.enterprise_course_enrollment_id == enrollment1.id
-            assert report1.course_completed
-            assert report1.completed_timestamp is None
-            assert report1.grade == LearnerExporter.GRADE_INCOMPLETE
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment1.id
+        assert learner_data[0].course_completed
+        assert learner_data[0].completed_timestamp is None
+        assert learner_data[0].grade == LearnerExporter.GRADE_INCOMPLETE
+
+        assert learner_data[1].course_id == self.course_key
+        assert learner_data[1].enterprise_course_enrollment_id == enrollment2.id
+        assert learner_data[1].course_completed
+        assert learner_data[1].completed_timestamp == self.NOW_TIMESTAMP
+        assert learner_data[1].grade == grade
 
         assert learner_data[2].course_id == self.course_key
-        assert learner_data[3].course_id == course_id2
-        for report2 in learner_data[2:3]:
-            assert report2.enterprise_course_enrollment_id == enrollment2.id
-            assert report2.course_completed
-            assert report2.completed_timestamp == self.NOW_TIMESTAMP
-            assert report2.grade == grade
-        assert learner_data[4].course_id == self.course_key
-        assert learner_data[5].course_id == self.course_id
-        for report3 in learner_data[4:5]:
-            assert report3.enterprise_course_enrollment_id == enrollment3.id
-            assert report3.course_completed
-            assert report3.completed_timestamp is None
-            assert report3.grade == LearnerExporter.GRADE_INCOMPLETE
+        assert learner_data[2].enterprise_course_enrollment_id == enrollment3.id
+        assert learner_data[2].course_completed
+        assert learner_data[2].completed_timestamp is None
+        assert learner_data[2].grade == LearnerExporter.GRADE_INCOMPLETE
 
     @ddt.data(
-        (True, True, 'audit', 2),
+        (True, True, 'audit', 1),
         (True, False, 'audit', 0),
         (False, True, 'audit', 0),
         (False, False, 'audit', 0),
-        (True, True, 'verified', 2),
-        (True, False, 'verified', 2),
-        (False, True, 'verified', 2),
-        (False, False, 'verified', 2),
+        (True, True, 'verified', 1),
+        (True, False, 'verified', 1),
+        (False, True, 'verified', 1),
+        (False, False, 'verified', 1),
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseEnrollment')
@@ -968,13 +952,11 @@ class TestLearnerExporter(unittest.TestCase):
 
         assert len(learner_data) == expected_data_len
 
-        if expected_data_len == 2:
+        if expected_data_len == 1:
             assert learner_data[0].course_id == self.course_key
-            assert learner_data[1].course_id == self.course_id
-            for report in learner_data:
-                assert report.enterprise_course_enrollment_id == enrollment.id
-                assert report.course_completed
-                assert report.grade == LearnerExporter.GRADE_PASSING
+            assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+            assert learner_data[0].course_completed
+            assert learner_data[0].grade == LearnerExporter.GRADE_PASSING
 
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_single_user_grade')

@@ -627,18 +627,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 content_title=content_title,
                 progress_status=progress_status,
             ),
-            TransmissionAudit(
-                plugin_configuration_id=self.enterprise_configuration.id,
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                course_id=enterprise_enrollment.course_id,
-                course_completed=course_completed,
-                completed_timestamp=completed_timestamp,
-                grade=grade,
-                user_email=user_email,
-                content_title=content_title,
-                progress_status=progress_status,
-            )
         ]
 
     def collect_certificate_data(self, enterprise_enrollment, channel_name):
