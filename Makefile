@@ -52,8 +52,7 @@ dummy_translations: ## generate dummy translation (.po) files
 
 extract_translations: ## extract strings to be translated, outputting .mo files
 	rm -rf docs/_build
-	./manage.py makemessages -l en -v1 -d django
-	./manage.py makemessages -l en -v1 -d djangojs -i "node_modules/*"
+	i18n_tool extract --no-segment
 
 fake_translations: extract_translations dummy_translations compile_translations ## generate and compile dummy translation files
 
