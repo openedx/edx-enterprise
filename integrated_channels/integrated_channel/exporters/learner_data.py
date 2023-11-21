@@ -312,25 +312,12 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_certificate_data(enterprise_enrollment, channel_name)
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
-                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
-                f' Passed timestamp: {passed_timestamp}'
-            ))
             if completed_date_from_api is None:
                 # means we cannot find a cert for this learner
                 # we will try getting grades info using the alternative api in this case
                 # if that also does not exist then we have nothing to report
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                     self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
-                LOGGER.info(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    f'No certificate found, obtained grading data from grades api.'
-                    f' CompletedDate: {completed_date_from_api},'
-                    f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
-                    f' Passed timestamp: {passed_timestamp}'
-                ))
 
         # In the past we have been inconsistent about the format/source/typing of the grade_percent value.
         # Initial investigations have lead us to believe that grade percents from the source are seemingly more
@@ -349,7 +336,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
         return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp
 
-    def get_incomplete_content_count(self, enterprise_enrollment, channel_name):
+    def get_incomplete_content_count(self, enterprise_enrollment):
         '''
         Fetch incomplete content count using completion blocks LMS api
         Will return None for non audit enrollment (but this does not have to be the case necessarily)
@@ -363,17 +350,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         if not is_audit_enrollment:
             return incomplete_count
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
-        enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         course_id = enterprise_enrollment.course_id
 
         user = User.objects.get(pk=lms_user_id)
         completion_summary = get_completion_summary(course_id, user)
         incomplete_count = completion_summary.get('incomplete_count')
-        LOGGER.info(
-            generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'Incomplete count for audit enrollment is {incomplete_count}'
-            ))
 
         return incomplete_count
 
@@ -435,7 +416,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
             # For audit courses, check if 100% completed
             # which we define as: no non-gated content is remaining
-            incomplete_count = self.get_incomplete_content_count(enterprise_enrollment, channel_name)
+            incomplete_count = self.get_incomplete_content_count(enterprise_enrollment)
 
             (
                 completed_date_from_api, grade_from_api,

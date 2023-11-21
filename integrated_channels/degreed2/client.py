@@ -116,21 +116,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Returns: status_code, response_text
         """
         json_payload = json.loads(payload)
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                user_id,
-                None,
-                '[Degreed2Client] - Attempting degreed2 create_course_completion,'
-                f'payload:{json_payload}'
-            )
-        )
-        LOGGER.info(self.make_log_msg(
-            json_payload.get('data').get('attributes').get('content-id'),
-            f'Attempting find course via url: {self.get_completions_url()}'),
-            user_id
-        )
         code, body = self._post(
             self.get_completions_url(),
             json_payload,
@@ -345,7 +330,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         if degreed_course_id:
             json_to_send['data']['id'] = degreed_course_id
 
-        LOGGER.info(self.make_log_msg('', f'About to post payload: {json_to_send}'))
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
                 override_url,
@@ -450,16 +434,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                     )
                 )
                 break
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                '[Degreed2Client] - Successfuly called:'
-                f'RESPONSE:{response}'
-            )
-        )
         return response.status_code, response.text
 
     def _patch(self, url, data, scope):

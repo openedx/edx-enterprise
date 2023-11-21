@@ -76,13 +76,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['course_metadata']['courseId'] = course_id_generated
 
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            self.enterprise_configuration.enterprise_customer.uuid,
-            None,
-            external_id,
-            f"Creating course with courseId: {external_id}, and generated course_id: {course_id_generated}"
-        ))
         self._create_session()
         create_url = self.generate_course_create_url()
         try:
@@ -111,14 +104,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 HTTPStatus.NOT_FOUND.value
             )
 
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            self.enterprise_configuration.enterprise_customer.uuid,
-            None,
-            external_id,
-            (f"Creating content page for Blackboard course with course ID={external_id},"
-             f" and generated course_id: {course_id_generated}")
-        ))
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
         success_body = 'Successfully created Blackboard integration course={bb_course_id} with integration ' \
@@ -139,15 +124,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         course_id = self._resolve_blackboard_course_id(external_id)
         BlackboardAPIClient._validate_course_id(course_id, external_id)
 
-        LOGGER.info(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                course_id,
-                f'Updating course with courseId: {course_id}'
-            )
-        )
         update_url = self.generate_course_update_url(course_id)
         response = self._patch(update_url, channel_metadata_item.get('course_metadata'))
 
