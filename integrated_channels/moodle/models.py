@@ -5,6 +5,7 @@ Database models for Enterprise Integrated Channel Moodle.
 import json
 from logging import getLogger
 
+from fernet_fields import EncryptedCharField
 from simple_history.models import HistoricalRecords
 
 from django.db import models
@@ -64,6 +65,17 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
+    decrypted_username = EncryptedCharField(
+        max_length=255,
+        verbose_name="Encrypted Webservice Username",
+        blank=True,
+        help_text=_(
+            "The encrypted API user's username used to obtain new tokens."
+            " It will be encrypted when stored in the database."
+        ),
+        null=True,
+    )
+
     password = models.CharField(
         max_length=255,
         blank=True,
@@ -73,6 +85,17 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
+    decrypted_password = EncryptedCharField(
+        max_length=255,
+        verbose_name="Encrypted Webservice Password",
+        blank=True,
+        help_text=_(
+            "The encrypted API user's password used to obtain new tokens."
+            " It will be encrypted when stored in the database."
+        ),
+        null=True,
+    )
+
     token = models.CharField(
         max_length=255,
         blank=True,
@@ -80,6 +103,17 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         help_text=_(
             "The user's token for the Moodle webservice."
         )
+    )
+
+    decrypted_token = EncryptedCharField(
+        max_length=255,
+        verbose_name="Encrypted Webservice Token",
+        blank=True,
+        help_text=_(
+            "The encrypted API user's token used to obtain new tokens."
+            " It will be encrypted when stored in the database."
+        ),
+        null=True,
     )
 
     transmission_chunk_size = models.IntegerField(
