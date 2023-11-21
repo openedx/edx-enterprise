@@ -15,7 +15,13 @@ Change Log
 
 Unreleased
 ----------
-Nothing unreleased.
+[4.7.3]
+--------
+feat: added management command to re-encrypt enterprise customer reporting configs
+
+[4.7.2]
+--------
+feat: stop learner data transmissions for course runs
 
 [4.7.1]
 --------
