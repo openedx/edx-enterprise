@@ -12,7 +12,7 @@ attrs==23.1.0
     #   trio
 autocommand==2.2.2
     # via jaraco-text
-certifi==2023.7.22
+certifi==2023.11.17
     # via selenium
 cheroot==10.0.0
     # via cherrypy
@@ -69,9 +69,9 @@ outcome==1.3.0.post0
     # via trio
 portend==3.2.0
     # via cherrypy
-pydantic==2.4.2
+pydantic==2.5.1
     # via inflect
-pydantic-core==2.10.1
+pydantic-core==2.14.3
     # via pydantic
 pysocks==1.7.1
     # via urllib3
@@ -101,8 +101,10 @@ typing-extensions==4.8.0
     #   inflect
     #   pydantic
     #   pydantic-core
-urllib3[socks]==2.0.7
-    # via selenium
+urllib3[socks]==2.1.0
+    # via
+    #   selenium
+    #   urllib3
 wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1
