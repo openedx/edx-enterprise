@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.7.5]
+--------
+feat: added flag to allow in progress course learner data transmission
+
 [4.7.4]
 --------
 feat: added fields for holding encrypted data in database
