@@ -309,8 +309,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 enterprise_enrollment_id
             )
 
-            if not learner_data.course_completed \
-                and not getattr(self.enterprise_configuration, 'enable_incomplete_progress_transmission', False):
+            if (not learner_data.course_completed and
+                    not getattr(self.enterprise_configuration, 'enable_incomplete_progress_transmission', False)):
                 # The user has not completed the course and enable_incomplete_progress_transmission is not set,
                 # so we shouldn't send a completion status call
                 remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
