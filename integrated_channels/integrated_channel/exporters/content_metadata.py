@@ -264,11 +264,6 @@ class ContentMetadataExporter(Exporter):
                     content_id=content_id,
                 ).first()
                 if incomplete_transmission:
-                    self._log_info(
-                        'Found an unsent content create record while creating record. '
-                        'Including record.',
-                        course_or_course_run_key=content_id
-                    )
                     incomplete_transmission.mark_for_create()
                     items_to_create[content_id] = incomplete_transmission
                 else:
@@ -347,12 +342,6 @@ class ContentMetadataExporter(Exporter):
             # if the item to create doesn't exist as an orphaned piece of content, do all the normal checks
             elif content_key not in existing_content_keys:
                 unique_new_items_to_create.append(item)
-            else:
-                self._log_info(
-                    'Found an previous content record in another catalog while creating. '
-                    'Skipping record.',
-                    course_or_course_run_key=content_key
-                )
 
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
@@ -443,11 +432,6 @@ class ContentMetadataExporter(Exporter):
 
         # Grab orphaned content metadata items for the customer, ordered by oldest to newest
         orphaned_content = OrphanedContentTransmissions.objects.filter(base_query)
-        num_records = len(orphaned_content)
-        self._log_info(
-            f'Found {num_records} orphaned content records for customer: '
-            f'{self.enterprise_customer.uuid}. Returning {min(max_set_count, num_records)} records.'
-        )
         ordered_and_chunked_orphaned_content = orphaned_content.order_by('created')[:max_set_count]
         return ordered_and_chunked_orphaned_content
 
@@ -463,10 +447,6 @@ class ContentMetadataExporter(Exporter):
         item.content_title = metadata.get('title')
         item.content_last_changed = metadata.get('content_last_modified')
         item.save()
-        self._log_info(
-            f'_sanitize_and_set_item_metadata method updated item: {item} `content_last_changed`: '
-            f'{metadata.get("content_last_modified")}'
-        )
 
     def export(self, **kwargs):
         """
@@ -509,10 +489,6 @@ class ContentMetadataExporter(Exporter):
                 kwargs.get('force_retrieve_all_catalogs', False),
                 max_payload_count
             )
-
-            self._log_info(f'diff items_to_create: {items_to_create}')
-            self._log_info(f'diff items_to_update: {items_to_update}')
-            self._log_info(f'diff items_to_delete: {items_to_delete}')
 
             content_keys_filter = list(items_to_create.keys()) + list(items_to_update.keys())
             if content_keys_filter:

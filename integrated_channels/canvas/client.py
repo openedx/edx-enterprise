@@ -90,15 +90,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # Do one of 3 things with the fetched canvas course info
         # If no course was found, create it
         if not located_course:
-            LOGGER.info(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    edx_course_id,
-                    f'Creating new course with payload {desired_payload}',
-                )
-            )
             # Course does not exist: Create the course
             status_code, response_text = self._post(
                 self.course_create_url,

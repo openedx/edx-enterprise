@@ -37,15 +37,6 @@ class Degreed2LearnerExporter(LearnerExporter):
         degreed_completed_timestamp = completed_date.strftime('%Y-%m-%dT%H:%M:%S') if isinstance(
             completed_date, datetime
         ) else None
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-            enterprise_enrollment.enterprise_customer_user.user_id,
-            enterprise_enrollment.course_id,
-            '[Degreed2Client] - Attempting get_learner_data_records:'
-            f'percent_grade={percent_grade}, degreed_completed_timestamp={degreed_completed_timestamp}'
-            f'completed_date={completed_date}, course_completed={course_completed}'
-        ))
         try:
             remote_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
                 self.enterprise_configuration.idp_id

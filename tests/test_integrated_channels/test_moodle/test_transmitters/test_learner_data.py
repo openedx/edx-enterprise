@@ -8,11 +8,10 @@ from unittest.mock import Mock
 
 from pytest import mark
 
-from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter, LearnerExporterUtility
+from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 from integrated_channels.moodle.models import MoodleLearnerDataTransmissionAudit
 from integrated_channels.moodle.transmitters import learner_data
-from integrated_channels.utils import encode_data_for_logging, generate_formatted_log
 from test_utils import factories
 
 
@@ -78,9 +77,7 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
         assert self.payload.error_message == ''
 
     @mock.patch("integrated_channels.integrated_channel.models.LearnerDataTransmissionAudit")
-    @mock.patch('integrated_channels.integrated_channel.transmitters.'
-                'learner_data.LOGGER', autospec=True)
-    def test_incomplete_progress_learner_data_transmission(self, mock_logger, learner_data_transmission_audit_mock):
+    def test_incomplete_progress_learner_data_transmission(self, learner_data_transmission_audit_mock):
         """
         Test that a customer's configuration can run in enable incomplete progress transmission mode
         """
@@ -97,19 +94,13 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
         learner_data_transmission_audit_mock.course_completed = False
         learner_data_transmission_audit_mock.course_id = 'course_id'
         LearnerExporterMock.export = Mock(return_value=[learner_data_transmission_audit_mock])
-        lms_user_id = LearnerExporterUtility.lms_user_id_for_ent_course_enrollment_id(
-            learner_data_transmission_audit_mock.enterprise_course_enrollment_id
-        )
-        serialized_payload = learner_data_transmission_audit_mock.serialize(
-            enterprise_configuration=self.enterprise_config
-        )
-        encoded_serialized_payload = encode_data_for_logging(serialized_payload)
+
         self.learner_transmitter.transmit(
             LearnerExporterMock,
             remote_user_id='user_id'
         )
         # with enable_incomplete_progress_transmission = True we should be able to call this method
-        assert self.learner_transmitter.client.create_course_completion.called
+        assert self.learner_transmitter.client.create_course_completion.call_count == 1
 
         # Set boolean flag to false
         self.enterprise_config.enable_incomplete_progress_transmission = False
@@ -117,12 +108,6 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
             LearnerExporterMock,
             remote_user_id='user_id'
         )
-        mock_logger.info.assert_called_with(generate_formatted_log(
-            self.enterprise_config.channel_code(),
-            self.enterprise_config.enterprise_customer.uuid or None,
-            lms_user_id,
-            learner_data_transmission_audit_mock.course_id,
-            'Skipping in-progress enterprise enrollment record '
-            f'integrated_channel_remote_user_id={learner_data_transmission_audit_mock.user_id}, '
-            f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
-        ))
+        # with enable_incomplete_progress_transmission = False we should not be able to call this method
+        # therefore the call count should remain the same
+        assert self.learner_transmitter.client.create_course_completion.call_count == 1

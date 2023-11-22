@@ -293,13 +293,6 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         # one by course key and one by course run id.
         # If the transmission with the course key succeeds, the next one will get skipped.
         # If it fails, the one with the course run id will be attempted and (presumably) succeed.
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid,
-            None,
-            None,
-            f"Looping through learner data = {payload.export(**kwargs)}"
-        ))
 
         for learner_data in payload.export(**kwargs):
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
@@ -315,15 +308,6 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 # so we shouldn't send a completion status call
                 remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
                 encoded_serialized_payload = encode_data_for_logging(serialized_payload)
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'Skipping in-progress enterprise enrollment record '
-                    f'integrated_channel_remote_user_id={remote_id}, '
-                    f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
-                ))
                 continue
 
             grade = getattr(learner_data, 'grade', None)
@@ -335,14 +319,6 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
             ):
                 # We've already sent a completion status for this enrollment
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'Skipping previously sent enterprise enrollment '
-                    f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}'
-                ))
                 continue
 
             if self.enterprise_configuration.dry_run_mode_enabled:

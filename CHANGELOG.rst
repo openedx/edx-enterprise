@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.7.6]
+--------
+chore: remove unnecessary logs from the integrated channels
+
 [4.7.5]
 --------
 feat: added flag to allow in progress course learner data transmission

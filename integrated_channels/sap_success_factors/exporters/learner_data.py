@@ -167,17 +167,6 @@ class SapSuccessFactorsLearnerManger:
             sap_student_id = sap_inactive_learner['studentID']
             social_auth_user = get_user_from_social_auth(providers, sap_student_id, enterprise_customer)
             if not social_auth_user:
-                LOGGER.info(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        f"No social auth data found for inactive user with SAP student id {sap_student_id} "
-                        f"of enterprise customer {enterprise_customer.name} with identity providers "
-                        f"{', '.join(map(lambda provider: provider.provider_id, providers))}"
-                    )
-                )
                 continue
 
             try:
