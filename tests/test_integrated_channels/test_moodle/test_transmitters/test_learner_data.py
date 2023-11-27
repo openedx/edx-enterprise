@@ -100,7 +100,7 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
             remote_user_id='user_id'
         )
         # with enable_incomplete_progress_transmission = True we should be able to call this method
-        assert self.learner_transmitter.client.create_course_completion.call_count == 1
+        self.learner_transmitter.client.create_course_completion.assert_called
 
         # Set boolean flag to false
         self.enterprise_config.enable_incomplete_progress_transmission = False
@@ -109,5 +109,4 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
             remote_user_id='user_id'
         )
         # with enable_incomplete_progress_transmission = False we should not be able to call this method
-        # therefore the call count should remain the same
-        assert self.learner_transmitter.client.create_course_completion.call_count == 1
+        self.learner_transmitter.client.create_course_completion.assert_not_called
