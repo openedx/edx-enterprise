@@ -78,6 +78,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['is_revoked'] = instance.license.is_revoked if instance.license else False
         representation['is_enrollment_active'] = instance.is_active
         representation['mode'] = instance.mode
+        representation['resume_course_run_url'] = self.context['course_enrollments_resume_urls'].get(course_run_id)
 
         if CourseDetails:
             course_details = CourseDetails.objects.filter(id=course_run_id).first()
