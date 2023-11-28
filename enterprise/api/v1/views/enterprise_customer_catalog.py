@@ -122,7 +122,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
-        'uuid', 'enterprise_customer',
+        'uuid', 'title', 'enterprise_customer', 'enterprise_catalog_query',
     )
     filterset_fields = FIELDS
     ordering_fields = FIELDS
