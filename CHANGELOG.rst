@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.8.1]
+--------
+feat: integrated resumeCourseRunUrl into enrollments API
+
 [4.7.6]
 --------
 chore: remove unnecessary logs from the integrated channels
