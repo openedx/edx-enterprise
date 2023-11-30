@@ -335,7 +335,24 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'grades[0][grade]': completion_data['grade'] * self.enterprise_configuration.grade_scale
         }
 
-        return self._post(params)
+        response = self._post(params)
+        status_code = response.get('status_code', None)
+        text = response.get('text', None)
+        headers = response.get('headers', None)
+        LOGGER.info(
+            'Learner Data Transmission'
+            f'for course={completion_data.courseID} '
+            f'and enterprise_course_enrollment_id={completion_data.enterprise_course_enrollment_id} with data '
+            f'source: {module_name}, '
+            f'activityid: {course_module_id}, '
+            f'grades[0][studentid]: {moodle_user_id}, '
+            f'grades[0][grade]: {completion_data.grade * self.enterprise_configuration.grade_scale} with response '
+            f'Status Code: {status_code}, '
+            f'Text: {text}, '
+            f'Headers: {headers}, ' 
+        )
+
+        return response
 
     def create_content_metadata(self, serialized_data):
         """
