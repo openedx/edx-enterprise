@@ -64,6 +64,9 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             'pacing': 'instructor',
             'display_org_with_default': 'my university',
         }]
+        course_enrollments_resume_urls = {
+            course_run_id: "http://example.com/resume_url",
+        }
 
         mock_get_cert.return_value = {
             'download_url': 'example.com',
@@ -93,7 +96,11 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         serializer = EnterpriseCourseEnrollmentSerializer(
             [enterprise_enrollment],
             many=True,
-            context={'request': request, 'course_overviews': course_overviews},
+            context={
+                'request': request,
+                'course_overviews': course_overviews,
+                'course_enrollments_resume_urls': course_enrollments_resume_urls
+            },
         )
 
         expected = OrderedDict([
@@ -112,6 +119,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('is_revoked', False),
             ('is_enrollment_active', True),
             ('mode', 'verified'),
+            ('resume_course_run_url', 'http://example.com/resume_url'),
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)
