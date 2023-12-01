@@ -28,7 +28,7 @@ def test_post_sso_configuration():
     responses.add(
         responses.POST,
         SSO_ORCHESTRATOR_CONFIGURE_URL,
-        json={},
+        json={'samlServiceProviderInformation': {'spMetadataUrl': 'https://example.com'}},
     )
     client = sso_orchestrator.EnterpriseSSOOrchestratorApiClient()
     actual_response = client.configure_sso_orchestration_record(
@@ -36,7 +36,7 @@ def test_post_sso_configuration():
         config_pk=TEST_ENTERPRISE_SSO_CONFIG_UUID,
         enterprise_data={'uuid': TEST_ENTERPRISE_ID, 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_ENTERPRISE_NAME},
     )
-    assert actual_response == 200
+    assert actual_response == 'https://example.com'
     responses.assert_call_count(count=1, url=SSO_ORCHESTRATOR_CONFIGURE_URL)
 
     sent_body_params = json.loads(responses.calls[0].request.body)

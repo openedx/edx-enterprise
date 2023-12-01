@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, Mock
 import ddt
 from pytest import mark
 
-from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter

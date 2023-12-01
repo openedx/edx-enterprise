@@ -19,7 +19,7 @@ from django.contrib.sites.models import Site
 from django.core import exceptions as django_exceptions
 from django.utils.translation import gettext_lazy as _
 
-from enterprise import models, utils
+from enterprise import models, utils  # pylint: disable=cyclic-import
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_PERMISSION_GROUPS, DefaultColors
@@ -222,7 +222,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
-            'enable_pathways', 'enable_programs',
+            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -446,7 +446,7 @@ class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerCatalog
         fields = (
-            'uuid', 'title', 'enterprise_customer', 'enterprise_catalog_query',
+            'uuid', 'title', 'enterprise_customer', 'enterprise_catalog_query', 'created', 'modified',
         )
 
 
@@ -1526,7 +1526,6 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         at_risk_enrollment_less_than_one_hour = serializers.IntegerField(required=True)
         at_risk_enrollment_end_date_soon = serializers.IntegerField(required=True)
         at_risk_enrollment_dormant = serializers.IntegerField(required=True)
-        created_at = serializers.DateTimeField(required=True)
 
     class LearnerEngagementSerializer(serializers.Serializer):
         """
@@ -1543,8 +1542,6 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         hours = serializers.IntegerField(required=True)
         hours_prior = serializers.IntegerField(required=True)
         active_contract = serializers.BooleanField(required=True)
-        contract_end_date = serializers.DateTimeField(required=True)
-        created_at = serializers.DateTimeField(required=True)
 
     learner_progress = LearnerProgressSerializer()
     learner_engagement = LearnerEngagementSerializer()

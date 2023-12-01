@@ -65,7 +65,7 @@ def validate_provider_config(enterprise_customer, sso_provider_id):
     enterprise_orchestration_config = enterprise_customer.sso_orchestration_records.filter(
         active=True
     )
-    if enterprise_orchestration_config.exists():
+    if enterprise_orchestration_config.exists() and not enterprise_orchestration_config.first().validated_at:
         enterprise_orchestration_config.update(validated_at=datetime.now())
 
     # With a successful SSO login, validate the enterprise customer's IDP config if it hasn't already been validated

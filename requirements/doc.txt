@@ -6,7 +6,7 @@
 #
 accessible-pygments==0.0.4
     # via pydata-sphinx-theme
-aiohttp==3.8.5
+aiohttp==3.8.6
     # via
     #   -r requirements/test-master.txt
     #   openai
@@ -16,7 +16,7 @@ aiosignal==1.3.1
     #   aiohttp
 alabaster==0.7.13
     # via sphinx
-amqp==5.1.1
+amqp==5.2.0
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -43,7 +43,7 @@ attrs==23.1.0
     #   -r requirements/test-master.txt
     #   aiohttp
     #   pytest
-babel==2.12.1
+babel==2.13.1
     # via
     #   pydata-sphinx-theme
     #   sphinx
@@ -54,11 +54,11 @@ backports-zoneinfo[tzdata]==0.2.1
     #   kombu
 beautifulsoup4==4.12.2
     # via pydata-sphinx-theme
-billiard==4.1.0
+billiard==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   celery
-bleach==6.0.0
+bleach==6.1.0
     # via -r requirements/test-master.txt
 celery==5.3.4
     # via
@@ -69,7 +69,7 @@ certifi==2023.7.22
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-cffi==1.15.1
+cffi==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   cryptography
@@ -106,6 +106,15 @@ code-annotations==1.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
+coreapi==2.3.3
+    # via
+    #   -r requirements/test-master.txt
+    #   drf-yasg
+coreschema==0.0.4
+    # via
+    #   -r requirements/test-master.txt
+    #   coreapi
+    #   drf-yasg
 cryptography==38.0.4
     # via
     #   -r requirements/test-master.txt
@@ -123,7 +132,7 @@ deprecated==1.2.14
     # via
     #   -r requirements/test-master.txt
     #   jwcrypto
-django==3.2.21
+django==3.2.22
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -137,14 +146,16 @@ django==3.2.21
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
-django-cache-memoize==0.1.10
+django-cache-memoize==0.2.0
     # via -r requirements/test-master.txt
-django-config-models==2.5.0
+django-config-models==2.5.1
     # via -r requirements/test-master.txt
 django-countries==7.5.1
     # via -r requirements/test-master.txt
@@ -156,9 +167,9 @@ django-crum==0.7.9
     #   edx-toggles
 django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
-django-filter==23.2
+django-filter==23.3
     # via -r requirements/test-master.txt
-django-ipware==5.0.0
+django-ipware==5.0.1
     # via -r requirements/test-master.txt
 django-model-utils==4.3.1
     # via
@@ -166,7 +177,7 @@ django-model-utils==4.3.1
     #   edx-rbac
 django-multi-email-field==0.7.0
     # via -r requirements/test-master.txt
-django-oauth-toolkit==1.5.0
+django-oauth-toolkit==1.7.1
     # via -r requirements/test-master.txt
 django-object-actions==4.2.0
     # via -r requirements/test-master.txt
@@ -185,6 +196,8 @@ djangorestframework==3.14.0
     #   -r requirements/test-master.txt
     #   django-config-models
     #   drf-jwt
+    #   drf-yasg
+    #   edx-api-doc-tools
     #   edx-drf-extensions
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
@@ -202,7 +215,13 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-braze-client==0.1.7
+drf-yasg==1.21.5
+    # via
+    #   -r requirements/test-master.txt
+    #   edx-api-doc-tools
+edx-api-doc-tools==1.7.0
+    # via -r requirements/test-master.txt
+edx-braze-client==0.1.8
     # via -r requirements/test-master.txt
 edx-django-utils==5.7.0
     # via
@@ -211,11 +230,11 @@ edx-django-utils==5.7.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==8.9.2
+edx-drf-extensions==8.12.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.5.0
+edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -231,9 +250,9 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==19.6.1
+faker==19.13.0
     # via factory-boy
-filelock==3.12.3
+filelock==3.12.4
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -252,12 +271,21 @@ imagesize==1.4.1
     # via sphinx
 importlib-metadata==6.8.0
     # via sphinx
+inflection==0.5.1
+    # via
+    #   -r requirements/test-master.txt
+    #   drf-yasg
 iniconfig==2.0.0
     # via pytest
+itypes==1.2.0
+    # via
+    #   -r requirements/test-master.txt
+    #   coreapi
 jinja2==3.1.2
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
+    #   coreschema
     #   sphinx
 jsondiff==2.0.0
     # via -r requirements/test-master.txt
@@ -267,7 +295,7 @@ jwcrypto==1.5.0
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-kombu==5.3.2
+kombu==5.3.3
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -280,7 +308,7 @@ multidict==6.0.4
     #   -r requirements/test-master.txt
     #   aiohttp
     #   yarl
-newrelic==9.0.0
+newrelic==9.1.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -290,15 +318,16 @@ oauthlib==3.2.2
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-openai==0.28.0
+openai==0.28.1
     # via -r requirements/test-master.txt
 oscrypto==1.3.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-packaging==23.1
+packaging==23.2
     # via
     #   -r requirements/test-master.txt
+    #   drf-yasg
     #   pydata-sphinx-theme
     #   pytest
     #   snowflake-connector-python
@@ -317,7 +346,7 @@ pgpy==0.6.0
     # via -r requirements/test-master.txt
 pillow==9.5.0
     # via -r requirements/test-master.txt
-platformdirs==3.8.1
+platformdirs==3.11.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -341,11 +370,11 @@ pycparser==2.21
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.18.0
+pycryptodomex==3.19.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pydata-sphinx-theme==0.14.0
+pydata-sphinx-theme==0.14.3
     # via sphinx-book-theme
 pygments==2.16.1
     # via
@@ -381,7 +410,6 @@ python-dateutil==2.8.2
     # via
     #   -r requirements/test-master.txt
     #   celery
-    #   edx-drf-extensions
     #   faker
 python-slugify==8.0.1
     # via
@@ -393,6 +421,7 @@ pytz==2022.7.1
     #   babel
     #   django
     #   djangorestframework
+    #   drf-yasg
     #   edx-tincan-py35
     #   snowflake-connector-python
 pyyaml==6.0.1
@@ -404,6 +433,7 @@ readme-renderer==42.0
 requests==2.31.0
     # via
     #   -r requirements/test-master.txt
+    #   coreapi
     #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -413,6 +443,14 @@ requests==2.31.0
     #   sphinx
 restructuredtext-lint==1.4.0
     # via doc8
+ruamel-yaml==0.17.35
+    # via
+    #   -r requirements/test-master.txt
+    #   drf-yasg
+ruamel-yaml-clib==0.2.8
+    # via
+    #   -r requirements/test-master.txt
+    #   ruamel-yaml
 rules==3.3
     # via -r requirements/test-master.txt
 semantic-version==2.10.0
@@ -423,8 +461,6 @@ six==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
-    #   django-oauth-toolkit
-    #   edx-drf-extensions
     #   edx-rbac
     #   python-dateutil
 slumber==0.7.1
@@ -433,7 +469,7 @@ slumber==0.7.1
     #   edx-rest-api-client
 snowballstemmer==2.2.0
     # via sphinx
-snowflake-connector-python==3.2.0
+snowflake-connector-python==3.2.1
     # via -r requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
@@ -471,7 +507,7 @@ stevedore==5.1.0
     #   doc8
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==7.1.0
+testfixtures==7.2.0
     # via -r requirements/test-master.txt
 text-unidecode==1.3
     # via
@@ -489,14 +525,13 @@ tqdm==4.66.1
     # via
     #   -r requirements/test-master.txt
     #   openai
-typing-extensions==4.7.1
+typing-extensions==4.8.0
     # via
     #   -r requirements/test-master.txt
     #   asgiref
     #   django-countries
     #   edx-opaque-keys
     #   faker
-    #   filelock
     #   kombu
     #   pydata-sphinx-theme
     #   snowflake-connector-python
@@ -507,18 +542,23 @@ tzdata==2023.3
     #   celery
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
-urllib3==1.26.16
+uritemplate==4.1.1
+    # via
+    #   -r requirements/test-master.txt
+    #   coreapi
+    #   drf-yasg
+urllib3==1.26.17
     # via
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-vine==5.0.0
+vine==5.1.0
     # via
     #   -r requirements/test-master.txt
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.6
+wcwidth==0.2.8
     # via
     #   -r requirements/test-master.txt
     #   prompt-toolkit
@@ -534,5 +574,5 @@ yarl==1.9.2
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
-zipp==3.16.2
+zipp==3.17.0
     # via importlib-metadata

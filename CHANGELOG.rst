@@ -15,6 +15,104 @@ Change Log
 
 Unreleased
 ----------
+
+[4.8.1]
+--------
+feat: integrated resumeCourseRunUrl into enrollments API
+
+[4.7.6]
+--------
+chore: remove unnecessary logs from the integrated channels
+
+[4.7.5]
+--------
+feat: added flag to allow in progress course learner data transmission
+
+[4.7.4]
+--------
+feat: added fields for holding encrypted data in database
+
+[4.7.3]
+--------
+feat: added management command to re-encrypt enterprise customer reporting configs
+
+[4.7.2]
+--------
+feat: stop learner data transmissions for course runs
+
+[4.7.1]
+--------
+chore: retire Degreed v1 code from the set of channels
+
+[4.7.0]
+--------
+feat: Add an ``api-docs`` page that lives at ``[LMS_ROOT_URL]/enterprise/api-docs/``
+
+[4.6.12]
+--------
+feat: unlink degreed2 inactive user
+
+[4.6.11]
+--------
+chore: Aligning SAP naming conventions
+
+[4.6.10]
+--------
+chore: Update requirements
+
+[4.6.9]
+-------
+chore: returning SP metadata url from the sso orchestrator to the API caller
+
+[4.6.8]
+-------
+feat: truncate API Response before writing to the APIResponseRecord
+fix: initiate filtering the API Response only when a successful response is received
+
+[4.6.7]
+-------
+feat: filter courses from API Response of SAPSF to store in the APIResponseRecord table
+
+[4.6.6]
+-------
+chore: orchestrator exception handling and submission refinements
+
+[4.6.5]
+-------
+feat: Added logs for Degreed2 client
+
+[4.6.4]
+-------
+chore: updating sso orchestrator self service api endpoints
+
+[4.6.3]
+-------
+fix: Remove not required fields
+
+[4.6.2]
+-------
+fix: clarify contact email helper text for enterprise customer
+
+[4.6.1]
+-------
+feat: Added the disable_subject_metadata_transmission flag to CornerstoneEnterpriseCustomerConfiguration.
+
+[4.6.0]
+-------
+feat: Added enable_source_demo_data_for_analytics_and_lpr field to EnterpriseCustomer.
+
+[4.5.7]
+-------
+fix: Fixed ChatGPT prompt and a few model modifications for better readability for admins.
+
+[4.5.6]
+-------
+feat: Added logs for learner completion data post request[moodle]
+
+[4.5.5]
+-------
+chore: sso orchestrator configs should start inactive and be activated upon successful configuration
+
 [4.5.4]
 -------
 feat: inactive moodle course instead of true delete

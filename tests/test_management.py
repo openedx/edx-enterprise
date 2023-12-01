@@ -46,7 +46,7 @@ from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
 )
-from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
     ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES,
@@ -87,7 +87,7 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
     Tests for the ``IntegratedChannelCommandMixin`` class.
     """
 
-    @ddt.data('SAP', 'DEGREED')
+    @ddt.data('SAP', 'DEGREED2')
     def test_transmit_content_metadata_specific_channel(self, channel_code):
         """
         Only the channel we input is what we get out.
@@ -143,12 +143,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
             name='Veridian Dynamics',
         )
-        self.degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
+        self.degreed2 = factories.Degreed2EnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            key='key',
-            secret='secret',
-            degreed_company_id='Degreed Company',
-            degreed_base_url='https://www.degreed.com/',
+            degreed_base_url='http://betatest.degreed.com/',
         )
         self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
@@ -193,7 +190,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
@@ -202,7 +199,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             transmit_content_metadata_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-            degreed_create_content_metadata_mock,
+            degreed2_create_content_metadata_mock,
     ):
         """
         Verify the data transmission task for integrated channels with error.
@@ -213,7 +210,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-        degreed_create_content_metadata_mock.return_value = 200, '{}'
+        degreed2_create_content_metadata_mock.return_value = 200, '{}'
 
         content_filter = {
             'key': ['course-v1:edX+DemoX+Demo_Course_1']
@@ -237,12 +234,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             content_filter=content_filter
         )
         self.mock_enterprise_customer_catalogs(str(enterprise_catalog.uuid))
-        dummy_degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
+        dummy_degreed2 = factories.Degreed2EnterpriseCustomerConfigurationFactory(
             enterprise_customer=dummy_enterprise_customer,
-            key='key',
-            secret='secret',
-            degreed_company_id='Degreed Company',
-            degreed_base_url='https://www.degreed.com/',
+            degreed_base_url='http://betatest.degreed.com/',
             active=True,
         )
         dummy_sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
@@ -255,7 +249,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
         expected_calls = [
             mock.call(username='C-3PO', channel_code='SAP', channel_pk=1),
-            mock.call(username='C-3PO', channel_code='DEGREED', channel_pk=1)
+            mock.call(username='C-3PO', channel_code='DEGREED2', channel_pk=1),
         ]
 
         call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
@@ -264,7 +258,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
     @responses.activate
     @freeze_time(NOW)
-    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
@@ -273,14 +267,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             transmit_content_metadata_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-            degreed_create_content_metadata_mock,
+            degreed2_create_content_metadata_mock,
     ):
         """
         Test the data transmission task.
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-        degreed_create_content_metadata_mock.return_value = 200, '{}'
+        degreed2_create_content_metadata_mock.return_value = 200, '{}'
 
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
@@ -288,7 +282,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
         expected_calls = [
             mock.call(username='C-3PO', channel_code='SAP', channel_pk=1),
-            mock.call(username='C-3PO', channel_code='DEGREED', channel_pk=1),
+            mock.call(username='C-3PO', channel_code='DEGREED2', channel_pk=1),
         ]
 
         call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
@@ -307,7 +301,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
         # Remove all integrated channels
         SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.all().delete()
-        DegreedEnterpriseCustomerConfiguration.objects.all().delete()
+        Degreed2EnterpriseCustomerConfiguration.objects.all().delete()
 
         with LogCapture(level=logging.INFO) as log_capture:
             call_command('transmit_content_metadata', '--catalog_user', user.username)
@@ -1907,12 +1901,12 @@ class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, 
         )
         self.enterprise_customer.enterprise_customer_catalogs.set([enterprise_catalog])
         self.enterprise_customer.save()
-        self.customer_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
+        self.customer_config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
+            sapsf_base_url='http://enterprise.successfactors.com/',
             key='key',
             secret='secret',
-            degreed_company_id='Degreed Company',
-            degreed_base_url='https://www.degreed.com/',
+            active=True,
         )
         self.orphaned_content = factories.ContentMetadataItemTransmissionFactory(
             content_id='DemoX',
@@ -2020,6 +2014,7 @@ class TestRemoveNullCatalogTransmissionAuditsManagementCommand(unittest.TestCase
     """
     Test the ``remove_null_catalog_transmission_audits`` management command.
     """
+
     def setUp(self):
         self.enterprise_customer_1 = factories.EnterpriseCustomerFactory(
             name='Wonka Factory',

@@ -405,17 +405,6 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         new_page_start_at = page_size + start_at
         total_inactive_learners = sap_inactive_learners['@odata.count']
         inactive_learners_on_page = sap_inactive_learners['value']
-        LOGGER.info(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                f"SAP SF searchStudent API returned {len(inactive_learners_on_page)} "
-                f"inactive learners of total {total_inactive_learners} starting from {start_at} for "
-                f"enterprise customer {self.enterprise_configuration.enterprise_customer.name}"
-            )
-        )
 
         all_inactive_learners += inactive_learners_on_page
         if total_inactive_learners > new_page_start_at:

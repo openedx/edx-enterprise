@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-annotated-types==0.5.0
+annotated-types==0.6.0
     # via pydantic
 attrs==23.1.0
     # via
@@ -28,7 +28,7 @@ h11==0.14.0
     # via wsproto
 idna==3.4
     # via trio
-importlib-resources==6.0.1
+importlib-resources==6.1.1
     # via jaraco-text
 inflect==7.0.0
     # via jaraco-text
@@ -40,7 +40,7 @@ jaraco-collections==4.3.0
     #   cherrypy
 jaraco-context==4.3.0
     # via jaraco-text
-jaraco-functools==3.9.0
+jaraco-functools==4.0.0
     # via
     #   -r requirements/js_test.in
     #   cheroot
@@ -65,13 +65,13 @@ more-itertools==10.1.0
     #   jaraco-text
 ordereddict==1.1
     # via jasmine-core
-outcome==1.2.0
+outcome==1.3.0.post0
     # via trio
 portend==3.2.0
     # via cherrypy
-pydantic==2.3.0
+pydantic==2.4.2
     # via inflect
-pydantic-core==2.6.3
+pydantic-core==2.10.1
     # via pydantic
 pysocks==1.7.1
     # via urllib3
@@ -79,7 +79,7 @@ pytz==2023.3.post1
     # via tempora
 pyyaml==6.0.1
     # via jasmine
-selenium==4.12.0
+selenium==4.15.2
     # via jasmine
 sniffio==1.3.0
     # via trio
@@ -89,26 +89,25 @@ tempora==5.5.0
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.22.2
+trio==0.23.1
     # via
     #   selenium
     #   trio-websocket
-trio-websocket==0.10.4
+trio-websocket==0.11.1
     # via selenium
 typing-extensions==4.8.0
     # via
     #   annotated-types
     #   inflect
-    #   jaraco-functools
     #   pydantic
     #   pydantic-core
-urllib3[socks]==2.0.4
+urllib3[socks]==2.0.7
     # via selenium
 wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1
     # via cherrypy
-zipp==3.16.2
+zipp==3.17.0
     # via importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:

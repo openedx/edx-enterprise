@@ -69,15 +69,19 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         self.client = Client()
         self.client.login(username=self.user.username, password="QWERTY")
 
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
-    def test_view_returns_information(self, mock_get_overviews, mock_serializer):
+    def test_view_returns_information(self, mock_get_overviews, mock_serializer, mock_course_resume_urls):
         """
         View should return data created by EnterpriseCourseEnrollmentSerializer
         (which we mock in this case)
         """
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
+        mock_course_resume_urls.return_value = {
+            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+        }
 
         resp = self.client.get(
             '{host}{path}?enterprise_id={enterprise_id}'.format(
@@ -92,6 +96,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             SERIALIZED_MOCK_INACTIVE_ENROLLMENT,
         ]
 
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
     @ddt.data('true', 'false')
@@ -100,6 +105,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             active_filter_value,
             mock_get_overviews,
             mock_serializer,
+            mock_course_resume_urls,
     ):
         """
         View should return data created by EnterpriseCourseEnrollmentSerializer
@@ -107,6 +113,9 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         """
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
+        mock_course_resume_urls.return_value = {
+            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+        }
 
         resp = self.client.get(
             '{host}{path}?enterprise_id={enterprise_id}&is_active={active_filter_value}'.format(
@@ -123,14 +132,23 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             expected_result = [SERIALIZED_MOCK_INACTIVE_ENROLLMENT]
         assert resp.json() == expected_result
 
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
-    def test_view_returns_bad_request_without_enterprise(self, mock_get_overviews, mock_serializer):
+    def test_view_returns_bad_request_without_enterprise(
+            self,
+            mock_get_overviews,
+            mock_serializer,
+            mock_course_resume_urls
+    ):
         """
         View should return a 400 because of the missing enterprise_id parameter.
         """
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
+        mock_course_resume_urls.return_value = {
+            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+        }
 
         resp = self.client.get(
             '{host}{path}'.format(
@@ -141,14 +159,23 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         assert resp.status_code == 400
         assert resp.json() == {'error': 'enterprise_id must be provided as a query parameter'}
 
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
-    def test_view_returns_not_found_unlinked_enterprise(self, mock_get_overviews, mock_serializer):
+    def test_view_returns_not_found_unlinked_enterprise(
+            self,
+            mock_get_overviews,
+            mock_serializer,
+            mock_course_resume_urls
+    ):
         """
         View should return a 404 because the user is not linked to the enterprise.
         """
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
+        mock_course_resume_urls.return_value = {
+            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+        }
 
         resp = self.client.get(
             '{host}{path}?enterprise_id={enterprise_id}'.format(
@@ -160,14 +187,16 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         assert resp.status_code == 404
         assert resp.json() == {'detail': 'Not found.'}
 
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user', mock.MagicMock())
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
-    def test_view_filters_out_invalid_enterprise_enrollments(self, mock_get_overviews):
+    def test_view_filters_out_invalid_enterprise_enrollments(self, mock_get_overviews, mock_course_resume_urls):
         """
         View does not fail, and view filters out all enrollments whose course_enrollment
         field is None
         """
         mock_get_overviews.return_value = {}
+        mock_course_resume_urls.return_value = {}
 
         resp = self.client.get(
             '{host}{path}?enterprise_id={enterprise_id}&is_active=true'.format(

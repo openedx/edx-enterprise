@@ -250,6 +250,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         response = self._get_course_contents(course_id)
         course_module_id = None
+        module_name = None
         if isinstance(response.json(), list):
             for course in response.json():
                 if course.get('name') == 'General':
@@ -333,6 +334,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             # The grade is exported as a decimal between [0-1]
             'grades[0][grade]': completion_data['grade'] * self.enterprise_configuration.grade_scale
         }
+
         return self._post(params)
 
     def create_content_metadata(self, serialized_data):

@@ -12,7 +12,7 @@ import requests
 from django.apps import apps
 from django.conf import settings
 
-from enterprise.utils import localized_utcnow
+from enterprise.utils import localized_utcnow, truncate_string
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
@@ -88,13 +88,10 @@ class ContentMetadataTransmitter(Transmitter):
         Transmit content metadata items to the integrated channel. Save or update content metadata records according to
         the type of transmission.
         """
-        self._log_info_for_each_item_map(delete_payload, 'transmitting delete')
         delete_payload_results = self._transmit_delete(delete_payload)
 
-        self._log_info_for_each_item_map(create_payload, 'transmitting create')
         create_payload_results = self._transmit_create(create_payload)
 
-        self._log_info_for_each_item_map(update_payload, 'transmitting update')
         update_payload_results = self._transmit_update(update_payload)
         return create_payload_results, update_payload_results, delete_payload_results
 
@@ -124,6 +121,14 @@ class ContentMetadataTransmitter(Transmitter):
             self._prepare_items_for_transmission(channel_metadata_items),
             sort_keys=True
         ).encode('utf-8')
+
+    def _filter_api_response(self, response, content_id):  # pylint: disable=unused-argument
+        """
+        Filter the response from the integrated channel API client.
+        This can be overridden by subclasses to parse the response
+        expected by the integrated channel.
+        """
+        return response
 
     def _transmit_action(self, content_metadata_item_map, client_method, action_name):  # pylint: disable=too-many-statements
         """
@@ -212,16 +217,20 @@ class ContentMetadataTransmitter(Transmitter):
             finally:
                 action_happened_at = localized_utcnow()
                 for content_id, transmission in chunk.items():
-                    self._log_info(
-                        f'integrated_channel_content_transmission_id={transmission.id}, '
-                        f'saving {action_name} transmission',
-                        course_or_course_run_key=content_id
-                    )
                     transmission.api_response_status_code = response_status_code
                     was_successful = response_status_code < 300
-
+                    api_content_response = response_body
+                    if was_successful:
+                        api_content_response = self._filter_api_response(api_content_response, content_id)
+                    (api_content_response, was_truncated) = truncate_string(api_content_response)
+                    if was_truncated:
+                        self._log_info(
+                            f'integrated_channel_content_transmission_id={transmission.id}, '
+                            f'api response truncated',
+                            course_or_course_run_key=content_id
+                        )
                     if transmission.api_record:
-                        transmission.api_record.body = response_body
+                        transmission.api_record.body = api_content_response
                         transmission.api_record.status_code = response_status_code
                         transmission.api_record.save()
                     else:
@@ -230,7 +239,7 @@ class ContentMetadataTransmitter(Transmitter):
                             'ApiResponseRecord'
                         )
                         transmission.api_record = ApiResponseRecord.objects.create(
-                            body=response_body, status_code=response_status_code
+                            body=api_content_response, status_code=response_status_code
                         )
                     if action_name == 'create':
                         transmission.remote_created_at = action_happened_at

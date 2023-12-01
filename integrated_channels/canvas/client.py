@@ -11,10 +11,13 @@ from dateutil.parser import parse
 
 from django.apps import apps
 
-from integrated_channels.canvas.utils import CanvasUtil
+from integrated_channels.canvas.utils import CanvasUtil  # pylint: disable=cyclic-import
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient, IntegratedChannelHealthStatus
-from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+from integrated_channels.utils import (  # pylint: disable=cyclic-import
+    generate_formatted_log,
+    refresh_session_if_expired,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,15 +90,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # Do one of 3 things with the fetched canvas course info
         # If no course was found, create it
         if not located_course:
-            LOGGER.info(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    edx_course_id,
-                    f'Creating new course with payload {desired_payload}',
-                )
-            )
             # Course does not exist: Create the course
             status_code, response_text = self._post(
                 self.course_create_url,
