@@ -336,17 +336,30 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
 
         response = self._post(params)
-        status_code = response.get('status_code', None)
-        text = response.get('text', None)
-        headers = response.get('headers', None)
+
+        if hasattr(response, 'status_code'):
+            status_code = response.status_code
+        else:
+            status_code = None
+
+        if hasattr(response, 'text'):
+            text = response.text
+        else:
+            text = None
+
+        if hasattr(response, 'headers'):
+            headers = response.headers
+        else:
+            headers = None
+
         LOGGER.info(
             'Learner Data Transmission'
-            f'for course={completion_data.courseID} '
-            f'and enterprise_course_enrollment_id={completion_data.enterprise_course_enrollment_id} with data '
+            f'for course={completion_data["courseID"]}  with data '
             f'source: {module_name}, '
             f'activityid: {course_module_id}, '
             f'grades[0][studentid]: {moodle_user_id}, '
-            f'grades[0][grade]: {completion_data.grade * self.enterprise_configuration.grade_scale} with response '
+            f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
+            f' with response: {response} '
             f'Status Code: {status_code}, '
             f'Text: {text}, '
             f'Headers: {headers}, ' 
