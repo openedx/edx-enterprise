@@ -2054,55 +2054,60 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
 
         response = self.client.get(ENTERPRISE_CATALOGS_LIST_ENDPOINT)
         response = self.load_json(response.content)
+        # Assert they exist, but don't test `created` and `modified` response keys because their values are
+        # non-deterministic.
+        if response['results']:
+            del response['results'][0]['created']
+            del response['results'][0]['modified']
 
         assert response == expected_results
 
     @ddt.data(
-        (
-            False,
-            False,
-            {'detail': 'Not found.'},
-        ),
-        (
-            False,
-            True,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': False,
+            'expected_result': {'detail': 'Not found.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'expected_result': fake_enterprise_api.build_fake_enterprise_catalog_detail(
                 paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                 include_enterprise_context=True,
                 add_utm_info=False,
                 count=3,
             ),
-        ),
-        (
-            True,
-            False,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': False,
+            'expected_result': fake_enterprise_api.build_fake_enterprise_catalog_detail(
                 paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                 include_enterprise_context=True,
                 add_utm_info=False,
                 count=3,
             ),
-        ),
-        (
-            True,
-            True,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'expected_result': fake_enterprise_api.build_fake_enterprise_catalog_detail(
                 paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                 include_enterprise_context=True,
                 add_utm_info=False,
                 count=3,
             ),
-        ),
+        },
     )
     @ddt.unpack
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
     def test_enterprise_customer_catalogs_detail(
             self,
+            mock_catalog_api_client,
             is_staff,
             is_linked_to_enterprise,
             expected_result,
-            mock_catalog_api_client,
     ):
         """
         Make sure the Enterprise Customer's Catalog view correctly returns details about specific catalogs based on
@@ -2137,6 +2142,12 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         )
         response = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT)
         response = self.load_json(response.content)
+        # Assert they exist, but don't test `created` and `modified` response keys because their values are
+        # non-deterministic.
+        if is_staff or is_linked_to_enterprise:
+            del response['created']
+            del response['modified']
+
         self.assertDictEqual(response, expected_result)
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -2167,6 +2178,10 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
 
         response = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT + '?page=2')
         response = self.load_json(response.content)
+        # Assert they exist, but don't test `created` and `modified` response keys because their values are
+        # non-deterministic.
+        del response['created']
+        del response['modified']
 
         expected_result = fake_enterprise_api.build_fake_enterprise_catalog_detail(
             paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
@@ -2205,6 +2220,10 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         )
         response = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT + '?page=2')
         response = self.load_json(response.content)
+        # Assert they exist, but don't test `created` and `modified` response keys because their values are
+        # non-deterministic.
+        del response['created']
+        del response['modified']
 
         expected_result = fake_enterprise_api.build_fake_enterprise_catalog_detail(
             paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_3,
