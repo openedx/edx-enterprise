@@ -53,6 +53,7 @@ class EnterpriseCourseEnrollmentView(APIView):
                 "org_name": "edX",
                 "is_revoked": false,
                 "is_enrollment_active": true
+                "resume_course_run_url": "http://localhost:18000/courses/course-v1:MITx+6.86x+2T2024"
             }
         ]
 

@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.8.4]
+--------
+fix: changed relative resumeCourseRunUrl to an absolute URL
+
 [4.8.3]
 --------
 refactor: adding log for learner data transmission
