@@ -362,7 +362,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             f' with response: {response} '
             f'Status Code: {status_code}, '
             f'Text: {text}, '
-            f'Headers: {headers}, ' 
+            f'Headers: {headers}, '
         )
 
         return response
