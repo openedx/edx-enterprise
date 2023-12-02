@@ -16,10 +16,6 @@ Change Log
 Unreleased
 ----------
 
-[4.8.2]
---------
-refactor: adding log for learner data transmission
-
 [4.8.1]
 --------
 feat: integrated resumeCourseRunUrl into enrollments API
