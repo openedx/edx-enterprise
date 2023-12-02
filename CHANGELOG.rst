@@ -16,7 +16,7 @@ Change Log
 Unreleased
 ----------
 
-[4.8.2]
+[4.8.3]
 --------
 refactor: adding log for learner data transmission
 
