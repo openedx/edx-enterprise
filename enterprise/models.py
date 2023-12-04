@@ -3955,6 +3955,15 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
     )
 
+    marked_authorized = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_(
+            "Whether admin has indicated the service provider metadata was uploaded."
+        )
+    )
+
     # ---------------------------- SAP Success Factors attribute mappings ---------------------------- #
 
     odata_api_timeout_interval = models.PositiveIntegerField(
