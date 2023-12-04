@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.8.5]
+--------
+feat: Added a management command to assign skills to Degreed courses
+
 [4.8.4]
 --------
 fix: changed relative resumeCourseRunUrl to an absolute URL
