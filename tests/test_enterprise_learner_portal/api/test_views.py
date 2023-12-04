@@ -80,7 +80,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
         mock_course_resume_urls.return_value = {
-            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+            'course-v1:edX+DemoX+Demo_Course': '/courses/course-v1:MITx+6.86x+2T2024'
         }
 
         resp = self.client.get(
@@ -114,7 +114,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
         mock_course_resume_urls.return_value = {
-            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+            'course-v1:edX+DemoX+Demo_Course': '/courses/course-v1:MITx+6.86x+2T2024'
         }
 
         resp = self.client.get(
@@ -147,7 +147,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
         mock_course_resume_urls.return_value = {
-            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+            'course-v1:edX+DemoX+Demo_Course': '/courses/course-v1:MITx+6.86x+2T2024'
         }
 
         resp = self.client.get(
@@ -174,7 +174,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
         mock_course_resume_urls.return_value = {
-            'course-v1:edX+DemoX+Demo_Course': 'http://example.com/resume_url'
+            'course-v1:edX+DemoX+Demo_Course': '/courses/course-v1:MITx+6.86x+2T2024'
         }
 
         resp = self.client.get(
