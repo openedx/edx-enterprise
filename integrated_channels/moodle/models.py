@@ -99,7 +99,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Set the encrypted username.
         """
         self.decrypted_username = value
-    
+
     password = models.CharField(
         max_length=255,
         blank=True,
