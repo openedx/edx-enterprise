@@ -273,31 +273,47 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
         """
         Given the last time a Content record sync was attempted and status update the appropriate timestamps.
         """
+        update_fields = []
         if self.last_sync_attempted_at is None or action_happened_at > self.last_sync_attempted_at:
             self.last_sync_attempted_at = action_happened_at
+            update_fields.append('last_sync_attempted_at')
         if self.last_content_sync_attempted_at is None or action_happened_at > self.last_content_sync_attempted_at:
             self.last_content_sync_attempted_at = action_happened_at
+            update_fields.append('last_content_sync_attempted_at')
         if not was_successful:
             if self.last_sync_errored_at is None or action_happened_at > self.last_sync_errored_at:
                 self.last_sync_errored_at = action_happened_at
+                update_fields.append('last_sync_errored_at')
             if self.last_content_sync_errored_at is None or action_happened_at > self.last_content_sync_errored_at:
                 self.last_content_sync_errored_at = action_happened_at
-        return self.save()
+                update_fields.append('last_content_sync_errored_at')
+        if update_fields:
+            return self.save(update_fields=update_fields)
+        else:
+            return self
 
     def update_learner_synced_at(self, action_happened_at, was_successful):
         """
         Given the last time a Learner record sync was attempted and status update the appropriate timestamps.
         """
+        update_fields = []
         if self.last_sync_attempted_at is None or action_happened_at > self.last_sync_attempted_at:
             self.last_sync_attempted_at = action_happened_at
+            update_fields.append('last_sync_attempted_at')
         if self.last_learner_sync_attempted_at is None or action_happened_at > self.last_learner_sync_attempted_at:
             self.last_learner_sync_attempted_at = action_happened_at
+            update_fields.append('last_learner_sync_attempted_at')
         if not was_successful:
             if self.last_sync_errored_at is None or action_happened_at > self.last_sync_errored_at:
                 self.last_sync_errored_at = action_happened_at
+                update_fields.append('last_sync_errored_at')
             if self.last_learner_sync_errored_at is None or action_happened_at > self.last_learner_sync_errored_at:
                 self.last_learner_sync_errored_at = action_happened_at
-        return self.save()
+                update_fields.append('last_learner_sync_errored_at')
+        if update_fields:
+            return self.save(update_fields=update_fields)
+        else:
+            return self
 
     @property
     def is_valid(self):
