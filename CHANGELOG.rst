@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[4.8.6]
+--------
+refactor: Override the default save method of ``EnterpriseCustomerPluginConfiguration`` to update only changed fields
 
 [4.8.5]
 --------
