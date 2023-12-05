@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.8.6]
+--------
+feat: add marked_authorized flag to SSO config
+
 [4.8.5]
 --------
 feat: Added a management command to assign skills to Degreed courses
