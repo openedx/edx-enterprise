@@ -59,7 +59,12 @@ from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIC
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import ReturnValueSpy, factories
-from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin, setup_course_catalog_api_client_mock
+from test_utils.fake_catalog_api import (
+    FAKE_COURSE_TO_CREATE,
+    FAKE_COURSE_TO_CREATE_2,
+    CourseDiscoveryApiTestMixin,
+    setup_course_catalog_api_client_mock,
+)
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 User = auth.get_user_model()
@@ -1403,6 +1408,61 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         # Test that we called the erroring out URL, but that we caught the error
         # (because the previous call_command did not error out with an exception)
         assert len(calls_to_search_url) > 0
+
+
+@mark.django_db
+@ddt.ddt
+class TestAssignSkillstoDegreedCoursesManagementCommand(unittest.TestCase):
+    """
+    Test the ``assign_skills_to_degreed_courses`` management command.
+    """
+
+    def setUp(self):
+        self.user = factories.UserFactory(username='C-3PO')
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            active=True,
+            name='Degreed Customer',
+        )
+        self.enterprise_customer_2 = factories.EnterpriseCustomerFactory(
+            active=True,
+            name='Degreed Customer 2',
+        )
+        self.enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.enterprise_catalog_2 = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer_2,
+        )
+        self.degreed_config = factories.Degreed2EnterpriseCustomerConfigurationFactory(
+
+            enterprise_customer=self.enterprise_customer,
+            degreed_base_url='http://betatest.degreed.com/',
+        )
+        self.degreed_config_2 = factories.Degreed2EnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer_2,
+            degreed_base_url='http://betatest.degreed.com/',
+        )
+        super().setUp()
+
+    @responses.activate
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.assign_course_skills')
+    def test_assign_skills_command(
+            self,
+            mock_degreed2_client,
+            mock_enterprise_catalog_client
+    ):
+        """
+        Test the unlink inactive learners task without any SAP integrated channel.
+        """
+        mock_degreed2_client.return_value = 201, '{}'
+        mock_enterprise_catalog_client.return_value = [FAKE_COURSE_TO_CREATE, FAKE_COURSE_TO_CREATE_2]
+        with LogCapture(level=logging.INFO) as log:
+            log_message = '[Degreed Skills] Attempting to assign skills for customer'
+            call_command('assign_skills_to_degreed_courses', '--catalog_user', self.user.username)
+            assert log_message in log.records[-1].getMessage()
+            # should make a call for two courses for both degreed enterprises with active config
+            self.assertEqual(mock_degreed2_client.call_count, 4)
 
 
 @ddt.ddt

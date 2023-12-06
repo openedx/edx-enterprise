@@ -63,8 +63,8 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             raise CommandError('A user with the username {} was not found.'.format(username)) from no_user_error
 
         enterprise_catalog_client = EnterpriseCatalogApiClient(user)
-
-        for degreed_channel_config in self.get_integrated_channels(options):
+        integrated_channels = self.get_integrated_channels(options)
+        for degreed_channel_config in integrated_channels:
             enterprise_customer = degreed_channel_config.enterprise_customer
             enterprise_customer_catalogs = degreed_channel_config.customer_catalogs_to_transmit or \
                 enterprise_customer.enterprise_customer_catalogs.all()
@@ -80,11 +80,24 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 continue
 
             degreed_client = Degreed2APIClient(degreed_channel_config)
+            LOGGER.info(
+                generate_formatted_log(
+                    degreed_channel_config.channel_code(),
+                    enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'[Degreed Skills] Attempting to assign skills for customer {enterprise_customer.slug}'
+                )
+            )
 
             for content_item in content_metadata_in_catalogs:
-
-                course_id = content_item.get('key', [])
+                course_id = content_item.get('key', None)
                 course_skills = content_item.get('skill_names', [])
+
+                # if we get empty list of skills, there's no point making API call to Degreed.
+                if not course_skills:
+                    continue
+
                 json_payload = self._prepare_json_payload_for_skills_endpoint(course_skills)
 
                 # assign skills metadata to degreed course by first fetching degreed course id
@@ -94,20 +107,22 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                     LOGGER.error(
                         generate_formatted_log(
                             degreed_channel_config.channel_code(),
-                            degreed_channel_config.enterprise_customer.uuid,
+                            enterprise_customer.uuid,
                             None,
                             None,
                             f'Degreed2APIClient assign_course_skills failed for course {course_id} '
                             f'with message: {error.message}'
                         )
                     )
+                    continue
                 except RequestException as error:
                     LOGGER.error(
                         generate_formatted_log(
                             degreed_channel_config.channel_code(),
-                            degreed_channel_config.enterprise_customer.uuid,
+                            enterprise_customer.uuid,
                             None,
                             None,
                             f'Degreed2APIClient request to assign skills failed with message: {error.message}'
                         )
                     )
+                    continue
