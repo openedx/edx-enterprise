@@ -204,16 +204,17 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             f'Degreed2: Attempted to find degreed course id but failed, external id was {external_id}'
             f', Response from Degreed was {response_body}')
 
-    def assign_course_skills(self, course_id, serialized_data):
+    def assign_course_skills(self, course_id, serialized_data):  # pylint: disable=inconsistent-return-statements
         """
         Assign skills to a course.
 
         Args:
+            course_id: Course key
             serialized_data: JSON-encoded object containing skills metadata.
 
         Raises:
             ClientError:
-                If degreed course id doesn't exist.
+                If Degreed course id doesn't exist.
                 If Degreed course skills API request fails.
         """
 
@@ -231,6 +232,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         course_id,
                         f'Succesfully assigned skills to course {course_id}')
                 )
+                return status_code, response_body
             elif status_code >= 400:
                 raise ClientError(
                     f'Degreed2APIClient failed to assign skills to course {course_id}.'

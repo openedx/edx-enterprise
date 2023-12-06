@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.8.8]
+--------
+fix: added more logs and handled edge cases in Degreed assign skills job
+
 [4.8.7]
 --------
 refactor: Override the default save method of ``EnterpriseCustomerPluginConfiguration`` to update only changed fields
