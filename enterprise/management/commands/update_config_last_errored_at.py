@@ -111,7 +111,9 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                                 config.id, channel_code, config.enterprise_customer.uuid
                             )
                         )
-                    config.save()
+                    config.save(update_fields=["last_learner_sync_errored_at", "last_content_sync_errored_at",
+                                               "last_sync_errored_at"])
+
         except Exception as exc:
             LOGGER.exception('update_config_last_errored_at', exc_info=exc)
             raise exc
