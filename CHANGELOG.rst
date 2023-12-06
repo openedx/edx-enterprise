@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.8.9]
+-------
+feat: adding timeouts to sso orchestrator configurations and api cleanup
+
 [4.8.8]
 --------
 fix: added more logs and handled edge cases in Degreed assign skills job

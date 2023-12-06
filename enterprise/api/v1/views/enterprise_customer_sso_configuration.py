@@ -37,6 +37,7 @@ LOGGER = getEnterpriseLogger(__name__)
 BAD_CUSTOMER_ERROR = 'Must provide valid enterprise customer'
 CONFIG_UPDATE_ERROR = 'Error updating SSO configuration record'
 CONFIG_CREATE_ERROR = 'Error creating SSO configuration record'
+BAD_IDP_METADATA_URL = 'Must provide valid IDP metadata url'
 
 
 class EnterpriseCustomerInactiveException(Exception):
@@ -243,9 +244,9 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             # If the metadata url has changed, we need to update the metadata xml
             try:
                 sso_config_metadata_xml = get_metadata_xml_from_url(request_metadata_url)
-            except SsoConfigurationApiError as e:
-                LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
-                return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+            except (SsoConfigurationApiError, requests.exceptions.SSLError) as e:
+                LOGGER.error(f'{BAD_IDP_METADATA_URL}{e}')
+                return Response({'error': f'{BAD_IDP_METADATA_URL} {e}'}, status=HTTP_400_BAD_REQUEST)
             request_data['metadata_xml'] = sso_config_metadata_xml
         if sso_config_metadata_xml or (sso_config_metadata_xml := request_data.get('metadata_xml')):
             try:
@@ -292,9 +293,9 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 # If the metadata url has changed, we need to update the metadata xml
                 try:
                     sso_config_metadata_xml = get_metadata_xml_from_url(request_metadata_url)
-                except SsoConfigurationApiError as e:
-                    LOGGER.error(f'{CONFIG_UPDATE_ERROR} {e}')
-                    return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+                except (SsoConfigurationApiError, requests.exceptions.SSLError) as e:
+                    LOGGER.error(f'{BAD_IDP_METADATA_URL}{e}')
+                    return Response({'error': f'{BAD_IDP_METADATA_URL} {e}'}, status=HTTP_400_BAD_REQUEST)
                 request_data['metadata_xml'] = sso_config_metadata_xml
         if request_metadata_xml := request_data.get('metadata_xml'):
             if request_metadata_xml != sso_configuration_record.first().metadata_xml:
