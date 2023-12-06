@@ -16,6 +16,8 @@ aiosignal==1.3.1
     #   aiohttp
 alabaster==0.7.13
     # via sphinx
+algoliasearch==2.6.3
+    # via -r requirements/test-master.txt
 amqp==5.1.1
     # via
     #   -r requirements/test-master.txt
@@ -404,6 +406,7 @@ readme-renderer==42.0
 requests==2.31.0
     # via
     #   -r requirements/test-master.txt
+    #   algoliasearch
     #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client

@@ -4,10 +4,11 @@ Views for the ``enterprise-customer`` API endpoint.
 
 from urllib.parse import quote_plus, unquote
 
+from algoliasearch.search_client import SearchClient
 from edx_rbac.decorators import permission_required
 from rest_framework import permissions
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK,
@@ -17,12 +18,15 @@ from rest_framework.status import (
     HTTP_409_CONFLICT,
 )
 
+from django.conf import settings
 from django.contrib import auth
 from django.core import exceptions
 from django.db import transaction
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy as _
 
 from enterprise import models
 from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
@@ -436,3 +440,41 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     raise UnlinkUserFromEnterpriseError(msg) from exc
 
         return Response(status=HTTP_200_OK)
+
+    @action(detail=False)
+    def algolia_key(self, request, *args, **kwargs):
+        """
+        Returns an Algolia API key that is secured to only allow searching for
+        objects associated with enterprise customers that the user is linked to.
+
+        This endpoint is used with `frontend-app-learner-portal-enterprise` MFE
+        currently.
+        """
+
+        if not (api_key := getattr(settings, "ENTERPRISE_ALGOLIA_SEARCH_API_KEY", "")):
+            LOGGER.warning("Algolia search API key is not configured. To enable this view, "
+                           "set `ENTERPRISE_ALGOLIA_SEARCH_API_KEY` in settings.")
+            raise Http404
+
+        queryset = self.queryset.filter(
+            **{
+                self.USER_ID_FILTER: request.user.id,
+                "enterprise_customer_users__linked": True
+            }
+        ).values_list("uuid", flat=True)
+
+        if len(queryset) == 0:
+            raise NotFound(_("User is not linked to any enterprise customers."))
+
+        secured_key = SearchClient.generate_secured_api_key(
+            api_key,
+            {
+                "filters": " OR ".join(
+                    f"enterprise_customer_uuids:{enterprise_customer_uuid}"
+                    for enterprise_customer_uuid
+                    in queryset
+                ),
+            }
+        )
+
+        return Response({"key": secured_key}, status=HTTP_200_OK)

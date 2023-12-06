@@ -24,6 +24,11 @@ alabaster==0.7.13
     # via
     #   -r requirements/doc.txt
     #   sphinx
+algoliasearch==2.6.3
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
 amqp==5.1.1
     # via
     #   -r requirements/doc.txt
@@ -719,6 +724,7 @@ requests==2.31.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+    #   algoliasearch
     #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client
