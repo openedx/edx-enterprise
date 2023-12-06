@@ -15,9 +15,13 @@ Change Log
 
 Unreleased
 ----------
-[4.8.6]
+[4.8.7]
 --------
 refactor: Override the default save method of ``EnterpriseCustomerPluginConfiguration`` to update only changed fields
+
+[4.8.6]
+--------
+feat: add marked_authorized flag to SSO config
 
 [4.8.5]
 --------
