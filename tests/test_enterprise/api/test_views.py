@@ -2,6 +2,7 @@
 Tests for the `edx-enterprise` api module.
 """
 
+import base64
 import copy
 import json
 import logging
@@ -139,6 +140,7 @@ ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT = reverse('enterprise-customer-unlink-users', kwargs={'pk': FAKE_UUIDS[0]})
+ENTERPRISE_CUSTOMER_ALGOLIA_KEY_ENDPOINT = reverse('enterprise-customer-algolia-key')
 PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
 LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-license-revoke'
@@ -1850,6 +1852,52 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             assert enterprise_customer_user_2.linked is False
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
+
+    def test_algolia_key(self):
+        """
+        Tests that the endpoint algolia_key endpoint returns the correct secured key.
+        """
+
+        # Test that the endpoint returns 401 if the user is not logged in.
+        self.client.logout()
+        response = self.client.get(ENTERPRISE_CUSTOMER_ALGOLIA_KEY_ENDPOINT)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+        username = 'test_learner_portal_user'
+        self.create_user(username=username, is_staff=False)
+        self.client.login(username=username, password=TEST_PASSWORD)
+
+        # Test that the endpoint returns 404 if the Algolia Search API key is not set.
+        with override_settings(ENTERPRISE_ALGOLIA_SEARCH_API_KEY=None):
+            response = self.client.get(ENTERPRISE_CUSTOMER_ALGOLIA_KEY_ENDPOINT)
+            assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # Test that the endpoint returns 404 if the user is not linked to any enterprise.
+        response = self.client.get(ENTERPRISE_CUSTOMER_ALGOLIA_KEY_ENDPOINT)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # Test that the endpoint returns 200 if the user is linked to at least one enterprise.
+        enterprise_customer_1 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[2])  # extra unlinked enterprise
+
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer_1
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        response = self.client.get(ENTERPRISE_CUSTOMER_ALGOLIA_KEY_ENDPOINT)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Test that the endpoint returns the key encoding correct filters.
+        decoded_key = base64.b64decode(response.json()["key"]).decode("utf-8")
+        assert decoded_key.endswith(
+            f"filters=enterprise_customer_uuids%3A{FAKE_UUIDS[0]}+OR+enterprise_customer_uuids%3A{FAKE_UUIDS[1]}"
+        )
 
 
 @ddt.ddt
