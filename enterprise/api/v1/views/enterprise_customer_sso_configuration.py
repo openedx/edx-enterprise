@@ -321,15 +321,31 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 return Response(status=HTTP_403_FORBIDDEN)
         try:
             with transaction.atomic():
+                needs_submitting = False
+                for request_key in request_data.keys():
+                    # If the requested data to update includes a field that is locked while configuring
+                    if request_key in EnterpriseCustomerSsoConfiguration.fields_locked_while_configuring:
+                        # If any of the provided values differ from the existing value
+                        existing_value = getattr(
+                            sso_configuration_record.first(), request_key, request_data[request_key]
+                        )
+                        if existing_value != request_data[request_key]:
+                            # Indicate that the record needs to be submitted for configuration to the orchestrator
+                            needs_submitting = True
                 sso_configuration_record.update(**request_data)
-                sp_metadata_url = sso_configuration_record.first().submit_for_configuration(
-                    updating_existing_record=True
-                )
+                sp_metadata_url = ''
+                if needs_submitting:
+                    sp_metadata_url = sso_configuration_record.first().submit_for_configuration(
+                        updating_existing_record=True
+                    )
         except (TypeError, FieldDoesNotExist, ValidationError, SsoOrchestratorClientError) as e:
             LOGGER.error(f'{CONFIG_UPDATE_ERROR} {e}')
             return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(sso_configuration_record.first())
-        return Response({'record': serializer.data, 'sp_metadata_url': sp_metadata_url}, status=HTTP_200_OK)
+        response = {'record': serializer.data}
+        if sp_metadata_url:
+            response['sp_metadata_url'] = sp_metadata_url
+        return Response(response, status=HTTP_200_OK)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',

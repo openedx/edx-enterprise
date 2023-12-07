@@ -7763,7 +7763,8 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
             uuid=config_pk,
             enterprise_customer=self.enterprise_customer,
-            submitted_at=localized_utcnow()
+            submitted_at=localized_utcnow(),
+            metadata_url="old_url",
         )
         data = {
             "metadata_url": "https://example.com/metadata.xml",

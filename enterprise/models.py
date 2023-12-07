@@ -4110,9 +4110,9 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
             for field in self.base_saml_config_fields:
                 if field == "active":
                     if not updating_existing_record:
-                        config_data['enable'] = True
+                        config_data['enabled'] = True
                     else:
-                        config_data['enable'] = getattr(self, field)
+                        config_data['enabled'] = getattr(self, field)
                 elif field_value := getattr(self, field):
                     config_data[utils.camelCase(field)] = field_value
 
