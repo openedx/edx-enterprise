@@ -61,6 +61,17 @@ def moodle_request_wrapper(method):
             # This only happens for grades AFAICT. Zero also doesn't necessarily mean success,
             # but we have nothing else to go on
             if body == 0:
+                if method.__name__ == "_wrapped_create_course_completion":
+                    completion_data = kwargs.get('payload')
+                    course_id = completion_data.get('courseID', None)
+                    LOGGER.info(
+                        'Integer Response for Moodle Course Completion'
+                        f'for course={course_id} '
+                        f' response: {response} '
+                        f'Status Code: {response.status_code}, '
+                        f'Text: {response.text}, '
+                        f'Headers: {response.headers}, '
+                    )
                 return 200, ''
             raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
         if isinstance(body, str):
@@ -365,7 +376,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 f'Headers: {headers}, '
             )
 
-        return response.status_code, response.text
+        return response
 
     def create_content_metadata(self, serialized_data):
         """
@@ -463,7 +474,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """Send course completion data to Moodle"""
         # The base integrated channels transmitter expects a tuple of (code, body),
         # but we need to wrap the requests
-        return self._wrapped_create_course_completion(user_id, payload)
+        resp = self._wrapped_create_course_completion(user_id, payload)
+        return resp.status_code, resp.text
 
     @moodle_request_wrapper
     def delete_course_completion(self, user_id, payload):
