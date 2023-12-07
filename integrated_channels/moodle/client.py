@@ -351,21 +351,21 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             headers = response.headers
         else:
             headers = None
+        if not status_code or not text or not headers:
+            LOGGER.info(
+                'Learner Data Transmission'
+                f'for course={completion_data["courseID"]}  with data '
+                f'source: {module_name}, '
+                f'activityid: {course_module_id}, '
+                f'grades[0][studentid]: {moodle_user_id}, '
+                f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
+                f' with response: {response} '
+                f'Status Code: {status_code}, '
+                f'Text: {text}, '
+                f'Headers: {headers}, '
+            )
 
-        LOGGER.info(
-            'Learner Data Transmission'
-            f'for course={completion_data["courseID"]}  with data '
-            f'source: {module_name}, '
-            f'activityid: {course_module_id}, '
-            f'grades[0][studentid]: {moodle_user_id}, '
-            f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
-            f' with response: {response} '
-            f'Status Code: {status_code}, '
-            f'Text: {text}, '
-            f'Headers: {headers}, '
-        )
-
-        return response
+        return response.status_code, response.text
 
     def create_content_metadata(self, serialized_data):
         """
@@ -463,8 +463,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """Send course completion data to Moodle"""
         # The base integrated channels transmitter expects a tuple of (code, body),
         # but we need to wrap the requests
-        resp = self._wrapped_create_course_completion(user_id, payload)
-        return resp.status_code, resp.text
+        return self._wrapped_create_course_completion(user_id, payload)
 
     @moodle_request_wrapper
     def delete_course_completion(self, user_id, payload):
