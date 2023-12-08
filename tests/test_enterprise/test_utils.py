@@ -537,6 +537,7 @@ class TestUtils(unittest.TestCase):
         (truncated_string, was_truncated) = truncate_string(test_string_2)
         self.assertTrue(was_truncated)
         self.assertEqual(len(truncated_string), MAX_ALLOWED_TEXT_LENGTH)
+
     @ddt.data(True, False)
     def test_hide_course_price_when_zero(self, hide_price):
         customer = factories.EnterpriseCustomerFactory()
@@ -563,3 +564,4 @@ class TestUtils(unittest.TestCase):
         else:
             self.assertEqual(zero_modes, processed_zero_modes)
             self.assertEqual(non_zero_modes, processed_non_zero_modes)
+

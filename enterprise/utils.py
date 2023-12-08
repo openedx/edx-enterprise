@@ -2407,5 +2407,3 @@ def hide_price_when_zero(enterprise_customer, course_modes):
                 mode['title']
             )
     return course_modes
-
-    
