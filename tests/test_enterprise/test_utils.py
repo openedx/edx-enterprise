@@ -564,4 +564,3 @@ class TestUtils(unittest.TestCase):
         else:
             self.assertEqual(zero_modes, processed_zero_modes)
             self.assertEqual(non_zero_modes, processed_non_zero_modes)
-
