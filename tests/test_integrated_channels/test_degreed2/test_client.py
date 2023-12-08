@@ -383,6 +383,117 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_assign_course_skills(self, mock_fetch_degreed_course_id):
+        """
+        ``assign_course_skills`` should use the appropriate URL for making API call.
+        """
+        payload = {
+            "data": [
+                {
+                    "id": "Financial Technology",
+                    "type": "skills"
+                }
+            ]
+        }
+        test_course_key = 'a_course_id'
+        mock_fetch_degreed_course_id.return_value = test_course_key
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_course_skills_url(test_course_key)}',
+            json='{}',
+            status=201
+        )
+
+        status_code, response_body = degreed_api_client.assign_course_skills('edx_course_key', payload)
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == oauth_url
+        assert responses.calls[1].request.url == f'{degreed_api_client.get_course_skills_url(test_course_key)}'
+        assert status_code == 201
+        assert response_body == '"{}"'
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_assign_skills_api_connection_error(self, mock_fetch_degreed_course_id):
+        """
+        ``assign_course_skills`` should raise ClientError when API request fails with a connection error.
+        """
+        test_course_key = 'a_course_id'
+        mock_fetch_degreed_course_id.return_value = test_course_key
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_course_skills_url(test_course_key)}',
+            body=requests.exceptions.RequestException()
+        )
+
+        payload = {
+            "data": [
+                {
+                    "id": "Financial Technology",
+                    "type": "skills"
+                }
+            ]
+        }
+        with pytest.raises(ClientError):
+            degreed_api_client.assign_course_skills('edx_course_key', payload)
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_assign_skills_api_failure_response(self, mock_fetch_degreed_course_id):
+        """
+        ``assign_course_skills`` should raise ClientError when API request fails with a with status code above 400.
+        """
+        test_course_key = 'a_course_id'
+        mock_fetch_degreed_course_id.return_value = test_course_key
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_course_skills_url(test_course_key)}',
+            json='{}',
+            status=400
+        )
+
+        payload = {
+            "data": [
+                {
+                    "id": "Financial Technology",
+                    "type": "skills"
+                }
+            ]
+        }
+        with pytest.raises(ClientError):
+            degreed_api_client.assign_course_skills('edx_course_key', payload)
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
     def test_update_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.

@@ -15,8 +15,31 @@ Change Log
 
 Unreleased
 ----------
+[4.8.9]
+-------
+feat: adding timeouts to sso orchestrator configurations and api cleanup
 
-[4.8.2]
+[4.8.8]
+--------
+fix: added more logs and handled edge cases in Degreed assign skills job
+
+[4.8.7]
+--------
+refactor: Override the default save method of ``EnterpriseCustomerPluginConfiguration`` to update only changed fields
+
+[4.8.6]
+--------
+feat: add marked_authorized flag to SSO config
+
+[4.8.5]
+--------
+feat: Added a management command to assign skills to Degreed courses
+
+[4.8.4]
+--------
+fix: changed relative resumeCourseRunUrl to an absolute URL
+
+[4.8.3]
 --------
 refactor: adding log for learner data transmission
 

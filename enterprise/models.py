@@ -3,6 +3,7 @@ Database models for enterprise.
 """
 
 import collections
+import datetime
 import itertools
 import json
 from decimal import Decimal
@@ -3955,6 +3956,15 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
     )
 
+    marked_authorized = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_(
+            "Whether admin has indicated the service provider metadata was uploaded."
+        )
+    )
+
     # ---------------------------- SAP Success Factors attribute mappings ---------------------------- #
 
     odata_api_timeout_interval = models.PositiveIntegerField(
@@ -4057,12 +4067,23 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         Returns True if the configuration has been submitted but not completed configuration.
         """
         if self.submitted_at:
-            if not self.configured_at:
-                return True
-            if self.errored_at and self.errored_at > self.submitted_at:
-                return False
-            if self.submitted_at > self.configured_at:
-                return True
+            # The configuration times out after 12 hours. If the configuration has not been submitted in the last 12
+            # hours then it can be considered unblocked.
+            sso_config_timeout_hours = getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_TIMEOUT_HOURS", 1)
+            sso_config_timeout_minutes = getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_TIMEOUT_MINUTES", 0)
+            timeout_timedelta = datetime.timedelta(hours=sso_config_timeout_hours, minutes=sso_config_timeout_minutes)
+            if (self.submitted_at + timeout_timedelta) > localized_utcnow():
+                # if we have received an error from the orchestrator after submitting the configuration, it is
+                # unblocked
+                if self.errored_at and self.errored_at > self.submitted_at:
+                    return False
+                # If we have not gotten a response from the orchestrator, it is still configuring
+                if not self.configured_at:
+                    return True
+                # If we have gotten a response from the orchestrator, but it's before the submission time, it is still
+                # configuring
+                if self.submitted_at > self.configured_at:
+                    return True
         return False
 
     def submit_for_configuration(self, updating_existing_record=False):

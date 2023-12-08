@@ -52,6 +52,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         self.oauth_api_path = app_config.oauth_api_path
         self.courses_api_path = app_config.courses_api_path
         self.completions_api_path = app_config.completions_api_path
+        self.skill_api_path = app_config.skill_api_path
         # to log without having to pass channel_name, ent_customer_uuid each time
         self.make_log_msg = lambda course_key, message, lms_user_id=None: generate_formatted_log(
             self.enterprise_configuration.channel_code(),
@@ -71,6 +72,12 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def get_completions_url(self):
         return urljoin(self.enterprise_configuration.degreed_base_url, self.completions_api_path)
+
+    def get_course_skills_url(self, course_key):
+        return urljoin(
+            self.enterprise_configuration.degreed_base_url,
+            self.skill_api_path.format(contentId=course_key)
+        )
 
     def create_assessment_reporting(self, user_id, payload):
         """
@@ -196,6 +203,48 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         raise ClientError(
             f'Degreed2: Attempted to find degreed course id but failed, external id was {external_id}'
             f', Response from Degreed was {response_body}')
+
+    def assign_course_skills(self, course_id, serialized_data):  # pylint: disable=inconsistent-return-statements
+        """
+        Assign skills to a course.
+
+        Args:
+            course_id: Course key
+            serialized_data: JSON-encoded object containing skills metadata.
+
+        Raises:
+            ClientError:
+                If Degreed course id doesn't exist.
+                If Degreed course skills API request fails.
+        """
+
+        degreed_course_id = self.fetch_degreed_course_id(course_id)
+        if not degreed_course_id:
+            raise ClientError(f'Degreed2: Cannot find course via external-id {course_id}')
+
+        course_skills_url = self.get_course_skills_url(degreed_course_id)
+        LOGGER.info(self.make_log_msg(course_id, f'Attempting to assign course skills {course_skills_url}'))
+        try:
+            status_code, response_body = self._patch(course_skills_url, serialized_data, self.CONTENT_WRITE_SCOPE)
+            if status_code == 201:
+                LOGGER.info(
+                    self.make_log_msg(
+                        course_id,
+                        f'Succesfully assigned skills to course {course_id}')
+                )
+                return status_code, response_body
+            elif status_code >= 400:
+                raise ClientError(
+                    f'Degreed2APIClient failed to assign skills to course {course_id}.'
+                    f'Failed with status_code={status_code} and response={response_body}',
+                )
+        except requests.exceptions.RequestException as exc:
+            raise ClientError(
+                'Degreed2APIClient request to assign skills failed: {error} {message}'.format(
+                    error=exc.__class__.__name__,
+                    message=str(exc)
+                )
+            ) from exc
 
     def create_content_metadata(self, serialized_data):
         """
