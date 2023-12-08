@@ -9,6 +9,7 @@ from fernet_fields import EncryptedCharField
 from simple_history.models import HistoricalRecords
 
 from django.db import models
+from django.utils.encoding import force_bytes, force_str
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.integrated_channel.models import (
@@ -76,6 +77,29 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         null=True,
     )
 
+    @property
+    def encrypted_username(self):
+        """
+        Return encrypted username as a string.
+
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_username field. This method will encrypt the username again before sending.
+        """
+        if self.decrypted_username:
+            return force_str(
+                self._meta.get_field('decrypted_username').fernet.encrypt(
+                    force_bytes(self.decrypted_username)
+                )
+            )
+        return self.decrypted_username
+
+    @encrypted_username.setter
+    def encrypted_username(self, value):
+        """
+        Set the encrypted username.
+        """
+        self.decrypted_username = value
+
     password = models.CharField(
         max_length=255,
         blank=True,
@@ -96,6 +120,29 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         null=True,
     )
 
+    @property
+    def encrypted_password(self):
+        """
+        Return encrypted password as a string.
+
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_password field. This method will encrypt the password again before sending.
+        """
+        if self.decrypted_password:
+            return force_str(
+                self._meta.get_field('decrypted_password').fernet.encrypt(
+                    force_bytes(self.decrypted_password)
+                )
+            )
+        return self.decrypted_password
+
+    @encrypted_password.setter
+    def encrypted_password(self, value):
+        """
+        Set the encrypted password.
+        """
+        self.decrypted_password = value
+
     token = models.CharField(
         max_length=255,
         blank=True,
@@ -115,6 +162,29 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         ),
         null=True,
     )
+
+    @property
+    def encrypted_token(self):
+        """
+        Return encrypted token as a string.
+
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_token field. This method will encrypt the token again before sending.
+        """
+        if self.decrypted_token:
+            return force_str(
+                self._meta.get_field('decrypted_token').fernet.encrypt(
+                    force_bytes(self.decrypted_token)
+                )
+            )
+        return self.decrypted_token
+
+    @encrypted_token.setter
+    def encrypted_token(self, value):
+        """
+        Set the encrypted token.
+        """
+        self.decrypted_token = value
 
     transmission_chunk_size = models.IntegerField(
         default=1,
@@ -142,6 +212,12 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         default=False,
     )
 
+    use_encrypted_user_data = models.BooleanField(
+        help_text=_("When set to True, the configured customer will use encrypted columns data to make client"
+                    " requests, this a boolean flag for testing purpose"),
+        default=False,
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -160,7 +236,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         incorrect_items = {'incorrect': []}
         if not self.moodle_base_url:
             missing_items.get('missing').append('moodle_base_url')
-        if not self.token and not (self.username and self.password):
+        if not self.decrypted_token and not (self.decrypted_username and self.decrypted_password):
             missing_items.get('missing').append('token OR username and password')
         if not self.service_short_name:
             missing_items.get('missing').append('service_short_name')
