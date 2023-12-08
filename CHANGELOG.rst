@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.8.10]
+--------
+feat: not submitting sso orchestrator records if no changes occur
+
 [4.8.9]
 -------
 feat: adding timeouts to sso orchestrator configurations and api cleanup
