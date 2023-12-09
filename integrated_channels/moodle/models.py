@@ -57,15 +57,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
-    username = models.CharField(
-        max_length=255,
-        verbose_name="Webservice Username",
-        blank=True,
-        help_text=_(
-            "The API user's username used to obtain new tokens."
-        )
-    )
-
     decrypted_username = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Webservice Username",
@@ -100,15 +91,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         """
         self.decrypted_username = value
 
-    password = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Webservice Password",
-        help_text=_(
-            "The API user's password used to obtain new tokens."
-        )
-    )
-
     decrypted_password = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Webservice Password",
@@ -142,15 +124,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Set the encrypted password.
         """
         self.decrypted_password = value
-
-    token = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Webservice User Token",
-        help_text=_(
-            "The user's token for the Moodle webservice."
-        )
-    )
 
     decrypted_token = EncryptedCharField(
         max_length=255,
@@ -209,12 +182,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     enable_incomplete_progress_transmission = models.BooleanField(
         help_text=_("When set to True, the configured customer will receive learner data transmissions, for incomplete"
                     " courses as well"),
-        default=False,
-    )
-
-    use_encrypted_user_data = models.BooleanField(
-        help_text=_("When set to True, the configured customer will use encrypted columns data to make client"
-                    " requests, this a boolean flag for testing purpose"),
         default=False,
     )
 
