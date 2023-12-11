@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+[4.8.11]
+--------
+feat: allow incomplete course learner transmissions till completion
+refactor: adding log inside moodle request wrapper
+
 [4.8.10]
 --------
 feat: not submitting sso orchestrator records if no changes occur
