@@ -61,6 +61,17 @@ def moodle_request_wrapper(method):
             # This only happens for grades AFAICT. Zero also doesn't necessarily mean success,
             # but we have nothing else to go on
             if body == 0:
+                if method.__name__ == "_wrapped_create_course_completion":
+                    completion_data = kwargs.get('payload')
+                    course_id = completion_data.get('courseID', None)
+                    LOGGER.info(
+                        'Integer Response for Moodle Course Completion'
+                        f'for course={course_id} '
+                        f' response: {response} '
+                        f'Status Code: {response.status_code}, '
+                        f'Text: {response.text}, '
+                        f'Headers: {response.headers}, '
+                    )
                 return 200, ''
             raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
         if isinstance(body, str):
@@ -359,19 +370,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             headers = response.headers
         else:
             headers = None
-
-        LOGGER.info(
-            'Learner Data Transmission'
-            f'for course={completion_data["courseID"]}  with data '
-            f'source: {module_name}, '
-            f'activityid: {course_module_id}, '
-            f'grades[0][studentid]: {moodle_user_id}, '
-            f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
-            f' with response: {response} '
-            f'Status Code: {status_code}, '
-            f'Text: {text}, '
-            f'Headers: {headers}, '
-        )
+        if not status_code or not text or not headers:
+            LOGGER.info(
+                'Learner Data Transmission'
+                f'for course={completion_data["courseID"]}  with data '
+                f'source: {module_name}, '
+                f'activityid: {course_module_id}, '
+                f'grades[0][studentid]: {moodle_user_id}, '
+                f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
+                f' with response: {response} '
+                f'Status Code: {status_code}, '
+                f'Text: {text}, '
+                f'Headers: {headers}, '
+            )
 
         return response
 
