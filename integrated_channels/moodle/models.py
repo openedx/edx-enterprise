@@ -212,12 +212,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         default=False,
     )
 
-    use_encrypted_user_data = models.BooleanField(
-        help_text=_("When set to True, the configured customer will use encrypted columns data to make client"
-                    " requests, this a boolean flag for testing purpose"),
-        default=False,
-    )
-
     history = HistoricalRecords()
 
     class Meta:

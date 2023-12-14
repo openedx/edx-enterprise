@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 import requests
 
 from django.apps import apps
+from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -134,7 +135,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('moodle')
         self.token = (
             enterprise_configuration.decrypted_token
-            if enterprise_configuration.use_encrypted_user_data
+            if settings.FEATURES.get('USE_ENCRYPTED_USER_DATA', False)
             else enterprise_configuration.token
         ) or self._get_access_token()
         self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
@@ -176,6 +177,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'service': self.enterprise_configuration.service_short_name
         }
 
+        decrypted_username = self.enterprise_configuration.decrypted_username
+        username = self.enterprise_configuration.username
+        decrypted_password = self.enterprise_configuration.decrypted_password
+        password = self.enterprise_configuration.password
+
         response = requests.post(
             urljoin(
                 self.enterprise_configuration.moodle_base_url,
@@ -186,12 +192,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             data={
-                "username": self.enterprise_configuration.decrypted_username
-                if self.enterprise_configuration.use_encrypted_user_data
-                else self.enterprise_configuration.username,
-                "password": self.enterprise_configuration.decrypted_password
-                if self.enterprise_configuration.use_encrypted_user_data
-                else self.enterprise_configuration.password,
+                "username": decrypted_username if settings.FEATURES.get('USE_ENCRYPTED_USER_DATA', False) else username,
+                "password": decrypted_password if settings.FEATURES.get('USE_ENCRYPTED_USER_DATA', False) else password,
             },
         )
 
