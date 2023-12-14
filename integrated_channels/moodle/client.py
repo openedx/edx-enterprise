@@ -70,7 +70,7 @@ def moodle_request_wrapper(method):
                         f'Text: {response.text}, '
                         f'Headers: {response.headers}, '
                     )
-                    return { 'status_code': 200, 'text': '' }
+                    return {'status_code': 200, 'text': ''}
                 return 200, ''
             raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
         if isinstance(body, str):
