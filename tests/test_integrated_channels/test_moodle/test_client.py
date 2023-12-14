@@ -9,6 +9,7 @@ import pytest
 import responses
 from requests.models import Response
 
+from django.conf import settings
 from integrated_channels.exceptions import ClientError
 from integrated_channels.moodle.client import MoodleAPIClient, MoodleClientError
 from test_utils import factories
@@ -98,6 +99,7 @@ class TestMoodleApiClient(unittest.TestCase):
             grade_assignment_name='edX Grade Test'
         )
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_api_url(self):
         moodle_api_client = MoodleAPIClient(self.enterprise_config)
         moodle_api_client_with_sub_dir = MoodleAPIClient(self.enterprise_custom_config)
@@ -113,6 +115,7 @@ class TestMoodleApiClient(unittest.TestCase):
         assert moodle_api_client.config is not None
 
     @responses.activate
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_get_course_id(self):
         """
         Test parsing of response from get_course_by_field Moodle endpoint.
@@ -126,6 +129,7 @@ class TestMoodleApiClient(unittest.TestCase):
         )
         assert client.get_course_id('course:test_course') == 2
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_successful_create_content_metadata(self):
         """
         Test core logic of create_content_metadata to ensure
@@ -144,6 +148,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_duplicate_shortname_create_content_metadata(self):
         """
         Test core logic of create_content_metadata when a duplicate exists
@@ -162,6 +167,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_duplicate_courseidnumber_create_content_metadata(self):
         """
         Test core logic of create_content_metadata when a duplicate exists
@@ -179,6 +185,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_multi_duplicate_create_content_metadata(self):
         """
         Test core logic of create_content_metadata when a duplicate exists
@@ -198,6 +205,7 @@ class TestMoodleApiClient(unittest.TestCase):
             client.create_content_metadata(MULTI_SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_multi_duplicate_courseidnumber_create_content_metadata(self):
         """
         Test core logic of create_content_metadata when a duplicate exists
@@ -217,6 +225,7 @@ class TestMoodleApiClient(unittest.TestCase):
             client.create_content_metadata(MULTI_SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_update_content_metadata(self):
         """
         Test core logic of update_content_metadata to ensure
@@ -233,6 +242,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client.update_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_delete_content_metadata(self):
         """
         Test core logic for formatting a delete request to Moodle.
@@ -258,6 +268,7 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_delete_content_metadata_no_course_found(self):
         """
         Test that we do not fail on delete when a course is not found on Canvas.
@@ -273,6 +284,7 @@ class TestMoodleApiClient(unittest.TestCase):
         result = client.delete_content_metadata(SERIALIZED_DATA)
         assert result.json() == {"result": "Course not found."}
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_course_completion_with_no_course(self):
         """Test that we properly raise exceptions if the client receives a 404 from Moodle"""
         with responses.RequestsMock() as rsps:
@@ -294,6 +306,7 @@ class TestMoodleApiClient(unittest.TestCase):
             assert client_error.value.message == 'MoodleAPIClient request failed: 404 ' \
                                                  'Course key "{}" not found in Moodle.'.format(self.moodle_course_id)
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_client_behavior_on_successful_learner_data_transmission(self):
         """
         Test that given successful requests for moodle learner data,
@@ -330,6 +343,7 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client._post.assert_called_once_with(expected_params)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_client_behavior_on_successful_learner_data_transmission_customization(self):
         """
         Test that given successful requests for moodle learner data,
@@ -366,6 +380,7 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client._post.assert_called_once_with(expected_params)  # pylint: disable=protected-access
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_get_course_final_grade_module_custom_name(self):
         """
         Test that given successful requests for moodle learner data,
@@ -390,6 +405,7 @@ class TestMoodleApiClient(unittest.TestCase):
         # The base transmitter expects the create course completion response to be a tuple of (code, body)
         assert client.get_course_final_grade_module(2) == (1337, 'foobar')
 
+    @unittest.mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_successful_update_existing_content_metadata(self):
         """
         Test core logic of create_content_metadata to ensure

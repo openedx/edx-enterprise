@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 from pytest import mark
 
+from django.conf import settings
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 from integrated_channels.moodle.models import MoodleLearnerDataTransmissionAudit
@@ -66,6 +67,7 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
 
         self.learner_transmitter = LearnerTransmitter(self.enterprise_config)
 
+    @mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_transmit_success(self):
         """
         Learner data transmission is successful and the payload is saved with the appropriate data.
