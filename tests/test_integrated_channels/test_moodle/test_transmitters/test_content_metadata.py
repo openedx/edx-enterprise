@@ -9,7 +9,6 @@ from unittest import mock
 import responses
 from pytest import mark
 
-from django.conf import settings
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
 from integrated_channels.moodle.transmitters.content_metadata import MoodleContentMetadataTransmitter
 from test_utils import factories
@@ -42,7 +41,6 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
             token=self.api_token,
         )
 
-    @mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_prepare_items_for_transmission(self):
         channel_metadata_items = [
             {
@@ -69,7 +67,6 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
     @mock.patch('integrated_channels.moodle.client.MoodleAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.moodle.client.MoodleAPIClient.delete_content_metadata')
     @mock.patch('integrated_channels.moodle.client.MoodleAPIClient.update_content_metadata')
-    @mock.patch.dict(settings.FEATURES, {'USE_ENCRYPTED_USER_DATA': True})
     def test_transmit_content_metadata_updates_records(
         self,
         create_content_metadata_mock,
