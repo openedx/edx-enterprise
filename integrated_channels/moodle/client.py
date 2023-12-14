@@ -135,7 +135,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('moodle')
         self.token = (
             enterprise_configuration.decrypted_token
-            if settings.FEATURES.get('USE_ENCRYPTED_USER_DATA', False)
+            if getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
             else enterprise_configuration.token
         ) or self._get_access_token()
         self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
