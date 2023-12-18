@@ -15,6 +15,7 @@ from django.apps import apps
 from django.conf import settings
 from django.http.request import QueryDict
 
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -275,6 +276,25 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
                 status_code=status_code
             )
+        # once course is created/updated successfully, we need to do 2 more steps
+        # 1. Fetch skills from enterprise-catalog
+        client = EnterpriseCatalogApiClient()
+        metadata = client.get_content_metadata_content_identifier(
+            enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            content_id=a_course.get('external-id')
+        )
+        LOGGER.warning(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f'[Degreed2Client] metadata: {metadata}'
+            )
+        )
+        # 2. Transmit to degreed
+        course_id = a_course.get("external-id")
+        self.assign_course_skills(course_id, metadata['skill_names'])
         return status_code, response_body
 
     def update_content_metadata(self, serialized_data):

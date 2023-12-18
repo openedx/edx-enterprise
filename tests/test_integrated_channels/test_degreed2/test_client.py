@@ -16,6 +16,7 @@ from six.moves.urllib.parse import urljoin
 
 from django.apps.registry import apps
 
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.degreed2.client import Degreed2APIClient
 from integrated_channels.exceptions import ClientError
@@ -206,6 +207,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client.delete_course_completion(None, None)
 
     @responses.activate
+    @pytest.mark.django_db
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_create_content_metadata_success(self):
         """
         ``create_content_metadata`` should use expected URLs and receive correct response.
@@ -214,7 +217,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
-
+        degreed_course_id = 'degreed-id'
         responses.add(
             responses.POST,
             oauth_url,
@@ -227,15 +230,36 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL +
+            EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200
+        )
+        responses.add(
+            responses.GET,
+            course_url+"?filter%5Bexternal_id%5D=key",
+            json={'data': [{'id': degreed_course_id}]},
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
 
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
-        assert len(responses.calls) == 2
+        assert len(responses.calls) == 5
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == course_url
         assert status_code == 200
         assert response_body == '"{}"'
 
     @responses.activate
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_create_content_metadata_retry_success(self):
         """
         ``create_content_metadata`` should hit a 429 and retry and receive correct response.
@@ -244,6 +268,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
+        degreed_course_id='degreed-id'
 
         responses.add(
             responses.POST,
@@ -263,9 +288,28 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200,
         )
-
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL +
+            EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200
+        )
+        responses.add(
+            responses.GET,
+            course_url+"?filter%5Bexternal_id%5D=key",
+            json={'data': [{'id': degreed_course_id}]},
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
-        assert len(responses.calls) == 3
+        assert len(responses.calls) == 6
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == course_url
         assert responses.calls[2].request.url == course_url
@@ -325,6 +369,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
             assert json.loads(response_body) == self.too_fast_response
 
     @responses.activate
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_create_content_metadata_course_exists(self):
         """
         ``create_content_metadata`` should return 409 status and not fail
@@ -333,6 +378,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
+        degreed_course_id='degreed-id'
 
         responses.add(
             responses.POST,
@@ -345,6 +391,26 @@ class TestDegreed2ApiClient(unittest.TestCase):
             course_url,
             json='{}',
             status=409
+        )
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL +
+            EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200
+        )
+        responses.add(
+            responses.GET,
+            course_url+"?filter%5Bexternal_id%5D=key",
+            json={'data': [{'id': degreed_course_id}]},
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
         )
         status_code, _ = degreed_api_client.create_content_metadata(create_course_payload())
         # we treat as "course exists" as a success
