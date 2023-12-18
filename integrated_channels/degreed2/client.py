@@ -293,8 +293,10 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
         )
         # 2. Transmit to degreed
-        course_id = a_course.get("external-id")
-        self.assign_course_skills(course_id, metadata['skill_names'])
+        skills = metadata['skill_names']
+        if skills:
+            course_id = a_course.get("external-id")
+            self.assign_course_skills(course_id, skills)
         return status_code, response_body
 
     def update_content_metadata(self, serialized_data):

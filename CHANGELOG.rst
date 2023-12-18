@@ -15,6 +15,13 @@ Change Log
 
 Unreleased
 ----------
+
+[4.8.12]
+--------
+
+* chore: update paragon npm dependency to move to the new @openedx scope.
+
+
 [4.8.11]
 --------
 feat: allow incomplete course learner transmissions till completion

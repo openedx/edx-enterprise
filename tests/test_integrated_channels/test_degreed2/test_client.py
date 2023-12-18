@@ -232,17 +232,18 @@ class TestDegreed2ApiClient(unittest.TestCase):
         )
         responses.add(
             responses.GET,
-            EnterpriseCatalogApiClient.API_BASE_URL +
-            EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
-                enterprise_config.enterprise_customer.uuid, "key/"),
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
-            status=200
+            status=200,
         )
         responses.add(
             responses.GET,
-            course_url+"?filter%5Bexternal_id%5D=key",
-            json={'data': [{'id': degreed_course_id}]},
-            status=200
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
         )
         responses.add(
             responses.PATCH,
@@ -268,7 +269,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
-        degreed_course_id='degreed-id'
+        degreed_course_id = "degreed-id"
 
         responses.add(
             responses.POST,
@@ -290,23 +291,24 @@ class TestDegreed2ApiClient(unittest.TestCase):
         )
         responses.add(
             responses.GET,
-            EnterpriseCatalogApiClient.API_BASE_URL +
-            EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
-                enterprise_config.enterprise_customer.uuid, "key/"),
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
-            status=200
+            status=200,
         )
         responses.add(
             responses.GET,
-            course_url+"?filter%5Bexternal_id%5D=key",
-            json={'data': [{'id': degreed_course_id}]},
-            status=200
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
         )
         responses.add(
             responses.PATCH,
-            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
-            json='{}',
-            status=200
+            f"{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills",
+            json="{}",
+            status=200,
         )
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
         assert len(responses.calls) == 6
@@ -378,7 +380,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
-        degreed_course_id='degreed-id'
+        degreed_course_id = "degreed-id"
 
         responses.add(
             responses.POST,
@@ -394,17 +396,18 @@ class TestDegreed2ApiClient(unittest.TestCase):
         )
         responses.add(
             responses.GET,
-            EnterpriseCatalogApiClient.API_BASE_URL +
-            EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
-                enterprise_config.enterprise_customer.uuid, "key/"),
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
-            status=200
+            status=200,
         )
         responses.add(
             responses.GET,
-            course_url+"?filter%5Bexternal_id%5D=key",
-            json={'data': [{'id': degreed_course_id}]},
-            status=200
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
         )
         responses.add(
             responses.PATCH,
