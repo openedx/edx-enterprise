@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.8.13]
+--------
+
+fix: fixed create_course_completion request's response handling in case return body is 0
+
 [4.8.12]
 --------
 
