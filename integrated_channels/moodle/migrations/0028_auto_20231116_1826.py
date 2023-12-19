@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('moodle', '0028_auto_20230928_1530'),
+        ('moodle', '0027_alter_historicalmoodleenterprisecustomerconfiguration_options'),
     ]
 
     operations = [
