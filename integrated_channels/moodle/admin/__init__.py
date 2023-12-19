@@ -21,11 +21,6 @@ class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
     class Meta:
         model = MoodleEnterpriseCustomerConfiguration
         fields = '__all__'
-        widgets = {
-            'decrypted_password': forms.widgets.PasswordInput(),
-            'decrypted_username': forms.widgets.PasswordInput(),
-            'decrypted_token': forms.widgets.PasswordInput(),
-        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -50,20 +45,6 @@ class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
 
     form = MoodleEnterpriseCustomerConfigurationForm
     change_actions = ('force_content_metadata_transmission',)
-
-    class Meta:
-        model = MoodleEnterpriseCustomerConfiguration
-
-    def get_fields(self, request, obj=None):
-        """
-        Return the fields that should be displayed on the admin form.
-        """
-        fields = list(super().get_fields(request, obj))
-        if obj:
-            # Exclude password fields when we are editing an existing model.
-            return [f for f in fields if f not in {'decrypted_username', 'decrypted_token', 'decrypted_password'}]
-
-        return fields
 
     @admin.action(
         description="Force content metadata transmission for this Enterprise Customer"
