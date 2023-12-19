@@ -296,8 +296,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         # 2. Transmit to degreed
         skills = metadata['skill_names']
         if skills:
-            course_id = a_course.get("external-id")
-            self.assign_course_skills(course_id, skills)
+            self.assign_course_skills(external_id, skills)
             LOGGER.info(
                 generate_formatted_log(
                     self.enterprise_configuration.channel_code(),
@@ -305,7 +304,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                     None,
                     None,
                     f'[Degreed2Client] transmitted skills: {metadata["skill_names"]},'
-                    f'for course: {course_id}'
+                    f'for course: {external_id}'
                 )
             )
         return status_code, response_body
