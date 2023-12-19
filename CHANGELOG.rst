@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.8.14]
+--------
+
+fix: restructured response from moodle request wrapper
+
 [4.8.13]
 --------
 
