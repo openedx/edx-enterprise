@@ -61,16 +61,17 @@ def moodle_request_wrapper(method):
             # This only happens for grades AFAICT. Zero also doesn't necessarily mean success,
             # but we have nothing else to go on
             if body == 0:
-                if method.__name__ == "_wrapped_create_course_completion" and response.status_code == 200:
+                if method.__name__ == "_wrapped_create_course_completion":
+                    completion_data = kwargs.get('payload')
+                    course_id = completion_data.get('courseID', None)
                     LOGGER.info(
                         'Integer Response for Moodle Course Completion'
-                        f'with data kwargs={kwargs} and args={args} '
+                        f'for course={course_id} '
                         f' response: {response} '
                         f'Status Code: {response.status_code}, '
                         f'Text: {response.text}, '
                         f'Headers: {response.headers}, '
                     )
-                    return {'status_code': 200, 'text': ''}
                 return 200, ''
             raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
         if isinstance(body, str):
