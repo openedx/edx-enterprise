@@ -28,9 +28,9 @@ class EnterpriseCatalogApiClient(UserAPIClient):
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     CATALOG_DIFF_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/generate_diff'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
-    CONTENT_METADATA_IDENTIFIER_ENDPOINT = (
-        ENTERPRISE_CUSTOMER_ENDPOINT + "/{}/content-metadata/" + "{}"
-    )
+    CONTENT_METADATA_IDENTIFIER_ENDPOINT = ENTERPRISE_CUSTOMER_ENDPOINT + \
+        "/{}/content-metadata/" + "{}"
+    
     APPEND_SLASH = True
     GET_CONTENT_METADATA_PAGE_SIZE = getattr(settings, 'ENTERPRISE_CATALOG_GET_CONTENT_METADATA_PAGE_SIZE', 50)
 

@@ -260,13 +260,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
         # only expect one course in this array as of now (chunk size is 1)
         a_course = channel_metadata_item['courses'][0]
+        external_id = a_course.get('external-id')
         status_code, response_body = self._sync_content_metadata(a_course, 'post', self.get_courses_url())
         if status_code == 409:
             # course already exists, don't raise failure, but log and move on
             LOGGER.warning(
                 self.make_log_msg(
-                    a_course.get('external-id'),
-                    f'Course with integration_id = {a_course.get("external-id")} already exists, '
+                    external_id,
+                    f'Course with integration_id = {external_id} already exists, '
                 )
             )
             # content already exists, we'll treat this as a success
@@ -276,14 +277,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
                 status_code=status_code
             )
-        # once course is created/updated successfully, we need to do 2 more steps
+        # once course is created successfully, we need to do 2 more steps
         # 1. Fetch skills from enterprise-catalog
         client = EnterpriseCatalogApiClient()
         metadata = client.get_content_metadata_content_identifier(
             enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            content_id=a_course.get('external-id')
+            content_id=external_id
         )
-        LOGGER.warning(
+        LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
@@ -297,6 +298,16 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         if skills:
             course_id = a_course.get("external-id")
             self.assign_course_skills(course_id, skills)
+            LOGGER.info(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'[Degreed2Client] transmitted skills: {metadata["skill_names"]},'
+                    f'for course: {course_id}'
+                )
+            )
         return status_code, response_body
 
     def update_content_metadata(self, serialized_data):
@@ -325,6 +336,36 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             patch_url,
             course_id
         )
+        # once course is updated successfully, we need to do 2 more steps
+        # 1. Fetch skills from enterprise-catalog
+        client = EnterpriseCatalogApiClient()
+        metadata = client.get_content_metadata_content_identifier(
+            enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            content_id=external_id
+        )
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f'[Degreed2Client] metadata: {metadata}'
+            )
+        )
+        # 2. Transmit to degreed
+        skills = metadata['skill_names']
+        if skills:
+            self.assign_course_skills(external_id, skills)
+            LOGGER.info(
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'[Degreed2Client] transmitted skills: {metadata["skill_names"]},'
+                    f'for course: {course_id}'
+                )
+            )
         return patch_status_code, patch_response_body
 
     def delete_content_metadata(self, serialized_data):

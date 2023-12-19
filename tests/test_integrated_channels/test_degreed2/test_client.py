@@ -421,6 +421,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_update_content_metadata_success(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
@@ -429,6 +430,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
+        degreed_course_id = "a_course_id"
+        course_url = degreed_api_client.get_courses_url()
 
         responses.add(
             responses.POST,
@@ -442,9 +445,29 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
-
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
         status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
-        assert len(responses.calls) == 2
+        assert len(responses.calls) == 4
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert status_code == 200
@@ -452,6 +475,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_assign_course_skills(self, mock_fetch_degreed_course_id):
         """
         ``assign_course_skills`` should use the appropriate URL for making API call.
@@ -563,6 +587,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_update_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
@@ -571,6 +596,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
+        degreed_course_id = 'a_course_id'
+        course_url = degreed_api_client.get_courses_url()
 
         responses.add(
             responses.POST,
@@ -590,9 +617,29 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
-
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
         status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
-        assert len(responses.calls) == 3
+        assert len(responses.calls) == 5
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
@@ -601,6 +648,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_update_content_metadata_retry_exhaust(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
@@ -609,6 +657,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
+        degreed_course_id = 'a_course_id'
+        course_url = degreed_api_client.get_courses_url()
 
         responses.add(
             responses.POST,
@@ -646,9 +696,30 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json=self.too_fast_response,
             status=429
         )
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
 
         status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
-        assert len(responses.calls) == 6
+        assert len(responses.calls) == 8
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
