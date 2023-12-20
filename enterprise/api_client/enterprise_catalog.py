@@ -8,6 +8,7 @@ from logging import getLogger
 from urllib.parse import urljoin
 
 from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
+from rest_framework.exceptions import NotFound
 
 from django.conf import settings
 
@@ -28,6 +29,8 @@ class EnterpriseCatalogApiClient(UserAPIClient):
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     CATALOG_DIFF_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/generate_diff'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
+    CONTENT_METADATA_IDENTIFIER_ENDPOINT = ENTERPRISE_CUSTOMER_ENDPOINT + \
+        "/{}/content-metadata/" + "{}"
     APPEND_SLASH = True
     GET_CONTENT_METADATA_PAGE_SIZE = getattr(settings, 'ENTERPRISE_CATALOG_GET_CONTENT_METADATA_PAGE_SIZE', 50)
 
@@ -311,6 +314,34 @@ class EnterpriseCatalogApiClient(UserAPIClient):
         response = self.client.get(api_url, params=query_params)
         response.raise_for_status()
         return response.json()['contains_content_items']
+
+    @UserAPIClient.refresh_token
+    def get_content_metadata_content_identifier(self, enterprise_uuid, content_id):  # pylint: disable=inconsistent-return-statements
+        """
+        Return all content metadata contained in the catalogs associated with the
+        given EnterpriseCustomer and content_id.
+        """
+        try:
+            api_url = self.get_api_url(
+                f"{self.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(enterprise_uuid, content_id)}"
+            )
+            response = self.client.get(api_url)
+            response.raise_for_status()
+            return response.json()
+        except NotFound as exc:
+            LOGGER.exception(
+                "No matching content found in catalog for customer: [%s] or content_id: [%s], Error: %s",
+                enterprise_uuid,
+                content_id,
+                str(exc),
+            )
+            return {}
+        except (RequestException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                "Exception raised in EnterpriseCatalogApiClient::get_content_metadata_content_identifier: [%s]",
+                str(exc),
+            )
+            return {}
 
 
 class NoAuthEnterpriseCatalogClient(NoAuthAPIClient):
