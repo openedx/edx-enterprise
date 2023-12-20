@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.8.14]
+--------
+
+feat: Modified existing content transmission job to post skills metadata to Degreed2
+
 [4.8.13]
 --------
 
