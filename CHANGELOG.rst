@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.8.15]
+--------
+
+fix: restructured response from moodle request wrapper
+feat: replacing non encrypted fields of moodle config model with encrypted ones (ENT 5613)
+
 [4.8.14]
 --------
 

@@ -32,6 +32,17 @@ class MoodleClientError(ClientError):
         super().__init__(message, status_code)
 
 
+class MoodleResponse:
+    """
+    Represents an HTTP response with status code and textual content.
+    """
+
+    def __init__(self, status_code, text):
+        """Save the status code and text of the response."""
+        self.status_code = status_code
+        self.text = text
+
+
 def moodle_request_wrapper(method):
     """
     Wraps requests to Moodle's API in a token check.
@@ -71,7 +82,7 @@ def moodle_request_wrapper(method):
                         f'Text: {response.text}, '
                         f'Headers: {response.headers}, '
                     )
-                    return {'status_code': 200, 'text': ''}
+                    return MoodleResponse(status_code=200, text='')
                 return 200, ''
             raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
         if isinstance(body, str):
@@ -485,6 +496,16 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         # The base integrated channels transmitter expects a tuple of (code, body),
         # but we need to wrap the requests
         resp = self._wrapped_create_course_completion(user_id, payload)
+        completion_data = json.loads(payload)
+        LOGGER.info(
+            generate_formatted_log(
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                course_or_course_run_key=completion_data['courseID'],
+                plugin_configuration_id=self.enterprise_configuration.id,
+                message=f'Response for Moodle Create Course Completion Request response: {resp} '
+            )
+        )
         return resp.status_code, resp.text
 
     @moodle_request_wrapper
