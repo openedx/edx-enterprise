@@ -1,8 +1,6 @@
 """
     Serializer for Moodle configuration.
 """
-from rest_framework import serializers
-
 from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 
