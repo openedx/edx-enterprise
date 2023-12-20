@@ -15,6 +15,7 @@ from django.apps import apps
 from django.conf import settings
 from django.http.request import QueryDict
 
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -61,6 +62,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             course_key,
             message,
         )
+        self.enterprise_catalog_api_client = EnterpriseCatalogApiClient()
 
     def get_oauth_url(self):
         config = self.enterprise_configuration
@@ -259,13 +261,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
         # only expect one course in this array as of now (chunk size is 1)
         a_course = channel_metadata_item['courses'][0]
+        external_id = a_course.get('external-id')
         status_code, response_body = self._sync_content_metadata(a_course, 'post', self.get_courses_url())
         if status_code == 409:
             # course already exists, don't raise failure, but log and move on
             LOGGER.warning(
                 self.make_log_msg(
-                    a_course.get('external-id'),
-                    f'Course with integration_id = {a_course.get("external-id")} already exists, '
+                    external_id,
+                    f'Course with integration_id = {external_id} already exists, '
                 )
             )
             # content already exists, we'll treat this as a success
@@ -275,6 +278,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
                 status_code=status_code
             )
+        self._fetch_and_assign_skills_to_course(external_id)
+
         return status_code, response_body
 
     def update_content_metadata(self, serialized_data):
@@ -303,7 +308,48 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             patch_url,
             course_id
         )
+
+        self._fetch_and_assign_skills_to_course(external_id)
+
         return patch_status_code, patch_response_body
+
+    def _fetch_and_assign_skills_to_course(self, external_id):
+        """
+        Fetches content metadata(skills) from enterprise catalog API
+        and transmits them to Degreed2 against given external_id(course_id)
+
+        Args:
+            external_id: Course id that is assigned to a course on Degreed side
+        """
+        # We need to do 2 steps here:
+        # 1. Fetch skills from enterprise-catalog
+
+        metadata = self.enterprise_catalog_api_client.get_content_metadata_content_identifier(
+            enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            content_id=external_id)
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f"[Degreed2Client] metadata: {metadata}",
+            )
+        )
+
+        # 2. Transmit to degreed
+        skills = metadata.get("skill_names", [])
+        if skills:
+            try:
+                self.assign_course_skills(external_id, skills)
+            except ClientError as err:
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f"[Degreed2Client]: {err.message}",
+                )
 
     def delete_content_metadata(self, serialized_data):
         """
