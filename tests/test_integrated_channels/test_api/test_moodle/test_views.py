@@ -82,13 +82,13 @@ class MoodleConfigurationViewSetTests(APITest):
             'moodle_base_url': 'http://testing2',
             'service_short_name': 'test',
             'enterprise_customer': ENTERPRISE_ID,
-            'encrypted_token': 'testing'
+            'token': 'testing'
         }
         response = self.client.put(url, payload)
         self.moodle_config.refresh_from_db()
         self.assertEqual(self.moodle_config.moodle_base_url, 'http://testing2')
         self.assertEqual(self.moodle_config.service_short_name, 'test')
-        self.assertEqual(self.moodle_config.decrypted_token, 'testing')
+        self.assertEqual(self.moodle_config.token, 'testing')
         self.assertEqual(response.status_code, 200)
 
     @mock.patch('enterprise.rules.crum.get_current_request')

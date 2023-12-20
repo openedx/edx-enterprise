@@ -132,11 +132,12 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('moodle')
-        self.token = (
+        token = (
             enterprise_configuration.decrypted_token
             if getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
             else enterprise_configuration.token
-        ) or self._get_access_token()
+        )
+        self.token = token or self._get_access_token()
         self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
 
     def _post(self, additional_params):

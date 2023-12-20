@@ -14,12 +14,8 @@ class MoodleConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
             'moodle_base_url',
             'service_short_name',
             'category_id',
-            'encrypted_username',
-            'encrypted_password',
-            'encrypted_token',
+            'username',
+            'password',
+            'token',
         )
         fields = EnterpriseCustomerPluginConfigSerializer.Meta.fields + extra_fields
-
-    encrypted_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
-    encrypted_username = serializers.CharField(required=False, allow_blank=False, read_only=False)
-    encrypted_token = serializers.CharField(required=False, allow_blank=False, read_only=False)
