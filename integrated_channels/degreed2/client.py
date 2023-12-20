@@ -62,6 +62,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             course_key,
             message,
         )
+        self.enterprise_catalog_api_client = EnterpriseCatalogApiClient()
 
     def get_oauth_url(self):
         config = self.enterprise_configuration
@@ -277,36 +278,8 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
                 status_code=status_code
             )
-        # once course is created successfully, we need to do 2 more steps
-        # 1. Fetch skills from enterprise-catalog
-        client = EnterpriseCatalogApiClient()
-        metadata = client.get_content_metadata_content_identifier(
-            enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            content_id=external_id
-        )
-        LOGGER.info(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                f'[Degreed2Client] metadata: {metadata}'
-            )
-        )
-        # 2. Transmit to degreed
-        skills = metadata['skill_names']
-        if skills:
-            self.assign_course_skills(external_id, skills)
-            LOGGER.info(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    f'[Degreed2Client] transmitted skills: {metadata["skill_names"]},'
-                    f'for course: {external_id}'
-                )
-            )
+        self._fetch_and_assign_skills_to_course(external_id)
+
         return status_code, response_body
 
     def update_content_metadata(self, serialized_data):
@@ -335,37 +308,48 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             patch_url,
             course_id
         )
-        # once course is updated successfully, we need to do 2 more steps
+
+        self._fetch_and_assign_skills_to_course(external_id)
+
+        return patch_status_code, patch_response_body
+
+    def _fetch_and_assign_skills_to_course(self, external_id):
+        """
+        Fetches content metadata(skills) from enterprise catalog API
+        and transmits them to Degreed2 against given external_id(course_id)
+
+        Args:
+            external_id: Course id that is assigned to a course on Degreed side
+        """
+        # We need to do 2 steps here:
         # 1. Fetch skills from enterprise-catalog
-        client = EnterpriseCatalogApiClient()
-        metadata = client.get_content_metadata_content_identifier(
+
+        metadata = self.enterprise_catalog_api_client.get_content_metadata_content_identifier(
             enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            content_id=external_id
-        )
+            content_id=external_id)
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),
                 self.enterprise_configuration.enterprise_customer.uuid,
                 None,
                 None,
-                f'[Degreed2Client] metadata: {metadata}'
+                f"[Degreed2Client] metadata: {metadata}",
             )
         )
+
         # 2. Transmit to degreed
-        skills = metadata['skill_names']
+        skills = metadata.get("skill_names", [])
         if skills:
-            self.assign_course_skills(external_id, skills)
-            LOGGER.info(
+            try:
+                self.assign_course_skills(external_id, skills)
+            except ClientError as err:
                 generate_formatted_log(
                     self.enterprise_configuration.channel_code(),
                     self.enterprise_configuration.enterprise_customer.uuid,
                     None,
                     None,
-                    f'[Degreed2Client] transmitted skills: {metadata["skill_names"]},'
-                    f'for course: {course_id}'
+                    f"[Degreed2Client]: {err.message}",
                 )
-            )
-        return patch_status_code, patch_response_body
 
     def delete_content_metadata(self, serialized_data):
         """

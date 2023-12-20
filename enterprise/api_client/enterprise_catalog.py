@@ -318,7 +318,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
     @UserAPIClient.refresh_token
     def get_content_metadata_content_identifier(self, enterprise_uuid, content_id):  # pylint: disable=inconsistent-return-statements
         """
-        Return all content metadata contained in the catalogs associated with the the
+        Return all content metadata contained in the catalogs associated with the
         given EnterpriseCustomer and content_id.
         """
         try:
@@ -341,6 +341,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
                 "Exception raised in EnterpriseCatalogApiClient::get_content_metadata_content_identifier: [%s]",
                 str(exc),
             )
+            return {}
 
 
 class NoAuthEnterpriseCatalogClient(NoAuthAPIClient):
