@@ -139,9 +139,9 @@ class MoodleConfigurationViewSetTests(APITest):
         _, incorrect = data[0].get('is_valid')
         assert incorrect.get('incorrect') == ['moodle_base_url', 'display_name']
 
-        self.moodle_config.decrypted_token = ''
-        self.moodle_config.decrypted_username = ''
-        self.moodle_config.decrypted_password = ''
+        self.moodle_config.token = ''
+        self.moodle_config.username = ''
+        self.moodle_config.password = ''
         self.moodle_config.moodle_base_url = ''
         self.moodle_config.service_short_name = ''
         self.moodle_config.save()
@@ -152,9 +152,9 @@ class MoodleConfigurationViewSetTests(APITest):
         assert missing.get('missing') == ['moodle_base_url', 'token OR username and password', 'service_short_name']
 
         self.moodle_config.category_id = 10
-        self.moodle_config.decrypted_username = 'lmao'
-        self.moodle_config.decrypted_password = 'foobar'
-        self.moodle_config.decrypted_token = 'baa'
+        self.moodle_config.username = 'lmao'
+        self.moodle_config.password = 'foobar'
+        self.moodle_config.token = 'baa'
         self.moodle_config.moodle_base_url = 'http://lovely.com'
         self.moodle_config.service_short_name = 'short'
         self.moodle_config.display_name = '1234!@#$'
