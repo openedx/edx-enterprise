@@ -21,17 +21,12 @@ class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
     class Meta:
         model = MoodleEnterpriseCustomerConfiguration
         fields = '__all__'
-        widgets = {
-            'decrypted_password': forms.widgets.PasswordInput(),
-            'decrypted_username': forms.widgets.PasswordInput(),
-            'decrypted_token': forms.widgets.PasswordInput(),
-        }
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_username = cleaned_data.get('username')
-        cleaned_password = cleaned_data.get('password')
-        cleaned_token = cleaned_data.get('token')
+        cleaned_username = cleaned_data.get('decrypted_username')
+        cleaned_password = cleaned_data.get('decrypted_password')
+        cleaned_token = cleaned_data.get('decrypted_token')
         if cleaned_token and (cleaned_username or cleaned_password):
             raise ValidationError(_('Cannot set both a Username/Password and Token'))
         if (cleaned_username and not cleaned_password) or (cleaned_password and not cleaned_username):
@@ -50,20 +45,6 @@ class MoodleEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
 
     form = MoodleEnterpriseCustomerConfigurationForm
     change_actions = ('force_content_metadata_transmission',)
-
-    class Meta:
-        model = MoodleEnterpriseCustomerConfiguration
-
-    def get_fields(self, request, obj=None):
-        """
-        Return the fields that should be displayed on the admin form.
-        """
-        fields = list(super().get_fields(request, obj))
-        if obj:
-            # Exclude password fields when we are editing an existing model.
-            return [f for f in fields if f not in {'decrypted_username', 'decrypted_token', 'decrypted_password'}]
-
-        return fields
 
     @admin.action(
         description="Force content metadata transmission for this Enterprise Customer"
