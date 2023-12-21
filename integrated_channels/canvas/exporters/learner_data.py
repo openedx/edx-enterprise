@@ -57,7 +57,7 @@ class CanvasLearnerExporter(LearnerExporter):
             course_id=course_id,
         ).first()
         if learner_transmission_record is None:
-            CanvasLearnerDataTransmissionAudit(
+            learner_transmission_record = CanvasLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_customer_user.user_email,
                 user_email=enterprise_customer_user.user_email,
