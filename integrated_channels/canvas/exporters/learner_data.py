@@ -50,9 +50,13 @@ class CanvasLearnerExporter(LearnerExporter):
             'canvas',
             'CanvasLearnerDataTransmissionAudit'
         )
-        # We return two records here, one with the course key and one with the course run id, to account for
-        # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-        return [
+        course_id = get_course_id_for_enrollment(enterprise_enrollment)
+        # We only want to send one record per enrollment and course, so we check if one exists first.
+        learner_transmission_record = CanvasLearnerDataTransmissionAudit.objects.filter(
+            enterprise_course_enrollment_id=enterprise_enrollment.id,
+            course_id=course_id,
+        ).first()
+        if learner_transmission_record is None:
             CanvasLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_customer_user.user_email,
@@ -64,8 +68,9 @@ class CanvasLearnerExporter(LearnerExporter):
                 canvas_completed_timestamp=canvas_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
-            ),
-        ]
+            )
+        # We return one record here, with the course key, that was sent to the integrated channel.
+        return [learner_transmission_record]
 
     def get_learner_assessment_data_records(
             self,

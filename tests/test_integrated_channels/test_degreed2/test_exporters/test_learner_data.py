@@ -91,6 +91,26 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
             )
             assert learner_data_record.grade == (grade_percent * 100 if grade_percent else None)
 
+    def test_retrieve_same_learner_data_record(self):
+        """
+        If a learner data record already exists for the enrollment, it should be retrieved instead of created.
+        """
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        exporter = Degreed2LearnerExporter('fake-user', self.config)
+        learner_data_records_1 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+        )[0]
+        learner_data_records_1.save()
+        learner_data_records_2 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+        )[0]
+        learner_data_records_2.save()
+
+        assert learner_data_records_1.id == learner_data_records_2.id
+
     def test_no_remote_id(self):
         """
         If the TPA API Client returns no remote user ID, nothing is returned.

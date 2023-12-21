@@ -593,22 +593,27 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         completed_timestamp = None
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
-        # We return two records here, one with the course key and one with the course run id, to account for
-        # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-        return [
-            TransmissionAudit(
+        course_id = get_course_id_for_enrollment(enterprise_enrollment)
+        # We only want to send one record per enrollment and course, so we check if one exists first.
+        learner_transmission_record = TransmissionAudit.objects.filter(
+            enterprise_course_enrollment_id=enterprise_enrollment.id,
+            course_id=course_id,
+        ).first()
+        if learner_transmission_record is None:
+            learner_transmission_record = TransmissionAudit(
                 plugin_configuration_id=self.enterprise_configuration.id,
                 enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                course_id=get_course_id_for_enrollment(enterprise_enrollment),
+                course_id=course_id,
                 course_completed=course_completed,
                 completed_timestamp=completed_timestamp,
                 grade=grade,
                 user_email=user_email,
                 content_title=content_title,
                 progress_status=progress_status,
-            ),
-        ]
+            )
+        # We return one record here, with the course key, that was sent to the integrated channel.
+        return [learner_transmission_record]
 
     def collect_certificate_data(self, enterprise_enrollment, channel_name):
         """
