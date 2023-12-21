@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 import requests
 
 from django.apps import apps
+from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -29,6 +30,17 @@ class MoodleClientError(ClientError):
         self.message = message
         self.moodle_error = moodle_error
         super().__init__(message, status_code)
+
+
+class MoodleResponse:
+    """
+    Represents an HTTP response with status code and textual content.
+    """
+
+    def __init__(self, status_code, text):
+        """Save the status code and text of the response."""
+        self.status_code = status_code
+        self.text = text
 
 
 def moodle_request_wrapper(method):
@@ -61,6 +73,16 @@ def moodle_request_wrapper(method):
             # This only happens for grades AFAICT. Zero also doesn't necessarily mean success,
             # but we have nothing else to go on
             if body == 0:
+                if method.__name__ == "_wrapped_create_course_completion" and response.status_code == 200:
+                    LOGGER.info(
+                        'Integer Response for Moodle Course Completion'
+                        f'with data kwargs={kwargs} and args={args} '
+                        f' response: {response} '
+                        f'Status Code: {response.status_code}, '
+                        f'Text: {response.text}, '
+                        f'Headers: {response.headers}, '
+                    )
+                    return MoodleResponse(status_code=200, text='')
                 return 200, ''
             raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
         if isinstance(body, str):
@@ -160,6 +182,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         querystring = {
             'service': self.enterprise_configuration.service_short_name
         }
+
+        decrypted_username = self.enterprise_configuration.decrypted_username
+        username = self.enterprise_configuration.username
+        decrypted_password = self.enterprise_configuration.decrypted_password
+        password = self.enterprise_configuration.password
 
         response = requests.post(
             urljoin(
@@ -351,19 +378,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             headers = response.headers
         else:
             headers = None
-
-        LOGGER.info(
-            'Learner Data Transmission'
-            f'for course={completion_data["courseID"]}  with data '
-            f'source: {module_name}, '
-            f'activityid: {course_module_id}, '
-            f'grades[0][studentid]: {moodle_user_id}, '
-            f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
-            f' with response: {response} '
-            f'Status Code: {status_code}, '
-            f'Text: {text}, '
-            f'Headers: {headers}, '
-        )
+        if not status_code or not text or not headers:
+            LOGGER.info(
+                'Learner Data Transmission'
+                f'for course={completion_data["courseID"]}  with data '
+                f'source: {module_name}, '
+                f'activityid: {course_module_id}, '
+                f'grades[0][studentid]: {moodle_user_id}, '
+                f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
+                f' with response: {response} '
+                f'Status Code: {status_code}, '
+                f'Text: {text}, '
+                f'Headers: {headers}, '
+            )
 
         return response
 
@@ -464,6 +491,16 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         # The base integrated channels transmitter expects a tuple of (code, body),
         # but we need to wrap the requests
         resp = self._wrapped_create_course_completion(user_id, payload)
+        completion_data = json.loads(payload)
+        LOGGER.info(
+            generate_formatted_log(
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                course_or_course_run_key=completion_data['courseID'],
+                plugin_configuration_id=self.enterprise_configuration.id,
+                message=f'Response for Moodle Create Course Completion Request response: {resp} '
+            )
+        )
         return resp.status_code, resp.text
 
     @moodle_request_wrapper

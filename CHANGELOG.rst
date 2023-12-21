@@ -15,6 +15,34 @@ Change Log
 
 Unreleased
 ----------
+
+[4.8.15]
+--------
+
+fix: restructured response from moodle request wrapper
+feat: replacing non encrypted fields of moodle config model with encrypted ones (ENT 5613)
+
+[4.8.14]
+--------
+
+feat: Modified existing content transmission job to post skills metadata to Degreed2
+
+[4.8.13]
+--------
+
+fix: fixed create_course_completion request's response handling in case return body is 0
+
+[4.8.12]
+--------
+
+* chore: update paragon npm dependency to move to the new @openedx scope.
+
+
+[4.8.11]
+--------
+feat: allow incomplete course learner transmissions till completion
+refactor: adding log inside moodle request wrapper
+
 [4.8.10]
 --------
 feat: not submitting sso orchestrator records if no changes occur
