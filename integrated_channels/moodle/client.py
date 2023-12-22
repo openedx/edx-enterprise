@@ -10,7 +10,6 @@ from urllib.parse import urljoin
 import requests
 
 from django.apps import apps
-from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -182,11 +181,6 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         querystring = {
             'service': self.enterprise_configuration.service_short_name
         }
-
-        decrypted_username = self.enterprise_configuration.decrypted_username
-        username = self.enterprise_configuration.username
-        decrypted_password = self.enterprise_configuration.decrypted_password
-        password = self.enterprise_configuration.password
 
         response = requests.post(
             urljoin(
