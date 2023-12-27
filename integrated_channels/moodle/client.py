@@ -192,6 +192,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         username = self.enterprise_configuration.username
         decrypted_password = self.enterprise_configuration.decrypted_password
         password = self.enterprise_configuration.password
+        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
 
         response = requests.post(
             urljoin(
@@ -203,8 +204,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             data={
-                "username": decrypted_username if settings.FEATURES.get('USE_ENCRYPTED_USER_DATA', False) else username,
-                "password": decrypted_password if settings.FEATURES.get('USE_ENCRYPTED_USER_DATA', False) else password,
+                "username": decrypted_username if use_encrypted_user_data else username,
+                "password": decrypted_password if use_encrypted_user_data else password,
             },
         )
 

@@ -36,6 +36,9 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
             decrypted_username=self.user,
             decrypted_password=self.password,
             decrypted_token=self.api_token,
+            username=self.user,
+            password=self.password,
+            token=self.api_token,
         )
 
     def test_prepare_items_for_transmission(self):
