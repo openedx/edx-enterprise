@@ -90,7 +90,7 @@ class TestMoodleApiClient(unittest.TestCase):
             moodle_base_url=self.custom_moodle_base_url,
             decrypted_username=self.user,
             decrypted_password=self.password,
-            decrypted_token=self.token
+            decrypted_token=self.token,
             username=self.user,
             password=self.password,
             token=self.token,
