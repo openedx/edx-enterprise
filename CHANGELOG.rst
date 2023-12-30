@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+[4.6.1]
+---------
+This version is based on v4.6.0 and contains some backports needed to OpenCraft's clients. There is no "official" v4.6.0.
+See this PR for more details: https://github.com/open-craft/edx-enterprise/pull/13
+
 [4.6.0]
 -------
 feat: Added enable_source_demo_data_for_analytics_and_lpr field to EnterpriseCustomer.
