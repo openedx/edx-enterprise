@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.8.16]
+--------
+
+fix: removed course completion check from is_already_transmitted utility (ENT 7837)
+
 [4.8.15]
 --------
 

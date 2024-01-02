@@ -218,7 +218,6 @@ def is_already_transmitted(
             plugin_configuration_id=enterprise_configuration_id,
             error_message='',
             status__lt=400,
-            course_completed=True
         )
         if subsection_id:
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
