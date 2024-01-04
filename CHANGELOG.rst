@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.8.17]
+--------
+
+fix: remove logs from Degreed2 client
+
 [4.8.16]
 --------
 
