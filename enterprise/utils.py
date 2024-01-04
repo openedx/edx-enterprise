@@ -1565,6 +1565,13 @@ def get_sso_orchestrator_configure_path():
     return settings.ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_PATH
 
 
+def get_sso_orchestrator_configure_edx_oauth_path():
+    """
+    Return the SSO orchestrator configure-edx-oauth endpoint path, or None if it is not defined.
+    """
+    return getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_EDX_OAUTH_PATH", None)
+
+
 def get_enterprise_worker_user():
     """
     Return the user object of enterprise worker user.

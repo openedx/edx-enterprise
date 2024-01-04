@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect, HttpResponseServerError, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -36,6 +36,7 @@ from enterprise.admin.utils import (
 )
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient, SsoOrchestratorClientError
 from enterprise.constants import PAGE_SIZE
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
@@ -50,6 +51,7 @@ from enterprise.utils import (
     delete_data_sharing_consent,
     enroll_users_in_course,
     get_ecommerce_worker_user,
+    get_sso_orchestrator_configure_edx_oauth_path,
     validate_course_exists_for_enterprise,
     validate_email_to_link,
 )
@@ -174,7 +176,8 @@ class BaseEnterpriseCustomerView(View):
         render the form with appropriate context.
         """
         context = self._build_context(request, customer_uuid)
-        context.update(additional_context)
+        if additional_context:
+            context.update(additional_context)
         return render(request, self.template, context)
 
 
@@ -895,3 +898,71 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             return HttpResponse(message, content_type="application/json", status=404)
 
         return JsonResponse({})
+
+
+class EnterpriseCustomerSetupAuthOrgIDView(BaseEnterpriseCustomerView):
+    """
+    Setup Auth org id View.
+
+    This action will configure SSO to GetSmarter using edX credentials via Auth0.
+    """
+    template = 'enterprise/admin/setup_auth_org_id.html'
+
+    def get(self, request, customer_uuid):
+        """
+        Handle GET request - render "Setup Auth org id" form.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        if not get_sso_orchestrator_configure_edx_oauth_path():
+            return HttpResponseForbidden(
+                "The ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_EDX_OAUTH_PATH setting was not configured."
+            )
+        return self.get_form_view(request, customer_uuid)
+
+    def post(self, request, customer_uuid):
+        """
+        Handle POST request - handle form submissions.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+        """
+        if not get_sso_orchestrator_configure_edx_oauth_path():
+            return HttpResponseForbidden(
+                "The ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_EDX_OAUTH_PATH setting was not configured."
+            )
+
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)
+
+        # Call the configure-edx-oauth endpoint on the enterprise-sso-orchestrator service to obtain an orgId.
+        # This will raise SsoOrchestratorClientError if the API request fails.
+        try:
+            auth_org_id = EnterpriseSSOOrchestratorApiClient().configure_edx_oauth(enterprise_customer)
+        except SsoOrchestratorClientError as exc:
+            error_msg = (
+                f"Error configuring edx oauth for enterprise customer {enterprise_customer.name}"
+                f"<{enterprise_customer.uuid}>: {exc}"
+            )
+            LOG.exception(error_msg)
+            return HttpResponseServerError(error_msg)
+
+        if auth_org_id:
+            enterprise_customer.auth_org_id = auth_org_id
+            enterprise_customer.save()
+            messages.success(request, _('Successfully written the "Auth org id" field for this enterprise customer.'))
+            return HttpResponseRedirect(reverse("admin:" + UrlNames.SETUP_AUTH_ORG_ID, args=(customer_uuid,)))
+        else:
+            # Annoyingly, there's still the remote possibility that the request succeeded but we failed to retrieve the
+            # auth_org_id. This might be due to a regression in the API response schema.
+            error_msg = (
+                f"Error configuring edx oauth for enterprise customer {enterprise_customer.name}"
+                f"<{enterprise_customer.uuid}>: Missing orgId."
+            )
+            LOG.exception(error_msg)
+            return HttpResponseServerError(error_msg)
