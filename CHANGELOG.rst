@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.8.18]
+--------
+
+feat: added logs to debug ENT-8130
+
 [4.8.17]
 --------
 
