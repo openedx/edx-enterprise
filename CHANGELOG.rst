@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.9.0]
+--------
+
+feat: add "Setup Auth org id" action for Enterprise Customers (ENT-8169)
+
 [4.8.18]
 --------
 

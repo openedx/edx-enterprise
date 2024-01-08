@@ -16,6 +16,7 @@ from enterprise.utils import (
     get_sso_orchestrator_api_base_url,
     get_sso_orchestrator_basic_auth_password,
     get_sso_orchestrator_basic_auth_username,
+    get_sso_orchestrator_configure_edx_oauth_path,
     get_sso_orchestrator_configure_path,
 )
 
@@ -67,6 +68,14 @@ class EnterpriseSSOOrchestratorApiClient:
         # probably want config value validated for this
         return urljoin(self.base_url, get_sso_orchestrator_configure_path())
 
+    def _get_orchestrator_configure_edx_oauth_url(self):
+        """
+        get the configure-edx-oauth url for the SSO Orchestrator API
+        """
+        if path := get_sso_orchestrator_configure_edx_oauth_path():
+            return urljoin(self.base_url, path)
+        return None
+
     def _create_auth_header(self):
         """
         create the basic auth header for requests to the SSO Orchestrator API
@@ -93,7 +102,7 @@ class EnterpriseSSOOrchestratorApiClient:
 
     def _post(self, url, data=None):
         """
-        make a GET request to the SSO Orchestrator API
+        make a POST request to the SSO Orchestrator API
         """
         self._create_session()
         response = self.session.post(url, json=data, auth=self._create_auth_header())
@@ -133,3 +142,24 @@ class EnterpriseSSOOrchestratorApiClient:
 
         response = self._post(self._get_orchestrator_configure_url(), data=request_data)
         return response.get('samlServiceProviderInformation', {}).get('spMetadataUrl', {})
+
+    def configure_edx_oauth(self, enterprise_customer):
+        """
+        Configure SSO to GetSmarter using edX credentials via Auth0.
+
+        Args:
+            enterprise_customer (EnterpriseCustomer): The enterprise customer for which to configure edX OAuth.
+
+        Returns:
+            str: Auth0 Organization ID.
+
+        Raises:
+            SsoOrchestratorClientError: If the request to the SSO Orchestrator API failed.
+        """
+        request_data = {
+            'enterpriseName': enterprise_customer.name,
+            'enterpriseSlug': enterprise_customer.slug,
+            'enterpriseUuid': str(enterprise_customer.uuid),
+        }
+        response = self._post(self._get_orchestrator_configure_edx_oauth_url(), data=request_data)
+        return response.get('orgId', None)

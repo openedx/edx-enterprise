@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_urls %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; {% if has_change_permission %}
+    <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  {% else %}
+    {{ opts.verbose_name_plural|capfirst }}
+  {% endif %}
+  &rsaquo; {% if has_change_permission %}
+    <a href="{% url opts|admin_urlname:'change' enterprise_customer.uuid %}">
+      {{ enterprise_customer|truncatewords:"18" }}
+    </a>
+  {% else %}
+    {{ enterprise_customer|capfirst }}
+  {% endif %}
+  &rsaquo;
+  {% trans "Setup Auth org id" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="forms-panel">
+    <h1>{% trans "Setup Auth org id" %}</h1>
+    <p>
+      This action is required for customers who will have learners in executive education courses. Setting up the
+      Auth org id will enable the enterprise's learners to take Exec Ed or OCM courses using the same set of login
+      credentials. Clicking the button below will facilitate the necessary steps with our external identity vendor,
+      Auth0, and will overwrite any value that may already be in the "Auth org id" field.
+    </p>
+    <form action="" method="post" id="setup-auth-org-id-form">
+      {% csrf_token %}
+      <div style="display:flex";>
+        <div style="vertical-align:top">
+          <input type="hidden" name="post" value="submit" />
+          <input type="hidden" name="action" value="submit" />
+          <input type="submit" value="{% trans "Setup Auth org id" %}" style="background: var(--default-button-bg);" />
+        </div>
+        <div style="margin-left:0.5rem">
+          <input
+            type="button"
+            value="{% trans "Cancel" %}"
+            onclick="history.go(-1)"
+            style="background: var(--close-button-bg);"
+          />
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+  {{ block.super }}
+{% endblock %}
