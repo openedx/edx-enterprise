@@ -16,6 +16,26 @@ Change Log
 Unreleased
 ----------
 
+[4.9.0]
+--------
+
+feat: add "Setup Auth org id" action for Enterprise Customers (ENT-8169)
+
+[4.8.18]
+--------
+
+feat: added logs to debug ENT-8130
+
+[4.8.17]
+--------
+
+fix: remove logs from Degreed2 client
+
+[4.8.16]
+--------
+
+fix: removed course completion check from is_already_transmitted utility (ENT 7837)
+
 [4.8.15]
 --------
 

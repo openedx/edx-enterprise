@@ -36,6 +36,7 @@ from enterprise.admin.views import (
     CatalogQueryPreviewView,
     EnterpriseCustomerManageLearnerDataSharingConsentView,
     EnterpriseCustomerManageLearnersView,
+    EnterpriseCustomerSetupAuthOrgIDView,
     EnterpriseCustomerTransmitCoursesView,
     TemplatePreviewView,
 )
@@ -45,6 +46,7 @@ from enterprise.utils import (
     discovery_query_url,
     get_all_field_names,
     get_default_catalog_content_filter,
+    get_sso_orchestrator_configure_edx_oauth_path,
     localized_utcnow,
 )
 
@@ -233,7 +235,29 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         export_as_csv_action('CSV Export', fields=EXPORT_AS_CSV_FIELDS),
     ]
 
-    change_actions = ('manage_learners', 'manage_learners_data_sharing_consent', 'transmit_courses_metadata')
+    change_actions = (
+        'setup_auth_org_id',
+        'manage_learners',
+        'manage_learners_data_sharing_consent',
+        'transmit_courses_metadata',
+    )
+
+    def get_change_actions(self, *args, **kwargs):
+        """
+        Buttons that appear at the top of the "Change Enterprise Customer" page.
+
+        Due to a known deficiency in the upstream django_object_actions library, we must STILL define change_actions
+        above with all possible values.
+        """
+        change_actions = (
+            'manage_learners',
+            'manage_learners_data_sharing_consent',
+            'transmit_courses_metadata',
+        )
+        # Add the "Setup Auth org id" button only if it is configured.
+        if get_sso_orchestrator_configure_edx_oauth_path():
+            change_actions = ('setup_auth_org_id',) + change_actions
+        return change_actions
 
     form = EnterpriseCustomerAdminForm
 
@@ -357,6 +381,19 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     transmit_courses_metadata.label = 'Transmit Courses Metadata'
 
+    @admin.action(
+        description='Setup auth_org_id for this Enterprise Customer'
+    )
+    def setup_auth_org_id(self, request, obj):
+        """
+        Object tool handler method - redirects to `Setup Auth org id` view.
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        setup_auth_org_id_url = reverse('admin:' + UrlNames.SETUP_AUTH_ORG_ID, args=(obj.uuid,))
+        return HttpResponseRedirect(setup_auth_org_id_url)
+
+    setup_auth_org_id.label = 'Setup Auth org id'
+
     def get_urls(self):
         """
         Returns the additional urls used by the custom object tools.
@@ -365,18 +402,23 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             re_path(
                 r"^([^/]+)/manage_learners$",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
-                name=UrlNames.MANAGE_LEARNERS
+                name=UrlNames.MANAGE_LEARNERS,
             ),
             re_path(
                 r"^([^/]+)/clear_learners_data_sharing_consent",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnerDataSharingConsentView.as_view()),
-                name=UrlNames.MANAGE_LEARNERS_DSC
+                name=UrlNames.MANAGE_LEARNERS_DSC,
             ),
             re_path(
                 r"^([^/]+)/transmit_courses_metadata",
                 self.admin_site.admin_view(EnterpriseCustomerTransmitCoursesView.as_view()),
-                name=UrlNames.TRANSMIT_COURSES_METADATA
-            )
+                name=UrlNames.TRANSMIT_COURSES_METADATA,
+            ),
+            re_path(
+                r"^([^/]+)/setup_auth_org_id",
+                self.admin_site.admin_view(EnterpriseCustomerSetupAuthOrgIDView.as_view()),
+                name=UrlNames.SETUP_AUTH_ORG_ID,
+            ),
         ]
         return customer_urls + super().get_urls()
 
