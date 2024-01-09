@@ -879,3 +879,46 @@ class OrphanedContentTransmissions(TimeStampedModel):
         on_delete=models.CASCADE,
     )
     resolved = models.BooleanField(default=False)
+
+class IntegratedChannelAPIRequestLogs(TimeStampedModel):
+    """
+     A model to track basic information about every API call we make from the integrated channels.
+    """
+    enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
+    enterprise_customer_configuration_uuid = models.UUIDField(blank=False, null=False)
+    endpoint = models.TextField(blank=False, null=False)
+    payload = models.TextField(blank=False, null=False)
+    time_taken = models.DurationField(blank=False, null=False)
+    api_record = models.OneToOneField(
+        ApiResponseRecord,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text=_('Data pertaining to the transmissions API request response.')
+    )
+
+    class Meta:
+        app_label = 'integrated_channel'
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return (
+            f'<IntegratedChannelAPIRequestLog {self.id}'
+            f' for enterprise customer {self.enterprise_customer_uuid}, '
+            f', enterprise_customer_configuration_uuid: {self.enterprise_customer_configuration_uuid}>'
+            f', endpoint: {self.endpoint}'
+            f', payload: {self.payload}'
+            f', time_taken: {self.time_taken}'
+            f', user_agent: {self.user_agent}'
+            f', user_ip: {self.user_ip}'
+            f', api_record.body: {self.api_record.body}'
+            f', api_record.status_code: {self.api_record.status_code}'
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
