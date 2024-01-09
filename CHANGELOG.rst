@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.9.1]
+--------
+
+fix: enable printing of error messages from the SSO Orchestrator API (ENT-8169)
+
 [4.9.0]
 --------
 
