@@ -108,7 +108,10 @@ class EnterpriseSSOOrchestratorApiClient:
         response = self.session.post(url, json=data, auth=self._create_auth_header())
         if response.status_code >= 300:
             raise SsoOrchestratorClientError(
-                f"Failed to make SSO Orchestrator API request: {response.status_code}",
+                (
+                    f"Failed to make SSO Orchestrator API request: {response.status_code}\n"
+                    f"{response.content}"
+                ),
                 response=response,
             )
         return response.json()
