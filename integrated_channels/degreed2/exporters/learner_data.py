@@ -57,10 +57,14 @@ class Degreed2LearnerExporter(LearnerExporter):
                 'degreed2',
                 'Degreed2LearnerDataTransmissionAudit'
             )
-            # We return two records here, one with the course key and one with the course run id, to account for
-            # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-            return [
-                Degreed2LearnerDataTransmissionAudit(
+            course_id = get_course_id_for_enrollment(enterprise_enrollment)
+            # We only want to send one record per enrollment and course, so we check if one exists first.
+            learner_transmission_record = Degreed2LearnerDataTransmissionAudit.objects.filter(
+                enterprise_course_enrollment_id=enterprise_enrollment.id,
+                course_id=course_id,
+            ).first()
+            if learner_transmission_record is None:
+                learner_transmission_record = Degreed2LearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
@@ -71,8 +75,9 @@ class Degreed2LearnerExporter(LearnerExporter):
                     grade=percent_grade,
                     enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
-                ),
-            ]
+                )
+            # We return one record here, with the course key, that was sent to the integrated channel.
+            return [learner_transmission_record]
         LOGGER.info(generate_formatted_log(
             self.enterprise_configuration.channel_code(),
             enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
