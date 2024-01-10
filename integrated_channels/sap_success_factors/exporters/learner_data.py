@@ -58,8 +58,14 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             total_hours = 0.0
             if course_run and self.enterprise_configuration.transmit_total_hours:
                 total_hours = course_run.get("estimated_hours", 0.0)
-            return [
-                SapSuccessFactorsLearnerDataTransmissionAudit(
+            course_id = get_course_id_for_enrollment(enterprise_enrollment)
+            # We only want to send one record per enrollment and course, so we check if one exists first.
+            learner_transmission_record = SapSuccessFactorsLearnerDataTransmissionAudit.objects.filter(
+                enterprise_course_enrollment_id=enterprise_enrollment.id,
+                course_id=course_id,
+            ).first()
+            if learner_transmission_record is None:
+                learner_transmission_record = SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     sapsf_user_id=sapsf_user_id,
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
@@ -72,8 +78,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     credit_hours=total_hours,
                     enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id
-                ),
-            ]
+                )
+            return [learner_transmission_record]
         LOGGER.info(
             generate_formatted_log(
                 self.enterprise_configuration.channel_code(),

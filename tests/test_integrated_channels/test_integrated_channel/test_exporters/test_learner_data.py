@@ -131,6 +131,33 @@ class TestLearnerExporter(unittest.TestCase):
         assert learner_data_record.completed_timestamp == (self.NOW_TIMESTAMP if completed_date is not None else None)
         assert learner_data_record.grade == 'A+'
 
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_retrieve_same_learner_data_record(self, mock_course_catalog_api):
+        """
+        If a learner data record already exists for the enrollment, it should be retrieved instead of created.
+        """
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        expected_course_completed = True
+        exporter = LearnerExporter('fake-user', self.config)
+        learner_data_records_1 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+            course_completed=expected_course_completed,
+            progress_status='Passed'
+        )[0]
+        learner_data_records_1.save()
+        learner_data_records_2 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+            course_completed=expected_course_completed,
+            progress_status='Passed'
+        )[0]
+        learner_data_records_2.save()
+
+        assert learner_data_records_1.id == learner_data_records_2.id
+
     def test_get_learner_subsection_data_records(self):
         """
         Test that the base learner subsection data exporter generates appropriate learner records from assessment grade

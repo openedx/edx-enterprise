@@ -16,10 +16,15 @@ Change Log
 Unreleased
 ----------
 
-[4.9.2]
+[4.9.3]
 --------
 
 feat: Add model for integrated channel API request log table (ENT-8018)
+
+[4.9.2]
+--------
+
+refactor: learner data transmission audit record  to utilize the existing records (ENT-8005)
 
 [4.9.1]
 --------

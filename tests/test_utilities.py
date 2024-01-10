@@ -137,6 +137,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "auth_org_id",
                 "active",
                 "country",
+                "integratedchannelapirequestlogs",
                 "invite_keys",
                 "hide_course_original_price",
                 "site",
