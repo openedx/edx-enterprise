@@ -33,6 +33,7 @@ from enterprise.admin.forms import (
     TransmitEnterpriseCoursesForm,
 )
 from enterprise.admin.utils import ValidationMessages
+from enterprise.api_client.sso_orchestrator import SsoOrchestratorClientError
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -2078,3 +2079,92 @@ class TestEnterpriseCustomerTransmitCoursesViewPost(BaseTestEnterpriseCustomerTr
                 )
             ]
         }
+
+
+class BaseTestEnterpriseCustomerSetupAuthOrgIDView(BaseEnterpriseCustomerView):
+    """
+    Common functionality for EnterpriseCustomerTransmitCoursesView tests.
+    """
+
+    def setUp(self):
+        """
+        Test set up
+        """
+        super().setUp()
+        self.enterprise_customer.auth_org_id = None
+        self.enterprise_customer.save()
+        self.view_url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.SETUP_AUTH_ORG_ID,
+            args=(self.enterprise_customer.uuid,)
+        )
+
+
+@ddt.ddt
+@mark.django_db
+@override_settings(ROOT_URLCONF='test_utils.admin_urls')
+class TestEnterpriseCustomerSetupAuthOrgIDViewGet(BaseTestEnterpriseCustomerSetupAuthOrgIDView):
+    """
+    Tests for EnterpriseCustomerSetupAuthOrgIDView GET endpoint.
+    """
+
+    def _test_get_response(self, response):
+        """
+        Test view GET response for common parts.
+        """
+        assert response.status_code == 200
+        self._test_common_context(response.context)
+        assert response.context['enterprise_customer'] == self.enterprise_customer
+
+    def test_get_not_logged_in(self):
+        response = self.client.get(self.view_url)
+        assert response.status_code == 302
+
+    def test_get_links(self):
+        self._login()
+
+        response = self.client.get(self.view_url)
+        self._test_get_response(response)
+
+
+@ddt.ddt
+@mark.django_db
+@override_settings(ROOT_URLCONF='test_utils.admin_urls')
+class TestEnterpriseCustomerSetupAuthOrgIDViewPost(BaseTestEnterpriseCustomerSetupAuthOrgIDView):
+    """
+    Tests for EnterpriseCustomerSetupAuthOrgIDView POST endpoint.
+    """
+
+    def test_post_not_logged_in(self):
+        response = self.client.post(self.view_url, data={})
+        assert response.status_code == 302
+
+    @mock.patch('enterprise.api_client.sso_orchestrator.EnterpriseSSOOrchestratorApiClient.configure_edx_oauth')
+    def test_post_happy_path(self, mock_configure_edx_oauth):
+        fake_org_id = 'foobar'
+        mock_configure_edx_oauth.return_value = fake_org_id
+        self._login()
+        response = self.client.post(self.view_url)
+        mock_configure_edx_oauth.assert_called_once_with(self.enterprise_customer)
+        self.enterprise_customer.refresh_from_db()
+        assert self.enterprise_customer.auth_org_id == fake_org_id
+
+        # Now check that the redirect is correct and that the success message is set.
+        self.assertRedirects(response, self.view_url, fetch_redirect_response=False)
+        get_response = self.client.get(self.view_url)
+        actual_messages = {
+            (m.level, m.message) for m in get_response.context['messages']
+        }
+        expected_messages = {
+            (messages.SUCCESS, 'Successfully written the "Auth org id" field for this enterprise customer.'),
+        }
+        assert actual_messages == expected_messages
+
+    @mock.patch('enterprise.api_client.sso_orchestrator.EnterpriseSSOOrchestratorApiClient.configure_edx_oauth')
+    def test_post_api_raises_error(self, mock_configure_edx_oauth):
+        mock_configure_edx_oauth.side_effect = SsoOrchestratorClientError('foobar')
+        self._login()
+        response = self.client.post(self.view_url)
+        assert response.status_code == 500
+        mock_configure_edx_oauth.assert_called_once_with(self.enterprise_customer)
+        self.enterprise_customer.refresh_from_db()
+        assert self.enterprise_customer.auth_org_id is None

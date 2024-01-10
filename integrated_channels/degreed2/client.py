@@ -475,16 +475,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 )
                 time.sleep(sleep_seconds)
             else:
-                LOGGER.error(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        '[Degreed2Client]._get - Exceeded retry attempts in:'
-                        f'URL:{url}'
-                    )
-                )
                 break
         return response.status_code, response.text
 
@@ -518,16 +508,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 )
                 time.sleep(sleep_seconds)
             else:
-                LOGGER.error(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        '[Degreed2Client]._post - Exceeded retry attempts in:'
-                        f'URL:{url}, DATA:{data}'
-                    )
-                )
                 break
         return response.status_code, response.text
 
