@@ -19,8 +19,8 @@ from integrated_channels.cornerstone.transmitters.content_metadata import Corner
 from integrated_channels.cornerstone.transmitters.learner_data import CornerstoneLearnerTransmitter
 from integrated_channels.integrated_channel.models import (
     EnterpriseCustomerPluginConfiguration,
+    IntegratedChannelAPIRequestLogs,
     LearnerDataTransmissionAudit,
-    IntegratedChannelAPIRequestLogs
 )
 from integrated_channels.utils import is_valid_url
 

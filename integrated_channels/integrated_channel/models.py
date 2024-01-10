@@ -880,12 +880,15 @@ class OrphanedContentTransmissions(TimeStampedModel):
     )
     resolved = models.BooleanField(default=False)
 
+
 class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
      A model to track basic information about every API call we make from the integrated channels.
     """
-    enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
-    enterprise_customer_configuration_uuid = models.UUIDField(blank=False, null=False)
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer, on_delete=models.CASCADE)
+    enterprise_customer_configuration_uuid = models.IntegerField(
+        blank=False, null=False)
     endpoint = models.TextField(blank=False, null=False)
     payload = models.TextField(blank=False, null=False)
     time_taken = models.DurationField(blank=False, null=False)
@@ -894,7 +897,8 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
         blank=True,
         null=True,
         on_delete=models.CASCADE,
-        help_text=_('Data pertaining to the transmissions API request response.')
+        help_text=_(
+            'Data pertaining to the transmissions API request response.')
     )
 
     class Meta:

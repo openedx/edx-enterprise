@@ -16,6 +16,16 @@ Change Log
 Unreleased
 ----------
 
+[4.9.2]
+--------
+
+feat: Add model for integrated channel API request log table (ENT-8018)
+
+[4.9.1]
+--------
+
+fix: enable printing of error messages from the SSO Orchestrator API (ENT-8169)
+
 [4.9.0]
 --------
 
