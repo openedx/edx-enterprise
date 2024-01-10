@@ -20,6 +20,7 @@ from integrated_channels.cornerstone.transmitters.learner_data import Cornerston
 from integrated_channels.integrated_channel.models import (
     EnterpriseCustomerPluginConfiguration,
     LearnerDataTransmissionAudit,
+    IntegratedChannelAPIRequestLogs
 )
 from integrated_channels.utils import is_valid_url
 
@@ -318,3 +319,37 @@ class CornerstoneCourseKey(models.Model):
 
     class Meta:
         app_label = 'cornerstone'
+
+
+class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
+    """
+     A model to track basic information about every API call we make from the integrated channels.
+    """
+    user_agent = models.CharField(max_length=255)
+    user_ip = models.GenericIPAddressField(blank=False, null=False)
+
+    class Meta:
+        app_label = 'cornerstone'
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return (
+            f'<CornerstoneAPIRequestLogs {self.id}'
+            f' for enterprise customer {self.enterprise_customer_uuid}, '
+            f', enterprise_customer_configuration_uuid: {self.enterprise_customer_configuration_uuid}>'
+            f', endpoint: {self.endpoint}'
+            f', payload: {self.payload}'
+            f', time_taken: {self.time_taken}'
+            f', user_agent: {self.user_agent}'
+            f', user_ip: {self.user_ip}'
+            f', api_record.body: {self.api_record.body}'
+            f', api_record.status_code: {self.api_record.status_code}'
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()

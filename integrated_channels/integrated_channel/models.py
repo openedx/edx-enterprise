@@ -911,8 +911,6 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
             f', endpoint: {self.endpoint}'
             f', payload: {self.payload}'
             f', time_taken: {self.time_taken}'
-            f', user_agent: {self.user_agent}'
-            f', user_ip: {self.user_ip}'
             f', api_record.body: {self.api_record.body}'
             f', api_record.status_code: {self.api_record.status_code}'
         )
