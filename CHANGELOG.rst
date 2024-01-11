@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.9.3]
+--------
+
+fix: Remove SAP debug logs
+
 [4.9.2]
 --------
 

@@ -397,11 +397,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         )
         enrollment_ids_to_export = [enrollment.id for enrollment in enrollments_permitted]
 
-        LOGGER.info(
-            f"[Debug-SAP]: course_run_id:{course_run_id}, channel_name: {channel_name}"
-            f"lms_user_for_filter:{lms_user_for_filter}, grade:{grade} "
-            f"enrollment_ids_to_export: {enrollment_ids_to_export}"
-        )
         for enterprise_enrollment in enrollments_permitted:
             lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
             user_email = enterprise_enrollment.enterprise_customer_user.user_email
@@ -460,18 +455,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 course_completed=_is_course_completed,
                 grade_percent=grade_percent,
             )
-            LOGGER.info(
-                generate_formatted_log(
-                    channel_name,
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    course_id,
-                    f", [Debug-SAP]: _is_course_completed: {_is_course_completed}, progress_status:{progress_status}"
-                    f",completed_date_from_api: {completed_date_from_api}, grade_from_api:{grade_from_api}"
-                    f"is_passing_from_api: {is_passing_from_api}, grade_percent:{grade_percent}"
-                    f"passed_timestamp:{passed_timestamp}, records: {records}",
-                )
-            )
+
             if records:
                 # There are some cases where we won't receive a record from the above
                 # method; right now, that should only happen if we have an Enterprise-linked
@@ -488,12 +472,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                         pass
 
                     yield record
-
-        LOGGER.info(generate_formatted_log(
-            channel_name, None, lms_user_for_filter, course_run_id,
-            f'[Debug-SAP]: export finished. Did not export records for EnterpriseCourseEnrollment objects: '
-            f' {enrollment_ids_to_export}.'
-        ))
 
     def _filter_out_pre_transmitted_enrollments(
             self,
@@ -546,42 +524,15 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             enterprise_customer_user__active=True,
         )
         if lms_user_for_filter and course_run_id:
-            LOGGER.info(
-                generate_formatted_log(
-                    channel_name,
-                    self.enterprise_customer.uuid,
-                    lms_user_for_filter,
-                    course_run_id,
-                    f"[Debug-SAP]: enrollments to process before filtering: {list(enrollment_queryset)}",
-                )
-            )
             enrollment_queryset = enrollment_queryset.filter(
                 course_id=course_run_id,
                 enterprise_customer_user__user_id=lms_user_for_filter.id,
-            )
-            LOGGER.info(
-                generate_formatted_log(
-                    channel_name,
-                    self.enterprise_customer.uuid,
-                    lms_user_for_filter,
-                    course_run_id,
-                    f"[Debug-SAP]: enrollments to process after filtering: {list(enrollment_queryset)}",
-                )
             )
             LOGGER.info(generate_formatted_log(
                 channel_name, self.enterprise_customer.uuid, lms_user_for_filter, course_run_id,
                 'get_enrollments_to_process run for single learner and course.'))
         enrollment_queryset = enrollment_queryset.order_by('course_id')
         # return resolved list instead of queryset
-        LOGGER.info(
-            generate_formatted_log(
-                channel_name,
-                self.enterprise_customer.uuid,
-                lms_user_for_filter,
-                course_run_id,
-                f"[Debug-SAP]: enrollments to process: {list(enrollment_queryset)}",
-            )
-        )
         return list(enrollment_queryset)
 
     def get_learner_assessment_data_records(
