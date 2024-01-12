@@ -2,6 +2,7 @@
 Generic learner data transmitter for integrated channels.
 """
 
+from datetime import timezone
 import logging
 from http import HTTPStatus
 
@@ -380,6 +381,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             was_successful = code < 300
             learner_data.status = str(code)
             learner_data.error_message = body if not was_successful else ''
+            learner_data.add_transmission_status(learner_data.status, learner_data.error_message)
             learner_data.save()
             self.enterprise_configuration.update_learner_synced_at(action_happened_at, was_successful)
 
