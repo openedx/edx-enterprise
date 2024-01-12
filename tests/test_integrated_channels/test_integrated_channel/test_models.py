@@ -256,6 +256,7 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         self.config.update_content_synced_at(first_timestamp, True)
         assert self.config.last_sync_attempted_at == first_timestamp
 
+
 @mark.django_db
 class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin):
     """
@@ -287,12 +288,11 @@ class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin
             f' for enterprise customer {self.enterprise_customer}, '
             f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
             f', endpoint: {self.endpoint}'
-            f', payload: {self.payload}'
             f', time_taken: {self.time_taken}'
             f', api_record.body: {self.api_record.body}'
             f', api_record.status_code: {self.api_record.status_code}'
         )
-        
+
         request_log = IntegratedChannelAPIRequestLogs(
             id=1,
             enterprise_customer=self.enterprise_customer,

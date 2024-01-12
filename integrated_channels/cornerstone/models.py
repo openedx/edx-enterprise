@@ -326,7 +326,7 @@ class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
      A model to track basic information about every API call we make from the integrated channels.
     """
     user_agent = models.CharField(max_length=255)
-    user_ip = models.GenericIPAddressField(blank=False, null=False)
+    user_ip = models.GenericIPAddressField(blank=True, null=True)
 
     class Meta:
         app_label = 'cornerstone'
@@ -340,7 +340,6 @@ class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
             f' for enterprise customer {self.enterprise_customer}, '
             f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
             f', endpoint: {self.endpoint}'
-            f', payload: {self.payload}'
             f', time_taken: {self.time_taken}'
             f', user_agent: {self.user_agent}'
             f', user_ip: {self.user_ip}'

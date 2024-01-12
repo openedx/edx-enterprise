@@ -16,10 +16,15 @@ Change Log
 Unreleased
 ----------
 
-[4.9.3]
+[4.9.4]
 --------
 
 feat: Add model for integrated channel API request log table (ENT-8018)
+
+[4.9.3]
+--------
+
+fix: Remove SAP debug logs
 
 [4.9.2]
 --------
