@@ -337,8 +337,8 @@ class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
         """
         return (
             f'<CornerstoneAPIRequestLogs {self.id}'
-            f' for enterprise customer {self.enterprise_customer_uuid}, '
-            f', enterprise_customer_configuration_uuid: {self.enterprise_customer_configuration_uuid}>'
+            f' for enterprise customer {self.enterprise_customer}, '
+            f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
             f', endpoint: {self.endpoint}'
             f', payload: {self.payload}'
             f', time_taken: {self.time_taken}'

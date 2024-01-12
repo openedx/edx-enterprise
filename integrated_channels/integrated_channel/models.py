@@ -887,8 +887,8 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer, on_delete=models.CASCADE)
-    enterprise_customer_configuration_uuid = models.IntegerField(
-        blank=False, null=False)
+    enterprise_customer_configuration_id = models.IntegerField(
+        blank=False, null=False, help_text='ID from the EnterpriseCustomerConfiguration model')
     endpoint = models.TextField(blank=False, null=False)
     payload = models.TextField(blank=False, null=False)
     time_taken = models.DurationField(blank=False, null=False)
@@ -910,8 +910,8 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
         """
         return (
             f'<IntegratedChannelAPIRequestLog {self.id}'
-            f' for enterprise customer {self.enterprise_customer_uuid}, '
-            f', enterprise_customer_configuration_uuid: {self.enterprise_customer_configuration_uuid}>'
+            f' for enterprise customer {self.enterprise_customer}, '
+            f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
             f', endpoint: {self.endpoint}'
             f', payload: {self.payload}'
             f', time_taken: {self.time_taken}'
