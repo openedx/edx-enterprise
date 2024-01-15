@@ -16,10 +16,25 @@ Change Log
 Unreleased
 ----------
 
-[4.9.1]
+[4.9.4]
 --------
 
 feat: replacing non encrypted fields of moodle config model with encrypted ones
+
+[4.9.3]
+--------
+
+fix: Remove SAP debug logs
+
+[4.9.2]
+--------
+
+refactor: learner data transmission audit record  to utilize the existing records (ENT-8005)
+
+[4.9.1]
+--------
+
+fix: enable printing of error messages from the SSO Orchestrator API (ENT-8169)
 
 [4.9.0]
 --------
