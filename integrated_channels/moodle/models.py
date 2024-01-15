@@ -230,7 +230,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         incorrect_items = {'incorrect': []}
         if not self.moodle_base_url:
             missing_items.get('missing').append('moodle_base_url')
-        if not self.token and not (self.username and self.password):
+        if not self.decrypted_token and not (self.decrypted_username and self.decrypted_password):
             missing_items.get('missing').append('token OR username and password')
         if not self.service_short_name:
             missing_items.get('missing').append('service_short_name')
