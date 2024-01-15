@@ -2,7 +2,6 @@
 Generic learner data transmitter for integrated channels.
 """
 
-from datetime import timezone
 import logging
 from http import HTTPStatus
 
