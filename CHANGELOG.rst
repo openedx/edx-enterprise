@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.9.1]
+--------
+
+feat: replacing non encrypted fields of moodle config model with encrypted ones
+
 [4.9.0]
 --------
 
