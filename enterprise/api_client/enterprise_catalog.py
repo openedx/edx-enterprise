@@ -316,7 +316,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
         return response.json()['contains_content_items']
 
     @UserAPIClient.refresh_token
-    def get_content_metadata_content_identifier(self, enterprise_uuid, content_id):  # pylint: disable=inconsistent-return-statements
+    def get_content_metadata_content_identifier(self, enterprise_uuid, content_id):
         """
         Return all content metadata contained in the catalogs associated with the
         given EnterpriseCustomer and content_id.
