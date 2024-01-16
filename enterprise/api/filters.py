@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from django.contrib import auth
 
-from enterprise.models import EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
 
 User = auth.get_user_model()
 
@@ -31,6 +31,36 @@ class UserFilterBackend(filters.BaseFilterBackend):
             filter_kwargs = {view.USER_ID_FILTER: request.user.id}
             queryset = queryset.filter(**filter_kwargs)
         return queryset
+
+
+class EnterpriseCourseEnrollmentFilterBackend(filters.BaseFilterBackend):
+    """
+    Filter backend to return enrollments under the user's enterprise(s) only.
+
+    * Staff users will bypass this filter.
+    * Non-staff users will receive enrollments under their linked enterprises,
+      only if they have the `enterprise.can_enroll_learners` permission.
+    * Non-staff users without the `enterprise.can_enroll_learners` permission
+      will receive only their own enrollments.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        """
+        Filter out enrollments if learner is not linked
+        """
+
+        if request.user.is_staff:
+            return queryset
+
+        if request.user.has_perm('enterprise.can_enroll_learners'):
+            enterprise_customers = EnterpriseCustomer.objects.filter(enterprise_customer_users__user_id=request.user.id)
+            return queryset.filter(enterprise_customer_user__enterprise_customer__in=enterprise_customers)
+
+        filter_kwargs = {
+            view.USER_ID_FILTER: request.user.id,
+        }
+
+        return queryset.filter(**filter_kwargs)
 
 
 class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):

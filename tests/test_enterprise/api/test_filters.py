@@ -10,7 +10,8 @@ from rest_framework.reverse import reverse
 
 from django.conf import settings
 
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE
+from enterprise.models import EnterpriseFeatureRole
 from test_utils import FAKE_UUIDS, TEST_EMAIL, TEST_USERNAME, APITest, factories
 
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
@@ -78,6 +79,73 @@ class TestUserFilterBackend(APITest):
         data = self.load_json(response.content)
         for key, value in expected_content_in_response.items():
             assert data[key] == value
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCourseEnrollmentFilterBackend(APITest):
+    """
+    Test suite for the ``EnterpriseCourseEnrollmentFilterBackend`` filter.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self._setup_enterprise_customer_and_enrollments(
+            uuid=FAKE_UUIDS[0],
+            users=[self.user, factories.UserFactory()]
+        )
+        self._setup_enterprise_customer_and_enrollments(
+            uuid=FAKE_UUIDS[1],
+            users=[factories.UserFactory(), factories.UserFactory()]
+        )
+
+        self.url = settings.TEST_SERVER + reverse('enterprise-course-enrollment-list')
+
+    def _setup_enterprise_customer_and_enrollments(self, uuid, users):
+        """
+        Creates an enterprise customer with the uuid and enrolls passed users.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=uuid)
+
+        for user in users:
+            enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+                enterprise_customer=enterprise_customer,
+                user_id=user.id
+            )
+            factories.EnterpriseCourseEnrollmentFactory(
+                enterprise_customer_user=enterprise_customer_user
+            )
+
+    def _setup_user_privileges_by_role(self, user, role):
+        """
+        Sets up privileges for the passed user based on the role.
+        """
+        if role == "staff":
+            user.is_staff = True
+            user.save()
+        elif role == "enrollment_api_admin":
+            factories.EnterpriseFeatureUserRoleAssignmentFactory(
+                user=user,
+                role=EnterpriseFeatureRole.objects.get(name=ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE)
+            )
+
+    @ddt.data(
+        ("regular", 1),
+        ("enrollment_api_admin", 2),
+        ("staff", 4),
+    )
+    @ddt.unpack
+    def test_filter_for_list(self, user_role, expected_course_enrollment_count):
+        """
+        Filter objects based off whether the user is a staff, enterprise enrollment api admin, or neither.
+        """
+        self._setup_user_privileges_by_role(self.user, user_role)
+
+        response = self.client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+        data = self.load_json(response.content)
+        assert len(data['results']) == expected_course_enrollment_count
 
 
 @ddt.ddt

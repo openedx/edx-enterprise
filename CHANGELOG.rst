@@ -16,6 +16,18 @@ Change Log
 Unreleased
 ----------
 
+[4.10.0]
+--------
+
+feat: enrollment API enhancements
+
+- Allows Enrollment API Admin to see all enrollments.
+- Makes the endpoint return more fields, such as: enrollment_track,
+  enrollment_date, user_email, course_start and course_end.
+- Changes EnterpriseCourseEnrollment's default ordering from 'created'
+  to 'id', which equivalent, but faster in some cases (due to the
+  existing indes on 'id').
+
 [4.9.5]
 --------
 
