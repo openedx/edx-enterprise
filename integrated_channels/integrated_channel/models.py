@@ -20,6 +20,7 @@ from model_utils.models import TimeStampedModel
 from enterprise.constants import TRANSMISSION_MARK_CREATE, TRANSMISSION_MARK_DELETE, TRANSMISSION_MARK_UPDATE
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerCatalog
 from enterprise.utils import localized_utcnow
+from integrated_channels.integrated_channel.constants import TRANSMISSION_STATUS_LIMIT
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
@@ -618,7 +619,7 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
 
         self.transmission_status.append(new_entry)
 
-        self.transmission_status = self.transmission_status[-3:]
+        self.transmission_status = self.transmission_status[-TRANSMISSION_STATUS_LIMIT:]
 
 
 class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):

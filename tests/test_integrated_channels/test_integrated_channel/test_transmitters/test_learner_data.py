@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, Mock
 import ddt
 from pytest import mark
 
+from integrated_channels.integrated_channel.constants import TRANSMISSION_STATUS_LIMIT
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
@@ -230,7 +231,7 @@ class TestLearnerDataTransmitter(unittest.TestCase):
 
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
         for _ in range(4):
-            if _ == 3:
+            if _ == TRANSMISSION_STATUS_LIMIT:
                 self.create_course_completion_mock.return_value = 400, '{"error":{"code":null,"message":"Invalid value for property \'courseCompleted\'."}}'
             transmitter.transmit(self.exporter([self.payload]))
         actual_transmission_status = self.payload.transmission_status
