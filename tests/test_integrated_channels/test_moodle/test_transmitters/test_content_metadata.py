@@ -33,9 +33,6 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.moodle_base_url,
             enterprise_customer=enterprise_customer,
-            decrypted_username=self.user,
-            decrypted_password=self.password,
-            decrypted_token=self.api_token,
             username=self.user,
             password=self.password,
             token=self.api_token,

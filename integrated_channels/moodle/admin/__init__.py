@@ -24,9 +24,9 @@ class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        cleaned_username = cleaned_data.get('decrypted_username')
-        cleaned_password = cleaned_data.get('decrypted_password')
-        cleaned_token = cleaned_data.get('decrypted_token')
+        cleaned_username = cleaned_data.get('username')
+        cleaned_password = cleaned_data.get('password')
+        cleaned_token = cleaned_data.get('token')
         if cleaned_token and (cleaned_username or cleaned_password):
             raise ValidationError(_('Cannot set both a Username/Password and Token'))
         if (cleaned_username and not cleaned_password) or (cleaned_password and not cleaned_username):

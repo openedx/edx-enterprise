@@ -135,12 +135,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('moodle')
-        token = (
-            enterprise_configuration.decrypted_token
-            if getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
-            else enterprise_configuration.token
-        )
-        self.token = token or self._get_access_token()
+        self.token = enterprise_configuration.token or self._get_access_token()
         self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
 
     def _post(self, additional_params):
@@ -180,12 +175,6 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'service': self.enterprise_configuration.service_short_name
         }
 
-        decrypted_username = self.enterprise_configuration.decrypted_username
-        username = self.enterprise_configuration.username
-        decrypted_password = self.enterprise_configuration.decrypted_password
-        password = self.enterprise_configuration.password
-        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
-
         response = requests.post(
             urljoin(
                 self.enterprise_configuration.moodle_base_url,
@@ -196,8 +185,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             data={
-                "username": decrypted_username if use_encrypted_user_data else username,
-                "password": decrypted_password if use_encrypted_user_data else password,
+                "username": self.enterprise_configuration.username,
+                "password": self.enterprise_configuration.password,
             },
         )
 
