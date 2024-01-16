@@ -1,7 +1,7 @@
 """
 Tests for the base learner data transmitter.
 """
-
+import datetime
 import unittest
 from unittest import mock
 from unittest.mock import MagicMock, Mock
@@ -12,6 +12,8 @@ from pytest import mark
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
+from integrated_channels.sap_success_factors.models import SapSuccessFactorsLearnerDataTransmissionAudit
+from integrated_channels.sap_success_factors.transmitters import learner_data
 from test_utils import factories
 
 
@@ -26,6 +28,13 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         super().setUp()
 
         enterprise_customer = factories.EnterpriseCustomerFactory(name='Starfleet Academy')
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+        )
+        self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            id=5,
+            enterprise_customer_user=self.enterprise_customer_user,
+        )
 
         # We need some non-abstract configuration for these things to work,
         # so it's okay for it to be any arbitrary channel. We randomly choose SAPSF.
@@ -37,6 +46,25 @@ class TestLearnerDataTransmitter(unittest.TestCase):
             sapsf_user_id="user_id",
             secret="client_secret",
         )
+        self.payload = SapSuccessFactorsLearnerDataTransmissionAudit(
+            enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+            course_id='course-v1:edX+DemoX+DemoCourse',
+            course_completed=True,
+            sap_completed_timestamp=1486855998,
+            completed_timestamp=datetime.datetime.fromtimestamp(1486855998),
+            total_hours=1.0,
+            grade=.9,
+        )
+        self.exporter = lambda payloads=self.payload: mock.MagicMock(
+            export=mock.MagicMock(return_value=iter(payloads))
+        )
+        # Mocks
+        create_course_completion_mock = mock.patch(
+            'integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_course_completion'
+        )
+
+        self.create_course_completion_mock = create_course_completion_mock.start()
+        self.addCleanup(create_course_completion_mock.stop)
 
         self.learner_transmitter = LearnerTransmitter(self.enterprise_config)
 
@@ -193,3 +221,23 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         )
         # with dry_run_mode_enabled = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
+
+    def test_transmission_status_learner_data_transmission(self):
+        """
+        Test that transmission status records three most recent status instances.
+        """
+        self.create_course_completion_mock.return_value = 200, ''
+
+        transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
+        for _ in range(4):
+            if _ == 3:
+                self.create_course_completion_mock.return_value = 400, '{"error":{"code":null,"message":"Invalid value for property \'courseCompleted\'."}}'
+            transmitter.transmit(self.exporter([self.payload]))
+        actual_transmission_status = self.payload.transmission_status
+
+        expected_transmission_status = [
+            {'timestamp': mock.ANY, 'Status_code': '200', 'error_message': ''},
+            {'timestamp': mock.ANY, 'Status_code': '200', 'error_message': ''},
+            {'timestamp': mock.ANY, 'Status_code': '400', 'error_message': 'Client create_course_completion failed: {"error":{"code":null,"message":"Invalid value for property \'courseCompleted\'."}}'},
+        ]
+        assert expected_transmission_status == actual_transmission_status
