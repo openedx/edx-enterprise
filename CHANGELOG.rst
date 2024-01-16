@@ -16,6 +16,16 @@ Change Log
 Unreleased
 ----------
 
+[4.9.5]
+--------
+
+feat: replacing non encrypted fields of moodle config model with encrypted ones
+
+[4.9.4]
+--------
+
+feat: Add model for integrated channel API request log table (ENT-8018)
+
 [4.9.3]
 --------
 
