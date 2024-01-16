@@ -10,7 +10,6 @@ from urllib.parse import urljoin
 import requests
 
 from django.apps import apps
-from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
