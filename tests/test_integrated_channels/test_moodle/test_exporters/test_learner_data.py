@@ -30,9 +30,9 @@ class TestMoodleLearnerDataExporter(unittest.TestCase):
             moodle_base_url='foobar',
             service_short_name='shortname',
             category_id=1,
-            username='username',
-            password='password',
-            token='token',
+            decrypted_username='username',
+            decrypted_password='password',
+            decrypted_token='token',
         )
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
