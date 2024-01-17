@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.10.1]
+--------
+
+feat: added json field in learner transmission audit to record 3 most latest response statuses
+
 [4.10.0]
 --------
 

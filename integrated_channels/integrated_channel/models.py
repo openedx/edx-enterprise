@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -19,6 +20,7 @@ from model_utils.models import TimeStampedModel
 from enterprise.constants import TRANSMISSION_MARK_CREATE, TRANSMISSION_MARK_DELETE, TRANSMISSION_MARK_UPDATE
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerCatalog
 from enterprise.utils import localized_utcnow
+from integrated_channels.integrated_channel.constants import TRANSMISSION_STATUS_RECORDS_LIMIT
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
@@ -531,6 +533,8 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         help_text=_('Data pertaining to the transmissions API request response.')
     )
 
+    transmission_status = models.JSONField(default=list, blank=True, null=True)
+
     class Meta:
         abstract = True
         app_label = 'integrated_channel'
@@ -602,6 +606,20 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
             'completedTimestamp': self.completed_timestamp,
             'grade': self.grade,
         }
+
+    def add_transmission_status(self, status_code, error_message):
+        """
+        Append the new entry to the list, keeping the list limited to latest three entries.
+        """
+        new_entry = {
+            'timestamp': timezone.now().isoformat(),
+            'Status_code': status_code,
+            'error_message': error_message,
+        }
+
+        self.transmission_status.append(new_entry)
+
+        self.transmission_status = self.transmission_status[-TRANSMISSION_STATUS_RECORDS_LIMIT:]
 
 
 class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
