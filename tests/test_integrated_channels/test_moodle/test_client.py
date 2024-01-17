@@ -82,18 +82,12 @@ class TestMoodleApiClient(unittest.TestCase):
             decrypted_username=self.user,
             decrypted_password=self.password,
             decrypted_token=self.token,
-            username=self.user,
-            password=self.password,
-            token=self.token,
         )
         self.enterprise_custom_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.custom_moodle_base_url,
             decrypted_username=self.user,
             decrypted_password=self.password,
             decrypted_token=self.token,
-            username=self.user,
-            password=self.password,
-            token=self.token,
             grade_scale=10,
             grade_assignment_name='edX Grade Test'
         )

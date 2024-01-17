@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.10.2]
+--------
+
+feat: removed unencrypted user credentials data columns
+
+
 [4.10.1]
 --------
 
