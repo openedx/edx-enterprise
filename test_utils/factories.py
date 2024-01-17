@@ -929,7 +929,7 @@ class MoodleEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFac
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     moodle_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     service_short_name = factory.LazyAttribute(lambda x: FAKER.slug())
-    token = factory.LazyAttribute(lambda x: FAKER.slug())
+    decrypted_token = factory.LazyAttribute(lambda x: FAKER.slug())
 
 
 class AdminNotificationFactory(factory.django.DjangoModelFactory):

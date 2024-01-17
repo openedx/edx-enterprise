@@ -36,9 +36,9 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
             moodle_base_url='foobar',
             service_short_name='shortname',
             category_id=1,
-            username='username',
-            password='password',
-            token='token',
+            decrypted_username='username',
+            decrypted_password='password',
+            decrypted_token='token',
         )
         self.payload = MoodleLearnerDataTransmissionAudit(
             moodle_user_email=self.enterprise_customer.contact_email,

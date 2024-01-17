@@ -134,7 +134,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('moodle')
-        self.token = enterprise_configuration.token or self._get_access_token()
+        self.token = enterprise_configuration.decrypted_token or self._get_access_token()
         self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
 
     def _post(self, additional_params):
@@ -184,8 +184,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             data={
-                "username": self.enterprise_configuration.username,
-                "password": self.enterprise_configuration.password,
+                "username": self.enterprise_configuration.decrypted_username,
+                "password": self.enterprise_configuration.decrypted_password,
             },
         )
 

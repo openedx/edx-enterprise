@@ -57,16 +57,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
-    deprecated_username = models.CharField(
-        max_length=255,
-        verbose_name="Webservice Username",
-        blank=True,
-        help_text=_(
-            "The API user's deprecated username used to obtain new tokens."
-        )
-    )
-
-    username = EncryptedCharField(
+    decrypted_username = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Webservice Username",
         blank=True,
@@ -83,33 +74,24 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Return encrypted username as a string.
 
         The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        username field. This method will encrypt the username again before sending.
+        decrypted_username field. This method will encrypt the username again before sending.
         """
-        if self.username:
+        if self.decrypted_username:
             return force_str(
-                self._meta.get_field('username').fernet.encrypt(
-                    force_bytes(self.username)
+                self._meta.get_field('decrypted_username').fernet.encrypt(
+                    force_bytes(self.decrypted_username)
                 )
             )
-        return self.username
+        return self.decrypted_username
 
     @encrypted_username.setter
     def encrypted_username(self, value):
         """
         Set the encrypted username.
         """
-        self.username = value
+        self.decrypted_username = value
 
-    deprecated_password = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Webservice Password",
-        help_text=_(
-            "The API user's deprecated password used to obtain new tokens."
-        )
-    )
-
-    password = EncryptedCharField(
+    decrypted_password = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Webservice Password",
         blank=True,
@@ -126,33 +108,24 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Return encrypted password as a string.
 
         The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        password field. This method will encrypt the password again before sending.
+        decrypted_password field. This method will encrypt the password again before sending.
         """
-        if self.password:
+        if self.decrypted_password:
             return force_str(
-                self._meta.get_field('password').fernet.encrypt(
-                    force_bytes(self.password)
+                self._meta.get_field('decrypted_password').fernet.encrypt(
+                    force_bytes(self.decrypted_password)
                 )
             )
-        return self.password
+        return self.decrypted_password
 
     @encrypted_password.setter
     def encrypted_password(self, value):
         """
         Set the encrypted password.
         """
-        self.password = value
+        self.decrypted_password = value
 
-    deprecated_token = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Webservice User Token",
-        help_text=_(
-            "The user's deprecated token for the Moodle webservice."
-        )
-    )
-
-    token = EncryptedCharField(
+    decrypted_token = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Webservice Token",
         blank=True,
@@ -169,22 +142,22 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Return encrypted token as a string.
 
         The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        token field. This method will encrypt the token again before sending.
+        decrypted_token field. This method will encrypt the token again before sending.
         """
-        if self.token:
+        if self.decrypted_token:
             return force_str(
-                self._meta.get_field('token').fernet.encrypt(
-                    force_bytes(self.token)
+                self._meta.get_field('decrypted_token').fernet.encrypt(
+                    force_bytes(self.decrypted_token)
                 )
             )
-        return self.token
+        return self.decrypted_token
 
     @encrypted_token.setter
     def encrypted_token(self, value):
         """
         Set the encrypted token.
         """
-        self.token = value
+        self.decrypted_token = value
 
     transmission_chunk_size = models.IntegerField(
         default=1,
@@ -230,7 +203,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         incorrect_items = {'incorrect': []}
         if not self.moodle_base_url:
             missing_items.get('missing').append('moodle_base_url')
-        if not self.token and not (self.username and self.password):
+        if not self.decrypted_token and not (self.decrypted_username and self.decrypted_password):
             missing_items.get('missing').append('token OR username and password')
         if not self.service_short_name:
             missing_items.get('missing').append('service_short_name')
