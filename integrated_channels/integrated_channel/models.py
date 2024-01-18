@@ -533,8 +533,6 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         help_text=_('Data pertaining to the transmissions API request response.')
     )
 
-    transmission_status = models.JSONField(default=list, blank=True, null=True)
-
     class Meta:
         abstract = True
         app_label = 'integrated_channel'
@@ -606,20 +604,6 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
             'completedTimestamp': self.completed_timestamp,
             'grade': self.grade,
         }
-
-    def add_transmission_status(self, status_code, error_message):
-        """
-        Append the new entry to the list, keeping the list limited to latest three entries.
-        """
-        new_entry = {
-            'timestamp': timezone.now().isoformat(),
-            'Status_code': status_code,
-            'error_message': error_message,
-        }
-
-        self.transmission_status.append(new_entry)
-
-        self.transmission_status = self.transmission_status[-TRANSMISSION_STATUS_RECORDS_LIMIT:]
 
 
 class GenericLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
