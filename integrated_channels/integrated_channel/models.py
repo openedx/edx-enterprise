@@ -533,6 +533,8 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
         help_text=_('Data pertaining to the transmissions API request response.')
     )
 
+    transmission_status = models.JSONField(default=list, blank=True, null=True)
+
     class Meta:
         abstract = True
         app_label = 'integrated_channel'
