@@ -222,23 +222,3 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         )
         # with dry_run_mode_enabled = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
-
-    def test_transmission_status_learner_data_transmission(self):
-        """
-        Test that transmission status records three most recent status instances.
-        """
-        self.create_course_completion_mock.return_value = 200, ''
-
-        transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
-        for _ in range(TRANSMISSION_STATUS_RECORDS_LIMIT + 1):
-            if _ == TRANSMISSION_STATUS_RECORDS_LIMIT:
-                self.create_course_completion_mock.return_value = 400, '{"error":{"code":null,"message":"Invalid value for property \'courseCompleted\'."}}'
-            transmitter.transmit(self.exporter([self.payload]))
-        actual_transmission_status = self.payload.transmission_status
-
-        expected_transmission_status = [
-            {'timestamp': mock.ANY, 'Status_code': '200', 'error_message': ''},
-            {'timestamp': mock.ANY, 'Status_code': '200', 'error_message': ''},
-            {'timestamp': mock.ANY, 'Status_code': '400', 'error_message': 'Client create_course_completion failed: {"error":{"code":null,"message":"Invalid value for property \'courseCompleted\'."}}'},
-        ]
-        assert expected_transmission_status == actual_transmission_status

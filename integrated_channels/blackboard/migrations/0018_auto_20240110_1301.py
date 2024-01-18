@@ -9,15 +9,21 @@ class Migration(migrations.Migration):
         ('blackboard', '0017_alter_historicalblackboardenterprisecustomerconfiguration_options'),
     ]
 
+    # johnnagro 20240118 DOS-4490
+    # Making this migration a no-op to revert a partially applied deploy migration
+    # operations = [
+    #     migrations.AddField(
+    #         model_name='blackboardlearnerassessmentdatatransmissionaudit',
+    #         name='transmission_status',
+    #         field=models.JSONField(blank=True, default=list, null=True),
+    #     ),
+    #     migrations.AddField(
+    #         model_name='blackboardlearnerdatatransmissionaudit',
+    #         name='transmission_status',
+    #         field=models.JSONField(blank=True, default=list, null=True),
+    #     ),
+    # ]
+
     operations = [
-        migrations.AddField(
-            model_name='blackboardlearnerassessmentdatatransmissionaudit',
-            name='transmission_status',
-            field=models.JSONField(blank=True, default=list, null=True),
-        ),
-        migrations.AddField(
-            model_name='blackboardlearnerdatatransmissionaudit',
-            name='transmission_status',
-            field=models.JSONField(blank=True, default=list, null=True),
-        ),
+        migrations.RunPython(migrations.RunPython.noop, reverse_code=migrations.RunPython.noop)
     ]
