@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.10.3]
+--------
+
+feat: management command to test query migration
+
+
 [4.10.2]
 --------
 
