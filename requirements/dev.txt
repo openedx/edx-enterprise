@@ -8,7 +8,7 @@ accessible-pygments==0.0.4
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
-aiohttp==3.9.1
+aiohttp==3.8.6
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -48,8 +48,9 @@ asn1crypto==1.5.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+    #   oscrypto
     #   snowflake-connector-python
-astroid==3.0.2
+astroid==3.0.1
     # via
     #   pylint
     #   pylint-celery
@@ -66,7 +67,7 @@ attrs==23.1.0
     #   -r requirements/test.txt
     #   aiohttp
     #   pytest
-babel==2.14.0
+babel==2.13.1
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
@@ -76,7 +77,6 @@ backports-zoneinfo[tzdata]==0.2.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-    #   backports-zoneinfo
     #   celery
     #   kombu
 beautifulsoup4==4.12.2
@@ -96,13 +96,13 @@ bleach==6.1.0
     #   -r requirements/test.txt
 build==1.0.3
     # via pip-tools
-celery==5.3.6
+celery==5.3.4
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-certifi==2023.11.17
+certifi==2023.7.22
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -126,6 +126,7 @@ charset-normalizer==2.0.12
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+    #   aiohttp
     #   requests
     #   snowflake-connector-python
 click==8.1.7
@@ -182,10 +183,9 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.4.0
+coverage[toml]==7.3.2
     # via
     #   -r requirements/test.txt
-    #   coverage
     #   pytest-cov
 cryptography==38.0.4
     # via
@@ -212,13 +212,13 @@ deprecated==1.2.14
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   jwcrypto
-diff-cover==8.0.2
+diff-cover==8.0.0
     # via -r requirements/test.txt
 dill==0.3.7
     # via pylint
-distlib==0.3.8
+distlib==0.3.7
     # via virtualenv
-django==3.2.23
+django==3.2.22
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/doc.txt
@@ -270,12 +270,12 @@ django-fernet-fields-v2==0.9
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-filter==23.5
+django-filter==23.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-ipware==6.0.2
+django-ipware==5.0.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -307,7 +307,7 @@ django-simple-history==3.1.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-waffle==4.1.0
+django-waffle==4.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -362,7 +362,7 @@ edx-braze-client==0.1.8
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-edx-django-utils==5.9.0
+edx-django-utils==5.7.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -371,7 +371,7 @@ edx-django-utils==5.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==9.1.2
+edx-drf-extensions==8.12.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -387,13 +387,12 @@ edx-opaque-keys[django]==2.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-    #   edx-opaque-keys
 edx-rbac==1.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-edx-rest-api-client==5.6.1
+edx-rest-api-client==5.6.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -413,12 +412,12 @@ factory-boy==3.3.0
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==22.2.0
+faker==19.13.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   factory-boy
-filelock==3.13.1
+filelock==3.12.4
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -437,7 +436,7 @@ frozenlist==1.4.0
     #   -r requirements/test.txt
     #   aiohttp
     #   aiosignal
-idna==3.6
+idna==3.4
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -449,7 +448,7 @@ imagesize==1.4.1
     # via
     #   -r requirements/doc.txt
     #   sphinx
-importlib-metadata==7.0.1
+importlib-metadata==6.8.0
     # via
     #   -r requirements/doc.txt
     #   build
@@ -465,7 +464,7 @@ iniconfig==2.0.0
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
-isort==5.13.2
+isort==5.12.0
     # via
     #   -r requirements/dev.in
     #   pylint
@@ -500,13 +499,13 @@ jwcrypto==1.5.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-oauth-toolkit
-kombu==5.3.5
+kombu==5.3.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml==5.1.0
+lxml==4.9.3
     # via edx-i18n-tools
 markupsafe==2.1.3
     # via
@@ -527,13 +526,13 @@ multidict==6.0.4
     #   -r requirements/test.txt
     #   aiohttp
     #   yarl
-newrelic==9.3.0
+newrelic==9.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-nh3==0.2.15
+nh3==0.2.14
     # via
     #   -r requirements/doc.txt
     #   readme-renderer
@@ -548,6 +547,12 @@ openai==0.28.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+oscrypto==1.3.0
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   snowflake-connector-python
 packaging==23.2
     # via
     #   -r requirements/doc.txt
@@ -560,7 +565,7 @@ packaging==23.2
     #   snowflake-connector-python
     #   sphinx
     #   tox
-path==16.9.0
+path==16.7.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -572,7 +577,7 @@ path-py==12.5.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pbr==6.0.0
+pbr==5.11.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -583,7 +588,7 @@ pgpy==0.6.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pillow==10.1.0
+pillow==9.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -609,13 +614,13 @@ pluggy==1.3.0
     #   tox
 polib==1.2.0
     # via edx-i18n-tools
-prompt-toolkit==3.0.43
+prompt-toolkit==3.0.39
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   click-repl
-psutil==5.9.6
+psutil==5.9.5
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -627,7 +632,7 @@ py==1.11.0
     #   -r requirements/test.txt
     #   pytest
     #   tox
-pyasn1==0.5.1
+pyasn1==0.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -641,13 +646,19 @@ pycparser==2.21
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   cffi
-pydata-sphinx-theme==0.14.4
+pycryptodomex==3.19.0
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   snowflake-connector-python
+pydata-sphinx-theme==0.14.3
     # via
     #   -r requirements/doc.txt
     #   sphinx-book-theme
 pydocstyle==6.3.0
     # via -r requirements/dev.in
-pygments==2.17.2
+pygments==2.16.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -665,9 +676,8 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   snowflake-connector-python
-pylint==3.0.3
+pylint==3.0.2
     # via
     #   edx-lint
     #   pylint-celery
@@ -720,19 +730,13 @@ python-dateutil==2.8.2
     #   celery
     #   faker
     #   freezegun
-python-ipware==2.0.0
-    # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
-    #   django-ipware
 python-slugify==8.0.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   code-annotations
-pytz==2023.3.post1
+pytz==2022.7.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -778,7 +782,7 @@ restructuredtext-lint==1.4.0
     # via
     #   -r requirements/doc.txt
     #   doc8
-ruamel-yaml==0.18.5
+ruamel-yaml==0.17.35
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -825,7 +829,7 @@ snowballstemmer==2.2.0
     #   -r requirements/doc.txt
     #   pydocstyle
     #   sphinx
-snowflake-connector-python==3.6.0
+snowflake-connector-python==3.2.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -886,7 +890,7 @@ stevedore==5.1.0
     #   doc8
     #   edx-django-utils
     #   edx-opaque-keys
-testfixtures==7.2.2
+testfixtures==7.2.0
     # via
     #   -r requirements/dev.in
     #   -r requirements/doc.txt
@@ -914,7 +918,7 @@ tomli==2.0.1
     #   pylint
     #   pyproject-hooks
     #   tox
-tomlkit==0.12.3
+tomlkit==0.12.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -923,6 +927,7 @@ tomlkit==0.12.3
     #   snowflake-connector-python
 tox==3.28.0
     # via
+    #   -c requirements/common_constraints.txt
     #   -c requirements/constraints.txt
     #   -r requirements/dev.in
 tqdm==4.66.1
@@ -934,7 +939,7 @@ tqdm==4.66.1
     #   twine
 twine==1.11.0
     # via -r requirements/dev.in
-typing-extensions==4.9.0
+typing-extensions==4.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -967,7 +972,7 @@ uritemplate==4.1.1
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-urllib3==1.26.18
+urllib3==1.26.17
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -982,9 +987,9 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.25.0
+virtualenv==20.24.6
     # via tox
-wcwidth==0.2.12
+wcwidth==0.2.8
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -996,17 +1001,17 @@ webencodings==0.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   bleach
-wheel==0.42.0
+wheel==0.41.3
     # via
     #   -r requirements/dev.in
     #   pip-tools
-wrapt==1.16.0
+wrapt==1.15.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   deprecated
-yarl==1.9.4
+yarl==1.9.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
