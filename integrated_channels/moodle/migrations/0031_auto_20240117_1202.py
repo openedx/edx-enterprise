@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('moodle', '0031_moodlelearnerdatatransmissionaudit_transmission_status'),
+        ('moodle', '0030_merge_0028_auto_20231116_1826_0029_auto_20231106_1233'),
     ]
 
     operations = [
