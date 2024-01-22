@@ -66,7 +66,7 @@ class Command(BaseCommand):
                 new_content_filter['course_type__exclude'] = 'executive-education-2u'
                 new_content_filter_json = json.dumps(new_content_filter)
                 discovery_count = discovery_client.get_catalog_results_from_discovery(new_content_filter).get('count')
-                enterprise_count = enterprise_catalog_client.get_enterprise_catalog(customer_catalog.uuid).get('count')
+                enterprise_count = enterprise_catalog_client.get_catalog_content_count(customer_catalog.uuid)
                 logger.info(
                     'compare_discovery_and_enterprise_catalogs catalog '
                     f'{customer_catalog.uuid} '
