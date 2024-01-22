@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.10.6]
+--------
+
+fix: tweak catalog compare mgmt command
+
+
 [4.10.5]
 --------
 
