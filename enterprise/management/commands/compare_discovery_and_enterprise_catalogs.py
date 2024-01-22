@@ -6,6 +6,8 @@ import copy
 import json
 import logging
 
+from requests.exceptions import HTTPError
+
 from django.core.management import BaseCommand
 
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
@@ -43,6 +45,13 @@ class Command(BaseCommand):
                     )
                     continue
 
+                if catalog_query.content_filter.get('aggregation_key'):
+                    logger.info(
+                        'compare_discovery_and_enterprise_catalogs '
+                        f'query {catalog_query.id} references aggregation_key somehow'
+                    )
+                    continue
+
                 new_content_filter = copy.deepcopy(catalog_query.content_filter)
                 new_content_filter['course_type__exclude'] = 'executive-education-2u'
                 new_content_filter_json = json.dumps(new_content_filter)
@@ -62,15 +71,24 @@ class Command(BaseCommand):
                     )
                     continue
 
-                new_content_filter = copy.deepcopy(customer_catalog.content_filter)
-                new_content_filter['course_type__exclude'] = 'executive-education-2u'
-                new_content_filter_json = json.dumps(new_content_filter)
-                discovery_count = discovery_client.get_catalog_results_from_discovery(new_content_filter).get('count')
-                enterprise_count = enterprise_catalog_client.get_catalog_content_count(customer_catalog.uuid)
-                logger.info(
-                    'compare_discovery_and_enterprise_catalogs catalog '
-                    f'{customer_catalog.uuid} '
-                    f'discovery count: {discovery_count}, '
-                    f'enterprise count: {enterprise_count}, '
-                    f'new filter: {new_content_filter_json}'
-                )
+                try:
+                    old_content_filter = customer_catalog.content_filter
+                    new_content_filter = copy.deepcopy(customer_catalog.content_filter)
+                    new_content_filter['course_type__exclude'] = 'executive-education-2u'
+                    new_content_filter_json = json.dumps(new_content_filter)
+                    old_discovery_count = discovery_client.get_catalog_results_from_discovery(old_content_filter).get('count')  # pylint: disable=line-too-long
+                    new_discovery_count = discovery_client.get_catalog_results_from_discovery(new_content_filter).get('count')  # pylint: disable=line-too-long
+                    enterprise_count = enterprise_catalog_client.get_catalog_content_count(customer_catalog.uuid)
+                    logger.info(
+                        'compare_discovery_and_enterprise_catalogs catalog '
+                        f'{customer_catalog.uuid} '
+                        f'existing discovery count: {old_discovery_count}, '
+                        f'new discovery count: {new_discovery_count}, '
+                        f'existing enterprise count: {enterprise_count}, '
+                        f'new filter: {new_content_filter_json}'
+                    )
+                except HTTPError:
+                    logger.exception(
+                        'compare_discovery_and_enterprise_catalogs '
+                        f'error checking catalog {customer_catalog.uuid}'
+                    )
