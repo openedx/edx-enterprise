@@ -13,6 +13,7 @@ from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
     CornerstoneLearnerDataTransmissionAudit,
+    CornerstoneAPIRequestLogs
 )
 from integrated_channels.integrated_channel.admin import BaseLearnerDataTransmissionAuditAdmin
 
@@ -138,3 +139,12 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAu
                 being rendered with this admin form.
         """
         return obj.user.email
+
+@admin.register(CornerstoneAPIRequestLogs)
+class CornerstoneAPIRequestLogAdmin(DjangoObjectActions, admin.ModelAdmin):
+    """
+    Django admin model for CornerstoneAPIRequestLogs.
+    """
+
+    class Meta:
+        model = CornerstoneAPIRequestLogs

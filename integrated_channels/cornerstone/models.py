@@ -330,6 +330,7 @@ class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
 
     class Meta:
         app_label = 'cornerstone'
+        verbose_name_plural = "Cornerstone API request logs"
 
     def __str__(self):
         """

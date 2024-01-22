@@ -910,13 +910,15 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     endpoint = models.TextField(blank=False, null=False)
     payload = models.TextField(blank=False, null=False)
     time_taken = models.DurationField(blank=False, null=False)
-    api_record = models.OneToOneField(
-        ApiResponseRecord,
+    status_code = models.PositiveIntegerField(
+        help_text='API call response HTTP status code',
         blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        help_text=_(
-            'Data pertaining to the transmissions API request response.')
+        null=True
+    )
+    response_body = models.TextField(
+        help_text='API call response body',
+        blank=True,
+        null=True
     )
 
     class Meta:

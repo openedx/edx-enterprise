@@ -10,7 +10,7 @@ import requests
 
 from django.apps import apps
 
-from integrated_channels.cornerstone.utils import get_or_create_key_pair
+from integrated_channels.cornerstone.utils import get_or_create_key_pair, store_cornerstone_api_calls
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.utils import generate_formatted_log
 
@@ -113,6 +113,16 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
                 'Content-Type': 'application/json'
             }
         )
+        store_cornerstone_api_calls(
+            user_agent='asdf',
+            user_ip='123',
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            endpoint=url,
+            payload=json_payload['data'],
+            time_taken=100,
+            status_code=200,
+            response_body='{}'
+        )        
         return response.status_code, response.text
 
     def create_assessment_reporting(self, user_id, payload):
