@@ -71,6 +71,13 @@ class Command(BaseCommand):
                     )
                     continue
 
+                if customer_catalog.content_filter.get('aggregation_key'):
+                    logger.info(
+                        'compare_discovery_and_enterprise_catalogs '
+                        f'catalog {customer_catalog.uuid} references aggregation_key somehow'
+                    )
+                    continue
+
                 try:
                     old_content_filter = customer_catalog.content_filter
                     new_content_filter = copy.deepcopy(customer_catalog.content_filter)
