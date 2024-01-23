@@ -57,9 +57,16 @@ class Command(BaseCommand):
                     f'updated query {catalog_query.id}'
                 )
 
-        for cusrtomer_catalog_batch in batch_by_pk(EnterpriseCustomerCatalog):
-            for customer_catalog in cusrtomer_catalog_batch:
+        for customer_catalog_batch in batch_by_pk(EnterpriseCustomerCatalog):
+            for customer_catalog in customer_catalog_batch:
                 logger.info(f'{customer_catalog.uuid}')
+
+                if customer_catalog.content_filter is None:
+                    logger.info(
+                        'add_exec_ed_exclusion_to_catalogs '
+                        f'catalog {customer_catalog.uuid} has no content_filter'
+                    )
+                    continue
 
                 if customer_catalog.content_filter.get('course_type__exclude'):
                     logger.info(
