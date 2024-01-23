@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.10.8]
+--------
+
+fix: guard against null content_filters
+
+
 [4.10.7]
 --------
 
