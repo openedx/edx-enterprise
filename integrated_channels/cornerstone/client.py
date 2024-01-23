@@ -5,6 +5,7 @@ Client for connecting to Cornerstone.
 import base64
 import json
 import logging
+import time
 
 import requests
 
@@ -104,7 +105,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             completion_path=self.global_cornerstone_config.completion_status_api_path,
             session_token=session_token,
         )
-
+        start_time = time.time()
         response = requests.post(
             url,
             json=[json_payload['data']],
@@ -113,16 +114,16 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
                 'Content-Type': 'application/json'
             }
         )
+        duration_seconds = time.time() - start_time
         store_cornerstone_api_calls(
-            user_agent='asdf',
-            user_ip='123',
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=url,
-            payload=json_payload['data'],
-            time_taken=100,
-            status_code=200,
-            response_body='{}'
-        )        
+            payload=json_payload["data"],
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
+        )
         return response.status_code, response.text
 
     def create_assessment_reporting(self, user_id, payload):

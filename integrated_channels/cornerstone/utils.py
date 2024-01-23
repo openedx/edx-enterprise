@@ -90,14 +90,15 @@ def get_or_create_key_pair(course_id):
 
 
 def store_cornerstone_api_calls(
-    user_agent,
-    user_ip,
     enterprise_customer,
+    enterprise_customer_configuration_id,
     endpoint,
     payload,
     time_taken,
     status_code,
     response_body,
+    user_agent=None,
+    user_ip=None,
 ):
     """
     Creates new record in CornerstoneAPIRequestLogs table.
@@ -106,6 +107,7 @@ def store_cornerstone_api_calls(
         user_agent=user_agent,
         user_ip=user_ip,
         enterprise_customer=enterprise_customer,
+        enterprise_customer_configuration_id=enterprise_customer_configuration_id,
         endpoint=endpoint,
         payload=payload,
         time_taken=time_taken,

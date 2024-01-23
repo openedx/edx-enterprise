@@ -18,8 +18,8 @@ from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLe
 from integrated_channels.cornerstone.transmitters.content_metadata import CornerstoneContentMetadataTransmitter
 from integrated_channels.cornerstone.transmitters.learner_data import CornerstoneLearnerTransmitter
 from integrated_channels.integrated_channel.models import (
+    BaseIntegratedChannelAPIRequestLogs,
     EnterpriseCustomerPluginConfiguration,
-    IntegratedChannelAPIRequestLogs,
     LearnerDataTransmissionAudit,
 )
 from integrated_channels.utils import is_valid_url
@@ -321,15 +321,16 @@ class CornerstoneCourseKey(models.Model):
         app_label = 'cornerstone'
 
 
-class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
+class CornerstoneAPIRequestLogs(BaseIntegratedChannelAPIRequestLogs):
     """
-     A model to track basic information about every API call we make from the integrated channels.
+    A model to track basic information about every API call we make from the integrated channels.
     """
-    user_agent = models.CharField(max_length=255)
+
+    user_agent = models.CharField(blank=True, null=True, max_length=255)
     user_ip = models.GenericIPAddressField(blank=True, null=True)
 
     class Meta:
-        app_label = 'cornerstone'
+        app_label = "cornerstone"
         verbose_name_plural = "Cornerstone API request logs"
 
     def __str__(self):
@@ -337,15 +338,15 @@ class CornerstoneAPIRequestLogs(IntegratedChannelAPIRequestLogs):
         Return a human-readable string representation of the object.
         """
         return (
-            f'<CornerstoneAPIRequestLogs {self.id}'
-            f' for enterprise customer {self.enterprise_customer}, '
-            f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
-            f', endpoint: {self.endpoint}'
-            f', time_taken: {self.time_taken}'
-            f', user_agent: {self.user_agent}'
-            f', user_ip: {self.user_ip}'
-            f', api_record.body: {self.api_record.body}'
-            f', api_record.status_code: {self.api_record.status_code}'
+            f"<CornerstoneAPIRequestLogs {self.id}"
+            f" for enterprise customer {self.enterprise_customer}, "
+            f", enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>"
+            f", endpoint: {self.endpoint}"
+            f", time_taken: {self.time_taken}"
+            f", user_agent: {self.user_agent}"
+            f", user_ip: {self.user_ip}"
+            f", api_record.body: {self.api_record.body}"
+            f", api_record.status_code: {self.api_record.status_code}"
         )
 
     def __repr__(self):
