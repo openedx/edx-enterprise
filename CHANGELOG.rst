@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.10.7]
+--------
+
+feat: mgmt command to add exec-ed exclusions to catalogs
+
+
 [4.10.6]
 --------
 
