@@ -21,16 +21,7 @@ def cornerstone_course_key_model():
     """
     return apps.get_model('cornerstone', 'CornerstoneCourseKey')
 
-
-def cornerstone_request_log_model():
-    """
-        Returns the ``CornerstoneAPIRequestLogs`` class.
-    """
-    return apps.get_model('cornerstone', 'CornerstoneAPIRequestLogs')
-
-
 LOGGER = getLogger(__name__)
-
 
 def create_cornerstone_learner_data(request, cornerstone_customer_configuration, course_id):
     """
@@ -87,42 +78,3 @@ def get_or_create_key_pair(course_id):
         internal_course_id=course_id, defaults={
             'external_course_id': str(uuid4())})
     return key_mapping
-
-
-def store_cornerstone_api_calls(
-    enterprise_customer,
-    enterprise_customer_configuration_id,
-    endpoint,
-    payload,
-    time_taken,
-    status_code,
-    response_body,
-    user_agent=None,
-    user_ip=None,
-):
-    """
-    Creates new record in CornerstoneAPIRequestLogs table.
-    """
-    try:
-        cornerstone_request_log_model().objects.create(
-            user_agent=user_agent,
-            user_ip=user_ip,
-            enterprise_customer=enterprise_customer,
-            enterprise_customer_configuration_id=enterprise_customer_configuration_id,
-            endpoint=endpoint,
-            payload=payload,
-            time_taken=time_taken,
-            status_code=status_code,
-            response_body=response_body,
-        )
-    except Exception as e:  # pylint: disable=broad-except
-        LOGGER.error(
-            f"[Cornerstone]: Error occurred while storing API call: {e}"
-            f"user_agent={user_agent}, user_ip={user_ip}, enterprise_customer={enterprise_customer}"
-            f"enterprise_customer_configuration_id={enterprise_customer_configuration_id},"
-            f"endpoint={endpoint}"
-            f"payload={payload}"
-            f"time_taken={time_taken}"
-            f"status_code={status_code}"
-            f"response_body={response_body}"
-        )

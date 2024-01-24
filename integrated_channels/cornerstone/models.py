@@ -339,14 +339,14 @@ class CornerstoneAPIRequestLogs(BaseIntegratedChannelAPIRequestLogs):
         """
         return (
             f"<CornerstoneAPIRequestLogs {self.id}"
-            f" for enterprise customer {self.enterprise_customer}, "
+            f" for enterprise customer {self.enterprise_customer}"
             f", enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>"
             f", endpoint: {self.endpoint}"
             f", time_taken: {self.time_taken}"
             f", user_agent: {self.user_agent}"
             f", user_ip: {self.user_ip}"
-            f", api_record.body: {self.api_record.body}"
-            f", api_record.status_code: {self.api_record.status_code}"
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
         )
 
     def __repr__(self):

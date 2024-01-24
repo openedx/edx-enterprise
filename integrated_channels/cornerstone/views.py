@@ -3,6 +3,7 @@ Views containing APIs for cornerstone integrated channel
 """
 
 import datetime
+import json
 from logging import getLogger
 import time
 
@@ -17,7 +18,7 @@ from django.utils.http import parse_http_date_safe
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user, get_oauth2authentication_class
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
-from integrated_channels.cornerstone.utils import store_cornerstone_api_calls
+from integrated_channels.utils import store_api_call
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 
 logger = getLogger(__name__)
@@ -160,21 +161,24 @@ class CornerstoneCoursesListView(BaseViewSet):
                     if_modified_since_dt = datetime.datetime.fromtimestamp(if_modified_since)
                     item['LastModifiedUTC'] = if_modified_since_dt.strftime(ISO_8601_DATE_FORMAT)
         duration_seconds = time.time() - start_time
-        store_cornerstone_api_calls(
-            enterprise_customer=enterprise_customer,
-            enterprise_customer_configuration_id=enterprise_config.id,
-            endpoint=request.get_full_path(),
-            payload=f"Request Headers: {request.headers}",
-            time_taken=duration_seconds,
-            status_code=200,
-            response_body=data,
-        )
-        # TODO remove following logs (temporarily added)
+        # TODO remove following log (temporarily added)
         logger.info(
             f"[Cornerstone]: request.headers={request.headers}"
             f"GET params={request.GET}"
             f"enterprise_config={enterprise_config}"
             f"enterprise_config.id={enterprise_config.id}"
             f"data={data}"
+        )
+        headers_dict = dict(request.headers)
+        headers_json = json.dumps(headers_dict)
+        store_api_call(
+            enterprise_customer=enterprise_customer,
+            enterprise_customer_configuration_id=enterprise_config.id,
+            endpoint=request.get_full_path(),
+            payload=f"Request Headers: {headers_json}",
+            time_taken=duration_seconds,
+            status_code=200,
+            response_body=json.dumps(data),
+            channel_code="CSOD"
         )
         return Response(data)

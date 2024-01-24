@@ -11,9 +11,9 @@ import requests
 
 from django.apps import apps
 
-from integrated_channels.cornerstone.utils import get_or_create_key_pair, store_cornerstone_api_calls
+from integrated_channels.cornerstone.utils import get_or_create_key_pair
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, store_api_call
 
 LOGGER = logging.getLogger(__name__)
 
@@ -115,12 +115,13 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             }
         )
         duration_seconds = time.time() - start_time
-        store_cornerstone_api_calls(
+        store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=url,
-            payload=json_payload["data"],
+            payload=json.dumps(json_payload["data"]),
             time_taken=duration_seconds,
+            channel_code=self.enterprise_configuration.channel_code(),
             status_code=response.status_code,
             response_body=response.text,
         )

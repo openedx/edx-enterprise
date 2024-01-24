@@ -930,8 +930,8 @@ class IntegratedChannelAPIRequestLogs(BaseIntegratedChannelAPIRequestLogs):
             f", enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>"
             f", endpoint: {self.endpoint}"
             f", time_taken: {self.time_taken}"
-            f", api_record.body: {self.api_record.body}"
-            f", api_record.status_code: {self.api_record.status_code}"
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
         )
 
     def __repr__(self):
