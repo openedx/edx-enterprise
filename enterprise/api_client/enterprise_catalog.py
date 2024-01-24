@@ -259,6 +259,16 @@ class EnterpriseCatalogApiClient(UserAPIClient):
         return list(content_metadata.values())
 
     @UserAPIClient.refresh_token
+    def get_catalog_content_count(self, catalog_uuid):
+        """
+        Gets the content metadata count for a catalog from the first page of results
+        """
+        api_url = self.get_api_url(self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
+        response = self.client.get(api_url)
+        response.raise_for_status()
+        return response.json()['count']
+
+    @UserAPIClient.refresh_token
     def refresh_catalogs(self, enterprise_catalogs):
         """
         Kicks off async tasks to refresh catalogs so recent changes will populate to production without needing to wait

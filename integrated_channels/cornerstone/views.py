@@ -169,4 +169,12 @@ class CornerstoneCoursesListView(BaseViewSet):
             status_code=200,
             response_body=data,
         )
+        # TODO remove following logs (temporarily added)
+        logger.info(
+            f"[Cornerstone]: request.headers={request.headers}"
+            f"GET params={request.GET}"
+            f"enterprise_config={enterprise_config}"
+            f"enterprise_config.id={enterprise_config.id}"
+            f"data={data}"
+        )
         return Response(data)

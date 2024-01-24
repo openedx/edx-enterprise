@@ -16,6 +16,35 @@ Change Log
 Unreleased
 ----------
 
+[4.10.9]
+--------
+
+feat: added logs temporarily for ENT-8276
+
+[4.10.8]
+--------
+
+fix: guard against null content_filters
+
+
+[4.10.7]
+--------
+
+feat: mgmt command to add exec-ed exclusions to catalogs
+
+
+[4.10.6]
+--------
+
+fix: tweak catalog compare mgmt command
+
+
+[4.10.5]
+--------
+
+fix: tweak catalog compare mgmt command
+
+
 [4.10.4]
 --------
 
