@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.10.9]
+--------
+
+feat: added logs temporarily for ENT-8276
+
 [4.10.8]
 --------
 
