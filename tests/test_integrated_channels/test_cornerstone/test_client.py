@@ -7,9 +7,6 @@ import unittest
 
 import pytest
 import responses
-from freezegun import freeze_time
-
-from django.apps.registry import apps
 
 from integrated_channels.cornerstone.client import CornerstoneAPIClient
 from test_utils import factories
