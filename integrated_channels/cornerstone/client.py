@@ -121,7 +121,6 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             endpoint=url,
             payload=json.dumps(json_payload["data"]),
             time_taken=duration_seconds,
-            channel_code=self.enterprise_configuration.channel_code(),
             status_code=response.status_code,
             response_body=response.text,
         )

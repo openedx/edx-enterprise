@@ -21,7 +21,9 @@ def cornerstone_course_key_model():
     """
     return apps.get_model('cornerstone', 'CornerstoneCourseKey')
 
+
 LOGGER = getLogger(__name__)
+
 
 def create_cornerstone_learner_data(request, cornerstone_customer_configuration, course_id):
     """

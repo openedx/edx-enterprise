@@ -919,6 +919,7 @@ class IntegratedChannelAPIRequestLogs(BaseIntegratedChannelAPIRequestLogs):
 
     class Meta:
         app_label = "integrated_channel"
+        verbose_name_plural = "Integrated channels API request logs"
 
     def __str__(self):
         """

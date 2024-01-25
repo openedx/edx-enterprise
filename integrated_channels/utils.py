@@ -476,18 +476,13 @@ def get_enterprise_customer_model():
     """
     return apps.get_model('enterprise', 'EnterpriseCustomer')
 
-def cornerstone_request_log_model():
-    """
-    Returns the ``CornerstoneAPIRequestLogs`` class.
-    """
-    return apps.get_model("cornerstone", "CornerstoneAPIRequestLogs")
-
 
 def integrated_channel_request_log_model():
     """
     Returns the ``IntegratedChannelAPIRequestLogs`` class.
     """
     return apps.get_model("integrated_channel", "IntegratedChannelAPIRequestLogs")
+
 
 def get_enterprise_customer_from_enterprise_enrollment(enrollment_id):
     """
@@ -514,6 +509,7 @@ def get_enterprise_client_by_channel_code(channel_code):
     }
     return _enterprise_client_model_by_channel_code[channel_code]
 
+
 def store_api_call(
     enterprise_customer,
     enterprise_customer_configuration_id,
@@ -522,40 +518,24 @@ def store_api_call(
     time_taken,
     status_code,
     response_body,
-    channel_code="",
-    user_agent=None,
-    user_ip=None,
 ):
     """
     Creates new record in CornerstoneAPIRequestLogs table.
     """
     try:
-        if channel_code == "CSOD":
-            cornerstone_request_log_model().objects.create(
-                user_agent=user_agent,
-                user_ip=user_ip,
-                enterprise_customer=enterprise_customer,
-                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
-                endpoint=endpoint,
-                payload=payload,
-                time_taken=time_taken,
-                status_code=status_code,
-                response_body=response_body,
-            )
-        else:
-            integrated_channel_request_log_model().objects.create(
-                enterprise_customer=enterprise_customer,
-                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
-                endpoint=endpoint,
-                payload=payload,
-                time_taken=time_taken,
-                status_code=status_code,
-                response_body=response_body,
-            )
+        integrated_channel_request_log_model().objects.create(
+            enterprise_customer=enterprise_customer,
+            enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+            endpoint=endpoint,
+            payload=payload,
+            time_taken=time_taken,
+            status_code=status_code,
+            response_body=response_body,
+        )
     except Exception as e:  # pylint: disable=broad-except
         LOGGER.error(
-            f"[{channel_code}]: store_api_call raised error while storing API call: {e}"
-            f"user_agent={user_agent}, user_ip={user_ip}, enterprise_customer={enterprise_customer}"
+            f"store_api_call raised error while storing API call: {e}"
+            f"enterprise_customer={enterprise_customer}"
             f"enterprise_customer_configuration_id={enterprise_customer_configuration_id},"
             f"endpoint={endpoint}"
             f"payload={payload}"
