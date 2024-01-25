@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.11.0]
+--------
+
+feat: update cornerstone client to store API calls in DB
+
 [4.10.9]
 --------
 
