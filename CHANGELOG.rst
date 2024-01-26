@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[4.10.10]
+---------
+
+feat: remove ability to edit catalog `include_exec_ed_2u_courses`
+
+
 [4.10.9]
 --------
 
