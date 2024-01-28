@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.10.11]
+---------
+* fix: add missing comma to catalog query fields list.
+
 [4.10.10]
 ---------
 

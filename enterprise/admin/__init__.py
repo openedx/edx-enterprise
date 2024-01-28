@@ -811,7 +811,7 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
         model = models.EnterpriseCatalogQuery
 
     fields = (
-        'uuid'
+        'uuid',
         'title',
         'discovery_query_url',
         'content_filter',
