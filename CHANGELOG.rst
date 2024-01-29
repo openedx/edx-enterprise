@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.10.13]
+---------
+
+feat: update blackboard client to store API calls in DB
+
 [4.10.12]
 ---------
 
