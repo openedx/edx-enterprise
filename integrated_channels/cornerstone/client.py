@@ -13,7 +13,7 @@ from django.apps import apps
 
 from integrated_channels.cornerstone.utils import get_or_create_key_pair
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, store_api_call
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,6 +36,9 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         """
         super().__init__(enterprise_configuration)
         self.global_cornerstone_config = apps.get_model('cornerstone', 'CornerstoneGlobalConfiguration').current()
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
         self.session = None
         self.expires_at = None
 
@@ -115,7 +118,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             }
         )
         duration_seconds = time.time() - start_time
-        store_api_call(
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=url,
