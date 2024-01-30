@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.0]
+---------
+* Added the ability for enterprise customers to enable/disable academies.
+
 [4.10.11]
 ---------
 * fix: add missing comma to catalog query fields list.
