@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('integrated_channel', '0032_auto_20240125_0936'),
+        ('integrated_channel', '0031_alter_integratedchannelapirequestlogs_options'),
     ]
 
     operations = [

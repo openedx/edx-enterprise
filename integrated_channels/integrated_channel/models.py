@@ -932,7 +932,6 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
         """
         return self.__str__()
 
-
     @classmethod
     def store_api_call(
         cls,
