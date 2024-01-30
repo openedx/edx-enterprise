@@ -16,10 +16,13 @@ Change Log
 Unreleased
 ----------
 
-[4.10.12]
+[4.11.1]
 ---------
+* feat: update cornerstone client to store API calls in DB
 
-feat: update cornerstone client to store API calls in DB
+[4.11.0]
+---------
+* Added the ability for enterprise customers to enable/disable academies.
 
 [4.10.11]
 ---------
