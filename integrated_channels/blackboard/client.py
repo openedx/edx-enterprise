@@ -20,7 +20,6 @@ from integrated_channels.integrated_channel.client import IntegratedChannelApiCl
 from integrated_channels.utils import (
     generate_formatted_log,
     refresh_session_if_expired,
-    store_api_call,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -58,6 +57,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         BlackboardGlobalConfiguration = apps.get_model(
             'blackboard',
             'BlackboardGlobalConfiguration'
+        )
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
         )
         self.global_blackboard_config = BlackboardGlobalConfiguration.current()
         self.config = apps.get_app_config('blackboard')
@@ -616,7 +618,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     pass
             # Store stringified data in the database
             try:
-                store_api_call(
+                self.IntegratedChannelAPIRequestLogs.store_api_call(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
                     enterprise_customer_configuration_id=self.enterprise_configuration.id,
                     endpoint=url,
