@@ -16,10 +16,20 @@ Change Log
 Unreleased
 ----------
 
-[4.11.0]
---------
+[4.10.12]
+---------
 
 feat: update cornerstone client to store API calls in DB
+
+[4.10.11]
+---------
+* fix: add missing comma to catalog query fields list.
+
+[4.10.10]
+---------
+
+feat: remove ability to edit catalog `include_exec_ed_2u_courses`
+
 
 [4.10.9]
 --------

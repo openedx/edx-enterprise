@@ -810,6 +810,13 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     class Meta:
         model = models.EnterpriseCatalogQuery
 
+    fields = (
+        'uuid',
+        'title',
+        'discovery_query_url',
+        'content_filter',
+    )
+
     def get_urls(self):
         """
         Returns the additional urls used by the custom object tools.
@@ -826,7 +833,6 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'discovery_query_url',
-        'include_exec_ed_2u_courses',
     )
 
     @admin.display(
