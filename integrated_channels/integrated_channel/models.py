@@ -881,7 +881,7 @@ class OrphanedContentTransmissions(TimeStampedModel):
     resolved = models.BooleanField(default=False)
 
 
-class BaseIntegratedChannelAPIRequestLogs(TimeStampedModel):
+class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
     A model to track basic information about every API call we make from the integrated channels.
     """
@@ -894,8 +894,9 @@ class BaseIntegratedChannelAPIRequestLogs(TimeStampedModel):
         null=False,
         help_text="ID from the EnterpriseCustomerConfiguration model",
     )
-    endpoint = models.TextField(
+    endpoint = models.URLField(
         blank=False,
+        max_length=255,
         null=False,
     )
     payload = models.TextField(blank=False, null=False)
@@ -906,16 +907,6 @@ class BaseIntegratedChannelAPIRequestLogs(TimeStampedModel):
     response_body = models.TextField(
         help_text="API call response body", blank=True, null=True
     )
-
-    class Meta:
-        app_label = "integrated_channel"
-        abstract = True
-
-
-class IntegratedChannelAPIRequestLogs(BaseIntegratedChannelAPIRequestLogs):
-    """
-    A model to track basic information about every API call we make from the integrated channels.
-    """
 
     class Meta:
         app_label = "integrated_channel"
@@ -940,3 +931,41 @@ class IntegratedChannelAPIRequestLogs(BaseIntegratedChannelAPIRequestLogs):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+    @classmethod
+    def store_api_call(
+        cls,
+        enterprise_customer,
+        enterprise_customer_configuration_id,
+        endpoint,
+        payload,
+        time_taken,
+        status_code,
+        response_body,
+    ):
+        """
+        Creates new record in IntegratedChannelAPIRequestLogs table.
+        """
+        try:
+            record = cls(
+                enterprise_customer=enterprise_customer,
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+                endpoint=endpoint,
+                payload=payload,
+                time_taken=time_taken,
+                status_code=status_code,
+                response_body=response_body,
+            )
+            record.save()
+        except Exception as e:  # pylint: disable=broad-except
+            LOGGER.error(
+                f"store_api_call raised error while storing API call: {e}"
+                f"enterprise_customer={enterprise_customer}"
+                f"enterprise_customer_configuration_id={enterprise_customer_configuration_id},"
+                f"endpoint={endpoint}"
+                f"payload={payload}"
+                f"time_taken={time_taken}"
+                f"status_code={status_code}"
+                f"response_body={response_body}"
+            )
