@@ -19,7 +19,7 @@ from integrated_channels.utils import (  # pylint: disable=cyclic-import
     generate_formatted_log,
     refresh_session_if_expired,
     store_api_call,
-    stringify_and_store_api_record
+    stringify_and_store_api_record,
 )
 
 LOGGER = logging.getLogger(__name__)

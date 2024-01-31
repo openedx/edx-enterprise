@@ -20,7 +20,6 @@ from integrated_channels.canvas.client import MESSAGE_WHEN_COURSE_WAS_DELETED, C
 from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelHealthStatus
-
 from test_utils import factories
 
 IntegratedChannelAPIRequestLogs = apps.get_model(
