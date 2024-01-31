@@ -58,7 +58,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.toggles import TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM, FEATURE_PREQUERY_SEARCH_SUGGESTIONS
+from enterprise.toggles import FEATURE_PREQUERY_SEARCH_SUGGESTIONS, TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_sso_orchestrator_api_base_url,
