@@ -6,8 +6,6 @@ from urllib.parse import urljoin
 
 from requests.utils import quote
 
-from django.apps import apps
-
 from integrated_channels.exceptions import ClientError
 from integrated_channels.utils import generate_formatted_log, store_api_call
 
