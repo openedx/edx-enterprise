@@ -16,6 +16,14 @@ Change Log
 Unreleased
 ----------
 
+[4.11.2]
+---------
+* feat: added caching for fetching degreed course id 
+
+[4.11.1]
+---------
+* Added management command to fix `LearnerDataTransmissionAudit` table records.
+
 [4.11.0]
 ---------
 * Added the ability for enterprise customers to enable/disable academies.
