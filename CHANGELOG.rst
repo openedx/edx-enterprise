@@ -16,9 +16,13 @@ Change Log
 Unreleased
 ----------
 
-[4.11.2]
+[4.11.3]
 ---------
 * feat: update cornerstone client to store API calls in DB
+
+[4.11.2]
+---------
+* feat: added caching for fetching degreed course id 
 
 [4.11.1]
 ---------
