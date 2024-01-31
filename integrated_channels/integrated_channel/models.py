@@ -885,41 +885,43 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
     A model to track basic information about every API call we make from the integrated channels.
     """
+
     enterprise_customer = models.ForeignKey(
-        EnterpriseCustomer, on_delete=models.CASCADE)
+        EnterpriseCustomer, on_delete=models.CASCADE
+    )
     enterprise_customer_configuration_id = models.IntegerField(
-        blank=False, null=False, help_text='ID from the EnterpriseCustomerConfiguration model')
-    endpoint = models.TextField(blank=False, null=False)
+        blank=False,
+        null=False,
+        help_text="ID from the EnterpriseCustomerConfiguration model",
+    )
+    endpoint = models.URLField(
+        blank=False,
+        max_length=255,
+        null=False,
+    )
     payload = models.TextField(blank=False, null=False)
-    time_taken = models.DurationField(blank=False, null=False)
-    api_record = models.OneToOneField(
-        ApiResponseRecord,
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        help_text=_(
-            'Data pertaining to the transmissions API request response.')
+    time_taken = models.FloatField(blank=False, null=False)
+    status_code = models.PositiveIntegerField(
+        help_text="API call response HTTP status code", blank=True, null=True
+    )
+    response_body = models.TextField(
+        help_text="API call response body", blank=True, null=True
     )
 
     class Meta:
-        app_label = 'integrated_channel'
+        app_label = "integrated_channel"
+        verbose_name_plural = "Integrated channels API request logs"
 
     def __str__(self):
         """
         Return a human-readable string representation of the object.
         """
         return (
-            f'<IntegratedChannelAPIRequestLog {self.id}'
-            f' for enterprise customer {self.enterprise_customer}, '
-            f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
-            f', endpoint: {self.endpoint}'
-            f', time_taken: {self.time_taken}'
-            f', api_record.body: {self.api_record.body}'
-            f', api_record.status_code: {self.api_record.status_code}'
+            f"<IntegratedChannelAPIRequestLog {self.id}"
+            f" for enterprise customer {self.enterprise_customer} "
+            f", enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>"
+            f", endpoint: {self.endpoint}"
+            f", time_taken: {self.time_taken}"
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
         )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()

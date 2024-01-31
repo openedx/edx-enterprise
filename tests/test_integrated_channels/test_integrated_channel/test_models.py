@@ -274,9 +274,8 @@ class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin
         self.endpoint = 'https://example.com/endpoint'
         self.payload = "{}"
         self.time_taken = 500
-        api_record = ApiResponseRecord(status_code=200, body='SUCCESS')
-        api_record.save()
-        self.api_record = api_record
+        self.response_body = "{}"
+        self.status_code = 200
         super().setUp()
 
     def test_content_meta_data_string_representation(self):
@@ -285,12 +284,12 @@ class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin
         """
         expected_string = (
             f'<IntegratedChannelAPIRequestLog {self.pk}'
-            f' for enterprise customer {self.enterprise_customer}, '
+            f' for enterprise customer {self.enterprise_customer} '
             f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
             f', endpoint: {self.endpoint}'
             f', time_taken: {self.time_taken}'
-            f', api_record.body: {self.api_record.body}'
-            f', api_record.status_code: {self.api_record.status_code}'
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
         )
 
         request_log = IntegratedChannelAPIRequestLogs(
@@ -300,6 +299,7 @@ class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin
             endpoint=self.endpoint,
             payload=self.payload,
             time_taken=self.time_taken,
-            api_record=self.api_record
+            response_body=self.response_body,
+            status_code=self.status_code
         )
         assert expected_string == repr(request_log)
