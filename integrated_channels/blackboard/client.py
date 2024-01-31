@@ -20,6 +20,7 @@ from integrated_channels.integrated_channel.client import IntegratedChannelApiCl
 from integrated_channels.utils import (
     generate_formatted_log,
     refresh_session_if_expired,
+    stringify_and_store_api_record
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -601,35 +602,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             path=COURSE_CONTENT_DELETE_PATH.format(course_id=course_id, content_id=content_id)
         )
 
-    def stringify_and_store_api_record(
-        self, url, data, time_taken, status_code, response_body
-    ):
-        if data is not None:
-            # Convert data to string if it's not already a string
-            if not isinstance(data, str):
-                try:
-                    # Check if data is a dictionary, list, or tuple then convert to JSON string
-                    if isinstance(data, (dict, list, tuple)):
-                        data = json.dumps(data)
-                    else:
-                        # If it's another type, simply convert to string
-                        data = str(data)
-                except Exception as e:
-                    pass
-            # Store stringified data in the database
-            try:
-                self.IntegratedChannelAPIRequestLogs.store_api_call(
-                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                    enterprise_customer_configuration_id=self.enterprise_configuration.id,
-                    endpoint=url,
-                    payload=data,
-                    time_taken=time_taken,
-                    status_code=status_code,
-                    response_body=response_body,
-                )
-            except Exception as e:
-                print(f"Failed to store data in the database: {e}")
-
     def _get(self, url, data=None):
         """
         Returns request's get response and raises Client Errors if appropriate.
@@ -637,7 +609,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         get_response = self.session.get(url, params=data)
         time_taken = time.time() - start_time
-        self.stringify_and_store_api_record(
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
             url=url,
             data=data,
             time_taken=time_taken,
@@ -655,7 +629,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         patch_response = self.session.patch(url, json=data)
         time_taken = time.time() - start_time
-        self.stringify_and_store_api_record(
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
             url=url,
             data=data,
             time_taken=time_taken,
@@ -673,7 +649,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         post_response = self.session.post(url, json=data)
         time_taken = time.time() - start_time
-        self.stringify_and_store_api_record(
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
             url=url,
             data=data,
             time_taken=time_taken,
@@ -692,7 +670,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         response = self.session.delete(url)
         time_taken = time.time() - start_time
-        self.stringify_and_store_api_record(
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
             url=url,
             data='',
             time_taken=time_taken,

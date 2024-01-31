@@ -543,3 +543,42 @@ def store_api_call(
             f"status_code={status_code}"
             f"response_body={response_body}"
         )
+   
+
+def stringify_and_store_api_record(
+    enterprise_customer,
+    enterprise_customer_configuration_id,
+    endpoint,
+    data,
+    time_taken,
+    status_code,
+    response_body
+):
+    """
+    Stringify the given data and store the API record in the database.
+    """
+    if data is not None:
+        # Convert data to string if it's not already a string
+        if not isinstance(data, str):
+            try:
+                # Check if data is a dictionary, list, or tuple then convert to JSON string
+                if isinstance(data, (dict, list, tuple)):
+                    data = json.dumps(data)
+                else:
+                    # If it's another type, simply convert to string
+                    data = str(data)
+            except (TypeError, ValueError) as e:
+                print(f"Error during stringification: {e}")
+        # Store stringified data in the database
+        try:
+            integrated_channel_request_log_model().store_api_call(
+                enterprise_customer=enterprise_customer,
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+                endpoint=endpoint,
+                payload=data,
+                time_taken=time_taken,
+                status_code=status_code,
+                response_body=response_body,
+            )
+        except Exception as e:   # pylint: disable=broad-except
+            print(f"Failed to store data in the database: {e}")
