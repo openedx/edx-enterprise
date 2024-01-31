@@ -511,14 +511,14 @@ def get_enterprise_client_by_channel_code(channel_code):
 
 
 def stringify_and_store_api_record(
-        enterprise_customer,
-        enterprise_customer_configuration_id,
-        endpoint,
-        data,
-        time_taken,
-        status_code,
-        response_body
-    ):
+    enterprise_customer,
+    enterprise_customer_configuration_id,
+    endpoint,
+    data,
+    time_taken,
+    status_code,
+    response_body
+):
     """
     Stringify the given data and store the API record in the database.
     """
