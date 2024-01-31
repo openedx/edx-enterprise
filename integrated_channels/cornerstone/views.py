@@ -3,6 +3,8 @@ Views containing APIs for cornerstone integrated channel
 """
 
 import datetime
+import json
+import time
 from logging import getLogger
 
 from dateutil import parser
@@ -11,6 +13,7 @@ from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
+from django.apps import apps
 from django.utils.http import parse_http_date_safe
 
 from enterprise.api.throttles import ServiceUserThrottle
@@ -98,7 +101,11 @@ class CornerstoneCoursesListView(BaseViewSet):
     """
 
     def get(self, request, *args, **kwargs):
+        start_time = time.time()
         enterprise_customer_uuid = request.GET.get('ciid')
+        IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
         if not enterprise_customer_uuid:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
@@ -156,12 +163,16 @@ class CornerstoneCoursesListView(BaseViewSet):
                                 f'fixing modified/header mismatch')
                     if_modified_since_dt = datetime.datetime.fromtimestamp(if_modified_since)
                     item['LastModifiedUTC'] = if_modified_since_dt.strftime(ISO_8601_DATE_FORMAT)
-        # TODO remove following logs (temporarily added)
-        logger.info(
-            f"[Cornerstone]: request.headers={request.headers}"
-            f"GET params={request.GET}"
-            f"enterprise_config={enterprise_config}"
-            f"enterprise_config.id={enterprise_config.id}"
-            f"data={data}"
+        duration_seconds = time.time() - start_time
+        headers_dict = dict(request.headers)
+        headers_json = json.dumps(headers_dict)
+        IntegratedChannelAPIRequestLogs.store_api_call(
+            enterprise_customer=enterprise_customer,
+            enterprise_customer_configuration_id=enterprise_config.id,
+            endpoint=request.get_full_path(),
+            payload=f"Request Headers: {headers_json}",
+            time_taken=duration_seconds,
+            status_code=200,
+            response_body=json.dumps(data)
         )
         return Response(data)

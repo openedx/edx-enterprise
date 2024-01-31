@@ -883,39 +883,47 @@ class OrphanedContentTransmissions(TimeStampedModel):
 
 class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
-     A model to track basic information about every API call we make from the integrated channels.
+    A model to track basic information about every API call we make from the integrated channels.
     """
+
     enterprise_customer = models.ForeignKey(
-        EnterpriseCustomer, on_delete=models.CASCADE)
+        EnterpriseCustomer, on_delete=models.CASCADE
+    )
     enterprise_customer_configuration_id = models.IntegerField(
-        blank=False, null=False, help_text='ID from the EnterpriseCustomerConfiguration model')
-    endpoint = models.TextField(blank=False, null=False)
+        blank=False,
+        null=False,
+        help_text="ID from the EnterpriseCustomerConfiguration model",
+    )
+    endpoint = models.URLField(
+        blank=False,
+        max_length=255,
+        null=False,
+    )
     payload = models.TextField(blank=False, null=False)
-    time_taken = models.DurationField(blank=False, null=False)
-    api_record = models.OneToOneField(
-        ApiResponseRecord,
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-        help_text=_(
-            'Data pertaining to the transmissions API request response.')
+    time_taken = models.FloatField(blank=False, null=False)
+    status_code = models.PositiveIntegerField(
+        help_text="API call response HTTP status code", blank=True, null=True
+    )
+    response_body = models.TextField(
+        help_text="API call response body", blank=True, null=True
     )
 
     class Meta:
-        app_label = 'integrated_channel'
+        app_label = "integrated_channel"
+        verbose_name_plural = "Integrated channels API request logs"
 
     def __str__(self):
         """
         Return a human-readable string representation of the object.
         """
         return (
-            f'<IntegratedChannelAPIRequestLog {self.id}'
-            f' for enterprise customer {self.enterprise_customer}, '
-            f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
-            f', endpoint: {self.endpoint}'
-            f', time_taken: {self.time_taken}'
-            f', api_record.body: {self.api_record.body}'
-            f', api_record.status_code: {self.api_record.status_code}'
+            f"<IntegratedChannelAPIRequestLog {self.id}"
+            f" for enterprise customer {self.enterprise_customer} "
+            f", enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>"
+            f", endpoint: {self.endpoint}"
+            f", time_taken: {self.time_taken}"
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
         )
 
     def __repr__(self):
@@ -923,3 +931,40 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    @classmethod
+    def store_api_call(
+        cls,
+        enterprise_customer,
+        enterprise_customer_configuration_id,
+        endpoint,
+        payload,
+        time_taken,
+        status_code,
+        response_body,
+    ):
+        """
+        Creates new record in IntegratedChannelAPIRequestLogs table.
+        """
+        try:
+            record = cls(
+                enterprise_customer=enterprise_customer,
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+                endpoint=endpoint,
+                payload=payload,
+                time_taken=time_taken,
+                status_code=status_code,
+                response_body=response_body,
+            )
+            record.save()
+        except Exception as e:  # pylint: disable=broad-except
+            LOGGER.error(
+                f"store_api_call raised error while storing API call: {e}"
+                f"enterprise_customer={enterprise_customer}"
+                f"enterprise_customer_configuration_id={enterprise_customer_configuration_id},"
+                f"endpoint={endpoint}"
+                f"payload={payload}"
+                f"time_taken={time_taken}"
+                f"status_code={status_code}"
+                f"response_body={response_body}"
+            )
