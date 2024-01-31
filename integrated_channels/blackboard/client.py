@@ -5,6 +5,7 @@ import base64
 import copy
 import json
 import logging
+import time
 from http import HTTPStatus
 from urllib.parse import urljoin
 
@@ -594,11 +595,72 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             path=COURSE_CONTENT_DELETE_PATH.format(course_id=course_id, content_id=content_id)
         )
 
+    def stringify_and_store_api_record(
+        self, url, data, time_taken, status_code, response_body
+    ):
+        """
+        Helper method to stringify `data` arg and create new record in
+        `IntegratedChannelAPIRequestLogs` model
+        """
+        if data is not None:
+            # Convert data to string if it's not already a string
+            if not isinstance(data, str):
+                try:
+                    # Check if data is a dictionary, list, or tuple then convert to JSON string
+                    if isinstance(data, (dict, list, tuple)):
+                        data = json.dumps(data)
+                    else:
+                        # If it's another type, simply convert to string
+                        data = str(data)
+                except Exception as e:  # pylint: disable=broad-except
+                    LOGGER.error(
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            f"stringify_and_store_api_record: Unable to stringify data: {e}",
+                        )
+                    )
+            # Store stringified data in the database
+            try:
+                IntegratedChannelAPIRequestLogs = apps.get_model(
+                    "integrated_channel", "IntegratedChannelAPIRequestLogs"
+                )
+                IntegratedChannelAPIRequestLogs.store_api_call(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                    endpoint=url,
+                    payload=data,
+                    time_taken=time_taken,
+                    status_code=status_code,
+                    response_body=response_body,
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f"stringify_and_store_api_record: Failed to store data in the database: {e}",
+                    )
+                )
+
     def _get(self, url, data=None):
         """
         Returns request's get response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         get_response = self.session.get(url, params=data)
+        time_taken = time.time() - start_time
+        self.stringify_and_store_api_record(
+            url=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=get_response.status_code,
+            response_body=get_response.text,
+        )
         if get_response.status_code >= 400:
             raise ClientError(get_response.text, get_response.status_code)
         return get_response
@@ -607,7 +669,16 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's patch response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         patch_response = self.session.patch(url, json=data)
+        time_taken = time.time() - start_time
+        self.stringify_and_store_api_record(
+            url=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=patch_response.status_code,
+            response_body=patch_response.text,
+        )
         if patch_response.status_code >= 400:
             raise ClientError(patch_response.text, patch_response.status_code)
         return patch_response
@@ -616,7 +687,17 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's post response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         post_response = self.session.post(url, json=data)
+        time_taken = time.time() - start_time
+        self.stringify_and_store_api_record(
+            url=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=post_response.status_code,
+            response_body=post_response.text,
+        )
+
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response
@@ -625,7 +706,16 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's delete response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         response = self.session.delete(url)
+        time_taken = time.time() - start_time
+        self.stringify_and_store_api_record(
+            url=url,
+            data='',
+            time_taken=time_taken,
+            status_code=response.status_code,
+            response_body=response.text,
+        )
         if response.status_code >= 400:
             raise ClientError(response.text, response.status_code)
         return response
