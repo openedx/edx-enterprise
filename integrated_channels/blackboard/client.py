@@ -17,10 +17,7 @@ from django.db import transaction
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import (
-    generate_formatted_log,
-    refresh_session_if_expired,
-)
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,9 +54,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         BlackboardGlobalConfiguration = apps.get_model(
             'blackboard',
             'BlackboardGlobalConfiguration'
-        )
-        self.IntegratedChannelAPIRequestLogs = apps.get_model(
-            "integrated_channel", "IntegratedChannelAPIRequestLogs"
         )
         self.global_blackboard_config = BlackboardGlobalConfiguration.current()
         self.config = apps.get_app_config('blackboard')
@@ -604,6 +598,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
     def stringify_and_store_api_record(
         self, url, data, time_taken, status_code, response_body
     ):
+        """
+        Helper method to stringify `data` arg and create new record in
+        `IntegratedChannelAPIRequestLogs` model
+        """
         if data is not None:
             # Convert data to string if it's not already a string
             if not isinstance(data, str):
@@ -614,11 +612,22 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     else:
                         # If it's another type, simply convert to string
                         data = str(data)
-                except Exception as e:
-                    pass
+                except Exception as e:  # pylint: disable=broad-except
+                    LOGGER.error(
+                        generate_formatted_log(
+                            self.enterprise_configuration.channel_code(),
+                            self.enterprise_configuration.enterprise_customer.uuid,
+                            None,
+                            None,
+                            f"stringify_and_store_api_record: Unable to stringify data: {e}",
+                        )
+                    )
             # Store stringified data in the database
             try:
-                self.IntegratedChannelAPIRequestLogs.store_api_call(
+                IntegratedChannelAPIRequestLogs = apps.get_model(
+                    "integrated_channel", "IntegratedChannelAPIRequestLogs"
+                )
+                IntegratedChannelAPIRequestLogs.store_api_call(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
                     enterprise_customer_configuration_id=self.enterprise_configuration.id,
                     endpoint=url,
@@ -627,8 +636,16 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                     status_code=status_code,
                     response_body=response_body,
                 )
-            except Exception as e:
-                print(f"Failed to store data in the database: {e}")
+            except Exception as e:  # pylint: disable=broad-except
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f"stringify_and_store_api_record: Failed to store data in the database: {e}",
+                    )
+                )
 
     def _get(self, url, data=None):
         """

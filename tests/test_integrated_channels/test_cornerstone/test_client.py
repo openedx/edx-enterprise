@@ -8,8 +8,14 @@ import unittest
 import pytest
 import responses
 
+from django.apps import apps
+
 from integrated_channels.cornerstone.client import CornerstoneAPIClient
 from test_utils import factories
+
+IntegratedChannelAPIRequestLogs = apps.get_model(
+    "integrated_channel", "IntegratedChannelAPIRequestLogs"
+)
 
 
 @pytest.mark.django_db
@@ -26,7 +32,7 @@ class TestCornerstoneApiClient(unittest.TestCase):
         )
 
     @responses.activate
-    def test_create_course_completion(self):
+    def test_create_course_completion_stores_api_record(self):
         """
         ``create_course_completion`` should use the appropriate URLs for transmission.
         """
@@ -47,9 +53,10 @@ class TestCornerstoneApiClient(unittest.TestCase):
             json="{}",
             status=200,
         )
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 0
         output = cornerstone_api_client.create_course_completion(
             "test-learner@example.com", json.dumps(payload)
         )
-
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 1
         assert len(responses.calls) == 1
         assert output == (200, '"{}"')

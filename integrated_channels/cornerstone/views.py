@@ -13,13 +13,13 @@ from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
+from django.apps import apps
 from django.utils.http import parse_http_date_safe
 
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user, get_oauth2authentication_class
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
-from integrated_channels.utils import store_api_call
 
 logger = getLogger(__name__)
 
@@ -103,6 +103,9 @@ class CornerstoneCoursesListView(BaseViewSet):
     def get(self, request, *args, **kwargs):
         start_time = time.time()
         enterprise_customer_uuid = request.GET.get('ciid')
+        IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
         if not enterprise_customer_uuid:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
@@ -163,7 +166,7 @@ class CornerstoneCoursesListView(BaseViewSet):
         duration_seconds = time.time() - start_time
         headers_dict = dict(request.headers)
         headers_json = json.dumps(headers_dict)
-        store_api_call(
+        IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=enterprise_customer,
             enterprise_customer_configuration_id=enterprise_config.id,
             endpoint=request.get_full_path(),

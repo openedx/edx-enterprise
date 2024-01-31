@@ -89,13 +89,3 @@ class ApiResponseRecordAdmin(admin.ModelAdmin):
     )
 
     list_per_page = 1000
-
-
-@admin.register(IntegratedChannelAPIRequestLogs)
-class CornerstoneAPIRequestLogAdmin(admin.ModelAdmin):
-    """
-    Django admin model for IntegratedChannelAPIRequestLogs.
-    """
-
-    class Meta:
-        model = IntegratedChannelAPIRequestLogs

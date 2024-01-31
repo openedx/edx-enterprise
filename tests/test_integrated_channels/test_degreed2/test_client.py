@@ -206,6 +206,29 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         degreed_api_client.delete_course_completion(None, None)
 
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient._get')
+    def test_fetch_degreed_course_id_cache(self, mock_get_request):
+        """
+        ``fetch_degreed_course_id`` should fetch data from the API only if the cache is empty.
+        """
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        mock_get_request.return_value = (
+            200, '{"data": [{"id": "degreed_course_id"}]}'
+        )
+        degreed_external_course_id_1 = 'course_id_1'
+        degreed_external_course_id_2 = 'course_id_2'
+
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_1)
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_2)
+        assert mock_get_request.call_count == 2
+
+        # The second call for the same course id should return the degreed_course_id from the cache
+        mock_get_request.reset_mock()
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_1)
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_2)
+        assert mock_get_request.call_count == 0
+
     @responses.activate
     @pytest.mark.django_db
     @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
@@ -239,6 +262,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
             status=200,
         )
+        # The second call for the same course id should return the degreed_course_id from the cache
         responses.add(
             responses.GET,
             course_url + "?filter%5Bexternal_id%5D=key",
@@ -253,7 +277,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         )
 
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
-        assert len(responses.calls) == 5
+        assert len(responses.calls) == 4
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == course_url
         assert status_code == 200
@@ -298,6 +322,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
             status=200,
         )
+        # The second call for the same course id should return the degreed_course_id from the cache
         responses.add(
             responses.GET,
             course_url + "?filter%5Bexternal_id%5D=key",
@@ -311,7 +336,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
             status=200,
         )
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
-        assert len(responses.calls) == 6
+        assert len(responses.calls) == 5
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == course_url
         assert responses.calls[2].request.url == course_url

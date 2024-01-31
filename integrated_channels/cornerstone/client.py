@@ -13,7 +13,7 @@ from django.apps import apps
 
 from integrated_channels.cornerstone.utils import get_or_create_key_pair
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, store_api_call
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -88,6 +88,9 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Raises:
             HTTPError: if we received a failure response code from Cornerstone
         """
+        IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
         json_payload = json.loads(payload)
         callback_url = json_payload['data'].pop('callbackUrl')
         session_token = self.enterprise_configuration.session_token
@@ -115,7 +118,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             }
         )
         duration_seconds = time.time() - start_time
-        store_api_call(
+        IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=url,
