@@ -3,6 +3,8 @@ Views containing APIs for cornerstone integrated channel
 """
 
 import datetime
+import json
+import time
 from logging import getLogger
 
 from dateutil import parser
@@ -11,6 +13,7 @@ from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
+from django.apps import apps
 from django.utils.http import parse_http_date_safe
 
 from enterprise.api.throttles import ServiceUserThrottle
@@ -98,6 +101,11 @@ class CornerstoneCoursesListView(BaseViewSet):
     """
 
     def get(self, request, *args, **kwargs):
+        start_time = time.time()
+        enterprise_customer_uuid = request.GET.get('ciid')
+        IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
         enterprise_customer_uuid = request.GET.get('ciid')
         if not enterprise_customer_uuid:
             return Response(
@@ -156,4 +164,16 @@ class CornerstoneCoursesListView(BaseViewSet):
                                 f'fixing modified/header mismatch')
                     if_modified_since_dt = datetime.datetime.fromtimestamp(if_modified_since)
                     item['LastModifiedUTC'] = if_modified_since_dt.strftime(ISO_8601_DATE_FORMAT)
+        duration_seconds = time.time() - start_time
+        headers_dict = dict(request.headers)
+        headers_json = json.dumps(headers_dict)
+        IntegratedChannelAPIRequestLogs.store_api_call(
+            enterprise_customer=enterprise_customer,
+            enterprise_customer_configuration_id=enterprise_config.id,
+            endpoint=request.get_full_path(),
+            payload=f"Request Headers: {headers_json}",
+            time_taken=duration_seconds,
+            status_code=200,
+            response_body=json.dumps(data)
+        )
         return Response(data)

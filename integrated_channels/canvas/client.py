@@ -599,13 +599,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             url (str): The canvas url to send delete requests to.
         """
         start_time = time.time()
-        delete_response = self.session.delete(url, data='{"event":"conclude"}')
+        data = '{"event":"conclude"}'
+        delete_response = self.session.delete(url, data=data)
         duration_seconds = time.time() - start_time
         stringify_and_store_api_record(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=url,
-            data='{"event":"conclude"}',
+            data=data,
             time_taken=duration_seconds,
             status_code=delete_response.status_code,
             response_body=delete_response.text,

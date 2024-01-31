@@ -108,7 +108,6 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             completion_path=self.global_cornerstone_config.completion_status_api_path,
             session_token=session_token,
         )
-
         start_time = time.time()
         response = requests.post(
             url,
