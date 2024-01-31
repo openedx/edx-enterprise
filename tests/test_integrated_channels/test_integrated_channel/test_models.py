@@ -283,14 +283,13 @@ class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin
         Test the string representation of the model.
         """
         expected_string = (
-            f'<IntegratedChannelAPIRequestLogs: '
             f'<IntegratedChannelAPIRequestLog {self.pk}'
             f' for enterprise customer {self.enterprise_customer} '
             f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
             f', endpoint: {self.endpoint}'
             f', time_taken: {self.time_taken}'
             f", response_body: {self.response_body}"
-            f", status_code: {self.status_code}>"
+            f", status_code: {self.status_code}"
         )
 
         request_log = IntegratedChannelAPIRequestLogs(

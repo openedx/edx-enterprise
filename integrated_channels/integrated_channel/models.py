@@ -926,6 +926,12 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
             f", status_code: {self.status_code}"
         )
 
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
     @classmethod
     def store_api_call(
         cls,
