@@ -553,9 +553,9 @@ def stringify_and_store_api_record(
             )
         except Exception as e:   # pylint: disable=broad-except
             LOGGER.exception(generate_formatted_log(
-                    None,
-                    None,
-                    None,
-                    None,
-                    f"Failed to store data:{data} in the database"
-                ), exc_info=e)
+                None,
+                None,
+                None,
+                None,
+                f"Failed to store data:{data} in the database"
+            ), exc_info=e)
