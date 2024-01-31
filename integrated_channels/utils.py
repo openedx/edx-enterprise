@@ -543,7 +543,7 @@ def store_api_call(
             f"status_code={status_code}"
             f"response_body={response_body}"
         )
-   
+
 
 def stringify_and_store_api_record(
     enterprise_customer,
@@ -568,7 +568,12 @@ def stringify_and_store_api_record(
                     # If it's another type, simply convert to string
                     data = str(data)
             except (TypeError, ValueError) as e:
-                print(f"Error during stringification: {e}")
+                LOGGER.error(
+                    f"stringify_and_store_api_record: Error occured during stringification: {e}"
+                    f"enterprise_customer={enterprise_customer}"
+                    f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                    f"data={data}"
+                )
         # Store stringified data in the database
         try:
             integrated_channel_request_log_model().store_api_call(
@@ -580,6 +585,11 @@ def stringify_and_store_api_record(
                 status_code=status_code,
                 response_body=response_body,
             )
-            return data
         except Exception as e:   # pylint: disable=broad-except
-            print(f"Failed to store data in the database: {e}")
+            LOGGER.error(
+                f"stringify_and_store_api_record: Error occured while storing: {e}"
+                f"enterprise_customer={enterprise_customer}"
+                f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                f"data={data}"
+            )
+    return data

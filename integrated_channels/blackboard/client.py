@@ -20,7 +20,7 @@ from integrated_channels.integrated_channel.client import IntegratedChannelApiCl
 from integrated_channels.utils import (
     generate_formatted_log,
     refresh_session_if_expired,
-    stringify_and_store_api_record
+    stringify_and_store_api_record,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -58,9 +58,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         BlackboardGlobalConfiguration = apps.get_model(
             'blackboard',
             'BlackboardGlobalConfiguration'
-        )
-        self.IntegratedChannelAPIRequestLogs = apps.get_model(
-            "integrated_channel", "IntegratedChannelAPIRequestLogs"
         )
         self.global_blackboard_config = BlackboardGlobalConfiguration.current()
         self.config = apps.get_app_config('blackboard')
@@ -612,7 +609,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         stringify_and_store_api_record(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            url=url,
+            endpoint=url,
             data=data,
             time_taken=time_taken,
             status_code=get_response.status_code,
@@ -632,7 +629,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         stringify_and_store_api_record(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            url=url,
+            endpoint=url,
             data=data,
             time_taken=time_taken,
             status_code=patch_response.status_code,
@@ -652,7 +649,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         stringify_and_store_api_record(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            url=url,
+            endpoint=url,
             data=data,
             time_taken=time_taken,
             status_code=post_response.status_code,
@@ -673,7 +670,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         stringify_and_store_api_record(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            url=url,
+            endpoint=url,
             data='',
             time_taken=time_taken,
             status_code=response.status_code,
