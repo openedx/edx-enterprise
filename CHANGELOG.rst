@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.6]
+---------
+* feat: Added a flag for prequery search suggestions
+
 [4.11.5]
 ---------
 * fix: Added logs and remove cornerstone from management command
