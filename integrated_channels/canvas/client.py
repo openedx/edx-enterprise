@@ -559,7 +559,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             status_code=post_response.status_code,
             response_body=post_response.text,
         )
-        
+
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response.status_code, post_response.text

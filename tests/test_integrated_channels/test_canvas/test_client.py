@@ -981,7 +981,7 @@ class TestCanvasApiClient(unittest.TestCase):
                     status=200
                 )
                 canvas_api_client.delete_content_metadata(course_to_update)
-                
+
                 assert IntegratedChannelAPIRequestLogs.objects.count() == 1
 
         assert client_error.value.message == 'No Canvas courses found with associated edx course ID: {}.'.format(
@@ -1178,7 +1178,7 @@ class TestCanvasApiClient(unittest.TestCase):
         """
         Test _get_oauth_access_token method's correct handling of OAuth token response.
         """
-        cornerstone_api_client = CanvasAPIClient(self.enterprise_config)
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
         responses.add(
             responses.POST,
             self.oauth_url,
@@ -1186,7 +1186,7 @@ class TestCanvasApiClient(unittest.TestCase):
             status=200,
         )
         assert IntegratedChannelAPIRequestLogs.objects.count() == 0
-        output = cornerstone_api_client._get_oauth_access_token()
+        output = canvas_api_client._get_oauth_access_token()  # pylint: disable=protected-access
 
         assert IntegratedChannelAPIRequestLogs.objects.count() == 1
         assert len(responses.calls) == 1

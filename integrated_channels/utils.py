@@ -511,7 +511,13 @@ def get_enterprise_client_by_channel_code(channel_code):
 
 
 def stringify_and_store_api_record(
-        enterprise_customer, enterprise_customer_configuration_id, endpoint, data, time_taken, status_code, response_body
+        enterprise_customer,
+        enterprise_customer_configuration_id,
+        endpoint,
+        data,
+        time_taken,
+        status_code,
+        response_body
     ):
     """
     Stringify the given data and store the API record in the database.
@@ -526,8 +532,8 @@ def stringify_and_store_api_record(
                 else:
                     # If it's another type, simply convert to string
                     data = str(data)
-            except Exception as e:
-                pass
+            except (TypeError, ValueError) as e:
+                print(f"Error during stringification: {e}")
         # Store stringified data in the database
         try:
             store_api_call(
