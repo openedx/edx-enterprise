@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.5]
+---------
+* fix: Added logs and remove cornerstone from management command
+
 [4.11.4]
 ---------
 * feat: update blackboard client to store API calls in DB
