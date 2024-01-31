@@ -19,11 +19,18 @@ TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.feature_prequery_search_suggestions
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables prequery search suggestions
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2024-01-31
 FEATURE_PREQUERY_SEARCH_SUGGESTIONS = WaffleFlag(
     f'{ENTERPRISE_NAMESPACE}.feature_prequery_search_suggestions',
     __name__,
     ENTERPRISE_LOG_PREFIX,
 )
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -31,11 +38,13 @@ def top_down_assignment_real_time_lcm():
     """
     return TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM.is_enabled()
 
+
 def feature_prequery_search_suggestions():
     """
     Returns whether the prequery search suggestion feature flag is enabled.
     """
     return FEATURE_PREQUERY_SEARCH_SUGGESTIONS.is_enabled()
+
 
 def enterprise_features():
     """
@@ -43,4 +52,5 @@ def enterprise_features():
     """
     return {
         'top_down_assignment_real_time_lcm': top_down_assignment_real_time_lcm(),
+        'feature_prequery_search_suggestions': feature_prequery_search_suggestions(),
     }
