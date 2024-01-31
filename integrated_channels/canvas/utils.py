@@ -5,7 +5,6 @@ from http import HTTPStatus
 from urllib.parse import urljoin
 
 from requests.utils import quote
-from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.utils import generate_formatted_log, integrated_channel_request_log_model
