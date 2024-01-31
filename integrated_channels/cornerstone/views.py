@@ -156,4 +156,12 @@ class CornerstoneCoursesListView(BaseViewSet):
                                 f'fixing modified/header mismatch')
                     if_modified_since_dt = datetime.datetime.fromtimestamp(if_modified_since)
                     item['LastModifiedUTC'] = if_modified_since_dt.strftime(ISO_8601_DATE_FORMAT)
+        # TODO remove following logs (temporarily added)
+        logger.info(
+            f"[Cornerstone]: request.headers={request.headers}"
+            f"GET params={request.GET}"
+            f"enterprise_config={enterprise_config}"
+            f"enterprise_config.id={enterprise_config.id}"
+            f"data={data}"
+        )
         return Response(data)

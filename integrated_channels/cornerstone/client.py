@@ -104,6 +104,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             completion_path=self.global_cornerstone_config.completion_status_api_path,
             session_token=session_token,
         )
+
         response = requests.post(
             url,
             json=[json_payload['data']],
