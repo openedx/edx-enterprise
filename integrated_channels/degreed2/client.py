@@ -9,6 +9,7 @@ import time
 from http import HTTPStatus
 
 import requests
+from edx_django_utils.cache import TieredCache, get_cache_key
 from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
@@ -182,9 +183,17 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def fetch_degreed_course_id(self, external_id):
         """
-        Fetch the 'id' of a course from Degreed2, given the external-id as a search param
-        'external-id' is the edX course key
+        Fetch the 'id' of a course from cache first and if not found then send a request to Degreed2,
+        given the external-id as a search param 'external-id' is the edX course key.
         """
+        cache_key = get_cache_key(
+            resource='degreed2_course_id',
+            resource_id=external_id,
+        )
+        cached_course_id = TieredCache.get_cached_response(cache_key)
+        if cached_course_id.is_found:
+            LOGGER.info(self.make_log_msg(external_id, f'Found cached course id: {cached_course_id.value}'))
+            return cached_course_id.value
         # QueryDict converts + to space
         params = QueryDict(f"filter[external_id]={external_id.replace('+','%2B')}")
         course_search_url = f'{self.get_courses_url()}?{params.urlencode(safe="[]")}'
@@ -201,7 +210,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
         response_json = json.loads(response_body)
         if response_json['data']:
-            return response_json['data'][0]['id']
+            # cache the course id with a 1 day expiration
+            response_course_id = response_json['data'][0]['id']
+            expires_in = 60 * 60 * 24  # 1 day
+            TieredCache.set_all_tiers(cache_key, response_course_id, expires_in)
+            return response_course_id
         raise ClientError(
             f'Degreed2: Attempted to find degreed course id but failed, external id was {external_id}'
             f', Response from Degreed was {response_body}')
