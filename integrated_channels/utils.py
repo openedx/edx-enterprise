@@ -580,5 +580,6 @@ def stringify_and_store_api_record(
                 status_code=status_code,
                 response_body=response_body,
             )
+            return data
         except Exception as e:   # pylint: disable=broad-except
             print(f"Failed to store data in the database: {e}")
