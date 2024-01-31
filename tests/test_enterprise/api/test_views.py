@@ -1610,7 +1610,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
             active=is_top_down_assignment_real_time_lcm_enabled
         ):
-            
+
             response = client.get(
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
@@ -1618,7 +1618,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
             active=feature_prequery_search_suggestions_enabled
         ):
-            
+
             response = client.get(
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
