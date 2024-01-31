@@ -5,9 +5,10 @@ from http import HTTPStatus
 from urllib.parse import urljoin
 
 from requests.utils import quote
+from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.utils import generate_formatted_log, store_api_call
+from integrated_channels.utils import generate_formatted_log, integrated_channel_request_log_model
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class CanvasUtil:
         start_time = time.time()
         resp = session.get(url)
         duration_seconds = time.time() - start_time
-        store_api_call(
+        integrated_channel_request_log_model().store_api_call(
             enterprise_customer=enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=enterprise_configuration.id,
             endpoint=url,
@@ -89,7 +90,7 @@ class CanvasUtil:
         start_time = time.time()
         resp = session.get(url)
         duration_seconds = time.time() - start_time
-        store_api_call(
+        integrated_channel_request_log_model().store_api_call(
             enterprise_customer=enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=enterprise_configuration.id,
             endpoint=url,

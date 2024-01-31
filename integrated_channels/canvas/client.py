@@ -18,7 +18,6 @@ from integrated_channels.integrated_channel.client import IntegratedChannelApiCl
 from integrated_channels.utils import (  # pylint: disable=cyclic-import
     generate_formatted_log,
     refresh_session_if_expired,
-    store_api_call,
     stringify_and_store_api_record,
 )
 
@@ -318,7 +317,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 start_time = time.time()
                 resp = self.session.get(canvas_assignments_url)
                 duration_seconds = time.time() - start_time
-                store_api_call(
+                self.IntegratedChannelAPIRequestLogs.store_api_call(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
                     enterprise_customer_configuration_id=self.enterprise_configuration.id,
                     endpoint=canvas_assignments_url,
@@ -663,7 +662,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         rsps = self.session.get(get_user_id_from_email_url)
         duration_seconds = time.time() - start_time
-        store_api_call(
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=get_user_id_from_email_url,
@@ -697,7 +696,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         rsps = self.session.get(get_users_courses_url)
         duration_seconds = time.time() - start_time
-        store_api_call(
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=get_users_courses_url,
@@ -741,7 +740,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         start_time = time.time()
         resp = self.session.get(canvas_assignments_url)
         duration_seconds = time.time() - start_time
-        store_api_call(
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=canvas_assignments_url,
@@ -788,7 +787,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     start_time = time.time()
                     resp = self.session.get(next_page)
                     duration_seconds = time.time() - start_time
-                    store_api_call(
+                    self.IntegratedChannelAPIRequestLogs.store_api_call(
                         enterprise_customer=self.enterprise_configuration.enterprise_customer,
                         enterprise_customer_configuration_id=self.enterprise_configuration.id,
                         endpoint=next_page,
@@ -971,7 +970,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             auth_token_url, "&".join(f"{key}={value}" for key, value in auth_token_params.items())
         )
         duration_seconds = time.time() - start_time
-        store_api_call(
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
             enterprise_customer=self.enterprise_configuration.enterprise_customer,
             enterprise_customer_configuration_id=self.enterprise_configuration.id,
             endpoint=complete_url,

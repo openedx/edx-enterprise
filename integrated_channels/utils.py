@@ -536,7 +536,7 @@ def stringify_and_store_api_record(
                 print(f"Error during stringification: {e}")
         # Store stringified data in the database
         try:
-            store_api_call(
+            integrated_channel_request_log_model().store_api_call(
                 enterprise_customer=enterprise_customer,
                 enterprise_customer_configuration_id=enterprise_customer_configuration_id,
                 endpoint=endpoint,
@@ -547,38 +547,3 @@ def stringify_and_store_api_record(
             )
         except Exception as e:   # pylint: disable=broad-except
             print(f"Failed to store data in the database: {e}")
-
-
-def store_api_call(
-    enterprise_customer,
-    enterprise_customer_configuration_id,
-    endpoint,
-    payload,
-    time_taken,
-    status_code,
-    response_body,
-):
-    """
-    Creates new record in CornerstoneAPIRequestLogs table.
-    """
-    try:
-        integrated_channel_request_log_model().objects.create(
-            enterprise_customer=enterprise_customer,
-            enterprise_customer_configuration_id=enterprise_customer_configuration_id,
-            endpoint=endpoint,
-            payload=payload,
-            time_taken=time_taken,
-            status_code=status_code,
-            response_body=response_body,
-        )
-    except Exception as e:  # pylint: disable=broad-except
-        LOGGER.error(
-            f"store_api_call raised error while storing API call: {e}"
-            f"enterprise_customer={enterprise_customer}"
-            f"enterprise_customer_configuration_id={enterprise_customer_configuration_id},"
-            f"endpoint={endpoint}"
-            f"payload={payload}"
-            f"time_taken={time_taken}"
-            f"status_code={status_code}"
-            f"response_body={response_body}"
-        )
