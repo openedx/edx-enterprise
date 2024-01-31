@@ -16,9 +16,13 @@ Change Log
 Unreleased
 ----------
 
-[4.11.1]
+[4.11.2]
 ---------
 * feat: update cornerstone client to store API calls in DB
+
+[4.11.1]
+---------
+* Added management command to fix `LearnerDataTransmissionAudit` table records.
 
 [4.11.0]
 ---------
