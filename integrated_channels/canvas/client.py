@@ -3,6 +3,7 @@ Client for connecting to Canvas.
 """
 import json
 import logging
+import time
 from http import HTTPStatus
 from urllib.parse import quote_plus, urljoin
 
@@ -17,6 +18,8 @@ from integrated_channels.integrated_channel.client import IntegratedChannelApiCl
 from integrated_channels.utils import (  # pylint: disable=cyclic-import
     generate_formatted_log,
     refresh_session_if_expired,
+    store_api_call,
+    stringify_and_store_api_record
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -62,6 +65,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self.session = None
         self.expires_at = None
         self.course_create_url = CanvasUtil.course_create_endpoint(self.enterprise_configuration)
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
 
     def create_content_metadata(self, serialized_data):
         """
@@ -309,7 +315,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             # Continue iterating over assignment responses while more paginated results exist or until the page count
             # limit is hit
             while more_pages_present and current_page_count < 150:
+                start_time = time.time()
                 resp = self.session.get(canvas_assignments_url)
+                duration_seconds = time.time() - start_time
+                store_api_call(
+                    enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                    enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                    endpoint=canvas_assignments_url,
+                    payload={},
+                    time_taken=duration_seconds,
+                    status_code=resp.status_code,
+                    response_body=resp.text,
+                )
 
                 if resp.status_code >= 400:
                     LOGGER.error(
@@ -530,7 +547,19 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             url (str): The url to send a POST request to.
             data (bytearray): The json encoded payload to POST.
         """
+        start_time = time.time()
         post_response = self.session.post(url, data=data)
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=duration_seconds,
+            status_code=post_response.status_code,
+            response_body=post_response.text,
+        )
+        
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response.status_code, post_response.text
@@ -544,7 +573,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             data (bytearray): The json encoded payload to UPDATE. This also contains the integration
             ID used to match a course with a course ID.
         """
+        start_time = time.time()
         put_response = self.session.put(url, data=data)
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=duration_seconds,
+            status_code=put_response.status_code,
+            response_body=put_response.text,
+        )
         if put_response.status_code >= 400:
             raise ClientError(put_response.text, put_response.status_code)
         return put_response.status_code, put_response.text
@@ -559,7 +599,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Args:
             url (str): The canvas url to send delete requests to.
         """
+        start_time = time.time()
         delete_response = self.session.delete(url, data='{"event":"conclude"}')
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data='{"event":"conclude"}',
+            time_taken=duration_seconds,
+            status_code=delete_response.status_code,
+            response_body=delete_response.text,
+        )
         if delete_response.status_code >= 400:
             raise ClientError(delete_response.text, delete_response.status_code)
         return delete_response.status_code, delete_response.text
@@ -609,7 +660,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         path = f'/api/v1/accounts/{self.enterprise_configuration.canvas_account_id}/users'
         query_params = f'?search_term={quote_plus(user_email)}'  # emails with unique symbols such as `+` cause issues
         get_user_id_from_email_url = urljoin(self.enterprise_configuration.canvas_base_url, path + query_params)
+        start_time = time.time()
         rsps = self.session.get(get_user_id_from_email_url)
+        duration_seconds = time.time() - start_time
+        store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=get_user_id_from_email_url,
+            payload={},
+            time_taken=duration_seconds,
+            status_code=rsps.status_code,
+            response_body=rsps.text,
+        )
 
         if rsps.status_code >= 400:
             raise ClientError(
@@ -632,7 +694,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """Helper method to retrieve all courses that a Canvas user is enrolled in."""
         path = f'/api/v1/users/{user_id}/courses'
         get_users_courses_url = urljoin(self.enterprise_configuration.canvas_base_url, path)
+        start_time = time.time()
         rsps = self.session.get(get_users_courses_url)
+        duration_seconds = time.time() - start_time
+        store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=get_users_courses_url,
+            payload={},
+            time_taken=duration_seconds,
+            status_code=rsps.status_code,
+            response_body=rsps.text,
+        )
 
         if rsps.status_code >= 400:
             raise ClientError(
@@ -665,7 +738,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """
         # Check if the course assignment already exists
         canvas_assignments_url = CanvasUtil.course_assignments_endpoint(self.enterprise_configuration, course_id)
+        start_time = time.time()
         resp = self.session.get(canvas_assignments_url)
+        duration_seconds = time.time() - start_time
+        store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=canvas_assignments_url,
+            payload={},
+            time_taken=duration_seconds,
+            status_code=resp.status_code,
+            response_body=resp.text,
+        )
 
         more_pages_present = True
         current_page_count = 0
@@ -701,7 +785,19 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             if not assignment_id:
                 next_page = CanvasUtil.determine_next_results_page(resp)
                 if next_page:
+                    start_time = time.time()
                     resp = self.session.get(next_page)
+                    duration_seconds = time.time() - start_time
+                    store_api_call(
+                        enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                        enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                        endpoint=next_page,
+                        payload={},
+                        time_taken=duration_seconds,
+                        status_code=resp.status_code,
+                        response_body=resp.text,
+                    )
+
                     current_page_count += 1
                 else:
                     more_pages_present = False
@@ -721,7 +817,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     'omit_from_final_grade': is_assessment_grade,
                 }
             }
+            start_time = time.time()
             create_assignment_resp = self.session.post(canvas_assignments_url, json=assignment_creation_data)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=canvas_assignments_url,
+                data=json.dumps(assignment_creation_data),
+                time_taken=duration_seconds,
+                status_code=resp.status_code,
+                response_body=resp.text,
+            )
 
             try:
                 assignment_id = create_assignment_resp.json()['id']
@@ -747,7 +854,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 'posted_grade': grade
             }
         }
+        start_time = time.time()
         submission_response = self.session.put(submission_url, json=submission_data)
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=submission_url,
+            data=json.dumps(submission_data),
+            time_taken=duration_seconds,
+            status_code=submission_response.status_code,
+            response_body=submission_response.text,
+        )
 
         if submission_response.status_code >= 400:
             raise ClientError(
@@ -846,7 +964,22 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             'refresh_token': self.enterprise_configuration.refresh_token,
         }
 
+        start_time = time.time()
         auth_response = requests.post(auth_token_url, auth_token_params)
+        # Combine the base URL and parameters to form the complete URL
+        complete_url = "{}?{}".format(
+            auth_token_url, "&".join(f"{key}={value}" for key, value in auth_token_params.items())
+        )
+        duration_seconds = time.time() - start_time
+        store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=complete_url,
+            payload={},
+            time_taken=duration_seconds,
+            status_code=auth_response.status_code,
+            response_body=auth_response.text,
+        )
         if auth_response.status_code >= 400:
             raise ClientError(auth_response.text, auth_response.status_code)
         try:

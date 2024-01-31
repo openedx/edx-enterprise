@@ -14,14 +14,21 @@ import responses
 from freezegun import freeze_time
 from requests.models import Response
 
+from django.apps import apps
+
 from integrated_channels.canvas.client import MESSAGE_WHEN_COURSE_WAS_DELETED, CanvasAPIClient
 from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelHealthStatus
+
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
+
+IntegratedChannelAPIRequestLogs = apps.get_model(
+    "integrated_channel", "IntegratedChannelAPIRequestLogs"
+)
 
 
 def _raise_ClientError(*unused_args):
@@ -181,6 +188,7 @@ class TestCanvasApiClient(unittest.TestCase):
 
             with pytest.raises(ClientError) as client_error:
                 canvas_api_client._search_for_canvas_user_by_email(self.canvas_email)  # pylint: disable=protected-access
+                assert IntegratedChannelAPIRequestLogs.objects.count() == 2
                 assert client_error.value.message == \
                     "Course: {course_id} not found registered in Canvas for Edx " \
                     "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
@@ -213,6 +221,7 @@ class TestCanvasApiClient(unittest.TestCase):
 
             with pytest.raises(ClientError) as client_error:
                 canvas_api_client._handle_get_user_canvas_course(self.canvas_user_id, self.course_id)  # pylint: disable=protected-access
+                assert IntegratedChannelAPIRequestLogs.objects.count() == 2
                 assert client_error.value.message == \
                     "Course: {course_id} not found registered in Canvas for Edx " \
                     "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
@@ -250,6 +259,7 @@ class TestCanvasApiClient(unittest.TestCase):
                     self.canvas_course_id,
                     'assignment_name'
                 )
+                assert IntegratedChannelAPIRequestLogs.objects.count() == 2
 
             assert client_error.value.message == 'Something went wrong retrieving assignments from Canvas. Got' \
                                                  ' response: {"error": "something went wrong"}'
@@ -333,6 +343,7 @@ class TestCanvasApiClient(unittest.TestCase):
                     self.canvas_assignment_id,
                     self.canvas_user_id
                 )
+                assert IntegratedChannelAPIRequestLogs.objects.count() == 2
             assert client_error.value.message == (
                 'Something went wrong while posting a submission to Canvas '
                 'assignment: {} under Canvas course: {}. Recieved response '
@@ -375,6 +386,7 @@ class TestCanvasApiClient(unittest.TestCase):
             assert canvas_api_client._handle_canvas_assignment_retrieval.mock_calls[0].kwargs[  # pylint: disable=protected-access
                 'is_assessment_grade'
             ]
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 1
 
     def test_completion_level_reporting_included_in_final_grade(self):
         with responses.RequestsMock() as rsps:
@@ -540,6 +552,7 @@ class TestCanvasApiClient(unittest.TestCase):
             )
 
             status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 1
             assert status_code == 200
             assert response_text == MESSAGE_WHEN_COURSE_WAS_DELETED
 
@@ -606,7 +619,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 self.canvas_course_id,
                 'Test Assignment'
             )
-
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 4
             assert canvas_assignment == 1
 
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
@@ -691,6 +704,7 @@ class TestCanvasApiClient(unittest.TestCase):
             canvas_api_client._create_session()  # pylint: disable=protected-access
             code, body = canvas_api_client.cleanup_duplicate_assignment_records([self.course_id, self.course_id_2])
 
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 3
             assert code == 200
             assert body == "Removed 3 duplicate assignments from Canvas."
 
@@ -741,6 +755,7 @@ class TestCanvasApiClient(unittest.TestCase):
             )
             canvas_api_client._create_session()  # pylint: disable=protected-access
             code, body = canvas_api_client.cleanup_duplicate_assignment_records([self.course_id, self.course_id_2])
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 2
             assert code == 400
             assert body == (
                 "Failed to dedup all assignments for the following courses: ['{}']. Number of individual assignments "
@@ -852,6 +867,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 [self.canvas_assignment_id, self.canvas_assignment_id_2]
             )
 
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 3
             assert len(assignments_removed) == 2
             assert self.canvas_assignment_id_2 in assignments_removed
             assert self.canvas_assignment_id in assignments_removed
@@ -885,6 +901,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 self.canvas_course_id,
                 [self.canvas_assignment_id, self.canvas_assignment_id_2]
             )
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 3
             assert self.canvas_assignment_id in failed_assignments
             assert len(failed_assignments) == 1
             assert len(assignments_removed) == 1
@@ -925,6 +942,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 status=200
             )
             status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 3
             assert status_code == 201
             assert response_text == expected_resp
 
@@ -963,6 +981,8 @@ class TestCanvasApiClient(unittest.TestCase):
                     status=200
                 )
                 canvas_api_client.delete_content_metadata(course_to_update)
+                
+                assert IntegratedChannelAPIRequestLogs.objects.count() == 1
 
         assert client_error.value.message == 'No Canvas courses found with associated edx course ID: {}.'.format(
             self.integration_id
@@ -993,6 +1013,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 status=200
             )
             status, response = canvas_api_client.update_content_metadata(course_to_update)
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 2
 
         assert status == 200
         assert response == mocked_create_messaged
@@ -1059,6 +1080,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 body=b'Mock update response text'
             )
             canvas_api_client.update_content_metadata(course_to_update)
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 3
 
     @mock.patch('integrated_channels.canvas.client.refresh_session_if_expired', lambda x: ('mock session', 30))
     def test_health_check_healthy(self):
@@ -1150,3 +1172,23 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method(empty_data)
 
         assert client_error.value.message == 'No data to transmit.'
+
+    @responses.activate
+    def test_canvas_api_client_get_oauth_access_token(self):
+        """
+        Test _get_oauth_access_token method's correct handling of OAuth token response.
+        """
+        cornerstone_api_client = CanvasAPIClient(self.enterprise_config)
+        responses.add(
+            responses.POST,
+            self.oauth_url,
+            json=self._token_response(),
+            status=200,
+        )
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 0
+        output = cornerstone_api_client._get_oauth_access_token()
+
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 1
+        assert len(responses.calls) == 1
+        token_response = self._token_response()
+        assert output == (token_response["access_token"], token_response["expires_in"])

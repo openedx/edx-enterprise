@@ -5,7 +5,6 @@ Client for connecting to Cornerstone.
 import base64
 import json
 import logging
-import time
 
 import requests
 
@@ -36,9 +35,6 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         """
         super().__init__(enterprise_configuration)
         self.global_cornerstone_config = apps.get_model('cornerstone', 'CornerstoneGlobalConfiguration').current()
-        self.IntegratedChannelAPIRequestLogs = apps.get_model(
-            "integrated_channel", "IntegratedChannelAPIRequestLogs"
-        )
         self.session = None
         self.expires_at = None
 
@@ -108,7 +104,6 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             completion_path=self.global_cornerstone_config.completion_status_api_path,
             session_token=session_token,
         )
-        start_time = time.time()
         response = requests.post(
             url,
             json=[json_payload['data']],
@@ -116,16 +111,6 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
                 'Authorization': self.authorization_header,
                 'Content-Type': 'application/json'
             }
-        )
-        duration_seconds = time.time() - start_time
-        self.IntegratedChannelAPIRequestLogs.store_api_call(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            endpoint=url,
-            payload=json.dumps(json_payload["data"]),
-            time_taken=duration_seconds,
-            status_code=response.status_code,
-            response_body=response.text,
         )
         return response.status_code, response.text
 
