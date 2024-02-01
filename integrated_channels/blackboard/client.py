@@ -17,11 +17,7 @@ from django.db import transaction
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import (
-    generate_formatted_log,
-    refresh_session_if_expired,
-    stringify_and_store_api_record,
-)
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 

@@ -32,8 +32,7 @@ class Command(BaseCommand):
         channel_learner_audit_models = [
             ('moodle', 'MoodleLearnerDataTransmissionAudit'),
             ('blackboard', 'BlackboardLearnerDataTransmissionAudit'),
-            ('cornerstone', 'CornerstoneLearnerDataTransmissionAudit'),
-            ('canvas', 'CanvasLearnerAssessmentDataTransmissionAudit'),
+            ('canvas', 'CanvasLearnerDataTransmissionAudit'),
             ('degreed2', 'Degreed2LearnerDataTransmissionAudit'),
             ('sap_success_factors', 'SapSuccessFactorsLearnerDataTransmissionAudit'),
         ]
@@ -62,6 +61,7 @@ class Command(BaseCommand):
                         .exclude(id=most_recent_transmission_id)
                     )
                     LOGGER.info(
-                        f'{app_label} channel - {duplicate_records_to_delete.count()} duplicate records are deleted'
+                        f'{app_label} channel - {duplicate_records_to_delete.count()} duplicate records are deleted '
+                        f' for enrollment id {enterprise_course_enrollment_id}'
                     )
                     duplicate_records_to_delete.delete()
