@@ -2,6 +2,7 @@
 Tests for the utilities used by integration channels.
 """
 
+import json
 import unittest
 from collections import namedtuple
 from datetime import timedelta
@@ -348,3 +349,36 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         assert len(out_a) == 1
         assert len(out_b) == 0
         assert len(out_c) == 7
+
+    @mock.patch("integrated_channels.utils.integrated_channel_request_log_model")
+    def test_stringify_and_store_api_record(
+        self, mock_integrated_channel_request_log_model
+    ):
+        data = {"key": "value"}
+        mock_integrated_channel_request_log_model.return_value = MagicMock()
+
+        # Test with dict input
+        stringified_data = utils.stringify_and_store_api_record(
+            "Customer", 123, "/endpoint", data, 1.23, 200, "response"
+        )
+        assert stringified_data == json.dumps(data)
+
+        # Test with int input
+        stringified_int = utils.stringify_and_store_api_record(
+            "Customer", 123, "/endpoint", 123, 1.23, 200, "response"
+        )
+        assert stringified_int == "123"
+
+        # Test with tuple input
+        data_tuple = (1, 2, "hello")
+        stringified_tuple = utils.stringify_and_store_api_record(
+            "Customer", 123, "/endpoint", data_tuple, 1.23, 200, "response"
+        )
+        assert stringified_tuple == json.dumps(data_tuple)
+
+        # Test with list input
+        data_list = [1, 2, "world"]
+        stringified_list = utils.stringify_and_store_api_record(
+            "Customer", 123, "/endpoint", data_list, 1.23, 200, "response"
+        )
+        assert stringified_list == json.dumps(data_list)
