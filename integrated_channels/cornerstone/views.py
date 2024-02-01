@@ -106,7 +106,6 @@ class CornerstoneCoursesListView(BaseViewSet):
         IntegratedChannelAPIRequestLogs = apps.get_model(
             "integrated_channel", "IntegratedChannelAPIRequestLogs"
         )
-        enterprise_customer_uuid = request.GET.get('ciid')
         if not enterprise_customer_uuid:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
