@@ -477,6 +477,13 @@ def get_enterprise_customer_model():
     return apps.get_model('enterprise', 'EnterpriseCustomer')
 
 
+def integrated_channel_request_log_model():
+    """
+    Returns the ``IntegratedChannelAPIRequestLogs`` class.
+    """
+    return apps.get_model("integrated_channel", "IntegratedChannelAPIRequestLogs")
+
+
 def get_enterprise_customer_from_enterprise_enrollment(enrollment_id):
     """
     Returns the Django ORM enterprise customer object that is associated with an enterprise enrollment ID
@@ -501,3 +508,53 @@ def get_enterprise_client_by_channel_code(channel_code):
         'canvas': CanvasAPIClient,
     }
     return _enterprise_client_model_by_channel_code[channel_code]
+
+
+def stringify_and_store_api_record(
+    enterprise_customer,
+    enterprise_customer_configuration_id,
+    endpoint,
+    data,
+    time_taken,
+    status_code,
+    response_body
+):
+    """
+    Stringify the given data and store the API record in the database.
+    """
+    if data is not None:
+        # Convert data to string if it's not already a string
+        if not isinstance(data, str):
+            try:
+                # Check if data is a dictionary, list, or tuple then convert to JSON string
+                if isinstance(data, (dict, list, tuple)):
+                    data = json.dumps(data)
+                else:
+                    # If it's another type, simply convert to string
+                    data = str(data)
+            except (TypeError, ValueError) as e:
+                LOGGER.error(
+                    f"stringify_and_store_api_record: Error occured during stringification: {e}"
+                    f"enterprise_customer={enterprise_customer}"
+                    f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                    f"data={data}"
+                )
+        # Store stringified data in the database
+        try:
+            integrated_channel_request_log_model().store_api_call(
+                enterprise_customer=enterprise_customer,
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+                endpoint=endpoint,
+                payload=data,
+                time_taken=time_taken,
+                status_code=status_code,
+                response_body=response_body,
+            )
+        except Exception as e:   # pylint: disable=broad-except
+            LOGGER.error(
+                f"stringify_and_store_api_record: Error occured while storing: {e}"
+                f"enterprise_customer={enterprise_customer}"
+                f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                f"data={data}"
+            )
+    return data

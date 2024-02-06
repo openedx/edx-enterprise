@@ -5,6 +5,7 @@ import base64
 import copy
 import json
 import logging
+import time
 from http import HTTPStatus
 from urllib.parse import urljoin
 
@@ -16,7 +17,7 @@ from django.db import transaction
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 
@@ -598,7 +599,18 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's get response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         get_response = self.session.get(url, params=data)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=get_response.status_code,
+            response_body=get_response.text,
+        )
         if get_response.status_code >= 400:
             raise ClientError(get_response.text, get_response.status_code)
         return get_response
@@ -607,7 +619,18 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's patch response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         patch_response = self.session.patch(url, json=data)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=patch_response.status_code,
+            response_body=patch_response.text,
+        )
         if patch_response.status_code >= 400:
             raise ClientError(patch_response.text, patch_response.status_code)
         return patch_response
@@ -616,7 +639,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's post response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         post_response = self.session.post(url, json=data)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=post_response.status_code,
+            response_body=post_response.text,
+        )
+
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response
@@ -625,7 +660,18 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's delete response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         response = self.session.delete(url)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data='',
+            time_taken=time_taken,
+            status_code=response.status_code,
+            response_body=response.text,
+        )
         if response.status_code >= 400:
             raise ClientError(response.text, response.status_code)
         return response

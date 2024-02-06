@@ -16,6 +16,38 @@ Change Log
 Unreleased
 ----------
 
+[4.11.7]
+---------
+* feat: update canvas client to store API calls in DB
+
+[4.11.6]
+---------
+* feat: Added a flag for prequery search suggestions
+
+[4.11.5]
+---------
+* fix: Added logs and remove cornerstone from management command
+
+[4.11.4]
+---------
+* feat: update blackboard client to store API calls in DB
+
+[4.11.3]
+---------
+* feat: update cornerstone client to store API calls in DB
+
+[4.11.2]
+---------
+* feat: added caching for fetching degreed course id 
+
+[4.11.1]
+---------
+* Added management command to fix `LearnerDataTransmissionAudit` table records.
+
+[4.11.0]
+---------
+* Added the ability for enterprise customers to enable/disable academies.
+
 [4.10.11]
 ---------
 * fix: add missing comma to catalog query fields list.
