@@ -7,7 +7,10 @@ from unittest import mock
 
 from pytest import mark
 
+from django.db.utils import IntegrityError
+
 from integrated_channels.blackboard.exporters.learner_data import BlackboardLearnerExporter
+from integrated_channels.blackboard.models import BlackboardLearnerDataTransmissionAudit
 from test_utils import factories
 
 
@@ -32,6 +35,24 @@ class TestBlackboardLearnerDataExporter(unittest.TestCase):
             client_secret='client_secret',
             refresh_token='token',
         )
+
+    def test_unique_enrollment_id_course_id_constraint(self):
+        """
+        Ensure that the unique constraint on enterprise_course_enrollment_id and course_id is enforced.
+        """
+        BlackboardLearnerDataTransmissionAudit.objects.create(
+            enterprise_course_enrollment_id=5,
+            course_id=self.course_id,
+            course_completed=True,
+            blackboard_completed_timestamp=1486855998,
+        )
+        with self.assertRaises(IntegrityError):
+            BlackboardLearnerDataTransmissionAudit.objects.create(
+                enterprise_course_enrollment_id=5,
+                course_id=self.course_id,
+                course_completed=True,
+                blackboard_completed_timestamp=1486855998,
+            )
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_retrieve_same_learner_data_record(self, mock_course_catalog_api):
