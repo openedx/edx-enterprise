@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.8]
+---------
+* chore: Update requirements
+
 [4.11.7]
 ---------
 * feat: update canvas client to store API calls in DB
