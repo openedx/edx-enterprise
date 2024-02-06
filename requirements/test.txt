@@ -32,7 +32,7 @@ async-timeout==4.0.3
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
-attrs==23.1.0
+attrs==23.2.0
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
@@ -101,7 +101,7 @@ coreschema==0.0.4
     #   -r requirements/test-master.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.4.0
+coverage[toml]==7.4.1
     # via
     #   coverage
     #   pytest-cov
@@ -162,7 +162,7 @@ django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
 django-filter==23.5
     # via -r requirements/test-master.txt
-django-ipware==6.0.2
+django-ipware==6.0.3
     # via -r requirements/test-master.txt
 django-model-utils==4.3.1
     # via
@@ -205,16 +205,16 @@ drf-yasg==1.21.5
     #   edx-api-doc-tools
 edx-api-doc-tools==1.7.0
     # via -r requirements/test-master.txt
-edx-braze-client==0.1.8
+edx-braze-client==0.2.1
     # via -r requirements/test-master.txt
-edx-django-utils==5.9.0
+edx-django-utils==5.10.1
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==9.1.2
+edx-drf-extensions==10.1.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -235,7 +235,7 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==22.5.0
+faker==22.6.0
     # via factory-boy
 filelock==3.13.1
     # via
@@ -245,7 +245,7 @@ freezegun==0.3.14
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-frozenlist==1.4.0
+frozenlist==1.4.1
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
@@ -266,7 +266,7 @@ itypes==1.2.0
     # via
     #   -r requirements/test-master.txt
     #   coreapi
-jinja2==3.1.2
+jinja2==3.1.3
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -276,14 +276,14 @@ jsondiff==2.0.0
     # via -r requirements/test-master.txt
 jsonfield==3.1.0
     # via -r requirements/test-master.txt
-jwcrypto==1.5.0
+jwcrypto==1.5.1
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
     # via
     #   -r requirements/test-master.txt
     #   celery
-markupsafe==2.1.3
+markupsafe==2.1.4
     # via
     #   -r requirements/test-master.txt
     #   jinja2
@@ -296,7 +296,7 @@ multidict==6.0.4
     #   -r requirements/test-master.txt
     #   aiohttp
     #   yarl
-newrelic==9.3.0
+newrelic==9.6.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -324,20 +324,20 @@ pbr==6.0.0
     #   stevedore
 pgpy==0.6.0
     # via -r requirements/test-master.txt
-pillow==10.1.0
+pillow==10.2.0
     # via -r requirements/test-master.txt
 platformdirs==3.11.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pluggy==1.3.0
+pluggy==1.4.0
     # via
     #   diff-cover
     #   pytest
     # via
     #   -r requirements/test-master.txt
     #   click-repl
-psutil==5.9.6
+psutil==5.9.8
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -388,11 +388,11 @@ python-dateutil==2.8.2
     #   celery
     #   faker
     #   freezegun
-python-ipware==2.0.0
+python-ipware==2.0.1
     # via
     #   -r requirements/test-master.txt
     #   django-ipware
-python-slugify==8.0.1
+python-slugify==8.0.2
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -450,7 +450,7 @@ slumber==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   edx-rest-api-client
-snowflake-connector-python==3.6.0
+snowflake-connector-python==3.7.0
     # via -r requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
@@ -495,7 +495,7 @@ typing-extensions==4.9.0
     #   faker
     #   kombu
     #   snowflake-connector-python
-tzdata==2023.3
+tzdata==2023.4
     # via
     #   -r requirements/test-master.txt
     #   backports-zoneinfo
@@ -517,7 +517,7 @@ urllib3==1.26.18
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.12
+wcwidth==0.2.13
     # via
     #   -r requirements/test-master.txt
     #   prompt-toolkit
