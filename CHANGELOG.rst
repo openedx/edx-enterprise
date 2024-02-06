@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.7]
+---------
+* feat: update canvas client to store API calls in DB
+
 [4.11.6]
 ---------
 * feat: Added a flag for prequery search suggestions
