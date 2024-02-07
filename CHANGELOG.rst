@@ -16,9 +16,13 @@ Change Log
 Unreleased
 ----------
 
-[4.11.8]
+[4.11.9]
 ---------
 * feat: register admin view for IntegratedChannelAPIRequestLogs
+
+[4.11.8]
+---------
+* chore: Update requirements
 
 [4.11.7]
 ---------
