@@ -4,7 +4,7 @@
 Status
 ******
 
-**Pending**
+**Accepted**
 
 Terminology
 *******
@@ -15,7 +15,7 @@ Terminology
 Context
 *******
 
-Groups is a new feature that will allow admins the flexibility to control and distribute funding. At a high level, a group is a subset of learners within an organization that is tied to an an enterprise customer's policy. A customer can have multiple policies and groups, and a learner can be in multiple groups. These changes will improve the user management and budgeting from the admin perspective, as well as adding personalization to the learner experience. Groups will be associated with a learner credit budget. In the past, we’ve used workarounds to sidestep this functionality, but with this new implementation, we will increase scalability and personalization.
+Groups is a new feature that will allow admins further customization and control of their learners. At a high level, a group is a subset of learners within an organization that can be tied to an enterprise customer's policy. A customer can have multiple policies and groups, and a learner can be in multiple groups. These changes will improve the user management and budgeting from the admin perspective, as well as adding personalization to the learner experience. In the past, we’ve used workarounds to sidestep this functionality, but with this new implementation, we will increase scalability and personalization. In this MVP, groups will be associated with a learner credit budget, though they are something that exists independently.
 
 EnterpriseGroup
 *********************
@@ -23,7 +23,6 @@ EnterpriseGroup
 ------
 - uuid, name, created, modified, history (boilerplate)
 - enterprise_customer_uuid (NOT NULL, FK to EnterpriseCustomer, related_name=”groups”)
-- policy_uuid (NOT NULL, UUIDField)
 
 **CRUD**
 ------
@@ -138,10 +137,6 @@ EnterpriseGroupMembership
 - uuid, created, modified, history (boilerplate)
 - group (NOT NULL, FK to EnterpriseGroup with related name ``members``)
 - enterprise_customer_user_id (NOT_NULL, FK to EnterpriseCustomerUser with related_name of ``memberships``)
-- status (NOT NULL, char selection: (`PENDING`, `ACCEPTED`, `EXPIRED`, `REMOVED`))
-- last_reminded (default=NULL, TimeField)
-
-TODO: Status will be set to expired if created is older than 90 days and status is still pending for PII reasons. Still need to think about how it is going to be updated (management command, filtered results, TBD).
 
 Consequences
 *********************
