@@ -15,7 +15,9 @@ Terminology
 Context
 *******
 
-Groups is a new feature that will allow admins further customization and control of their learners. At a high level, a group is a subset of learners within an organization that can be tied to an enterprise customer's policy. A customer can have multiple policies and groups, and a learner can be in multiple groups. These changes will improve the user management and budgeting from the admin perspective, as well as adding personalization to the learner experience. In the past, we’ve used workarounds to sidestep this functionality, but with this new implementation, we will increase scalability and personalization. In this MVP, groups will be associated with a learner credit budget, though they are something that exists independently.
+Groups is a new feature that will allow admins further customization and control of their learners. At a high level, a group is a subset of learners within an organization that can be tied to an enterprise customer's policy. A customer can have multiple policies and groups, and a learner can be in multiple groups. These changes will improve the user management and budgeting from the admin perspective, as well as adding personalization to the learner experience. In the past, we’ve used workarounds to sidestep this functionality, but with this new implementation, we will increase scalability and personalization. 
+
+In this MVP, groups will be associated with a learner credit budget, though they are something that exists independently. Groups will allow for analytics segmentation, bulk actions, access control, and more throughout the admin experience.  
 
 EnterpriseGroup
 *********************
@@ -112,15 +114,6 @@ Returns a list of the EnterpriseGroupMembership objects that were created
    }
 
 
-**POST /remind_learners**
-------
-**api/v1/enterprise-group/<group_uuid>/remind_learners**
-
-Inputs
-==========
-- ``learner_uuids`` (POST data, required): A list of enterprise_customer_user_ids to remind of their group membership
-
-
 **POST /remove_learners**
 ------
 **api/v1/enterprise-group/<group_uuid>/remove_learners**
@@ -136,7 +129,8 @@ EnterpriseGroupMembership
 ------
 - uuid, created, modified, history (boilerplate)
 - group (NOT NULL, FK to EnterpriseGroup with related name ``members``)
-- enterprise_customer_user_id (NOT_NULL, FK to EnterpriseCustomerUser with related_name of ``memberships``)
+- enterprise_customer_user_id (FK to EnterpriseCustomerUser with related_name of ``memberships``)
+- pending_enterprise_customer_user_id (FK to PendingEnterpriseCustomerUser with related_name of ``pending_memberships``)
 
 Consequences
 *********************
