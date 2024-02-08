@@ -38,7 +38,6 @@ The root URL for getting the basic information about the group
         'group_uuid': 'group_uuid',
         'name': 'group_name',
         'enterprise_customer_uuid': 'enterprise_customer_uuid',
-        'policy_uuid': 'policy_uuid'
    }
 
 
@@ -62,7 +61,6 @@ Returns a paginated list of groups filtered by the query params
                'group_uuid': 'group_uuid',
                'name': 'group_name',
                'enterprise_customer_uuid': 'enterprise_customer_uuid',
-               'policy_uuid': 'policy_uuid'
            }
        ]
    }
