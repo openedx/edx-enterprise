@@ -92,7 +92,7 @@ class ApiResponseRecordAdmin(admin.ModelAdmin):
 
 
 @admin.register(IntegratedChannelAPIRequestLogs)
-class CornerstoneAPIRequestLogAdmin(admin.ModelAdmin):
+class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
     """
     Django admin model for IntegratedChannelAPIRequestLogs.
     """
