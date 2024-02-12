@@ -4,8 +4,9 @@ Client for connecting to Moodle.
 
 import json
 import logging
+import time
 from http import HTTPStatus
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlencode
 
 import requests
 
@@ -13,7 +14,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 
@@ -136,6 +137,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('moodle')
         self.token = enterprise_configuration.decrypted_token or self._get_access_token()
         self.api_url = urljoin(self.enterprise_configuration.moodle_base_url, self.MOODLE_API_PATH)
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
 
     def _post(self, additional_params):
         """
@@ -150,10 +154,21 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
         params.update(additional_params)
 
+        start_time = time.time()
         response = requests.post(
             url=self.api_url,
             data=params,
             headers=headers
+        )
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=self.api_url,
+            data=params,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
 
         return response
@@ -173,20 +188,31 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         querystring = {
             'service': self.enterprise_configuration.service_short_name
         }
-
+        
+        url = urljoin(self.enterprise_configuration.moodle_base_url, 'login/token.php')
+        complete_url = "{}?{}".format(url, urlencode(querystring))
+        start_time =  time.time()
+        data = {
+            "username": self.enterprise_configuration.decrypted_username,
+            "password": self.enterprise_configuration.decrypted_password,
+        }
         response = requests.post(
-            urljoin(
-                self.enterprise_configuration.moodle_base_url,
-                'login/token.php',
-            ),
+            url,
             params=querystring,
             headers={
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            data={
-                "username": self.enterprise_configuration.decrypted_username,
-                "password": self.enterprise_configuration.decrypted_password,
-            },
+            data=data,
+        )
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=complete_url,
+            data=data,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
 
         try:
@@ -246,9 +272,21 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'courseid': course_id,
             'moodlewsrestformat': 'json'
         }
+        complete_url = "{}?{}".format(self.api_url, urlencode(params))
+        start_time = time.time()
         response = requests.get(
             self.api_url,
             params=params
+        )
+        duration_seconds = time.time() - start_time
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=complete_url,
+            payload='',
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
         return response
 
@@ -294,9 +332,21 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'value': key,
             'moodlewsrestformat': 'json'
         }
+        complete_url = "{}?{}".format(self.api_url, urlencode(params))
+        start_time = time.time()
         response = requests.get(
             self.api_url,
             params=params
+        )
+        duration_seconds = time.time() - start_time
+        self.IntegratedChannelAPIRequestLogs.store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=complete_url,
+            payload='',
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
         return response
 
