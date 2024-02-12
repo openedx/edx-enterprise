@@ -1,5 +1,5 @@
 0013 Creating Custom Groups for Enterprise Customers
-##############################
+####################################################
 
 Status
 ******
@@ -7,7 +7,7 @@ Status
 **Accepted**
 
 Terminology
-*******
+***********
 *Enterprise Group* - Collection of enterprise customer users
 
 *Membership* - Relationship between enterprise learner and enterprise group
@@ -22,18 +22,19 @@ In this MVP, groups will be associated with a learner credit budget, though they
 EnterpriseGroup
 *********************
 **Model properties**
-------
+--------------------
 - uuid, name, created, modified, history (boilerplate)
 - enterprise_customer_uuid (NOT NULL, FK to EnterpriseCustomer, related_name=”groups”)
 
 **CRUD**
-------
+--------
 **api/v1/enterprise-group/<group_uuid>**
 
 Outputs
 ==========
 The root URL for getting the basic information about the group
 ::
+
    {
         'group_uuid': 'group_uuid',
         'name': 'group_name',
@@ -44,7 +45,7 @@ The root URL for getting the basic information about the group
 **api/v1/enterprise-group/?learner_uuid=[enterprise_customer_user_id]&enterprise_uuid=[enterprise_uuid]**
 
 Accepted Query Params
-==========
+=====================
 - ``learner_uuid`` (optional): Get all the groups that the learner is associated with 
 - ``enterprise_uuid`` (optional): Get all the groups under the enterprise
 
@@ -52,6 +53,7 @@ Outputs
 ==========
 Returns a paginated list of groups filtered by the query params
 ::
+
    {
        'count': 1,
        'next': null,
@@ -67,13 +69,14 @@ Returns a paginated list of groups filtered by the query params
 
 
 **GET (list) /learners**
-------
+------------------------
 **api/v1/enterprise-group/<group_uuid>/learners/**
 
 Outputs
 ==========
 Returns a paginated list of learners that are associated with the enterprise group uuid 
 ::
+
    {
        'count': 1,
        'next': null,
@@ -88,7 +91,7 @@ Returns a paginated list of learners that are associated with the enterprise gro
 
 
 **POST /assign_learners**
-------
+-------------------------
 **api/v1/enterprise-group/<group_uuid>/assign_learners**
 
 Inputs
@@ -99,6 +102,7 @@ Outputs
 ==========
 Returns a list of the EnterpriseGroupMembership objects that were created 
 ::
+
    {
        'count': 1,
        'next': null,
@@ -113,7 +117,7 @@ Returns a list of the EnterpriseGroupMembership objects that were created
 
 
 **POST /remove_learners**
-------
+-------------------------
 **api/v1/enterprise-group/<group_uuid>/remove_learners**
 
 Inputs
@@ -122,9 +126,9 @@ Inputs
 
    
 EnterpriseGroupMembership
-*********************
+*************************
 **Model properties**
-------
+--------------------
 - uuid, created, modified, history (boilerplate)
 - group (NOT NULL, FK to EnterpriseGroup with related name ``members``)
 - enterprise_customer_user_id (FK to EnterpriseCustomerUser with related_name of ``memberships``)
