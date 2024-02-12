@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.10]
+---------
+* feat: add unique constraint on learner data transmission audit models
+
 [4.11.9]
 ---------
 * feat: register admin view for IntegratedChannelAPIRequestLogs

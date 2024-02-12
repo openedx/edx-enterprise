@@ -177,6 +177,12 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
 
     class Meta:
         app_label = 'degreed2'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['enterprise_course_enrollment_id', 'course_id'],
+                name='degreed2_unique_enrollment_course_id'
+            )
+        ]
         index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):

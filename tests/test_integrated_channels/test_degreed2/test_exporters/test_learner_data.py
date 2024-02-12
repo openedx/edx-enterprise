@@ -12,7 +12,10 @@ from freezegun import freeze_time
 from mock.mock import MagicMock
 from pytest import mark
 
+from django.db.utils import IntegrityError
+
 from integrated_channels.degreed2.exporters.learner_data import Degreed2LearnerExporter
+from integrated_channels.degreed2.models import Degreed2LearnerDataTransmissionAudit
 from test_utils import factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
 
@@ -59,6 +62,25 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
         setup_course_catalog_api_client_mock(self.course_catalog_client)
         self.addCleanup(course_catalog_api_client_mock.stop)
         super().setUp()
+
+    def test_unique_enrollment_id_course_id_constraint(self):
+        """
+        Ensure that the unique constraint on enterprise_course_enrollment_id and course_id is enforced.
+        """
+        course_id = 'course-v1:edX+DemoX+DemoCourse'
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=course_id,
+        )
+        Degreed2LearnerDataTransmissionAudit.objects.create(
+            enterprise_course_enrollment_id=enterprise_course_enrollment.id,
+            course_id=course_id,
+        )
+        with self.assertRaises(IntegrityError):
+            Degreed2LearnerDataTransmissionAudit.objects.create(
+                enterprise_course_enrollment_id=enterprise_course_enrollment.id,
+                course_id=course_id,
+            )
 
     @ddt.data(
         (None, None,),
