@@ -393,11 +393,11 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             start_time = time.time()
             response = self.session.get(search_student_paginated_url)
             duration_seconds = time.time() - start_time
-            stringify_and_store_api_record(
+            self.IntegratedChannelAPIRequestLogs.store_api_call(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 enterprise_customer_configuration_id=self.enterprise_configuration.id,
                 endpoint=search_student_paginated_url,
-                data='',
+                payload='',
                 time_taken=duration_seconds,
                 status_code=response.status_code,
                 response_body=response.text,
