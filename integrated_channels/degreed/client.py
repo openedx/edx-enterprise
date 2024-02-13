@@ -42,9 +42,6 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         self.global_degreed_config = apps.get_model('degreed', 'DegreedGlobalConfiguration').current()
         self.session = None
         self.expires_at = None
-        self.IntegratedChannelAPIRequestLogs = apps.get_model(
-            "integrated_channel", "IntegratedChannelAPIRequestLogs"
-        )
 
     def create_assessment_reporting(self, user_id, payload):
         """
