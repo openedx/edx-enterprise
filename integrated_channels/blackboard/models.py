@@ -332,6 +332,12 @@ class BlackboardLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
 
     class Meta:
         app_label = 'blackboard'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['enterprise_course_enrollment_id', 'course_id'],
+                name='blackboard_unique_enrollment_course_id'
+            )
+        ]
         index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):

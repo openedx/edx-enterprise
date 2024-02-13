@@ -2,12 +2,16 @@
 Tests for Moodle learner data exporters.
 """
 
+import datetime
 import unittest
 from unittest import mock
 
 from pytest import mark
 
+from django.db.utils import IntegrityError
+
 from integrated_channels.moodle.exporters.learner_data import MoodleLearnerExporter
+from integrated_channels.moodle.models import MoodleLearnerDataTransmissionAudit
 from test_utils import factories
 
 
@@ -34,6 +38,32 @@ class TestMoodleLearnerDataExporter(unittest.TestCase):
             decrypted_password='password',
             decrypted_token='token',
         )
+
+    def test_unique_enrollment_id_course_id_constraint(self):
+        """
+        Ensure that the unique constraint on enterprise_course_enrollment_id and course_id is enforced.
+        """
+        MoodleLearnerDataTransmissionAudit.objects.create(
+            moodle_user_email=self.enterprise_customer.contact_email,
+            enterprise_course_enrollment_id=5,
+            course_id=self.course_id,
+            course_completed=True,
+            moodle_completed_timestamp=1486855998,
+            completed_timestamp=datetime.datetime.fromtimestamp(1486855998),
+            total_hours=1.0,
+            grade=.9,
+        )
+        with self.assertRaises(IntegrityError):
+            MoodleLearnerDataTransmissionAudit.objects.create(
+                moodle_user_email=self.enterprise_customer.contact_email,
+                enterprise_course_enrollment_id=5,
+                course_id=self.course_id,
+                course_completed=True,
+                moodle_completed_timestamp=1486855998,
+                completed_timestamp=datetime.datetime.fromtimestamp(1486855998),
+                total_hours=2.0,
+                grade=.9,
+            )
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_retrieve_same_learner_data_record(self, mock_course_catalog_api):

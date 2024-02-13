@@ -16,6 +16,18 @@ Change Log
 Unreleased
 ----------
 
+[4.11.10]
+---------
+* feat: add unique constraint on learner data transmission audit models
+
+[4.11.9]
+---------
+* feat: register admin view for IntegratedChannelAPIRequestLogs
+
+[4.11.8]
+---------
+* chore: Update requirements
+
 [4.11.7]
 ---------
 * feat: update canvas client to store API calls in DB
