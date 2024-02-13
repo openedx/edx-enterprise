@@ -4,7 +4,7 @@ Tests for clients in integrated_channels.
 
 import random
 import unittest
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urljoin
 
 import pytest
 import responses
@@ -449,7 +449,7 @@ class TestMoodleApiClient(unittest.TestCase):
             'moodlewsrestformat': 'json',
         }
         params.update(SERIALIZED_DATA)
-        
+
         api_url = urljoin(self.enterprise_config.moodle_base_url, client.MOODLE_API_PATH)
         responses.add(
             responses.POST,

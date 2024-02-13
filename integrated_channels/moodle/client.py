@@ -188,7 +188,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         querystring = {
             'service': self.enterprise_configuration.service_short_name
         }
-        
+
         url = urljoin(self.enterprise_configuration.moodle_base_url, 'login/token.php')
         complete_url = "{}?{}".format(url, urlencode(querystring))
         start_time =  time.time()
