@@ -178,6 +178,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_programs",
                 "enable_demo_data_for_analytics_and_lpr",
                 "enable_academies",
+                "groups",
             ]
         ),
         (
@@ -188,6 +189,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_enrollments",
                 "id",
                 "created",
+                "memberships",
                 "modified",
                 "enterprise_customer",
                 "user_id",
