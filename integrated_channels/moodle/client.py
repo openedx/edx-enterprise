@@ -6,7 +6,7 @@ import json
 import logging
 import time
 from http import HTTPStatus
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urlencode, urljoin
 
 import requests
 
