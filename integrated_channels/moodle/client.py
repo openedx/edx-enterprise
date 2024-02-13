@@ -191,7 +191,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
         url = urljoin(self.enterprise_configuration.moodle_base_url, 'login/token.php')
         complete_url = "{}?{}".format(url, urlencode(querystring))
-        start_time =  time.time()
+        start_time = time.time()
         data = {
             "username": self.enterprise_configuration.decrypted_username,
             "password": self.enterprise_configuration.decrypted_password,
