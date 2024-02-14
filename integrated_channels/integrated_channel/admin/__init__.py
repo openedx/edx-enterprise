@@ -97,5 +97,36 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
     Django admin model for IntegratedChannelAPIRequestLogs.
     """
 
+    list_display = [
+        "endpoint",
+        "enterprise_customer",
+        "time_taken",
+        "status_code",
+    ]
+    list_filter = [
+        "status_code",
+        "enterprise_customer",
+        "endpoint",
+        "time_taken",
+    ]
+    search_fields = [
+        "status_code",
+        "enterprise_customer",
+        "enterprise_customer_configuration_id",
+        "endpoint",
+        "time_taken",
+        "response_body",
+        "payload",
+    ]
+    readonly_fields = [
+        "status_code",
+        "enterprise_customer",
+        "enterprise_customer_configuration_id",
+        "endpoint",
+        "time_taken",
+        "response_body",
+        "payload",
+    ]
+
     class Meta:
         model = IntegratedChannelAPIRequestLogs
