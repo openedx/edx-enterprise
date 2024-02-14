@@ -29,6 +29,8 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
+    EnterpriseGroup,
+    EnterpriseGroupMembership,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
@@ -1095,3 +1097,42 @@ class EnterpriseCustomerSsoConfigurationFactory(factory.django.DjangoModelFactor
     metadata_url = factory.LazyAttribute(lambda x: FAKER.url())
     entity_id = factory.LazyAttribute(lambda x: FAKER.url())
     update_from_metadata = True
+
+
+class EnterpriseGroupFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseGroup factory.
+
+    Creates an instance of EnterpriseGroup with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseGroupFactory.
+        """
+
+        model = EnterpriseGroup
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    name = factory.LazyAttribute(lambda x: FAKER.company())
+
+
+class EnterpriseGroupMembershipFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseGroupMembership factory.
+
+    Creates an instance of EnterpriseGroupMembership with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseGroupMembershipFactory.
+        """
+
+        model = EnterpriseGroupMembership
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    group = factory.SubFactory(EnterpriseGroupFactory)
+    enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
+    pending_enterprise_customer_user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)

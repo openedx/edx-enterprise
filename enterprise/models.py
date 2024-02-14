@@ -4198,3 +4198,72 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         self.submitted_at = localized_utcnow()
         self.save()
         return sp_metadata_url
+
+
+class EnterpriseGroup(TimeStampedModel):
+    """
+    Enterprise Group model
+
+    .. no_pii:
+    """
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(
+        max_length=25,
+        blank=False,
+        help_text=_(
+            'Specifies enterprise group name.'
+        )
+    )
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='groups',
+        on_delete=models.deletion.CASCADE
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Enterprise Group")
+        verbose_name_plural = _("Enterprise Groups")
+        unique_together = (("name", "enterprise_customer"),)
+        ordering = ['-modified']
+
+
+class EnterpriseGroupMembership(TimeStampedModel):
+    """
+    Enterprise Group Membership model
+
+    .. no_pii:
+    """
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    group = models.ForeignKey(
+        EnterpriseGroup,
+        blank=False,
+        null=False,
+        related_name='members',
+        on_delete=models.deletion.CASCADE,
+    )
+    enterprise_customer_user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        blank=True,
+        null=True,
+        related_name='memberships',
+        on_delete=models.deletion.CASCADE,
+    )
+    pending_enterprise_customer_user = models.ForeignKey(
+        PendingEnterpriseCustomerUser,
+        blank=True,
+        null=True,
+        related_name='memberships',
+        on_delete=models.deletion.CASCADE,
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Enterprise Group Membership")
+        verbose_name_plural = _("Enterprise Group Memberships")
+        # https://code.djangoproject.com/ticket/9039 - NULL value fields should not throw unique constraint errors
+        # ie no issue if multiple fields have: group = A and pending_enterprise_customer_user = NULL
+        unique_together = (("group", "enterprise_customer_user"), ("group", "pending_enterprise_customer_user"))
+        ordering = ['-modified']
