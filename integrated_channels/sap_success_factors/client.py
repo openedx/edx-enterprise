@@ -15,7 +15,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +46,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         self.global_sap_config = apps.get_model('sap_success_factors', 'SAPSuccessFactorsGlobalConfiguration').current()
         self.session = None
         self.expires_at = None
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
 
     def get_oauth_access_token(self, client_id, client_secret, company_id, user_id, user_type, customer_uuid):
         """
@@ -70,23 +73,35 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             'SAPSuccessFactorsGlobalConfiguration'
         )
         global_sap_config = SAPSuccessFactorsGlobalConfiguration.current()
-
+        start_time = time.time()
+        complete_url = urljoin(
+            self.enterprise_configuration.sapsf_base_url,
+            global_sap_config.oauth_api_path,
+        )
+        serialized_data = {
+            'grant_type': 'client_credentials',
+            'scope': {
+                'userId': user_id,
+                'companyId': company_id,
+                'userType': user_type,
+                'resourceType': 'learning_public_api',
+            }
+        }
         response = requests.post(
-            urljoin(
-                self.enterprise_configuration.sapsf_base_url,
-                global_sap_config.oauth_api_path,
-            ),
-            json={
-                'grant_type': 'client_credentials',
-                'scope': {
-                    'userId': user_id,
-                    'companyId': company_id,
-                    'userType': user_type,
-                    'resourceType': 'learning_public_api',
-                }
-            },
+            complete_url,
+            json=serialized_data,
             auth=(client_id, client_secret),
             headers={'content-type': CONTENT_TYPE_APP_JSON}
+        )
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=complete_url,
+            data=serialized_data,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
 
         try:
@@ -256,7 +271,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER,
             self.enterprise_configuration.enterprise_customer.uuid
         )
-
+        start_time = time.time()
         response = requests.post(
             url,
             data=payload,
@@ -264,6 +279,16 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 'Authorization': 'Bearer {}'.format(oauth_access_token),
                 'content-type': CONTENT_TYPE_APP_JSON
             }
+        )
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=payload,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
 
         if response.status_code >= 400:
@@ -284,7 +309,18 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             payload (str): The json encoded payload to post.
         """
         self._create_session()
+        start_time = time.time()
         response = self.session.post(url, data=payload)
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=payload,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
+        )
         if response.status_code >= 400:
             LOGGER.error(
                 generate_formatted_log(
@@ -354,7 +390,18 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             ),
         )
         try:
+            start_time = time.time()
             response = self.session.get(search_student_paginated_url)
+            duration_seconds = time.time() - start_time
+            self.IntegratedChannelAPIRequestLogs.store_api_call(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=search_student_paginated_url,
+                payload='',
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+            )
             sap_inactive_learners = response.json()
         except ValueError as error:
             raise ClientError(response, response.status_code) from error
