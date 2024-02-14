@@ -13,7 +13,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = logging.getLogger(__name__)
 
@@ -198,18 +198,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
                         - `COMPLETION_PROVIDER_SCOPE`
         """
         self._create_session(scope)
-        start_time = time.time()
         response = self.session.post(url, data=data)
-        duration_seconds = time.time() - start_time
-        stringify_and_store_api_record(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            endpoint=url,
-            data=data,
-            time_taken=duration_seconds,
-            status_code=response.status_code,
-            response_body=response.text,
-        )
         return response.status_code, response.text
 
     def _delete(self, url, data, scope):
@@ -224,18 +213,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
                         - `COMPLETION_PROVIDER_SCOPE`
         """
         self._create_session(scope)
-        start_time = time.time()
         response = self.session.delete(url, data=data)
-        duration_seconds = time.time() - start_time
-        stringify_and_store_api_record(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            endpoint=url,
-            data=data,
-            time_taken=duration_seconds,
-            status_code=response.status_code,
-            response_body=response.text,
-        )
         return response.status_code, response.text
 
     def _create_session(self, scope):
@@ -279,29 +257,16 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             HTTPError: If we received a failure response code from Degreed.
             ClientError: If an unexpected response format was received that we could not parse.
         """
-        url = urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.oauth_api_path)
-        data = {
-            'grant_type': 'password',
-            'username': user_id,
-            'password': user_password,
-            'scope': scope,
-        }
-        start_time = time.time()
         response = requests.post(
-            url,
-            data=data,
+            urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.oauth_api_path),
+            data={
+                'grant_type': 'password',
+                'username': user_id,
+                'password': user_password,
+                'scope': scope,
+            },
             auth=(client_id, client_secret),
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
-        )
-        duration_seconds = time.time() - start_time
-        stringify_and_store_api_record(
-            enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            enterprise_customer_configuration_id=self.enterprise_configuration.id,
-            endpoint=url,
-            data=data,
-            time_taken=duration_seconds,
-            status_code=response.status_code,
-            response_body=response.text,
         )
 
         try:
