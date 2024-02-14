@@ -20,7 +20,7 @@ from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +64,9 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             message,
         )
         self.enterprise_catalog_api_client = EnterpriseCatalogApiClient()
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
 
     def get_oauth_url(self):
         config = self.enterprise_configuration
@@ -473,7 +476,18 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.get(url)
+            duration_seconds = time.time() - start_time
+            self.IntegratedChannelAPIRequestLogs.store_api_call(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                payload='',
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -506,7 +520,18 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.post(url, json=data)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                data=data,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -539,7 +564,18 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.patch(url, json=data)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                data=data,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -572,7 +608,18 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.delete(url, json=data) if data else self.session.delete(url)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                data=data if data else '',
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -613,15 +660,28 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If an unexpected response format was received that we could not parse.
         """
         config = self.enterprise_configuration
+        url = self.get_oauth_url()
+        data = {
+            'grant_type': 'client_credentials',
+            'scope': scope,
+            'client_id': config.client_id,
+            'client_secret': config.client_secret,
+        }
+        start_time = time.time()
         response = requests.post(
-            self.get_oauth_url(),
-            data={
-                'grant_type': 'client_credentials',
-                'scope': scope,
-                'client_id': config.client_id,
-                'client_secret': config.client_secret,
-            },
+            url,
+            data=data,
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        )
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
         )
 
         try:

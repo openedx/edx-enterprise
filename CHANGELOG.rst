@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.11.11]
+---------
+* feat: record degreed API calls
+
 [4.11.10]
 ---------
 * feat: add unique constraint on learner data transmission audit models
