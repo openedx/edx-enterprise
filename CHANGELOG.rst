@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.11.13]
+---------
+* feat: Update IntegratedChannelAPIRequestLogs list view
+
 [4.11.12]
 ---------
 * feat: new enterprise models relating to enterprise groups
