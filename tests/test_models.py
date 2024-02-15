@@ -2646,6 +2646,62 @@ class TestEnterpriseCustomerInviteKey(unittest.TestCase):
 
 @mark.django_db
 @ddt.ddt
+class TestEnterpriseGroup(unittest.TestCase):
+    """
+    Tests for the EnterpriseGroup model.
+    """
+
+    def test_group_name_uniqueness(self):
+        """
+        Test the unique constraints on the EnterpriseGroup table
+        """
+        group_1 = factories.EnterpriseGroupFactory(name="foobar")
+        # Test that group names under each customer must be unique
+        factories.EnterpriseGroupFactory(name="foobar")
+        with raises(Exception):
+            factories.EnterpriseGroupFactory(name="foobar", enterprise_customer=group_1.enterprise_customer)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseGroupMembership(unittest.TestCase):
+    """
+    Tests for the EnterpriseGroupMembership model.
+    """
+
+    def test_group_membership_uniqueness(self):
+        """
+        Test the unique constraints on the EnterpriseGroupMembership table
+        """
+        # Test that NULL values in either customer user and pending customer users will not trigger uniqueness
+        # constraints
+        null_user_membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=None,
+            pending_enterprise_customer_user=None,
+        )
+        factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=None,
+            pending_enterprise_customer_user=None,
+            group=null_user_membership.group,
+        )
+        group_membership_1 = factories.EnterpriseGroupMembershipFactory()
+
+        # Test that a user cannot be assigned to a group more than once
+        with raises(Exception):
+            factories.EnterpriseGroupMembershipFactory(
+                group=group_membership_1.group,
+                enterprise_customer_user=group_membership_1.enterprise_customer_user,
+            )
+        # Test that a pending user cannot be assigned to a group more than once
+        with raises(Exception):
+            factories.EnterpriseGroupMembershipFactory(
+                group=group_membership_1.group,
+                pending_enterprise_customer_user=group_membership_1.pending_enterprise_customer_user,
+            )
+
+
+@mark.django_db
+@ddt.ddt
 class TestEnterpriseCustomerSsoConfiguration(unittest.TestCase):
     """
     Tests for the EnterpriseCustomerSsoConfiguration model.
