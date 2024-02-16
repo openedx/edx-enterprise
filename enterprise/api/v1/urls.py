@@ -19,6 +19,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_reporting,
     enterprise_customer_sso_configuration,
     enterprise_customer_user,
+    enterprise_group,
     enterprise_subsidy_fulfillment,
     notifications,
     pending_enterprise_customer_user,
@@ -70,6 +71,9 @@ router.register(
 )
 router.register(
     "enterprise_catalogs", enterprise_customer_catalog.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs'
+)
+router.register(
+    "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
 )
 
 
