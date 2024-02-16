@@ -173,6 +173,7 @@ class CornerstoneCoursesListView(BaseViewSet):
             payload=f"Request Headers: {headers_json}",
             time_taken=duration_seconds,
             status_code=200,
-            response_body=json.dumps(data)
+            response_body=json.dumps(data),
+            channel_name='cornerstone'
         )
         return Response(data)
