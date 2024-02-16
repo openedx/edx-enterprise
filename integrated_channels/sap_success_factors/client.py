@@ -102,6 +102,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name='sap_success_factors'
         )
 
         try:
@@ -289,6 +290,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name='sap_success_factors'
         )
 
         if response.status_code >= 400:
@@ -320,6 +322,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name='sap_success_factors'
         )
         if response.status_code >= 400:
             LOGGER.error(
@@ -401,6 +404,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 time_taken=duration_seconds,
                 status_code=response.status_code,
                 response_body=response.text,
+                channel_name='sap_success_factors'
             )
             sap_inactive_learners = response.json()
         except ValueError as error:

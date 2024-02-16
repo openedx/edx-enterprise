@@ -126,6 +126,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name='cornerstone'
         )
         return response.status_code, response.text
 

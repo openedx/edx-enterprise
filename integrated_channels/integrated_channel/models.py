@@ -907,6 +907,10 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     response_body = models.TextField(
         help_text="API call response body", blank=True, null=True
     )
+    channel_name = models.TextField(
+        help_text="Name of the integrated channel associated with this API call log record.",
+        blank=True
+    )
 
     class Meta:
         app_label = "integrated_channel"

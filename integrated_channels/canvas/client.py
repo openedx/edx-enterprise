@@ -325,6 +325,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     time_taken=duration_seconds,
                     status_code=resp.status_code,
                     response_body=resp.text,
+                    channel_name='canvas'
                 )
 
                 if resp.status_code >= 400:
@@ -557,6 +558,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=post_response.status_code,
             response_body=post_response.text,
+            channel_name='canvas'
         )
 
         if post_response.status_code >= 400:
@@ -583,6 +585,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=put_response.status_code,
             response_body=put_response.text,
+            channel_name='canvas'
         )
         if put_response.status_code >= 400:
             raise ClientError(put_response.text, put_response.status_code)
@@ -610,6 +613,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=delete_response.status_code,
             response_body=delete_response.text,
+            channel_name='canvas'
         )
         if delete_response.status_code >= 400:
             raise ClientError(delete_response.text, delete_response.status_code)
@@ -671,6 +675,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=rsps.status_code,
             response_body=rsps.text,
+            channel_name='canvas'
         )
 
         if rsps.status_code >= 400:
@@ -705,6 +710,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=rsps.status_code,
             response_body=rsps.text,
+            channel_name='canvas'
         )
 
         if rsps.status_code >= 400:
@@ -749,6 +755,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=resp.status_code,
             response_body=resp.text,
+            channel_name='canvas'
         )
 
         more_pages_present = True
@@ -796,6 +803,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                         time_taken=duration_seconds,
                         status_code=resp.status_code,
                         response_body=resp.text,
+                        channel_name='canvas'
                     )
 
                     current_page_count += 1
@@ -828,6 +836,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 time_taken=duration_seconds,
                 status_code=resp.status_code,
                 response_body=resp.text,
+                channel_name='canvas'
             )
 
             try:
@@ -865,6 +874,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=submission_response.status_code,
             response_body=submission_response.text,
+            channel_name='canvas'
         )
 
         if submission_response.status_code >= 400:
@@ -979,6 +989,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=auth_response.status_code,
             response_body=auth_response.text,
+            channel_name='canvas'
         )
         if auth_response.status_code >= 400:
             raise ClientError(auth_response.text, auth_response.status_code)
