@@ -49,14 +49,17 @@ class AnalyticsSummaryView(generics.GenericAPIView):
             )
 
         prompt_data = serializer.data
-        learner_progress_prompt = generate_prompt_for_learner_progress_summary(prompt_data['learner_progress'])
         learner_engagement_prompt = generate_prompt_for_learner_engagement_summary(prompt_data['learner_engagement'])
-
-        return Response(data={
-            'learner_progress': ChatGPTResponse.get_or_create(
-                learner_progress_prompt, role, enterprise_customer, ChatGPTResponse.LEARNER_PROGRESS,
-            ),
+        response_data = {
             'learner_engagement': ChatGPTResponse.get_or_create(
                 learner_engagement_prompt, role, enterprise_customer, ChatGPTResponse.LEARNER_ENGAGEMENT,
             ),
-        })
+        }
+
+        if 'learner_progress' in prompt_data:
+            learner_progress_prompt = generate_prompt_for_learner_progress_summary(prompt_data['learner_progress'])
+            response_data['learner_progress'] = ChatGPTResponse.get_or_create(
+                learner_progress_prompt, role, enterprise_customer, ChatGPTResponse.LEARNER_PROGRESS,
+            )
+
+        return Response(data=response_data)

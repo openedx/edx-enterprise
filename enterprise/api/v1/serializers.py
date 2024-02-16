@@ -1569,7 +1569,7 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         hours_prior = serializers.IntegerField(required=True)
         active_contract = serializers.BooleanField(required=True)
 
-    learner_progress = LearnerProgressSerializer()
+    learner_progress = LearnerProgressSerializer(required=False)
     learner_engagement = LearnerEngagementSerializer()
 
 
