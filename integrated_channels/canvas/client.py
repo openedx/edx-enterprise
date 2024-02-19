@@ -20,6 +20,7 @@ from integrated_channels.utils import (  # pylint: disable=cyclic-import
     refresh_session_if_expired,
     stringify_and_store_api_record,
 )
+from enterprise.models import EnterpriseCustomerUser
 
 LOGGER = logging.getLogger(__name__)
 
@@ -682,13 +683,34 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         get_users_by_email_response = rsps.json()
 
         try:
-            canvas_user_id = get_users_by_email_response[0]['id']
+            canvas_user_id = get_users_by_email_response[0]["id"]
+            return canvas_user_id
         except (KeyError, IndexError) as error:
-            raise ClientError(
-                "No Canvas user ID found associated with email: {}".format(user_email),
-                HTTPStatus.NOT_FOUND.value
-            ) from error
-        return canvas_user_id
+            # learner is decommissioned on Canvas side - unlink it from enterprise
+            try:
+                enterprise_customer = self.enterprise_configuration.enterprise_customer
+                # Unlink user from related Enterprise Customer
+                EnterpriseCustomerUser.objects.unlink_user(
+                    enterprise_customer=enterprise_customer,
+                    user_email=user_email,
+                )
+                raise ClientError(
+                    "No Canvas user ID found associated with email: {} - User unlinked from enterprise now".format(
+                        user_email
+                    ),
+                    HTTPStatus.NOT_FOUND.value,
+                ) from error
+            except Exception as e:  # pylint: disable=broad-except
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f"Error occurred while unlinking a Canvas learner: {user_email}. "
+                        f"Error: {e}",
+                    )
+                )
 
     def _get_canvas_user_courses_by_id(self, user_id):
         """Helper method to retrieve all courses that a Canvas user is enrolled in."""

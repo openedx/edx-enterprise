@@ -7,10 +7,13 @@ import json
 import random
 import unittest
 from unittest import mock
-from urllib.parse import urljoin
+from urllib.parse import quote_plus, urljoin
+from unittest.mock import patch
 
 import pytest
 import responses
+import requests
+
 from freezegun import freeze_time
 from requests.models import Response
 
@@ -21,6 +24,7 @@ from integrated_channels.canvas.utils import CanvasUtil
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelHealthStatus
 from test_utils import factories
+from enterprise.models import EnterpriseCustomerUser
 
 IntegratedChannelAPIRequestLogs = apps.get_model(
     "integrated_channel", "IntegratedChannelAPIRequestLogs"
@@ -418,6 +422,30 @@ class TestCanvasApiClient(unittest.TestCase):
             assert not canvas_api_client._handle_canvas_assignment_retrieval.mock_calls[0].kwargs.get(  # pylint: disable=protected-access
                 'is_assessment_grade'
             )
+
+    @responses.activate
+    def test_search_for_deleted_user(self):
+        """
+        ``_search_for_canvas_user_by_email`` should handle exception for deleted users gracefully
+        by unlinking that user from enterprise
+        """
+        responses.add(
+            responses.POST, self.oauth_url, json=self._token_response(), status=200
+        )
+        path = f"/api/v1/accounts/{self.account_id}/users"
+        query_params = f'?search_term={quote_plus("test@test.com")}'  # emails with unique symbols such as `+` cause issues
+        get_user_id_from_email_url = urljoin(self.url_base, path + query_params)
+        responses.add(responses.GET, get_user_id_from_email_url, json=[], status=200)
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        canvas_api_client._create_session()  # pylint: disable=protected-access
+        assert responses.calls[0].request.url == self.oauth_url
+
+        with mock.patch.object(
+            EnterpriseCustomerUser.objects, "unlink_user"
+        ) as unlink_user_mock:
+            canvas_api_client._search_for_canvas_user_by_email(self.canvas_email)
+            unlink_user_mock.assert_called_once()
+        assert len(responses.calls) == 2
 
     def test_create_client_session_with_oauth_access_key(self):
         """ Test instantiating the client will fetch and set the session's oauth access key"""
