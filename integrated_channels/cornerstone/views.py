@@ -174,6 +174,6 @@ class CornerstoneCoursesListView(BaseViewSet):
             time_taken=duration_seconds,
             status_code=200,
             response_body=json.dumps(data),
-            channel_name='cornerstone'
+            channel_name=enterprise_config.channel_code()
         )
         return Response(data)

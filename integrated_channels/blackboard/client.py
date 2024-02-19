@@ -610,7 +610,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             time_taken=time_taken,
             status_code=get_response.status_code,
             response_body=get_response.text,
-            channel_name='blackboard'
+            channel_name=self.enterprise_configuration.channel_code()
         )
         if get_response.status_code >= 400:
             raise ClientError(get_response.text, get_response.status_code)
@@ -631,7 +631,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             time_taken=time_taken,
             status_code=patch_response.status_code,
             response_body=patch_response.text,
-            channel_name='blackboard'
+            channel_name=self.enterprise_configuration.channel_code()
         )
         if patch_response.status_code >= 400:
             raise ClientError(patch_response.text, patch_response.status_code)
@@ -652,7 +652,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             time_taken=time_taken,
             status_code=post_response.status_code,
             response_body=post_response.text,
-            channel_name='blackboard'
+            channel_name=self.enterprise_configuration.channel_code()
         )
 
         if post_response.status_code >= 400:
@@ -674,7 +674,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             time_taken=time_taken,
             status_code=response.status_code,
             response_body=response.text,
-            channel_name='blackboard'
+            channel_name=self.enterprise_configuration.channel_code()
         )
         if response.status_code >= 400:
             raise ClientError(response.text, response.status_code)

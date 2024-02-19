@@ -487,7 +487,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 time_taken=duration_seconds,
                 status_code=response.status_code,
                 response_body=response.text,
-                channel_name='degreed2'
+                channel_name=self.enterprise_configuration.channel_code()
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
@@ -532,7 +532,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 time_taken=duration_seconds,
                 status_code=response.status_code,
                 response_body=response.text,
-                channel_name='degreed2'
+                channel_name=self.enterprise_configuration.channel_code()
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
@@ -577,7 +577,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 time_taken=duration_seconds,
                 status_code=response.status_code,
                 response_body=response.text,
-                channel_name='degreed2'
+                channel_name=self.enterprise_configuration.channel_code()
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
@@ -622,7 +622,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 time_taken=duration_seconds,
                 status_code=response.status_code,
                 response_body=response.text,
-                channel_name='degreed2'
+                channel_name=self.enterprise_configuration.channel_code()
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
@@ -686,7 +686,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
-            channel_name='degreed2'
+            channel_name=self.enterprise_configuration.channel_code()
         )
 
         try:
