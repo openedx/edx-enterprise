@@ -12,6 +12,7 @@ from dateutil.parser import parse
 
 from django.apps import apps
 
+from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.canvas.utils import CanvasUtil  # pylint: disable=cyclic-import
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient, IntegratedChannelHealthStatus
@@ -20,7 +21,6 @@ from integrated_channels.utils import (  # pylint: disable=cyclic-import
     refresh_session_if_expired,
     stringify_and_store_api_record,
 )
-from enterprise.models import EnterpriseCustomerUser
 
 LOGGER = logging.getLogger(__name__)
 
@@ -651,7 +651,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return integration_id
 
-    def _search_for_canvas_user_by_email(self, user_email):
+    def _search_for_canvas_user_by_email(self, user_email):  # pylint: disable=inconsistent-return-statements
         """
         Helper method to make an api call to Canvas using the user's email as a search term.
 
