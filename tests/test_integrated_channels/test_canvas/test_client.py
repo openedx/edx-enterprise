@@ -7,7 +7,7 @@ import json
 import random
 import unittest
 from unittest import mock
-from urllib.parse import quote_plus, urljoin
+from urllib.parse import urljoin
 
 import pytest
 import responses
@@ -162,39 +162,27 @@ class TestCanvasApiClient(unittest.TestCase):
                 canvas_api_client._create_session()  # pylint: disable=protected-access
                 assert canvas_api_client.expires_at > orig_expires_at
 
+    @responses.activate
     def test_search_for_canvas_user_with_400(self):
         """
-        Test that we properly raise exceptions if the client can't find the edx user in Canvas while reporting
-        grades (assessment and course level reporting both use the same method of retrieval).
+        Test that we properly raise exception and unlink user if the client can't find the edx user in Canvas
+        while reporting grades (assessment and course level reporting both use the same method of retrieval).
         """
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                self.canvas_users_url,
-                body="[]",
-                status=200
-            )
-            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        responses.add(
+            responses.POST, self.oauth_url, json=self._token_response(), status=200
+        )
+        responses.add(responses.GET, self.canvas_users_url, json=[], status=200)
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        canvas_api_client._create_session()  # pylint: disable=protected-access
+        assert responses.calls[0].request.url == self.oauth_url
 
-            # Searching for canvas users will require the session to be created
-            rsps.add(
-                responses.POST,
-                self.oauth_url,
-                json=self._token_response(),
-                status=200
-            )
-            canvas_api_client._create_session()  # pylint: disable=protected-access
-
-            with pytest.raises(ClientError) as client_error:
-                canvas_api_client._search_for_canvas_user_by_email(self.canvas_email)  # pylint: disable=protected-access
-                assert IntegratedChannelAPIRequestLogs.objects.count() == 2
-                assert client_error.value.message == \
-                    "Course: {course_id} not found registered in Canvas for Edx " \
-                    "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
-                        course_id=self.course_id,
-                        canvas_email=self.canvas_email,
-                        canvas_user_id=self.canvas_user_id
-                    )
+        with mock.patch.object(
+            EnterpriseCustomerUser.objects, "unlink_user"
+        ) as unlink_user_mock:
+            canvas_api_client._search_for_canvas_user_by_email(self.canvas_email)  # pylint: disable=protected-access
+            unlink_user_mock.assert_called_once()
+        assert len(responses.calls) == 2
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 2
 
     def test_assessment_reporting_with_no_canvas_course_found(self):
         """
@@ -419,32 +407,6 @@ class TestCanvasApiClient(unittest.TestCase):
             assert not canvas_api_client._handle_canvas_assignment_retrieval.mock_calls[0].kwargs.get(  # pylint: disable=protected-access
                 'is_assessment_grade'
             )
-
-    @responses.activate
-    def test_search_for_deleted_user(self):
-        """
-        ``_search_for_canvas_user_by_email`` should handle exception for deleted users gracefully
-        by unlinking that user from enterprise
-        """
-        responses.add(
-            responses.POST, self.oauth_url, json=self._token_response(), status=200
-        )
-        path = f"/api/v1/accounts/{self.account_id}/users"
-        # emails with unique symbols such as `+` cause issues
-        query_params = f'?search_term={quote_plus("test@test.com")}'
-        get_user_id_from_email_url = urljoin(
-            self.url_base, path + query_params)
-        responses.add(responses.GET, get_user_id_from_email_url, json=[], status=200)
-        canvas_api_client = CanvasAPIClient(self.enterprise_config)
-        canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert responses.calls[0].request.url == self.oauth_url
-
-        with mock.patch.object(
-            EnterpriseCustomerUser.objects, "unlink_user"
-        ) as unlink_user_mock:
-            canvas_api_client._search_for_canvas_user_by_email(self.canvas_email)  # pylint: disable=protected-access
-            unlink_user_mock.assert_called_once()
-        assert len(responses.calls) == 2
 
     def test_create_client_session_with_oauth_access_key(self):
         """ Test instantiating the client will fetch and set the session's oauth access key"""
