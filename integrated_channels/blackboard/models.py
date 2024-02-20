@@ -7,7 +7,6 @@ import uuid
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
-from simple_history.models import HistoricalRecords
 from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
@@ -153,8 +152,6 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
             "A UUID for use in public-facing urls such as oauth state variables."
         )
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'blackboard'

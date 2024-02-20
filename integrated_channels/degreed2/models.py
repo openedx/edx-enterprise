@@ -6,8 +6,6 @@ Database models for Enterprise Integrated Channel Degreed.
 import json
 from logging import getLogger
 
-from simple_history.models import HistoricalRecords
-
 from django.db import models
 
 from integrated_channels.degreed2.exporters.content_metadata import Degreed2ContentMetadataExporter
@@ -73,8 +71,6 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         default=1,
         help_text="The maximum number of data items to transmit to the integrated channel with each request."
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'degreed2'
