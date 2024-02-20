@@ -517,7 +517,8 @@ def stringify_and_store_api_record(
     data,
     time_taken,
     status_code,
-    response_body
+    response_body,
+    channel_name
 ):
     """
     Stringify the given data and store the API record in the database.
@@ -537,6 +538,7 @@ def stringify_and_store_api_record(
                     f"stringify_and_store_api_record: Error occured during stringification: {e}"
                     f"enterprise_customer={enterprise_customer}"
                     f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                    f"channel name={channel_name}"
                     f"data={data}"
                 )
         # Store stringified data in the database
@@ -549,12 +551,14 @@ def stringify_and_store_api_record(
                 time_taken=time_taken,
                 status_code=status_code,
                 response_body=response_body,
+                channel_name=channel_name
             )
         except Exception as e:   # pylint: disable=broad-except
             LOGGER.error(
                 f"stringify_and_store_api_record: Error occured while storing: {e}"
                 f"enterprise_customer={enterprise_customer}"
                 f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                f"channel name={channel_name}"
                 f"data={data}"
             )
     return data

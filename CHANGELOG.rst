@@ -15,6 +15,14 @@ Change Log
 
 Unreleased
 ----------
+[4.11.15]
+---------
+* feat: unlink canvas user if not decommissioned on canvas side
+
+[4.11.14]
+---------
+* feat: added channel_name for api call logs records
+
 [4.11.13]
 ---------
 * feat: Update IntegratedChannelAPIRequestLogs list view
