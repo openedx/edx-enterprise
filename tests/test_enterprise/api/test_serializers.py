@@ -297,6 +297,20 @@ class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpr
         assert sorted(ecu_1_data['role_assignments']) == sorted([ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE])
         assert ecu_2_data['role_assignments'] == [ENTERPRISE_LEARNER_ROLE]
 
+    def test_group_membership(self):
+        """
+        Test that group memberships are associated properly with a single instance.
+        """
+
+        enterprise_group = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group
+        )
+
+        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
+        assert serializer.data['enterprise_group'].uuid == membership.uuid
+
 
 @mark.django_db
 class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):
