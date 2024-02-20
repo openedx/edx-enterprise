@@ -54,6 +54,7 @@ class CanvasUtil:
             time_taken=duration_seconds,
             status_code=resp.status_code,
             response_body=resp.text,
+            channel_name=enterprise_configuration.channel_code()
         )
         all_accounts = resp.json()
         root_account = None
@@ -97,6 +98,7 @@ class CanvasUtil:
             time_taken=duration_seconds,
             status_code=resp.status_code,
             response_body=resp.text,
+            channel_name=enterprise_configuration.channel_code()
         )
         all_courses_response = resp.json()
 
