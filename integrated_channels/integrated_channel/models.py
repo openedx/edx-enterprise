@@ -907,6 +907,10 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     response_body = models.TextField(
         help_text="API call response body", blank=True, null=True
     )
+    channel_name = models.TextField(
+        help_text="Name of the integrated channel associated with this API call log record.",
+        blank=True
+    )
 
     class Meta:
         app_label = "integrated_channel"
@@ -942,6 +946,7 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
         time_taken,
         status_code,
         response_body,
+        channel_name
     ):
         """
         Creates new record in IntegratedChannelAPIRequestLogs table.
@@ -955,6 +960,7 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
                 time_taken=time_taken,
                 status_code=status_code,
                 response_body=response_body,
+                channel_name=channel_name
             )
             record.save()
         except Exception as e:  # pylint: disable=broad-except
@@ -967,4 +973,5 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
                 f"time_taken={time_taken}"
                 f"status_code={status_code}"
                 f"response_body={response_body}"
+                f"channel_name={channel_name}"
             )

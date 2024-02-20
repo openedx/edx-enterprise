@@ -169,6 +169,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
         )
 
         return response
@@ -213,6 +214,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
         )
 
         try:
@@ -287,6 +289,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
         )
         return response
 
@@ -347,6 +350,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             time_taken=duration_seconds,
             status_code=response.status_code,
             response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
         )
         return response
 

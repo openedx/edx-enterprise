@@ -802,6 +802,15 @@ class CourseDetailSerializer(ImmutableStateSerializer):
         return updated_course
 
 
+class EnterpriseGroupSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroup model.
+    """
+    class Meta:
+        model = models.EnterpriseGroup
+        fields = ('enterprise_customer', 'name', 'uuid')
+
+
 class CourseRunDetailSerializer(ImmutableStateSerializer):
     """
     Serializer for course run data retrieved from the discovery service course_run detail API endpoint.
