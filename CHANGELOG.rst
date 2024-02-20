@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.11.15]
+---------
+* feat: CRUD api endpoints for the enterprise group table 
+
 [4.11.14]
 ---------
 * feat: added channel_name for api call logs records

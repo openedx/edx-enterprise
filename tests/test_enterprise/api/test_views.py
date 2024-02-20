@@ -53,6 +53,8 @@ from enterprise.models import (
     EnterpriseEnrollmentSource,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
+    EnterpriseGroup,
+    EnterpriseGroupMembership,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
@@ -87,6 +89,8 @@ from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerSsoConfigurationFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupFactory,
+    EnterpriseGroupMembershipFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
@@ -7243,6 +7247,142 @@ class TestEnterpriseCustomerAPICredentialsViewSet(BaseTestEnterpriseAPIViews):
         )
         assert response.status_code == 200
         assert not Application.objects.filter(user=user).exists()
+
+
+@mark.django_db
+class TestEnterpriseGroupViewSet(APITest):
+    """
+    Tests for the EnterpriseGroupViewSet
+    """
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.user = UserFactory(
+            is_active=True,
+            is_staff=False,
+        )
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id, enterprise_customer=self.enterprise_customer
+        )
+        self.user.set_password(TEST_PASSWORD)
+        self.user.save()
+        self.client = APIClient()
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+        self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        self.group_2 = EnterpriseGroupFactory()
+        for _ in range(5):
+            EnterpriseGroupMembershipFactory(
+                group=self.group_1,
+                pending_enterprise_customer_user=None,
+                enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            )
+
+    def test_group_permissions(self):
+        """
+        Test that the requesting user must be authenticated
+        """
+        self.client.logout()
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-list',
+        )
+        response = self.client.get(url)
+        assert response.status_code == 401
+
+    def test_successful_list_groups(self):
+        """
+        Test a successful GET request to the list endpoint.
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-list',
+        )
+        response = self.client.get(url)
+        assert response.json().get('count') == 1
+        assert response.json().get('results')[0].get('uuid') == str(self.group_1.uuid)
+
+    def test_successful_retrieve_group(self):
+        """
+        Test retrieving a single group record
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-detail',
+            kwargs={'pk': self.group_1.uuid},
+        )
+        response = self.client.get(url)
+        assert response.json().get('uuid') == str(self.group_1.uuid)
+
+    def test_successful_list_with_filters(self):
+        """
+        Test that the list endpoint can be filtered down via query params
+        """
+        url = settings.TEST_SERVER + reverse('enterprise-group-list')
+        new_group = EnterpriseGroupFactory()
+        new_membership = EnterpriseGroupMembershipFactory(group=new_group)
+        EnterpriseCustomerUserFactory(
+            user_id=self.user.id, enterprise_customer=new_group.enterprise_customer,
+        )
+        learner_query_param = f"?learner_uuids={new_membership.pending_enterprise_customer_user.id}"
+        learner_filtered_response = self.client.get(url + learner_query_param)
+        assert len(learner_filtered_response.json().get('results')) == 1
+        assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
+
+        enterprise_query_param = f"?enterprise_uuids={new_group.enterprise_customer.uuid}"
+        enterprise_filtered_response = self.client.get(url + enterprise_query_param)
+        assert len(enterprise_filtered_response.json().get('results')) == 1
+        assert enterprise_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
+
+        random_enterprise_query_param = f"?enterprise_uuids={uuid.uuid4()}"
+        response = self.client.get(url + random_enterprise_query_param)
+        assert not response.json().get('results')
+
+    def test_successful_post_group(self):
+        """
+        Test creating a new group record
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-list',
+        )
+        new_customer = EnterpriseCustomerFactory()
+        request_data = {
+            'enterprise_customer': str(new_customer.uuid),
+            'name': 'foobar',
+        }
+        response = self.client.post(url, data=request_data)
+        assert response.json().get('name') == 'foobar'
+        assert len(EnterpriseGroup.objects.filter(name='foobar')) == 1
+
+    def test_successful_update_group(self):
+        """
+        Test patching an existing group record
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-detail',
+            kwargs={'pk': self.group_1.uuid},
+        )
+        request_data = {'name': 'ayylmao'}
+        response = self.client.patch(url, data=request_data)
+        assert response.json().get('uuid') == str(self.group_1.uuid)
+        assert response.json().get('name') == 'ayylmao'
+        assert len(EnterpriseGroup.objects.filter(name='ayylmao')) == 1
+
+    def test_successful_delete_group(self):
+        """
+        Test deleting a group record
+        """
+        group_to_delete_uuid = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer).uuid
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-detail',
+            kwargs={'pk': group_to_delete_uuid},
+        )
+        response = self.client.delete(url)
+        assert response.status_code == 204
+        assert not EnterpriseGroup.objects.filter(uuid=group_to_delete_uuid)
+        assert not EnterpriseGroupMembership.objects.filter(group=group_to_delete_uuid)
 
 
 @mark.django_db
