@@ -21,7 +21,7 @@ class Command(BaseCommand):
     help = _('''
     This management command deletes records from the IntegratedChannelAPIRequestLogs model that are older than one month
     ''')
-    
+
     def add_arguments(self, parser):
         """
         Adds custom arguments to the parser.
