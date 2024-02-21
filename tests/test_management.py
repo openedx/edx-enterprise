@@ -57,8 +57,8 @@ from integrated_channels.integrated_channel.management.commands import (
 )
 from integrated_channels.integrated_channel.models import (
     ContentMetadataItemTransmission,
+    IntegratedChannelAPIRequestLogs,
     OrphanedContentTransmissions,
-    IntegratedChannelAPIRequestLogs
 )
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger

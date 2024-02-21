@@ -1,13 +1,14 @@
 """
 Deletes records from the IntegratedChannelAPIRequestLogs model that are older than one month..
 """
-from logging import getLogger
 from datetime import timedelta
-from django.utils import timezone
+from logging import getLogger
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 from django.utils.translation import gettext as _
+
 from integrated_channels.utils import integrated_channel_request_log_model
 
 User = auth.get_user_model()
