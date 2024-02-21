@@ -6,7 +6,6 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
-from simple_history.models import HistoricalRecords
 
 from django.db import models
 
@@ -140,8 +139,6 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         verbose_name="Provider Code",
         help_text="The provider code that Degreed gives to the content provider."
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'degreed'

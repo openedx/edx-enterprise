@@ -7,7 +7,6 @@ from logging import getLogger
 
 from config_models.models import ConfigurationModel
 from jsonfield import JSONField
-from simple_history.models import HistoricalRecords
 
 from django.contrib import auth
 from django.db import models
@@ -125,8 +124,6 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
             "If checked, subjects will not be sent to Cornerstone"
         )
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'cornerstone'

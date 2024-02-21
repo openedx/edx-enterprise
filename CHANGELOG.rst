@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+
+[4.12.0]
+---------
+* feat: Remove history tables for integrated channels customers configurations.
+
 [4.11.15]
 ---------
 * feat: CRUD api endpoints for the enterprise group table 

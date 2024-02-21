@@ -6,7 +6,6 @@ import json
 from logging import getLogger
 
 from fernet_fields import EncryptedCharField
-from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import force_bytes, force_str
@@ -184,8 +183,6 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
                     " courses as well"),
         default=False,
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'moodle'
