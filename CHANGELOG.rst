@@ -15,9 +15,14 @@ Change Log
 
 Unreleased
 ----------
-[4.11.16]
+
+[4.12.1]
 ---------
 * feat: unlink canvas user if not decommissioned on canvas side
+
+[4.12.0]
+---------
+* feat: Remove history tables for integrated channels customers configurations.
 
 [4.11.15]
 ---------
