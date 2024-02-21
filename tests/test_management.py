@@ -3,6 +3,7 @@ Test the Enterprise management commands and related functions.
 """
 
 import logging
+import random
 import unittest
 import uuid
 from contextlib import contextmanager
@@ -54,7 +55,11 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
-from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission, OrphanedContentTransmissions
+from integrated_channels.integrated_channel.models import (
+    ContentMetadataItemTransmission,
+    OrphanedContentTransmissions,
+    IntegratedChannelAPIRequestLogs
+)
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -2099,3 +2104,60 @@ class TestRemoveNullCatalogTransmissionAuditsManagementCommand(unittest.TestCase
         assert ContentMetadataItemTransmission.objects.filter(
             enterprise_customer_catalog_uuid=None
         ).count() == 0
+
+
+@mark.django_db
+class TestRemoveStaleIntegratedChannelAPILogsCommand(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``remove_stale_integrated_channel_api_logs`` management command.
+    """
+
+    def setUp(self):
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.pk = 1
+        self.enterprise_customer_configuration_id = 1
+        self.endpoint = 'https://example.com/endpoint'
+        self.payload = "{}"
+        self.time_taken = 500
+        self.response_body = "{}"
+        self.status_code = 200
+        super().setUp()
+
+    def test_remove_stale_integrated_channel_api_logs(self):
+        """
+        Test the remove stale integrated channel api logs command.
+        """
+        time_duration_value = random.randint(15, 60)
+        time_threshold = timezone.now() - timedelta(days=time_duration_value)
+
+        data = {
+            'enterprise_customer': self.enterprise_customer,
+            'enterprise_customer_configuration_id': self.enterprise_customer_configuration_id,
+            'endpoint': self.endpoint,
+            'payload': self.payload,
+            'time_taken': self.time_taken,
+            'response_body': self.response_body,
+            'status_code': self.status_code,
+            'created': time_threshold,
+            'modified': time_threshold
+        }
+
+        instances = []
+
+        num_records = 10
+
+        for _ in range(num_records):
+            instances.append(IntegratedChannelAPIRequestLogs(**data))
+
+        IntegratedChannelAPIRequestLogs.objects.bulk_create(instances)
+        data["created"] = data["modified"] = timezone.now()
+        IntegratedChannelAPIRequestLogs.objects.create(**data)
+
+        assert IntegratedChannelAPIRequestLogs.objects.all().count() == num_records + 1
+        call_command('remove_stale_integrated_channel_api_logs', time_duration=time_duration_value)
+        assert IntegratedChannelAPIRequestLogs.objects.all().count() == 1
+
+        older_than_one_month = IntegratedChannelAPIRequestLogs.objects.filter(
+            created__lt=time_threshold
+        ).exists()
+        self.assertFalse(older_than_one_month)
