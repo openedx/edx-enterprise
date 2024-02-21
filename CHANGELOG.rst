@@ -15,9 +15,13 @@ Change Log
 
 Unreleased
 ----------
-[4.11.15]
+[4.11.16]
 ---------
 * feat: unlink canvas user if not decommissioned on canvas side
+
+[4.11.15]
+---------
+* feat: CRUD api endpoints for the enterprise group table 
 
 [4.11.14]
 ---------
