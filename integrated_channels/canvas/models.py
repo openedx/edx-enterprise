@@ -6,7 +6,6 @@ import json
 import uuid
 from logging import getLogger
 
-from simple_history.models import HistoricalRecords
 from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
@@ -95,8 +94,6 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
             "A UUID for use in public-facing urls such as oauth state variables."
         )
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'canvas'

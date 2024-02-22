@@ -174,6 +174,13 @@ urlpatterns = [
         ),
         name='enterprise-customer-sso-configuration-base'
     ),
+    re_path(
+        r'^enterprise-group/(?P<group_uuid>[A-Za-z0-9-]+)/learners/?$',
+        enterprise_group.EnterpriseGroupViewSet.as_view(
+            {'get': 'get_learners'}
+        ),
+        name='enterprise-group-learners'
+    ),
 ]
 
 urlpatterns += router.urls
