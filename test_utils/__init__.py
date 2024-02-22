@@ -330,6 +330,22 @@ class APITest(APITestCase):
         request.COOKIES[jwt_cookie_name()] = jwt_token
         return request
 
+    def set_multiple_enterprise_roles_to_jwt(self, context_and_roles):
+        """
+        Sets multiple roles to the jwt token cookies
+        """
+        jwt_roles = []
+        for pairs in context_and_roles:
+            context, role = pairs
+            jwt_roles.append(f"{context}:{role}")
+        payload = generate_unversioned_payload(self.user)
+        payload.update({
+            'roles': jwt_roles
+        })
+        jwt_token = generate_jwt_token(payload)
+
+        self.client.cookies[jwt_cookie_name()] = jwt_token
+
     def set_jwt_cookie(self, system_wide_role='enterprise_admin', context='some_context'):
         """
         Set jwt token in cookies.

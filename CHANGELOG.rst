@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.12.4]
+---------
+* feat: adding assign_learners and remove_learners api endpoints for enterprise groups
+
 [4.12.3]
 ---------
 * feat: management command to clear out excessive records for API log table
@@ -34,7 +38,7 @@ Unreleased
 
 [4.11.15]
 ---------
-* feat: CRUD api endpoints for the enterprise group table 
+* feat: CRUD api endpoints for the enterprise group table
 
 [4.11.14]
 ---------
@@ -86,7 +90,7 @@ Unreleased
 
 [4.11.2]
 ---------
-* feat: added caching for fetching degreed course id 
+* feat: added caching for fetching degreed course id
 
 [4.11.1]
 ---------

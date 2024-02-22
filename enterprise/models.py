@@ -1476,6 +1476,18 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         )
         return enterprise_customer_user
 
+    def fulfill_pending_group_memberships(self, enterprise_customer_user):
+        """
+        Updates any membership records associated with a new created enterprise customer user object.
+
+        Arguments:
+            enterprise_customer_user: a EnterpriseCustomerUser instance
+        """
+        self.memberships.update(
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user=enterprise_customer_user
+        )
+
     def fulfill_pending_course_enrollments(self, enterprise_customer_user):
         """
         Enrolls a newly created EnterpriseCustomerUser in any courses attached to their
