@@ -16,6 +16,14 @@ Change Log
 Unreleased
 ----------
 
+[4.12.2]
+---------
+* * feat: add api /learners/ endpoint to the enterprise group viewset
+
+[4.12.1]
+---------
+* feat: unlink canvas user if not decommissioned on canvas side
+
 [4.12.0]
 ---------
 * feat: Remove history tables for integrated channels customers configurations.
