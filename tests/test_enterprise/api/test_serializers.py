@@ -309,7 +309,8 @@ class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpr
         )
 
         serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
-        assert serializer.data['enterprise_group'].uuid == membership.uuid
+        assert len(serializer.data['enterprise_group']) == 1
+        assert serializer.data['enterprise_group'][0].uuid == membership.uuid
 
     def test_multi_group_membership(self):
         """
