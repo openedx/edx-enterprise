@@ -592,6 +592,19 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
         fields = ('enterprise_customer', 'name', 'uuid')
 
 
+class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroupMembership model.
+    """
+    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
+    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
+    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
+
+    class Meta:
+        model = models.EnterpriseGroupMembership
+        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid')
+
+
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
@@ -817,28 +830,6 @@ class CourseDetailSerializer(ImmutableStateSerializer):
                 course_run['key']
             )
         return updated_course
-
-
-class EnterpriseGroupSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseGroup model.
-    """
-    class Meta:
-        model = models.EnterpriseGroup
-        fields = ('enterprise_customer', 'name', 'uuid')
-
-
-class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseGroupMembership model.
-    """
-    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
-    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
-    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
-
-    class Meta:
-        model = models.EnterpriseGroupMembership
-        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid')
 
 
 class CourseRunDetailSerializer(ImmutableStateSerializer):
