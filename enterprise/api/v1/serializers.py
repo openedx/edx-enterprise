@@ -679,7 +679,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         """
         Return the enterprise group membership for this enterprise customer user.
         """
-        return obj.memberships.select_related('group').first()
+        return obj.memberships.select_related('group').all()
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
