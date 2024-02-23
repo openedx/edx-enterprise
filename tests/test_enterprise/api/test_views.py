@@ -7272,12 +7272,13 @@ class TestEnterpriseGroupViewSet(APITest):
 
         self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
         self.group_2 = EnterpriseGroupFactory()
-        for _ in range(5):
-            EnterpriseGroupMembershipFactory(
+        self.enterprise_group_memberships = []
+        for _ in range(11):
+            self.enterprise_group_memberships.append(EnterpriseGroupMembershipFactory(
                 group=self.group_1,
                 pending_enterprise_customer_user=None,
                 enterprise_customer_user__enterprise_customer=self.enterprise_customer,
-            )
+            ))
 
     def test_group_permissions(self):
         """
@@ -7313,6 +7314,66 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.get(url)
         assert response.json().get('uuid') == str(self.group_1.uuid)
+
+    def test_successful_list_learners(self):
+        """
+        Test a successful GET request to the list endpoint.
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        )
+        results_list = []
+        for i in reversed(range(1, 11)):
+            results_list.append(
+                {
+                    'learner_id': self.enterprise_group_memberships[i].enterprise_customer_user.id,
+                    'pending_learner_id': None,
+                    'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
+                },
+            )
+        expected_response = {
+            'count': 11,
+            'next': f'http://testserver/enterprise/api/v1/enterprise-group/{self.group_1.uuid}/learners?page=2',
+            'previous': None,
+            'results': results_list,
+        }
+        response = self.client.get(url)
+        assert response.json() == expected_response
+        # verify page 2 of paginated response
+        url_page_2 = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        ) + '?page=2'
+        page_2_response = self.client.get(url_page_2)
+        expected_response_page_2 = {
+            'count': 11,
+            'next': None,
+            'previous': f'http://testserver/enterprise/api/v1/enterprise-group/{self.group_1.uuid}/learners',
+            'results': [
+                {
+                    'learner_id': self.enterprise_group_memberships[0].enterprise_customer_user.id,
+                    'pending_learner_id': None,
+                    'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
+                }
+            ],
+        }
+        assert page_2_response.json() == expected_response_page_2
+
+    def test_group_uuid_not_found(self):
+        """
+        Verify that the endpoint api/v1/enterprise_group/<group uuid>/learners/
+        returns 404 when the group_uuid is not found.
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
+        group_uuid = fake.uuid4()
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group_uuid},
+        )
+        response = self.client.get(url)
+        assert response.status_code == 404
 
     def test_successful_list_with_filters(self):
         """
