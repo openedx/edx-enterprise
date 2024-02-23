@@ -10,15 +10,15 @@ attrs==23.2.0
     #   trio
 autocommand==2.2.2
     # via jaraco-text
-backports-tarfile==1.1.0
+backports-tarfile==1.1.1
     # via jaraco-context
 certifi==2024.2.2
     # via selenium
-cheroot==10.0.0
+cheroot==10.0.1
     # via cherrypy
 cherrypy==18.9.0
     # via jasmine
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via
     #   trio
     #   trio-websocket
@@ -44,7 +44,7 @@ jaraco-collections==5.0.1
     #   cherrypy
 jaraco-context==5.3.0
     # via jaraco-text
-jaraco-functools==4.0.0
+jaraco-functools==4.0.1
     # via
     #   -r requirements/js_test.in
     #   cheroot
