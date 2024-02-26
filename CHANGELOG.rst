@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.12.3]
+---------
+* feat: management command to clear out excessive records for API log table
+
 [4.12.2]
 ---------
 * feat: add api /learners/ endpoint to the enterprise group viewset
