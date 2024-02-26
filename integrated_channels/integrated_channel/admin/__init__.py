@@ -128,7 +128,7 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
         "payload",
     ]
 
-    list_per_page = 100
+    list_per_page = 20
 
     class Meta:
         model = IntegratedChannelAPIRequestLogs
