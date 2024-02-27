@@ -583,6 +583,28 @@ class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSeri
         }
 
 
+class EnterpriseGroupSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroup model.
+    """
+    class Meta:
+        model = models.EnterpriseGroup
+        fields = ('enterprise_customer', 'name', 'uuid')
+
+
+class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroupMembership model.
+    """
+    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
+    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
+    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
+
+    class Meta:
+        model = models.EnterpriseGroupMembership
+        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid')
+
+
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
@@ -600,7 +622,8 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
             'groups',
             'created',
             'invite_key',
-            'role_assignments'
+            'role_assignments',
+            'enterprise_group',
         )
 
     user = UserSerializer()
@@ -608,6 +631,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     role_assignments = serializers.SerializerMethodField()
+    enterprise_group = serializers.SerializerMethodField()
 
     def _get_role_assignments_by_ecu_id(self, enterprise_customer_users):
         """
@@ -663,6 +687,12 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         Return the enterprise role assignments for this enterprise customer user.
         """
         return self.role_assignments_by_ecu_id.get(obj.id, [])
+
+    def get_enterprise_group(self, obj):
+        """
+        Return the enterprise group membership for this enterprise customer user.
+        """
+        return obj.memberships.select_related('group').all()
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
@@ -800,28 +830,6 @@ class CourseDetailSerializer(ImmutableStateSerializer):
                 course_run['key']
             )
         return updated_course
-
-
-class EnterpriseGroupSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseGroup model.
-    """
-    class Meta:
-        model = models.EnterpriseGroup
-        fields = ('enterprise_customer', 'name', 'uuid')
-
-
-class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseGroupMembership model.
-    """
-    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
-    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
-    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
-
-    class Meta:
-        model = models.EnterpriseGroupMembership
-        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid')
 
 
 class CourseRunDetailSerializer(ImmutableStateSerializer):

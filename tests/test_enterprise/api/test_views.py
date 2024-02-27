@@ -1261,6 +1261,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_demo_data_for_analytics_and_lpr': False,
                     'enable_academies': False,
                 },
+                'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
                 'created': '2021-10-20T19:01:31Z', 'invite_key': None, 'role_assignments': [],

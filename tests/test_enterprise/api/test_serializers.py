@@ -297,6 +297,44 @@ class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpr
         assert sorted(ecu_1_data['role_assignments']) == sorted([ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE])
         assert ecu_2_data['role_assignments'] == [ENTERPRISE_LEARNER_ROLE]
 
+    def test_group_membership(self):
+        """
+        Test that group memberships are associated properly with a single instance.
+        """
+
+        enterprise_group = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group
+        )
+
+        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
+        assert len(serializer.data['enterprise_group']) == 1
+        assert serializer.data['enterprise_group'][0].uuid == membership.uuid
+
+    def test_multi_group_membership(self):
+        """
+        Test that multiple group memberships are associated properly with a single instance.
+        """
+
+        enterprise_group = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        enterprise_group_2 = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group
+        )
+        membership_2 = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group_2
+        )
+
+        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
+        assert len(serializer.data['enterprise_group']) == 2
+        assert sorted([membership.uuid, membership_2.uuid]) == sorted([
+            serializer.data['enterprise_group'][0].uuid,
+            serializer.data['enterprise_group'][1].uuid,
+        ])
+
 
 @mark.django_db
 class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):
