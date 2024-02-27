@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.12.5]
+---------
+* feat: adding a group membership to the EnterpriseCustomerUserReadOnlySerializer
+
 [4.12.4]
 ---------
 * feat: adding assign_learners and remove_learners api endpoints for enterprise groups
