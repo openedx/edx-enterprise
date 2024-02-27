@@ -85,6 +85,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
             is_user_created=created,
         )
         pending_ecu.fulfill_pending_course_enrollments(enterprise_customer_user)
+        pending_ecu.fulfill_pending_group_memberships(enterprise_customer_user)
         pending_ecu.delete()
 
     enterprise_customer_users = models.EnterpriseCustomerUser.objects.filter(user_id=user_instance.id)
