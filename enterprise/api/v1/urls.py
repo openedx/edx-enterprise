@@ -181,6 +181,16 @@ urlpatterns = [
         ),
         name='enterprise-group-learners'
     ),
+    re_path(
+        r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/assign_learners/?$',
+        enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'assign_learners'}),
+        name='enterprise-group-assign-learners'
+    ),
+    re_path(
+        r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/remove_learners/?$',
+        enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'remove_learners'}),
+        name='enterprise-group-remove-learners'
+    ),
 ]
 
 urlpatterns += router.urls

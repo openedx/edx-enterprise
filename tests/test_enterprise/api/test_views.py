@@ -511,7 +511,6 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         )
 
         expected_groups = ['enterprise_enrollment_api_access']
-
         response = self.client.get(
             '{host}{path}?username={username}'.format(
                 host=settings.TEST_SERVER,
@@ -7271,7 +7270,12 @@ class TestEnterpriseGroupViewSet(APITest):
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
 
         self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
-        self.group_2 = EnterpriseGroupFactory()
+        self.group_2 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk)
+        ])
+
         self.enterprise_group_memberships = []
         for _ in range(11):
             self.enterprise_group_memberships.append(EnterpriseGroupMembershipFactory(
@@ -7300,8 +7304,7 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-list',
         )
         response = self.client.get(url)
-        assert response.json().get('count') == 1
-        assert response.json().get('results')[0].get('uuid') == str(self.group_1.uuid)
+        assert response.json().get('count') == 2
 
     def test_successful_retrieve_group(self):
         """
@@ -7412,6 +7415,10 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise_customer': str(new_customer.uuid),
             'name': 'foobar',
         }
+        unauthorized_response = self.client.post(url, data=request_data)
+        assert unauthorized_response.status_code == 403
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, new_customer.pk)
         response = self.client.post(url, data=request_data)
         assert response.json().get('name') == 'foobar'
         assert len(EnterpriseGroup.objects.filter(name='foobar')) == 1
@@ -7425,11 +7432,19 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-detail',
             kwargs={'pk': self.group_1.uuid},
         )
-        request_data = {'name': 'ayylmao'}
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+
+        request_data = {'enterprise_customer': new_uuid}
         response = self.client.patch(url, data=request_data)
         assert response.json().get('uuid') == str(self.group_1.uuid)
-        assert response.json().get('name') == 'ayylmao'
-        assert len(EnterpriseGroup.objects.filter(name='ayylmao')) == 1
+        assert response.json().get('enterprise_customer') == str(new_uuid)
+        assert len(EnterpriseGroup.objects.filter(enterprise_customer=str(new_uuid))) == 1
 
     def test_successful_delete_group(self):
         """
@@ -7445,6 +7460,162 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 204
         assert not EnterpriseGroup.objects.filter(uuid=group_to_delete_uuid)
         assert not EnterpriseGroupMembership.objects.filter(group=group_to_delete_uuid)
+
+    def test_assign_learners_404(self):
+        """
+        Test that the assign learners endpoint properly handles no finding the provided group
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': uuid.uuid4()},
+        )
+        assert self.client.post(url).status_code == 404
+
+    def test_assign_learners_requires_learner_emails(self):
+        """
+        Test that the assign learners endpoint requires a POST body param: `learner_emails`
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        response = self.client.post(url)
+        assert response.status_code == 400
+        assert response.data == "Error: missing request data: `learner_emails`."
+
+    def test_successful_assign_learners_to_group(self):
+        """
+        Test that both existing and new learners assigned to groups properly creates membership records
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+
+        existing_emails = ",".join([(UserFactory().email) for _ in range(10)])
+        new_emails = ",".join([(f"email_{x}@example.com") for x in range(10)])
+
+        request_data = {'learner_emails': f"{new_emails},{existing_emails}"}
+        response = self.client.post(url, data=request_data)
+
+        assert response.status_code == 201
+        assert response.data == {'records_processed': 20, 'new_learners': 10, 'existing_learners': 10}
+        assert len(
+            EnterpriseGroupMembership.objects.filter(
+                group=self.group_2,
+                pending_enterprise_customer_user__isnull=True
+            )
+        ) == 10
+        assert len(
+            EnterpriseGroupMembership.objects.filter(
+                group=self.group_2,
+                enterprise_customer_user__isnull=True
+            )
+        ) == 10
+
+    def test_remove_learners_404(self):
+        """
+        Test that the remove learners endpoint properly handles no finding the provided group
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': uuid.uuid4()},
+        )
+        assert self.client.post(url).status_code == 404
+
+    def test_remove_learners_requires_learner_emails(self):
+        """
+        Test that the remove learners endpoint requires a POST body param: `learner_emails`
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        response = self.client.post(url)
+        assert response.status_code == 400
+        assert response.data == "Error: missing request data: `learner_emails`."
+
+    def test_patch_with_bad_request_customer_to_change_to(self):
+        """
+        Test that the PATCH endpoint will not allow the user to update a group to a customer that the requester
+        doesn't have access to
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-detail',
+            kwargs={'pk': self.group_1.uuid},
+        )
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+
+        request_data = {'enterprise_customer': new_uuid}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 401
+
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 200
+
+        request_data = {'enterprise_customer': uuid.uuid4()}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 401
+
+    def test_successful_remove_learners_from_group(self):
+        """
+        Test that both existing and new learners in groups are properly removed by the remove_learners endpoint
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        existing_emails = ""
+        memberships_to_delete = []
+        for _ in range(10):
+            membership = EnterpriseGroupMembershipFactory(group=self.group_2)
+            memberships_to_delete.append(membership)
+            existing_emails += membership.enterprise_customer_user.user.email + ','
+
+        request_data = {'learner_emails': existing_emails}
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 200
+        assert response.data == {'records_deleted': 10}
+        for membership in memberships_to_delete:
+            with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
+                EnterpriseGroupMembership.objects.get(pk=membership.pk)
+
+    def test_remove_learners_from_group_only_removes_from_specified_group(self):
+        """
+        Test that removing a learner's membership from a group will only effect the specified group
+        """
+        existing_group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        group_to_remove_from = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        pending_user = PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        existing_membership = EnterpriseGroupMembershipFactory(
+            group=existing_group,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None
+        )
+        membership_to_remove = EnterpriseGroupMembershipFactory(
+            group=group_to_remove_from,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None
+        )
+
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': group_to_remove_from.uuid},
+        )
+
+        request_data = {'learner_emails': pending_user.user_email}
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 200
+        with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
+            EnterpriseGroupMembership.objects.get(pk=membership_to_remove.pk)
+        assert EnterpriseGroupMembership.objects.get(pk=existing_membership.pk)
 
 
 @mark.django_db
