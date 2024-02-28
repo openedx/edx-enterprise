@@ -467,8 +467,7 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
 
     def test_get_enterprise_customer_user_contains_features(self):
         """
-        Assert whether the paginated response contains `enterprise_features` with the
-        appropriate feature flags.
+        Assert whether the paginated response contains `enterprise_features`.
         """
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
