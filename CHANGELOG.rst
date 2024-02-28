@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.12.6]
+---------
+* fix: adding get_queryset for fix of integrated channel api logs loading
+
 [4.12.5]
 ---------
 * feat: adding a group membership to the EnterpriseCustomerUserReadOnlySerializer
