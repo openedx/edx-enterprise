@@ -7402,6 +7402,15 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url + random_enterprise_query_param)
         assert not response.json().get('results')
 
+        new_group.delete()
+        new_membership.delete()
+        enterprise_unfiltered_response = self.client.get(url)
+        assert len(enterprise_unfiltered_response.json().get('results')) == 0
+        enterprise_query_param = "?include_deleted=true"
+        enterprise_filtered_response = self.client.get(url + enterprise_query_param)
+        assert len(enterprise_filtered_response.json().get('results')) == 1
+        assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
+
     def test_successful_post_group(self):
         """
         Test creating a new group record
@@ -7458,8 +7467,11 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.delete(url)
         assert response.status_code == 204
-        assert not EnterpriseGroup.objects.filter(uuid=group_to_delete_uuid)
-        assert not EnterpriseGroupMembership.objects.filter(group=group_to_delete_uuid)
+        assert EnterpriseGroup.available_objects.filter(uuid=group_to_delete_uuid).count() == 0
+        assert EnterpriseGroup.all_objects.filter(uuid=group_to_delete_uuid).count() == 1
+        # if a group gets soft deleted, we still cascade and actually delete the memberships
+        assert EnterpriseGroupMembership.available_objects.filter(group=group_to_delete_uuid).count() == 0
+        assert EnterpriseGroupMembership.all_objects.filter(group=group_to_delete_uuid).count() == 0
 
     def test_assign_learners_404(self):
         """
