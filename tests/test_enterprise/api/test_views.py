@@ -465,6 +465,27 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     Test enterprise learner list endpoint
     """
 
+    def test_get_enterprise_customer_user_contains_features(self):
+        """
+        Assert whether the paginated response contains `enterprise_features` with the
+        appropriate feature flags.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        response = self.client.get(
+            '{host}{path}?username={username}'.format(
+                host=settings.TEST_SERVER,
+                path=ENTERPRISE_LEARNER_LIST_ENDPOINT,
+                username=user.username
+            )
+        )
+        response = self.load_json(response.content)
+        assert response['enterprise_features'] is not None
+
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
