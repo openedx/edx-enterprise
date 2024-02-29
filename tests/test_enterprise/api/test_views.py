@@ -7384,6 +7384,11 @@ class TestEnterpriseGroupViewSet(APITest):
         }
         assert page_2_response.json() == expected_response_page_2
 
+        self.enterprise_group_memberships[0].delete()
+        response = self.client.get(url)
+        response.json()['count'] == 10
+        
+
     def test_group_uuid_not_found(self):
         """
         Verify that the endpoint api/v1/enterprise_group/<group uuid>/learners/
