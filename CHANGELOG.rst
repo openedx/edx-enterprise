@@ -16,6 +16,14 @@ Change Log
 Unreleased
 ----------
 
+[4.13.0]
+---------
+* feat: add Waffle-based `enterprise_features` to the `EnterpriseCustomerUserViewSet`.
+
+[4.12.6]
+---------
+* fix: Proximus learner transmission failures
+
 [4.12.5]
 ---------
 * feat: adding a group membership to the EnterpriseCustomerUserReadOnlySerializer
