@@ -73,7 +73,7 @@ docs: ## generate Sphinx HTML documentation, including API docs
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
 PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
 LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
-PLATFORM_BASE_REQS = https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt
+PLATFORM_BASE_REQS = https://raw.githubusercontent.com/openedx/edx-platform/master/requirements/edx/base.txt
 COMMON_CONSTRAINTS_TXT=requirements/common_constraints.txt
 .PHONY: $(COMMON_CONSTRAINTS_TXT)
 $(COMMON_CONSTRAINTS_TXT):
