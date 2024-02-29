@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[4.13.0]
+---------
+* feat: add Waffle-based `enterprise_features` to the `EnterpriseCustomerUserViewSet`.
+
 [4.12.6]
 ---------
 * fix: Proximus learner transmission failures
