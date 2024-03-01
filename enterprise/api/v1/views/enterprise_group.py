@@ -119,8 +119,32 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         group_uuid = kwargs.get('group_uuid')
         try:
-            learner_list = self.get_queryset().get(uuid=group_uuid).members.all()
-            page = self.paginate_queryset(learner_list)
+            group_object = self.get_queryset().get(uuid=group_uuid)
+            if group_object.applies_to_all_contexts:
+                members = []
+                customer_users = models.EnterpriseCustomerUser.objects.filter(
+                    enterprise_customer=group_object.enterprise_customer,
+                    active=True,
+                )
+                pending_customer_users = models.PendingEnterpriseCustomerUser.objects.filter(
+                    enterprise_customer=group_object.enterprise_customer,
+                )
+                for ent_user in customer_users:
+                    members.append(models.EnterpriseGroupMembership(
+                        uuid=None,
+                        enterprise_customer_user=ent_user,
+                        group=group_object,
+                    ))
+                for pending_user in pending_customer_users:
+                    members.append(models.EnterpriseGroupMembership(
+                        uuid=None,
+                        pending_enterprise_customer_user=pending_user,
+                        group=group_object,
+                    ))
+                page = self.paginate_queryset(members)
+            else:
+                learner_list = group_object.members.all()
+                page = self.paginate_queryset(learner_list)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
             return response

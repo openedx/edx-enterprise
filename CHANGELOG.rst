@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.3]
+---------
+* feat: adding management command to remove expired pending group memberships
+
 [4.13.2]
 ---------
 * feat: add a waffle flag for enterprise groups feature
@@ -22,7 +26,6 @@ Unreleased
 [4.13.1]
 ---------
 * feat: adding soft delete functionality for groups and group memberships
-
 
 [4.13.0]
 ---------
