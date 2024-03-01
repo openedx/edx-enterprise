@@ -15,6 +15,9 @@ Change Log
 
 Unreleased
 ----------
+[4.13.2]
+---------
+* feat: add a waffle flag for enterprise groups feature
 
 [4.13.1]
 ---------
