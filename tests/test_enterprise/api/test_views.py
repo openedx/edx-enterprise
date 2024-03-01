@@ -7386,8 +7386,7 @@ class TestEnterpriseGroupViewSet(APITest):
 
         self.enterprise_group_memberships[0].delete()
         response = self.client.get(url)
-        response.json()['count'] == 10
-        
+        assert response.json()['count'] == 10
 
     def test_group_uuid_not_found(self):
         """
