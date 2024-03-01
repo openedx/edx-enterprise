@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[4.13.1]
+---------
+* feat: adding soft delete functionality for groups and group memberships
+
+
 [4.13.0]
 ---------
 * feat: add Waffle-based `enterprise_features` to the `EnterpriseCustomerUserViewSet`.

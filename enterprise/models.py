@@ -4212,7 +4212,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         return sp_metadata_url
 
 
-class EnterpriseGroup(TimeStampedModel):
+class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
     """
     Enterprise Group model
 
@@ -4242,7 +4242,7 @@ class EnterpriseGroup(TimeStampedModel):
         ordering = ['-modified']
 
 
-class EnterpriseGroupMembership(TimeStampedModel):
+class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
     """
     Enterprise Group Membership model
 

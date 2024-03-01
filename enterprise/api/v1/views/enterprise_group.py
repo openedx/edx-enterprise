@@ -28,6 +28,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
     API views for the ``enterprise-group`` API endpoint.
     """
     queryset = models.EnterpriseGroup.objects.all()
+    queryset_with_removed = models.EnterpriseGroup.all_objects.all()
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend,)
     serializer_class = serializers.EnterpriseGroupSerializer
@@ -37,7 +38,12 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         - Filter down the queryset of groups available to the requesting user.
         - Account for requested filtering query params
         """
-        queryset = self.queryset
+        include_deleted = self.request.query_params.get('include_deleted', False)
+        if include_deleted:
+            queryset = self.queryset_with_removed
+        else:
+            queryset = self.queryset
+
         if not self.request.user.is_staff:
             enterprise_user_objects = models.EnterpriseCustomerUser.objects.filter(
                 user_id=self.request.user.id,
