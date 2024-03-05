@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.5]
+---------
+* feat: added autocomplete for enterprise customer in EnterpriseCustomerCatalogAdmin
+
 [4.13.4]
 ---------
 * feat: admin pages for enterprise groups and enterprise group memberships

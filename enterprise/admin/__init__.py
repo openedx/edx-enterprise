@@ -887,6 +887,8 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer__uuid',
     )
 
+    autocomplete_fields = ['enterprise_customer']
+
     fields = (
         'title',
         'enterprise_customer',
