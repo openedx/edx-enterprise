@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -27,6 +28,7 @@ from integrated_channels.utils import channel_code_to_app_label, convert_comma_s
 
 LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
+LAST_24_HRS = timezone.now() - timezone.timedelta(hours=24)
 
 
 def set_default_display_name(*args, **kw):
@@ -671,6 +673,11 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True
     )
+    remote_errored_at = models.DateTimeField(
+        help_text='Date when the content transmission was failed in the remote API.',
+        blank=True,
+        null=True
+    )
     remote_updated_at = models.DateTimeField(
         help_text='Date when the content transmission was last updated in the remote API',
         blank=True,
@@ -707,13 +714,16 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         """
         Return any pre-existing records for this customer/plugin/content which was previously deleted
         """
-        return ContentMetadataItemTransmission.objects.filter(
+        query = Q(
             enterprise_customer=enterprise_customer,
             plugin_configuration_id=plugin_configuration_id,
             content_id=content_id,
             integrated_channel_code=integrated_channel_code,
             remote_deleted_at__isnull=False,
         )
+        query.add(Q(remote_errored_at__lt=LAST_24_HRS) |
+                  Q(remote_errored_at__isnull=True), Q.AND)
+        return ContentMetadataItemTransmission.objects.filter(query)
 
     @classmethod
     def incomplete_create_transmissions(
@@ -734,6 +744,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_created_at__isnull=True,
             remote_updated_at__isnull=True,
             remote_deleted_at__isnull=True,
+            remote_errored_at__isnull=True,
         )
         in_db_but_failed_to_send_query = Q(
             enterprise_customer=enterprise_customer,
@@ -745,6 +756,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=True,
             api_response_status_code__gte=400,
         )
+        in_db_but_failed_to_send_query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
         in_db_but_unsent_query.add(in_db_but_failed_to_send_query, Q.OR)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_unsent_query)
 
@@ -769,6 +782,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=True,
             api_response_status_code__gte=400,
         )
+        in_db_but_failed_to_send_query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
     @classmethod
@@ -791,6 +806,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=False,
             api_response_status_code__gte=400,
         )
+        in_db_but_failed_to_send_query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
     def _mark_transmission(self, mark_for):
