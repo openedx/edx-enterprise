@@ -4233,6 +4233,14 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         related_name='groups',
         on_delete=models.deletion.CASCADE
     )
+    applies_to_all_contexts = models.BooleanField(
+        verbose_name="Set group membership to the entire org of learners.",
+        default=False,
+        help_text=_(
+            "When enabled, all learners connected to the org will be considered a member."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:
