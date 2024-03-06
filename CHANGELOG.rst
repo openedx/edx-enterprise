@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.4]
+---------
+* feat: admin pages for enterprise groups and enterprise group memberships
+
 [4.13.3]
 ---------
 * feat: adding management command to remove expired pending group memberships
