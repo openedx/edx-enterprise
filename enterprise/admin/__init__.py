@@ -456,7 +456,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     )
 
     list_display = ('username', 'user_email', 'get_enterprise_customer')
-    search_fields = ('user_id',)
+    search_fields = ('user_id', 'user_email',)
 
     @admin.display(
         description='Enterprise Customer'
@@ -581,6 +581,11 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'user_email',
         'enterprise_customer',
         'created'
+    )
+
+    search_fields = (
+        'user_email',
+        'id'
     )
 
     readonly_fields = (
@@ -1155,3 +1160,53 @@ class EnterpriseCustomerSsoConfigurationAdmin(DjangoObjectActions, admin.ModelAd
         obj.save()
 
     mark_configured.label = "Mark as Configured"
+
+
+@admin.register(models.EnterpriseGroup)
+class EnterpriseGroupAdmin(admin.ModelAdmin):
+    """
+    Django admin for EnterpriseGroup model.
+    """
+    model = models.EnterpriseGroup
+    list_display = ('uuid', 'enterprise_customer', 'applies_to_all_contexts', )
+    list_filter = ('applies_to_all_contexts',)
+    search_fields = (
+        'uuid',
+        'name',
+        'enterprise_customer__name',
+        'enterprise_customer__uuid',
+    )
+    readonly_fields = ('count', 'members',)
+
+    def members(self, obj):
+        """
+        Return the non-deleted members of a group
+        """
+        return obj.get_all_learners()
+
+    @admin.display(description="Number of members in group")
+    def count(self, obj):
+        """
+        Return the number of members in a group
+        """
+        return len(obj.get_all_learners())
+
+
+@admin.register(models.EnterpriseGroupMembership)
+class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
+    """
+    Django admin for EnterpriseGroupMembership model.
+    """
+    model = models.EnterpriseGroupMembership
+    list_display = ('group', 'membership_user',)
+    search_fields = (
+        'uuid',
+        'group__enterprise_customer_user',
+        'enterprise_customer_user',
+        'pending_enterprise_customer_user',
+    )
+    autocomplete_fields = (
+        'group',
+        'enterprise_customer_user',
+        'pending_enterprise_customer_user',
+    )
