@@ -99,15 +99,9 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
 
     list_display = [
         "endpoint",
-        "enterprise_customer",
+        "enterprise_customer_id",
         "time_taken",
         "status_code",
-    ]
-    list_filter = [
-        "status_code",
-        "enterprise_customer",
-        "endpoint",
-        "time_taken",
     ]
     search_fields = [
         "status_code",
