@@ -936,7 +936,6 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
             )
         ]
 
-
     def __str__(self):
         """
         Return a human-readable string representation of the object.
