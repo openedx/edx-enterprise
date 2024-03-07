@@ -60,7 +60,11 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.toggles import FEATURE_PREQUERY_SEARCH_SUGGESTIONS, TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
+from enterprise.toggles import (
+    ENTERPRISE_GROUPS_V1,
+    FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
+    TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
+)
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_sso_orchestrator_api_base_url,
@@ -464,6 +468,26 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     """
     Test enterprise learner list endpoint
     """
+
+    def test_get_enterprise_customer_user_contains_features(self):
+        """
+        Assert whether the paginated response contains `enterprise_features`.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        response = self.client.get(
+            '{host}{path}?username={username}'.format(
+                host=settings.TEST_SERVER,
+                path=ENTERPRISE_LEARNER_LIST_ENDPOINT,
+                username=user.username
+            )
+        )
+        response = self.load_json(response.content)
+        assert response['enterprise_features'] is not None
 
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
@@ -1499,59 +1523,61 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
 
     @ddt.data(
         # Request missing required permissions query param.
-        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False, False),
+        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False),
+         True, None, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, None, False, False),
+         False, None, False, False, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False),
+         True, None, False, False, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False, False),
+         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False,
+         False, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on slug with results, with
-        # top down assignment & real-time LCM feature enabled and
-        # prequery search results enabled
+        # top down assignment & real-time LCM feature enabled,
+        # prequery search results enabled and
+        # enterprise groups v1 feature enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, True, True),
+         None, True, True, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -1565,6 +1591,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             expected_error,
             is_top_down_assignment_real_time_lcm_enabled,
             feature_prequery_search_suggestions_enabled,
+            enterprise_groups_v1_enabled,
             mock_get_logo_url,
     ):
         """
@@ -1621,6 +1648,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         with override_waffle_flag(
             FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
             active=feature_prequery_search_suggestions_enabled
+        ):
+
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
+        with override_waffle_flag(
+            ENTERPRISE_GROUPS_V1,
+            active=enterprise_groups_v1_enabled
         ):
 
             response = client.get(
@@ -1686,7 +1721,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_features': {
                     'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
                     'feature_prequery_search_suggestions': feature_prequery_search_suggestions_enabled,
-
+                    'enterprise_groups_v1': enterprise_groups_v1_enabled,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
@@ -7364,6 +7399,10 @@ class TestEnterpriseGroupViewSet(APITest):
         }
         assert page_2_response.json() == expected_response_page_2
 
+        self.enterprise_group_memberships[0].delete()
+        response = self.client.get(url)
+        assert response.json()['count'] == 10
+
     def test_group_uuid_not_found(self):
         """
         Verify that the endpoint api/v1/enterprise_group/<group uuid>/learners/
@@ -7401,6 +7440,15 @@ class TestEnterpriseGroupViewSet(APITest):
         random_enterprise_query_param = f"?enterprise_uuids={uuid.uuid4()}"
         response = self.client.get(url + random_enterprise_query_param)
         assert not response.json().get('results')
+
+        new_group.delete()
+        new_membership.delete()
+        enterprise_unfiltered_response = self.client.get(url)
+        assert len(enterprise_unfiltered_response.json().get('results')) == 0
+        enterprise_query_param = "?include_deleted=true"
+        enterprise_filtered_response = self.client.get(url + enterprise_query_param)
+        assert len(enterprise_filtered_response.json().get('results')) == 1
+        assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
 
     def test_successful_post_group(self):
         """
@@ -7458,8 +7506,11 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.delete(url)
         assert response.status_code == 204
-        assert not EnterpriseGroup.objects.filter(uuid=group_to_delete_uuid)
-        assert not EnterpriseGroupMembership.objects.filter(group=group_to_delete_uuid)
+        assert EnterpriseGroup.available_objects.filter(uuid=group_to_delete_uuid).count() == 0
+        assert EnterpriseGroup.all_objects.filter(uuid=group_to_delete_uuid).count() == 1
+        # if a group gets soft deleted, we still cascade and actually delete the memberships
+        assert EnterpriseGroupMembership.available_objects.filter(group=group_to_delete_uuid).count() == 0
+        assert EnterpriseGroupMembership.all_objects.filter(group=group_to_delete_uuid).count() == 0
 
     def test_assign_learners_404(self):
         """
@@ -7616,6 +7667,28 @@ class TestEnterpriseGroupViewSet(APITest):
         with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
             EnterpriseGroupMembership.objects.get(pk=membership_to_remove.pk)
         assert EnterpriseGroupMembership.objects.get(pk=existing_membership.pk)
+
+    def test_group_applies_to_all_contexts_learner_list(self):
+        """
+        Test that hitting the enterprise-group `/learners/` endpoint for a group that has ``applies_to_all_contexts``
+        will return all learners in the group's org regardless of what membership records exist.
+        """
+        new_group = EnterpriseGroupFactory(applies_to_all_contexts=True)
+        new_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id, enterprise_customer=new_group.enterprise_customer,
+            active=True
+        )
+        pending_user = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=new_group.enterprise_customer,
+        )
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': new_group.uuid},
+        )
+        response = self.client.get(url)
+        results = response.json().get('results')
+        for result in results:
+            assert (result.get('pending_learner_id') == pending_user.id) or (result.get('learner_id') == new_user.id)
 
 
 @mark.django_db

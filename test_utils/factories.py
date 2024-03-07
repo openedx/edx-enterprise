@@ -2,6 +2,7 @@
 Factoryboy factories.
 """
 
+from random import randint
 from uuid import UUID
 
 import factory
@@ -244,7 +245,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = User
 
     email = factory.LazyAttribute(lambda x: FAKER.email())
-    username = factory.LazyAttribute(lambda x: FAKER.user_name())
+    username = factory.LazyAttribute(lambda x: FAKER.user_name() + str(randint(1, 10000)))
     first_name = factory.LazyAttribute(lambda x: FAKER.first_name())
     last_name = factory.LazyAttribute(lambda x: FAKER.last_name())
     is_staff = False
@@ -1114,6 +1115,7 @@ class EnterpriseGroupFactory(factory.django.DjangoModelFactory):
         model = EnterpriseGroup
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    applies_to_all_contexts = False
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     name = factory.LazyAttribute(lambda x: FAKER.company())
 

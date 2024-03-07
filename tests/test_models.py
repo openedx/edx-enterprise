@@ -53,6 +53,8 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
+    EnterpriseGroupMembership,
     LicensedEnterpriseCourseEnrollment,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
@@ -2661,6 +2663,18 @@ class TestEnterpriseGroup(unittest.TestCase):
         with raises(Exception):
             factories.EnterpriseGroupFactory(name="foobar", enterprise_customer=group_1.enterprise_customer)
 
+    def test_enterprise_group_soft_delete(self):
+        """
+        Test ``EnterpriseGroup`` soft deletion property.
+        """
+        group = factories.EnterpriseGroupFactory()
+
+        assert EnterpriseGroup.all_objects.count() == 1
+        assert EnterpriseGroup.available_objects.count() == 1
+        group.delete()
+        assert EnterpriseGroup.all_objects.count() == 1
+        assert EnterpriseGroup.available_objects.count() == 0
+
 
 @mark.django_db
 @ddt.ddt
@@ -2698,6 +2712,18 @@ class TestEnterpriseGroupMembership(unittest.TestCase):
                 group=group_membership_1.group,
                 pending_enterprise_customer_user=group_membership_1.pending_enterprise_customer_user,
             )
+
+    def test_enterprise_group_membership_soft_delete(self):
+        """
+        Test ``EnterpriseGroupMembership`` soft deletion property.
+        """
+        membership = factories.EnterpriseGroupMembershipFactory()
+
+        assert EnterpriseGroupMembership.all_objects.count() == 1
+        assert EnterpriseGroupMembership.available_objects.count() == 1
+        membership.delete()
+        assert EnterpriseGroupMembership.all_objects.count() == 1
+        assert EnterpriseGroupMembership.available_objects.count() == 0
 
 
 @mark.django_db

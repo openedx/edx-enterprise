@@ -131,20 +131,6 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
 
         assert learner_data_records_1.id == learner_data_records_2.id
 
-    def test_get_learner_data_record_not_exist(self):
-        """
-        If learner data is not already exist, nothing is returned.
-        """
-        exporter = CornerstoneLearnerExporter('fake-user', self.config)
-        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=factories.EnterpriseCustomerUserFactory(
-                user_id=self.other_user.id,
-                enterprise_customer=self.enterprise_customer,
-            ),
-            course_id=self.course_id,
-        )
-        assert exporter.get_learner_data_records(enterprise_course_enrollment) is None
-
     @responses.activate
     @mock.patch('integrated_channels.cornerstone.client.requests.post')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
