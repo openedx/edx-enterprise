@@ -15,6 +15,18 @@ Change Log
 
 Unreleased
 ----------
+[4.13.6]
+---------
+* feat: disable failing transmissions for 24hrs
+
+[4.13.5]
+---------
+* feat: added autocomplete for enterprise customer in EnterpriseCustomerCatalogAdmin
+
+[4.13.4]
+---------
+* feat: admin pages for enterprise groups and enterprise group memberships
+
 [4.13.3]
 ---------
 * feat: adding management command to remove expired pending group memberships
