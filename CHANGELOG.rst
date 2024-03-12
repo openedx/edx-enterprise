@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.6]
+---------
+* feat: disable failing transmissions for 24hrs
+
 [4.13.5]
 ---------
 * feat: added autocomplete for enterprise customer in EnterpriseCustomerCatalogAdmin

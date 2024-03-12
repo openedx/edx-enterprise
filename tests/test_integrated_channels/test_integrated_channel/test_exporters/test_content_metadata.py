@@ -12,6 +12,7 @@ from pytest import mark
 from testfixtures import LogCapture
 
 from django.test.utils import override_settings
+from django.utils import timezone
 
 from enterprise.constants import EXEC_ED_COURSE_TYPE
 from enterprise.utils import get_content_metadata_item_id
@@ -111,6 +112,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             ]
         }
         content_id = "NYIF+BOPC.4x"
+        content_id_to_skip = "CTIF+BOPC.4x"
         mock_metadata = {
             "aggregation_key": "course:NYIF+BOPC.4x",
             "content_type": "course",
@@ -164,7 +166,20 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             channel_metadata=channel_metadata,
             remote_created_at=datetime.datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            remote_errored_at=None,
         )
+        transmission_audit_to_skip = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_to_skip,
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=sap_config.id,
+            integrated_channel_code=sap_config.channel_code(),
+            channel_metadata=channel_metadata,
+            remote_created_at=datetime.datetime.utcnow(),
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            # failed within last 24hrs
+            remote_errored_at=timezone.now() - timezone.timedelta(hours=23),
+        )
+
         # Mock the catalog service to return the metadata of the content to be deleted
         mock_get_content_metadata.return_value = [mock_metadata]
         # Mock the catalog service to return the content to be deleted in the delete payload
@@ -173,6 +188,14 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         _, _, delete_payload = exporter.export()
         assert delete_payload[transmission_audit.content_id].channel_metadata.get('schedule') == []
         assert delete_payload[transmission_audit.content_id].channel_metadata.get('status') == 'INACTIVE'
+
+        # if transmission was attempted in last 24hrs, it shouldn't be reattempted
+        mock_get_catalog_diff.return_value = (
+            [], [{'content_key': transmission_audit_to_skip.content_id}], [])
+        exporter = SapSuccessFactorsContentMetadataExporter(
+            'fake-user', sap_config)
+        _, _, delete_payload = exporter.export()
+        assert not delete_payload
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
     def test_exporter_get_catalog_diff_works_with_orphaned_content(self, mock_get_catalog_diff):
@@ -226,6 +249,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_updated_at=datetime.datetime.utcnow(),
             content_last_changed=None,
             api_response_status_code=500,
+            # didn't failed within last 24hrs
+            remote_errored_at=timezone.now() - timezone.timedelta(hours=25),
         )
         mock_metadata = get_fake_content_metadata()[:1]
         mock_metadata[0]['key'] = test_failed_updated_content.content_id
@@ -255,6 +280,29 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         # The exporter should now properly include the content in the update payload.
         assert update_payload == {test_failed_updated_content.content_id: test_failed_updated_content}
+
+        # shouldn't export if it errored in last 24hrs
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        content_id_to_skip = "CTIF+BOPC.4x"
+        test_failed_updated_content_to_skip = ContentMetadataItemTransmissionFactory(
+            content_id=content_id_to_skip,
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            integrated_channel_code=self.config.channel_code(),
+            plugin_configuration_id=self.config.id,
+            remote_created_at=datetime.datetime.utcnow(),
+            remote_updated_at=datetime.datetime.utcnow(),
+            content_last_changed=None,
+            api_response_status_code=500,
+            # failed within last 24hrs
+            remote_errored_at=timezone.now() - timezone.timedelta(hours=23),
+        )
+        mock_get_catalog_diff.return_value = (
+            [], [], [{'content_key': test_failed_updated_content_to_skip.content_id,
+                      'date_updated': datetime.datetime.now()}]
+        )
+        _, update_payload, __ = exporter.export()
+        assert not update_payload
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
@@ -389,6 +437,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             remote_created_at=None,
             remote_updated_at=None,
             remote_deleted_at=None,
+            remote_errored_at=None,
         )
         past_transmission.save()
         mock_get_content_metadata.return_value = get_fake_content_metadata()
