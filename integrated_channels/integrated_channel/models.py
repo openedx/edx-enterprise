@@ -885,20 +885,7 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
     A model to track basic information about every API call we make from the integrated channels.
     """
-    MOODLE = 'MOODLE'
-    DEGREED2 = 'DEGREED2'
-    CANVAS = 'CANVAS'
-    SAP = 'SAP'
-    CSOD = 'CSOD'
-    BLACKBOARD = 'BLACKBOARD'
-    CHANNEL_NAMES = (
-        (MOODLE, 'MOODLE'),
-        (DEGREED2, 'DEGREED2'),
-        (CANVAS, 'CANVAS'),
-        (SAP, 'SAP SUCCESS FACTORS'),
-        (CSOD, 'CORNERSTONE'),
-        (BLACKBOARD, 'BLACKBOARD'),
-    )
+
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer, on_delete=models.CASCADE
     )
@@ -920,21 +907,14 @@ class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     response_body = models.TextField(
         help_text="API call response body", blank=True, null=True
     )
-    channel_name = models.CharField(
+    channel_name = models.TextField(
         help_text="Name of the integrated channel associated with this API call log record.",
-        max_length=32,
-        choices=CHANNEL_NAMES,
-        blank=True,
+        blank=True
     )
 
     class Meta:
         app_label = "integrated_channel"
         verbose_name_plural = "Integrated channels API request logs"
-        indexes = [
-            models.Index(
-                fields=['channel_name', 'status_code', 'enterprise_customer_configuration_id', 'endpoint',],
-            )
-        ]
 
     def __str__(self):
         """
