@@ -17,6 +17,7 @@ from enterprise.api.utils import get_enterprise_customer_from_enterprise_group_i
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
+from enterprise.utils import localized_utcnow
 
 LOGGER = getEnterpriseLogger(__name__)
 
@@ -195,6 +196,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 # Extend the list of memberships that need to be created associated with existing Users
                 ent_customer_users = [
                     models.EnterpriseGroupMembership(
+                        activated_at=localized_utcnow(),
                         enterprise_customer_user=ecu,
                         group=group
                     )

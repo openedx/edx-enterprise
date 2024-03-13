@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.8]
+---------
+* feat: adding an activated_at value to group membership records
+
 [4.13.7]
 ---------
 * fix: adding get_queryset for fix of integrated channel api logs loading

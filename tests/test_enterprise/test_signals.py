@@ -256,10 +256,11 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
         pending_user = PendingEnterpriseCustomerUserFactory(user_email=email)
-        EnterpriseGroupMembershipFactory(
+        new_membership = EnterpriseGroupMembershipFactory(
             pending_enterprise_customer_user=pending_user,
             enterprise_customer_user=None
         )
+        assert not new_membership.activated_at
         parameters = {"instance": user, "created": False}
         handle_user_post_save(mock.Mock(), **parameters)
         # Should delete pending link
@@ -267,8 +268,10 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         assert len(EnterpriseGroupMembership.objects.all()) == 1
 
         new_enterprise_user = EnterpriseCustomerUser.objects.get(user_id=user.id)
-        assert EnterpriseGroupMembership.objects.first().pending_enterprise_customer_user is None
-        assert EnterpriseGroupMembership.objects.first().enterprise_customer_user == new_enterprise_user
+        membership = EnterpriseGroupMembership.objects.first()
+        assert membership.pending_enterprise_customer_user is None
+        assert membership.enterprise_customer_user == new_enterprise_user
+        assert membership.activated_at
 
 
 @mark.django_db
