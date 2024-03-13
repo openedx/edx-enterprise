@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.7]
+---------
+* fix: adding get_queryset for fix of integrated channel api logs loading
+
 [4.13.6]
 ---------
 * feat: disable failing transmissions for 24hrs
