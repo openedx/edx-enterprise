@@ -12,6 +12,7 @@ from logging import getLogger
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Q
+from django.utils import timezone
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import (
@@ -71,6 +72,7 @@ class ContentMetadataExporter(Exporter):
     # TODO: Move this to the EnterpriseCustomerPluginConfiguration model as a JSONField.
     DATA_TRANSFORM_MAPPING = {}
     SKIP_KEY_IF_NONE = False
+    LAST_24_HRS = timezone.now() - timezone.timedelta(hours=24)
 
     def __init__(self, user, enterprise_configuration):
         """
@@ -201,6 +203,8 @@ class ContentMetadataExporter(Exporter):
                     remote_deleted_at__isnull=True,
                     remote_created_at__isnull=False,
                 )
+                content_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
+                    remote_errored_at__isnull=True), Q.AND)
                 # If not force_retrieve_all_catalogs, filter content records where `content last changed` is less than
                 # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
                 if not force_retrieve_all_catalogs:
@@ -397,13 +401,17 @@ class ContentMetadataExporter(Exporter):
                 incomplete_transmission.mark_for_delete()
                 items_to_delete[content_id] = incomplete_transmission
             else:
-                past_content = ContentMetadataItemTransmission.objects.filter(
+                past_content_query = Q(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
                     content_id=content_id
-                ).first()
+                )
+                past_content_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
+                    remote_errored_at__isnull=True), Q.AND)
+                past_content = ContentMetadataItemTransmission.objects.filter(
+                    past_content_query).first()
                 if past_content:
                     past_content.mark_for_delete()
                     items_to_delete[content_id] = past_content
