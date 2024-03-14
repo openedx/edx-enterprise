@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.9]
+---------
+* fix: add missing filter to disable failing transmissions for 24hrs
+
 [4.13.8]
 ---------
 * feat: adding an activated_at value to group membership records
@@ -73,7 +77,7 @@ Unreleased
 
 [4.12.1]
 ---------
-* feat: unlink canvas user if not decommissioned on canvas side
+* feat: unlink canvas user if decommissioned on canvas side
 
 [4.12.0]
 ---------
