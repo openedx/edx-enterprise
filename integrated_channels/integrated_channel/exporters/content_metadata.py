@@ -137,6 +137,8 @@ class ContentMetadataExporter(Exporter):
         # filter only records who have failed to delete or update, meaning we know they exist on the customer's
         # instance and require some kind of action
         failed_query.add(Q(remote_deleted_at__isnull=False) | Q(remote_updated_at__isnull=False), Q.AND)
+        failed_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
+            remote_errored_at__isnull=True), Q.AND)
         # enterprise_customer_catalog filter is optional
         if enterprise_customer_catalog is not None:
             failed_query.add(Q(enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid), Q.AND)
@@ -489,7 +491,7 @@ class ContentMetadataExporter(Exporter):
                 f'Retrieved {len(content_keys)} content keys for past transmissions to customer: '
                 f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
             )
-
+ 
             # From the saved content records, use the enterprise catalog API to determine what needs sending
             items_to_create, items_to_update, items_to_delete = self._get_catalog_diff(
                 enterprise_customer_catalog,
