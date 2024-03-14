@@ -7690,6 +7690,28 @@ class TestEnterpriseGroupViewSet(APITest):
         for result in results:
             assert (result.get('pending_learner_id') == pending_user.id) or (result.get('learner_id') == new_user.id)
 
+    def test_group_assign_realized_learner_adds_activated_at(self):
+        """
+        Test that newly created membership records associated with an existing user have an activated at value written
+        but records associated with pending memberships do not.
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        request_data = {'learner_emails': f"{UserFactory().email},email@example.com"}
+        self.client.post(url, data=request_data)
+        membership = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            pending_enterprise_customer_user__isnull=True
+        ).first()
+        assert membership.activated_at
+        pending_membership = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            enterprise_customer_user__isnull=True
+        ).first()
+        assert not pending_membership.activated_at
+
 
 @mark.django_db
 class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):

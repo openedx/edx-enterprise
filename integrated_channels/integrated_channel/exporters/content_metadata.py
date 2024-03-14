@@ -491,7 +491,7 @@ class ContentMetadataExporter(Exporter):
                 f'Retrieved {len(content_keys)} content keys for past transmissions to customer: '
                 f'{self.enterprise_customer.uuid} under catalog: {enterprise_customer_catalog.uuid}.'
             )
- 
+
             # From the saved content records, use the enterprise catalog API to determine what needs sending
             items_to_create, items_to_update, items_to_delete = self._get_catalog_diff(
                 enterprise_customer_catalog,
