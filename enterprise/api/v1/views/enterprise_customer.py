@@ -171,9 +171,15 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Parameters:
             enrollments_info (list of dicts): an array of dictionaries, each containing the necessary information to
                 create an enrollment based on a subsidy for a user in a specified course. Each dictionary must contain
-                a user email (or user_id), a course run key, and either a UUID of the license that the learner is using
-                to enroll with or a transaction ID related to Executive Education the enrollment. `licenses_info` is
-                also accepted as a body param name.
+                the following keys:
+
+                * 'user_id' OR 'email': Either unique identifier describing the user to enroll.
+                * 'course_run_key': The course to enroll into.
+                * 'license_uuid' OR 'transaction_id': ID of either accepted form of subsidy. `license_uuid` refers to
+                  subscription licenses, and `transaction_id` refers to Learner Credit transactions.
+                * 'force_enrollment' (bool, optional): Enroll even if enrollment deadline is expired (default False).
+
+                `licenses_info` is also accepted as a body param name.
 
                 Example::
 
