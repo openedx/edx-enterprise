@@ -4249,7 +4249,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         unique_together = (("name", "enterprise_customer"),)
         ordering = ['-modified']
 
-    def get_all_learners(self):
+    def get_all_learners(self, filter_for_pecus):
         """
         Returns all users associated with the group, whether the group specifies the entire org else all associated
         membership records.
@@ -4277,6 +4277,8 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
                 ))
             return members
         else:
+            if filter_for_pecus is not None:
+                return self.members.filter(is_removed=False, enterprise_customer_user_id__isnull=True)
             return self.members.filter(is_removed=False)
 
 

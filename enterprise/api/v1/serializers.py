@@ -599,10 +599,11 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
     pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
     enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
+    enterprise_customer = EnterpriseCustomerSerializer(source='group.enterprise_customer', read_only=True)
 
     class Meta:
         model = models.EnterpriseGroupMembership
-        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid')
+        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid', 'enterprise_customer')
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):

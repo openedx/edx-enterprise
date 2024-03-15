@@ -17,6 +17,7 @@ from enterprise.api.utils import get_enterprise_customer_from_enterprise_group_i
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
+from enterprise.tasks import send_group_membership_invitation_notification, send_group_membership_removal_notification
 
 LOGGER = getEnterpriseLogger(__name__)
 
@@ -111,6 +112,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                         'learner_uuid': 'enterprise_customer_user_id',
                         'pending_learner_id': 'pending_enterprise_customer_user_id',
                         'enterprise_group_membership_uuid': 'enterprise_group_membership_uuid',
+                        'enterprise_customer': EnterpriseCustomerSerializer
                     },
                 ],
             }
@@ -118,9 +120,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         """
 
         group_uuid = kwargs.get('group_uuid')
+        # GET api/v1/enterprise-group/<group_uuid>/learners?filter_for_pecus=true
+        filter_for_pecus = self.request.query_params.get('filter_for_pecus', None)
         try:
             group_object = self.get_queryset().get(uuid=group_uuid)
-            members = group_object.get_all_learners()
+            members = group_object.get_all_learners(filter_for_pecus)
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
@@ -157,6 +161,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
         if requested_emails := request.POST.dict().get('learner_emails'):
+            budget_expiration = request.POST.dict().get('budget_expiration')
+            catalog_uuid = request.POST.dict().get('catalog_uuid')
             total_records_processed = 0
             total_existing_users_processed = 0
             total_new_users_processed = 0
@@ -167,7 +173,6 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 ecus = []
                 # Gather all existing User objects associated with the email batch
                 existing_users = User.objects.filter(email__in=user_email_batch)
-
                 # Build and create a list of EnterpriseCustomerUser objects for the emails of existing Users
                 # Ignore conflicts in case any of the ent customer user objects already exist
                 ecu_by_email = {
@@ -237,6 +242,14 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 'new_learners': total_new_users_processed,
                 'existing_learners': total_existing_users_processed,
             }
+            if budget_expiration is not None and catalog_uuid is not None:
+                for membership in memberships:
+                    send_group_membership_invitation_notification.delay(
+                        customer.uuid,
+                        membership.uuid,
+                        budget_expiration,
+                        catalog_uuid
+                    )
             return Response(data, status=201)
         return Response(data="Error: missing request data: `learner_emails`.", status=400)
 
@@ -259,6 +272,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         """
         try:
             group = self.get_queryset().get(uuid=group_uuid)
+            customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
         if requested_emails := request.POST.dict().get('learner_emails'):
@@ -272,6 +286,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                     group_q & (ecu_in_q | pecu_in_q),
                 )
                 records_deleted += len(records_to_delete)
+                for record in records_to_delete:
+                    send_group_membership_removal_notification.delay(customer.uuid, record.uuid)
                 records_to_delete.delete()
             data = {
                 'records_deleted': records_deleted,

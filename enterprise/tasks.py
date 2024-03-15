@@ -9,10 +9,13 @@ from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.apps import apps
+from django.conf import settings
 from django.core import mail
 from django.db import IntegrityError
 
-from enterprise.api_client.braze import BrazeAPIClient
+from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, BrazeAPIClient
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import get_enterprise_customer, send_email_notification_message
 
@@ -127,6 +130,22 @@ def enterprise_customer_user_model():
     return apps.get_model('enterprise', 'EnterpriseCustomerUser')
 
 
+def pending_enterprise_customer_user_model():
+    """
+    Returns the ``PendingEnterpriseCustomerUser`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'PendingEnterpriseCustomerUser')
+
+
+def enterprise_group_membership_model():
+    """
+    Returns the ``EnterpriseGroupMembership`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'EnterpriseGroupMembership')
+
+
 def enterprise_course_enrollment_model():
     """
     Returns the ``EnterpriseCourseEnrollment`` class.
@@ -169,7 +188,7 @@ def send_sso_configured_email(
     }
 
     try:
-        braze_client_instance = BrazeAPIClient.get_braze_client()
+        braze_client_instance = BrazeAPIClient()
         braze_client_instance.send_campaign_message(
             braze_campaign_id,
             recipients=[contact_email],
@@ -179,6 +198,136 @@ def send_sso_configured_email(
         message = (
             'Enterprise oauth integration email sending received an '
             f'exception for enterprise: {enterprise_name}.'
+        )
+        LOGGER.exception(message)
+        raise exc
+
+
+@shared_task
+@set_code_owner_attribute
+def send_group_membership_invitation_notification(
+    enterprise_customer_uuid,
+    group_membership_uuid,
+    budget_expiration,
+    catalog_uuid
+):
+    """
+    Send braze email notification when member is invited to a group.
+
+    Arguments:
+        * enterprise_customer_uuid (string)
+        * group_membership_uuid (string)
+        * budget_expiration (datetime)
+        * catalog_uuid (string)
+    """
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+    group_membership = enterprise_group_membership_model().objects.filter(
+        uuid=group_membership_uuid
+    ).values().last()
+    braze_client_instance = BrazeAPIClient()
+    enterprise_catalog_client = EnterpriseCatalogApiClient()
+    braze_trigger_properties = {}
+    contact_email = enterprise_customer.contact_email
+    enterprise_customer_name = enterprise_customer.name
+    braze_trigger_properties['contact_admin_link'] = braze_client_instance.generate_mailto_link(contact_email)
+    braze_trigger_properties['enterprise_customer_name'] = enterprise_customer_name
+    braze_trigger_properties[
+        'catalog_content_count'
+    ] = enterprise_catalog_client.get_catalog_content_count(catalog_uuid)
+    braze_trigger_properties['budget_end_date'] = budget_expiration
+    if group_membership['enterprise_customer_user_id'] is None:
+        pending_enterprise_customer_user = pending_enterprise_customer_user_model().objects.get(
+            id=group_membership['pending_enterprise_customer_user_id'])
+        learner_email = pending_enterprise_customer_user.user_email
+        recipient = braze_client_instance.create_recipient_no_external_id(
+            learner_email,
+        )
+        # We need an alias record to exist in Braze before
+        # sending to any previously-unidentified users.
+        braze_client_instance.create_braze_alias(
+            [learner_email],
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+    else:
+        enterprise_customer_user = enterprise_customer_user_model().objects.get(
+            user_id=group_membership['enterprise_customer_user_id'])
+        learner_email = enterprise_customer_user.user_email
+        recipient = braze_client_instance.create_recipient(
+            user_email=learner_email,
+            lms_user_id=enterprise_customer_user.user_id,
+        )
+
+    try:
+        braze_client_instance.send_campaign_message(
+            settings.BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID,
+            recipients=[recipient],
+            trigger_properties=braze_trigger_properties,
+        )
+    except BrazeClientError as exc:
+        message = (
+            "Groups learner invitation email could not be sent "
+            f"to {learner_email} for enterprise {enterprise_customer_name}."
+        )
+        LOGGER.exception(message)
+        raise exc
+
+
+@shared_task
+@set_code_owner_attribute
+def send_group_membership_removal_notification(enterprise_customer_uuid, group_membership_uuid):
+    """
+    Send braze email notification when learner is removed from a group.
+
+    Arguments:
+        * enterprise_customer_uuid (string)
+        * group_membership_uuid (string)
+    """
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+    group_membership = enterprise_group_membership_model().objects.filter(
+        uuid=group_membership_uuid
+    ).values().last()
+    braze_client_instance = BrazeAPIClient()
+    braze_trigger_properties = {}
+    braze_campaign_id = settings.BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID
+    contact_email = enterprise_customer.contact_email
+    enterprise_customer_name = enterprise_customer.name
+    braze_trigger_properties['contact_admin_link'] = braze_client_instance.generate_mailto_link(contact_email)
+    braze_trigger_properties['enterprise_customer_name'] = enterprise_customer_name
+
+    if group_membership['enterprise_customer_user_id'] is None:
+        pending_enterprise_customer_user = pending_enterprise_customer_user_model().objects.get(
+            id=group_membership['pending_enterprise_customer_user_id']
+        )
+        learner_email = pending_enterprise_customer_user.user_email
+        recipient = braze_client_instance.create_recipient_no_external_id(
+            learner_email,
+        )
+        # We need an alias record to exist in Braze before
+        # sending to any previously-unidentified users.
+        braze_client_instance.create_braze_alias(
+            [learner_email],
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+    else:
+        enterprise_customer_user = enterprise_customer_user_model().objects.get(
+            user_id=group_membership['enterprise_customer_user_id']
+        )
+        learner_email = enterprise_customer_user.user_email
+        recipient = braze_client_instance.create_recipient(
+            user_email=learner_email,
+            lms_user_id=enterprise_customer_user.user_id,
+        )
+
+    try:
+        braze_client_instance.send_campaign_message(
+            braze_campaign_id,
+            recipients=[recipient],
+            trigger_properties=braze_trigger_properties,
+        )
+    except BrazeClientError as exc:
+        message = (
+            "Groups learner removal email could not be sent "
+            f"to {learner_email} for enterprise {enterprise_customer_name}."
         )
         LOGGER.exception(message)
         raise exc
