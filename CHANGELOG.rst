@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.10]
+---------
+* fix: remove filter to debug failing transmissions
+
 [4.13.9]
 ---------
 * fix: add missing filter to disable failing transmissions for 24hrs
