@@ -495,7 +495,7 @@ class ApiResponseRecord(TimeStampedModel):
 
 class LearnerDataTransmissionAudit(TimeStampedModel):
     """
-    The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
+    The payload we send to an integrated channel at a given point in time for an enterprise course enrollment.
 
     .. pii: The user_email model field contains PII
 
@@ -505,7 +505,7 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     enterprise_customer_uuid = models.UUIDField(blank=True, null=True)
     user_email = models.CharField(max_length=255, blank=True, null=True)
     plugin_configuration_id = models.IntegerField(blank=True, null=True)
-    enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True, db_index=True)
+    enterprise_course_enrollment_id = models.IntegerField(blank=True, null=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     content_title = models.CharField(max_length=255, default=None, null=True, blank=True)
     course_completed = models.BooleanField(default=True)
