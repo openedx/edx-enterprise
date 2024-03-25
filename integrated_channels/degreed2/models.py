@@ -180,6 +180,9 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             )
         ]
         index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
+        indexes = [
+            models.Index(fields=['error_message', 'enterprise_course_enrollment_id'], name='degreed2_course_error_idx'),
+        ]
 
     def __str__(self):
         """
