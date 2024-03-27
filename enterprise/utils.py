@@ -60,8 +60,10 @@ except ImportError:
 
 try:
     from common.djangoapps.course_modes.models import CourseMode
+    from common.djangoapps.student.models import CourseEnrollmentAllowed
 except ImportError:
     CourseMode = None
+    CourseEnrollmentAllowed = None
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -2364,7 +2366,6 @@ def get_md5_hash(content):
     Get the MD5 hash digest of the given content.
 
     Arguments:
-        content (str): Content in string format for calculating MD5 hash digest.
 
     Returns:
         (str): MD5 hash digest.
@@ -2394,3 +2395,23 @@ def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
         was_truncated = True
         return (truncated_string, was_truncated)
     return (string, was_truncated)
+
+
+def ensure_course_enrollment_is_allowed(course_id, email, enrollment_api_client):
+    """
+    Create a CourseEnrollmentAllowed object for invitation-only courses.
+
+    Arguments:
+        course_id (str): ID of the course to allow enrollment
+        email (str): email of the user whose enrollment should be allowed
+        enrollment_api_client (:class:`enterprise.api_client.lms.EnrollmentApiClient`): Enrollment API Client
+    """
+    if not CourseEnrollmentAllowed:
+        raise NotConnectedToOpenEdX()
+
+    course_details = enrollment_api_client.get_course_details(course_id)
+    if course_details["invite_only"]:
+        CourseEnrollmentAllowed.objects.update_or_create(
+            course_id=course_id,
+            email=email,
+        )
