@@ -9,7 +9,7 @@ function makeOption(name, value) {
     return $("<option></option>").text(name).val(value);
 }
 
-function fillModeDropdown(data) {
+function updateCourseData(data) {
     /*
      Given a set of data fetched from the enrollment API, populate the Course Mode
      dropdown with those options that are valid for the course entered in the
@@ -19,6 +19,11 @@ function fillModeDropdown(data) {
     var previous_value = $course_mode.val();
     applyModes(data.course_modes);
     $course_mode.val(previous_value);
+
+    // If the course is invite-only, show the force enrollment box.
+    if (data.invite_only) {
+        $("#id_force_enrollment").parent().show();
+    }
 }
 
 function applyModes(modes) {
@@ -43,7 +48,7 @@ function loadCourseModes(success, failure) {
             return;
         }
         $.ajax({method: 'get', url: enrollmentApiRoot + "course/" + courseId})
-            .done(success || fillModeDropdown)
+            .done(success || updateCourseData)
             .fail(failure || function (err, jxHR, errstat) { disableMode(disableReason); });
     });
 }
@@ -134,11 +139,38 @@ function loadPage() {
        programEnrollment.$control.oldValue = null;
     });
 
+    // NOTE: As the course details won't be fetched for course id in the CSV
+    // file, this has a potential side-effect of enrolling learners into the courses
+    // which might be marked as closed for reasons other then being "Invite Only".
+    //
+    // This is considered as a reasonable tradeoff at the time of this addition.
+    // Currently, the EnrollmentListView does not support invitation only courses.
+    // This problem does not happen in the Instructor Dashboard because it doesn't 
+    // invoke access checks when calling the enroll method. Modifying the enroll method
+    // is a high-risk change, and it seems that the API will need some changes in
+    // the near future anyway - when the Instructor Dashboard is converted into an
+    // MFE (it could be an excellent opportunity to eliminate many legacy behaviors
+    // there, too).
+    $("#id_bulk_upload_csv").change(function(e) {
+        if (e.target.value) {
+            var force_enrollment = $("#id_force_enrollment");
+            force_enrollment.parent().show();
+            force_enrollment.siblings(".helptext")[0].innerHTML = gettext(
+                "If any of the courses in the CSV file are marked 'Invite Only', " +
+                "this should be enabled for the enrollments to go through in those courses."
+            );
+        }
+    });
+
     if (courseEnrollment.$control.val()) {
         courseEnrollment.$control.trigger("input");
     } else if (programEnrollment.$control.val()) {
         programEnrollment.$control.trigger("input");
     }
+
+    // hide the force_invite_only checkbox by default
+    $("#id_force_enrollment").parent().hide();
+
     $("#learner-management-form").submit(addCheckedLearnersToEnrollBox);
 }
 
