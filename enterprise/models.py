@@ -1139,6 +1139,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         return None
 
     @property
+    def name(self):
+        """
+        Return linked user's name.
+        """
+        if self.user is not None:
+            return f"{self.user.first_name} {self.user.last_name}"
+        return None
+
+    @property
     def data_sharing_consent_records(self):
         """
         Return the DataSharingConsent records associated with this EnterpriseCustomerUser.
