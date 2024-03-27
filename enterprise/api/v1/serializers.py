@@ -601,9 +601,49 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
     enterprise_customer = EnterpriseCustomerSerializer(source='group.enterprise_customer', read_only=True)
 
+    member_details = serializers.SerializerMethodField()
+    recent_action = serializers.SerializerMethodField()
+    member_status = serializers.SerializerMethodField()
+
     class Meta:
         model = models.EnterpriseGroupMembership
-        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid', 'enterprise_customer')
+        fields = (
+            'learner_id',
+            'pending_learner_id',
+            'enterprise_group_membership_uuid',
+            'member_details',
+            'recent_action',
+            'member_status',
+            'enterprise_customer'
+        )
+
+    def get_member_details(self, obj):
+        """
+        Return either the member's name and email if it's the case that the member is realized, otherwise just email
+        """
+        if user := obj.enterprise_customer_user:
+            return {"user_email": user.user_email, "user_name": user.name}
+        return {"user_email": obj.pending_enterprise_customer_user.user_email}
+
+    def get_recent_action(self, obj):
+        """
+        Return the timestamp and name of the most recent action associated with the membership.
+        """
+        if obj.is_removed:
+            return f"Removed: {obj.modified.strftime('%B %d, %Y')}"
+        if obj.enterprise_customer_user and obj.activated_at:
+            return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
+        return f"Invited: {obj.created.strftime('%B %d, %Y')}"
+
+    def get_member_status(self, obj):
+        """
+        Return the status related to the membership.
+        """
+        if obj.is_removed:
+            return "removed"
+        if obj.enterprise_customer_user:
+            return "accepted"
+        return "pending"
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):

@@ -15,6 +15,30 @@ Change Log
 
 Unreleased
 ----------
+[4.13.12]
+---------
+* feat: adding additional info to the enterprise group membership serializer
+
+[4.13.11]
+---------
+* feat: pass force_enrollment when bulk enrolling learners
+
+[4.13.10]
+---------
+* fix: remove filter to debug failing transmissions
+
+[4.13.9]
+---------
+* fix: add missing filter to disable failing transmissions for 24hrs
+
+[4.13.8]
+---------
+* feat: adding an activated_at value to group membership records
+
+[4.13.7]
+---------
+* fix: adding get_queryset for fix of integrated channel api logs loading
+
 [4.13.6]
 ---------
 * feat: disable failing transmissions for 24hrs
@@ -65,7 +89,7 @@ Unreleased
 
 [4.12.1]
 ---------
-* feat: unlink canvas user if not decommissioned on canvas side
+* feat: unlink canvas user if decommissioned on canvas side
 
 [4.12.0]
 ---------

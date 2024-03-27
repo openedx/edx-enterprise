@@ -7318,6 +7318,7 @@ class TestEnterpriseGroupViewSet(APITest):
                 group=self.group_1,
                 pending_enterprise_customer_user=None,
                 enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+                activated_at=datetime.now()
             ))
 
     def test_group_permissions(self):
@@ -7354,6 +7355,52 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
         assert response.json().get('uuid') == str(self.group_1.uuid)
 
+    def test_list_learner_pending_learner_data(self):
+        """
+        Test the response data of the list learners in group endpoint when the membership is pending
+        """
+        group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        )
+        pending_user = PendingEnterpriseCustomerUserFactory()
+        EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None,
+        )
+        response = self.client.get(url)
+        assert response.json().get('results')[0].get('member_details') == {'user_email': pending_user.user_email}
+        assert response.json().get('results')[0].get(
+            'recent_action'
+        ) == f'Invited: {datetime.now().strftime("%B %d, %Y")}'
+
+    def test_list_learner_statuses(self):
+        """
+        Test the response data of the list learners in group endpoint when the membership is pending
+        """
+        group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        )
+        EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            activated_at=datetime.now()
+        )
+        response = self.client.get(url)
+        assert response.json().get('count') == 2
+        statuses = [result.get('member_status') for result in response.json().get('results')]
+        assert statuses.sort() == ['accepted', 'pending'].sort()
+
     def test_successful_list_learners(self):
         """
         Test a successful GET request to the list endpoint.
@@ -7365,14 +7412,21 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         results_list = []
         for i in reversed(range(1, 11)):
+            member_user = self.enterprise_group_memberships[i].enterprise_customer_user
             results_list.append(
                 {
-                    'learner_id': self.enterprise_group_memberships[i].enterprise_customer_user.id,
+                    'learner_id': member_user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
                     'enterprise_customer': {
                         'name': self.enterprise_customer.name,
-                    }
+                    },
+                    'member_details': {
+                        'user_name': member_user.name,
+                        'user_email': member_user.user_email
+                    },
+                    'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
+                    'member_status': 'accepted',
                 },
             )
         expected_response = {
@@ -7397,18 +7451,25 @@ class TestEnterpriseGroupViewSet(APITest):
             kwargs={'group_uuid': self.group_1.uuid},
         ) + '?page=2'
         page_2_response = self.client.get(url_page_2)
+        user = self.enterprise_group_memberships[0].enterprise_customer_user
         expected_response_page_2 = {
             'count': 11,
             'next': None,
             'previous': f'http://testserver/enterprise/api/v1/enterprise-group/{self.group_1.uuid}/learners',
             'results': [
                 {
-                    'learner_id': self.enterprise_group_memberships[0].enterprise_customer_user.id,
+                    'learner_id': user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
                     'enterprise_customer': {
                         'name': self.enterprise_customer.name,
-                    }
+                    },
+                    'member_details': {
+                        'user_name': user.name,
+                        'user_email': user.user_email
+                    },
+                    'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
+                    'member_status': 'accepted',
                 }
             ],
         }
@@ -7746,6 +7807,28 @@ class TestEnterpriseGroupViewSet(APITest):
         results = response.json().get('results')
         for result in results:
             assert (result.get('pending_learner_id') == pending_user.id) or (result.get('learner_id') == new_user.id)
+
+    def test_group_assign_realized_learner_adds_activated_at(self):
+        """
+        Test that newly created membership records associated with an existing user have an activated at value written
+        but records associated with pending memberships do not.
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        request_data = {'learner_emails': f"{UserFactory().email},email@example.com"}
+        self.client.post(url, data=request_data)
+        membership = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            pending_enterprise_customer_user__isnull=True
+        ).first()
+        assert membership.activated_at
+        pending_membership = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            enterprise_customer_user__isnull=True
+        ).first()
+        assert not pending_membership.activated_at
 
 
 @mark.django_db

@@ -1139,6 +1139,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         return None
 
     @property
+    def name(self):
+        """
+        Return linked user's name.
+        """
+        if self.user is not None:
+            return f"{self.user.first_name} {self.user.last_name}"
+        return None
+
+    @property
     def data_sharing_consent_records(self):
         """
         Return the DataSharingConsent records associated with this EnterpriseCustomerUser.
@@ -1484,6 +1493,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
             enterprise_customer_user: a EnterpriseCustomerUser instance
         """
         self.memberships.update(
+            activated_at=localized_utcnow(),
             pending_enterprise_customer_user=None,
             enterprise_customer_user=enterprise_customer_user
         )
@@ -4309,6 +4319,14 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         null=True,
         related_name='memberships',
         on_delete=models.deletion.CASCADE,
+    )
+    activated_at = models.DateTimeField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The moment at which the membership record is written with an Enterprise Customer User record."
+        ),
     )
     history = HistoricalRecords()
 

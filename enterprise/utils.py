@@ -1807,6 +1807,7 @@ def customer_admin_enroll_user_with_status(
         enrollment_source=None,
         license_uuid=None,
         transaction_id=None,
+        force_enrollment=False,
 ):
     """
     For use with bulk enrollment, or any use case of admin enrolling a user
@@ -1848,6 +1849,7 @@ def customer_admin_enroll_user_with_status(
             course_mode,
             is_active=True,
             enterprise_uuid=enterprise_customer.uuid,
+            force_enrollment=force_enrollment,
         )
         succeeded = True
         LOGGER.info("Successfully enrolled user %s in course %s", user.id, course_id)
@@ -1987,6 +1989,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
             * 'course_run_key': The course to enroll into.
             * 'course_mode': The course mode.
             * 'license_uuid' OR 'transaction_id': ID of either accepted form of subsidy.
+            * 'force_enrollment' (bool, optional): Enroll user even enrollment deadline is expired (default False).
 
             Example::
 
@@ -2037,6 +2040,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
         license_uuid = subsidy_user_info.get('license_uuid')
         transaction_id = subsidy_user_info.get('transaction_id')
         activation_link = subsidy_user_info.get('activation_link')
+        force_enrollment = subsidy_user_info.get('force_enrollment', False)
 
         if user_id and user_email:
             user = User.objects.filter(id=subsidy_user_info['user_id']).first()
@@ -2066,7 +2070,8 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     course_run_key,
                     enrollment_source,
                     license_uuid,
-                    transaction_id
+                    transaction_id,
+                    force_enrollment=force_enrollment,
                 )
                 if succeeded:
                     success_dict = {
