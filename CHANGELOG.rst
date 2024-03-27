@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.13.12]
+---------
+* feat: adding additional info to the enterprise group membership serializer
+
 [4.13.11]
 ---------
 * feat: pass force_enrollment when bulk enrolling learners
