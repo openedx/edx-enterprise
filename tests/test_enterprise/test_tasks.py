@@ -10,6 +10,9 @@ from unittest import mock
 
 from pytest import mark
 
+from enterprise.constants import (
+    SSO_BRAZE_CAMPAIGN_ID,
+)
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
 from enterprise.settings.test import BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID, BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID
 from enterprise.tasks import (
@@ -17,6 +20,7 @@ from enterprise.tasks import (
     send_enterprise_email_notification,
     send_group_membership_invitation_notification,
     send_group_membership_removal_notification,
+    send_sso_configured_email,
 )
 from enterprise.utils import serialize_notification_content
 from test_utils.factories import (
@@ -272,3 +276,24 @@ class TestEnterpriseTasks(unittest.TestCase):
             },
         ) for recipient in mock_recipients]
         mock_braze_api_client().send_campaign_message.assert_has_calls(calls)
+
+    @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
+    def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
+        """
+        Assert sso configuration calls Braze API with the correct arguments.
+        """
+        mock_braze_client().create_recipient_no_external_id.return_value = (
+            self.enterprise_customer.contact_email)
+        expected_trigger_properties = {
+            'enterprise_customer_slug': self.enterprise_customer.slug,
+            'enterprise_customer_name': self.enterprise_customer.name,
+            'enterprise_sender_alias': self.enterprise_customer.sender_alias,
+            'enterprise_contact_email': self.enterprise_customer.contact_email,
+        }
+        send_sso_configured_email(self.enterprise_customer.uuid)
+        call = [mock.call(
+            SSO_BRAZE_CAMPAIGN_ID,
+            recipients=[self.enterprise_customer.contact_email],
+            trigger_properties=expected_trigger_properties
+        )]
+        mock_braze_client().send_campaign_message.assert_has_calls(call)

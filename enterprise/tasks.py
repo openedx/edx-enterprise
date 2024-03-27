@@ -15,7 +15,6 @@ from django.db import IntegrityError
 
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, BrazeAPIClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import get_enterprise_customer, send_email_notification_message
 
@@ -189,9 +188,16 @@ def send_sso_configured_email(
 
     try:
         braze_client_instance = BrazeAPIClient()
+        recipient = braze_client_instance.create_recipient_no_external_id(
+            contact_email,
+        )
+        braze_client_instance.create_braze_alias(
+            [contact_email],
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
         braze_client_instance.send_campaign_message(
             braze_campaign_id,
-            recipients=[contact_email],
+            recipients=[recipient],
             trigger_properties=braze_trigger_properties,
         )
     except BrazeClientError as exc:
