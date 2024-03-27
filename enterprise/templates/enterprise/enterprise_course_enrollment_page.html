@@ -77,19 +77,21 @@
 
                 <label for="radio{{ forloop.counter0 }}">
                   <strong class="title">{{ course_mode.title }}</strong>
-                  <span class="price">
-                    {{ price_text }}:
-                    {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
-                      {% if hide_course_original_price %}
-                        {{ course_mode.final_price }}
+                  {% if not course_mode.hide_price %}
+                    <span class="price">
+                      {{ price_text }}:
+                      {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
+                        {% if hide_course_original_price %}
+                          {{ course_mode.final_price }}
+                        {% else %}
+                          <strike>{{ course_mode.original_price }}</strike> {{ course_mode.final_price }}
+                          <div>{{discount_text|safe }}</div>
+                        {% endif %}
                       {% else %}
-                        <strike>{{ course_mode.original_price }}</strike> {{ course_mode.final_price }}
-                        <div>{{discount_text|safe }}</div>
+                        {{ course_mode.original_price }}
                       {% endif %}
-                    {% else %}
-                      {{ course_mode.original_price }}
-                    {% endif %}
-                  </span>
+                    </span>
+                  {% endif %}
                   <span class="description">{{ course_mode.description }}</span>
                 </label>
               </div>

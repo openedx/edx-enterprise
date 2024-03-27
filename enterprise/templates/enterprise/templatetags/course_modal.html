@@ -25,7 +25,7 @@
           <ul class="details-list">
             {% if premium_modes|length > 0 %}
               {% with course_mode=premium_modes.0 %}
-                {% if course_mode.original_price %}
+                {% if course_mode.original_price and not course_mode.hide_price %}
                   <li>
                     <div class="detail-container">
                       <div class="detail-title-container">
