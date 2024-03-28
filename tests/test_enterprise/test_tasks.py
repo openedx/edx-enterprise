@@ -10,9 +10,7 @@ from unittest import mock
 
 from pytest import mark
 
-from enterprise.constants import (
-    SSO_BRAZE_CAMPAIGN_ID,
-)
+from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
 from enterprise.settings.test import BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID, BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID
 from enterprise.tasks import (
