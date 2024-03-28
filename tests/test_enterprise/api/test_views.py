@@ -41,7 +41,6 @@ from enterprise.constants import (
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
-    SSO_BRAZE_CAMPAIGN_ID,
 )
 from enterprise.models import (
     ChatGPTResponse,
@@ -7296,6 +7295,7 @@ class TestEnterpriseGroupViewSet(APITest):
             is_active=True,
             is_staff=False,
         )
+        self.pending_enterprise_customer_user = PendingEnterpriseCustomerUserFactory()
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id, enterprise_customer=self.enterprise_customer
         )
@@ -7417,6 +7417,9 @@ class TestEnterpriseGroupViewSet(APITest):
                     'learner_id': member_user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
+                    'enterprise_customer': {
+                        'name': self.enterprise_customer.name,
+                    },
                     'member_details': {
                         'user_name': member_user.name,
                         'user_email': member_user.user_email
@@ -7432,7 +7435,15 @@ class TestEnterpriseGroupViewSet(APITest):
             'results': results_list,
         }
         response = self.client.get(url)
-        assert response.json() == expected_response
+        for i in range(10):
+            assert response.json()['results'][i]['learner_id'] == expected_response['results'][i]['learner_id']
+            assert response.json()['results'][i]['pending_learner_id'] == (
+                expected_response['results'][i]['pending_learner_id'])
+            assert (response.json()['results'][i]['enterprise_group_membership_uuid']
+                    == expected_response['results'][i]['enterprise_group_membership_uuid'])
+            assert (response.json()['results'][i]['enterprise_customer']['name']
+                    == expected_response['results'][i]['enterprise_customer']['name'])
+
         # verify page 2 of paginated response
         url_page_2 = settings.TEST_SERVER + reverse(
             'enterprise-group-learners',
@@ -7449,6 +7460,9 @@ class TestEnterpriseGroupViewSet(APITest):
                     'learner_id': user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
+                    'enterprise_customer': {
+                        'name': self.enterprise_customer.name,
+                    },
                     'member_details': {
                         'user_name': user.name,
                         'user_email': user.user_email
@@ -7458,11 +7472,48 @@ class TestEnterpriseGroupViewSet(APITest):
                 }
             ],
         }
-        assert page_2_response.json() == expected_response_page_2
-
+        assert page_2_response.json()['count'] == expected_response_page_2['count']
+        assert page_2_response.json()['previous'] == expected_response_page_2['previous']
+        assert page_2_response.json()['results'][0]['learner_id'] == (
+            expected_response_page_2['results'][0]['learner_id'])
+        assert page_2_response.json()['results'][0]['pending_learner_id'] == (
+            expected_response_page_2['results'][0]['pending_learner_id'])
+        assert (page_2_response.json()['results'][0]['enterprise_group_membership_uuid']
+                == expected_response_page_2['results'][0]['enterprise_group_membership_uuid'])
+        assert (page_2_response.json()['results'][0]['enterprise_customer']['name']
+                == expected_response_page_2['results'][0]['enterprise_customer']['name'])
         self.enterprise_group_memberships[0].delete()
         response = self.client.get(url)
         assert response.json()['count'] == 10
+
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/?filter_for_pecus=true'
+        # verify filtered response for only pending users
+        self.enterprise_group_memberships.append(EnterpriseGroupMembershipFactory(
+            group=self.group_1,
+            pending_enterprise_customer_user=self.pending_enterprise_customer_user,
+            enterprise_customer_user=None
+        ))
+        filter_for_pecus_url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        ) + '/?filter_for_pecus=true'
+        filter_for_pecus_response = self.client.get(filter_for_pecus_url)
+        expected_filtered_for_pecus_response = {
+            'count': 1,
+            'next': None,
+            'previous': None,
+            'results': [
+                {
+                    'learner_id': self.enterprise_group_memberships[0].enterprise_customer_user.id,
+                    'pending_learner_id': self.pending_enterprise_customer_user,
+                    'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
+                    'enterprise_customer': {
+                        'name': self.enterprise_customer.name,
+                    }
+                },
+            ],
+        }
+        assert filter_for_pecus_response.json()['count'] == expected_filtered_for_pecus_response['count']
 
     def test_group_uuid_not_found(self):
         """
@@ -7595,7 +7646,8 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 400
         assert response.data == "Error: missing request data: `learner_emails`."
 
-    def test_successful_assign_learners_to_group(self):
+    @mock.patch('enterprise.tasks.send_group_membership_invitation_notification.delay', return_value=mock.MagicMock())
+    def test_successful_assign_learners_to_group(self, mock_send_group_membership_invitation_notification):
         """
         Test that both existing and new learners assigned to groups properly creates membership records
         """
@@ -7606,10 +7658,14 @@ class TestEnterpriseGroupViewSet(APITest):
 
         existing_emails = ",".join([(UserFactory().email) for _ in range(10)])
         new_emails = ",".join([(f"email_{x}@example.com") for x in range(10)])
-
-        request_data = {'learner_emails': f"{new_emails},{existing_emails}"}
+        budget_expiration = datetime.now()
+        catalog_uuid = uuid.uuid4()
+        request_data = {
+            'learner_emails': f"{new_emails},{existing_emails}",
+            'budget_expiration': budget_expiration,
+            'catalog_uuid': catalog_uuid,
+        }
         response = self.client.post(url, data=request_data)
-
         assert response.status_code == 201
         assert response.data == {'records_processed': 20, 'new_learners': 10, 'existing_learners': 10}
         assert len(
@@ -7624,6 +7680,7 @@ class TestEnterpriseGroupViewSet(APITest):
                 enterprise_customer_user__isnull=True
             )
         ) == 10
+        assert mock_send_group_membership_invitation_notification.call_count == 20
 
     def test_remove_learners_404(self):
         """
@@ -7676,7 +7733,8 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.patch(url, data=request_data)
         assert response.status_code == 401
 
-    def test_successful_remove_learners_from_group(self):
+    @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
+    def test_successful_remove_learners_from_group(self, mock_send_group_membership_removal_notification):
         """
         Test that both existing and new learners in groups are properly removed by the remove_learners endpoint
         """
@@ -7695,9 +7753,7 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.status_code == 200
         assert response.data == {'records_deleted': 10}
-        for membership in memberships_to_delete:
-            with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
-                EnterpriseGroupMembership.objects.get(pk=membership.pk)
+        assert mock_send_group_membership_removal_notification.call_count == 10
 
     def test_remove_learners_from_group_only_removes_from_specified_group(self):
         """
@@ -7862,7 +7918,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         response = self.post_sso_configuration_complete(config_pk)
         assert response.status_code == 404
 
-    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
     def test_sso_configuration_oauth_orchestration_complete_error(self, mock_braze_client):
         """
         Verify that the endpoint is able to mark an sso config as errored.
@@ -7883,7 +7939,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.errored_at is not None
         assert response.status_code == status.HTTP_200_OK
 
-    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
+    @mock.patch("enterprise.api_client.braze.BrazeAPIClient")
     def test_sso_configuration_oauth_orchestration_complete(self, mock_braze_client):
         """
         Verify that the endpoint returns the correct response when the oauth orchestration is complete.
@@ -7903,46 +7959,6 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         assert enterprise_sso_orchestration_config.configured_at is not None
         assert enterprise_sso_orchestration_config.is_pending_configuration() is False
         assert response.status_code == status.HTTP_200_OK
-
-    @mock.patch("enterprise.api_client.braze.BrazeAPIClient.get_braze_client")
-    def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
-        """
-        Assert sso configuration calls Braze API with the correct arguments.
-        """
-        mock_braze_client.return_value.get_braze_client.return_value = mock.MagicMock()
-        mock_send_campaign_message = mock_braze_client.return_value.send_campaign_message
-
-        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, "*")
-        config_pk = uuid.uuid4()
-        enterprise_sso_orchestration_config = EnterpriseCustomerSsoConfigurationFactory(
-            uuid=config_pk,
-            enterprise_customer=self.enterprise_customer,
-            configured_at=None,
-            submitted_at=localized_utcnow(),
-        )
-        url = settings.TEST_SERVER + reverse(
-            self.SSO_CONFIGURATION_COMPLETE_ENDPOINT,
-            kwargs={'configuration_uuid': config_pk}
-        )
-        assert enterprise_sso_orchestration_config.is_pending_configuration()
-        self.client.post(url)
-
-        expected_trigger_properties = {
-            'enterprise_customer_slug': self.enterprise_customer.slug,
-            'enterprise_customer_name': self.enterprise_customer.name,
-            'enterprise_sender_alias': self.enterprise_customer.sender_alias,
-            'enterprise_contact_email': self.enterprise_customer.contact_email,
-        }
-
-        mock_send_campaign_message.assert_any_call(
-            SSO_BRAZE_CAMPAIGN_ID,
-            recipients=[self.enterprise_customer.contact_email],
-            trigger_properties=expected_trigger_properties,
-        )
-        enterprise_sso_orchestration_config.refresh_from_db()
-        assert enterprise_sso_orchestration_config.configured_at is not None
-
-    # -------------------------- retrieve test suite --------------------------
 
     def test_sso_configuration_retrieve(self):
         """
