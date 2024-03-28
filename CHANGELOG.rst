@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.1]
+--------
+* feat: allowing for sorting and filtering of the enterprise group learner endpoints
+
 [4.15.0]
 ---------
 * feat: Add new languages in enterprise customer admin
