@@ -18,6 +18,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
+    EnterpriseGroupMembership,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
@@ -33,6 +34,7 @@ from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupMembershipFactory,
     PendingEnrollmentFactory,
     PendingEnterpriseCustomerAdminUserFactory,
     PendingEnterpriseCustomerUserFactory,
@@ -249,6 +251,27 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Link have been created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Pending link should be kept"
+
+    def test_handle_user_post_save_fulfills_pending_group_memberships(self):
+        email = "jackie.chan@hollywood.com"
+        user = UserFactory(id=1, email=email)
+        pending_user = PendingEnterpriseCustomerUserFactory(user_email=email)
+        new_membership = EnterpriseGroupMembershipFactory(
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None
+        )
+        assert not new_membership.activated_at
+        parameters = {"instance": user, "created": False}
+        handle_user_post_save(mock.Mock(), **parameters)
+        # Should delete pending link
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert len(EnterpriseGroupMembership.objects.all()) == 1
+
+        new_enterprise_user = EnterpriseCustomerUser.objects.get(user_id=user.id)
+        membership = EnterpriseGroupMembership.objects.first()
+        assert membership.pending_enterprise_customer_user is None
+        assert membership.enterprise_customer_user == new_enterprise_user
+        assert membership.activated_at
 
 
 @mark.django_db

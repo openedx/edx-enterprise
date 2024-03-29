@@ -297,6 +297,59 @@ class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpr
         assert sorted(ecu_1_data['role_assignments']) == sorted([ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE])
         assert ecu_2_data['role_assignments'] == [ENTERPRISE_LEARNER_ROLE]
 
+    def test_group_membership(self):
+        """
+        Test that group memberships are associated properly with a single instance.
+        """
+
+        enterprise_group = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group
+        )
+
+        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
+        assert len(serializer.data['enterprise_group']) == 1
+        assert serializer.data['enterprise_group'][0] == membership.group.uuid
+
+    def test_group_membership_when_applies_to_all_contexts(self):
+        """
+        Test that when a group has ``applies_to_all_contexts`` set to True, that group is included in the enterprise
+        customer user serializer data when there is an associated via an enterprise customer object.
+        """
+        enterprise_group = factories.EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer_1,
+            applies_to_all_contexts=True,
+        )
+        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
+        # Assert the enterprise customer user serializer found the group
+        assert serializer.data.get('enterprise_group') == [enterprise_group.uuid]
+        # Assert the group has no memberships that could be read by the serializer
+        assert not enterprise_group.members.all()
+
+    def test_multi_group_membership(self):
+        """
+        Test that multiple group memberships are associated properly with a single instance.
+        """
+
+        enterprise_group = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        enterprise_group_2 = factories.EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer_1)
+        membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group
+        )
+        membership_2 = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+            group=enterprise_group_2
+        )
+
+        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
+        assert len(serializer.data['enterprise_group']) == 2
+        assert sorted([membership.group.uuid, membership_2.group.uuid]) == sorted([
+            serializer.data['enterprise_group'][0],
+            serializer.data['enterprise_group'][1],
+        ])
+
 
 @mark.django_db
 class TestEnterpriseCustomerReportingConfigurationSerializer(APITest):

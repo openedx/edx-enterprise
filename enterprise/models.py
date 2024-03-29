@@ -1139,6 +1139,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         return None
 
     @property
+    def name(self):
+        """
+        Return linked user's name.
+        """
+        if self.user is not None:
+            return f"{self.user.first_name} {self.user.last_name}"
+        return None
+
+    @property
     def data_sharing_consent_records(self):
         """
         Return the DataSharingConsent records associated with this EnterpriseCustomerUser.
@@ -1475,6 +1484,19 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
             defaults={'active': True},
         )
         return enterprise_customer_user
+
+    def fulfill_pending_group_memberships(self, enterprise_customer_user):
+        """
+        Updates any membership records associated with a new created enterprise customer user object.
+
+        Arguments:
+            enterprise_customer_user: a EnterpriseCustomerUser instance
+        """
+        self.memberships.update(
+            activated_at=localized_utcnow(),
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user=enterprise_customer_user
+        )
 
     def fulfill_pending_course_enrollments(self, enterprise_customer_user):
         """
@@ -4200,7 +4222,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         return sp_metadata_url
 
 
-class EnterpriseGroup(TimeStampedModel):
+class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
     """
     Enterprise Group model
 
@@ -4221,6 +4243,14 @@ class EnterpriseGroup(TimeStampedModel):
         related_name='groups',
         on_delete=models.deletion.CASCADE
     )
+    applies_to_all_contexts = models.BooleanField(
+        verbose_name="Set group membership to the entire org of learners.",
+        default=False,
+        help_text=_(
+            "When enabled, all learners connected to the org will be considered a member."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -4229,8 +4259,38 @@ class EnterpriseGroup(TimeStampedModel):
         unique_together = (("name", "enterprise_customer"),)
         ordering = ['-modified']
 
+    def get_all_learners(self):
+        """
+        Returns all users associated with the group, whether the group specifies the entire org else all associated
+        membership records.
+        """
+        if self.applies_to_all_contexts:
+            members = []
+            customer_users = EnterpriseCustomerUser.objects.filter(
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+            )
+            pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
+                enterprise_customer=self.enterprise_customer,
+            )
+            for ent_user in customer_users:
+                members.append(EnterpriseGroupMembership(
+                    uuid=None,
+                    enterprise_customer_user=ent_user,
+                    group=self,
+                ))
+            for pending_user in pending_customer_users:
+                members.append(EnterpriseGroupMembership(
+                    uuid=None,
+                    pending_enterprise_customer_user=pending_user,
+                    group=self,
+                ))
+            return members
+        else:
+            return self.members.filter(is_removed=False)
 
-class EnterpriseGroupMembership(TimeStampedModel):
+
+class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
     """
     Enterprise Group Membership model
 
@@ -4258,6 +4318,14 @@ class EnterpriseGroupMembership(TimeStampedModel):
         related_name='memberships',
         on_delete=models.deletion.CASCADE,
     )
+    activated_at = models.DateTimeField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The moment at which the membership record is written with an Enterprise Customer User record."
+        ),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -4267,3 +4335,31 @@ class EnterpriseGroupMembership(TimeStampedModel):
         # ie no issue if multiple fields have: group = A and pending_enterprise_customer_user = NULL
         unique_together = (("group", "enterprise_customer_user"), ("group", "pending_enterprise_customer_user"))
         ordering = ['-modified']
+
+    @property
+    def membership_user(self):
+        """
+        Return the user record associated with the membership, defaulting to ``enterprise_customer_user``
+        and falling back on ``obj.pending_enterprise_customer_user``
+        """
+        return self.enterprise_customer_user or self.pending_enterprise_customer_user
+
+    def clean(self, *args, **kwargs):
+        """
+        Ensure that records added via Django Admin have matching customer records between learner and group.
+        """
+        user = self.membership_user
+        if user:
+            user_customer = user.enterprise_customer
+            if user_customer != self.group.enterprise_customer:
+                raise ValidationError(
+                    'Enterprise Customer associated with membership group must match the Enterprise Customer associated'
+                    ' with the memberships user'
+                )
+        super().clean(*args, **kwargs)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return f"member: {self.membership_user} in group: {self.uuid}"
