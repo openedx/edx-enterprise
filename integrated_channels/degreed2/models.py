@@ -62,7 +62,7 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
             "calls to Degreed on behalf of the customer."
         )
     )
-    
+
     decrypted_client_secret = EncryptedCharField(
         max_length=255,
         blank=True,
