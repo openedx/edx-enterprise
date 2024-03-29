@@ -24,4 +24,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(populate_decrypted_fields, reverse_code=migrations.RunPython.noop),
     ]
-
