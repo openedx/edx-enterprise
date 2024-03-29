@@ -18,7 +18,7 @@ jobs:
       matrix:
         python-version:
         - '3.8'
-        - '3.12'
+        - '3.11'
         toxenv: [quality, docs, django32-celery53, django42-celery53, django32-pii-annotations,
           django42]
     env:
@@ -29,7 +29,7 @@ jobs:
       run: echo "NODE_VER=`cat .nvmrc`" >> $GITHUB_ENV
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: ['3.8','3.11']
         architecture: x64
     - uses: actions/setup-node@v2
       with:
