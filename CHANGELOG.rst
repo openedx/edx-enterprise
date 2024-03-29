@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+[4.13.13]
+---------
+* fix: adding additional info to the enterprise group serializer
+
+
 [4.13.12]
 ---------
 * feat: adding additional info to the enterprise group membership serializer
