@@ -6,6 +6,7 @@ Database models for Enterprise Integrated Channel Degreed.
 import json
 from logging import getLogger
 
+from fernet_fields import EncryptedCharField
 from django.db import models
 
 from integrated_channels.degreed2.exporters.content_metadata import Degreed2ContentMetadataExporter
@@ -39,6 +40,18 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         )
     )
 
+    decrypted_client_id = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted API Client ID",
+        help_text=(
+            "The encrypted API Client ID provided to edX by the enterprise customer to be used to make API "
+            "calls to Degreed on behalf of the customer."
+        ),
+        null=True
+    )
+
     client_secret = models.CharField(
         max_length=255,
         blank=True,
@@ -48,6 +61,18 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
             "The API Client Secret provided to edX by the enterprise customer to be used to make API "
             "calls to Degreed on behalf of the customer."
         )
+    )
+    
+    decrypted_client_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted API Client Secret",
+        help_text=(
+            "The encrypted API Client Secret provided to edX by the enterprise customer to be used to make API "
+            "calls to Degreed on behalf of the customer."
+        ),
+        null=True
     )
 
     degreed_base_url = models.CharField(
