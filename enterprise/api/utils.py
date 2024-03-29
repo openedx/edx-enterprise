@@ -19,6 +19,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
+    EnterpriseGroup,
 )
 
 User = auth.get_user_model()
@@ -36,6 +37,16 @@ def get_service_usernames():
         return set(settings.ENTERPRISE_ALL_SERVICE_USERNAMES)
 
     return {getattr(settings, username, None) for username in SERVICE_USERNAMES}
+
+
+def get_enterprise_customer_from_enterprise_group_id(group_id):
+    """
+    Get the enterprise customer id given an enterprise customer group id.
+    """
+    try:
+        return str(EnterpriseGroup.objects.get(pk=group_id).enterprise_customer.uuid)
+    except EnterpriseGroup.DoesNotExist:
+        return None
 
 
 def get_enterprise_customer_from_catalog_id(catalog_id):

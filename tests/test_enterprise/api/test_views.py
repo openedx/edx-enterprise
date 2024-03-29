@@ -60,7 +60,11 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.toggles import FEATURE_PREQUERY_SEARCH_SUGGESTIONS, TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
+from enterprise.toggles import (
+    ENTERPRISE_GROUPS_V1,
+    FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
+    TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
+)
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_sso_orchestrator_api_base_url,
@@ -465,6 +469,26 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     Test enterprise learner list endpoint
     """
 
+    def test_get_enterprise_customer_user_contains_features(self):
+        """
+        Assert whether the paginated response contains `enterprise_features`.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        response = self.client.get(
+            '{host}{path}?username={username}'.format(
+                host=settings.TEST_SERVER,
+                path=ENTERPRISE_LEARNER_LIST_ENDPOINT,
+                username=user.username
+            )
+        )
+        response = self.load_json(response.content)
+        assert response['enterprise_features'] is not None
+
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -511,7 +535,6 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         )
 
         expected_groups = ['enterprise_enrollment_api_access']
-
         response = self.client.get(
             '{host}{path}?username={username}'.format(
                 host=settings.TEST_SERVER,
@@ -1262,6 +1285,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_demo_data_for_analytics_and_lpr': False,
                     'enable_academies': False,
                 },
+                'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
                 'data_sharing_consent_records': [], 'groups': [],
                 'created': '2021-10-20T19:01:31Z', 'invite_key': None, 'role_assignments': [],
@@ -1499,59 +1523,61 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
 
     @ddt.data(
         # Request missing required permissions query param.
-        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False, False),
+        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False),
+         True, None, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, None, False, False),
+         False, None, False, False, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False),
+         True, None, False, False, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False, False),
+         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False,
+         False, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         None, False, False),
+         None, False, False, False),
         # Staff user with group permission filtering on slug with results, with
-        # top down assignment & real-time LCM feature enabled and
-        # prequery search results enabled
+        # top down assignment & real-time LCM feature enabled,
+        # prequery search results enabled and
+        # enterprise groups v1 feature enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, True, True),
+         None, True, True, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -1565,6 +1591,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             expected_error,
             is_top_down_assignment_real_time_lcm_enabled,
             feature_prequery_search_suggestions_enabled,
+            enterprise_groups_v1_enabled,
             mock_get_logo_url,
     ):
         """
@@ -1621,6 +1648,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         with override_waffle_flag(
             FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
             active=feature_prequery_search_suggestions_enabled
+        ):
+
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
+        with override_waffle_flag(
+            ENTERPRISE_GROUPS_V1,
+            active=enterprise_groups_v1_enabled
         ):
 
             response = client.get(
@@ -1686,7 +1721,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_features': {
                     'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
                     'feature_prequery_search_suggestions': feature_prequery_search_suggestions_enabled,
-
+                    'enterprise_groups_v1': enterprise_groups_v1_enabled,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
@@ -7270,13 +7305,19 @@ class TestEnterpriseGroupViewSet(APITest):
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
 
         self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
-        self.group_2 = EnterpriseGroupFactory()
+        self.group_2 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk)
+        ])
+
         self.enterprise_group_memberships = []
         for _ in range(11):
             self.enterprise_group_memberships.append(EnterpriseGroupMembershipFactory(
                 group=self.group_1,
                 pending_enterprise_customer_user=None,
                 enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+                activated_at=datetime.now()
             ))
 
     def test_group_permissions(self):
@@ -7299,8 +7340,7 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-list',
         )
         response = self.client.get(url)
-        assert response.json().get('count') == 1
-        assert response.json().get('results')[0].get('uuid') == str(self.group_1.uuid)
+        assert response.json().get('count') == 2
 
     def test_successful_retrieve_group(self):
         """
@@ -7314,6 +7354,52 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
         assert response.json().get('uuid') == str(self.group_1.uuid)
 
+    def test_list_learner_pending_learner_data(self):
+        """
+        Test the response data of the list learners in group endpoint when the membership is pending
+        """
+        group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        )
+        pending_user = PendingEnterpriseCustomerUserFactory()
+        EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None,
+        )
+        response = self.client.get(url)
+        assert response.json().get('results')[0].get('member_details') == {'user_email': pending_user.user_email}
+        assert response.json().get('results')[0].get(
+            'recent_action'
+        ) == f'Invited: {datetime.now().strftime("%B %d, %Y")}'
+
+    def test_list_learner_statuses(self):
+        """
+        Test the response data of the list learners in group endpoint when the membership is pending
+        """
+        group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        )
+        EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            activated_at=datetime.now()
+        )
+        response = self.client.get(url)
+        assert response.json().get('count') == 2
+        statuses = [result.get('member_status') for result in response.json().get('results')]
+        assert statuses.sort() == ['accepted', 'pending'].sort()
+
     def test_successful_list_learners(self):
         """
         Test a successful GET request to the list endpoint.
@@ -7325,11 +7411,18 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         results_list = []
         for i in reversed(range(1, 11)):
+            member_user = self.enterprise_group_memberships[i].enterprise_customer_user
             results_list.append(
                 {
-                    'learner_id': self.enterprise_group_memberships[i].enterprise_customer_user.id,
+                    'learner_id': member_user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
+                    'member_details': {
+                        'user_name': member_user.name,
+                        'user_email': member_user.user_email
+                    },
+                    'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
+                    'member_status': 'accepted',
                 },
             )
         expected_response = {
@@ -7346,19 +7439,30 @@ class TestEnterpriseGroupViewSet(APITest):
             kwargs={'group_uuid': self.group_1.uuid},
         ) + '?page=2'
         page_2_response = self.client.get(url_page_2)
+        user = self.enterprise_group_memberships[0].enterprise_customer_user
         expected_response_page_2 = {
             'count': 11,
             'next': None,
             'previous': f'http://testserver/enterprise/api/v1/enterprise-group/{self.group_1.uuid}/learners',
             'results': [
                 {
-                    'learner_id': self.enterprise_group_memberships[0].enterprise_customer_user.id,
+                    'learner_id': user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
+                    'member_details': {
+                        'user_name': user.name,
+                        'user_email': user.user_email
+                    },
+                    'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
+                    'member_status': 'accepted',
                 }
             ],
         }
         assert page_2_response.json() == expected_response_page_2
+
+        self.enterprise_group_memberships[0].delete()
+        response = self.client.get(url)
+        assert response.json()['count'] == 10
 
     def test_group_uuid_not_found(self):
         """
@@ -7398,6 +7502,15 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url + random_enterprise_query_param)
         assert not response.json().get('results')
 
+        new_group.delete()
+        new_membership.delete()
+        enterprise_unfiltered_response = self.client.get(url)
+        assert len(enterprise_unfiltered_response.json().get('results')) == 0
+        enterprise_query_param = "?include_deleted=true"
+        enterprise_filtered_response = self.client.get(url + enterprise_query_param)
+        assert len(enterprise_filtered_response.json().get('results')) == 1
+        assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
+
     def test_successful_post_group(self):
         """
         Test creating a new group record
@@ -7411,6 +7524,10 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise_customer': str(new_customer.uuid),
             'name': 'foobar',
         }
+        unauthorized_response = self.client.post(url, data=request_data)
+        assert unauthorized_response.status_code == 403
+
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, new_customer.pk)
         response = self.client.post(url, data=request_data)
         assert response.json().get('name') == 'foobar'
         assert len(EnterpriseGroup.objects.filter(name='foobar')) == 1
@@ -7424,11 +7541,19 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-detail',
             kwargs={'pk': self.group_1.uuid},
         )
-        request_data = {'name': 'ayylmao'}
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+
+        request_data = {'enterprise_customer': new_uuid}
         response = self.client.patch(url, data=request_data)
         assert response.json().get('uuid') == str(self.group_1.uuid)
-        assert response.json().get('name') == 'ayylmao'
-        assert len(EnterpriseGroup.objects.filter(name='ayylmao')) == 1
+        assert response.json().get('enterprise_customer') == str(new_uuid)
+        assert len(EnterpriseGroup.objects.filter(enterprise_customer=str(new_uuid))) == 1
 
     def test_successful_delete_group(self):
         """
@@ -7442,8 +7567,211 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.delete(url)
         assert response.status_code == 204
-        assert not EnterpriseGroup.objects.filter(uuid=group_to_delete_uuid)
-        assert not EnterpriseGroupMembership.objects.filter(group=group_to_delete_uuid)
+        assert EnterpriseGroup.available_objects.filter(uuid=group_to_delete_uuid).count() == 0
+        assert EnterpriseGroup.all_objects.filter(uuid=group_to_delete_uuid).count() == 1
+        # if a group gets soft deleted, we still cascade and actually delete the memberships
+        assert EnterpriseGroupMembership.available_objects.filter(group=group_to_delete_uuid).count() == 0
+        assert EnterpriseGroupMembership.all_objects.filter(group=group_to_delete_uuid).count() == 0
+
+    def test_assign_learners_404(self):
+        """
+        Test that the assign learners endpoint properly handles no finding the provided group
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': uuid.uuid4()},
+        )
+        assert self.client.post(url).status_code == 404
+
+    def test_assign_learners_requires_learner_emails(self):
+        """
+        Test that the assign learners endpoint requires a POST body param: `learner_emails`
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        response = self.client.post(url)
+        assert response.status_code == 400
+        assert response.data == "Error: missing request data: `learner_emails`."
+
+    def test_successful_assign_learners_to_group(self):
+        """
+        Test that both existing and new learners assigned to groups properly creates membership records
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+
+        existing_emails = ",".join([(UserFactory().email) for _ in range(10)])
+        new_emails = ",".join([(f"email_{x}@example.com") for x in range(10)])
+
+        request_data = {'learner_emails': f"{new_emails},{existing_emails}"}
+        response = self.client.post(url, data=request_data)
+
+        assert response.status_code == 201
+        assert response.data == {'records_processed': 20, 'new_learners': 10, 'existing_learners': 10}
+        assert len(
+            EnterpriseGroupMembership.objects.filter(
+                group=self.group_2,
+                pending_enterprise_customer_user__isnull=True
+            )
+        ) == 10
+        assert len(
+            EnterpriseGroupMembership.objects.filter(
+                group=self.group_2,
+                enterprise_customer_user__isnull=True
+            )
+        ) == 10
+
+    def test_remove_learners_404(self):
+        """
+        Test that the remove learners endpoint properly handles no finding the provided group
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': uuid.uuid4()},
+        )
+        assert self.client.post(url).status_code == 404
+
+    def test_remove_learners_requires_learner_emails(self):
+        """
+        Test that the remove learners endpoint requires a POST body param: `learner_emails`
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        response = self.client.post(url)
+        assert response.status_code == 400
+        assert response.data == "Error: missing request data: `learner_emails`."
+
+    def test_patch_with_bad_request_customer_to_change_to(self):
+        """
+        Test that the PATCH endpoint will not allow the user to update a group to a customer that the requester
+        doesn't have access to
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-detail',
+            kwargs={'pk': self.group_1.uuid},
+        )
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+
+        request_data = {'enterprise_customer': new_uuid}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 401
+
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 200
+
+        request_data = {'enterprise_customer': uuid.uuid4()}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 401
+
+    def test_successful_remove_learners_from_group(self):
+        """
+        Test that both existing and new learners in groups are properly removed by the remove_learners endpoint
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        existing_emails = ""
+        memberships_to_delete = []
+        for _ in range(10):
+            membership = EnterpriseGroupMembershipFactory(group=self.group_2)
+            memberships_to_delete.append(membership)
+            existing_emails += membership.enterprise_customer_user.user.email + ','
+
+        request_data = {'learner_emails': existing_emails}
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 200
+        assert response.data == {'records_deleted': 10}
+        for membership in memberships_to_delete:
+            with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
+                EnterpriseGroupMembership.objects.get(pk=membership.pk)
+
+    def test_remove_learners_from_group_only_removes_from_specified_group(self):
+        """
+        Test that removing a learner's membership from a group will only effect the specified group
+        """
+        existing_group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        group_to_remove_from = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        pending_user = PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        existing_membership = EnterpriseGroupMembershipFactory(
+            group=existing_group,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None
+        )
+        membership_to_remove = EnterpriseGroupMembershipFactory(
+            group=group_to_remove_from,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None
+        )
+
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': group_to_remove_from.uuid},
+        )
+
+        request_data = {'learner_emails': pending_user.user_email}
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 200
+        with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
+            EnterpriseGroupMembership.objects.get(pk=membership_to_remove.pk)
+        assert EnterpriseGroupMembership.objects.get(pk=existing_membership.pk)
+
+    def test_group_applies_to_all_contexts_learner_list(self):
+        """
+        Test that hitting the enterprise-group `/learners/` endpoint for a group that has ``applies_to_all_contexts``
+        will return all learners in the group's org regardless of what membership records exist.
+        """
+        new_group = EnterpriseGroupFactory(applies_to_all_contexts=True)
+        new_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id, enterprise_customer=new_group.enterprise_customer,
+            active=True
+        )
+        pending_user = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=new_group.enterprise_customer,
+        )
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': new_group.uuid},
+        )
+        response = self.client.get(url)
+        results = response.json().get('results')
+        for result in results:
+            assert (result.get('pending_learner_id') == pending_user.id) or (result.get('learner_id') == new_user.id)
+
+    def test_group_assign_realized_learner_adds_activated_at(self):
+        """
+        Test that newly created membership records associated with an existing user have an activated at value written
+        but records associated with pending memberships do not.
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        request_data = {'learner_emails': f"{UserFactory().email},email@example.com"}
+        self.client.post(url, data=request_data)
+        membership = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            pending_enterprise_customer_user__isnull=True
+        ).first()
+        assert membership.activated_at
+        pending_membership = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            enterprise_customer_user__isnull=True
+        ).first()
+        assert not pending_membership.activated_at
 
 
 @mark.django_db

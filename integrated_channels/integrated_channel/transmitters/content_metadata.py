@@ -249,9 +249,12 @@ class ContentMetadataTransmitter(Transmitter):
                         transmission.remote_deleted_at = action_happened_at
                         if was_successful:
                             successfully_removed_content_keys.append(transmission.content_id)
-                    transmission.save()
                     if was_successful:
                         transmission.remove_marked_for()
+                        transmission.remote_errored_at = None
+                    else:
+                        transmission.remote_errored_at = action_happened_at
+                    transmission.save()
                     self.enterprise_configuration.update_content_synced_at(action_happened_at, was_successful)
                     results.append(transmission)
 

@@ -583,6 +583,67 @@ class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSeri
         }
 
 
+class EnterpriseGroupSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroup model.
+    """
+    class Meta:
+        model = models.EnterpriseGroup
+        fields = ('enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts')
+
+
+class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroupMembership model.
+    """
+    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
+    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
+    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
+
+    member_details = serializers.SerializerMethodField()
+    recent_action = serializers.SerializerMethodField()
+    member_status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.EnterpriseGroupMembership
+        fields = (
+            'learner_id',
+            'pending_learner_id',
+            'enterprise_group_membership_uuid',
+            'member_details',
+            'recent_action',
+            'member_status',
+        )
+
+    def get_member_details(self, obj):
+        """
+        Return either the member's name and email if it's the case that the member is realized, otherwise just email
+        """
+        if user := obj.enterprise_customer_user:
+            return {"user_email": user.user_email, "user_name": user.name}
+        return {"user_email": obj.pending_enterprise_customer_user.user_email}
+
+    def get_recent_action(self, obj):
+        """
+        Return the timestamp and name of the most recent action associated with the membership.
+        """
+        if obj.is_removed:
+            return f"Removed: {obj.modified.strftime('%B %d, %Y')}"
+        if obj.enterprise_customer_user and obj.activated_at:
+            return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
+        return f"Invited: {obj.created.strftime('%B %d, %Y')}"
+
+    def get_member_status(self, obj):
+        """
+        Return the status related to the membership.
+        """
+        if obj.is_removed:
+            return "removed"
+        if obj.enterprise_customer_user:
+            return "accepted"
+        return "pending"
+
+
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
@@ -600,7 +661,8 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
             'groups',
             'created',
             'invite_key',
-            'role_assignments'
+            'role_assignments',
+            'enterprise_group',
         )
 
     user = UserSerializer()
@@ -608,6 +670,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     role_assignments = serializers.SerializerMethodField()
+    enterprise_group = serializers.SerializerMethodField()
 
     def _get_role_assignments_by_ecu_id(self, enterprise_customer_users):
         """
@@ -663,6 +726,28 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         Return the enterprise role assignments for this enterprise customer user.
         """
         return self.role_assignments_by_ecu_id.get(obj.id, [])
+
+    def get_enterprise_group(self, obj):
+        """
+        Return the enterprise group membership for this enterprise customer user.
+        """
+        related_customer = obj.enterprise_customer
+        # Find any groups that have ``applies_to_all_contexts`` set to True that are connected to the customer
+        # that's related to the customer associated with this customer user record.
+        all_context_groups = models.EnterpriseGroup.objects.filter(
+            enterprise_customer=related_customer,
+            applies_to_all_contexts=True
+        ).values_list('uuid', flat=True)
+        enterprise_groups_from_memberships = obj.memberships.select_related('group').all().values_list(
+            'group',
+            flat=True
+        )
+        # Combine both sets of group UUIDs
+        group_uuids = set(enterprise_groups_from_memberships)
+        for group in all_context_groups:
+            group_uuids.add(group)
+
+        return list(group_uuids)
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
@@ -800,28 +885,6 @@ class CourseDetailSerializer(ImmutableStateSerializer):
                 course_run['key']
             )
         return updated_course
-
-
-class EnterpriseGroupSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseGroup model.
-    """
-    class Meta:
-        model = models.EnterpriseGroup
-        fields = ('enterprise_customer', 'name', 'uuid')
-
-
-class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseGroupMembership model.
-    """
-    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
-    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
-    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
-
-    class Meta:
-        model = models.EnterpriseGroupMembership
-        fields = ('learner_id', 'pending_learner_id', 'enterprise_group_membership_uuid')
 
 
 class CourseRunDetailSerializer(ImmutableStateSerializer):

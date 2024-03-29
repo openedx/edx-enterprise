@@ -15,6 +15,78 @@ Change Log
 
 Unreleased
 ----------
+[4.13.13]
+---------
+* fix: adding additional info to the enterprise group serializer
+
+
+[4.13.12]
+---------
+* feat: adding additional info to the enterprise group membership serializer
+
+[4.13.11]
+---------
+* feat: pass force_enrollment when bulk enrolling learners
+
+[4.13.10]
+---------
+* fix: remove filter to debug failing transmissions
+
+[4.13.9]
+---------
+* fix: add missing filter to disable failing transmissions for 24hrs
+
+[4.13.8]
+---------
+* feat: adding an activated_at value to group membership records
+
+[4.13.7]
+---------
+* fix: adding get_queryset for fix of integrated channel api logs loading
+
+[4.13.6]
+---------
+* feat: disable failing transmissions for 24hrs
+
+[4.13.5]
+---------
+* feat: added autocomplete for enterprise customer in EnterpriseCustomerCatalogAdmin
+
+[4.13.4]
+---------
+* feat: admin pages for enterprise groups and enterprise group memberships
+
+[4.13.3]
+---------
+* feat: adding management command to remove expired pending group memberships
+
+[4.13.2]
+---------
+* feat: add a waffle flag for enterprise groups feature
+
+[4.13.1]
+---------
+* feat: adding soft delete functionality for groups and group memberships
+
+[4.13.0]
+---------
+* feat: add Waffle-based `enterprise_features` to the `EnterpriseCustomerUserViewSet`.
+
+[4.12.6]
+---------
+* fix: Proximus learner transmission failures
+
+[4.12.5]
+---------
+* feat: adding a group membership to the EnterpriseCustomerUserReadOnlySerializer
+
+[4.12.4]
+---------
+* feat: adding assign_learners and remove_learners api endpoints for enterprise groups
+
+[4.12.3]
+---------
+* feat: management command to clear out excessive records for API log table
 
 [4.12.2]
 ---------
@@ -22,7 +94,7 @@ Unreleased
 
 [4.12.1]
 ---------
-* feat: unlink canvas user if not decommissioned on canvas side
+* feat: unlink canvas user if decommissioned on canvas side
 
 [4.12.0]
 ---------
@@ -30,7 +102,7 @@ Unreleased
 
 [4.11.15]
 ---------
-* feat: CRUD api endpoints for the enterprise group table 
+* feat: CRUD api endpoints for the enterprise group table
 
 [4.11.14]
 ---------
@@ -82,7 +154,7 @@ Unreleased
 
 [4.11.2]
 ---------
-* feat: added caching for fetching degreed course id 
+* feat: added caching for fetching degreed course id
 
 [4.11.1]
 ---------

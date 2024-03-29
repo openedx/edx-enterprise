@@ -301,7 +301,8 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                 'results': [],
                 'enterprise_features': {
                     'top_down_assignment_real_time_lcm': False,
-                    'feature_prequery_search_suggestions': False
+                    'feature_prequery_search_suggestions': False,
+                    'enterprise_groups_v1': False
                 }
             }
             assert response == mock_empty_200_success_response
