@@ -7,6 +7,7 @@ import json
 from logging import getLogger
 
 from fernet_fields import EncryptedCharField
+
 from django.db import models
 
 from integrated_channels.degreed2.exporters.content_metadata import Degreed2ContentMetadataExporter
