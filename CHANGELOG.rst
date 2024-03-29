@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.14.0]
+---------
+* feat: Adding python3.11 support. Dropped django32 support.
+
 [4.13.13]
 ---------
 * fix: adding additional info to the enterprise group serializer
