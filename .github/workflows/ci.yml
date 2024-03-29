@@ -19,7 +19,7 @@ jobs:
         python-version:
         - '3.8'
         - '3.11'
-        toxenv: [quality, docs, django42-celery53, django32-pii-annotations, django42]
+        toxenv: [quality, docs, django42-celery53, django42-pii-annotations, django42]
     env:
       RUNJSHINT: true
     steps:
