@@ -274,8 +274,6 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 Number of membership records removed
         """
         try:
-            import pdb
-            pdb.set_trace()
             group = self.get_queryset().get(uuid=group_uuid)
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
