@@ -280,15 +280,24 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         external_id = a_course.get('external-id')
         status_code, response_body = self._sync_content_metadata(a_course, 'post', self.get_courses_url())
         if status_code == 409:
-            # course already exists, don't raise failure, but log and move on
+            # course already exists, don't raise failure, but try to mark it as active on Degreed side
+            # if succeeds, we'll treat this as a success
             LOGGER.warning(
                 self.make_log_msg(
                     external_id,
-                    f'Course with integration_id = {external_id} already exists, '
+                    f'Course with integration_id = {external_id} already exists, marking it as active'
                 )
             )
-            # content already exists, we'll treat this as a success
-            status_code = 200
+            try:
+                channel_metadata_item['courses'][0]['obsolete'] = False
+                return self.update_content_metadata(json.dumps(channel_metadata_item).encode('utf-8'))
+            except requests.exceptions.RequestException as exc:
+                raise ClientError(
+                    'Degreed2APIClient request failed while handling 409: {error} {message}'.format(
+                        error=exc.__class__.__name__,
+                        message=str(exc)
+                    )
+                ) from exc
         elif status_code >= 400:
             raise ClientError(
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
