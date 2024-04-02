@@ -7658,11 +7658,11 @@ class TestEnterpriseGroupViewSet(APITest):
 
         existing_emails = ",".join([(UserFactory().email) for _ in range(10)])
         new_emails = ",".join([(f"email_{x}@example.com") for x in range(10)])
-        budget_expiration = datetime.now()
-        catalog_uuid = uuid.uuid4()
+        act_by_date = datetime.now().strftime("%m-%d-%Y, %H:%M:%S")
+        catalog_uuid = str(uuid.uuid4())
         request_data = {
             'learner_emails': f"{new_emails},{existing_emails}",
-            'budget_expiration': budget_expiration,
+            'act_by_date': act_by_date,
             'catalog_uuid': catalog_uuid,
         }
         response = self.client.post(url, data=request_data)
@@ -7680,7 +7680,15 @@ class TestEnterpriseGroupViewSet(APITest):
                 enterprise_customer_user__isnull=True
             )
         ) == 10
-        assert mock_send_group_membership_invitation_notification.call_count == 20
+        assert mock_send_group_membership_invitation_notification.call_count == 1
+        group_uuids = list(EnterpriseGroupMembership.objects.filter(group=self.group_2).values_list('uuid', flat=True))
+        mock_send_group_membership_invitation_notification.assert_has_calls([
+            mock.call(self.enterprise_customer.uuid,
+                      list(reversed(group_uuids)),
+                      act_by_date,
+                      catalog_uuid,
+                      ),
+        ], any_order=True)
 
     def test_remove_learners_404(self):
         """
@@ -7753,7 +7761,7 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.status_code == 200
         assert response.data == {'records_deleted': 10}
-        assert mock_send_group_membership_removal_notification.call_count == 10
+        assert mock_send_group_membership_removal_notification.call_count == 1
 
     def test_remove_learners_from_group_only_removes_from_specified_group(self):
         """

@@ -161,9 +161,9 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
-        if requested_emails := request.POST.dict().get('learner_emails'):
-            budget_expiration = request.POST.dict().get('budget_expiration')
-            catalog_uuid = request.POST.dict().get('catalog_uuid')
+        if requested_emails := request.data.get('learner_emails'):
+            act_by_date = request.data.get('act_by_date')
+            catalog_uuid = request.data.get('catalog_uuid')
             total_records_processed = 0
             total_existing_users_processed = 0
             total_new_users_processed = 0
@@ -244,12 +244,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 'new_learners': total_new_users_processed,
                 'existing_learners': total_existing_users_processed,
             }
-            if budget_expiration is not None and catalog_uuid is not None:
-                for membership in memberships:
+            membership_uuids = [membership.uuid for membership in memberships]
+            if act_by_date is not None and catalog_uuid is not None:
+                for membership_uuid_batch in utils.batch(membership_uuids, batch_size=200):
                     send_group_membership_invitation_notification.delay(
                         customer.uuid,
-                        membership.uuid,
-                        budget_expiration,
+                        membership_uuid_batch,
+                        act_by_date,
                         catalog_uuid
                     )
             return Response(data, status=201)
@@ -273,6 +274,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 Number of membership records removed
         """
         try:
+            import pdb
+            pdb.set_trace()
             group = self.get_queryset().get(uuid=group_uuid)
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
@@ -288,8 +291,9 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                     group_q & (ecu_in_q | pecu_in_q),
                 )
                 records_deleted += len(records_to_delete)
-                for record in records_to_delete:
-                    send_group_membership_removal_notification.delay(customer.uuid, record.uuid)
+                records_to_delete_uuids = [record.uuid for record in records_to_delete]
+                for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
+                    send_group_membership_removal_notification.delay(customer.uuid, records_to_delete_uuids_batch)
                 records_to_delete.delete()
             data = {
                 'records_deleted': records_deleted,
