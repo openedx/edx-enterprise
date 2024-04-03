@@ -77,7 +77,6 @@ backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-    #   backports-zoneinfo
     #   celery
     #   django
     #   kombu
@@ -187,7 +186,6 @@ coreschema==0.0.4
 coverage[toml]==7.4.4
     # via
     #   -r requirements/test.txt
-    #   coverage
     #   pytest-cov
 cryptography==38.0.4
     # via
@@ -358,7 +356,7 @@ edx-braze-client==0.2.2
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-edx-django-utils==5.10.1
+edx-django-utils==5.12.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -383,7 +381,6 @@ edx-opaque-keys[django]==2.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-drf-extensions
-    #   edx-opaque-keys
 edx-rbac==1.8.0
     # via
     #   -r requirements/doc.txt
@@ -503,7 +500,7 @@ kombu==5.3.6
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml==5.1.1
+lxml==5.2.1
     # via edx-i18n-tools
 markupsafe==2.1.5
     # via
@@ -662,7 +659,6 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   snowflake-connector-python
 pylint==3.1.0
     # via

@@ -4,8 +4,6 @@
 #
 #    make upgrade
 #
-annotated-types==0.6.0
-    # via pydantic
 attrs==23.2.0
     # via
     #   outcome
@@ -28,11 +26,15 @@ h11==0.14.0
     # via wsproto
 idna==3.6
     # via trio
+importlib-metadata==6.11.0
+    # via
+    #   -c requirements/common_constraints.txt
+    #   typeguard
 importlib-resources==6.4.0
     # via jaraco-text
-inflect==7.0.0
+inflect==7.2.0
     # via jaraco-text
-jaraco-classes==3.3.1
+jaraco-classes==3.4.0
     # via -r requirements/js_test.in
 jaraco-collections==5.0.0
     # via
@@ -60,6 +62,7 @@ more-itertools==10.2.0
     # via
     #   cheroot
     #   cherrypy
+    #   inflect
     #   jaraco-classes
     #   jaraco-functools
     #   jaraco-text
@@ -69,10 +72,6 @@ outcome==1.3.0.post0
     # via trio
 portend==3.2.0
     # via cherrypy
-pydantic==2.6.4
-    # via inflect
-pydantic-core==2.16.3
-    # via pydantic
 pysocks==1.7.1
     # via urllib3
 pytz==2024.1
@@ -95,23 +94,23 @@ trio==0.25.0
     #   trio-websocket
 trio-websocket==0.11.1
     # via selenium
+typeguard==4.2.1
+    # via inflect
 typing-extensions==4.10.0
     # via
-    #   annotated-types
     #   inflect
-    #   pydantic
-    #   pydantic-core
     #   selenium
+    #   typeguard
 urllib3[socks]==2.2.1
-    # via
-    #   selenium
-    #   urllib3
+    # via selenium
 wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1
     # via cherrypy
 zipp==3.18.1
-    # via importlib-resources
+    # via
+    #   importlib-metadata
+    #   importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

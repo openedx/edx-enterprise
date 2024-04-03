@@ -50,7 +50,6 @@ backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
-    #   backports-zoneinfo
     #   celery
     #   django
     #   kombu
@@ -220,7 +219,7 @@ edx-api-doc-tools==1.7.0
     # via -r requirements/test-master.txt
 edx-braze-client==0.2.2
     # via -r requirements/test-master.txt
-edx-django-utils==5.10.1
+edx-django-utils==5.12.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -235,7 +234,6 @@ edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-    #   edx-opaque-keys
 edx-rbac==1.8.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.6.1
@@ -381,7 +379,6 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   snowflake-connector-python
 pymongo==3.13.0
     # via
