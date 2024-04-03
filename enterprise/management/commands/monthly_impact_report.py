@@ -927,7 +927,7 @@ class Command(BaseCommand):
             cs.execute(QUERY)
             rows = cs.fetchall()
             for row in rows:
-                yield row
+                yield row   # pylint: disable=use-yield-from,useless-suppression
         finally:
             cs.close()
         ctx.close()

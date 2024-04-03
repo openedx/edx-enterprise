@@ -142,6 +142,7 @@ enable =
 	no-self-argument,
 	no-value-for-parameter,
 	non-iterator-returned,
+	non-parent-method-called,
 	nonexistent-operator,
 	not-a-mapping,
 	not-an-iterable,
@@ -161,10 +162,13 @@ enable =
 	return-outside-function,
 	signature-differs,
 	super-init-not-called,
+	super-method-not-called,
 	syntax-error,
+	test-inherits-tests,
 	too-few-format-args,
 	too-many-format-args,
 	too-many-function-args,
+	translation-of-non-string,
 	truncated-format-string,
 	undefined-all-variable,
 	undefined-loop-variable,
@@ -210,6 +214,7 @@ enable =
 	consider-using-enumerate,
 	global-at-module-level,
 	global-variable-not-assigned,
+	literal-used-as-attribute,
 	logging-format-interpolation,
 	logging-not-lazy,
 	multiple-imports,
@@ -220,6 +225,7 @@ enable =
 	redundant-unittest-assert,
 	reimported,
 	simplifiable-if-statement,
+	simplifiable-range,
 	singleton-comparison,
 	superfluous-parens,
 	unidiomatic-typecheck,
@@ -228,6 +234,7 @@ enable =
 	unnecessary-semicolon,
 	unneeded-not,
 	useless-else-on-loop,
+	wrong-assert-type,
 	
 	deprecated-method,
 	deprecated-module,
@@ -276,7 +283,9 @@ disable =
 	unspecified-encoding,
 	unused-wildcard-import,
 	use-maxsplit-arg,
-
+	
+	feature-toggle-needs-doc,
+	illegal-waffle-usage,
 	
 	logging-fstring-interpolation,
 	logging-format-interpolation,
@@ -377,5 +386,5 @@ int-import-graph =
 
 [EXCEPTIONS]
 overgeneral-exceptions = builtins.Exception
-
 # 852b6fff3b5db38083c340a20de6cc6024cc0c00
+
