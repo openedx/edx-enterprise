@@ -19,6 +19,10 @@ Unreleased
 ---------
 * feat: Adding python3.11 support. Dropped django32 support.
 
+[4.13.14]
+---------
+* feat: handle Degreed 409 case (mark as active instead of recreating course)
+
 [4.13.13]
 ---------
 * fix: adding additional info to the enterprise group serializer
