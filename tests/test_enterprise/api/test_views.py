@@ -14,6 +14,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
+import pytz
 import responses
 from edx_toggles.toggles.testutils import override_waffle_flag
 from faker import Faker
@@ -7486,19 +7487,19 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
         assert response.json()['count'] == 10
 
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/?filter_for_pecus=true'
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/?pending_users_only=true'
         # verify filtered response for only pending users
         self.enterprise_group_memberships.append(EnterpriseGroupMembershipFactory(
             group=self.group_1,
             pending_enterprise_customer_user=self.pending_enterprise_customer_user,
             enterprise_customer_user=None
         ))
-        filter_for_pecus_url = settings.TEST_SERVER + reverse(
+        pending_users_only_url = settings.TEST_SERVER + reverse(
             'enterprise-group-learners',
             kwargs={'group_uuid': self.group_1.uuid},
-        ) + '/?filter_for_pecus=true'
-        filter_for_pecus_response = self.client.get(filter_for_pecus_url)
-        expected_filtered_for_pecus_response = {
+        ) + '/?pending_users_only=true'
+        pending_users_only_response = self.client.get(pending_users_only_url)
+        expected_pending_users_only_response = {
             'count': 1,
             'next': None,
             'previous': None,
@@ -7513,7 +7514,7 @@ class TestEnterpriseGroupViewSet(APITest):
                 },
             ],
         }
-        assert filter_for_pecus_response.json()['count'] == expected_filtered_for_pecus_response['count']
+        assert pending_users_only_response.json()['count'] == expected_pending_users_only_response['count']
 
     def test_group_uuid_not_found(self):
         """
@@ -7658,8 +7659,8 @@ class TestEnterpriseGroupViewSet(APITest):
 
         existing_emails = ",".join([(UserFactory().email) for _ in range(10)])
         new_emails = ",".join([(f"email_{x}@example.com") for x in range(10)])
-        act_by_date = datetime.now().strftime("%m-%d-%Y, %H:%M:%S")
-        catalog_uuid = str(uuid.uuid4())
+        act_by_date = datetime.now(pytz.UTC)
+        catalog_uuid = uuid.uuid4()
         request_data = {
             'learner_emails': f"{new_emails},{existing_emails}",
             'act_by_date': act_by_date,

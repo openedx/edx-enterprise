@@ -2,6 +2,7 @@
 Django tasks.
 """
 
+from datetime import datetime
 from logging import getLogger
 
 from braze.exceptions import BrazeClientError
@@ -238,7 +239,7 @@ def send_group_membership_invitation_notification(
         'catalog_content_count'
     ] = enterprise_catalog_client.get_catalog_content_count(catalog_uuid)
 
-    braze_trigger_properties['act_by_date'] = act_by_date
+    braze_trigger_properties['act_by_date'] = datetime.strptime(act_by_date, "%B %d, %Y")
     pecu_emails = []
     ecus = []
     for membership_uuid in membership_uuids:

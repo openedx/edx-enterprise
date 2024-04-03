@@ -95,12 +95,18 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         return super().create(request, *args, **kwargs)
 
     @action(detail=True, methods=['get'])
-    def get_learners(self, *args, **kwargs):
+    def get_learners(self, request, *args, **kwargs):
         """
-        Endpoint Location: GET api/v1/enterprise-group/<group_uuid>/learners/
+        Endpoint Location to return all learners: GET api/v1/enterprise-group/<group_uuid>/learners/
+
+        Endpoint Location to return pending learners:
+        GET api/v1/enterprise-group/<group_uuid>/learners?pending_users_only=true
 
         Request Arguments:
         - ``group_uuid`` (URL location, required): The uuid of the group from which learners should be listed.
+
+        Optional query params:
+        - ``pending_users_only`` (string, optional): Specify that results should only contain pending learners
 
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
@@ -110,10 +116,16 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 'previous': null,
                 'results': [
                     {
-                        'learner_uuid': 'enterprise_customer_user_id',
-                        'pending_learner_id': 'pending_enterprise_customer_user_id',
-                        'enterprise_group_membership_uuid': 'enterprise_group_membership_uuid',
-                        'enterprise_customer': EnterpriseCustomerSerializer
+                        'learner_id': integer or None,
+                        'pending_learner_id': integer or None,
+                        'enterprise_group_membership_uuid': UUID,
+                        'enterprise_customer': EnterpriseCustomerSerializer,
+                        'member_details': {
+                            'user_email': string,
+                            'user_name': string,
+                        },
+                        'recent_action': string,
+                        'member_status': string,
                     },
                 ],
             }
@@ -121,8 +133,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         """
 
         group_uuid = kwargs.get('group_uuid')
-        # GET api/v1/enterprise-group/<group_uuid>/learners?filter_for_pecus=true
-        filter_for_pecus = self.request.query_params.get('filter_for_pecus', None)
+        filter_for_pecus = request.query_params.get('pending_users_only', None)
         try:
             group_object = self.get_queryset().get(uuid=group_uuid)
             members = group_object.get_all_learners(filter_for_pecus)
@@ -161,13 +172,28 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
+
         if requested_emails := request.data.get('learner_emails'):
-            act_by_date = request.data.get('act_by_date')
-            catalog_uuid = request.data.get('catalog_uuid')
+            request_data = {}
+            if act_by_date := request.data.get('act_by_date'):
+                request_data['act_by_date'] = act_by_date
+            if catalog_uuid := request.data.get('catalog_uuid'):
+                request_data['catalog_uuid'] = catalog_uuid
+            request_data['learner_emails'] = requested_emails.split(',')
+
+            param_serializers = serializers.EnterpriseGroupAssignLearnersRequestQuerySerializer(
+                data=request_data
+            )
+            param_serializers.is_valid()
+            if not param_serializers.is_valid():
+                return Response(param_serializers.errors, status=400)
+
+            act_by_date = param_serializers.validated_data.get('act_by_date')
+            catalog_uuid = param_serializers.validated_data.get('catalog_uuid')
             total_records_processed = 0
             total_existing_users_processed = 0
             total_new_users_processed = 0
-            for user_email_batch in utils.batch(requested_emails.rstrip(',').split(',')[: 1000], batch_size=200):
+            for user_email_batch in utils.batch(requested_emails[: 1000], batch_size=200):
                 user_emails_to_create = []
                 memberships_to_create = []
                 # ecus: enterprise customer users
