@@ -1710,6 +1710,6 @@ class EnterpriseGroupAssignLearnersRequestQuerySerializer(serializers.Serializer
     catalog_uuid = serializers.UUIDField(required=False)
     act_by_date = serializers.DateTimeField(required=False)
     learner_emails = serializers.ListField(
-        child=serializers.EmailField(required=False),
-        allow_empty=True
+        child=serializers.EmailField(required=True),
+        allow_empty=False
     )
