@@ -171,7 +171,9 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
-        if requested_emails := request.data.getlist('learner_emails'):
+        import pdb
+        pdb.set_trace()
+        if requested_emails := request.POST.getlist('learner_emails'):
             request_data = {}
             request_data['act_by_date'] = request.data.get('act_by_date')
             request_data['catalog_uuid'] = request.data.get('catalog_uuid')

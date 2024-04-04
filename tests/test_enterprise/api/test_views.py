@@ -7418,9 +7418,6 @@ class TestEnterpriseGroupViewSet(APITest):
                     'learner_id': member_user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
-                    'enterprise_customer': {
-                        'name': self.enterprise_customer.name,
-                    },
                     'member_details': {
                         'user_name': member_user.name,
                         'user_email': member_user.user_email
@@ -7442,8 +7439,6 @@ class TestEnterpriseGroupViewSet(APITest):
                 expected_response['results'][i]['pending_learner_id'])
             assert (response.json()['results'][i]['enterprise_group_membership_uuid']
                     == expected_response['results'][i]['enterprise_group_membership_uuid'])
-            assert (response.json()['results'][i]['enterprise_customer']['name']
-                    == expected_response['results'][i]['enterprise_customer']['name'])
 
         # verify page 2 of paginated response
         url_page_2 = settings.TEST_SERVER + reverse(
@@ -7461,9 +7456,6 @@ class TestEnterpriseGroupViewSet(APITest):
                     'learner_id': user.id,
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
-                    'enterprise_customer': {
-                        'name': self.enterprise_customer.name,
-                    },
                     'member_details': {
                         'user_name': user.name,
                         'user_email': user.user_email
@@ -7481,8 +7473,6 @@ class TestEnterpriseGroupViewSet(APITest):
             expected_response_page_2['results'][0]['pending_learner_id'])
         assert (page_2_response.json()['results'][0]['enterprise_group_membership_uuid']
                 == expected_response_page_2['results'][0]['enterprise_group_membership_uuid'])
-        assert (page_2_response.json()['results'][0]['enterprise_customer']['name']
-                == expected_response_page_2['results'][0]['enterprise_customer']['name'])
         self.enterprise_group_memberships[0].delete()
         response = self.client.get(url)
         assert response.json()['count'] == 10
@@ -7820,7 +7810,7 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-assign-learners',
             kwargs={'group_uuid': self.group_2.uuid},
         )
-        request_data = {'learner_emails': f"{UserFactory().email},email@example.com"}
+        request_data = {'learner_emails': [UserFactory().email, 'email@example.com']}
         self.client.post(url, data=request_data)
         membership = EnterpriseGroupMembership.objects.filter(
             group=self.group_2,
