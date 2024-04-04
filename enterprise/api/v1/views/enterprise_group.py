@@ -183,7 +183,6 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             param_serializers.is_valid()
             if not param_serializers.is_valid():
                 return Response(param_serializers.errors, status=400)
-
             act_by_date = param_serializers.validated_data.get('act_by_date')
             catalog_uuid = param_serializers.validated_data.get('catalog_uuid')
             learner_emails = param_serializers.validated_data.get('learner_emails')
