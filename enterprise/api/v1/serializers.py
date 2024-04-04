@@ -589,7 +589,7 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = models.EnterpriseGroup
-        fields = ('enterprise_customer', 'name', 'uuid')
+        fields = ('enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts')
 
 
 class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):

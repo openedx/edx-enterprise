@@ -440,6 +440,12 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/courses/{degreed_course_id}',
+            json='{}',
+            status=200
+        )
         status_code, _ = degreed_api_client.create_content_metadata(create_course_payload())
         # we treat as "course exists" as a success
         assert status_code == 200
