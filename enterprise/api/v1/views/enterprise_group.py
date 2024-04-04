@@ -119,7 +119,6 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                         'learner_id': integer or None,
                         'pending_learner_id': integer or None,
                         'enterprise_group_membership_uuid': UUID,
-                        'enterprise_customer': EnterpriseCustomerSerializer,
                         'member_details': {
                             'user_email': string,
                             'user_name': string,
@@ -172,16 +171,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
-
-        if requested_emails := request.data.get('learner_emails'):
+        if requested_emails := request.data.getlist('learner_emails'):
             request_data = {}
-            if act_by_date := request.data.get('act_by_date'):
-                request_data['act_by_date'] = act_by_date
-            if catalog_uuid := request.data.get('catalog_uuid'):
-                request_data['catalog_uuid'] = catalog_uuid
-            request_data['learner_emails'] = requested_emails.split(',')
+            request_data['act_by_date'] = request.data.get('act_by_date')
+            request_data['catalog_uuid'] = request.data.get('catalog_uuid')
+            request_data['learner_emails'] = requested_emails
 
-            param_serializers = serializers.EnterpriseGroupAssignLearnersRequestQuerySerializer(
+            param_serializers = serializers.EnterpriseGroupAssignLearnersRequestDataSerializer(
                 data=request_data
             )
             param_serializers.is_valid()
@@ -190,10 +186,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
             act_by_date = param_serializers.validated_data.get('act_by_date')
             catalog_uuid = param_serializers.validated_data.get('catalog_uuid')
+            learner_emails = param_serializers.validated_data.get('learner_emails')
             total_records_processed = 0
             total_existing_users_processed = 0
             total_new_users_processed = 0
-            for user_email_batch in utils.batch(requested_emails[: 1000], batch_size=200):
+            for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
                 user_emails_to_create = []
                 memberships_to_create = []
                 # ecus: enterprise customer users

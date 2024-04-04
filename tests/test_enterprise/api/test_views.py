@@ -7656,13 +7656,12 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-assign-learners',
             kwargs={'group_uuid': self.group_2.uuid},
         )
-
-        existing_emails = ",".join([(UserFactory().email) for _ in range(10)])
-        new_emails = ",".join([(f"email_{x}@example.com") for x in range(10)])
+        existing_emails = [UserFactory().email for _ in range(10)]
+        new_emails = [f"email_{x}@example.com" for x in range(10)]
         act_by_date = datetime.now(pytz.UTC)
         catalog_uuid = uuid.uuid4()
         request_data = {
-            'learner_emails': f"{new_emails},{existing_emails}",
+            'learner_emails': existing_emails + new_emails,
             'act_by_date': act_by_date,
             'catalog_uuid': catalog_uuid,
         }
@@ -7682,14 +7681,10 @@ class TestEnterpriseGroupViewSet(APITest):
             )
         ) == 10
         assert mock_send_group_membership_invitation_notification.call_count == 1
-        group_uuids = list(EnterpriseGroupMembership.objects.filter(group=self.group_2).values_list('uuid', flat=True))
+        group_uuids = list(reversed(list(
+            EnterpriseGroupMembership.objects.filter(group=self.group_2).values_list('uuid', flat=True))))
         mock_send_group_membership_invitation_notification.assert_has_calls([
-            mock.call(self.enterprise_customer.uuid,
-                      list(reversed(group_uuids)),
-                      act_by_date,
-                      catalog_uuid,
-                      ),
-        ], any_order=True)
+            mock.call(self.enterprise_customer.uuid, group_uuids, act_by_date, catalog_uuid)], any_order=True)
 
     def test_remove_learners_404(self):
         """

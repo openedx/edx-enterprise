@@ -599,7 +599,6 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
     pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
     enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
-    enterprise_customer = EnterpriseCustomerSerializer(source='group.enterprise_customer', read_only=True)
 
     member_details = serializers.SerializerMethodField()
     recent_action = serializers.SerializerMethodField()
@@ -614,7 +613,6 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
             'member_details',
             'recent_action',
             'member_status',
-            'enterprise_customer'
         )
 
     def get_member_details(self, obj):
@@ -1703,12 +1701,12 @@ class EnterpriseCustomerApiCredentialRegeneratePatchSerializer(serializers.Seria
     updated = serializers.DateTimeField(required=False, read_only=True)
 
 
-class EnterpriseGroupAssignLearnersRequestQuerySerializer(serializers.Serializer):
+class EnterpriseGroupAssignLearnersRequestDataSerializer(serializers.Serializer):
     """
     Serializer for the Enterprise Group Assign Learners endpoint query params
     """
-    catalog_uuid = serializers.UUIDField(required=False)
-    act_by_date = serializers.DateTimeField(required=False)
+    catalog_uuid = serializers.UUIDField(required=False, allow_null=True)
+    act_by_date = serializers.DateTimeField(required=False, allow_null=True)
     learner_emails = serializers.ListField(
         child=serializers.EmailField(required=True),
         allow_empty=False

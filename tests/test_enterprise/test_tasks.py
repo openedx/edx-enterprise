@@ -222,7 +222,7 @@ class TestEnterpriseTasks(unittest.TestCase):
             self.pending_enterprise_customer_user.user_email)
         mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
             mock_catalog_content_count)
-        act_by_date = datetime.now()
+        act_by_date = datetime.today()
         catalog_uuid = uuid.uuid4()
         membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
         send_group_membership_invitation_notification(
@@ -238,7 +238,7 @@ class TestEnterpriseTasks(unittest.TestCase):
                 'contact_admin_link': mock_admin_mailto,
                 'enterprise_customer_name': self.enterprise_customer.name,
                 'catalog_content_count': mock_catalog_content_count,
-                'act_by_date': act_by_date,
+                'act_by_date': act_by_date.strftime('%B %d, %Y'),
             },
         )]
         mock_braze_api_client().send_campaign_message.assert_has_calls(calls)
