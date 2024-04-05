@@ -7696,7 +7696,7 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.post(url)
         assert response.status_code == 400
-        assert response.data == "Error: missing request data: `learner_emails`."
+        assert response.json() == {'learner_emails': ['This field is required.']}
 
     def test_patch_with_bad_request_customer_to_change_to(self):
         """
@@ -7736,12 +7736,12 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-remove-learners',
             kwargs={'group_uuid': self.group_2.uuid},
         )
-        existing_emails = ""
+        existing_emails = []
         memberships_to_delete = []
         for _ in range(10):
             membership = EnterpriseGroupMembershipFactory(group=self.group_2)
             memberships_to_delete.append(membership)
-            existing_emails += membership.enterprise_customer_user.user.email + ','
+            existing_emails.append(membership.enterprise_customer_user.user.email)
 
         request_data = {'learner_emails': existing_emails}
         response = self.client.post(url, data=request_data)

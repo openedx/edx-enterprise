@@ -171,7 +171,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
-        param_serializer = serializers.EnterpriseGroupAssignLearnersRequestDataSerializer(data=request.data)
+        param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
         param_serializer.is_valid(raise_exception=True)
         act_by_date = param_serializer.data['act_by_date']
         catalog_uuid = param_serializer.data['catalog_uuid']
@@ -289,23 +289,29 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
-        if requested_emails := request.POST.dict().get('learner_emails'):
-            records_deleted = 0
-            for user_email_batch in utils.batch(requested_emails.split(','), batch_size=200):
-                existing_users = User.objects.filter(email__in=user_email_batch).values_list("id", flat=True)
-                group_q = Q(group=group)
-                ecu_in_q = Q(enterprise_customer_user__user_id__in=existing_users)
-                pecu_in_q = Q(pending_enterprise_customer_user__user_email__in=user_email_batch)
-                records_to_delete = models.EnterpriseGroupMembership.objects.filter(
-                    group_q & (ecu_in_q | pecu_in_q),
-                )
-                records_deleted += len(records_to_delete)
-                records_to_delete_uuids = [record.uuid for record in records_to_delete]
-                for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
-                    send_group_membership_removal_notification.delay(customer.uuid, records_to_delete_uuids_batch)
-                records_to_delete.delete()
-            data = {
-                'records_deleted': records_deleted,
-            }
-            return Response(data, status=200)
-        return Response(data="Error: missing request data: `learner_emails`.", status=400)
+        param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
+        param_serializer.is_valid(raise_exception=True)
+        catalog_uuid = param_serializer.data['catalog_uuid']
+        learner_emails = param_serializer.data['learner_emails']
+
+        records_deleted = 0
+        for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
+            existing_users = User.objects.filter(email__in=user_email_batch).values_list("id", flat=True)
+            group_q = Q(group=group)
+            ecu_in_q = Q(enterprise_customer_user__user_id__in=existing_users)
+            pecu_in_q = Q(pending_enterprise_customer_user__user_email__in=user_email_batch)
+            records_to_delete = models.EnterpriseGroupMembership.objects.filter(
+                group_q & (ecu_in_q | pecu_in_q),
+            )
+            records_deleted += len(records_to_delete)
+            records_to_delete_uuids = [record.uuid for record in records_to_delete]
+            for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
+                send_group_membership_removal_notification.delay(
+                    customer.uuid,
+                    records_to_delete_uuids_batch,
+                    catalog_uuid)
+            records_to_delete.delete()
+        data = {
+            'records_deleted': records_deleted,
+        }
+        return Response(data, status=200)

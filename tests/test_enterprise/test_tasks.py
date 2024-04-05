@@ -243,8 +243,9 @@ class TestEnterpriseTasks(unittest.TestCase):
         )]
         mock_braze_api_client().send_campaign_message.assert_has_calls(calls)
 
+    @mock.patch('enterprise.tasks.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
-    def test_send_group_membership_removal_notification(self, mock_braze_api_client):
+    def test_send_group_membership_removal_notification(self, mock_braze_api_client, mock_enterprise_catalog_client):
         """
         Verify send_group_membership_removal_notification hits braze client with expected args
         """
@@ -266,10 +267,15 @@ class TestEnterpriseTasks(unittest.TestCase):
         mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
         mock_braze_api_client().create_recipient_no_external_id.return_value = (
             self.pending_enterprise_customer_user.user_email)
+        mock_catalog_content_count = 5
+        mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
+            mock_catalog_content_count)
         membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
+        catalog_uuid = uuid.uuid4()
         send_group_membership_removal_notification(
             self.enterprise_customer.uuid,
             membership_uuids,
+            catalog_uuid,
         )
         calls = [mock.call(
             BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID,
@@ -277,6 +283,7 @@ class TestEnterpriseTasks(unittest.TestCase):
             trigger_properties={
                 'contact_admin_link': mock_admin_mailto,
                 'enterprise_customer_name': self.enterprise_customer.name,
+                'catalog_content_count': mock_catalog_content_count,
             },
         )]
         mock_braze_api_client().send_campaign_message.assert_has_calls(calls)

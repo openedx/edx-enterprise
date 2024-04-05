@@ -1701,12 +1701,12 @@ class EnterpriseCustomerApiCredentialRegeneratePatchSerializer(serializers.Seria
     updated = serializers.DateTimeField(required=False, read_only=True)
 
 
-class EnterpriseGroupAssignLearnersRequestDataSerializer(serializers.Serializer):
+class EnterpriseGroupRequestDataSerializer(serializers.Serializer):
     """
     Serializer for the Enterprise Group Assign Learners endpoint query params
     """
     catalog_uuid = serializers.UUIDField(required=False, allow_null=True)
-    act_by_date = serializers.DateTimeField(required=False, allow_null=True, format='%Y-%m-%dT%H:%M:%SZ')
+    act_by_date = serializers.DateTimeField(required=False, allow_null=True)
     learner_emails = serializers.ListField(
         child=serializers.EmailField(required=True),
         allow_empty=False

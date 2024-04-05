@@ -278,7 +278,7 @@ def send_group_membership_invitation_notification(
 
 @shared_task
 @set_code_owner_attribute
-def send_group_membership_removal_notification(enterprise_customer_uuid, membership_uuids):
+def send_group_membership_removal_notification(enterprise_customer_uuid, membership_uuids, catalog_uuid):
     """
     Send braze email notification when learner is removed from a group.
 
@@ -288,11 +288,15 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
     """
     enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
     braze_client_instance = BrazeAPIClient()
+    enterprise_catalog_client = EnterpriseCatalogApiClient()
     braze_trigger_properties = {}
     contact_email = enterprise_customer.contact_email
     enterprise_customer_name = enterprise_customer.name
     braze_trigger_properties['contact_admin_link'] = braze_client_instance.generate_mailto_link(contact_email)
     braze_trigger_properties['enterprise_customer_name'] = enterprise_customer_name
+    braze_trigger_properties[
+        'catalog_content_count'
+    ] = enterprise_catalog_client.get_catalog_content_count(catalog_uuid)
     pecu_emails = []
     ecus = []
     membership_records = enterprise_group_membership_model().objects.filter(uuid__in=membership_uuids)
