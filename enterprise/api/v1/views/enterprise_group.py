@@ -171,112 +171,101 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
-        if requested_emails := request.POST.getlist('learner_emails'):
-            request_data = {}
-            request_data['act_by_date'] = request.data.get('act_by_date')
-            request_data['catalog_uuid'] = request.data.get('catalog_uuid')
-            request_data['learner_emails'] = requested_emails
-
-            param_serializers = serializers.EnterpriseGroupAssignLearnersRequestDataSerializer(
-                data=request_data
-            )
-            param_serializers.is_valid()
-            if not param_serializers.is_valid():
-                return Response(param_serializers.errors, status=400)
-            act_by_date = param_serializers.validated_data.get('act_by_date')
-            catalog_uuid = param_serializers.validated_data.get('catalog_uuid')
-            learner_emails = param_serializers.validated_data.get('learner_emails')
-            total_records_processed = 0
-            total_existing_users_processed = 0
-            total_new_users_processed = 0
-            for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
-                user_emails_to_create = []
-                memberships_to_create = []
-                # ecus: enterprise customer users
-                ecus = []
-                # Gather all existing User objects associated with the email batch
-                existing_users = User.objects.filter(email__in=user_email_batch)
-                # Build and create a list of EnterpriseCustomerUser objects for the emails of existing Users
-                # Ignore conflicts in case any of the ent customer user objects already exist
-                ecu_by_email = {
-                    user.email: models.EnterpriseCustomerUser(
-                        enterprise_customer=customer, user_id=user.id, active=True
-                    ) for user in existing_users
-                }
-                models.EnterpriseCustomerUser.objects.bulk_create(
-                    ecu_by_email.values(),
-                    ignore_conflicts=True,
-                )
-
-                # Fetch all ent customer users related to existing users provided by requester
-                # whether they were created above or already existed
-                ecus.extend(
-                    models.EnterpriseCustomerUser.objects.filter(
-                        user_id__in=existing_users.values_list('id', flat=True)
-                    )
-                )
-
-                # Extend the list of emails that don't have User objects associated and need to be turned into
-                # new PendingEnterpriseCustomerUser objects
-                user_emails_to_create.extend(set(user_email_batch).difference(set(ecu_by_email.keys())))
-
-                # Extend the list of memberships that need to be created associated with existing Users
-                ent_customer_users = [
-                    models.EnterpriseGroupMembership(
-                        activated_at=localized_utcnow(),
-                        enterprise_customer_user=ecu,
-                        group=group
-                    )
-                    for ecu in ecus
-                ]
-                total_existing_users_processed += len(ent_customer_users)
-                memberships_to_create.extend(ent_customer_users)
-
-            # Go over (in batches) all emails that don't have User objects
-            for emails_to_create_batch in utils.batch(user_emails_to_create, batch_size=200):
-                # Create the PendingEnterpriseCustomerUser objects
-                pecu_records = [
-                    models.PendingEnterpriseCustomerUser(
-                        enterprise_customer=customer, user_email=user_email
-                    ) for user_email in emails_to_create_batch
-                ]
-                # According to Django docs, bulk created objects can't be used in future bulk creates as the in memory
-                # objects returned by bulk_create won't have PK's assigned.
-                models.PendingEnterpriseCustomerUser.objects.bulk_create(pecu_records)
-                pecus = models.PendingEnterpriseCustomerUser.objects.filter(
-                    user_email__in=emails_to_create_batch,
-                    enterprise_customer=customer,
-                )
-                total_new_users_processed += len(pecus)
-                # Extend the list of memberships that need to be created associated with the new pending users
-                memberships_to_create.extend([
-                    models.EnterpriseGroupMembership(
-                        pending_enterprise_customer_user=pecu,
-                        group=group
-                    ) for pecu in pecus
-                ])
-
-            # Create all our memberships, bulk_create will batch for us.
-            memberships = models.EnterpriseGroupMembership.objects.bulk_create(
-                memberships_to_create, ignore_conflicts=True
-            )
-            total_records_processed += len(memberships)
-            data = {
-                'records_processed': total_records_processed,
-                'new_learners': total_new_users_processed,
-                'existing_learners': total_existing_users_processed,
+        param_serializer = serializers.EnterpriseGroupAssignLearnersRequestDataSerializer(data=request.data)
+        param_serializer.is_valid(raise_exception=True)
+        act_by_date = param_serializer.data['act_by_date']
+        catalog_uuid = param_serializer.data['catalog_uuid']
+        learner_emails = param_serializer.data['learner_emails']
+        total_records_processed = 0
+        total_existing_users_processed = 0
+        total_new_users_processed = 0
+        for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
+            user_emails_to_create = []
+            memberships_to_create = []
+            # ecus: enterprise customer users
+            ecus = []
+            # Gather all existing User objects associated with the email batch
+            existing_users = User.objects.filter(email__in=user_email_batch)
+            # Build and create a list of EnterpriseCustomerUser objects for the emails of existing Users
+            # Ignore conflicts in case any of the ent customer user objects already exist
+            ecu_by_email = {
+                user.email: models.EnterpriseCustomerUser(
+                    enterprise_customer=customer, user_id=user.id, active=True
+                ) for user in existing_users
             }
-            membership_uuids = [membership.uuid for membership in memberships]
-            if act_by_date is not None and catalog_uuid is not None:
-                for membership_uuid_batch in utils.batch(membership_uuids, batch_size=200):
-                    send_group_membership_invitation_notification.delay(
-                        customer.uuid,
-                        membership_uuid_batch,
-                        act_by_date,
-                        catalog_uuid
-                    )
-            return Response(data, status=201)
-        return Response(data="Error: missing request data: `learner_emails`.", status=400)
+            models.EnterpriseCustomerUser.objects.bulk_create(
+                ecu_by_email.values(),
+                ignore_conflicts=True,
+            )
+
+            # Fetch all ent customer users related to existing users provided by requester
+            # whether they were created above or already existed
+            ecus.extend(
+                models.EnterpriseCustomerUser.objects.filter(
+                    user_id__in=existing_users.values_list('id', flat=True)
+                )
+            )
+
+            # Extend the list of emails that don't have User objects associated and need to be turned into
+            # new PendingEnterpriseCustomerUser objects
+            user_emails_to_create.extend(set(user_email_batch).difference(set(ecu_by_email.keys())))
+
+            # Extend the list of memberships that need to be created associated with existing Users
+            ent_customer_users = [
+                models.EnterpriseGroupMembership(
+                    activated_at=localized_utcnow(),
+                    enterprise_customer_user=ecu,
+                    group=group
+                )
+                for ecu in ecus
+            ]
+            total_existing_users_processed += len(ent_customer_users)
+            memberships_to_create.extend(ent_customer_users)
+
+        # Go over (in batches) all emails that don't have User objects
+        for emails_to_create_batch in utils.batch(user_emails_to_create, batch_size=200):
+            # Create the PendingEnterpriseCustomerUser objects
+            pecu_records = [
+                models.PendingEnterpriseCustomerUser(
+                    enterprise_customer=customer, user_email=user_email
+                ) for user_email in emails_to_create_batch
+            ]
+            # According to Django docs, bulk created objects can't be used in future bulk creates as the in memory
+            # objects returned by bulk_create won't have PK's assigned.
+            models.PendingEnterpriseCustomerUser.objects.bulk_create(pecu_records)
+            pecus = models.PendingEnterpriseCustomerUser.objects.filter(
+                user_email__in=emails_to_create_batch,
+                enterprise_customer=customer,
+            )
+            total_new_users_processed += len(pecus)
+            # Extend the list of memberships that need to be created associated with the new pending users
+            memberships_to_create.extend([
+                models.EnterpriseGroupMembership(
+                    pending_enterprise_customer_user=pecu,
+                    group=group
+                ) for pecu in pecus
+            ])
+
+        # Create all our memberships, bulk_create will batch for us.
+        memberships = models.EnterpriseGroupMembership.objects.bulk_create(
+            memberships_to_create, ignore_conflicts=True
+        )
+        total_records_processed += len(memberships)
+        data = {
+            'records_processed': total_records_processed,
+            'new_learners': total_new_users_processed,
+            'existing_learners': total_existing_users_processed,
+        }
+        membership_uuids = [membership.uuid for membership in memberships]
+        if act_by_date is not None and catalog_uuid is not None:
+            for membership_uuid_batch in utils.batch(membership_uuids, batch_size=200):
+                send_group_membership_invitation_notification.delay(
+                    customer.uuid,
+                    membership_uuid_batch,
+                    act_by_date,
+                    catalog_uuid
+                )
+        return Response(data, status=201)
 
     @action(methods=['post'], detail=False, permission_classes=[permissions.IsAuthenticated])
     @permission_required(

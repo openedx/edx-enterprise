@@ -241,16 +241,14 @@ def send_group_membership_invitation_notification(
     braze_trigger_properties['act_by_date'] = act_by_date.strftime('%B %d, %Y')
     pecu_emails = []
     ecus = []
-    for membership_uuid in membership_uuids:
-        group_membership = enterprise_group_membership_model().objects.filter(
-            uuid=membership_uuid
-        )
-        if group_membership[0].pending_enterprise_customer_user is not None:
-            pecu_emails.append(group_membership[0].pending_enterprise_customer_user.user_email)
+    membership_records = enterprise_group_membership_model().objects.filter(uuid__in=membership_uuids)
+    for group_membership in membership_records:
+        if group_membership.pending_enterprise_customer_user is not None:
+            pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
         else:
             ecus.append({
-                'user_email': group_membership[0].enterprise_customer_user.user_email,
-                'user_id': group_membership[0].enterprise_customer_user.user_id
+                'user_email': group_membership.enterprise_customer_user.user_email,
+                'user_id': group_membership.enterprise_customer_user.user_id
             })
     recipients = []
     for pecu_email in pecu_emails:
@@ -297,16 +295,14 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
     braze_trigger_properties['enterprise_customer_name'] = enterprise_customer_name
     pecu_emails = []
     ecus = []
-    for membership_uuid in membership_uuids:
-        group_membership = enterprise_group_membership_model().objects.filter(
-            uuid=membership_uuid
-        )
-        if group_membership[0].pending_enterprise_customer_user is not None:
-            pecu_emails.append(group_membership[0].pending_enterprise_customer_user.user_email)
+    membership_records = enterprise_group_membership_model().objects.filter(uuid__in=membership_uuids)
+    for group_membership in membership_records:
+        if group_membership.pending_enterprise_customer_user is not None:
+            pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
         else:
             ecus.append({
-                'user_email': group_membership[0].enterprise_customer_user.user_email,
-                'user_id': group_membership[0].enterprise_customer_user.user_id
+                'user_email': group_membership.enterprise_customer_user.user_email,
+                'user_id': group_membership.enterprise_customer_user.user_id
             })
 
     recipients = []

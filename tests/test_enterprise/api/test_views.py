@@ -14,7 +14,6 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
-import pytz
 import responses
 from edx_toggles.toggles.testutils import override_waffle_flag
 from faker import Faker
@@ -7635,7 +7634,8 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.post(url)
         assert response.status_code == 400
-        assert response.data == "Error: missing request data: `learner_emails`."
+
+        assert response.json() == {'learner_emails': ['This field is required.']}
 
     @mock.patch('enterprise.tasks.send_group_membership_invitation_notification.delay', return_value=mock.MagicMock())
     def test_successful_assign_learners_to_group(self, mock_send_group_membership_invitation_notification):
@@ -7648,8 +7648,8 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         existing_emails = [UserFactory().email for _ in range(10)]
         new_emails = [f"email_{x}@example.com" for x in range(10)]
-        act_by_date = datetime.now(pytz.UTC)
-        catalog_uuid = uuid.uuid4()
+        act_by_date = datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+        catalog_uuid = str(uuid.uuid4())
         request_data = {
             'learner_emails': existing_emails + new_emails,
             'act_by_date': act_by_date,
