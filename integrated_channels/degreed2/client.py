@@ -674,11 +674,12 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         config = self.enterprise_configuration
         url = self.get_oauth_url()
+        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
         data = {
             'grant_type': 'client_credentials',
             'scope': scope,
-            'client_id': config.client_id,
-            'client_secret': config.client_secret,
+            'client_id': config.decrypted_client_id if use_encrypted_user_data else config.client_id,
+            'client_secret': config.decrypted_client_secret if use_encrypted_user_data else config.client_secret,
         }
         start_time = time.time()
         response = requests.post(
