@@ -2,6 +2,7 @@
 Views for the ``enterprise-customer-sso-configuration`` API endpoint.
 """
 
+import re
 from xml.etree.ElementTree import fromstring
 
 import requests
@@ -98,12 +99,12 @@ def fetch_entity_id_from_metadata_xml(metadata_xml):
     """
     Fetches the entity id from the metadata xml.
     """
-    root = fromstring(metadata_xml)
-    if entity_id := root.get('entityID'):
-        return entity_id
-    if entity_descriptor_child := root.find('EntityDescriptor'):
-        return entity_descriptor_child.get('entityID')
-    raise EntityIdNotFoundError('Could not find entity ID in metadata xml')
+    entity_id_pattern = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"
+    match = re.search(entity_id_pattern, metadata_xml, re.DOTALL)
+    if match:
+        return match.group(2)
+    else:
+        raise EntityIdNotFoundError('Could not find entity ID in metadata xml')
 
 
 def fetch_request_data_from_request(request):
