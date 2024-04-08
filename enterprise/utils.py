@@ -2394,3 +2394,10 @@ def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
         was_truncated = True
         return (truncated_string, was_truncated)
     return (string, was_truncated)
+
+
+def convert_to_snake(string):
+    """
+    Helper method to convert strings to snake case.
+    """
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()

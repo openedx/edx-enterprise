@@ -27,6 +27,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
+from django.db.models import Q
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
@@ -49,6 +50,9 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
     ENTERPRISE_OPERATOR_ROLE,
+    GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+    GROUP_MEMBERSHIP_PENDING_STATUS,
+    GROUP_MEMBERSHIP_STATUS_CHOICES,
     MAX_INVITE_KEYS,
     DefaultColors,
     FulfillmentTypes,
@@ -1502,7 +1506,8 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         self.memberships.update(
             activated_at=localized_utcnow(),
             pending_enterprise_customer_user=None,
-            enterprise_customer_user=enterprise_customer_user
+            enterprise_customer_user=enterprise_customer_user,
+            status=GROUP_MEMBERSHIP_ACCEPTED_STATUS
         )
 
     def fulfill_pending_course_enrollments(self, enterprise_customer_user):
@@ -4266,35 +4271,105 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         unique_together = (("name", "enterprise_customer"),)
         ordering = ['-modified']
 
-    def get_all_learners(self):
+    def _get_filtered_ecu_ids(self, user_query):
         """
-        Returns all users associated with the group, whether the group specifies the entire org else all associated
-        membership records.
+        Filter a group's enterprise customer user members by their User email.
         """
-        if self.applies_to_all_contexts:
-            members = []
+        # Unfortunately, user (and by extension email) is a property not a field on the ecu model. In order to
+        # filter ecu's by email,  we have to select from the Users table. To make this efficient, we join the user
+        # table on ecu table where the ecu is associated with the enterprise customer on the group. This limits how
+        # many User records we're calling `where email like %` on.
+        # Parameterizing the query makes this raw sql safe from sql injects re the Django docs-
+        # https://docs.djangoproject.com/en/5.0/topics/security/
+        var_q = f"%{user_query}%"
+        sql_string = """
+            select entcu.id from enterprise_enterprisecustomeruser entcu
+            join auth_user au on entcu.user_id = au.id
+            where entcu.enterprise_customer_id = %s and au.email like %s;
+        """
+        # Raw sql is picky about uuid format
+        customer_id = str(self.enterprise_customer.pk).replace("-", "")
+        ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q))
+        return [ecu.id for ecu in ecus]
+
+    def _get_implicit_group_members(self, user_query=None):
+        """
+        Fetches all implicit members of a group, indicated by a (pending) enterprise customer user records.
+        """
+        members = []
+        # Regardless of user_query, we will need all pecus related to the group's customer
+        pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        if user_query:
+            # Get all ecus relevant to the user query
+            customer_users = EnterpriseCustomerUser.objects.filter(
+                id__in=self._get_filtered_ecu_ids(user_query)
+            )
+            # pecu has user_email as a field, so we can filter directly
+            pending_customer_users = pending_customer_users.filter(user_email__icontains=user_query)
+        else:
+            # No filtering query so get all ecus related to the group's customer
             customer_users = EnterpriseCustomerUser.objects.filter(
                 enterprise_customer=self.enterprise_customer,
                 active=True,
             )
-            pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
-                enterprise_customer=self.enterprise_customer,
-            )
-            for ent_user in customer_users:
-                members.append(EnterpriseGroupMembership(
-                    uuid=None,
-                    enterprise_customer_user=ent_user,
-                    group=self,
-                ))
-            for pending_user in pending_customer_users:
-                members.append(EnterpriseGroupMembership(
-                    uuid=None,
-                    pending_enterprise_customer_user=pending_user,
-                    group=self,
-                ))
-            return members
+        # Build an in memory array of all the implicit memberships
+        for ent_user in customer_users:
+            members.append(EnterpriseGroupMembership(
+                uuid=None,
+                enterprise_customer_user=ent_user,
+                group=self,
+            ))
+        for pending_user in pending_customer_users:
+            members.append(EnterpriseGroupMembership(
+                uuid=None,
+                pending_enterprise_customer_user=pending_user,
+                group=self,
+            ))
+        return members
+
+    def _get_explicit_group_members(self, user_query=None, fetch_removed=False):
+        """
+        Fetch explicitly defined members of a group, indicated by an existing membership record
+        """
+        members = self.members.select_related(
+            'enterprise_customer_user', 'pending_enterprise_customer_user'
+        )
+        if not fetch_removed:
+            members = members.filter(is_removed=False)
+        if user_query:
+            # filter the ecu's by joining the ecu table with the User table and selecting `where email like user_query`
+            ecu_filter = Q(enterprise_customer_user__id__in=self._get_filtered_ecu_ids(user_query))
+            # pecu has user_email as a field, so we can filter directly through the ORM with the user_query
+            pecu_filter = Q(pending_enterprise_customer_user__user_email__icontains=user_query)
+            members = members.filter(ecu_filter | pecu_filter)
+        return members
+
+    def get_all_learners(self, user_query=None, sort_by=None, desc_order=False, fetch_removed=False):
+        """
+        Returns all users associated with the group, whether the group specifies the entire org else all associated
+        membership records.
+
+        Params:
+            q (optional): filter the returned members list by user email and name with a provided sub-string
+            sort_by (optional): specify how the list of returned members should be ordered. Supported sorting values
+            are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
+            beginning of the sorting value ie `-memberStatus`.
+        """
+        if self.applies_to_all_contexts:
+            members = self._get_implicit_group_members(user_query)
         else:
-            return self.members.filter(is_removed=False)
+            members = self._get_explicit_group_members(user_query, fetch_removed)
+        if sort_by:
+            lambda_keys = {
+                'member_details': lambda t: t.member_email,
+                'status': lambda t: t.status,
+                'recent_action': lambda t: t.recent_action,
+            }
+            members = sorted(members, key=lambda_keys.get(sort_by), reverse=desc_order)
+        return members
 
 
 class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
@@ -4333,6 +4408,23 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
             "The moment at which the membership record is written with an Enterprise Customer User record."
         ),
     )
+    status = models.CharField(
+        verbose_name="Membership Status",
+        max_length=20,
+        blank=True,
+        null=True,
+        choices=GROUP_MEMBERSHIP_STATUS_CHOICES,
+        default=GROUP_MEMBERSHIP_PENDING_STATUS,
+        help_text=_("Current status of the membership record"),
+    )
+    removed_at = models.DateTimeField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The moment at which the membership record was revoked by an Enterprise admin."
+        ),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -4343,13 +4435,33 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         unique_together = (("group", "enterprise_customer_user"), ("group", "pending_enterprise_customer_user"))
         ordering = ['-modified']
 
-    @property
+    @cached_property
     def membership_user(self):
         """
         Return the user record associated with the membership, defaulting to ``enterprise_customer_user``
         and falling back on ``obj.pending_enterprise_customer_user``
         """
         return self.enterprise_customer_user or self.pending_enterprise_customer_user
+
+    @cached_property
+    def member_email(self):
+        """
+        Return the email associated with the member
+        """
+        if self.enterprise_customer_user:
+            return self.enterprise_customer_user.user_email
+        return self.pending_enterprise_customer_user.user_email
+
+    @cached_property
+    def recent_action(self):
+        """
+        Return the timestamp of the most recent action relating to the membership
+        """
+        if self.is_removed:
+            return self.removed_at
+        if self.enterprise_customer_user and self.activated_at:
+            return self.activated_at
+        return self.created
 
     def clean(self, *args, **kwargs):
         """

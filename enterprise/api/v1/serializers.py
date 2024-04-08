@@ -603,7 +603,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
 
     member_details = serializers.SerializerMethodField()
     recent_action = serializers.SerializerMethodField()
-    member_status = serializers.SerializerMethodField()
+    status = serializers.CharField(required=False)
 
     class Meta:
         model = models.EnterpriseGroupMembership
@@ -613,7 +613,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
             'enterprise_group_membership_uuid',
             'member_details',
             'recent_action',
-            'member_status',
+            'status',
         )
 
     def get_member_details(self, obj):
@@ -633,16 +633,6 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         if obj.enterprise_customer_user and obj.activated_at:
             return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
         return f"Invited: {obj.created.strftime('%B %d, %Y')}"
-
-    def get_member_status(self, obj):
-        """
-        Return the status related to the membership.
-        """
-        if obj.is_removed:
-            return "removed"
-        if obj.enterprise_customer_user:
-            return "accepted"
-        return "pending"
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
@@ -1700,3 +1690,18 @@ class EnterpriseCustomerApiCredentialRegeneratePatchSerializer(serializers.Seria
     client_secret = serializers.CharField(read_only=True, default=generate_client_secret())
     redirect_uris = serializers.CharField(required=False)
     updated = serializers.DateTimeField(required=False, read_only=True)
+
+
+class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
+    """
+    Serializer for the Enterprise Group Learners endpoint query filter
+    """
+    user_query = serializers.CharField(required=False, max_length=320)
+    sort_by = serializers.ChoiceField(
+        choices=[
+            ('member_details', 'member_details'),
+            ('status', 'status'),
+            ('recent_action', 'recent_action')
+        ],
+        required=False,
+    )
