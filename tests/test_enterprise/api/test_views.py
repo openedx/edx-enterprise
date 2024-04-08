@@ -1225,6 +1225,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }],
         ),
         (
@@ -1284,6 +1285,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_programs': True,
                     'enable_demo_data_for_analytics_and_lpr': False,
                     'enable_academies': False,
+                    'enable_one_academy': False,
                 },
                 'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
@@ -1381,6 +1383,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }],
         ),
         (
@@ -1448,6 +1451,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }],
         ),
         (
@@ -1708,6 +1712,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }
         else:
             mock_empty_200_success_response = {
