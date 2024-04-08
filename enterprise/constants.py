@@ -186,6 +186,25 @@ def json_serialized_course_modes():
 AVAILABLE_LANGUAGES = [
     ('en', 'English'),
     ('es-419', 'Español (Latinoamérica)'),  # Spanish (Latin America)
+    ('ar', 'العربية'),  # Arabic
+    ('zh-cn', '中文 (简体)'),  # Chinese (China)
+    ('fr-ca', 'français (Canada)'),  # French (Canada)
+    ('da', 'dansk'),  # Danish
+    ('de-de', 'Deutsch (Deutschland)'),  # German (Germany)
+    ('el', 'Ελληνικά'),  # Greek
+    ('he', 'עברית'),  # Hebrew
+    ('hi', 'हिन्दी'),  # Hindi
+    ('id', 'Bahasa Indonesia'),  # Indonesian
+    ('it-it', 'Italiano (Italia)'),  # Italian (Italy)
+    ('pt-br', 'Português (Brasil)'),  # Portuguese (Brazil)
+    ('pt-pt', 'Português (Portugal)'),  # Portuguese (Portugal)
+    ('ru', 'Русский'),  # Russian
+    ('es-es', 'Español (España)'),  # Spanish (Spain)
+    ('sw', 'Kiswahili'),  # Swahili
+    ('te', 'తెలుగు'),  # Telugu
+    ('th', 'ไทย'),  # Thai
+    ('tr-tr', 'Türkçe (Türkiye)'),  # Turkish (Turkey)
+    ('uk', 'українська'),  # Ukrainian
 ]
 
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
