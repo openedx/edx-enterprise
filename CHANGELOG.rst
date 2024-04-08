@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.0]
+---------
+* feat: Add new languages in enterprise customer admin
+
 [4.14.0]
 ---------
 * Added the ability for enterprise customers to enable One Academy for its learners.
