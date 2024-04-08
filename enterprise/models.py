@@ -403,6 +403,13 @@ class EnterpriseCustomer(TimeStampedModel):
             "If checked, the learners will be able to see the academies on the learner portal dashboard."
         )
     )
+    enable_one_academy = models.BooleanField(
+        verbose_name="Enable One Academy feature",
+        default=False,
+        help_text=_(
+            "If checked, search will be replaced with one academy on enterprise learner portal."
+        )
+    )
 
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",

@@ -31,10 +31,8 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.api.v1 import serializers
+from enterprise.api.v1.views.enterprise_customer_sso_configuration import fetch_entity_id_from_metadata_xml
 from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnterpriseCourseEnrollmentViewSet
-from enterprise.api.v1.views.enterprise_customer_sso_configuration import (
-    fetch_entity_id_from_metadata_xml
-)
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
@@ -1228,6 +1226,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }],
         ),
         (
@@ -1287,6 +1286,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_programs': True,
                     'enable_demo_data_for_analytics_and_lpr': False,
                     'enable_academies': False,
+                    'enable_one_academy': False,
                 },
                 'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
@@ -1384,6 +1384,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }],
         ),
         (
@@ -1451,6 +1452,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }],
         ),
         (
@@ -1711,6 +1713,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
+                'enable_one_academy': False,
             }
         else:
             mock_empty_200_success_response = {

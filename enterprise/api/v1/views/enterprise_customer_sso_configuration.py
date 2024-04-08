@@ -3,7 +3,6 @@ Views for the ``enterprise-customer-sso-configuration`` API endpoint.
 """
 
 import re
-from xml.etree.ElementTree import fromstring
 
 import requests
 from edx_rbac.decorators import permission_required
