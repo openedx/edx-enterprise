@@ -223,6 +223,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
+            'enable_one_academy',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -602,7 +603,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
 
     member_details = serializers.SerializerMethodField()
     recent_action = serializers.SerializerMethodField()
-    member_status = serializers.SerializerMethodField()
+    status = serializers.CharField(required=False)
 
     class Meta:
         model = models.EnterpriseGroupMembership
@@ -612,7 +613,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
             'enterprise_group_membership_uuid',
             'member_details',
             'recent_action',
-            'member_status',
+            'status',
         )
 
     def get_member_details(self, obj):
@@ -632,16 +633,6 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         if obj.enterprise_customer_user and obj.activated_at:
             return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
         return f"Invited: {obj.created.strftime('%B %d, %Y')}"
-
-    def get_member_status(self, obj):
-        """
-        Return the status related to the membership.
-        """
-        if obj.is_removed:
-            return "removed"
-        if obj.enterprise_customer_user:
-            return "accepted"
-        return "pending"
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
@@ -1709,5 +1700,19 @@ class EnterpriseGroupRequestDataSerializer(serializers.Serializer):
     act_by_date = serializers.DateTimeField(required=False, allow_null=True)
     learner_emails = serializers.ListField(
         child=serializers.EmailField(required=True),
-        allow_empty=False
+        allow_empty=False)
+
+
+class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
+    """
+    Serializer for the Enterprise Group Learners endpoint query filter
+    """
+    user_query = serializers.CharField(required=False, max_length=320)
+    sort_by = serializers.ChoiceField(
+        choices=[
+            ('member_details', 'member_details'),
+            ('status', 'status'),
+            ('recent_action', 'recent_action')
+        ],
+        required=False,
     )

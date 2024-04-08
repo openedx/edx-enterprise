@@ -12,7 +12,7 @@ from django.contrib import auth
 from django.db.models import Q
 from django.http import Http404
 
-from enterprise import models, rules, utils
+from enterprise import constants, models, rules, utils
 from enterprise.api.utils import get_enterprise_customer_from_enterprise_group_id
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
@@ -107,6 +107,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         Optional query params:
         - ``pending_users_only`` (string, optional): Specify that results should only contain pending learners
+        - ``q`` (string, optional): Filter the returned members by user email and name with a provided sub-string
+        - ``sort_by`` (string, optional): Specify how the returned members should be ordered. Supported sorting values
+        are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
+        beginning of the sorting value ie `-memberStatus`.
+        - ``page`` (int, optional): Which page of paginated data to return.
 
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
@@ -130,12 +135,27 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             }
 
         """
+        query_params = self.request.query_params.copy()
+        is_reversed = bool(query_params.get('is_reversed', False))
+
+        param_serializers = serializers.EnterpriseGroupLearnersRequestQuerySerializer(
+            data=query_params
+        )
+
+        if not param_serializers.is_valid():
+            return Response(param_serializers.errors, status=400)
+
+        user_query = param_serializers.validated_data.get('user_query')
+        sort_by = param_serializers.validated_data.get('sort_by')
 
         group_uuid = kwargs.get('group_uuid')
         filter_for_pecus = request.query_params.get('pending_users_only', None)
         try:
             group_object = self.get_queryset().get(uuid=group_uuid)
-            members = group_object.get_all_learners(filter_for_pecus)
+            if filter_for_pecus is not None:
+                members = group_object.get_all_learners(filter_for_pecus)
+            else:
+                members = group_object.get_all_learners(user_query, sort_by, desc_order=is_reversed)
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
             response = self.get_paginated_response(serializer.data)

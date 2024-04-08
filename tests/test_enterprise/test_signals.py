@@ -261,6 +261,8 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
             enterprise_customer_user=None
         )
         assert not new_membership.activated_at
+        assert new_membership.status == 'pending'
+
         parameters = {"instance": user, "created": False}
         handle_user_post_save(mock.Mock(), **parameters)
         # Should delete pending link
@@ -272,6 +274,7 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         assert membership.pending_enterprise_customer_user is None
         assert membership.enterprise_customer_user == new_enterprise_user
         assert membership.activated_at
+        assert membership.status == 'accepted'
 
 
 @mark.django_db

@@ -186,6 +186,25 @@ def json_serialized_course_modes():
 AVAILABLE_LANGUAGES = [
     ('en', 'English'),
     ('es-419', 'Español (Latinoamérica)'),  # Spanish (Latin America)
+    ('ar', 'العربية'),  # Arabic
+    ('zh-cn', '中文 (简体)'),  # Chinese (China)
+    ('fr-ca', 'français (Canada)'),  # French (Canada)
+    ('da', 'dansk'),  # Danish
+    ('de-de', 'Deutsch (Deutschland)'),  # German (Germany)
+    ('el', 'Ελληνικά'),  # Greek
+    ('he', 'עברית'),  # Hebrew
+    ('hi', 'हिन्दी'),  # Hindi
+    ('id', 'Bahasa Indonesia'),  # Indonesian
+    ('it-it', 'Italiano (Italia)'),  # Italian (Italy)
+    ('pt-br', 'Português (Brasil)'),  # Portuguese (Brazil)
+    ('pt-pt', 'Português (Portugal)'),  # Portuguese (Portugal)
+    ('ru', 'Русский'),  # Russian
+    ('es-es', 'Español (España)'),  # Spanish (Spain)
+    ('sw', 'Kiswahili'),  # Swahili
+    ('te', 'తెలుగు'),  # Telugu
+    ('th', 'ไทย'),  # Thai
+    ('tr-tr', 'Türkçe (Türkiye)'),  # Turkish (Turkey)
+    ('uk', 'українська'),  # Ukrainian
 ]
 
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
@@ -222,3 +241,12 @@ SSO_BRAZE_CAMPAIGN_ID = 'a5f10d46-8093-4ce1-bab7-6df018d03660'
 
 # The maximum length of a text field in the database.
 MAX_ALLOWED_TEXT_LENGTH = 16_000_000
+
+GROUP_MEMBERSHIP_PENDING_STATUS = 'pending'
+GROUP_MEMBERSHIP_REMOVED_STATUS = 'removed'
+GROUP_MEMBERSHIP_ACCEPTED_STATUS = 'accepted'
+GROUP_MEMBERSHIP_STATUS_CHOICES = (
+    (GROUP_MEMBERSHIP_REMOVED_STATUS, 'Removed'),
+    (GROUP_MEMBERSHIP_ACCEPTED_STATUS, 'Accepted'),
+    (GROUP_MEMBERSHIP_PENDING_STATUS, 'Pending'),
+)

@@ -178,6 +178,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_programs",
                 "enable_demo_data_for_analytics_and_lpr",
                 "enable_academies",
+                "enable_one_academy",
                 "groups",
             ]
         ),
