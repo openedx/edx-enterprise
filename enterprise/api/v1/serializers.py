@@ -1716,3 +1716,4 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         ],
         required=False,
     )
+    pending_users_only = serializers.BooleanField(required=False, default=False)

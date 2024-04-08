@@ -100,7 +100,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         Endpoint Location to return all learners: GET api/v1/enterprise-group/<group_uuid>/learners/
 
         Endpoint Location to return pending learners:
-        GET api/v1/enterprise-group/<group_uuid>/learners?pending_users_only=true
+        GET api/v1/enterprise-group/<group_uuid>/learners/?pending_users_only=true
 
         Request Arguments:
         - ``group_uuid`` (URL location, required): The uuid of the group from which learners should be listed.
@@ -129,7 +129,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                             'user_name': string,
                         },
                         'recent_action': string,
-                        'member_status': string,
+                        'status': string,
                     },
                 ],
             }
@@ -147,13 +147,16 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         user_query = param_serializers.validated_data.get('user_query')
         sort_by = param_serializers.validated_data.get('sort_by')
+        pending_users_only = param_serializers.validated_data.get('pending_users_only')
 
         group_uuid = kwargs.get('group_uuid')
-        filter_for_pecus = request.query_params.get('pending_users_only', None)
         try:
             group_object = self.get_queryset().get(uuid=group_uuid)
-            if filter_for_pecus is not None:
-                members = group_object.get_all_learners(filter_for_pecus)
+            if pending_users_only is not None:
+                members = group_object.get_all_learners(user_query,
+                                                        sort_by,
+                                                        desc_order=is_reversed,
+                                                        pending_users_only=pending_users_only)
             else:
                 members = group_object.get_all_learners(user_query, sort_by, desc_order=is_reversed)
             page = self.paginate_queryset(members)
@@ -304,6 +307,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             - ``records_deleted``:
                 Number of membership records removed
         """
+        # import pdb
+        # pdb.set_trace()
         try:
             group = self.get_queryset().get(uuid=group_uuid)
             customer = group.enterprise_customer
@@ -331,6 +336,14 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                     records_to_delete_uuids_batch,
                     catalog_uuid)
             records_to_delete.delete()
+            # Woohoo! Records removed! Now to update the soft deleted records
+            deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
+                group_q & (ecu_in_q | pecu_in_q),
+            )
+            deleted_records.update(
+                status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
+                removed_at=localized_utcnow()
+            )
         data = {
             'records_deleted': records_deleted,
         }

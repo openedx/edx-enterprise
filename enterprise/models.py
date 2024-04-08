@@ -4330,7 +4330,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             ))
         return members
 
-    def _get_explicit_group_members(self, user_query=None, fetch_removed=False):
+    def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=None,):
         """
         Fetch explicitly defined members of a group, indicated by an existing membership record
         """
@@ -4345,9 +4345,16 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             # pecu has user_email as a field, so we can filter directly through the ORM with the user_query
             pecu_filter = Q(pending_enterprise_customer_user__user_email__icontains=user_query)
             members = members.filter(ecu_filter | pecu_filter)
+        if pending_users_only:
+            members = members.filter(is_removed=False, enterprise_customer_user_id__isnull=True)
         return members
 
-    def get_all_learners(self, user_query=None, sort_by=None, desc_order=False, fetch_removed=False):
+    def get_all_learners(self,
+                         user_query=None,
+                         sort_by=None,
+                         desc_order=False,
+                         fetch_removed=False,
+                         pending_users_only=False):
         """
         Returns all users associated with the group, whether the group specifies the entire org else all associated
         membership records.
@@ -4369,6 +4376,8 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
                 'recent_action': lambda t: t.recent_action,
             }
             members = sorted(members, key=lambda_keys.get(sort_by), reverse=desc_order)
+        if pending_users_only:
+            members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
         return members
 
 
