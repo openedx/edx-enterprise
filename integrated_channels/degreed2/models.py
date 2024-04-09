@@ -31,17 +31,6 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
     .. no_pii:
     """
 
-    client_id = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        verbose_name="API Client ID",
-        help_text=(
-            "The API Client ID provided to edX by the enterprise customer to be used to make API "
-            "calls to Degreed on behalf of the customer."
-        )
-    )
-
     decrypted_client_id = EncryptedCharField(
         max_length=255,
         blank=True,
@@ -75,17 +64,6 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         Set the encrypted client_id.
         """
         self.decrypted_client_id = value
-
-    client_secret = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        verbose_name="API Client Secret",
-        help_text=(
-            "The API Client Secret provided to edX by the enterprise customer to be used to make API "
-            "calls to Degreed on behalf of the customer."
-        )
-    )
 
     decrypted_client_secret = EncryptedCharField(
         max_length=255,
@@ -158,10 +136,10 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         missing_items = {'missing': []}
         incorrect_items = {'incorrect': []}
 
-        if not self.client_id:
-            missing_items.get('missing').append('client_id')
-        if not self.client_secret:
-            missing_items.get('missing').append('client_secret')
+        if not self.decrypted_client_id:
+            missing_items.get('missing').append('decrypted_client_id')
+        if not self.decrypted_client_secret:
+            missing_items.get('missing').append('decrypted_client_secret')
         if not self.degreed_base_url:
             missing_items.get('missing').append('degreed_base_url')
         if not is_valid_url(self.degreed_token_fetch_base_url):
