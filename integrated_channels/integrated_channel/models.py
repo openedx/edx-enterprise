@@ -269,7 +269,7 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             enterprise_customer=self.enterprise_customer,
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
-        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)
+        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)  # pylint: disable=unsupported-binary-operation
 
     def update_content_synced_at(self, action_happened_at, was_successful):
         """
