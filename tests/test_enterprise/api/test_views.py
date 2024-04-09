@@ -7402,8 +7402,131 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.get(url)
         assert response.json().get('count') == 2
-        statuses = [result.get('member_status') for result in response.json().get('results')]
+        statuses = [result.get('status') for result in response.json().get('results')]
         assert statuses.sort() == ['accepted', 'pending'].sort()
+
+    def test_list_learners_bad_sort_by(self):
+        """
+        Test that the list learners endpoint properly validates sort by query params
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        ) + "?sort_by=ayylmao"
+
+        response = self.client.get(url)
+        assert response.status_code == 400
+        assert response.data.get('sort_by')
+
+        long_query_string = "foo".join('bar' for _ in range(320))
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        ) + f"?user_query={long_query_string}"
+        response = self.client.get(url)
+        assert response.status_code == 400
+        assert response.data.get('user_query')
+
+    def test_list_learners_filtered(self):
+        """
+        Test that the list learners endpoint can be filtered by user details
+        """
+        group = EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            applies_to_all_contexts=True,
+        )
+        pending_user = PendingEnterpriseCustomerUserFactory(
+            user_email="foobar@example.com",
+            enterprise_customer=self.enterprise_customer,
+        )
+        pending_user_query_string = f'?user_query={pending_user.user_email}'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        ) + pending_user_query_string
+        response = self.client.get(url)
+
+        assert response.json().get('count') == 1
+        assert response.json().get('results')[0].get('pending_learner_id') == pending_user.id
+
+        group.applies_to_all_contexts = False
+        group.save()
+        pending_membership = EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=pending_user,
+            enterprise_customer_user=None,
+        )
+        existing_membership = EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+        )
+        existing_user = existing_membership.enterprise_customer_user.user
+        # Changing email to something that we know will be unique for collision purposes
+        existing_user.email = "ayylmao@example.com"
+        existing_user.save()
+        existing_user_query_string = '?user_query=ayylmao'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        ) + existing_user_query_string
+        response = self.client.get(url)
+
+        assert response.json().get('count') == 1
+        assert response.json().get('results')[0].get(
+            'learner_id'
+        ) == existing_membership.enterprise_customer_user.id
+
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        ) + pending_user_query_string
+
+        response = self.client.get(url)
+
+        assert response.json().get('count') == 1
+        assert response.json().get('results')[0].get(
+            'pending_learner_id'
+        ) == pending_membership.pending_enterprise_customer_user.id
+
+    def test_list_learners_sort_by(self):
+        """
+        Test that the list learners endpoint can be sorted by 'recentAction', 'status', 'memberDetails'
+        values respectively
+        """
+        # Test sorting by the three sortable values
+        for sort_by_value in ['recent_action', 'status', 'member_details']:
+            url = settings.TEST_SERVER + reverse(
+                'enterprise-group-learners',
+                kwargs={'group_uuid': self.group_1.uuid},
+            ) + f"?sort_by={sort_by_value}"
+
+            response = self.client.get(url)
+            results = response.json().get('results')
+
+            returned_sorted_values = [result.get(sort_by_value) for result in results]
+            # Member details are returned as a dictionary, and is sorted by the user email value as it's guaranteed
+            # to exist in the object
+            if sort_by_value == 'member_details':
+                assert returned_sorted_values == sorted(returned_sorted_values, key=lambda t: t.get('user_email'))
+            else:
+                assert returned_sorted_values == sorted(returned_sorted_values)
+
+        # Test sorting in reverse order
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        ) + "?sort_by=member_details&is_reversed=True"
+        response = self.client.get(url)
+        results = response.json().get('results')
+        returned_sorted_values = [
+            value.get('member_details') for value in results
+        ]
+        assert returned_sorted_values == sorted(
+            returned_sorted_values,
+            key=lambda t: t.get('user_email'),
+            reverse=True,
+        )
 
     def test_successful_list_learners(self):
         """
@@ -7423,11 +7546,11 @@ class TestEnterpriseGroupViewSet(APITest):
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
                     'member_details': {
+                        'user_email': member_user.user_email,
                         'user_name': member_user.name,
-                        'user_email': member_user.user_email
                     },
                     'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
-                    'member_status': 'accepted',
+                    'status': 'pending',
                 },
             )
         expected_response = {
@@ -7455,11 +7578,11 @@ class TestEnterpriseGroupViewSet(APITest):
                     'pending_learner_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
                     'member_details': {
+                        'user_email': user.user_email,
                         'user_name': user.name,
-                        'user_email': user.user_email
                     },
                     'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
-                    'member_status': 'accepted',
+                    'status': 'pending',
                 }
             ],
         }
@@ -7515,6 +7638,23 @@ class TestEnterpriseGroupViewSet(APITest):
         enterprise_filtered_response = self.client.get(url + enterprise_query_param)
         assert len(enterprise_filtered_response.json().get('results')) == 1
         assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
+
+    def test_list_members_little_bobby_tables(self):
+        """
+        Test that we properly sanitize member user query filters
+        https://xkcd.com/327/
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        )
+        # The problematic child
+        filter_query_param = "?user_query=Robert`); DROP TABLE enterprise_enterprisecustomeruser;--"
+        sql_injection_protected_response = self.client.get(url + filter_query_param)
+        assert sql_injection_protected_response.status_code == 200
+        assert not sql_injection_protected_response.json().get('results')
+        assert EnterpriseCustomerUser.objects.all()
 
     def test_successful_post_group(self):
         """
@@ -7701,6 +7841,8 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 200
         assert response.data == {'records_deleted': 10}
         for membership in memberships_to_delete:
+            assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).status == 'removed'
+            assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).removed_at
             with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
                 EnterpriseGroupMembership.objects.get(pk=membership.pk)
 
