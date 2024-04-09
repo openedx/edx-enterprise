@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.2]
+--------
+* feat: save cornerstone learner's information received from frontend.
+
 [4.15.1]
 --------
 * feat: allowing for sorting and filtering of the enterprise group learner endpoints
