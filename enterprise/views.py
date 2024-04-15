@@ -2363,6 +2363,7 @@ class RouterView(NonAtomicView):
 
         - Look to see whether a request is eligible for direct audit enrollment, and if so, directly enroll the user.
         """
+        user_id = request.user.id
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
         if course_key:
@@ -2382,15 +2383,17 @@ class RouterView(NonAtomicView):
                 'CornerstoneEnterpriseCustomerConfiguration'
             )
             with transaction.atomic():
-                # The presense of a sessionToken and subdomain param indicates a Cornerstone redirect
+                # The presence of a sessionToken and subdomain param indicates a Cornerstone redirect
                 # We need to store this sessionToken for api access
+                csod_user_guid = request.GET.get('userGuid')
+                csod_callback_url = request.GET.get('callbackUrl')
                 csod_session_token = request.GET.get('sessionToken')
                 csod_subdomain = request.GET.get("subdomain")
                 if csod_session_token and csod_subdomain:
                     LOGGER.info(
                         f'integrated_channel=CSOD, '
                         f'integrated_channel_enterprise_customer_uuid={enterprise_customer.uuid}, '
-                        f'integrated_channel_lms_user={request.user.id}, '
+                        f'integrated_channel_lms_user={user_id}, '
                         f'integrated_channel_course_key={course_key}, '
                         'enrollment redirect'
                     )
@@ -2403,7 +2406,15 @@ class RouterView(NonAtomicView):
                         cornerstone_customer_configuration.session_token = csod_session_token
                         cornerstone_customer_configuration.session_token_modified = localized_utcnow()
                         cornerstone_customer_configuration.save()
-                        create_cornerstone_learner_data(request, cornerstone_customer_configuration, course_key)
+                        create_cornerstone_learner_data(
+                            user_id,
+                            csod_user_guid,
+                            csod_session_token,
+                            csod_callback_url,
+                            csod_subdomain,
+                            cornerstone_customer_configuration,
+                            course_key
+                        )
                     else:
                         LOGGER.error(
                             f'integrated_channel=CSOD, '
