@@ -4292,7 +4292,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q))
         return [ecu.id for ecu in ecus]
 
-    def _get_implicit_group_members(self, user_query=None):
+    def _get_implicit_group_members(self, user_query=None, pending_users_only=False):
         """
         Fetches all implicit members of a group, indicated by a (pending) enterprise customer user records.
         """
@@ -4315,6 +4315,9 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
                 enterprise_customer=self.enterprise_customer,
                 active=True,
             )
+        # Setting customer_users to be an empty array so we only get back pecu members
+        if pending_users_only:
+            customer_users = []
         # Build an in memory array of all the implicit memberships
         for ent_user in customer_users:
             members.append(EnterpriseGroupMembership(
@@ -4330,7 +4333,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             ))
         return members
 
-    def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=None,):
+    def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=False,):
         """
         Fetch explicitly defined members of a group, indicated by an existing membership record
         """
@@ -4366,9 +4369,9 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             beginning of the sorting value ie `-memberStatus`.
         """
         if self.applies_to_all_contexts:
-            members = self._get_implicit_group_members(user_query)
+            members = self._get_implicit_group_members(user_query, pending_users_only)
         else:
-            members = self._get_explicit_group_members(user_query, fetch_removed)
+            members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
         if sort_by:
             lambda_keys = {
                 'member_details': lambda t: t.member_email,
@@ -4376,8 +4379,6 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
                 'recent_action': lambda t: t.recent_action,
             }
             members = sorted(members, key=lambda_keys.get(sort_by), reverse=desc_order)
-        if pending_users_only:
-            members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
         return members
 
 

@@ -152,13 +152,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         group_uuid = kwargs.get('group_uuid')
         try:
             group_object = self.get_queryset().get(uuid=group_uuid)
-            if pending_users_only is not None:
-                members = group_object.get_all_learners(user_query,
-                                                        sort_by,
-                                                        desc_order=is_reversed,
-                                                        pending_users_only=pending_users_only)
-            else:
-                members = group_object.get_all_learners(user_query, sort_by, desc_order=is_reversed)
+            members = group_object.get_all_learners(user_query,
+                                                    sort_by,
+                                                    desc_order=is_reversed,
+                                                    pending_users_only=pending_users_only)
+
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
@@ -177,9 +175,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         """
         POST /enterprise/api/v1/enterprise-group/<group uuid>/assign_learners
 
-        Required Arguments:
+        Request Arguments:
         - ``learner_emails``: List of learner emails to associate with the group. Note: only processes the first
         1000 records provided.
+
+        Optional request data:
+        - ``act_by_date`` (datetime, optional): The expiration date for the subsidy.
+        - ``catalog_uuid`` (string, optional): The uuid of the catalog that is part of the subsidy.
 
         Returns:
         - ``records_processed``: Total number of group membership records processed.
@@ -196,9 +198,10 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             raise Http404 from exc
         param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
         param_serializer.is_valid(raise_exception=True)
-        act_by_date = param_serializer.data['act_by_date']
-        catalog_uuid = param_serializer.data['catalog_uuid']
-        learner_emails = param_serializer.data['learner_emails']
+        # act_by_date and catalog_uuid values are needed for Braze email trigger properties
+        act_by_date = param_serializer.data.get('act_by_date')
+        catalog_uuid = param_serializer.data.get('catalog_uuid')
+        learner_emails = param_serializer.data.get('learner_emails')
         total_records_processed = 0
         total_existing_users_processed = 0
         total_new_users_processed = 0
@@ -280,7 +283,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             'existing_learners': total_existing_users_processed,
         }
         membership_uuids = [membership.uuid for membership in memberships]
-        if act_by_date is not None and catalog_uuid is not None:
+        if act_by_date and catalog_uuid:
             for membership_uuid_batch in utils.batch(membership_uuids, batch_size=200):
                 send_group_membership_invitation_notification.delay(
                     customer.uuid,
@@ -303,12 +306,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             - ``learner_emails``:
                 List of learner emails to associate with the group.
 
+        Optional request data:
+            - ``catalog_uuid`` (string, optional): The uuid of the catalog that is part of the subsidy.
+
         Returns:
             - ``records_deleted``:
                 Number of membership records removed
         """
-        # import pdb
-        # pdb.set_trace()
         try:
             group = self.get_queryset().get(uuid=group_uuid)
             customer = group.enterprise_customer
@@ -316,8 +320,9 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             raise Http404 from exc
         param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
         param_serializer.is_valid(raise_exception=True)
-        catalog_uuid = param_serializer.data['catalog_uuid']
-        learner_emails = param_serializer.data['learner_emails']
+
+        catalog_uuid = param_serializer.data.get('catalog_uuid')
+        learner_emails = param_serializer.data.get('learner_emails')
 
         records_deleted = 0
         for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
@@ -330,12 +335,12 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             )
             records_deleted += len(records_to_delete)
             records_to_delete_uuids = [record.uuid for record in records_to_delete]
+            records_to_delete.delete()
             for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
                 send_group_membership_removal_notification.delay(
                     customer.uuid,
                     records_to_delete_uuids_batch,
                     catalog_uuid)
-            records_to_delete.delete()
             # Woohoo! Records removed! Now to update the soft deleted records
             deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
                 group_q & (ecu_in_q | pecu_in_q),
