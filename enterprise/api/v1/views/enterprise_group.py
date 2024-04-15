@@ -199,9 +199,9 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
         param_serializer.is_valid(raise_exception=True)
         # act_by_date and catalog_uuid values are needed for Braze email trigger properties
-        act_by_date = param_serializer.data.get('act_by_date')
-        catalog_uuid = param_serializer.data.get('catalog_uuid')
-        learner_emails = param_serializer.data.get('learner_emails')
+        act_by_date = param_serializer.validated_data.get('act_by_date')
+        catalog_uuid = param_serializer.validated_data.get('catalog_uuid')
+        learner_emails = param_serializer.validated_data.get('learner_emails')
         total_records_processed = 0
         total_existing_users_processed = 0
         total_new_users_processed = 0
@@ -321,8 +321,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
         param_serializer.is_valid(raise_exception=True)
 
-        catalog_uuid = param_serializer.data.get('catalog_uuid')
-        learner_emails = param_serializer.data.get('learner_emails')
+        catalog_uuid = param_serializer.validated_data.get('catalog_uuid')
+        learner_emails = param_serializer.validated_data.get('learner_emails')
 
         records_deleted = 0
         for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
