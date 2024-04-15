@@ -15,6 +15,26 @@ Change Log
 
 Unreleased
 ----------
+[4.15.2]
+--------
+* feat: save cornerstone learner's information received from frontend.
+
+[4.15.1]
+--------
+* feat: allowing for sorting and filtering of the enterprise group learner endpoints
+
+[4.15.0]
+---------
+* feat: Add new languages in enterprise customer admin
+
+[4.14.0]
+---------
+* Added the ability for enterprise customers to enable One Academy for its learners.
+
+[4.13.14]
+---------
+* feat: handle Degreed 409 case (mark as active instead of recreating course)
+
 [4.13.13]
 ---------
 * fix: adding additional info to the enterprise group serializer
