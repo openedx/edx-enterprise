@@ -14,8 +14,6 @@
 - [ ] [Changelog](https://github.com/openedx/edx-enterprise/blob/master/CHANGELOG.rst) record added
 - [ ] Translations updated (see docs/internationalization.rst but also this isn't blocking for merge atm)
 
-*Only commit code on Fridays/before holidays after speaking with your team and pushing out a time sensitive fix*
-
 **Post merge:**
 - [ ] Tag pushed and a new [version](https://github.com/openedx/edx-enterprise/releases) released
     - *Note*: Assets will be added automatically. You just need to provide a tag (should match your version number) and title and description.
