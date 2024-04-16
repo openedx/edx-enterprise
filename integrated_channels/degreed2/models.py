@@ -54,6 +54,18 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
         null=True
     )
 
+    decrypted_client_id = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted API Client ID",
+        help_text=(
+            "The encrypted API Client ID provided to edX by the enterprise customer to be used to make API "
+            "calls to Degreed on behalf of the customer."
+        ),
+        null=True
+    )
+
     @property
     def encrypted_client_id(self):
         """
@@ -85,6 +97,18 @@ class Degreed2EnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurat
             "The API Client Secret provided to edX by the enterprise customer to be used to make API "
             "calls to Degreed on behalf of the customer."
         )
+    )
+
+    decrypted_client_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted API Client Secret",
+        help_text=(
+            "The encrypted API Client Secret provided to edX by the enterprise customer to be used to make API "
+            "calls to Degreed on behalf of the customer."
+        ),
+        null=True
     )
 
     decrypted_client_secret = EncryptedCharField(
