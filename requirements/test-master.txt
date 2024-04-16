@@ -83,7 +83,7 @@ click-plugins==1.1.1
     #   celery
 click-repl==0.3.0
     # via celery
-code-annotations==1.6.0
+code-annotations==1.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -243,7 +243,7 @@ edx-rbac==1.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-rest-api-client==5.6.1
+edx-rest-api-client==5.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -251,7 +251,7 @@ edx-tincan-py35==1.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-toggles==5.1.1
+edx-toggles==5.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -295,7 +295,7 @@ jwcrypto==1.5.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django-oauth-toolkit
-kombu==5.3.6
+kombu==5.3.7
     # via celery
 markupsafe==2.1.5
     # via
@@ -367,7 +367,6 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   snowflake-connector-python
 pymongo==3.13.0
     # via
