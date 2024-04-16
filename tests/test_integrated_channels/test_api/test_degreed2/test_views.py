@@ -82,8 +82,8 @@ class Degreed2ConfigurationViewSetTests(APITest):
             'degreed_base_url': 'http://testing2',
             'degreed_token_fetch_base_url': 'foobar',
             'enterprise_customer': ENTERPRISE_ID,
-            'decrypted_client_id': 'testing',
-            'decrypted_client_secret': 'secret',
+            'encrypted_client_id': 'testing',
+            'encrypted_client_secret': 'secret',
         }
         response = self.client.put(url, payload)
         self.degreed2_config.refresh_from_db()
