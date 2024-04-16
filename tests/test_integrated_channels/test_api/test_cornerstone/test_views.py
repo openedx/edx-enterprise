@@ -5,11 +5,15 @@ import json
 from unittest import mock
 from uuid import uuid4
 
+from django.conf import settings
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
-from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
+from integrated_channels.cornerstone.models import (
+    CornerstoneEnterpriseCustomerConfiguration,
+    CornerstoneLearnerDataTransmissionAudit,
+)
 from test_utils import APITest, factories
 
 ENTERPRISE_ID = str(uuid4())
@@ -151,3 +155,155 @@ class CornerstoneConfigurationViewSetTests(APITest):
         data = json.loads(response.content.decode('utf-8')).get('results')
         missing, incorrect = data[0].get('is_valid')
         assert not missing.get('missing') and not incorrect.get('incorrect')
+
+
+class CornerstoneLearnerInformationViewTests(APITest):
+    """
+    Tests for CornerstoneLearnerInformationView API endpoints
+    """
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ENTERPRISE_ID)
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id,
+        )
+        self.csod_subdomain = 'dummy_subdomain'
+        self.cornerstone_config = CornerstoneEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            active=True,
+            cornerstone_base_url=f'https://{self.csod_subdomain}.com',
+        )
+        self.cornerstone_config.save()
+        self.course_key = 'edX+DemoX'
+        self.path = settings.TEST_SERVER + '/integrated_channels/api/v1/cornerstone/save-learner-information'
+
+    def test_save_learner_endpoint_happy_path(self):
+        """
+        Test the happy path where csod information for a learner gets saved successfully.
+        """
+        dummy_token = "123123123"
+        post_data = {
+            "courseKey": self.course_key,
+            "enterpriseUUID": self.enterprise_customer.uuid,
+            "userGuid": "24142313",
+            "callbackUrl": "https://example.com/csod/callback/1",
+            "sessionToken": dummy_token,
+            "subdomain": self.csod_subdomain
+        }
+        response = self.client.post(self.path, post_data)
+        assert response.status_code == 200
+        self.cornerstone_config.refresh_from_db()
+        assert self.cornerstone_config.session_token == dummy_token
+        assert CornerstoneLearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            course_id=self.course_key,
+            user_id=self.user.id
+        ).exists()
+
+    def test_save_learner_endpoint_enterprise_customer_does_not_exist(self):
+        """
+        Test when enterprise customer does not exist.
+        """
+        dummy_token = "123123123"
+        post_data = {
+            "courseKey": self.course_key,
+            "enterpriseUUID": 'invalid-uuid',
+            "userGuid": "24142313",
+            "callbackUrl": "https://example.com/csod/callback/1",
+            "sessionToken": dummy_token,
+            "subdomain": self.csod_subdomain
+        }
+        response = self.client.post(self.path, post_data)
+        self.cornerstone_config.refresh_from_db()
+        assert self.cornerstone_config.session_token != dummy_token
+        assert response.status_code == 404
+        assert CornerstoneLearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            course_id=self.course_key,
+            user_id=self.user.id
+        ).count() == 0
+
+    def test_save_learner_endpoint_cornerstone_config_does_not_exist(self):
+        """
+        Test when cornerstone config is not found.
+        """
+        dummy_token = "123123123"
+        post_data = {
+            "courseKey": self.course_key,
+            "enterpriseUUID": self.enterprise_customer.uuid,
+            "userGuid": "24142313",
+            "callbackUrl": "https://example.com/csod/callback/1",
+            "sessionToken": dummy_token,
+            "subdomain": 'invalid-subdomain'
+        }
+        response = self.client.post(self.path, post_data)
+        self.cornerstone_config.refresh_from_db()
+        assert self.cornerstone_config.session_token != dummy_token
+        assert response.status_code == 404
+        assert CornerstoneLearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            course_id=self.course_key,
+            user_id=self.user.id
+        ).count() == 0
+
+    def test_save_learner_endpoint_learner_not_linked(self):
+        """
+        Test when learner is not linked to the given enterprise. We should not be saving anything in that case.
+        """
+        # Delete EnterpriseCustomerUser record.
+        self.enterprise_customer_user.delete()
+        dummy_token = "123123123"
+        post_data = {
+            "courseKey": self.course_key,
+            "enterpriseUUID": self.enterprise_customer.uuid,
+            "userGuid": "24142313",
+            "callbackUrl": "https://example.com/csod/callback/1",
+            "sessionToken": dummy_token,
+            "subdomain": self.csod_subdomain
+        }
+        response = self.client.post(self.path, post_data)
+        self.cornerstone_config.refresh_from_db()
+        assert self.cornerstone_config.session_token != dummy_token
+        assert response.status_code == 404
+        assert CornerstoneLearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            course_id=self.course_key,
+            user_id=self.user.id
+        ).count() == 0
+
+    def test_save_learner_endpoint_update_existing_record(self):
+        """
+        When an existing transmisison record is found, we should update that one instead of creating a duplicate.
+        """
+        # Create transmission record
+        CornerstoneLearnerDataTransmissionAudit.objects.create(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            user_id=self.user.id,
+            course_id=self.course_key,
+            session_token='123456'
+        )
+        dummy_token = "123123123"
+        post_data = {
+            "courseKey": self.course_key,
+            "enterpriseUUID": self.enterprise_customer.uuid,
+            "userGuid": "24142313",
+            "callbackUrl": "https://example.com/csod/callback/1",
+            "sessionToken": dummy_token,
+            "subdomain": self.csod_subdomain
+        }
+        response = self.client.post(self.path, post_data)
+        assert response.status_code == 200
+        self.cornerstone_config.refresh_from_db()
+        assert self.cornerstone_config.session_token == dummy_token
+        assert CornerstoneLearnerDataTransmissionAudit.objects.filter(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            plugin_configuration_id=self.cornerstone_config.id,
+            course_id=self.course_key,
+            user_id=self.user.id
+        ).count() == 1
