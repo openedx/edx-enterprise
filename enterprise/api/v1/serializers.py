@@ -1426,6 +1426,10 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
     course_run_key = serializers.CharField(required=True)
     license_uuid = serializers.CharField(required=False)
     transaction_id = serializers.CharField(required=False)
+    force_enrollment = serializers.BooleanField(
+        required=False,
+        help_text='Enroll even if enrollment deadline is expired.',
+    )
 
     def create(self, validated_data):
         return validated_data
