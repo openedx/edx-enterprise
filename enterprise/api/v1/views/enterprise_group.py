@@ -12,7 +12,7 @@ from django.contrib import auth
 from django.db.models import Q
 from django.http import Http404
 
-from enterprise import models, rules, utils
+from enterprise import constants, models, rules, utils
 from enterprise.api.utils import get_enterprise_customer_from_enterprise_group_id
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
@@ -101,6 +101,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         Request Arguments:
         - ``group_uuid`` (URL location, required): The uuid of the group from which learners should be listed.
 
+        Optional query params:
+        - ``q`` (string, optional): Filter the returned members by user email and name with a provided sub-string
+        - ``sort_by`` (string, optional): Specify how the returned members should be ordered. Supported sorting values
+        are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
+        beginning of the sorting value ie `-memberStatus`.
+        - ``page`` (int, optional): Which page of paginated data to return.
+
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
             {
@@ -117,11 +124,23 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             }
 
         """
+        query_params = self.request.query_params.copy()
+        is_reversed = bool(query_params.get('is_reversed', False))
+
+        param_serializers = serializers.EnterpriseGroupLearnersRequestQuerySerializer(
+            data=query_params
+        )
+
+        if not param_serializers.is_valid():
+            return Response(param_serializers.errors, status=400)
+
+        user_query = param_serializers.validated_data.get('user_query')
+        sort_by = param_serializers.validated_data.get('sort_by')
 
         group_uuid = kwargs.get('group_uuid')
         try:
             group_object = self.get_queryset().get(uuid=group_uuid)
-            members = group_object.get_all_learners()
+            members = group_object.get_all_learners(user_query, sort_by, desc_order=is_reversed)
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
@@ -197,6 +216,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 ent_customer_users = [
                     models.EnterpriseGroupMembership(
                         activated_at=localized_utcnow(),
+                        status=constants.GROUP_MEMBERSHIP_ACCEPTED_STATUS,
                         enterprise_customer_user=ecu,
                         group=group
                     )
@@ -275,8 +295,15 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 )
                 records_deleted += len(records_to_delete)
                 records_to_delete.delete()
-            data = {
-                'records_deleted': records_deleted,
-            }
+
+                # Woohoo! Records removed! Now to update the soft deleted records
+                deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
+                    group_q & (ecu_in_q | pecu_in_q),
+                )
+                deleted_records.update(
+                    status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
+                    removed_at=localized_utcnow()
+                )
+            data = {'records_deleted': records_deleted}
             return Response(data, status=200)
         return Response(data="Error: missing request data: `learner_emails`.", status=400)
