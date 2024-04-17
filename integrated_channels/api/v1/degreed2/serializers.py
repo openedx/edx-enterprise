@@ -11,6 +11,8 @@ class Degreed2ConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
     class Meta:
         model = Degreed2EnterpriseCustomerConfiguration
         extra_fields = (
+            'client_id',
+            'client_secret',
             'encrypted_client_id',
             'encrypted_client_secret',
             'degreed_base_url',
