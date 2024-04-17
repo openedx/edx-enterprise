@@ -40,10 +40,11 @@ jobs:
       run: tox
     - name: Run code coverage
       if: matrix.python-version == '3.8' && matrix.toxenv == 'django42-celery53'
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         flags: unittests
         fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Run jshint
       if: matrix.toxenv=='django42-celery53'     # Only run this once as part of tests
       run: |
