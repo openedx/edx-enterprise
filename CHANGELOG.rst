@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.3]
+--------
+* feat: replacing non encrypted fields of degreed config model with encrypted ones 
+
 [4.15.2]
 --------
 * feat: save cornerstone learner's information received from frontend.
