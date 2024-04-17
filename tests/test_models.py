@@ -61,6 +61,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
+from enterprise.signals import update_enterprise_learners_user_preference
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     get_default_catalog_content_filter,
@@ -326,30 +327,53 @@ class TestEnterpriseCustomer(unittest.TestCase):
         api_client_mock.return_value.enterprise_contains_content_items.return_value = False
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
+    @mock.patch(
+        'enterprise.signals.update_enterprise_learners_user_preference.delay',
+        wraps=update_enterprise_learners_user_preference
+    )
     @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
-    def test_unset_language_of_all_enterprise_learners(self, user_preference_mock):
+    def test_unset_language_of_all_enterprise_learners(self, user_preference_mock, mock_task):
         """
         Validate that unset_language_of_all_enterprise_learners is called whenever default_language changes.
         """
+        user = factories.UserFactory(email='user123@example.com')
         enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_id=user.id
+        )
+        enterprise_customer.default_language = 'es-419'
+        enterprise_customer.save()
+        mock_task.assert_called_once()
         user_preference_mock.objects.filter.assert_called_once()
 
         # Make sure `unset_language_of_all_enterprise_learners` is called each time `default_language` changes.
         enterprise_customer.default_language = 'es-417'
         enterprise_customer.save()
+        assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
 
         # make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
         # not changed.
         enterprise_customer.default_language = 'es-417'
         enterprise_customer.save()
+        assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
 
         # Make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
         # set to `None`.
         enterprise_customer.default_language = None
         enterprise_customer.save()
+        assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
+
+    @mock.patch('enterprise.signals.update_enterprise_learners_user_preference.delay')
+    def test_async_task_not_called_on_enterprise_customer_creation(self, mock_task):
+        """
+        Validate that upon creation of new enterprise customer, async task is not called.
+        """
+        factories.EnterpriseCustomerFactory()
+        mock_task.assert_not_called()
 
     def test_enterprise_customer_user_toggle_universal_link(self):
         enterprise_customer = factories.EnterpriseCustomerFactory()
