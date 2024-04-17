@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+
+[4.15.4]
+--------
+* feat: upgrade Django to 4.2 & drop support for Django 3.2
+
 [4.15.3]
 --------
 * feat: replacing non encrypted fields of degreed config model with encrypted ones 
