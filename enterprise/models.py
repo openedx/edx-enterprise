@@ -4297,6 +4297,8 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         Fetches all implicit members of a group, indicated by a (pending) enterprise customer user records.
         """
         members = []
+        customer_users = []
+
         # Regardless of user_query, we will need all pecus related to the group's customer
         pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
             enterprise_customer=self.enterprise_customer,
@@ -4304,20 +4306,19 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
 
         if user_query:
             # Get all ecus relevant to the user query
-            customer_users = EnterpriseCustomerUser.objects.filter(
-                id__in=self._get_filtered_ecu_ids(user_query)
-            )
+            if not pending_users_only:
+                customer_users = EnterpriseCustomerUser.objects.filter(
+                    id__in=self._get_filtered_ecu_ids(user_query)
+                )
             # pecu has user_email as a field, so we can filter directly
             pending_customer_users = pending_customer_users.filter(user_email__icontains=user_query)
         else:
-            # No filtering query so get all ecus related to the group's customer
-            customer_users = EnterpriseCustomerUser.objects.filter(
-                enterprise_customer=self.enterprise_customer,
-                active=True,
-            )
-        # Setting customer_users to be an empty array so we only get back pecu members
-        if pending_users_only:
-            customer_users = []
+            if not pending_users_only:
+                # No filtering query so get all ecus related to the group's customer
+                customer_users = EnterpriseCustomerUser.objects.filter(
+                    enterprise_customer=self.enterprise_customer,
+                    active=True,
+                )
         # Build an in memory array of all the implicit memberships
         for ent_user in customer_users:
             members.append(EnterpriseGroupMembership(

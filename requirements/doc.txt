@@ -49,7 +49,6 @@ babel==2.14.0
 backports-zoneinfo[tzdata]==0.2.1
     # via
     #   -r requirements/test-master.txt
-    #   backports-zoneinfo
     #   celery
     #   django
     #   kombu
@@ -102,7 +101,7 @@ click-repl==0.3.0
     # via
     #   -r requirements/test-master.txt
     #   celery
-code-annotations==1.6.0
+code-annotations==1.8.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
@@ -234,20 +233,19 @@ edx-opaque-keys[django]==2.5.1
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-    #   edx-opaque-keys
 edx-rbac==1.8.0
     # via -r requirements/test-master.txt
-edx-rest-api-client==5.6.1
+edx-rest-api-client==5.7.0
     # via -r requirements/test-master.txt
 edx-tincan-py35==1.0.0
     # via -r requirements/test-master.txt
-edx-toggles==5.1.1
+edx-toggles==5.2.0
     # via -r requirements/test-master.txt
 factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==24.7.1
+faker==24.9.0
     # via factory-boy
 filelock==3.13.1
     # via
@@ -294,7 +292,7 @@ jwcrypto==1.5.4
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-kombu==5.3.6
+kombu==5.3.7
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -380,7 +378,6 @@ pyjwt[crypto]==2.8.0
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
-    #   pyjwt
     #   snowflake-connector-python
 pymongo==3.13.0
     # via
