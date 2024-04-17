@@ -134,7 +134,7 @@ chem==1.2.0
 click-plugins==1.1.1
     # via celery
     # via celery
-code-annotations==1.6.0
+code-annotations==1.8.0
     # via
     #   edx-enterprise
     #   edx-toggles
@@ -146,7 +146,7 @@ coreschema==0.0.4
     # via
     #   coreapi
     #   drf-yasg
-crowdsourcehinter-xblock==0.6
+crowdsourcehinter-xblock==0.7
     # via -r requirements/edx/bundled.in
 cryptography==38.0.4
     # via
@@ -469,7 +469,7 @@ edx-drf-extensions==10.2.0
     #   edx-when
     #   edxval
     #   openedx-learning
-edx-enterprise==4.15.1
+edx-enterprise==4.15.2
     # via
     #   -c requirements/edx/../constraints.txt
     #   -r requirements/edx/kernel.in
@@ -477,7 +477,7 @@ edx-event-bus-kafka==5.6.0
     # via -r requirements/edx/kernel.in
 edx-event-bus-redis==0.3.3
     # via -r requirements/edx/kernel.in
-edx-i18n-tools==1.3.0
+edx-i18n-tools==1.5.0
     # via
     #   -r requirements/edx/bundled.in
     #   ora2
@@ -508,7 +508,7 @@ edx-proctoring==4.16.1
     #   -r requirements/edx/kernel.in
     #   edx-proctoring-proctortrack
 edx-rbac==1.8.0
-edx-rest-api-client==5.6.1
+edx-rest-api-client==5.7.0
     # via
     #   -r requirements/edx/kernel.in
     #   edx-enterprise
@@ -522,7 +522,7 @@ edx-submissions==3.7.0
     #   -r requirements/edx/kernel.in
     #   ora2
 edx-tincan-py35==1.0.0
-edx-toggles==5.1.1
+edx-toggles==5.2.0
     # via
     #   -r requirements/edx/kernel.in
     #   edx-completion
@@ -536,7 +536,7 @@ edx-toggles==5.1.1
     #   ora2
 edx-token-utils==0.2.1
     # via -r requirements/edx/kernel.in
-edx-when==2.4.0
+edx-when==2.5.0
     # via
     #   -r requirements/edx/kernel.in
     #   edx-proctoring
@@ -550,7 +550,7 @@ enmerkar==0.7.1
     # via enmerkar-underscore
 enmerkar-underscore==2.2.0
     # via -r requirements/edx/kernel.in
-event-tracking==2.3.0
+event-tracking==2.4.0
     # via
     #   -r requirements/edx/kernel.in
     #   edx-completion
@@ -758,7 +758,7 @@ openedx-atlas==0.6.0
     # via -r requirements/edx/kernel.in
 openedx-blockstore==1.4.0
     # via -r requirements/edx/kernel.in
-openedx-calc==3.0.1
+openedx-calc==3.1.0
     # via -r requirements/edx/kernel.in
 openedx-django-pyfs==3.6.0
     # via
@@ -1117,7 +1117,7 @@ stevedore==5.1.0
     #   edx-django-utils
     #   edx-enterprise
     #   edx-opaque-keys
-super-csv==3.1.0
+super-csv==3.2.0
     # via edx-bulk-grades
 sympy==1.12
     # via openedx-calc
@@ -1168,7 +1168,7 @@ urllib3==1.26.18
     #   py2neo
     #   requests
     #   snowflake-connector-python
-user-util==1.0.0
+user-util==1.1.0
     # via -r requirements/edx/kernel.in
     # via
     #   amqp
