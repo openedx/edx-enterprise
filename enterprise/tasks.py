@@ -14,7 +14,11 @@ from django.db import IntegrityError
 
 from enterprise.api_client.braze import BrazeAPIClient
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
-from enterprise.utils import get_enterprise_customer, send_email_notification_message
+from enterprise.utils import (
+    get_enterprise_customer,
+    send_email_notification_message,
+    unset_language_of_all_enterprise_learners,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -182,3 +186,15 @@ def send_sso_configured_email(
         )
         LOGGER.exception(message)
         raise exc
+
+
+@shared_task
+@set_code_owner_attribute
+def update_enterprise_learners_user_preference(enterprise_customer_uuid):
+    """
+    Update the user preference `pref-lang` attribute for all enterprise learners linked with an enterprise.
+
+    Arguments:
+        * enterprise_customer_uuid (UUID): uuid of an enterprise customer
+    """
+    unset_language_of_all_enterprise_learners(enterprise_customer_uuid)
