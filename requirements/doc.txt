@@ -60,7 +60,7 @@ billiard==4.2.0
     #   celery
 bleach==6.1.0
     # via -r requirements/test-master.txt
-celery==5.3.6
+celery==5.4.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
@@ -245,7 +245,7 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==24.9.0
+faker==24.11.0
     # via factory-boy
 filelock==3.13.1
     # via
