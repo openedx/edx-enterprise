@@ -339,6 +339,9 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
         LOGGER.exception(message)
         raise exc
 
+
+@shared_task
+@set_code_owner_attribute
 def update_enterprise_learners_user_preference(enterprise_customer_uuid):
     """
     Update the user preference `pref-lang` attribute for all enterprise learners linked with an enterprise.
