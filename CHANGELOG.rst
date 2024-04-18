@@ -15,6 +15,14 @@ Change Log
 
 Unreleased
 ----------
+[4.15.6]
+--------
+* perf: update user preferences inside an async task to void request timeout
+
+[4.15.5]
+--------
+* fix: Improved the query to only fetch active configs for CSOD customers.
+
 [4.15.4]
 --------
 * fix: allowing for existing pecus to be added to enterprise groups

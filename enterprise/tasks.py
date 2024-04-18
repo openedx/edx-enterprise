@@ -16,7 +16,11 @@ from django.db import IntegrityError
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, BrazeAPIClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
-from enterprise.utils import get_enterprise_customer, send_email_notification_message
+from enterprise.utils import (
+    get_enterprise_customer,
+    send_email_notification_message,
+    unset_language_of_all_enterprise_learners,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -334,3 +338,12 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
         )
         LOGGER.exception(message)
         raise exc
+
+def update_enterprise_learners_user_preference(enterprise_customer_uuid):
+    """
+    Update the user preference `pref-lang` attribute for all enterprise learners linked with an enterprise.
+
+    Arguments:
+        * enterprise_customer_uuid (UUID): uuid of an enterprise customer
+    """
+    unset_language_of_all_enterprise_learners(enterprise_customer_uuid)
