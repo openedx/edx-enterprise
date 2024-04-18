@@ -4,16 +4,28 @@ Tests for the `edx-enterprise` tasks module.
 
 import copy
 import unittest
+import uuid
+from datetime import datetime
 from unittest import mock
 
 from pytest import mark
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
-from enterprise.tasks import create_enterprise_enrollment, send_enterprise_email_notification
+from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource, EnterpriseGroupMembership
+from enterprise.settings.test import BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID, BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID
+from enterprise.tasks import (
+    create_enterprise_enrollment,
+    send_enterprise_email_notification,
+    send_group_membership_invitation_notification,
+    send_group_membership_removal_notification,
+    send_sso_configured_email,
+)
 from enterprise.utils import serialize_notification_content
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupFactory,
+    EnterpriseGroupMembershipFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
@@ -30,10 +42,12 @@ class TestEnterpriseTasks(unittest.TestCase):
         """
         Setup for `TestEnterpriseTasks` test.
         """
-        self.user = UserFactory(id=2, email='user@example.com')
         self.enterprise_customer = EnterpriseCustomerFactory(
             name='Team Titans',
         )
+        self.user = UserFactory(email='user@example.com')
+        self.pending_enterprise_customer_user = PendingEnterpriseCustomerUserFactory()
+        self.enterprise_group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=self.enterprise_customer,
@@ -180,3 +194,117 @@ class TestEnterpriseTasks(unittest.TestCase):
             admin_enrollment=admin_enrollment,
         ) for item in email_items]
         mock_send_notification.assert_has_calls(calls)
+
+    @mock.patch('enterprise.tasks.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
+    def test_send_group_membership_invitation_notification(self, mock_braze_api_client, mock_enterprise_catalog_client):
+        """
+        Verify send_group_membership_invitation_notification hits braze client with expected args
+        """
+        EnterpriseGroupMembershipFactory(
+            group=self.enterprise_group,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        EnterpriseGroupMembershipFactory(
+            group=self.enterprise_group,
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            activated_at=datetime.now()
+        )
+        admin_email = 'edx@example.org'
+        mock_recipients = [self.pending_enterprise_customer_user.user_email,
+                           mock_braze_api_client().create_recipient.return_value]
+        mock_catalog_content_count = 5
+        mock_admin_mailto = f'mailto:{admin_email}'
+        mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
+        mock_braze_api_client().create_recipient_no_external_id.return_value = (
+            self.pending_enterprise_customer_user.user_email)
+        mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
+            mock_catalog_content_count)
+        act_by_date = datetime.today()
+        catalog_uuid = uuid.uuid4()
+        membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
+        send_group_membership_invitation_notification(
+            self.enterprise_customer.uuid,
+            membership_uuids,
+            act_by_date,
+            catalog_uuid,
+        )
+        calls = [mock.call(
+            BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID,
+            recipients=mock_recipients,
+            trigger_properties={
+                'contact_admin_link': mock_admin_mailto,
+                'enterprise_customer_name': self.enterprise_customer.name,
+                'catalog_content_count': mock_catalog_content_count,
+                'act_by_date': act_by_date.strftime('%B %d, %Y'),
+            },
+        )]
+        mock_braze_api_client().send_campaign_message.assert_has_calls(calls)
+
+    @mock.patch('enterprise.tasks.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
+    def test_send_group_membership_removal_notification(self, mock_braze_api_client, mock_enterprise_catalog_client):
+        """
+        Verify send_group_membership_removal_notification hits braze client with expected args
+        """
+        EnterpriseGroupMembershipFactory(
+            group=self.enterprise_group,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        EnterpriseGroupMembershipFactory(
+            group=self.enterprise_group,
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            activated_at=datetime.now()
+        )
+        admin_email = 'edx@example.org'
+        mock_recipients = [self.pending_enterprise_customer_user.user_email,
+                           mock_braze_api_client().create_recipient.return_value]
+        mock_admin_mailto = f'mailto:{admin_email}'
+        mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
+        mock_braze_api_client().create_recipient_no_external_id.return_value = (
+            self.pending_enterprise_customer_user.user_email)
+        mock_catalog_content_count = 5
+        mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
+            mock_catalog_content_count)
+        membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
+        catalog_uuid = uuid.uuid4()
+        send_group_membership_removal_notification(
+            self.enterprise_customer.uuid,
+            membership_uuids,
+            catalog_uuid,
+        )
+        calls = [mock.call(
+            BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID,
+            recipients=mock_recipients,
+            trigger_properties={
+                'contact_admin_link': mock_admin_mailto,
+                'enterprise_customer_name': self.enterprise_customer.name,
+                'catalog_content_count': mock_catalog_content_count,
+            },
+        )]
+        mock_braze_api_client().send_campaign_message.assert_has_calls(calls)
+
+    @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
+    def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
+        """
+        Assert sso configuration calls Braze API with the correct arguments.
+        """
+        mock_braze_client().create_recipient_no_external_id.return_value = (
+            self.enterprise_customer.contact_email)
+        expected_trigger_properties = {
+            'enterprise_customer_slug': self.enterprise_customer.slug,
+            'enterprise_customer_name': self.enterprise_customer.name,
+            'enterprise_sender_alias': self.enterprise_customer.sender_alias,
+            'enterprise_contact_email': self.enterprise_customer.contact_email,
+        }
+        send_sso_configured_email(self.enterprise_customer.uuid)
+        call = [mock.call(
+            SSO_BRAZE_CAMPAIGN_ID,
+            recipients=[self.enterprise_customer.contact_email],
+            trigger_properties=expected_trigger_properties
+        )]
+        mock_braze_client().send_campaign_message.assert_has_calls(call)
