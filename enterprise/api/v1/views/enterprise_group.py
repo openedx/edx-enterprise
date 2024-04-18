@@ -235,7 +235,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 ]
                 # According to Django docs, bulk created objects can't be used in future bulk creates as the in memory
                 # objects returned by bulk_create won't have PK's assigned.
-                models.PendingEnterpriseCustomerUser.objects.bulk_create(pecu_records)
+                models.PendingEnterpriseCustomerUser.objects.bulk_create(pecu_records, ignore_conflicts=True)
                 pecus = models.PendingEnterpriseCustomerUser.objects.filter(
                     user_email__in=emails_to_create_batch,
                     enterprise_customer=customer,

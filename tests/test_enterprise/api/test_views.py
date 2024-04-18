@@ -7743,6 +7743,21 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 400
         assert response.data == "Error: missing request data: `learner_emails`."
 
+    def test_assign_learners_to_group_with_existing_pecu(self):
+        """
+        Test that we can add existing pending ecus to groups
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        pcu = PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        existing_email = pcu.user_email
+        request_data = {'learner_emails': existing_email}
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 201
+        assert response.json() == {'records_processed': 1, 'new_learners': 1, 'existing_learners': 0}
+
     def test_successful_assign_learners_to_group(self):
         """
         Test that both existing and new learners assigned to groups properly creates membership records

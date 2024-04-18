@@ -26,7 +26,7 @@ glob2==0.7
     # via jasmine-core
 h11==0.14.0
     # via wsproto
-idna==3.6
+idna==3.7
     # via trio
 importlib-metadata==6.11.0
     # via
@@ -38,7 +38,7 @@ inflect==7.2.0
     # via jaraco-text
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
-jaraco-collections==5.0.0
+jaraco-collections==5.0.1
     # via
     #   -r requirements/js_test.in
     #   cherrypy
@@ -104,9 +104,7 @@ typing-extensions==4.11.0
     #   selenium
     #   typeguard
 urllib3[socks]==2.2.1
-    # via
-    #   selenium
-    #   urllib3
+    # via selenium
 wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1
