@@ -127,7 +127,8 @@ class CornerstoneCoursesListView(BaseViewSet):
 
         worker_user = get_enterprise_worker_user()
         enterprise_config = CornerstoneEnterpriseCustomerConfiguration.objects.get(
-            enterprise_customer=enterprise_customer
+            enterprise_customer=enterprise_customer,
+            active=True
         )
         exporter = enterprise_config.get_content_metadata_exporter(worker_user)
         transmitter = enterprise_config.get_content_metadata_transmitter()
