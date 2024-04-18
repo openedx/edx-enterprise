@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.7]
+--------
+* feat: add send group membership invite and removal braze emails
+
 [4.15.6]
 --------
 * perf: update user preferences inside an async task to void request timeout
