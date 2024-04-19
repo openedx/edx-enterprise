@@ -14,6 +14,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
 from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import parse_http_date_safe
 
 from enterprise.api.throttles import ServiceUserThrottle
@@ -126,10 +127,20 @@ class CornerstoneCoursesListView(BaseViewSet):
                 })
 
         worker_user = get_enterprise_worker_user()
-        enterprise_config = CornerstoneEnterpriseCustomerConfiguration.objects.get(
-            enterprise_customer=enterprise_customer,
-            active=True
-        )
+        try:
+            enterprise_config = CornerstoneEnterpriseCustomerConfiguration.objects.get(
+                enterprise_customer=enterprise_customer,
+                active=True
+            )
+        except ObjectDoesNotExist:
+            return Response(
+                status=status.HTTP_404_NOT_FOUND,
+                data={
+                    "message": (
+                        "No active Cornerstone configuration found for given ciid."
+                    )
+                })
+
         exporter = enterprise_config.get_content_metadata_exporter(worker_user)
         transmitter = enterprise_config.get_content_metadata_transmitter()
 

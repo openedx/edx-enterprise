@@ -69,6 +69,20 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+        @responses.activate
+        def test_course_list_invalid_ciid(self):
+            """
+            Test courses list with ciid of existing customer but with a non-active config
+            """
+            self.config.active = False
+            self.config.save()
+            url = '{path}?ciid={customer_uuid}'.format(
+                path=self.course_list_url,
+                customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
+            )
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_course_list_with_skip_key_if_none_false(self):
         """
         Test courses list view produces desired json when SKIP_KEY_IF_NONE is set to False
