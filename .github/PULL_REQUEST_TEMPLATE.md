@@ -21,5 +21,6 @@
     - Each step in the release build has a condition flag that checks if the rest of the steps are done and if so will deploy to PyPi.
     (so basically once your build finishes, after maybe a minute you should see the new version in PyPi automatically (on refresh))
 - [ ] PR created in [edx-platform](https://github.com/openedx/edx-platform) to upgrade dependencies (including edx-enterprise)
+    - Trigger the '[Upgrade one Python dependency](https://github.com/openedx/edx-platform/actions/workflows/upgrade-one-python-dependency.yml)' action against master in edx-platform with new version number to generate version bump PR
     - This **must** be done after the version is visible in PyPi as `make upgrade` in edx-platform will look for the latest version in PyPi.
     - Note: the edx-enterprise constraint in edx-platform **must** also be bumped to the latest version in PyPi.
