@@ -32,6 +32,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.api.v1 import serializers
+from enterprise.api.v1.views.enterprise_customer_sso_configuration import fetch_entity_id_from_metadata_xml
 from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
@@ -99,6 +100,8 @@ from test_utils.factories import (
     UserFactory,
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
+
+from .constants import FAKE_SSO_METADATA_XML_WITH_ENTITY_ID
 
 Application = get_application_model()
 fake = Faker()
@@ -7990,6 +7993,7 @@ class TestEnterpriseGroupViewSet(APITest):
         assert not pending_membership.activated_at
 
 
+@ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
     """
@@ -8648,3 +8652,12 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.uuid)
         response = self.delete_sso_configuration(uuid.uuid4())
         assert response.status_code == 404
+
+    @ddt.data(*FAKE_SSO_METADATA_XML_WITH_ENTITY_ID)
+    @ddt.unpack
+    def test_fetch_entity_id_from_metadata_xml(self, metadata_xml, expected_entity_id):
+        """
+        Test expected entityId after parsing metadata xml file.
+        """
+        actual_entity_id = fetch_entity_id_from_metadata_xml(metadata_xml)
+        assert actual_entity_id == expected_entity_id

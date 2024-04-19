@@ -2,6 +2,7 @@
 Views for the ``enterprise-customer-sso-configuration`` API endpoint.
 """
 
+import re
 from xml.etree.ElementTree import fromstring
 
 import requests
@@ -25,6 +26,7 @@ from enterprise import models
 from enterprise.api.utils import get_enterprise_customer_from_user_id
 from enterprise.api.v1 import serializers
 from enterprise.api_client.sso_orchestrator import SsoOrchestratorClientError
+from enterprise.constants import ENTITY_ID_REGEX
 from enterprise.logging import getEnterpriseLogger
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerSsoConfiguration, EnterpriseCustomerUser
 from enterprise.tasks import send_sso_configured_email
@@ -101,8 +103,13 @@ def fetch_entity_id_from_metadata_xml(metadata_xml):
     root = fromstring(metadata_xml)
     if entity_id := root.get('entityID'):
         return entity_id
-    if entity_descriptor_child := root.find('EntityDescriptor'):
+    elif entity_descriptor_child := root.find('EntityDescriptor'):
         return entity_descriptor_child.get('entityID')
+    else:
+        # find <EntityDescriptor entityId=''> and parse URL from it
+        match = re.search(ENTITY_ID_REGEX, metadata_xml, re.DOTALL)
+        if match:
+            return match.group(2)
     raise EntityIdNotFoundError('Could not find entity ID in metadata xml')
 
 

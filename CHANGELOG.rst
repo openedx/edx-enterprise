@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.8]
+--------
+* fix: SSO self-serve tool invalid entityId parsing
+
 [4.15.7]
 --------
 * feat: add send group membership invite and removal braze emails
