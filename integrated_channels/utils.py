@@ -517,7 +517,6 @@ def dummy_reverse(_apps, _schema_editor):
     :param _schema_editor:
     :return:
     """
-    pass
 
 
 def stringify_and_store_api_record(
