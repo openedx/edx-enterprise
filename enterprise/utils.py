@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+from collections import OrderedDict
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -2408,3 +2409,49 @@ def convert_to_snake(string):
     Helper method to convert strings to snake case.
     """
     return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+
+
+def get_integrated_channel_choices():
+    """
+    Helper method to return channel code for each integrated channel.
+    """
+    BlackboardEnterpriseCustomerConfiguration = apps.get_model(
+        'blackboard', 'BlackboardEnterpriseCustomerConfiguration')
+    CanvasEnterpriseCustomerConfiguration = apps.get_model('canvas',
+                                                           'CanvasEnterpriseCustomerConfiguration')
+    CornerstoneEnterpriseCustomerConfiguration = apps.get_model('cornerstone',
+                                                                'CornerstoneEnterpriseCustomerConfiguration')
+    Degreed2EnterpriseCustomerConfiguration = apps.get_model('degreed2',
+                                                             'Degreed2EnterpriseCustomerConfiguration')
+    MoodleEnterpriseCustomerConfiguration = apps.get_model('moodle',
+                                                           'MoodleEnterpriseCustomerConfiguration')
+    SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(
+        'sap_success_factors', 'SAPSuccessFactorsEnterpriseCustomerConfiguration')
+
+    return OrderedDict([
+        (integrated_channel_class.channel_code(), integrated_channel_class)
+        for integrated_channel_class in (
+            BlackboardEnterpriseCustomerConfiguration,
+            CanvasEnterpriseCustomerConfiguration,
+            CornerstoneEnterpriseCustomerConfiguration,
+            Degreed2EnterpriseCustomerConfiguration,
+            MoodleEnterpriseCustomerConfiguration,
+            SAPSuccessFactorsEnterpriseCustomerConfiguration,
+        )
+    ])
+
+
+def get_integrations_for_customers(customer_uuid):
+    """
+    Helper method to return channel code for each enterprise customer with active integrations.
+
+    Arguments:
+        customer_uuid (UUI): uuid of an enterprise customer
+    Returns:
+        list: a list of integration channel codes.
+    """
+    unique_integrations = []
+    integrated_channel_choices = get_integrated_channel_choices()
+    for code, choice in integrated_channel_choices.items():
+        if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
+            unique_integrations.append(code)
