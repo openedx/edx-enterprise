@@ -19,7 +19,7 @@ from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import (
     get_enterprise_customer,
     send_email_notification_message,
-    unset_language_of_all_enterprise_learners,
+    set_language_of_all_enterprise_learners,
 )
 
 LOGGER = getLogger(__name__)
@@ -342,11 +342,12 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
 
 @shared_task
 @set_code_owner_attribute
-def update_enterprise_learners_user_preference(enterprise_customer_uuid):
+def update_enterprise_learners_user_preference(enterprise_customer_uuid, default_language):
     """
     Update the user preference `pref-lang` attribute for all enterprise learners linked with an enterprise.
 
     Arguments:
         * enterprise_customer_uuid (UUID): uuid of an enterprise customer
+        * default_language (str): new language code to set for all enterprise learners
     """
-    unset_language_of_all_enterprise_learners(enterprise_customer_uuid)
+    set_language_of_all_enterprise_learners(enterprise_customer_uuid, default_language)

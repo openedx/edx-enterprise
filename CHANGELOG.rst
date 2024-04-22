@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.10]
+---------
+* fix: set default langauge for all learners linked with an enteprise customer
+
 [4.15.9]
 --------
 * fix: return a 404 response for inactive CSOD customers while fetching courses
