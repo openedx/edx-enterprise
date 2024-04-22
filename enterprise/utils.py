@@ -2417,14 +2417,14 @@ def get_integrated_channel_choices():
     """
     BlackboardEnterpriseCustomerConfiguration = apps.get_model(
         'blackboard', 'BlackboardEnterpriseCustomerConfiguration')
-    CanvasEnterpriseCustomerConfiguration = apps.get_model('canvas',
-                                                           'CanvasEnterpriseCustomerConfiguration')
-    CornerstoneEnterpriseCustomerConfiguration = apps.get_model('cornerstone',
-                                                                'CornerstoneEnterpriseCustomerConfiguration')
-    Degreed2EnterpriseCustomerConfiguration = apps.get_model('degreed2',
-                                                             'Degreed2EnterpriseCustomerConfiguration')
-    MoodleEnterpriseCustomerConfiguration = apps.get_model('moodle',
-                                                           'MoodleEnterpriseCustomerConfiguration')
+    CanvasEnterpriseCustomerConfiguration = apps.get_model(
+        'canvas', 'CanvasEnterpriseCustomerConfiguration')
+    CornerstoneEnterpriseCustomerConfiguration = apps.get_model(
+        'cornerstone', 'CornerstoneEnterpriseCustomerConfiguration')
+    Degreed2EnterpriseCustomerConfiguration = apps.get_model(
+        'degreed2', 'Degreed2EnterpriseCustomerConfiguration')
+    MoodleEnterpriseCustomerConfiguration = apps.get_model(
+        'moodle', 'MoodleEnterpriseCustomerConfiguration')
     SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(
         'sap_success_factors', 'SAPSuccessFactorsEnterpriseCustomerConfiguration')
 
@@ -2455,3 +2455,4 @@ def get_integrations_for_customers(customer_uuid):
     for code, choice in integrated_channel_choices.items():
         if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
             unique_integrations.append(code)
+    return unique_integrations

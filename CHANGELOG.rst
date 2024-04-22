@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.16.0]
+--------
+* feat: update enterprise customer serializer to include active integration codes
+
 [4.15.9]
 --------
 * fix: return a 404 response for inactive CSOD customers while fetching courses
