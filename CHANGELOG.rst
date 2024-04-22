@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.11]
+---------
+* fix: support `force_enrollment` in serializers used by bulk enrollment (ENT-8788)
+
 [4.15.10]
 ---------
 * fix: set default langauge for all learners linked with an enteprise customer
