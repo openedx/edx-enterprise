@@ -4726,6 +4726,57 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         assert mock_update_or_create_enrollment.call_count == 2
 
     @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
+    @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment', mock.MagicMock())
+    def test_bulk_enrollment_force_enrollment(
+        self,
+        mock_update_or_create_enrollment,
+        mock_get_course_mode,
+    ):
+        """
+        Ensure bulk enrollment passes force_enrollment hints into lower level functions.
+        """
+        mock_update_or_create_enrollment.return_value = True
+
+        user_one = factories.UserFactory(is_active=True)
+        user_two = factories.UserFactory(is_active=True)
+
+        factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+
+        self.assertEqual(len(PendingEnrollment.objects.all()), 0)
+        body = {
+            'enrollments_info': [
+                {
+                    'user_id': user_one.id,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac',
+                    # For this enrollment, force_enrollment should fallback to False.
+                },
+                {
+                    'email': user_two.email,
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'license_uuid': '2c58acdade7c4ede838f7111b42e18ac',
+                    'force_enrollment': True,
+                },
+            ]
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        assert mock_update_or_create_enrollment.mock_calls[0].kwargs['force_enrollment'] is False
+        assert mock_update_or_create_enrollment.mock_calls[1].kwargs['force_enrollment'] is True
+
+    @mock.patch('enterprise.api.v1.views.enterprise_customer.get_best_mode_from_course_key')
     @mock.patch('enterprise.api.v1.views.enterprise_customer.track_enrollment')
     @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
     def test_bulk_enrollment_in_bulk_courses_nonexisting_user_id(
