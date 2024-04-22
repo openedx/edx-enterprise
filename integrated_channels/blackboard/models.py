@@ -8,7 +8,6 @@ from logging import getLogger
 
 from config_models.models import ConfigurationModel
 from fernet_fields import EncryptedCharField
-from simple_history.models import HistoricalRecords
 from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
