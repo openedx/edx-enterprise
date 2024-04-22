@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -27,6 +28,7 @@ from integrated_channels.utils import channel_code_to_app_label, convert_comma_s
 
 LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
+LAST_24_HRS = timezone.now() - timezone.timedelta(hours=24)
 
 
 def set_default_display_name(*args, **kw):
@@ -267,37 +269,53 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             enterprise_customer=self.enterprise_customer,
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
-        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)
+        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)  # pylint: disable=unsupported-binary-operation
 
     def update_content_synced_at(self, action_happened_at, was_successful):
         """
         Given the last time a Content record sync was attempted and status update the appropriate timestamps.
         """
+        update_fields = []
         if self.last_sync_attempted_at is None or action_happened_at > self.last_sync_attempted_at:
             self.last_sync_attempted_at = action_happened_at
+            update_fields.append('last_sync_attempted_at')
         if self.last_content_sync_attempted_at is None or action_happened_at > self.last_content_sync_attempted_at:
             self.last_content_sync_attempted_at = action_happened_at
+            update_fields.append('last_content_sync_attempted_at')
         if not was_successful:
             if self.last_sync_errored_at is None or action_happened_at > self.last_sync_errored_at:
                 self.last_sync_errored_at = action_happened_at
+                update_fields.append('last_sync_errored_at')
             if self.last_content_sync_errored_at is None or action_happened_at > self.last_content_sync_errored_at:
                 self.last_content_sync_errored_at = action_happened_at
-        return self.save()
+                update_fields.append('last_content_sync_errored_at')
+        if update_fields:
+            return self.save(update_fields=update_fields)
+        else:
+            return self
 
     def update_learner_synced_at(self, action_happened_at, was_successful):
         """
         Given the last time a Learner record sync was attempted and status update the appropriate timestamps.
         """
+        update_fields = []
         if self.last_sync_attempted_at is None or action_happened_at > self.last_sync_attempted_at:
             self.last_sync_attempted_at = action_happened_at
+            update_fields.append('last_sync_attempted_at')
         if self.last_learner_sync_attempted_at is None or action_happened_at > self.last_learner_sync_attempted_at:
             self.last_learner_sync_attempted_at = action_happened_at
+            update_fields.append('last_learner_sync_attempted_at')
         if not was_successful:
             if self.last_sync_errored_at is None or action_happened_at > self.last_sync_errored_at:
                 self.last_sync_errored_at = action_happened_at
+                update_fields.append('last_sync_errored_at')
             if self.last_learner_sync_errored_at is None or action_happened_at > self.last_learner_sync_errored_at:
                 self.last_learner_sync_errored_at = action_happened_at
-        return self.save()
+                update_fields.append('last_learner_sync_errored_at')
+        if update_fields:
+            return self.save(update_fields=update_fields)
+        else:
+            return self
 
     @property
     def is_valid(self):
@@ -655,6 +673,11 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         blank=True,
         null=True
     )
+    remote_errored_at = models.DateTimeField(
+        help_text='Date when the content transmission was failed in the remote API.',
+        blank=True,
+        null=True
+    )
     remote_updated_at = models.DateTimeField(
         help_text='Date when the content transmission was last updated in the remote API',
         blank=True,
@@ -691,13 +714,16 @@ class ContentMetadataItemTransmission(TimeStampedModel):
         """
         Return any pre-existing records for this customer/plugin/content which was previously deleted
         """
-        return ContentMetadataItemTransmission.objects.filter(
+        query = Q(
             enterprise_customer=enterprise_customer,
             plugin_configuration_id=plugin_configuration_id,
             content_id=content_id,
             integrated_channel_code=integrated_channel_code,
             remote_deleted_at__isnull=False,
         )
+        query.add(Q(remote_errored_at__lt=LAST_24_HRS) |
+                  Q(remote_errored_at__isnull=True), Q.AND)
+        return ContentMetadataItemTransmission.objects.filter(query)
 
     @classmethod
     def incomplete_create_transmissions(
@@ -718,6 +744,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_created_at__isnull=True,
             remote_updated_at__isnull=True,
             remote_deleted_at__isnull=True,
+            remote_errored_at__isnull=True,
         )
         in_db_but_failed_to_send_query = Q(
             enterprise_customer=enterprise_customer,
@@ -729,6 +756,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=True,
             api_response_status_code__gte=400,
         )
+        in_db_but_failed_to_send_query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
         in_db_but_unsent_query.add(in_db_but_failed_to_send_query, Q.OR)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_unsent_query)
 
@@ -753,6 +782,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=True,
             api_response_status_code__gte=400,
         )
+        in_db_but_failed_to_send_query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
     @classmethod
@@ -775,6 +806,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=False,
             api_response_status_code__gte=400,
         )
+        in_db_but_failed_to_send_query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
     def _mark_transmission(self, mark_for):
@@ -863,3 +896,99 @@ class OrphanedContentTransmissions(TimeStampedModel):
         on_delete=models.CASCADE,
     )
     resolved = models.BooleanField(default=False)
+
+
+class IntegratedChannelAPIRequestLogs(TimeStampedModel):
+    """
+    A model to track basic information about every API call we make from the integrated channels.
+    """
+
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer, on_delete=models.CASCADE
+    )
+    enterprise_customer_configuration_id = models.IntegerField(
+        blank=False,
+        null=False,
+        help_text="ID from the EnterpriseCustomerConfiguration model",
+    )
+    endpoint = models.URLField(
+        blank=False,
+        max_length=255,
+        null=False,
+    )
+    payload = models.TextField(blank=False, null=False)
+    time_taken = models.FloatField(blank=False, null=False)
+    status_code = models.PositiveIntegerField(
+        help_text="API call response HTTP status code", blank=True, null=True
+    )
+    response_body = models.TextField(
+        help_text="API call response body", blank=True, null=True
+    )
+    channel_name = models.TextField(
+        help_text="Name of the integrated channel associated with this API call log record.",
+        blank=True
+    )
+
+    class Meta:
+        app_label = "integrated_channel"
+        verbose_name_plural = "Integrated channels API request logs"
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return (
+            f"<IntegratedChannelAPIRequestLog {self.id}"
+            f" for enterprise customer {self.enterprise_customer} "
+            f", enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>"
+            f", endpoint: {self.endpoint}"
+            f", time_taken: {self.time_taken}"
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+    @classmethod
+    def store_api_call(
+        cls,
+        enterprise_customer,
+        enterprise_customer_configuration_id,
+        endpoint,
+        payload,
+        time_taken,
+        status_code,
+        response_body,
+        channel_name
+    ):
+        """
+        Creates new record in IntegratedChannelAPIRequestLogs table.
+        """
+        try:
+            record = cls(
+                enterprise_customer=enterprise_customer,
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+                endpoint=endpoint,
+                payload=payload,
+                time_taken=time_taken,
+                status_code=status_code,
+                response_body=response_body,
+                channel_name=channel_name
+            )
+            record.save()
+        except Exception as e:  # pylint: disable=broad-except
+            LOGGER.error(
+                f"store_api_call raised error while storing API call: {e}"
+                f"enterprise_customer={enterprise_customer}"
+                f"enterprise_customer_configuration_id={enterprise_customer_configuration_id},"
+                f"endpoint={endpoint}"
+                f"payload={payload}"
+                f"time_taken={time_taken}"
+                f"status_code={status_code}"
+                f"response_body={response_body}"
+                f"channel_name={channel_name}"
+            )

@@ -39,6 +39,7 @@ from enterprise.constants import (
     DEFAULT_CATALOG_CONTENT_FILTER,
     LMS_API_DATETIME_FORMAT,
     LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE,
+    MAX_ALLOWED_TEXT_LENGTH,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
     PROGRAM_TYPE_DESCRIPTION,
     CourseModes,
@@ -1564,6 +1565,13 @@ def get_sso_orchestrator_configure_path():
     return settings.ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_PATH
 
 
+def get_sso_orchestrator_configure_edx_oauth_path():
+    """
+    Return the SSO orchestrator configure-edx-oauth endpoint path, or None if it is not defined.
+    """
+    return getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_CONFIGURE_EDX_OAUTH_PATH", None)
+
+
 def get_enterprise_worker_user():
     """
     Return the user object of enterprise worker user.
@@ -1799,6 +1807,7 @@ def customer_admin_enroll_user_with_status(
         enrollment_source=None,
         license_uuid=None,
         transaction_id=None,
+        force_enrollment=False,
 ):
     """
     For use with bulk enrollment, or any use case of admin enrolling a user
@@ -1840,6 +1849,7 @@ def customer_admin_enroll_user_with_status(
             course_mode,
             is_active=True,
             enterprise_uuid=enterprise_customer.uuid,
+            force_enrollment=force_enrollment,
         )
         succeeded = True
         LOGGER.info("Successfully enrolled user %s in course %s", user.id, course_id)
@@ -1979,6 +1989,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
             * 'course_run_key': The course to enroll into.
             * 'course_mode': The course mode.
             * 'license_uuid' OR 'transaction_id': ID of either accepted form of subsidy.
+            * 'force_enrollment' (bool, optional): Enroll user even enrollment deadline is expired (default False).
 
             Example::
 
@@ -2029,6 +2040,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
         license_uuid = subsidy_user_info.get('license_uuid')
         transaction_id = subsidy_user_info.get('transaction_id')
         activation_link = subsidy_user_info.get('activation_link')
+        force_enrollment = subsidy_user_info.get('force_enrollment', False)
 
         if user_id and user_email:
             user = User.objects.filter(id=subsidy_user_info['user_id']).first()
@@ -2058,7 +2070,8 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     course_run_key,
                     enrollment_source,
                     license_uuid,
-                    transaction_id
+                    transaction_id,
+                    force_enrollment=force_enrollment,
                 )
                 if succeeded:
                     success_dict = {
@@ -2205,22 +2218,29 @@ def get_platform_logo_url():
     return urljoin(settings.LMS_ROOT_URL, logo_url)
 
 
-def unset_language_of_all_enterprise_learners(enterprise_customer):
+def unset_language_of_all_enterprise_learners(enterprise_customer_uuid):
     """
     Unset the language preference of all the learners belonging to the given enterprise customer.
 
     Arguments:
-        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
+        enterprise_customer_uuid (UUI): uuid of an enterprise customer
     """
     if UserPreference:
+        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
         user_ids = list(enterprise_customer.enterprise_customer_users.values_list('user_id', flat=True))
 
-        UserPreference.objects.filter(
-            key=LANGUAGE_KEY,
-            user_id__in=user_ids
-        ).update(
-            value=''
-        )
+        LOGGER.info('Update user preference started for learners. Enterprise: [%s]', enterprise_customer_uuid)
+
+        for chunk in batch(user_ids, batch_size=10000):
+            UserPreference.objects.filter(
+                key=LANGUAGE_KEY,
+                user_id__in=chunk
+            ).update(
+                value=''
+            )
+            LOGGER.info('Updated user preference for learners. Batch Size: [%s]', len(chunk))
+
+        LOGGER.info('Update user preference completed for learners. Enterprise: [%s]', enterprise_customer_uuid)
 
 
 def unset_enterprise_learner_language(enterprise_customer_user):
@@ -2365,3 +2385,26 @@ def camelCase(string):
     """
     output = ''.join(x for x in string.title() if x.isalnum())
     return output[0].lower() + output[1:]
+
+
+def truncate_string(string, max_length=MAX_ALLOWED_TEXT_LENGTH):
+    """
+    Truncate a string to the specified max length.
+    If max length is not specified, it will be set to MAX_ALLOWED_TEXT_LENGTH.
+
+    Returns:
+        (tuple): (truncated_string, was_truncated)
+    """
+    was_truncated = False
+    if len(string) > max_length:
+        truncated_string = string[:max_length]
+        was_truncated = True
+        return (truncated_string, was_truncated)
+    return (string, was_truncated)
+
+
+def convert_to_snake(string):
+    """
+    Helper method to convert strings to snake case.
+    """
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()

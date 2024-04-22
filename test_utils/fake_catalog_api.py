@@ -220,7 +220,8 @@ FAKE_COURSE_TO_CREATE_2 = {
     'content_type': 'course',
     'enrollment_url': FAKE_URL,
     'programs': [],
-    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+    'content_last_modified': '2020-08-18T00:32:33.754662Z',
+    'skill_names': ['Information Technology']
 }
 
 FAKE_COURSE_TO_CREATE = {
@@ -258,7 +259,8 @@ FAKE_COURSE_TO_CREATE = {
     'content_type': 'course',
     'enrollment_url': FAKE_URL,
     'programs': [],
-    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+    'content_last_modified': '2020-08-18T00:32:33.754662Z',
+    'skill_names': ['Machine Learning']
 }
 
 FAKE_COURSE = {

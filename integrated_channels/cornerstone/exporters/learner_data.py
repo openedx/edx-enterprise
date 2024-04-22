@@ -69,8 +69,11 @@ class CornerstoneLearnerExporter(LearnerExporter):
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                 enterprise_enrollment.enterprise_customer_user.user_id,
                 enterprise_enrollment.course_id,
-                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
-                 'Cornerstone User ID not found for [{name}]'.format(
-                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-                 ))))
+                (
+                    'get_learner_data_records finished. No learner data was sent for this LMS User Id {user_id} '
+                    'because Cornerstone User ID not found'.format(
+                        user_id=enterprise_enrollment.enterprise_customer_user.user_id
+                    )
+                )
+            ))
             return None

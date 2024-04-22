@@ -117,9 +117,23 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             self.NOW if completed_date is not None else None
         )
 
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_retrieve_same_learner_data_record(self, mock_course_catalog_api):
+        """
+        If a learner data record already exists for the enrollment, it should be retrieved instead of created.
+        """
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        exporter = CornerstoneLearnerExporter('fake-user', self.config)
+        learner_data_records_1 = exporter.get_learner_data_records(self.enterprise_course_enrollment)[0]
+        learner_data_records_1.save()
+        learner_data_records_2 = exporter.get_learner_data_records(self.enterprise_course_enrollment)[0]
+        learner_data_records_2.save()
+
+        assert learner_data_records_1.id == learner_data_records_2.id
+
     def test_get_learner_data_record_not_exist(self):
         """
-        If learner data is not already exist, nothing is returned.
+        If learner data does not already exist, nothing is returned.
         """
         exporter = CornerstoneLearnerExporter('fake-user', self.config)
         enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(

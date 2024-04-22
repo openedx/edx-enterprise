@@ -53,12 +53,15 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
+    EnterpriseGroupMembership,
     LicensedEnterpriseCourseEnrollment,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
+from enterprise.signals import update_enterprise_learners_user_preference
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     get_default_catalog_content_filter,
@@ -324,30 +327,53 @@ class TestEnterpriseCustomer(unittest.TestCase):
         api_client_mock.return_value.enterprise_contains_content_items.return_value = False
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
+    @mock.patch(
+        'enterprise.signals.update_enterprise_learners_user_preference.delay',
+        wraps=update_enterprise_learners_user_preference
+    )
     @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
-    def test_unset_language_of_all_enterprise_learners(self, user_preference_mock):
+    def test_unset_language_of_all_enterprise_learners(self, user_preference_mock, mock_task):
         """
         Validate that unset_language_of_all_enterprise_learners is called whenever default_language changes.
         """
+        user = factories.UserFactory(email='user123@example.com')
         enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_id=user.id
+        )
+        enterprise_customer.default_language = 'es-419'
+        enterprise_customer.save()
+        mock_task.assert_called_once()
         user_preference_mock.objects.filter.assert_called_once()
 
         # Make sure `unset_language_of_all_enterprise_learners` is called each time `default_language` changes.
         enterprise_customer.default_language = 'es-417'
         enterprise_customer.save()
+        assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
 
         # make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
         # not changed.
         enterprise_customer.default_language = 'es-417'
         enterprise_customer.save()
+        assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
 
         # Make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
         # set to `None`.
         enterprise_customer.default_language = None
         enterprise_customer.save()
+        assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
+
+    @mock.patch('enterprise.signals.update_enterprise_learners_user_preference.delay')
+    def test_async_task_not_called_on_enterprise_customer_creation(self, mock_task):
+        """
+        Validate that upon creation of new enterprise customer, async task is not called.
+        """
+        factories.EnterpriseCustomerFactory()
+        mock_task.assert_not_called()
 
     def test_enterprise_customer_user_toggle_universal_link(self):
         enterprise_customer = factories.EnterpriseCustomerFactory()
@@ -2642,6 +2668,86 @@ class TestEnterpriseCustomerInviteKey(unittest.TestCase):
             enterprise_customer_key = EnterpriseCustomerInviteKey.objects.get(uuid=enterprise_customer_key.uuid)
             enterprise_customer_key.is_active = True
             enterprise_customer_key.save()
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseGroup(unittest.TestCase):
+    """
+    Tests for the EnterpriseGroup model.
+    """
+
+    def test_group_name_uniqueness(self):
+        """
+        Test the unique constraints on the EnterpriseGroup table
+        """
+        group_1 = factories.EnterpriseGroupFactory(name="foobar")
+        # Test that group names under each customer must be unique
+        factories.EnterpriseGroupFactory(name="foobar")
+        with raises(Exception):
+            factories.EnterpriseGroupFactory(name="foobar", enterprise_customer=group_1.enterprise_customer)
+
+    def test_enterprise_group_soft_delete(self):
+        """
+        Test ``EnterpriseGroup`` soft deletion property.
+        """
+        group = factories.EnterpriseGroupFactory()
+
+        assert EnterpriseGroup.all_objects.count() == 1
+        assert EnterpriseGroup.available_objects.count() == 1
+        group.delete()
+        assert EnterpriseGroup.all_objects.count() == 1
+        assert EnterpriseGroup.available_objects.count() == 0
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseGroupMembership(unittest.TestCase):
+    """
+    Tests for the EnterpriseGroupMembership model.
+    """
+
+    def test_group_membership_uniqueness(self):
+        """
+        Test the unique constraints on the EnterpriseGroupMembership table
+        """
+        # Test that NULL values in either customer user and pending customer users will not trigger uniqueness
+        # constraints
+        null_user_membership = factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=None,
+            pending_enterprise_customer_user=None,
+        )
+        factories.EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=None,
+            pending_enterprise_customer_user=None,
+            group=null_user_membership.group,
+        )
+        group_membership_1 = factories.EnterpriseGroupMembershipFactory()
+
+        # Test that a user cannot be assigned to a group more than once
+        with raises(Exception):
+            factories.EnterpriseGroupMembershipFactory(
+                group=group_membership_1.group,
+                enterprise_customer_user=group_membership_1.enterprise_customer_user,
+            )
+        # Test that a pending user cannot be assigned to a group more than once
+        with raises(Exception):
+            factories.EnterpriseGroupMembershipFactory(
+                group=group_membership_1.group,
+                pending_enterprise_customer_user=group_membership_1.pending_enterprise_customer_user,
+            )
+
+    def test_enterprise_group_membership_soft_delete(self):
+        """
+        Test ``EnterpriseGroupMembership`` soft deletion property.
+        """
+        membership = factories.EnterpriseGroupMembershipFactory()
+
+        assert EnterpriseGroupMembership.all_objects.count() == 1
+        assert EnterpriseGroupMembership.available_objects.count() == 1
+        membership.delete()
+        assert EnterpriseGroupMembership.all_objects.count() == 1
+        assert EnterpriseGroupMembership.available_objects.count() == 0
 
 
 @mark.django_db

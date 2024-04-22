@@ -19,6 +19,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_reporting,
     enterprise_customer_sso_configuration,
     enterprise_customer_user,
+    enterprise_group,
     enterprise_subsidy_fulfillment,
     notifications,
     pending_enterprise_customer_user,
@@ -70,6 +71,9 @@ router.register(
 )
 router.register(
     "enterprise_catalogs", enterprise_customer_catalog.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs'
+)
+router.register(
+    "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
 )
 
 
@@ -169,6 +173,23 @@ urlpatterns = [
             {'get': 'list', 'post': 'create'}
         ),
         name='enterprise-customer-sso-configuration-base'
+    ),
+    re_path(
+        r'^enterprise-group/(?P<group_uuid>[A-Za-z0-9-]+)/learners/?$',
+        enterprise_group.EnterpriseGroupViewSet.as_view(
+            {'get': 'get_learners'}
+        ),
+        name='enterprise-group-learners'
+    ),
+    re_path(
+        r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/assign_learners/?$',
+        enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'assign_learners'}),
+        name='enterprise-group-assign-learners'
+    ),
+    re_path(
+        r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/remove_learners/?$',
+        enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'remove_learners'}),
+        name='enterprise-group-remove-learners'
     ),
 ]
 

@@ -5,6 +5,7 @@ Client for connecting to Cornerstone.
 import base64
 import json
 import logging
+import time
 
 import requests
 
@@ -87,6 +88,9 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Raises:
             HTTPError: if we received a failure response code from Cornerstone
         """
+        IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
+        )
         json_payload = json.loads(payload)
         callback_url = json_payload['data'].pop('callbackUrl')
         session_token = self.enterprise_configuration.session_token
@@ -104,7 +108,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             completion_path=self.global_cornerstone_config.completion_status_api_path,
             session_token=session_token,
         )
-
+        start_time = time.time()
         response = requests.post(
             url,
             json=[json_payload['data']],
@@ -112,6 +116,17 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
                 'Authorization': self.authorization_header,
                 'Content-Type': 'application/json'
             }
+        )
+        duration_seconds = time.time() - start_time
+        IntegratedChannelAPIRequestLogs.store_api_call(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            payload=json.dumps(json_payload["data"]),
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
         )
         return response.status_code, response.text
 

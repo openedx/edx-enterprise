@@ -20,6 +20,10 @@ try:
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
 except ImportError:
     get_course_overviews = None
+try:
+    from lms.djangoapps.learner_home.views import get_resume_urls_for_course_enrollments
+except ImportError:
+    get_resume_urls_for_course_enrollments = None
 
 
 class EnterpriseCourseEnrollmentView(APIView):
@@ -49,6 +53,7 @@ class EnterpriseCourseEnrollmentView(APIView):
                 "org_name": "edX",
                 "is_revoked": false,
                 "is_enrollment_active": true
+                "resume_course_run_url": "http://localhost:18000/courses/course-v1:MITx+6.86x+2T2024"
             }
         ]
 
@@ -86,10 +91,22 @@ class EnterpriseCourseEnrollmentView(APIView):
 
         course_overviews = get_course_overviews([record.course_id for record in filtered_enterprise_enrollments])
 
+        if get_resume_urls_for_course_enrollments:
+            course_enrollments_resume_urls = get_resume_urls_for_course_enrollments(
+                user,
+                list(filtered_enterprise_enrollments)
+            )
+
         data = EnterpriseCourseEnrollmentSerializer(
             filtered_enterprise_enrollments,
             many=True,
-            context={'request': request, 'course_overviews': course_overviews},
+            context={
+                'request': request,
+                'course_overviews': course_overviews,
+                'course_enrollments_resume_urls': (
+                    course_enrollments_resume_urls if course_enrollments_resume_urls else None
+                )
+            },
         ).data
 
         if request.query_params.get('is_active'):

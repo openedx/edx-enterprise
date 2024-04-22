@@ -5,6 +5,7 @@ import base64
 import copy
 import json
 import logging
+import time
 from http import HTTPStatus
 from urllib.parse import urljoin
 
@@ -16,7 +17,7 @@ from django.db import transaction
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 
@@ -76,13 +77,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['course_metadata']['courseId'] = course_id_generated
 
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            self.enterprise_configuration.enterprise_customer.uuid,
-            None,
-            external_id,
-            f"Creating course with courseId: {external_id}, and generated course_id: {course_id_generated}"
-        ))
         self._create_session()
         create_url = self.generate_course_create_url()
         try:
@@ -111,14 +105,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 HTTPStatus.NOT_FOUND.value
             )
 
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            self.enterprise_configuration.enterprise_customer.uuid,
-            None,
-            external_id,
-            (f"Creating content page for Blackboard course with course ID={external_id},"
-             f" and generated course_id: {course_id_generated}")
-        ))
         course_created_response = self.create_integration_content_for_course(bb_course_id, copy_of_channel_metadata)
 
         success_body = 'Successfully created Blackboard integration course={bb_course_id} with integration ' \
@@ -139,15 +125,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         course_id = self._resolve_blackboard_course_id(external_id)
         BlackboardAPIClient._validate_course_id(course_id, external_id)
 
-        LOGGER.info(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                course_id,
-                f'Updating course with courseId: {course_id}'
-            )
-        )
         update_url = self.generate_course_update_url(course_id)
         response = self._patch(update_url, channel_metadata_item.get('course_metadata'))
 
@@ -622,7 +599,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's get response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         get_response = self.session.get(url, params=data)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=get_response.status_code,
+            response_body=get_response.text,
+            channel_name=self.enterprise_configuration.channel_code()
+        )
         if get_response.status_code >= 400:
             raise ClientError(get_response.text, get_response.status_code)
         return get_response
@@ -631,7 +620,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's patch response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         patch_response = self.session.patch(url, json=data)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=patch_response.status_code,
+            response_body=patch_response.text,
+            channel_name=self.enterprise_configuration.channel_code()
+        )
         if patch_response.status_code >= 400:
             raise ClientError(patch_response.text, patch_response.status_code)
         return patch_response
@@ -640,7 +641,20 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's post response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         post_response = self.session.post(url, json=data)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=time_taken,
+            status_code=post_response.status_code,
+            response_body=post_response.text,
+            channel_name=self.enterprise_configuration.channel_code()
+        )
+
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response
@@ -649,7 +663,19 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Returns request's delete response and raises Client Errors if appropriate.
         """
+        start_time = time.time()
         response = self.session.delete(url)
+        time_taken = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data='',
+            time_taken=time_taken,
+            status_code=response.status_code,
+            response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
+        )
         if response.status_code >= 400:
             raise ClientError(response.text, response.status_code)
         return response

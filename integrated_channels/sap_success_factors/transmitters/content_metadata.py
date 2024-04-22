@@ -1,8 +1,14 @@
 """
 Class for transmitting content metadata to SuccessFactors.
 """
+import json
+import logging
+
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.utils import log_exception
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
@@ -18,6 +24,26 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             enterprise_configuration=enterprise_configuration,
             client=client
         )
+
+    def _filter_api_response(self, response, content_id):
+        """
+        Filter the response from SAPSF to only include the content
+        based on the content_id
+        """
+        try:
+            parsed_response = json.loads(response)
+            parsed_response["ocnCourses"] = [item for item in parsed_response["ocnCourses"]
+                                             if item["courseID"] == content_id]
+            filtered_response = json.dumps(parsed_response)
+            return filtered_response
+        except Exception as exc:  # pylint: disable=broad-except
+            log_exception(
+                self.enterprise_configuration,
+                f'Failed to filter the API response: '
+                f'{exc}',
+                content_id
+            )
+            return response
 
     def transmit(self, create_payload, update_payload, delete_payload):
         """

@@ -15,3 +15,4 @@ class Degreed2Config(AppConfig):
     oauth_api_path = "/oauth/token"
     courses_api_path = "/api/v2/content/courses"
     completions_api_path = "/api/v2/completions"
+    skill_api_path = "api/v2/content/{contentId}/relationships/skills"

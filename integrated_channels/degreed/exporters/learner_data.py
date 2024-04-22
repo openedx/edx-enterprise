@@ -54,17 +54,6 @@ class DegreedLearnerExporter(LearnerExporter):
                     enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
                 ),
-                DegreedLearnerDataTransmissionAudit(
-                    enterprise_course_enrollment_id=enterprise_enrollment.id,
-                    degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                    user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                    course_id=enterprise_enrollment.course_id,
-                    course_completed=course_completed,
-                    completed_timestamp=completed_date,
-                    degreed_completed_timestamp=degreed_completed_timestamp,
-                    enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-                    plugin_configuration_id=self.enterprise_configuration.id,
-                )
             ]
         LOGGER.info(generate_formatted_log(
             self.enterprise_configuration.channel_code(),

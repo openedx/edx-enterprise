@@ -52,11 +52,14 @@ class MoodleLearnerExporter(LearnerExporter):
         )
 
         percent_grade = kwargs.get('grade_percent', None)
-        # We return two records here, one with the course key and one with the course run id, to account for
-        # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-        # TODO: this shouldn't be necessary anymore and eventually phased out as part of tech debt
-        return [
-            MoodleLearnerDataTransmissionAudit(
+        course_id = get_course_id_for_enrollment(enterprise_enrollment)
+        # We only want to send one record per enrollment and course, so we check if one exists first.
+        learner_transmission_record = MoodleLearnerDataTransmissionAudit.objects.filter(
+            enterprise_course_enrollment_id=enterprise_enrollment.id,
+            course_id=course_id,
+        ).first()
+        if learner_transmission_record is None:
+            learner_transmission_record = MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 moodle_user_email=enterprise_customer_user.user_email,
                 user_email=enterprise_customer_user.user_email,
@@ -67,17 +70,7 @@ class MoodleLearnerExporter(LearnerExporter):
                 moodle_completed_timestamp=moodle_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,
-            ),
-            MoodleLearnerDataTransmissionAudit(
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                moodle_user_email=enterprise_customer_user.user_email,
-                user_email=enterprise_customer_user.user_email,
-                course_id=enterprise_enrollment.course_id,
-                course_completed=course_completed,
-                grade=percent_grade,
-                completed_timestamp=completed_date,
-                moodle_completed_timestamp=moodle_completed_timestamp,
-                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
-                plugin_configuration_id=self.enterprise_configuration.id,
             )
-        ]
+        # We return one record here, with the course key, that was sent to the integrated channel.
+        # TODO: this shouldn't be necessary anymore and eventually phased out as part of tech debt
+        return [learner_transmission_record]

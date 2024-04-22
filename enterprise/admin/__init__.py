@@ -36,6 +36,7 @@ from enterprise.admin.views import (
     CatalogQueryPreviewView,
     EnterpriseCustomerManageLearnerDataSharingConsentView,
     EnterpriseCustomerManageLearnersView,
+    EnterpriseCustomerSetupAuthOrgIDView,
     EnterpriseCustomerTransmitCoursesView,
     TemplatePreviewView,
 )
@@ -45,6 +46,7 @@ from enterprise.utils import (
     discovery_query_url,
     get_all_field_names,
     get_default_catalog_content_filter,
+    get_sso_orchestrator_configure_edx_oauth_path,
     localized_utcnow,
 )
 
@@ -212,7 +214,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'enable_executive_education_2U_fulfillment',
                        'enable_career_engagement_network_on_learner_portal',
                        'career_engagement_network_message', 'enable_pathways', 'enable_programs',
-                       'enable_demo_data_for_analytics_and_lpr'),
+                       'enable_demo_data_for_analytics_and_lpr', 'enable_academies', 'enable_one_academy'),
             'description': ('The following default settings should be the same for '
                             'the majority of enterprise customers, '
                             'and are either rarely used, unlikely to be sold, '
@@ -233,7 +235,29 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         export_as_csv_action('CSV Export', fields=EXPORT_AS_CSV_FIELDS),
     ]
 
-    change_actions = ('manage_learners', 'manage_learners_data_sharing_consent', 'transmit_courses_metadata')
+    change_actions = (
+        'setup_auth_org_id',
+        'manage_learners',
+        'manage_learners_data_sharing_consent',
+        'transmit_courses_metadata',
+    )
+
+    def get_change_actions(self, *args, **kwargs):
+        """
+        Buttons that appear at the top of the "Change Enterprise Customer" page.
+
+        Due to a known deficiency in the upstream django_object_actions library, we must STILL define change_actions
+        above with all possible values.
+        """
+        change_actions = (
+            'manage_learners',
+            'manage_learners_data_sharing_consent',
+            'transmit_courses_metadata',
+        )
+        # Add the "Setup Auth org id" button only if it is configured.
+        if get_sso_orchestrator_configure_edx_oauth_path():
+            change_actions = ('setup_auth_org_id',) + change_actions
+        return change_actions
 
     form = EnterpriseCustomerAdminForm
 
@@ -357,6 +381,19 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     transmit_courses_metadata.label = 'Transmit Courses Metadata'
 
+    @admin.action(
+        description='Setup auth_org_id for this Enterprise Customer'
+    )
+    def setup_auth_org_id(self, request, obj):
+        """
+        Object tool handler method - redirects to `Setup Auth org id` view.
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        setup_auth_org_id_url = reverse('admin:' + UrlNames.SETUP_AUTH_ORG_ID, args=(obj.uuid,))
+        return HttpResponseRedirect(setup_auth_org_id_url)
+
+    setup_auth_org_id.label = 'Setup Auth org id'
+
     def get_urls(self):
         """
         Returns the additional urls used by the custom object tools.
@@ -365,18 +402,23 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             re_path(
                 r"^([^/]+)/manage_learners$",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
-                name=UrlNames.MANAGE_LEARNERS
+                name=UrlNames.MANAGE_LEARNERS,
             ),
             re_path(
                 r"^([^/]+)/clear_learners_data_sharing_consent",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnerDataSharingConsentView.as_view()),
-                name=UrlNames.MANAGE_LEARNERS_DSC
+                name=UrlNames.MANAGE_LEARNERS_DSC,
             ),
             re_path(
                 r"^([^/]+)/transmit_courses_metadata",
                 self.admin_site.admin_view(EnterpriseCustomerTransmitCoursesView.as_view()),
-                name=UrlNames.TRANSMIT_COURSES_METADATA
-            )
+                name=UrlNames.TRANSMIT_COURSES_METADATA,
+            ),
+            re_path(
+                r"^([^/]+)/setup_auth_org_id",
+                self.admin_site.admin_view(EnterpriseCustomerSetupAuthOrgIDView.as_view()),
+                name=UrlNames.SETUP_AUTH_ORG_ID,
+            ),
         ]
         return customer_urls + super().get_urls()
 
@@ -414,7 +456,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     )
 
     list_display = ('username', 'user_email', 'get_enterprise_customer')
-    search_fields = ('user_id',)
+    search_fields = ('user_id', 'user_email',)
 
     @admin.display(
         description='Enterprise Customer'
@@ -539,6 +581,11 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'user_email',
         'enterprise_customer',
         'created'
+    )
+
+    search_fields = (
+        'user_email',
+        'id'
     )
 
     readonly_fields = (
@@ -768,6 +815,13 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     class Meta:
         model = models.EnterpriseCatalogQuery
 
+    fields = (
+        'uuid',
+        'title',
+        'discovery_query_url',
+        'content_filter',
+    )
+
     def get_urls(self):
         """
         Returns the additional urls used by the custom object tools.
@@ -784,7 +838,6 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     list_display = (
         'title',
         'discovery_query_url',
-        'include_exec_ed_2u_courses',
     )
 
     @admin.display(
@@ -833,6 +886,8 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer__name',
         'enterprise_customer__uuid',
     )
+
+    autocomplete_fields = ['enterprise_customer']
 
     fields = (
         'title',
@@ -1107,3 +1162,53 @@ class EnterpriseCustomerSsoConfigurationAdmin(DjangoObjectActions, admin.ModelAd
         obj.save()
 
     mark_configured.label = "Mark as Configured"
+
+
+@admin.register(models.EnterpriseGroup)
+class EnterpriseGroupAdmin(admin.ModelAdmin):
+    """
+    Django admin for EnterpriseGroup model.
+    """
+    model = models.EnterpriseGroup
+    list_display = ('uuid', 'enterprise_customer', 'applies_to_all_contexts', )
+    list_filter = ('applies_to_all_contexts',)
+    search_fields = (
+        'uuid',
+        'name',
+        'enterprise_customer__name',
+        'enterprise_customer__uuid',
+    )
+    readonly_fields = ('count', 'members',)
+
+    def members(self, obj):
+        """
+        Return the non-deleted members of a group
+        """
+        return obj.get_all_learners()
+
+    @admin.display(description="Number of members in group")
+    def count(self, obj):
+        """
+        Return the number of members in a group
+        """
+        return len(obj.get_all_learners())
+
+
+@admin.register(models.EnterpriseGroupMembership)
+class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
+    """
+    Django admin for EnterpriseGroupMembership model.
+    """
+    model = models.EnterpriseGroupMembership
+    list_display = ('group', 'membership_user',)
+    search_fields = (
+        'uuid',
+        'group__enterprise_customer_user',
+        'enterprise_customer_user',
+        'pending_enterprise_customer_user',
+    )
+    autocomplete_fields = (
+        'group',
+        'enterprise_customer_user',
+        'pending_enterprise_customer_user',
+    )

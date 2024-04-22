@@ -2,6 +2,7 @@
 Views for the ``enterprise-customer-sso-configuration`` API endpoint.
 """
 
+import re
 from xml.etree.ElementTree import fromstring
 
 import requests
@@ -24,6 +25,8 @@ from django.db import transaction
 from enterprise import models
 from enterprise.api.utils import get_enterprise_customer_from_user_id
 from enterprise.api.v1 import serializers
+from enterprise.api_client.sso_orchestrator import SsoOrchestratorClientError
+from enterprise.constants import ENTITY_ID_REGEX
 from enterprise.logging import getEnterpriseLogger
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerSsoConfiguration, EnterpriseCustomerUser
 from enterprise.tasks import send_sso_configured_email
@@ -36,6 +39,7 @@ LOGGER = getEnterpriseLogger(__name__)
 BAD_CUSTOMER_ERROR = 'Must provide valid enterprise customer'
 CONFIG_UPDATE_ERROR = 'Error updating SSO configuration record'
 CONFIG_CREATE_ERROR = 'Error creating SSO configuration record'
+BAD_IDP_METADATA_URL = 'Must provide valid IDP metadata url'
 
 
 class EnterpriseCustomerInactiveException(Exception):
@@ -99,8 +103,13 @@ def fetch_entity_id_from_metadata_xml(metadata_xml):
     root = fromstring(metadata_xml)
     if entity_id := root.get('entityID'):
         return entity_id
-    if entity_descriptor_child := root.find('EntityDescriptor'):
+    elif entity_descriptor_child := root.find('EntityDescriptor'):
         return entity_descriptor_child.get('entityID')
+    else:
+        # find <EntityDescriptor entityId=''> and parse URL from it
+        match = re.search(ENTITY_ID_REGEX, metadata_xml, re.DOTALL)
+        if match:
+            return match.group(2)
     raise EntityIdNotFoundError('Could not find entity ID in metadata xml')
 
 
@@ -145,6 +154,14 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 f'SSO configuration record {sso_configuration_record.pk} has received a completion callback but has'
                 ' not been marked as submitted.'
             )
+
+        if error_msg := request.POST.get('error'):
+            LOGGER.error(
+                f'SSO configuration record {sso_configuration_record.pk} has failed to configure due to {error_msg}.'
+            )
+            sso_configuration_record.errored_at = localized_utcnow()
+            sso_configuration_record.save()
+            return Response(status=HTTP_200_OK)
 
         # Mark the configuration record as active IFF this the record has never been configured.
         if not sso_configuration_record.configured_at:
@@ -234,9 +251,9 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             # If the metadata url has changed, we need to update the metadata xml
             try:
                 sso_config_metadata_xml = get_metadata_xml_from_url(request_metadata_url)
-            except SsoConfigurationApiError as e:
-                LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
-                return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+            except (SsoConfigurationApiError, requests.exceptions.SSLError) as e:
+                LOGGER.error(f'{BAD_IDP_METADATA_URL}{e}')
+                return Response({'error': f'{BAD_IDP_METADATA_URL} {e}'}, status=HTTP_400_BAD_REQUEST)
             request_data['metadata_xml'] = sso_config_metadata_xml
         if sso_config_metadata_xml or (sso_config_metadata_xml := request_data.get('metadata_xml')):
             try:
@@ -248,16 +265,14 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             request_data['entity_id'] = entity_id
 
         try:
-            new_record = EnterpriseCustomerSsoConfiguration.objects.create(**request_data)
-        except TypeError as e:
-            LOGGER.error(f'{CONFIG_CREATE_ERROR}{e}')
-            return Response({'error': f'{CONFIG_CREATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
+            with transaction.atomic():
+                new_record = EnterpriseCustomerSsoConfiguration.objects.create(**request_data)
+                sp_metadata_url = new_record.submit_for_configuration()
+        except (TypeError, SsoOrchestratorClientError) as e:
+            LOGGER.error(f'{CONFIG_CREATE_ERROR} {e}')
+            return Response({'error': f'{CONFIG_CREATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
 
-        # Wondering what to do here with error handling
-        # If we fail to submit for configuration (ie get a network error) should we rollback the created record?
-        new_record.submit_for_configuration()
-
-        return Response({'data': new_record.pk}, status=HTTP_201_CREATED)
+        return Response({'record': new_record.pk, 'sp_metadata_url': sp_metadata_url}, status=HTTP_201_CREATED)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',
@@ -285,9 +300,9 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 # If the metadata url has changed, we need to update the metadata xml
                 try:
                     sso_config_metadata_xml = get_metadata_xml_from_url(request_metadata_url)
-                except SsoConfigurationApiError as e:
-                    LOGGER.error(f'{CONFIG_UPDATE_ERROR} {e}')
-                    return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
+                except (SsoConfigurationApiError, requests.exceptions.SSLError) as e:
+                    LOGGER.error(f'{BAD_IDP_METADATA_URL}{e}')
+                    return Response({'error': f'{BAD_IDP_METADATA_URL} {e}'}, status=HTTP_400_BAD_REQUEST)
                 request_data['metadata_xml'] = sso_config_metadata_xml
         if request_metadata_xml := request_data.get('metadata_xml'):
             if request_metadata_xml != sso_configuration_record.first().metadata_xml:
@@ -313,13 +328,31 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
                 return Response(status=HTTP_403_FORBIDDEN)
         try:
             with transaction.atomic():
+                needs_submitting = False
+                for request_key in request_data.keys():
+                    # If the requested data to update includes a field that is locked while configuring
+                    if request_key in EnterpriseCustomerSsoConfiguration.fields_locked_while_configuring:
+                        # If any of the provided values differ from the existing value
+                        existing_value = getattr(
+                            sso_configuration_record.first(), request_key, request_data[request_key]
+                        )
+                        if existing_value != request_data[request_key]:
+                            # Indicate that the record needs to be submitted for configuration to the orchestrator
+                            needs_submitting = True
                 sso_configuration_record.update(**request_data)
-                sso_configuration_record.first().submit_for_configuration(updating_existing_record=True)
-        except (TypeError, FieldDoesNotExist, ValidationError) as e:
-            LOGGER.error(f'{CONFIG_UPDATE_ERROR}{e}')
-            return Response({'error': f'{CONFIG_UPDATE_ERROR}{e}'}, status=HTTP_400_BAD_REQUEST)
+                sp_metadata_url = ''
+                if needs_submitting:
+                    sp_metadata_url = sso_configuration_record.first().submit_for_configuration(
+                        updating_existing_record=True
+                    )
+        except (TypeError, FieldDoesNotExist, ValidationError, SsoOrchestratorClientError) as e:
+            LOGGER.error(f'{CONFIG_UPDATE_ERROR} {e}')
+            return Response({'error': f'{CONFIG_UPDATE_ERROR} {e}'}, status=HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(sso_configuration_record.first())
-        return Response(serializer.data, status=HTTP_200_OK)
+        response = {'record': serializer.data}
+        if sp_metadata_url:
+            response['sp_metadata_url'] = sp_metadata_url
+        return Response(response, status=HTTP_200_OK)
 
     @permission_required(
         'enterprise.can_access_admin_dashboard',

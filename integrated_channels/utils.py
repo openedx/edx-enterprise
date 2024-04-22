@@ -217,7 +217,7 @@ def is_already_transmitted(
             enterprise_course_enrollment_id=enterprise_enrollment_id,
             plugin_configuration_id=enterprise_configuration_id,
             error_message='',
-            status__lt=400
+            status__lt=400,
         )
         if subsection_id:
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
@@ -314,6 +314,18 @@ def generate_formatted_log(
         f'integrated_channel_lms_user={lms_user_id}, '\
         f'integrated_channel_course_key={course_or_course_run_key}, '\
         f'integrated_channel_plugin_configuration_id={plugin_configuration_id}, {message}'
+
+
+def log_exception(enterprise_configuration, msg, course_or_course_run_key=None):
+    LOGGER.exception(
+        generate_formatted_log(
+            channel_name=enterprise_configuration.channel_code(),
+            enterprise_customer_uuid=enterprise_configuration.enterprise_customer.uuid,
+            course_or_course_run_key=course_or_course_run_key,
+            plugin_configuration_id=enterprise_configuration.id,
+            message=msg
+        )
+    )
 
 
 def refresh_session_if_expired(
@@ -465,6 +477,13 @@ def get_enterprise_customer_model():
     return apps.get_model('enterprise', 'EnterpriseCustomer')
 
 
+def integrated_channel_request_log_model():
+    """
+    Returns the ``IntegratedChannelAPIRequestLogs`` class.
+    """
+    return apps.get_model("integrated_channel", "IntegratedChannelAPIRequestLogs")
+
+
 def get_enterprise_customer_from_enterprise_enrollment(enrollment_id):
     """
     Returns the Django ORM enterprise customer object that is associated with an enterprise enrollment ID
@@ -491,6 +510,7 @@ def get_enterprise_client_by_channel_code(channel_code):
     return _enterprise_client_model_by_channel_code[channel_code]
 
 
+<<<<<<< HEAD
 def dummy_reverse(_apps, _schema_editor):
     """
     Reverse a data migration but do nothing.
@@ -498,3 +518,57 @@ def dummy_reverse(_apps, _schema_editor):
     :param _schema_editor:
     :return:
     """
+=======
+def stringify_and_store_api_record(
+    enterprise_customer,
+    enterprise_customer_configuration_id,
+    endpoint,
+    data,
+    time_taken,
+    status_code,
+    response_body,
+    channel_name
+):
+    """
+    Stringify the given data and store the API record in the database.
+    """
+    if data is not None:
+        # Convert data to string if it's not already a string
+        if not isinstance(data, str):
+            try:
+                # Check if data is a dictionary, list, or tuple then convert to JSON string
+                if isinstance(data, (dict, list, tuple)):
+                    data = json.dumps(data)
+                else:
+                    # If it's another type, simply convert to string
+                    data = str(data)
+            except (TypeError, ValueError) as e:
+                LOGGER.error(
+                    f"stringify_and_store_api_record: Error occured during stringification: {e}"
+                    f"enterprise_customer={enterprise_customer}"
+                    f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                    f"channel name={channel_name}"
+                    f"data={data}"
+                )
+        # Store stringified data in the database
+        try:
+            integrated_channel_request_log_model().store_api_call(
+                enterprise_customer=enterprise_customer,
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id,
+                endpoint=endpoint,
+                payload=data,
+                time_taken=time_taken,
+                status_code=status_code,
+                response_body=response_body,
+                channel_name=channel_name
+            )
+        except Exception as e:   # pylint: disable=broad-except
+            LOGGER.error(
+                f"stringify_and_store_api_record: Error occured while storing: {e}"
+                f"enterprise_customer={enterprise_customer}"
+                f"enterprise_customer_configuration_id={enterprise_customer_configuration_id}"
+                f"channel name={channel_name}"
+                f"data={data}"
+            )
+    return data
+>>>>>>> 5648d58dde396760dc447a449b6320af9a3889df

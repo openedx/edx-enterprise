@@ -312,25 +312,12 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_certificate_data(enterprise_enrollment, channel_name)
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'collect_certificate_data finished with CompletedDate: {completed_date_from_api},'
-                f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
-                f' Passed timestamp: {passed_timestamp}'
-            ))
             if completed_date_from_api is None:
                 # means we cannot find a cert for this learner
                 # we will try getting grades info using the alternative api in this case
                 # if that also does not exist then we have nothing to report
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                     self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
-                LOGGER.info(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    f'No certificate found, obtained grading data from grades api.'
-                    f' CompletedDate: {completed_date_from_api},'
-                    f' Grade: {grade_from_api}, IsPassing: {is_passing_from_api},'
-                    f' Passed timestamp: {passed_timestamp}'
-                ))
 
         # In the past we have been inconsistent about the format/source/typing of the grade_percent value.
         # Initial investigations have lead us to believe that grade percents from the source are seemingly more
@@ -349,7 +336,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
         return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp
 
-    def get_incomplete_content_count(self, enterprise_enrollment, channel_name):
+    def get_incomplete_content_count(self, enterprise_enrollment):
         '''
         Fetch incomplete content count using completion blocks LMS api
         Will return None for non audit enrollment (but this does not have to be the case necessarily)
@@ -363,17 +350,11 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         if not is_audit_enrollment:
             return incomplete_count
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
-        enterprise_customer_uuid = enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid
         course_id = enterprise_enrollment.course_id
 
         user = User.objects.get(pk=lms_user_id)
         completion_summary = get_completion_summary(course_id, user)
         incomplete_count = completion_summary.get('incomplete_count')
-        LOGGER.info(
-            generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'Incomplete count for audit enrollment is {incomplete_count}'
-            ))
 
         return incomplete_count
 
@@ -435,7 +416,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
             # For audit courses, check if 100% completed
             # which we define as: no non-gated content is remaining
-            incomplete_count = self.get_incomplete_content_count(enterprise_enrollment, channel_name)
+            incomplete_count = self.get_incomplete_content_count(enterprise_enrollment)
 
             (
                 completed_date_from_api, grade_from_api,
@@ -458,6 +439,12 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             # Apply the Source of Truth for Grades
             # Note: Only completed records are transmitted by the completion transmitter
             #       therefore even non complete grading/cert records are exported here.
+            _is_course_completed = is_course_completed(
+                enterprise_enrollment,
+                is_passing_from_api,
+                incomplete_count,
+                passed_timestamp,
+            )
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
                 user_email=user_email,
@@ -465,12 +452,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 grade=grade_from_api,
                 content_title=course_details.display_name,
                 progress_status=progress_status,
-                course_completed=is_course_completed(
-                    enterprise_enrollment,
-                    is_passing_from_api,
-                    incomplete_count,
-                    passed_timestamp,
-                ),
+                course_completed=_is_course_completed,
                 grade_percent=grade_percent,
             )
 
@@ -490,12 +472,6 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                         pass
 
                     yield record
-
-        LOGGER.info(generate_formatted_log(
-            channel_name, None, lms_user_for_filter, course_run_id,
-            f'export finished. Did not export records for EnterpriseCourseEnrollment objects: '
-            f' {enrollment_ids_to_export}.'
-        ))
 
     def _filter_out_pre_transmitted_enrollments(
             self,
@@ -612,26 +588,18 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         completed_timestamp = None
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
-        # We return two records here, one with the course key and one with the course run id, to account for
-        # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-        return [
-            TransmissionAudit(
+        course_id = get_course_id_for_enrollment(enterprise_enrollment)
+        # We only want to send one record per enrollment and course, so we check if one exists first.
+        learner_transmission_record = TransmissionAudit.objects.filter(
+            enterprise_course_enrollment_id=enterprise_enrollment.id,
+            course_id=course_id,
+        ).first()
+        if learner_transmission_record is None:
+            learner_transmission_record = TransmissionAudit(
                 plugin_configuration_id=self.enterprise_configuration.id,
                 enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                course_id=get_course_id_for_enrollment(enterprise_enrollment),
-                course_completed=course_completed,
-                completed_timestamp=completed_timestamp,
-                grade=grade,
-                user_email=user_email,
-                content_title=content_title,
-                progress_status=progress_status,
-            ),
-            TransmissionAudit(
-                plugin_configuration_id=self.enterprise_configuration.id,
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                course_id=enterprise_enrollment.course_id,
+                course_id=course_id,
                 course_completed=course_completed,
                 completed_timestamp=completed_timestamp,
                 grade=grade,
@@ -639,7 +607,8 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 content_title=content_title,
                 progress_status=progress_status,
             )
-        ]
+        # We return one record here, with the course key, that was sent to the integrated channel.
+        return [learner_transmission_record]
 
     def collect_certificate_data(self, enterprise_enrollment, channel_name):
         """

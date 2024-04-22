@@ -12,6 +12,7 @@ from logging import getLogger
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Q
+from django.utils import timezone
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import (
@@ -71,6 +72,7 @@ class ContentMetadataExporter(Exporter):
     # TODO: Move this to the EnterpriseCustomerPluginConfiguration model as a JSONField.
     DATA_TRANSFORM_MAPPING = {}
     SKIP_KEY_IF_NONE = False
+    LAST_24_HRS = timezone.now() - timezone.timedelta(hours=24)
 
     def __init__(self, user, enterprise_configuration):
         """
@@ -201,6 +203,8 @@ class ContentMetadataExporter(Exporter):
                     remote_deleted_at__isnull=True,
                     remote_created_at__isnull=False,
                 )
+                content_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
+                    remote_errored_at__isnull=True), Q.AND)
                 # If not force_retrieve_all_catalogs, filter content records where `content last changed` is less than
                 # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
                 if not force_retrieve_all_catalogs:
@@ -264,11 +268,6 @@ class ContentMetadataExporter(Exporter):
                     content_id=content_id,
                 ).first()
                 if incomplete_transmission:
-                    self._log_info(
-                        'Found an unsent content create record while creating record. '
-                        'Including record.',
-                        course_or_course_run_key=content_id
-                    )
                     incomplete_transmission.mark_for_create()
                     items_to_create[content_id] = incomplete_transmission
                 else:
@@ -347,12 +346,6 @@ class ContentMetadataExporter(Exporter):
             # if the item to create doesn't exist as an orphaned piece of content, do all the normal checks
             elif content_key not in existing_content_keys:
                 unique_new_items_to_create.append(item)
-            else:
-                self._log_info(
-                    'Found an previous content record in another catalog while creating. '
-                    'Skipping record.',
-                    course_or_course_run_key=content_key
-                )
 
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
@@ -408,13 +401,17 @@ class ContentMetadataExporter(Exporter):
                 incomplete_transmission.mark_for_delete()
                 items_to_delete[content_id] = incomplete_transmission
             else:
-                past_content = ContentMetadataItemTransmission.objects.filter(
+                past_content_query = Q(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
                     integrated_channel_code=self.enterprise_configuration.channel_code(),
                     enterprise_customer_catalog_uuid=enterprise_customer_catalog.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
                     content_id=content_id
-                ).first()
+                )
+                past_content_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
+                    remote_errored_at__isnull=True), Q.AND)
+                past_content = ContentMetadataItemTransmission.objects.filter(
+                    past_content_query).first()
                 if past_content:
                     past_content.mark_for_delete()
                     items_to_delete[content_id] = past_content
@@ -443,11 +440,6 @@ class ContentMetadataExporter(Exporter):
 
         # Grab orphaned content metadata items for the customer, ordered by oldest to newest
         orphaned_content = OrphanedContentTransmissions.objects.filter(base_query)
-        num_records = len(orphaned_content)
-        self._log_info(
-            f'Found {num_records} orphaned content records for customer: '
-            f'{self.enterprise_customer.uuid}. Returning {min(max_set_count, num_records)} records.'
-        )
         ordered_and_chunked_orphaned_content = orphaned_content.order_by('created')[:max_set_count]
         return ordered_and_chunked_orphaned_content
 
@@ -463,10 +455,6 @@ class ContentMetadataExporter(Exporter):
         item.content_title = metadata.get('title')
         item.content_last_changed = metadata.get('content_last_modified')
         item.save()
-        self._log_info(
-            f'_sanitize_and_set_item_metadata method updated item: {item} `content_last_changed`: '
-            f'{metadata.get("content_last_modified")}'
-        )
 
     def export(self, **kwargs):
         """
@@ -509,10 +497,6 @@ class ContentMetadataExporter(Exporter):
                 kwargs.get('force_retrieve_all_catalogs', False),
                 max_payload_count
             )
-
-            self._log_info(f'diff items_to_create: {items_to_create}')
-            self._log_info(f'diff items_to_update: {items_to_update}')
-            self._log_info(f'diff items_to_delete: {items_to_delete}')
 
             content_keys_filter = list(items_to_create.keys()) + list(items_to_update.keys())
             if content_keys_filter:

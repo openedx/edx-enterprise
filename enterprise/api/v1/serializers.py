@@ -19,7 +19,7 @@ from django.contrib.sites.models import Site
 from django.core import exceptions as django_exceptions
 from django.utils.translation import gettext_lazy as _
 
-from enterprise import models, utils
+from enterprise import models, utils  # pylint: disable=cyclic-import
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_PERMISSION_GROUPS, DefaultColors
@@ -222,7 +222,8 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
-            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr',
+            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
+            'enable_one_academy',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -356,6 +357,32 @@ class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
         )
 
 
+class EnterpriseCourseEnrollmentWithAdditionalFieldsReadOnlySerializer(EnterpriseCourseEnrollmentReadOnlySerializer):
+    """
+    Serializer for EnterpriseCourseEnrollment model with additional fields.
+    """
+
+    class Meta:
+        model = models.EnterpriseCourseEnrollment
+        fields = (
+            'enterprise_customer_user',
+            'course_id',
+            'created',
+            'unenrolled_at',
+            'enrollment_date',
+            'enrollment_track',
+            'user_email',
+            'course_start',
+            'course_end',
+        )
+
+    enrollment_track = serializers.CharField()
+    enrollment_date = serializers.DateTimeField()
+    user_email = serializers.EmailField()
+    course_start = serializers.DateTimeField()
+    course_end = serializers.DateTimeField()
+
+
 class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
     """
     Serializer for writing to the EnterpriseCourseEnrollment model.
@@ -446,7 +473,7 @@ class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerCatalog
         fields = (
-            'uuid', 'title', 'enterprise_customer', 'enterprise_catalog_query',
+            'uuid', 'title', 'enterprise_customer', 'enterprise_catalog_query', 'created', 'modified',
         )
 
 
@@ -557,6 +584,57 @@ class EnterpriseCustomerCatalogWriteOnlySerializer(EnterpriseCustomerCatalogSeri
         }
 
 
+class EnterpriseGroupSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroup model.
+    """
+    class Meta:
+        model = models.EnterpriseGroup
+        fields = ('enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts')
+
+
+class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseGroupMembership model.
+    """
+    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
+    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
+    enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
+
+    member_details = serializers.SerializerMethodField()
+    recent_action = serializers.SerializerMethodField()
+    status = serializers.CharField(required=False)
+
+    class Meta:
+        model = models.EnterpriseGroupMembership
+        fields = (
+            'learner_id',
+            'pending_learner_id',
+            'enterprise_group_membership_uuid',
+            'member_details',
+            'recent_action',
+            'status',
+        )
+
+    def get_member_details(self, obj):
+        """
+        Return either the member's name and email if it's the case that the member is realized, otherwise just email
+        """
+        if user := obj.enterprise_customer_user:
+            return {"user_email": user.user_email, "user_name": user.name}
+        return {"user_email": obj.pending_enterprise_customer_user.user_email}
+
+    def get_recent_action(self, obj):
+        """
+        Return the timestamp and name of the most recent action associated with the membership.
+        """
+        if obj.is_removed:
+            return f"Removed: {obj.modified.strftime('%B %d, %Y')}"
+        if obj.enterprise_customer_user and obj.activated_at:
+            return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
+        return f"Invited: {obj.created.strftime('%B %d, %Y')}"
+
+
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
@@ -574,7 +652,8 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
             'groups',
             'created',
             'invite_key',
-            'role_assignments'
+            'role_assignments',
+            'enterprise_group',
         )
 
     user = UserSerializer()
@@ -582,6 +661,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     role_assignments = serializers.SerializerMethodField()
+    enterprise_group = serializers.SerializerMethodField()
 
     def _get_role_assignments_by_ecu_id(self, enterprise_customer_users):
         """
@@ -637,6 +717,28 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         Return the enterprise role assignments for this enterprise customer user.
         """
         return self.role_assignments_by_ecu_id.get(obj.id, [])
+
+    def get_enterprise_group(self, obj):
+        """
+        Return the enterprise group membership for this enterprise customer user.
+        """
+        related_customer = obj.enterprise_customer
+        # Find any groups that have ``applies_to_all_contexts`` set to True that are connected to the customer
+        # that's related to the customer associated with this customer user record.
+        all_context_groups = models.EnterpriseGroup.objects.filter(
+            enterprise_customer=related_customer,
+            applies_to_all_contexts=True
+        ).values_list('uuid', flat=True)
+        enterprise_groups_from_memberships = obj.memberships.select_related('group').all().values_list(
+            'group',
+            flat=True
+        )
+        # Combine both sets of group UUIDs
+        group_uuids = set(enterprise_groups_from_memberships)
+        for group in all_context_groups:
+            group_uuids.add(group)
+
+        return list(group_uuids)
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
@@ -1526,7 +1628,6 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         at_risk_enrollment_less_than_one_hour = serializers.IntegerField(required=True)
         at_risk_enrollment_end_date_soon = serializers.IntegerField(required=True)
         at_risk_enrollment_dormant = serializers.IntegerField(required=True)
-        created_at = serializers.DateTimeField(required=True)
 
     class LearnerEngagementSerializer(serializers.Serializer):
         """
@@ -1543,8 +1644,6 @@ class AnalyticsSummarySerializer(serializers.Serializer):
         hours = serializers.IntegerField(required=True)
         hours_prior = serializers.IntegerField(required=True)
         active_contract = serializers.BooleanField(required=True)
-        contract_end_date = serializers.DateTimeField(required=True)
-        created_at = serializers.DateTimeField(required=True)
 
     learner_progress = LearnerProgressSerializer()
     learner_engagement = LearnerEngagementSerializer()
@@ -1591,3 +1690,30 @@ class EnterpriseCustomerApiCredentialRegeneratePatchSerializer(serializers.Seria
     client_secret = serializers.CharField(read_only=True, default=generate_client_secret())
     redirect_uris = serializers.CharField(required=False)
     updated = serializers.DateTimeField(required=False, read_only=True)
+
+
+class EnterpriseGroupRequestDataSerializer(serializers.Serializer):
+    """
+    Serializer for the Enterprise Group Assign Learners endpoint query params
+    """
+    catalog_uuid = serializers.UUIDField(required=False, allow_null=True)
+    act_by_date = serializers.DateTimeField(required=False, allow_null=True)
+    learner_emails = serializers.ListField(
+        child=serializers.EmailField(required=True),
+        allow_empty=False)
+
+
+class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
+    """
+    Serializer for the Enterprise Group Learners endpoint query filter
+    """
+    user_query = serializers.CharField(required=False, max_length=320)
+    sort_by = serializers.ChoiceField(
+        choices=[
+            ('member_details', 'member_details'),
+            ('status', 'status'),
+            ('recent_action', 'recent_action')
+        ],
+        required=False,
+    )
+    pending_users_only = serializers.BooleanField(required=False, default=False)

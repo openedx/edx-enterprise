@@ -15,6 +15,458 @@ Change Log
 
 Unreleased
 ----------
+[4.15.9]
+--------
+* fix: return a 404 response for inactive CSOD customers while fetching courses
+
+
+[4.15.8]
+--------
+* fix: SSO self-serve tool invalid entityId parsing
+
+[4.15.7]
+--------
+* feat: add send group membership invite and removal braze emails
+
+[4.15.6]
+--------
+* perf: update user preferences inside an async task to void request timeout
+
+[4.15.5]
+--------
+* fix: Improved the query to only fetch active configs for CSOD customers.
+
+[4.15.4]
+--------
+* fix: allowing for existing pecus to be added to enterprise groups
+
+[4.15.3]
+--------
+* feat: replacing non encrypted fields of degreed config model with encrypted ones
+
+[4.15.2]
+--------
+* feat: save cornerstone learner's information received from frontend.
+
+[4.15.1]
+--------
+* feat: allowing for sorting and filtering of the enterprise group learner endpoints
+
+[4.15.0]
+---------
+* feat: Add new languages in enterprise customer admin
+
+[4.14.0]
+---------
+* Added the ability for enterprise customers to enable One Academy for its learners.
+
+[4.13.14]
+---------
+* feat: handle Degreed 409 case (mark as active instead of recreating course)
+
+[4.13.13]
+---------
+* fix: adding additional info to the enterprise group serializer
+
+
+[4.13.12]
+---------
+* feat: adding additional info to the enterprise group membership serializer
+
+[4.13.11]
+---------
+* feat: pass force_enrollment when bulk enrolling learners
+
+[4.13.10]
+---------
+* fix: remove filter to debug failing transmissions
+
+[4.13.9]
+---------
+* fix: add missing filter to disable failing transmissions for 24hrs
+
+[4.13.8]
+---------
+* feat: adding an activated_at value to group membership records
+
+[4.13.7]
+---------
+* fix: adding get_queryset for fix of integrated channel api logs loading
+
+[4.13.6]
+---------
+* feat: disable failing transmissions for 24hrs
+
+[4.13.5]
+---------
+* feat: added autocomplete for enterprise customer in EnterpriseCustomerCatalogAdmin
+
+[4.13.4]
+---------
+* feat: admin pages for enterprise groups and enterprise group memberships
+
+[4.13.3]
+---------
+* feat: adding management command to remove expired pending group memberships
+
+[4.13.2]
+---------
+* feat: add a waffle flag for enterprise groups feature
+
+[4.13.1]
+---------
+* feat: adding soft delete functionality for groups and group memberships
+
+[4.13.0]
+---------
+* feat: add Waffle-based `enterprise_features` to the `EnterpriseCustomerUserViewSet`.
+
+[4.12.6]
+---------
+* fix: Proximus learner transmission failures
+
+[4.12.5]
+---------
+* feat: adding a group membership to the EnterpriseCustomerUserReadOnlySerializer
+
+[4.12.4]
+---------
+* feat: adding assign_learners and remove_learners api endpoints for enterprise groups
+
+[4.12.3]
+---------
+* feat: management command to clear out excessive records for API log table
+
+[4.12.2]
+---------
+* feat: add api /learners/ endpoint to the enterprise group viewset
+
+[4.12.1]
+---------
+* feat: unlink canvas user if decommissioned on canvas side
+
+[4.12.0]
+---------
+* feat: Remove history tables for integrated channels customers configurations.
+
+[4.11.15]
+---------
+* feat: CRUD api endpoints for the enterprise group table
+
+[4.11.14]
+---------
+* feat: added channel_name for api call logs records
+
+[4.11.13]
+---------
+* feat: Update IntegratedChannelAPIRequestLogs list view
+
+[4.11.12]
+---------
+* feat: new enterprise models relating to enterprise groups
+
+[4.11.11]
+---------
+* feat: record degreed API calls
+
+[4.11.10]
+---------
+* feat: add unique constraint on learner data transmission audit models
+
+[4.11.9]
+---------
+* feat: register admin view for IntegratedChannelAPIRequestLogs
+
+[4.11.8]
+---------
+* chore: Update requirements
+
+[4.11.7]
+---------
+* feat: update canvas client to store API calls in DB
+
+[4.11.6]
+---------
+* feat: Added a flag for prequery search suggestions
+
+[4.11.5]
+---------
+* fix: Added logs and remove cornerstone from management command
+
+[4.11.4]
+---------
+* feat: update blackboard client to store API calls in DB
+
+[4.11.3]
+---------
+* feat: update cornerstone client to store API calls in DB
+
+[4.11.2]
+---------
+* feat: added caching for fetching degreed course id
+
+[4.11.1]
+---------
+* Added management command to fix `LearnerDataTransmissionAudit` table records.
+
+[4.11.0]
+---------
+* Added the ability for enterprise customers to enable/disable academies.
+
+[4.10.11]
+---------
+* fix: add missing comma to catalog query fields list.
+
+[4.10.10]
+---------
+
+feat: remove ability to edit catalog `include_exec_ed_2u_courses`
+
+
+[4.10.9]
+--------
+
+feat: added logs temporarily for ENT-8276
+
+[4.10.8]
+--------
+
+fix: guard against null content_filters
+
+
+[4.10.7]
+--------
+
+feat: mgmt command to add exec-ed exclusions to catalogs
+
+
+[4.10.6]
+--------
+
+fix: tweak catalog compare mgmt command
+
+
+[4.10.5]
+--------
+
+fix: tweak catalog compare mgmt command
+
+
+[4.10.4]
+--------
+
+revert: 4.10.1
+
+[4.10.3]
+--------
+
+feat: management command to test query migration
+
+
+[4.10.2]
+--------
+
+feat: removed unencrypted user credentials data columns
+
+
+[4.10.1]
+--------
+
+feat: added json field in learner transmission audit to record 3 most latest response statuses
+
+[4.10.0]
+--------
+
+feat: enrollment API enhancements
+
+- Allows Enrollment API Admin to see all enrollments.
+- Makes the endpoint return more fields, such as: enrollment_track,
+  enrollment_date, user_email, course_start and course_end.
+- Changes EnterpriseCourseEnrollment's default ordering from 'created'
+  to 'id', which equivalent, but faster in some cases (due to the
+  existing indes on 'id').
+
+[4.9.5]
+--------
+
+feat: replacing non encrypted fields of moodle config model with encrypted ones
+
+[4.9.4]
+--------
+
+feat: Add model for integrated channel API request log table (ENT-8018)
+
+[4.9.3]
+--------
+
+fix: Remove SAP debug logs
+
+[4.9.2]
+--------
+
+refactor: learner data transmission audit record  to utilize the existing records (ENT-8005)
+
+[4.9.1]
+--------
+
+fix: enable printing of error messages from the SSO Orchestrator API (ENT-8169)
+
+[4.9.0]
+--------
+
+feat: add "Setup Auth org id" action for Enterprise Customers (ENT-8169)
+
+[4.8.18]
+--------
+
+feat: added logs to debug ENT-8130
+
+[4.8.17]
+--------
+
+fix: remove logs from Degreed2 client
+
+[4.8.16]
+--------
+
+fix: removed course completion check from is_already_transmitted utility (ENT 7837)
+
+[4.8.15]
+--------
+
+fix: restructured response from moodle request wrapper
+feat: replacing non encrypted fields of moodle config model with encrypted ones (ENT 5613)
+
+[4.8.14]
+--------
+
+feat: Modified existing content transmission job to post skills metadata to Degreed2
+
+[4.8.13]
+--------
+
+fix: fixed create_course_completion request's response handling in case return body is 0
+
+[4.8.12]
+--------
+
+* chore: update paragon npm dependency to move to the new @openedx scope.
+
+
+[4.8.11]
+--------
+feat: allow incomplete course learner transmissions till completion
+refactor: adding log inside moodle request wrapper
+
+[4.8.10]
+--------
+feat: not submitting sso orchestrator records if no changes occur
+
+[4.8.9]
+-------
+feat: adding timeouts to sso orchestrator configurations and api cleanup
+
+[4.8.8]
+--------
+fix: added more logs and handled edge cases in Degreed assign skills job
+
+[4.8.7]
+--------
+refactor: Override the default save method of ``EnterpriseCustomerPluginConfiguration`` to update only changed fields
+
+[4.8.6]
+--------
+feat: add marked_authorized flag to SSO config
+
+[4.8.5]
+--------
+feat: Added a management command to assign skills to Degreed courses
+
+[4.8.4]
+--------
+fix: changed relative resumeCourseRunUrl to an absolute URL
+
+[4.8.3]
+--------
+refactor: adding log for learner data transmission
+
+[4.8.1]
+--------
+feat: integrated resumeCourseRunUrl into enrollments API
+
+[4.7.6]
+--------
+chore: remove unnecessary logs from the integrated channels
+
+[4.7.5]
+--------
+feat: added flag to allow in progress course learner data transmission
+
+[4.7.4]
+--------
+feat: added fields for holding encrypted data in database
+
+[4.7.3]
+--------
+feat: added management command to re-encrypt enterprise customer reporting configs
+
+[4.7.2]
+--------
+feat: stop learner data transmissions for course runs
+
+[4.7.1]
+--------
+chore: retire Degreed v1 code from the set of channels
+
+[4.7.0]
+--------
+feat: Add an ``api-docs`` page that lives at ``[LMS_ROOT_URL]/enterprise/api-docs/``
+
+[4.6.12]
+--------
+feat: unlink degreed2 inactive user
+
+[4.6.11]
+--------
+chore: Aligning SAP naming conventions
+
+[4.6.10]
+--------
+chore: Update requirements
+
+[4.6.9]
+-------
+chore: returning SP metadata url from the sso orchestrator to the API caller
+
+[4.6.8]
+-------
+feat: truncate API Response before writing to the APIResponseRecord
+fix: initiate filtering the API Response only when a successful response is received
+
+[4.6.7]
+-------
+feat: filter courses from API Response of SAPSF to store in the APIResponseRecord table
+
+[4.6.6]
+-------
+chore: orchestrator exception handling and submission refinements
+
+[4.6.5]
+-------
+feat: Added logs for Degreed2 client
+
+[4.6.4]
+-------
+chore: updating sso orchestrator self service api endpoints
+
+[4.6.3]
+-------
+fix: Remove not required fields
+
+[4.6.2]
+-------
+fix: clarify contact email helper text for enterprise customer
+
 [4.6.1]
 -------
 feat: Added the disable_subject_metadata_transmission flag to CornerstoneEnterpriseCustomerConfiguration.

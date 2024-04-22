@@ -3,7 +3,6 @@ Management command for making things with test factories
 """
 
 import logging
-import re
 import sys
 
 import factory
@@ -12,6 +11,8 @@ from factory.declarations import SubFactory
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand, CommandError, SystemCheckError, handle_default_options
 from django.db import connections
+
+from enterprise.utils import convert_to_snake
 
 # We have to import the enterprise test factories to ensure it's loaded and found by __subclasses__
 # To ensure factories outside of the enterprise package are loaded and found by the script,
@@ -51,13 +52,6 @@ def all_subclasses(cls):
     """
     return set(cls.__subclasses__()).union(
         [s for c in cls.__subclasses__() for s in all_subclasses(c)])
-
-
-def convert_to_snake(string):
-    """
-    Helper method to convert strings to snake case.
-    """
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
 
 
 class Node():

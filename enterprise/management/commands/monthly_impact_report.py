@@ -926,8 +926,7 @@ class Command(BaseCommand):
         try:
             cs.execute(QUERY)
             rows = cs.fetchall()
-            for row in rows:
-                yield row
+            yield from rows
         finally:
             cs.close()
         ctx.close()

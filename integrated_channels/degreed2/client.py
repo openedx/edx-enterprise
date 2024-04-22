@@ -6,17 +6,21 @@ Client for connecting to Degreed2.
 import json
 import logging
 import time
+from http import HTTPStatus
 
 import requests
+from edx_django_utils.cache import TieredCache, get_cache_key
 from six.moves.urllib.parse import urljoin
 
 from django.apps import apps
 from django.conf import settings
 from django.http.request import QueryDict
 
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired
+from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired, stringify_and_store_api_record
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +54,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         self.oauth_api_path = app_config.oauth_api_path
         self.courses_api_path = app_config.courses_api_path
         self.completions_api_path = app_config.completions_api_path
+        self.skill_api_path = app_config.skill_api_path
         # to log without having to pass channel_name, ent_customer_uuid each time
         self.make_log_msg = lambda course_key, message, lms_user_id=None: generate_formatted_log(
             self.enterprise_configuration.channel_code(),
@@ -57,6 +62,10 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             lms_user_id,
             course_key,
             message,
+        )
+        self.enterprise_catalog_api_client = EnterpriseCatalogApiClient()
+        self.IntegratedChannelAPIRequestLogs = apps.get_model(
+            "integrated_channel", "IntegratedChannelAPIRequestLogs"
         )
 
     def get_oauth_url(self):
@@ -69,6 +78,12 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def get_completions_url(self):
         return urljoin(self.enterprise_configuration.degreed_base_url, self.completions_api_path)
+
+    def get_course_skills_url(self, course_key):
+        return urljoin(
+            self.enterprise_configuration.degreed_base_url,
+            self.skill_api_path.format(contentId=course_key)
+        )
 
     def create_assessment_reporting(self, user_id, payload):
         """
@@ -114,16 +129,44 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         Returns: status_code, response_text
         """
         json_payload = json.loads(payload)
-        LOGGER.info(self.make_log_msg(
-            json_payload.get('data').get('attributes').get('content-id'),
-            f'Attempting find course via url: {self.get_completions_url()}'),
-            user_id
-        )
-        return self._post(
+        code, body = self._post(
             self.get_completions_url(),
             json_payload,
             self.ALL_DESIRED_SCOPES
         )
+        if code == HTTPStatus.BAD_REQUEST.value:
+            error_response = json.loads(body)
+            for error in error_response['errors']:
+                if 'detail' in error and 'Invalid user identifier' in error['detail']:
+                    try:
+                        enterprise_customer = self.enterprise_configuration.enterprise_customer
+                        LOGGER.info(
+                            generate_formatted_log(
+                                self.enterprise_configuration.channel_code(),
+                                self.enterprise_configuration.enterprise_customer.uuid,
+                                None,
+                                None,
+                                f'User {user_id} was deleted on degreed side,'
+                                f"so marking it as inactive and unlinking from enterprise"
+                            )
+                        )
+                        # Unlink user from related Enterprise Customer
+                        EnterpriseCustomerUser.objects.unlink_user(
+                            enterprise_customer=enterprise_customer,
+                            user_email=json_payload.get('data').get('attributes').get('user-id'),
+                        )
+                    except Exception as e:  # pylint: disable=broad-except
+                        LOGGER.error(
+                            generate_formatted_log(
+                                self.enterprise_configuration.channel_code(),
+                                self.enterprise_configuration.enterprise_customer.uuid,
+                                None,
+                                None,
+                                f'Error occurred while unlinking a degreed2 learner: {user_id}. '
+                                f'Payload: {json_payload}, Error: {e}'
+                            )
+                        )
+        return code, body
 
     def delete_course_completion(self, user_id, payload):
         """
@@ -143,9 +186,17 @@ class Degreed2APIClient(IntegratedChannelApiClient):
 
     def fetch_degreed_course_id(self, external_id):
         """
-        Fetch the 'id' of a course from Degreed2, given the external-id as a search param
-        'external-id' is the edX course key
+        Fetch the 'id' of a course from cache first and if not found then send a request to Degreed2,
+        given the external-id as a search param 'external-id' is the edX course key.
         """
+        cache_key = get_cache_key(
+            resource='degreed2_course_id',
+            resource_id=external_id,
+        )
+        cached_course_id = TieredCache.get_cached_response(cache_key)
+        if cached_course_id.is_found:
+            LOGGER.info(self.make_log_msg(external_id, f'Found cached course id: {cached_course_id.value}'))
+            return cached_course_id.value
         # QueryDict converts + to space
         params = QueryDict(f"filter[external_id]={external_id.replace('+','%2B')}")
         course_search_url = f'{self.get_courses_url()}?{params.urlencode(safe="[]")}'
@@ -162,10 +213,56 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
         response_json = json.loads(response_body)
         if response_json['data']:
-            return response_json['data'][0]['id']
+            # cache the course id with a 1 day expiration
+            response_course_id = response_json['data'][0]['id']
+            expires_in = 60 * 60 * 24  # 1 day
+            TieredCache.set_all_tiers(cache_key, response_course_id, expires_in)
+            return response_course_id
         raise ClientError(
             f'Degreed2: Attempted to find degreed course id but failed, external id was {external_id}'
             f', Response from Degreed was {response_body}')
+
+    def assign_course_skills(self, course_id, serialized_data):  # pylint: disable=inconsistent-return-statements
+        """
+        Assign skills to a course.
+
+        Args:
+            course_id: Course key
+            serialized_data: JSON-encoded object containing skills metadata.
+
+        Raises:
+            ClientError:
+                If Degreed course id doesn't exist.
+                If Degreed course skills API request fails.
+        """
+
+        degreed_course_id = self.fetch_degreed_course_id(course_id)
+        if not degreed_course_id:
+            raise ClientError(f'Degreed2: Cannot find course via external-id {course_id}')
+
+        course_skills_url = self.get_course_skills_url(degreed_course_id)
+        LOGGER.info(self.make_log_msg(course_id, f'Attempting to assign course skills {course_skills_url}'))
+        try:
+            status_code, response_body = self._patch(course_skills_url, serialized_data, self.CONTENT_WRITE_SCOPE)
+            if status_code == 201:
+                LOGGER.info(
+                    self.make_log_msg(
+                        course_id,
+                        f'Succesfully assigned skills to course {course_id}')
+                )
+                return status_code, response_body
+            elif status_code >= 400:
+                raise ClientError(
+                    f'Degreed2APIClient failed to assign skills to course {course_id}.'
+                    f'Failed with status_code={status_code} and response={response_body}',
+                )
+        except requests.exceptions.RequestException as exc:
+            raise ClientError(
+                'Degreed2APIClient request to assign skills failed: {error} {message}'.format(
+                    error=exc.__class__.__name__,
+                    message=str(exc)
+                )
+            ) from exc
 
     def create_content_metadata(self, serialized_data):
         """
@@ -180,22 +277,34 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
         # only expect one course in this array as of now (chunk size is 1)
         a_course = channel_metadata_item['courses'][0]
+        external_id = a_course.get('external-id')
         status_code, response_body = self._sync_content_metadata(a_course, 'post', self.get_courses_url())
         if status_code == 409:
-            # course already exists, don't raise failure, but log and move on
+            # course already exists, don't raise failure, but try to mark it as active on Degreed side
+            # if succeeds, we'll treat this as a success
             LOGGER.warning(
                 self.make_log_msg(
-                    a_course.get('external-id'),
-                    f'Course with integration_id = {a_course.get("external-id")} already exists, '
+                    external_id,
+                    f'Course with integration_id = {external_id} already exists, marking it as active'
                 )
             )
-            # content already exists, we'll treat this as a success
-            status_code = 200
+            try:
+                channel_metadata_item['courses'][0]['obsolete'] = False
+                return self.update_content_metadata(json.dumps(channel_metadata_item).encode('utf-8'))
+            except requests.exceptions.RequestException as exc:
+                raise ClientError(
+                    'Degreed2APIClient request failed while handling 409: {error} {message}'.format(
+                        error=exc.__class__.__name__,
+                        message=str(exc)
+                    )
+                ) from exc
         elif status_code >= 400:
             raise ClientError(
                 f'Degreed2APIClient create_content_metadata failed with status {status_code}: {response_body}',
                 status_code=status_code
             )
+        self._fetch_and_assign_skills_to_course(external_id)
+
         return status_code, response_body
 
     def update_content_metadata(self, serialized_data):
@@ -224,7 +333,48 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             patch_url,
             course_id
         )
+
+        self._fetch_and_assign_skills_to_course(external_id)
+
         return patch_status_code, patch_response_body
+
+    def _fetch_and_assign_skills_to_course(self, external_id):
+        """
+        Fetches content metadata(skills) from enterprise catalog API
+        and transmits them to Degreed2 against given external_id(course_id)
+
+        Args:
+            external_id: Course id that is assigned to a course on Degreed side
+        """
+        # We need to do 2 steps here:
+        # 1. Fetch skills from enterprise-catalog
+
+        metadata = self.enterprise_catalog_api_client.get_content_metadata_content_identifier(
+            enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            content_id=external_id)
+        LOGGER.info(
+            generate_formatted_log(
+                self.enterprise_configuration.channel_code(),
+                self.enterprise_configuration.enterprise_customer.uuid,
+                None,
+                None,
+                f"[Degreed2Client] metadata: {metadata}",
+            )
+        )
+
+        # 2. Transmit to degreed
+        skills = metadata.get("skill_names", [])
+        if skills:
+            try:
+                self.assign_course_skills(external_id, skills)
+            except ClientError as err:
+                generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f"[Degreed2Client]: {err.message}",
+                )
 
     def delete_content_metadata(self, serialized_data):
         """
@@ -300,7 +450,6 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         if degreed_course_id:
             json_to_send['data']['id'] = degreed_course_id
 
-        LOGGER.info(self.make_log_msg('', f'About to post payload: {json_to_send}'))
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
                 override_url,
@@ -336,7 +485,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.get(url)
+            duration_seconds = time.time() - start_time
+            self.IntegratedChannelAPIRequestLogs.store_api_call(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                payload='',
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -345,7 +506,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'429 detected from {url}, backing-off before retrying, '
+                        f'[Degreed2Client]._get 429 detected from {url}, backing-off before retrying, '
                         f'sleeping {sleep_seconds} seconds...'
                     )
                 )
@@ -369,7 +530,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.post(url, json=data)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                data=data,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -378,7 +551,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                         self.enterprise_configuration.enterprise_customer.uuid,
                         None,
                         None,
-                        f'429 detected from {url}, backing-off before retrying, '
+                        f'[Degreed2Client]._post 429 detected from {url}, backing-off before retrying, '
                         f'sleeping {sleep_seconds} seconds...'
                     )
                 )
@@ -402,7 +575,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.patch(url, json=data)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                data=data,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -435,7 +620,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         attempts = 0
         while True:
             attempts = attempts + 1
+            start_time = time.time()
             response = self.session.delete(url, json=data) if data else self.session.delete(url)
+            duration_seconds = time.time() - start_time
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=url,
+                data=data if data else '',
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
                 LOGGER.warning(
@@ -476,15 +673,30 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             ClientError: If an unexpected response format was received that we could not parse.
         """
         config = self.enterprise_configuration
+        url = self.get_oauth_url()
+        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
+        data = {
+            'grant_type': 'client_credentials',
+            'scope': scope,
+            'client_id': config.decrypted_client_id if use_encrypted_user_data else config.client_id,
+            'client_secret': config.decrypted_client_secret if use_encrypted_user_data else config.client_secret,
+        }
+        start_time = time.time()
         response = requests.post(
-            self.get_oauth_url(),
-            data={
-                'grant_type': 'client_credentials',
-                'scope': scope,
-                'client_id': config.client_id,
-                'client_secret': config.client_secret,
-            },
+            url,
+            data=data,
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        )
+        duration_seconds = time.time() - start_time
+        stringify_and_store_api_record(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_configuration.id,
+            endpoint=url,
+            data=data,
+            time_taken=duration_seconds,
+            status_code=response.status_code,
+            response_body=response.text,
+            channel_name=self.enterprise_configuration.channel_code()
         )
 
         try:

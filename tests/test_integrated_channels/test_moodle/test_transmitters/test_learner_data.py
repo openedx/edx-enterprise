@@ -4,9 +4,12 @@ Tests for Moodle learner data transmissions.
 import datetime
 import unittest
 from unittest import mock
+from unittest.mock import Mock
 
 from pytest import mark
 
+from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 from integrated_channels.moodle.models import MoodleLearnerDataTransmissionAudit
 from integrated_channels.moodle.transmitters import learner_data
 from test_utils import factories
@@ -33,9 +36,9 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
             moodle_base_url='foobar',
             service_short_name='shortname',
             category_id=1,
-            username='username',
-            password='password',
-            token='token',
+            decrypted_username='username',
+            decrypted_password='password',
+            decrypted_token='token',
         )
         self.payload = MoodleLearnerDataTransmissionAudit(
             moodle_user_email=self.enterprise_customer.contact_email,
@@ -58,6 +61,8 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
         self.create_course_completion_mock = create_course_completion_mock.start()
         self.addCleanup(create_course_completion_mock.stop)
 
+        self.learner_transmitter = LearnerTransmitter(self.enterprise_config)
+
     def test_transmit_success(self):
         """
         Learner data transmission is successful and the payload is saved with the appropriate data.
@@ -70,3 +75,39 @@ class TestMoodleLearnerDataTransmitter(unittest.TestCase):
         self.create_course_completion_mock.assert_called_with(self.payload.moodle_user_email, self.payload.serialize())
         assert self.payload.status == '200'
         assert self.payload.error_message == ''
+
+    @mock.patch("integrated_channels.integrated_channel.models.LearnerDataTransmissionAudit")
+    def test_incomplete_progress_learner_data_transmission(self, learner_data_transmission_audit_mock):
+        """
+        Test that a customer's configuration can run in enable incomplete progress transmission mode
+        """
+        # Set boolean flag to true
+        self.enterprise_config.enable_incomplete_progress_transmission = True
+
+        self.learner_transmitter.client.create_course_completion = Mock(return_value=(200, 'success'))
+
+        LearnerExporterMock = LearnerExporter
+
+        learner_data_transmission_audit_mock.serialize = Mock(return_value='serialized data')
+        learner_data_transmission_audit_mock.user_id = 1
+        learner_data_transmission_audit_mock.enterprise_course_enrollment_id = 1
+        learner_data_transmission_audit_mock.course_completed = False
+        learner_data_transmission_audit_mock.course_id = 'course_id'
+        LearnerExporterMock.export = Mock(return_value=[learner_data_transmission_audit_mock])
+
+        self.learner_transmitter.transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        # with enable_incomplete_progress_transmission = True we should be able to call this method
+        assert self.learner_transmitter.client.create_course_completion.call_count == 1
+
+        # Set boolean flag to false
+        self.enterprise_config.enable_incomplete_progress_transmission = False
+        self.learner_transmitter.transmit(
+            LearnerExporterMock,
+            remote_user_id='user_id'
+        )
+        # with enable_incomplete_progress_transmission = False we should not be able to call this method
+        # therefore the call count should remain the same
+        assert self.learner_transmitter.client.create_course_completion.call_count == 1

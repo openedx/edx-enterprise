@@ -3,6 +3,7 @@ Database models for enterprise.
 """
 
 import collections
+import datetime
 import itertools
 import json
 from decimal import Decimal
@@ -26,6 +27,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
+from django.db.models import Q
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils import timezone
@@ -48,6 +50,9 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
     ENTERPRISE_OPERATOR_ROLE,
+    GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+    GROUP_MEMBERSHIP_PENDING_STATUS,
+    GROUP_MEMBERSHIP_STATUS_CHOICES,
     MAX_INVITE_KEYS,
     DefaultColors,
     FulfillmentTypes,
@@ -91,6 +96,11 @@ try:
     from common.djangoapps.entitlements.models import CourseEntitlement
 except ImportError:
     CourseEntitlement = None
+
+try:
+    from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+except ImportError:
+    CourseOverview = None
 
 LOGGER = getEnterpriseLogger(__name__)
 User = auth.get_user_model()
@@ -390,6 +400,21 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_academies = models.BooleanField(
+        verbose_name="Display academies screen",
+        default=False,
+        help_text=_(
+            "If checked, the learners will be able to see the academies on the learner portal dashboard."
+        )
+    )
+    enable_one_academy = models.BooleanField(
+        verbose_name="Enable One Academy feature",
+        default=False,
+        help_text=_(
+            "If checked, search will be replaced with one academy on enterprise learner portal."
+        )
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,
@@ -426,7 +451,8 @@ class EnterpriseCustomer(TimeStampedModel):
         verbose_name="Customer admin contact email:",
         null=True,
         blank=True,
-        help_text=_("Email address presented on learner portal as public point of contact from customer organization.")
+        help_text=_("Email linked on learner portal as public point of contact, will default to all "
+                    "admin users associated with this customer if left blank.")
     )
 
     default_contract_discount = models.DecimalField(
@@ -1067,7 +1093,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     linked=False,
                 )
                 self.linked = True
-                # An existing record has been found so update auto primary key with primay key of existing record
+                # An existing record has been found so update auto primary key with primary key of existing record
                 self.pk = existing.pk
                 # Update the kwargs so that Django will update the existing record instead of creating a new one
                 kwargs = dict(kwargs, **{'force_insert': False, 'force_update': True})
@@ -1121,6 +1147,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         if self.user is not None:
             return self.user.username
+        return None
+
+    @property
+    def name(self):
+        """
+        Return linked user's name.
+        """
+        if self.user is not None:
+            return f"{self.user.first_name} {self.user.last_name}"
         return None
 
     @property
@@ -1461,6 +1496,20 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         )
         return enterprise_customer_user
 
+    def fulfill_pending_group_memberships(self, enterprise_customer_user):
+        """
+        Updates any membership records associated with a new created enterprise customer user object.
+
+        Arguments:
+            enterprise_customer_user: a EnterpriseCustomerUser instance
+        """
+        self.memberships.update(
+            activated_at=localized_utcnow(),
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user=enterprise_customer_user,
+            status=GROUP_MEMBERSHIP_ACCEPTED_STATUS
+        )
+
     def fulfill_pending_course_enrollments(self, enterprise_customer_user):
         """
         Enrolls a newly created EnterpriseCustomerUser in any courses attached to their
@@ -1771,7 +1820,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     @property
     def sync_learner_profile_data(self):
         """
-        Return bool indicating if data received from the identity provider shoudl be synced to the edX profile.
+        Return bool indicating if data received from the identity provider should be synced to the edX profile.
         """
         identity_provider = self.identity_provider
         return identity_provider is not None and identity_provider.sync_learner_profile_data
@@ -1855,9 +1904,59 @@ class EnterpriseCourseEnrollmentManager(models.Manager):
         """
         Override to return only those enrollment records for which learner is linked to an enterprise.
         """
+
         return super().get_queryset().select_related('enterprise_customer_user').filter(
             enterprise_customer_user__linked=True
         )
+
+
+class EnterpriseCourseEnrollmentWithAdditionalFieldsManager(models.Manager):
+    """
+    Model manager for `EnterpriseCourseEnrollment`.
+    """
+
+    def get_queryset(self):
+        """
+        Override to return only those enrollment records for which learner is linked to an enterprise.
+        """
+
+        return super().get_queryset().select_related('enterprise_customer_user').filter(
+            enterprise_customer_user__linked=True
+        ).annotate(**self._get_additional_data_annotations())
+
+    def _get_additional_data_annotations(self):
+        """
+        Return annotations with additional data for the queryset.
+        Additional fields are None in the test environment, where platform models are not available.
+        """
+
+        if not CourseEnrollment or not CourseOverview:
+            return {
+                'enrollment_track': models.Value(None, output_field=models.CharField()),
+                'enrollment_date': models.Value(None, output_field=models.DateTimeField()),
+                'user_email': models.Value(None, output_field=models.EmailField()),
+                'course_start': models.Value(None, output_field=models.DateTimeField()),
+                'course_end': models.Value(None, output_field=models.DateTimeField()),
+            }
+
+        enrollment_subquery = CourseEnrollment.objects.filter(
+            user=models.OuterRef('enterprise_customer_user__user_id'),
+            course_id=models.OuterRef('course_id'),
+        )
+        user_subquery = auth.get_user_model().objects.filter(
+            id=models.OuterRef('enterprise_customer_user__user_id'),
+        ).values('email')[:1]
+        course_subquery = CourseOverview.objects.filter(
+            id=models.OuterRef('course_id'),
+        )
+
+        return {
+            'enrollment_track': models.Subquery(enrollment_subquery.values('mode')[:1]),
+            'enrollment_date': models.Subquery(enrollment_subquery.values('created')[:1]),
+            'user_email': models.Subquery(user_subquery),
+            'course_start': models.Subquery(course_subquery.values('start')[:1]),
+            'course_end': models.Subquery(course_subquery.values('end')[:1]),
+        }
 
 
 class EnterpriseCourseEnrollment(TimeStampedModel):
@@ -1879,11 +1978,15 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     """
 
     objects = EnterpriseCourseEnrollmentManager()
+    with_additional_fields = EnterpriseCourseEnrollmentWithAdditionalFieldsManager()
 
     class Meta:
         unique_together = (('enterprise_customer_user', 'course_id',),)
         app_label = 'enterprise'
-        ordering = ['created']
+        # Originally, we were ordering by 'created', but there was never an index on that column. To avoid creating
+        # an index on that column, we are ordering by 'id' instead, which is indexed by default and is equivalent to
+        # ordering by 'created' in this case.
+        ordering = ['id']
 
     enterprise_customer_user = models.ForeignKey(
         EnterpriseCustomerUser,
@@ -2245,7 +2348,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
     Stores a re-usable catalog query.
 
     This stored catalog query used in `EnterpriseCustomerCatalog` objects to build catalog's content_filter field.
-    This is a saved instance of `content_filter` that can be re-used accross different catalogs.
+    This is a saved instance of `content_filter` that can be re-used across different catalogs.
 
     .. no_pii:
     """
@@ -3015,7 +3118,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         Check enable_compression flag is set as expected
 
         Arguments:
-            enable_compression (bool): file copression flag
+            enable_compression (bool): file compression flag
             data_type (str): report type
             delivery_method (str): delivery method for sending files
 
@@ -3743,7 +3846,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     """
     all_objects = models.Manager()
 
-    SAP_SUCCESS_FACTORS = 'SAP_SUCCESS_FACTORS'
+    SAP_SUCCESS_FACTORS = 'sap_success_factors'
 
     fields_locked_while_configuring = (
         'metadata_url',
@@ -3946,6 +4049,23 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
     )
 
+    errored_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_(
+            "The date and time when the orchestrator encountered an error during configuration."
+        )
+    )
+
+    marked_authorized = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_(
+            "Whether admin has indicated the service provider metadata was uploaded."
+        )
+    )
+
     # ---------------------------- SAP Success Factors attribute mappings ---------------------------- #
 
     odata_api_timeout_interval = models.PositiveIntegerField(
@@ -4048,10 +4168,23 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         Returns True if the configuration has been submitted but not completed configuration.
         """
         if self.submitted_at:
-            if not self.configured_at:
-                return True
-            if self.submitted_at > self.configured_at:
-                return True
+            # The configuration times out after 12 hours. If the configuration has not been submitted in the last 12
+            # hours then it can be considered unblocked.
+            sso_config_timeout_hours = getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_TIMEOUT_HOURS", 1)
+            sso_config_timeout_minutes = getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_TIMEOUT_MINUTES", 0)
+            timeout_timedelta = datetime.timedelta(hours=sso_config_timeout_hours, minutes=sso_config_timeout_minutes)
+            if (self.submitted_at + timeout_timedelta) > localized_utcnow():
+                # if we have received an error from the orchestrator after submitting the configuration, it is
+                # unblocked
+                if self.errored_at and self.errored_at > self.submitted_at:
+                    return False
+                # If we have not gotten a response from the orchestrator, it is still configuring
+                if not self.configured_at:
+                    return True
+                # If we have gotten a response from the orchestrator, but it's before the submission time, it is still
+                # configuring
+                if self.submitted_at > self.configured_at:
+                    return True
         return False
 
     def submit_for_configuration(self, updating_existing_record=False):
@@ -4071,19 +4204,20 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         config_data = {}
         if self.identity_provider == self.SAP_SUCCESS_FACTORS:
             for field in self.sap_config_fields:
-                sap_data[utils.camelCase(field)] = getattr(self, field)
+                if field_value := getattr(self, field):
+                    sap_data[utils.camelCase(field)] = field_value
             is_sap = True
         else:
             for field in self.base_saml_config_fields:
                 if field == "active":
                     if not updating_existing_record:
-                        config_data['enable'] = True
+                        config_data['enabled'] = True
                     else:
-                        config_data['enable'] = getattr(self, field)
-                else:
-                    config_data[utils.camelCase(field)] = getattr(self, field)
+                        config_data['enabled'] = getattr(self, field)
+                elif field_value := getattr(self, field):
+                    config_data[utils.camelCase(field)] = field_value
 
-        EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
+        sp_metadata_url = EnterpriseSSOOrchestratorApiClient().configure_sso_orchestration_record(
             config_data=config_data,
             config_pk=self.pk,
             enterprise_data={
@@ -4097,3 +4231,265 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
         )
         self.submitted_at = localized_utcnow()
         self.save()
+        return sp_metadata_url
+
+
+class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
+    """
+    Enterprise Group model
+
+    .. no_pii:
+    """
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(
+        max_length=25,
+        blank=False,
+        help_text=_(
+            'Specifies enterprise group name.'
+        )
+    )
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='groups',
+        on_delete=models.deletion.CASCADE
+    )
+    applies_to_all_contexts = models.BooleanField(
+        verbose_name="Set group membership to the entire org of learners.",
+        default=False,
+        help_text=_(
+            "When enabled, all learners connected to the org will be considered a member."
+        )
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Enterprise Group")
+        verbose_name_plural = _("Enterprise Groups")
+        unique_together = (("name", "enterprise_customer"),)
+        ordering = ['-modified']
+
+    def _get_filtered_ecu_ids(self, user_query):
+        """
+        Filter a group's enterprise customer user members by their User email.
+        """
+        # Unfortunately, user (and by extension email) is a property not a field on the ecu model. In order to
+        # filter ecu's by email,  we have to select from the Users table. To make this efficient, we join the user
+        # table on ecu table where the ecu is associated with the enterprise customer on the group. This limits how
+        # many User records we're calling `where email like %` on.
+        # Parameterizing the query makes this raw sql safe from sql injects re the Django docs-
+        # https://docs.djangoproject.com/en/5.0/topics/security/
+        var_q = f"%{user_query}%"
+        sql_string = """
+            select entcu.id from enterprise_enterprisecustomeruser entcu
+            join auth_user au on entcu.user_id = au.id
+            where entcu.enterprise_customer_id = %s and au.email like %s;
+        """
+        # Raw sql is picky about uuid format
+        customer_id = str(self.enterprise_customer.pk).replace("-", "")
+        ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q))
+        return [ecu.id for ecu in ecus]
+
+    def _get_implicit_group_members(self, user_query=None, pending_users_only=False):
+        """
+        Fetches all implicit members of a group, indicated by a (pending) enterprise customer user records.
+        """
+        members = []
+        customer_users = []
+
+        # Regardless of user_query, we will need all pecus related to the group's customer
+        pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        if user_query:
+            # Get all ecus relevant to the user query
+            if not pending_users_only:
+                customer_users = EnterpriseCustomerUser.objects.filter(
+                    id__in=self._get_filtered_ecu_ids(user_query)
+                )
+            # pecu has user_email as a field, so we can filter directly
+            pending_customer_users = pending_customer_users.filter(user_email__icontains=user_query)
+        else:
+            if not pending_users_only:
+                # No filtering query so get all ecus related to the group's customer
+                customer_users = EnterpriseCustomerUser.objects.filter(
+                    enterprise_customer=self.enterprise_customer,
+                    active=True,
+                )
+        # Build an in memory array of all the implicit memberships
+        for ent_user in customer_users:
+            members.append(EnterpriseGroupMembership(
+                uuid=None,
+                enterprise_customer_user=ent_user,
+                group=self,
+            ))
+        for pending_user in pending_customer_users:
+            members.append(EnterpriseGroupMembership(
+                uuid=None,
+                pending_enterprise_customer_user=pending_user,
+                group=self,
+            ))
+        return members
+
+    def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=False,):
+        """
+        Fetch explicitly defined members of a group, indicated by an existing membership record
+        """
+        members = self.members.select_related(
+            'enterprise_customer_user', 'pending_enterprise_customer_user'
+        )
+        if not fetch_removed:
+            members = members.filter(is_removed=False)
+        if user_query:
+            # filter the ecu's by joining the ecu table with the User table and selecting `where email like user_query`
+            ecu_filter = Q(enterprise_customer_user__id__in=self._get_filtered_ecu_ids(user_query))
+            # pecu has user_email as a field, so we can filter directly through the ORM with the user_query
+            pecu_filter = Q(pending_enterprise_customer_user__user_email__icontains=user_query)
+            members = members.filter(ecu_filter | pecu_filter)
+        if pending_users_only:
+            members = members.filter(is_removed=False, enterprise_customer_user_id__isnull=True)
+        return members
+
+    def get_all_learners(self,
+                         user_query=None,
+                         sort_by=None,
+                         desc_order=False,
+                         fetch_removed=False,
+                         pending_users_only=False):
+        """
+        Returns all users associated with the group, whether the group specifies the entire org else all associated
+        membership records.
+
+        Params:
+            q (optional): filter the returned members list by user email and name with a provided sub-string
+            sort_by (optional): specify how the list of returned members should be ordered. Supported sorting values
+            are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
+            beginning of the sorting value ie `-memberStatus`.
+        """
+        if self.applies_to_all_contexts:
+            members = self._get_implicit_group_members(user_query, pending_users_only)
+        else:
+            members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
+        if sort_by:
+            lambda_keys = {
+                'member_details': lambda t: t.member_email,
+                'status': lambda t: t.status,
+                'recent_action': lambda t: t.recent_action,
+            }
+            members = sorted(members, key=lambda_keys.get(sort_by), reverse=desc_order)
+        return members
+
+
+class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
+    """
+    Enterprise Group Membership model
+
+    .. no_pii:
+    """
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    group = models.ForeignKey(
+        EnterpriseGroup,
+        blank=False,
+        null=False,
+        related_name='members',
+        on_delete=models.deletion.CASCADE,
+    )
+    enterprise_customer_user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        blank=True,
+        null=True,
+        related_name='memberships',
+        on_delete=models.deletion.CASCADE,
+    )
+    pending_enterprise_customer_user = models.ForeignKey(
+        PendingEnterpriseCustomerUser,
+        blank=True,
+        null=True,
+        related_name='memberships',
+        on_delete=models.deletion.CASCADE,
+    )
+    activated_at = models.DateTimeField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The moment at which the membership record is written with an Enterprise Customer User record."
+        ),
+    )
+    status = models.CharField(
+        verbose_name="Membership Status",
+        max_length=20,
+        blank=True,
+        null=True,
+        choices=GROUP_MEMBERSHIP_STATUS_CHOICES,
+        default=GROUP_MEMBERSHIP_PENDING_STATUS,
+        help_text=_("Current status of the membership record"),
+    )
+    removed_at = models.DateTimeField(
+        default=None,
+        blank=True,
+        null=True,
+        help_text=_(
+            "The moment at which the membership record was revoked by an Enterprise admin."
+        ),
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Enterprise Group Membership")
+        verbose_name_plural = _("Enterprise Group Memberships")
+        # https://code.djangoproject.com/ticket/9039 - NULL value fields should not throw unique constraint errors
+        # ie no issue if multiple fields have: group = A and pending_enterprise_customer_user = NULL
+        unique_together = (("group", "enterprise_customer_user"), ("group", "pending_enterprise_customer_user"))
+        ordering = ['-modified']
+
+    @cached_property
+    def membership_user(self):
+        """
+        Return the user record associated with the membership, defaulting to ``enterprise_customer_user``
+        and falling back on ``obj.pending_enterprise_customer_user``
+        """
+        return self.enterprise_customer_user or self.pending_enterprise_customer_user
+
+    @cached_property
+    def member_email(self):
+        """
+        Return the email associated with the member
+        """
+        if self.enterprise_customer_user:
+            return self.enterprise_customer_user.user_email
+        return self.pending_enterprise_customer_user.user_email
+
+    @cached_property
+    def recent_action(self):
+        """
+        Return the timestamp of the most recent action relating to the membership
+        """
+        if self.is_removed:
+            return self.removed_at
+        if self.enterprise_customer_user and self.activated_at:
+            return self.activated_at
+        return self.created
+
+    def clean(self, *args, **kwargs):
+        """
+        Ensure that records added via Django Admin have matching customer records between learner and group.
+        """
+        user = self.membership_user
+        if user:
+            user_customer = user.enterprise_customer
+            if user_customer != self.group.enterprise_customer:
+                raise ValidationError(
+                    'Enterprise Customer associated with membership group must match the Enterprise Customer associated'
+                    ' with the memberships user'
+                )
+        super().clean(*args, **kwargs)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return f"member: {self.membership_user} in group: {self.uuid}"

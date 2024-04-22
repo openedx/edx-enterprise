@@ -78,6 +78,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['is_revoked'] = instance.license.is_revoked if instance.license else False
         representation['is_enrollment_active'] = instance.is_active
         representation['mode'] = instance.mode
+        representation['resume_course_run_url'] = self._get_resume_course_run_url(course_run_id, request)
 
         if CourseDetails:
             course_details = CourseDetails.objects.filter(id=course_run_id).first()
@@ -121,3 +122,12 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                 course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
 
         return course_run_url
+
+    def _get_resume_course_run_url(self, course_run_id, request):
+        """
+        Converts a relative resume course run URL to an absolute URL.
+        """
+        resume_course_run_url = self.context['course_enrollments_resume_urls'].get(course_run_id)
+        if resume_course_run_url:
+            return request.build_absolute_uri(resume_course_run_url)
+        return None

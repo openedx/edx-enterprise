@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` utils module.
 import unittest
 from datetime import timedelta
 from unittest import mock
+from unittest.mock import call
 from urllib.parse import quote, urlencode
 
 import ddt
@@ -12,6 +13,7 @@ from pytest import mark
 from django.conf import settings
 from django.forms.models import model_to_dict
 
+from enterprise.constants import MAX_ALLOWED_TEXT_LENGTH
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
@@ -22,6 +24,7 @@ from enterprise.utils import (
     localized_utcnow,
     parse_lms_api_datetime,
     serialize_notification_content,
+    truncate_string,
 )
 from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
 
@@ -324,6 +327,119 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 2)
 
     @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
+    def test_enroll_subsidy_users_in_courses_with_force_enrollment(
+        self,
+        mock_update_or_create_enrollment,
+    ):
+        """
+        """
+        self.create_user()
+        another_user_1 = factories.UserFactory(is_active=True)
+        another_user_2 = factories.UserFactory(is_active=True)
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        licensed_users_info = [
+            {
+                # Should succeed with force_enrollment passed as False under the hood.
+                'user_id': self.user.id,
+                'course_run_key': 'course-key-1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+            },
+            {
+                # Should also succeed with force_enrollment passed as False.
+                'user_id': another_user_1.id,
+                'course_run_key': 'course-key-2',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+                'force_enrollment': False,
+            },
+            {
+                # Should succeed with force_enrollment passed as True.
+                'user_id': another_user_2.id,
+                'course_run_key': 'course-key-3',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae',
+                'force_enrollment': True,
+            },
+        ]
+
+        mock_update_or_create_enrollment.return_value = True
+
+        result = enroll_subsidy_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [
+                    {
+                        'user_id': self.user.id,
+                        'email': self.user.email,
+                        'course_run_key': 'course-key-1',
+                        'user': self.user,
+                        'created': True,
+                        'activation_link': None,
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=self.user.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
+                    },
+                    {
+                        'user_id': another_user_1.id,
+                        'email': another_user_1.email,
+                        'course_run_key': 'course-key-2',
+                        'user': another_user_1,
+                        'created': True,
+                        'activation_link': None,
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=another_user_1.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
+                    },
+                    {
+                        'user_id': another_user_2.id,
+                        'email': another_user_2.email,
+                        'course_run_key': 'course-key-3',
+                        'user': another_user_2,
+                        'created': True,
+                        'activation_link': None,
+                        'enterprise_fulfillment_source_uuid': EnterpriseCourseEnrollment.objects.filter(
+                            enterprise_customer_user__user_id=another_user_2.id
+                        ).first().licensedenterprisecourseenrollment_enrollment_fulfillment.uuid,
+                    },
+                ],
+                'failures': [],
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 3)
+        assert mock_update_or_create_enrollment.mock_calls == [
+            call(
+                self.user.username,
+                'course-key-1',
+                'verified',
+                is_active=True,
+                enterprise_uuid=ent_customer.uuid,
+                force_enrollment=False,
+            ),
+            call(
+                another_user_1.username,
+                'course-key-2',
+                'verified',
+                is_active=True,
+                enterprise_uuid=ent_customer.uuid,
+                force_enrollment=False,
+            ),
+            call(
+                another_user_2.username,
+                'course-key-3',
+                'verified',
+                is_active=True,
+                enterprise_uuid=ent_customer.uuid,
+                force_enrollment=True,
+            ),
+        ]
+
+    @mock.patch('enterprise.utils.lms_update_or_create_enrollment')
     def test_enroll_subsidy_users_in_courses_user_identifier_failures(
         self,
         mock_update_or_create_enrollment,
@@ -516,3 +632,21 @@ class TestUtils(unittest.TestCase):
         expiration_date = get_default_invite_key_expiration_date()
         expected_expiration_date = current_time + timedelta(days=365)
         self.assertEqual(expiration_date.date(), expected_expiration_date.date())
+
+    def test_truncate_string(self):
+        """
+        Test that `truncate_string` returns the expected string.
+        """
+        test_string_1 = 'This is a test string'
+        (truncated_string_1, was_truncated_1) = truncate_string(test_string_1, 10)
+        self.assertTrue(was_truncated_1)
+        self.assertEqual('This is a ', truncated_string_1)
+
+        (truncated_string_2, was_truncated_2) = truncate_string(test_string_1, 100)
+        self.assertFalse(was_truncated_2)
+        self.assertEqual('This is a test string', truncated_string_2)
+
+        test_string_2 = ''.rjust(MAX_ALLOWED_TEXT_LENGTH + 10, 'x')
+        (truncated_string, was_truncated) = truncate_string(test_string_2)
+        self.assertTrue(was_truncated)
+        self.assertEqual(len(truncated_string), MAX_ALLOWED_TEXT_LENGTH)

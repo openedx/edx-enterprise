@@ -4,7 +4,11 @@ Admin site configurations for integrated channel's Content Metadata Transmission
 
 from django.contrib import admin
 
-from integrated_channels.integrated_channel.models import ApiResponseRecord, ContentMetadataItemTransmission
+from integrated_channels.integrated_channel.models import (
+    ApiResponseRecord,
+    ContentMetadataItemTransmission,
+    IntegratedChannelAPIRequestLogs,
+)
 from integrated_channels.utils import get_enterprise_customer_from_enterprise_enrollment
 
 
@@ -85,3 +89,44 @@ class ApiResponseRecordAdmin(admin.ModelAdmin):
     )
 
     list_per_page = 1000
+
+
+@admin.register(IntegratedChannelAPIRequestLogs)
+class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
+    """
+    Django admin model for IntegratedChannelAPIRequestLogs.
+    """
+
+    list_display = [
+        "endpoint",
+        "enterprise_customer_id",
+        "time_taken",
+        "status_code",
+    ]
+    search_fields = [
+        "status_code",
+        "enterprise_customer",
+        "enterprise_customer_configuration_id",
+        "endpoint",
+        "time_taken",
+        "response_body",
+        "payload",
+    ]
+    readonly_fields = [
+        "status_code",
+        "enterprise_customer",
+        "enterprise_customer_configuration_id",
+        "endpoint",
+        "time_taken",
+        "response_body",
+        "payload",
+    ]
+
+    list_per_page = 20
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related('enterprise_customer')
+
+    class Meta:
+        model = IntegratedChannelAPIRequestLogs

@@ -12,7 +12,10 @@ from freezegun import freeze_time
 from mock.mock import MagicMock
 from pytest import mark
 
+from django.db.utils import IntegrityError
+
 from integrated_channels.degreed2.exporters.learner_data import Degreed2LearnerExporter
+from integrated_channels.degreed2.models import Degreed2LearnerDataTransmissionAudit
 from test_utils import factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
 
@@ -60,6 +63,25 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
         self.addCleanup(course_catalog_api_client_mock.stop)
         super().setUp()
 
+    def test_unique_enrollment_id_course_id_constraint(self):
+        """
+        Ensure that the unique constraint on enterprise_course_enrollment_id and course_id is enforced.
+        """
+        course_id = 'course-v1:edX+DemoX+DemoCourse'
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=course_id,
+        )
+        Degreed2LearnerDataTransmissionAudit.objects.create(
+            enterprise_course_enrollment_id=enterprise_course_enrollment.id,
+            course_id=course_id,
+        )
+        with self.assertRaises(IntegrityError):
+            Degreed2LearnerDataTransmissionAudit.objects.create(
+                enterprise_course_enrollment_id=enterprise_course_enrollment.id,
+                course_id=course_id,
+            )
+
     @ddt.data(
         (None, None,),
         (NOW, .83),
@@ -80,9 +102,8 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
             completed_date=completed_date,
             grade_percent=grade_percent,
         )
-        assert len(learner_data_records) == 2
+        assert len(learner_data_records) == 1
         assert learner_data_records[0].course_id == self.course_key
-        assert learner_data_records[1].course_id == self.course_id
 
         for learner_data_record in learner_data_records:
             assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
@@ -91,6 +112,26 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
                 self.NOW.strftime('%Y-%m-%dT%H:%M:%S') if completed_date is not None else None
             )
             assert learner_data_record.grade == (grade_percent * 100 if grade_percent else None)
+
+    def test_retrieve_same_learner_data_record(self):
+        """
+        If a learner data record already exists for the enrollment, it should be retrieved instead of created.
+        """
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        exporter = Degreed2LearnerExporter('fake-user', self.config)
+        learner_data_records_1 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+        )[0]
+        learner_data_records_1.save()
+        learner_data_records_2 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+        )[0]
+        learner_data_records_2.save()
+
+        assert learner_data_records_1.id == learner_data_records_2.id
 
     def test_no_remote_id(self):
         """

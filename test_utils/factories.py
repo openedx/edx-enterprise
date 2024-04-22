@@ -2,6 +2,7 @@
 Factoryboy factories.
 """
 
+from random import randint
 from uuid import UUID
 
 import factory
@@ -27,6 +28,10 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerSsoConfiguration,
     EnterpriseCustomerUser,
+    EnterpriseFeatureRole,
+    EnterpriseFeatureUserRoleAssignment,
+    EnterpriseGroup,
+    EnterpriseGroupMembership,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
@@ -240,7 +245,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = User
 
     email = factory.LazyAttribute(lambda x: FAKER.email())
-    username = factory.LazyAttribute(lambda x: FAKER.user_name())
+    username = factory.LazyAttribute(lambda x: FAKER.user_name() + str(randint(1, 10000)))
     first_name = factory.LazyAttribute(lambda x: FAKER.first_name())
     last_name = factory.LazyAttribute(lambda x: FAKER.last_name())
     is_staff = False
@@ -270,6 +275,39 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     linked = True
     is_relinkable = True
     invite_key = None
+
+
+class EnterpriseFeatureRoleFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseFeatureRole factory.
+    Creates an instance of EnterpriseFeatureRole with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseFeatureRoleFactory.
+        """
+
+        model = EnterpriseFeatureRole
+
+    name = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class EnterpriseFeatureUserRoleAssignmentFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseFeatureUserRoleAssignment factory.
+    Creates an instance of EnterpriseFeatureUserRoleAssignment with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseFeatureUserRoleAssignmentFactory.
+        """
+
+        model = EnterpriseFeatureUserRoleAssignment
+
+    role = factory.SubFactory(EnterpriseFeatureRoleFactory)
+    user = factory.SubFactory(UserFactory)
 
 
 class AnonymousUserFactory(factory.Factory):
@@ -894,7 +932,7 @@ class MoodleEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFac
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     moodle_base_url = factory.LazyAttribute(lambda x: FAKER.url())
     service_short_name = factory.LazyAttribute(lambda x: FAKER.slug())
-    token = factory.LazyAttribute(lambda x: FAKER.slug())
+    decrypted_token = factory.LazyAttribute(lambda x: FAKER.slug())
 
 
 class AdminNotificationFactory(factory.django.DjangoModelFactory):
@@ -1060,3 +1098,43 @@ class EnterpriseCustomerSsoConfigurationFactory(factory.django.DjangoModelFactor
     metadata_url = factory.LazyAttribute(lambda x: FAKER.url())
     entity_id = factory.LazyAttribute(lambda x: FAKER.url())
     update_from_metadata = True
+
+
+class EnterpriseGroupFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseGroup factory.
+
+    Creates an instance of EnterpriseGroup with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseGroupFactory.
+        """
+
+        model = EnterpriseGroup
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    applies_to_all_contexts = False
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    name = factory.LazyAttribute(lambda x: FAKER.company())
+
+
+class EnterpriseGroupMembershipFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseGroupMembership factory.
+
+    Creates an instance of EnterpriseGroupMembership with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseGroupMembershipFactory.
+        """
+
+        model = EnterpriseGroupMembership
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    group = factory.SubFactory(EnterpriseGroupFactory)
+    enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
+    pending_enterprise_customer_user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)

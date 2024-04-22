@@ -9,7 +9,11 @@ import pytz
 from pytest import mark
 
 from enterprise.utils import get_content_metadata_item_id, localized_utcnow
-from integrated_channels.integrated_channel.models import ApiResponseRecord, ContentMetadataItemTransmission
+from integrated_channels.integrated_channel.models import (
+    ApiResponseRecord,
+    ContentMetadataItemTransmission,
+    IntegratedChannelAPIRequestLogs,
+)
 from test_utils import factories
 from test_utils.fake_catalog_api import FAKE_COURSE_RUN, get_fake_catalog, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -251,3 +255,51 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase, EnterpriseMoc
         first_timestamp = localized_utcnow()
         self.config.update_content_synced_at(first_timestamp, True)
         assert self.config.last_sync_attempted_at == first_timestamp
+
+
+@mark.django_db
+class TestIntegratedChannelAPIRequestLogs(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Tests for the ``IntegratedChannelAPIRequestLogs`` model.
+    """
+
+    def setUp(self):
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
+            self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory(
+                enterprise_customer=self.enterprise_customer,
+            )
+        self.pk = 1
+        self.enterprise_customer_configuration_id = 1
+        self.endpoint = 'https://example.com/endpoint'
+        self.payload = "{}"
+        self.time_taken = 500
+        self.response_body = "{}"
+        self.status_code = 200
+        super().setUp()
+
+    def test_content_meta_data_string_representation(self):
+        """
+        Test the string representation of the model.
+        """
+        expected_string = (
+            f'<IntegratedChannelAPIRequestLog {self.pk}'
+            f' for enterprise customer {self.enterprise_customer} '
+            f', enterprise_customer_configuration_id: {self.enterprise_customer_configuration_id}>'
+            f', endpoint: {self.endpoint}'
+            f', time_taken: {self.time_taken}'
+            f", response_body: {self.response_body}"
+            f", status_code: {self.status_code}"
+        )
+
+        request_log = IntegratedChannelAPIRequestLogs(
+            id=1,
+            enterprise_customer=self.enterprise_customer,
+            enterprise_customer_configuration_id=self.enterprise_customer_configuration_id,
+            endpoint=self.endpoint,
+            payload=self.payload,
+            time_taken=self.time_taken,
+            response_body=self.response_body,
+            status_code=self.status_code
+        )
+        assert expected_string == repr(request_log)

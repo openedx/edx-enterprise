@@ -4,14 +4,21 @@ Tests for clients in integrated_channels.
 
 import random
 import unittest
+from urllib.parse import urljoin
 
 import pytest
 import responses
 from requests.models import Response
 
+from django.apps import apps
+
 from integrated_channels.exceptions import ClientError
 from integrated_channels.moodle.client import MoodleAPIClient, MoodleClientError
 from test_utils import factories
+
+IntegratedChannelAPIRequestLogs = apps.get_model(
+    "integrated_channel", "IntegratedChannelAPIRequestLogs"
+)
 
 SERIALIZED_DATA = {
     'courses[0][summary]': 'edX Demonstration Course',
@@ -79,15 +86,15 @@ class TestMoodleApiClient(unittest.TestCase):
         self.learner_data_payload = '{{"courseID": {}, "grade": {}}}'.format(self.moodle_course_id, self.grade)
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.moodle_base_url,
-            username=self.user,
-            password=self.password,
-            token=self.token,
+            decrypted_username=self.user,
+            decrypted_password=self.password,
+            decrypted_token=self.token,
         )
         self.enterprise_custom_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.custom_moodle_base_url,
-            username=self.user,
-            password=self.password,
-            token=self.token,
+            decrypted_username=self.user,
+            decrypted_password=self.password,
+            decrypted_token=self.token,
             grade_scale=10,
             grade_assignment_name='edX Grade Test'
         )
@@ -360,6 +367,7 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client._post.assert_called_once_with(expected_params)  # pylint: disable=protected-access
 
+    @responses.activate
     def test_get_course_final_grade_module_custom_name(self):
         """
         Test that given successful requests for moodle learner data,
@@ -370,19 +378,24 @@ class TestMoodleApiClient(unittest.TestCase):
 
         client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
         client.get_course_id.return_value = self.moodle_course_id
-        mock_response = unittest.mock.Mock(spec=Response)
-        mock_response.json.return_value = [{
+        mock_response = [{
             'name': 'General',
             'modules': [{'name': self.enterprise_custom_config.grade_assignment_name,
                         'id': 1337, 'modname': 'foobar'}]}]
-
-        client._get_course_contents = unittest.mock.MagicMock(name='_get_course_contents', return_value=mock_response)  # pylint: disable=protected-access
+        responses.add(
+            responses.GET,
+            client.api_url,
+            json=mock_response,
+            status=200,
+        )
 
         client.get_creds_of_user_in_course = unittest.mock.MagicMock(name='get_user_in_course')
         client.get_creds_of_user_in_course.return_value = self.moodle_user_id
 
         # The base transmitter expects the create course completion response to be a tuple of (code, body)
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 0
         assert client.get_course_final_grade_module(2) == (1337, 'foobar')
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 1
 
     def test_successful_update_existing_content_metadata(self):
         """
@@ -408,3 +421,42 @@ class TestMoodleApiClient(unittest.TestCase):
         client._get_courses.return_value = mock_response  # pylint: disable=protected-access
         client.create_content_metadata(SERIALIZED_DATA)
         client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
+
+    @responses.activate
+    def test_create_content_metadata_with_mocked_api_requests(self):
+        """
+        Test to verify that the content metadata creation process correctly interacts
+        with the Moodle API by mocking the necessary API requests.
+        """
+        self.enterprise_config.decrypted_token = None
+        url = urljoin(self.enterprise_config.moodle_base_url, 'login/token.php')
+        responses.add(
+            responses.POST,
+            url,
+            json={"token": "token"},
+            status=200,
+        )
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 0
+        client = MoodleAPIClient(self.enterprise_config)
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 1
+        client._get_courses = unittest.mock.MagicMock(name='_get_courses')  # pylint: disable=protected-access
+        mock_response = Response()
+        mock_response.status_code = 200
+        mock_response._content = self._get_courses_response_empty  # pylint: disable=protected-access
+        client._get_courses.return_value = mock_response  # pylint: disable=protected-access
+        params = {
+            'wstoken': self.token,
+            'moodlewsrestformat': 'json',
+        }
+        params.update(SERIALIZED_DATA)
+
+        api_url = urljoin(self.enterprise_config.moodle_base_url, client.MOODLE_API_PATH)
+        responses.add(
+            responses.POST,
+            api_url,
+            json={},
+            status=200,
+        )
+        client.create_content_metadata(SERIALIZED_DATA)
+        assert IntegratedChannelAPIRequestLogs.objects.count() == 2
+        assert len(responses.calls) == 2

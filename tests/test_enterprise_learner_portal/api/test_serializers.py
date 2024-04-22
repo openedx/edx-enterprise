@@ -4,12 +4,14 @@ Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal ap
 
 from collections import OrderedDict
 from unittest import mock
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 import ddt
 from pytest import mark
 
 from django.conf import settings
+from django.http import HttpRequest
 from django.test import RequestFactory, TestCase
 
 from enterprise.utils import NotConnectedToOpenEdX
@@ -36,6 +38,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         (settings.EXEC_ED_LANDING_PAGE, True),
     )
     @ddt.unpack
+    @patch.object(HttpRequest, 'get_host', return_value='courses.edx.org')
     @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_emails_enabled')
@@ -50,6 +53,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             mock_get_emails_enabled,
             mock_get_course_run_status,
             mock_course_enrollment_class,
+            _,
     ):
         """
         EnterpriseCourseEnrollmentSerializer should create proper representation
@@ -64,6 +68,9 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             'pacing': 'instructor',
             'display_org_with_default': 'my university',
         }]
+        course_enrollments_resume_urls = {
+            course_run_id: '/courses/course-v1:MITx+6.86x+2T2024'
+        }
 
         mock_get_cert.return_value = {
             'download_url': 'example.com',
@@ -87,13 +94,17 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         mock_course_enrollment_class.objects.get.return_value.is_active = True
         mock_course_enrollment_class.objects.get.return_value.mode = 'verified'
 
-        request = self.factory.get('/')
+        request = HttpRequest()
         request.user = self.user
 
         serializer = EnterpriseCourseEnrollmentSerializer(
             [enterprise_enrollment],
             many=True,
-            context={'request': request, 'course_overviews': course_overviews},
+            context={
+                'request': request,
+                'course_overviews': course_overviews,
+                'course_enrollments_resume_urls': course_enrollments_resume_urls
+            },
         )
 
         expected = OrderedDict([
@@ -112,6 +123,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('is_revoked', False),
             ('is_enrollment_active', True),
             ('mode', 'verified'),
+            ('resume_course_run_url', 'http://courses.edx.org/courses/course-v1:MITx+6.86x+2T2024'),
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)

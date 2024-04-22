@@ -16,6 +16,8 @@ from six.moves.urllib.parse import urljoin
 
 from django.apps.registry import apps
 
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.degreed2.client import Degreed2APIClient
 from integrated_channels.exceptions import ClientError
 from test_utils import factories
@@ -76,6 +78,18 @@ class TestDegreed2ApiClient(unittest.TestCase):
                     "status": 429,
                     "title": "API calls quota exceeded.",
                     "detail": "Maximum 70 requests allowed per 1m."
+                }
+            ]
+        }
+        self.user_deleted_response = {
+            "errors": [
+                {
+                    "id": "c2e2f849-ed0a-4ed8-833c-f9008113948c",
+                    "code": "bad-request",
+                    "status": 400,
+                    "title": "Bad Request",
+                    "detail": "Invalid user identifier: test-learner@example.com",
+                    "source": "test-learner@example.com"
                 }
             ]
         }
@@ -143,6 +157,47 @@ class TestDegreed2ApiClient(unittest.TestCase):
         assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
 
     @responses.activate
+    def test_create_course_completion_for_deleted_user(self):
+        """
+        ``create_course_completion`` should handle exception for deleted users gracefully
+        by unlinking that user from enterprise
+        """
+        degreed_api_client = Degreed2APIClient(self.enterprise_config)
+        responses.add(
+            responses.POST,
+            degreed_api_client.get_oauth_url(),
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            degreed_api_client.get_completions_url(),
+            json=self.user_deleted_response,
+            status=400
+        )
+
+        payload = {
+            "data": {
+                "attributes": {
+                    "user-id": 'test-learner@example.com',
+                    "user-identifier-type": "Email",
+                    "content-id": 'DemoX',
+                    "content-id-type": "externalId",
+                    "content-type": "course",
+                    "completed-at": NOW_TIMESTAMP_FORMATTED,
+                    "percentile": 80,
+                }
+            }
+        }
+        email = payload.get("data").get("attributes").get("user-id")
+        with mock.patch.object(EnterpriseCustomerUser.objects, 'unlink_user') as unlink_user_mock:
+            degreed_api_client.create_course_completion(email, json.dumps(payload))
+            unlink_user_mock.assert_called_once()
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == degreed_api_client.get_oauth_url()
+        assert responses.calls[1].request.url == degreed_api_client.get_completions_url()
+
+    @responses.activate
     def test_delete_course_completion(self):
         """
         TODO this feature isn't implemented yet.
@@ -151,7 +206,32 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         degreed_api_client.delete_course_completion(None, None)
 
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient._get')
+    def test_fetch_degreed_course_id_cache(self, mock_get_request):
+        """
+        ``fetch_degreed_course_id`` should fetch data from the API only if the cache is empty.
+        """
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        mock_get_request.return_value = (
+            200, '{"data": [{"id": "degreed_course_id"}]}'
+        )
+        degreed_external_course_id_1 = 'course_id_1'
+        degreed_external_course_id_2 = 'course_id_2'
+
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_1)
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_2)
+        assert mock_get_request.call_count == 2
+
+        # The second call for the same course id should return the degreed_course_id from the cache
+        mock_get_request.reset_mock()
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_1)
+        degreed_api_client.fetch_degreed_course_id(degreed_external_course_id_2)
+        assert mock_get_request.call_count == 0
+
     @responses.activate
+    @pytest.mark.django_db
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_create_content_metadata_success(self):
         """
         ``create_content_metadata`` should use expected URLs and receive correct response.
@@ -160,7 +240,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
-
+        degreed_course_id = 'degreed-id'
         responses.add(
             responses.POST,
             oauth_url,
@@ -173,15 +253,38 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        # The second call for the same course id should return the degreed_course_id from the cache
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
 
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
-        assert len(responses.calls) == 2
+        assert len(responses.calls) == 4
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == course_url
         assert status_code == 200
         assert response_body == '"{}"'
 
     @responses.activate
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_create_content_metadata_retry_success(self):
         """
         ``create_content_metadata`` should hit a 429 and retry and receive correct response.
@@ -190,6 +293,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
+        degreed_course_id = "degreed-id"
 
         responses.add(
             responses.POST,
@@ -209,9 +313,30 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200,
         )
-
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        # The second call for the same course id should return the degreed_course_id from the cache
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f"{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills",
+            json="{}",
+            status=200,
+        )
         status_code, response_body = degreed_api_client.create_content_metadata(create_course_payload())
-        assert len(responses.calls) == 3
+        assert len(responses.calls) == 5
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == course_url
         assert responses.calls[2].request.url == course_url
@@ -271,6 +396,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
             assert json.loads(response_body) == self.too_fast_response
 
     @responses.activate
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_create_content_metadata_course_exists(self):
         """
         ``create_content_metadata`` should return 409 status and not fail
@@ -279,6 +405,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
         course_url = degreed_api_client.get_courses_url()
+        degreed_course_id = "degreed-id"
 
         responses.add(
             responses.POST,
@@ -292,12 +419,40 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=409
         )
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/courses/{degreed_course_id}',
+            json='{}',
+            status=200
+        )
         status_code, _ = degreed_api_client.create_content_metadata(create_course_payload())
         # we treat as "course exists" as a success
         assert status_code == 200
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_update_content_metadata_success(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
@@ -306,6 +461,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
+        degreed_course_id = "a_course_id"
+        course_url = degreed_api_client.get_courses_url()
 
         responses.add(
             responses.POST,
@@ -319,9 +476,29 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
-
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
         status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
-        assert len(responses.calls) == 2
+        assert len(responses.calls) == 4
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert status_code == 200
@@ -329,6 +506,119 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+    def test_assign_course_skills(self, mock_fetch_degreed_course_id):
+        """
+        ``assign_course_skills`` should use the appropriate URL for making API call.
+        """
+        payload = {
+            "data": [
+                {
+                    "id": "Financial Technology",
+                    "type": "skills"
+                }
+            ]
+        }
+        test_course_key = 'a_course_id'
+        mock_fetch_degreed_course_id.return_value = test_course_key
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_course_skills_url(test_course_key)}',
+            json='{}',
+            status=201
+        )
+
+        status_code, response_body = degreed_api_client.assign_course_skills('edx_course_key', payload)
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == oauth_url
+        assert responses.calls[1].request.url == f'{degreed_api_client.get_course_skills_url(test_course_key)}'
+        assert status_code == 201
+        assert response_body == '"{}"'
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_assign_skills_api_connection_error(self, mock_fetch_degreed_course_id):
+        """
+        ``assign_course_skills`` should raise ClientError when API request fails with a connection error.
+        """
+        test_course_key = 'a_course_id'
+        mock_fetch_degreed_course_id.return_value = test_course_key
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_course_skills_url(test_course_key)}',
+            body=requests.exceptions.RequestException()
+        )
+
+        payload = {
+            "data": [
+                {
+                    "id": "Financial Technology",
+                    "type": "skills"
+                }
+            ]
+        }
+        with pytest.raises(ClientError):
+            degreed_api_client.assign_course_skills('edx_course_key', payload)
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    def test_assign_skills_api_failure_response(self, mock_fetch_degreed_course_id):
+        """
+        ``assign_course_skills`` should raise ClientError when API request fails with a with status code above 400.
+        """
+        test_course_key = 'a_course_id'
+        mock_fetch_degreed_course_id.return_value = test_course_key
+        enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
+        degreed_api_client = Degreed2APIClient(enterprise_config)
+        oauth_url = degreed_api_client.get_oauth_url()
+
+        responses.add(
+            responses.POST,
+            oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.PATCH,
+            f'{degreed_api_client.get_course_skills_url(test_course_key)}',
+            json='{}',
+            status=400
+        )
+
+        payload = {
+            "data": [
+                {
+                    "id": "Financial Technology",
+                    "type": "skills"
+                }
+            ]
+        }
+        with pytest.raises(ClientError):
+            degreed_api_client.assign_course_skills('edx_course_key', payload)
+
+    @responses.activate
+    @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_update_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
@@ -337,6 +627,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
+        degreed_course_id = 'a_course_id'
+        course_url = degreed_api_client.get_courses_url()
 
         responses.add(
             responses.POST,
@@ -356,9 +648,29 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json='{}',
             status=200
         )
-
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
         status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
-        assert len(responses.calls) == 3
+        assert len(responses.calls) == 5
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
@@ -367,6 +679,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_update_content_metadata_retry_exhaust(self, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
@@ -375,6 +688,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         enterprise_config = factories.Degreed2EnterpriseCustomerConfigurationFactory()
         degreed_api_client = Degreed2APIClient(enterprise_config)
         oauth_url = degreed_api_client.get_oauth_url()
+        degreed_course_id = 'a_course_id'
+        course_url = degreed_api_client.get_courses_url()
 
         responses.add(
             responses.POST,
@@ -412,9 +727,30 @@ class TestDegreed2ApiClient(unittest.TestCase):
             json=self.too_fast_response,
             status=429
         )
+        responses.add(
+            responses.GET,
+            EnterpriseCatalogApiClient.API_BASE_URL
+            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+                enterprise_config.enterprise_customer.uuid, "key/"
+            ),
+            json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            course_url + "?filter%5Bexternal_id%5D=key",
+            json={"data": [{"id": degreed_course_id}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f'{enterprise_config.degreed_base_url}api/v2/content/{degreed_course_id}/relationships/skills',
+            json='{}',
+            status=200
+        )
 
         status_code, response_body = degreed_api_client.update_content_metadata(create_course_payload())
-        assert len(responses.calls) == 6
+        assert len(responses.calls) == 8
         assert responses.calls[0].request.url == oauth_url
         assert responses.calls[1].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'
         assert responses.calls[2].request.url == f'{degreed_api_client.get_courses_url()}/a_course_id'

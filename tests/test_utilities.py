@@ -137,6 +137,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "auth_org_id",
                 "active",
                 "country",
+                "integratedchannelapirequestlogs",
                 "invite_keys",
                 "hide_course_original_price",
                 "site",
@@ -176,6 +177,9 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_pathways",
                 "enable_programs",
                 "enable_demo_data_for_analytics_and_lpr",
+                "enable_academies",
+                "enable_one_academy",
+                "groups",
             ]
         ),
         (
@@ -186,6 +190,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_enrollments",
                 "id",
                 "created",
+                "memberships",
                 "modified",
                 "enterprise_customer",
                 "user_id",

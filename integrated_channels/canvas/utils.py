@@ -1,12 +1,13 @@
 '''Collection of static util methods for various Canvas operations'''
 import logging
+import time
 from http import HTTPStatus
 from urllib.parse import urljoin
 
 from requests.utils import quote
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.utils import generate_formatted_log, integrated_channel_request_log_model
 
 LOGGER = logging.getLogger(__name__)
 
@@ -42,7 +43,19 @@ class CanvasUtil:
         If root account cannot be found, returns None
         """
         url = urljoin(enterprise_configuration.canvas_base_url, "/api/v1/accounts")
+        start_time = time.time()
         resp = session.get(url)
+        duration_seconds = time.time() - start_time
+        integrated_channel_request_log_model().store_api_call(
+            enterprise_customer=enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=enterprise_configuration.id,
+            endpoint=url,
+            payload='',
+            time_taken=duration_seconds,
+            status_code=resp.status_code,
+            response_body=resp.text,
+            channel_name=enterprise_configuration.channel_code()
+        )
         all_accounts = resp.json()
         root_account = None
         for account in all_accounts:
@@ -74,7 +87,19 @@ class CanvasUtil:
         """
         path = f"/api/v1/accounts/{canvas_account_id}/courses/?search_term={quote(edx_course_id)}&state[]=all"
         url = urljoin(enterprise_configuration.canvas_base_url, path)
+        start_time = time.time()
         resp = session.get(url)
+        duration_seconds = time.time() - start_time
+        integrated_channel_request_log_model().store_api_call(
+            enterprise_customer=enterprise_configuration.enterprise_customer,
+            enterprise_customer_configuration_id=enterprise_configuration.id,
+            endpoint=url,
+            payload='',
+            time_taken=duration_seconds,
+            status_code=resp.status_code,
+            response_body=resp.text,
+            channel_name=enterprise_configuration.channel_code()
+        )
         all_courses_response = resp.json()
 
         if resp.status_code >= 400:

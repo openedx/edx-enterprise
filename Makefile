@@ -52,8 +52,7 @@ dummy_translations: ## generate dummy translation (.po) files
 
 extract_translations: ## extract strings to be translated, outputting .mo files
 	rm -rf docs/_build
-	./manage.py makemessages -l en -v1 -d django
-	./manage.py makemessages -l en -v1 -d djangojs -i "node_modules/*"
+	i18n_tool extract --no-segment
 
 fake_translations: extract_translations dummy_translations compile_translations ## generate and compile dummy translation files
 
@@ -74,7 +73,7 @@ docs: ## generate Sphinx HTML documentation, including API docs
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
 PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
 LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
-PLATFORM_BASE_REQS = https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt
+PLATFORM_BASE_REQS = https://raw.githubusercontent.com/openedx/edx-platform/master/requirements/edx/base.txt
 COMMON_CONSTRAINTS_TXT=requirements/common_constraints.txt
 .PHONY: $(COMMON_CONSTRAINTS_TXT)
 $(COMMON_CONSTRAINTS_TXT):
