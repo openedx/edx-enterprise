@@ -510,7 +510,6 @@ def get_enterprise_client_by_channel_code(channel_code):
     return _enterprise_client_model_by_channel_code[channel_code]
 
 
-<<<<<<< HEAD
 def dummy_reverse(_apps, _schema_editor):
     """
     Reverse a data migration but do nothing.
@@ -518,7 +517,9 @@ def dummy_reverse(_apps, _schema_editor):
     :param _schema_editor:
     :return:
     """
-=======
+    pass
+
+
 def stringify_and_store_api_record(
     enterprise_customer,
     enterprise_customer_configuration_id,
@@ -571,4 +572,3 @@ def stringify_and_store_api_record(
                 f"data={data}"
             )
     return data
->>>>>>> 5648d58dde396760dc447a449b6320af9a3889df
