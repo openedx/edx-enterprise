@@ -509,6 +509,7 @@ def get_enterprise_client_by_channel_code(channel_code):
     }
     return _enterprise_client_model_by_channel_code[channel_code]
 
+
 def stringify_and_store_api_record(
     enterprise_customer,
     enterprise_customer_configuration_id,
