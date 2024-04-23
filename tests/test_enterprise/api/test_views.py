@@ -14,6 +14,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
+import jwt
 import pytz
 import responses
 from edx_toggles.toggles.testutils import override_waffle_flag
@@ -6958,6 +6959,7 @@ class TestPlotlyAuthView(APITest):
         """
         Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
         """
+        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid, enable_audit_data_reporting=True)
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
 
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -6965,6 +6967,9 @@ class TestPlotlyAuthView(APITest):
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_200_OK
         assert 'token' in response.json()
+        token = response.json().get('token')
+        decoded_jwt = jwt.decode(token, settings.ENTERPRISE_PLOTLY_SECRET, algorithms=['HS512'])
+        assert decoded_jwt['audit_data_reporting_enabled'] is True
 
     def test_view_with_admin_user_tries(self):
         """
