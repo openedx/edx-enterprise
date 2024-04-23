@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.15.12]
+---------
+* feat: update enterprise customer serializer to include active integration codes
+
 [4.15.11]
 ---------
 * fix: support `force_enrollment` in serializers used by bulk enrollment (ENT-8788)
