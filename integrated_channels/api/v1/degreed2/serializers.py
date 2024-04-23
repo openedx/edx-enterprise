@@ -17,5 +17,6 @@ class Degreed2ConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
             'degreed_token_fetch_base_url',
         )
         fields = EnterpriseCustomerPluginConfigSerializer.Meta.fields + extra_fields
-        encrypted_client_id = serializers.CharField(required=False, allow_blank=False, read_only=False)
-        encrypted_client_secret = serializers.CharField(required=False, allow_blank=False, read_only=False)
+
+    encrypted_client_id = serializers.CharField(required=False, allow_blank=False, read_only=False)
+    encrypted_client_secret = serializers.CharField(required=False, allow_blank=False, read_only=False)
