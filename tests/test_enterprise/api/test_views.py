@@ -7513,7 +7513,7 @@ class TestEnterpriseGroupViewSet(APITest):
         request_data = {'learner_emails': memberships_to_delete}
         response = self.client.post(remove_url, data=request_data)
         # then we're checking if the filter works
-        removed_users_query_string = f'?show_removed=true'
+        removed_users_query_string = '?show_removed=true'
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-learners',
             kwargs={'group_uuid': group.uuid},

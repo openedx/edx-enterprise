@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 ----------
+[4.16.2]
+--------
+* fix: fixing the removal logic for EnterpriseGroupMemberships, adding optional flag
+
+
 [4.15.9]
 --------
 * fix: return a 404 response for inactive CSOD customers while fetching courses
