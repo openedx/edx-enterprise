@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+from collections import OrderedDict
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -2218,34 +2219,43 @@ def get_platform_logo_url():
     return urljoin(settings.LMS_ROOT_URL, logo_url)
 
 
-def unset_language_of_all_enterprise_learners(enterprise_customer_uuid):
+def set_language_of_all_enterprise_learners(enterprise_customer_uuid, default_language):
     """
-    Unset the language preference of all the learners belonging to the given enterprise customer.
+    Set the language preference of all the learners belonging to the given enterprise customer.
 
     Arguments:
         enterprise_customer_uuid (UUI): uuid of an enterprise customer
+        default_language (str): default language to set for all learners
     """
     if UserPreference:
         enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
         user_ids = list(enterprise_customer.enterprise_customer_users.values_list('user_id', flat=True))
 
-        LOGGER.info('Update user preference started for learners. Enterprise: [%s]', enterprise_customer_uuid)
+        LOGGER.info(
+            '[SET_ENT_LANG] Update user preference started for learners. Enterprise: [%s], Language: [%s]',
+            enterprise_customer_uuid,
+            default_language
+        )
 
         for chunk in batch(user_ids, batch_size=10000):
             UserPreference.objects.filter(
                 key=LANGUAGE_KEY,
                 user_id__in=chunk
             ).update(
-                value=''
+                value=default_language
             )
-            LOGGER.info('Updated user preference for learners. Batch Size: [%s]', len(chunk))
+            LOGGER.info('[SET_ENT_LANG] Updated user preference for learners. Batch Size: [%s]', len(chunk))
 
-        LOGGER.info('Update user preference completed for learners. Enterprise: [%s]', enterprise_customer_uuid)
+        LOGGER.info(
+            '[SET_ENT_LANG] Update user preference completed for learners. Enterprise: [%s], Language: [%s]',
+            enterprise_customer_uuid,
+            default_language
+        )
 
 
-def unset_enterprise_learner_language(enterprise_customer_user):
+def set_enterprise_learner_language(enterprise_customer_user):
     """
-    Unset the language preference of the given enterprise learners.
+    Set the language preference of the given enterprise learners.
 
     Arguments:
         enterprise_customer_user (EnterpriseCustomerUser): Instance of the enterprise customer user.
@@ -2254,7 +2264,7 @@ def unset_enterprise_learner_language(enterprise_customer_user):
         UserPreference.objects.update_or_create(
             key=LANGUAGE_KEY,
             user_id=enterprise_customer_user.user_id,
-            defaults={'value': ''}
+            defaults={'value': enterprise_customer_user.enterprise_customer.default_language}
         )
 
 
@@ -2408,3 +2418,50 @@ def convert_to_snake(string):
     Helper method to convert strings to snake case.
     """
     return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+
+
+def get_integrated_channel_choices():
+    """
+    Helper method to return channel code for each integrated channel.
+    """
+    BlackboardEnterpriseCustomerConfiguration = apps.get_model(
+        'blackboard', 'BlackboardEnterpriseCustomerConfiguration')
+    CanvasEnterpriseCustomerConfiguration = apps.get_model(
+        'canvas', 'CanvasEnterpriseCustomerConfiguration')
+    CornerstoneEnterpriseCustomerConfiguration = apps.get_model(
+        'cornerstone', 'CornerstoneEnterpriseCustomerConfiguration')
+    Degreed2EnterpriseCustomerConfiguration = apps.get_model(
+        'degreed2', 'Degreed2EnterpriseCustomerConfiguration')
+    MoodleEnterpriseCustomerConfiguration = apps.get_model(
+        'moodle', 'MoodleEnterpriseCustomerConfiguration')
+    SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(
+        'sap_success_factors', 'SAPSuccessFactorsEnterpriseCustomerConfiguration')
+
+    return OrderedDict([
+        (integrated_channel_class.channel_code(), integrated_channel_class)
+        for integrated_channel_class in (
+            BlackboardEnterpriseCustomerConfiguration,
+            CanvasEnterpriseCustomerConfiguration,
+            CornerstoneEnterpriseCustomerConfiguration,
+            Degreed2EnterpriseCustomerConfiguration,
+            MoodleEnterpriseCustomerConfiguration,
+            SAPSuccessFactorsEnterpriseCustomerConfiguration,
+        )
+    ])
+
+
+def get_integrations_for_customers(customer_uuid):
+    """
+    Helper method to return channel code for each enterprise customer with active integrations.
+
+    Arguments:
+        customer_uuid (UUI): uuid of an enterprise customer
+    Returns:
+        list: a list of integration channel codes.
+    """
+    unique_integrations = []
+    integrated_channel_choices = get_integrated_channel_choices()
+    for code, choice in integrated_channel_choices.items():
+        if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
+            unique_integrations.append(code)
+    return unique_integrations

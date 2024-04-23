@@ -35,6 +35,7 @@ from enterprise.models import (
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
+    get_integrations_for_customers,
     get_last_course_run_end_date,
     has_course_run_available_for_enrollment,
     track_enrollment,
@@ -223,7 +224,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
-            'enable_one_academy',
+            'enable_one_academy', 'active_integrations',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -232,6 +233,10 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     enterprise_customer_catalogs = serializers.SerializerMethodField()
     enterprise_notification_banner = serializers.SerializerMethodField()
     admin_users = serializers.SerializerMethodField()
+    active_integrations = serializers.SerializerMethodField()
+
+    def get_active_integrations(self, obj):
+        return get_integrations_for_customers(obj.uuid)
 
     def get_branding_configuration(self, obj):
         """
@@ -1426,6 +1431,10 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
     course_run_key = serializers.CharField(required=True)
     license_uuid = serializers.CharField(required=False)
     transaction_id = serializers.CharField(required=False)
+    force_enrollment = serializers.BooleanField(
+        required=False,
+        help_text='Enroll even if enrollment deadline is expired.',
+    )
 
     def create(self, validated_data):
         return validated_data

@@ -19,11 +19,29 @@ Unreleased
 --------
 * fix: fixing the removal logic for EnterpriseGroupMemberships, adding optional flag
 
+[4.16.1]
+---------
+* fix: add enterprise audit reporting status in plotly auth token
+
+[4.16.0]
+---------
+* feat: Adding python3.11 support. Dropped django32 support.
+
+[4.15.12]
+---------
+* feat: update enterprise customer serializer to include active integration codes
+
+[4.15.11]
+---------
+* fix: support `force_enrollment` in serializers used by bulk enrollment (ENT-8788)
+
+[4.15.10]
+---------
+* fix: set default langauge for all learners linked with an enteprise customer
 
 [4.15.9]
 --------
 * fix: return a 404 response for inactive CSOD customers while fetching courses
-
 
 [4.15.8]
 --------
