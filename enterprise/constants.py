@@ -250,3 +250,5 @@ GROUP_MEMBERSHIP_STATUS_CHOICES = (
     (GROUP_MEMBERSHIP_ACCEPTED_STATUS, 'Accepted'),
     (GROUP_MEMBERSHIP_PENDING_STATUS, 'Pending'),
 )
+
+ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"

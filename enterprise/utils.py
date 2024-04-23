@@ -2218,27 +2218,43 @@ def get_platform_logo_url():
     return urljoin(settings.LMS_ROOT_URL, logo_url)
 
 
-def unset_language_of_all_enterprise_learners(enterprise_customer):
+def set_language_of_all_enterprise_learners(enterprise_customer_uuid, default_language):
     """
-    Unset the language preference of all the learners belonging to the given enterprise customer.
+    Set the language preference of all the learners belonging to the given enterprise customer.
 
     Arguments:
-        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
+        enterprise_customer_uuid (UUI): uuid of an enterprise customer
+        default_language (str): default language to set for all learners
     """
     if UserPreference:
+        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
         user_ids = list(enterprise_customer.enterprise_customer_users.values_list('user_id', flat=True))
 
-        UserPreference.objects.filter(
-            key=LANGUAGE_KEY,
-            user_id__in=user_ids
-        ).update(
-            value=''
+        LOGGER.info(
+            '[SET_ENT_LANG] Update user preference started for learners. Enterprise: [%s], Language: [%s]',
+            enterprise_customer_uuid,
+            default_language
+        )
+
+        for chunk in batch(user_ids, batch_size=10000):
+            UserPreference.objects.filter(
+                key=LANGUAGE_KEY,
+                user_id__in=chunk
+            ).update(
+                value=default_language
+            )
+            LOGGER.info('[SET_ENT_LANG] Updated user preference for learners. Batch Size: [%s]', len(chunk))
+
+        LOGGER.info(
+            '[SET_ENT_LANG] Update user preference completed for learners. Enterprise: [%s], Language: [%s]',
+            enterprise_customer_uuid,
+            default_language
         )
 
 
-def unset_enterprise_learner_language(enterprise_customer_user):
+def set_enterprise_learner_language(enterprise_customer_user):
     """
-    Unset the language preference of the given enterprise learners.
+    Set the language preference of the given enterprise learners.
 
     Arguments:
         enterprise_customer_user (EnterpriseCustomerUser): Instance of the enterprise customer user.
@@ -2247,7 +2263,7 @@ def unset_enterprise_learner_language(enterprise_customer_user):
         UserPreference.objects.update_or_create(
             key=LANGUAGE_KEY,
             user_id=enterprise_customer_user.user_id,
-            defaults={'value': ''}
+            defaults={'value': enterprise_customer_user.enterprise_customer.default_language}
         )
 
 

@@ -1426,6 +1426,10 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
     course_run_key = serializers.CharField(required=True)
     license_uuid = serializers.CharField(required=False)
     transaction_id = serializers.CharField(required=False)
+    force_enrollment = serializers.BooleanField(
+        required=False,
+        help_text='Enroll even if enrollment deadline is expired.',
+    )
 
     def create(self, validated_data):
         return validated_data
@@ -1692,6 +1696,17 @@ class EnterpriseCustomerApiCredentialRegeneratePatchSerializer(serializers.Seria
     updated = serializers.DateTimeField(required=False, read_only=True)
 
 
+class EnterpriseGroupRequestDataSerializer(serializers.Serializer):
+    """
+    Serializer for the Enterprise Group Assign Learners endpoint query params
+    """
+    catalog_uuid = serializers.UUIDField(required=False, allow_null=True)
+    act_by_date = serializers.DateTimeField(required=False, allow_null=True)
+    learner_emails = serializers.ListField(
+        child=serializers.EmailField(required=True),
+        allow_empty=False)
+
+
 class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
     """
     Serializer for the Enterprise Group Learners endpoint query filter
@@ -1705,3 +1720,4 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         ],
         required=False,
     )
+    pending_users_only = serializers.BooleanField(required=False, default=False)

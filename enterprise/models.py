@@ -4292,11 +4292,13 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q))
         return [ecu.id for ecu in ecus]
 
-    def _get_implicit_group_members(self, user_query=None):
+    def _get_implicit_group_members(self, user_query=None, pending_users_only=False):
         """
         Fetches all implicit members of a group, indicated by a (pending) enterprise customer user records.
         """
         members = []
+        customer_users = []
+
         # Regardless of user_query, we will need all pecus related to the group's customer
         pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
             enterprise_customer=self.enterprise_customer,
@@ -4304,17 +4306,19 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
 
         if user_query:
             # Get all ecus relevant to the user query
-            customer_users = EnterpriseCustomerUser.objects.filter(
-                id__in=self._get_filtered_ecu_ids(user_query)
-            )
+            if not pending_users_only:
+                customer_users = EnterpriseCustomerUser.objects.filter(
+                    id__in=self._get_filtered_ecu_ids(user_query)
+                )
             # pecu has user_email as a field, so we can filter directly
             pending_customer_users = pending_customer_users.filter(user_email__icontains=user_query)
         else:
-            # No filtering query so get all ecus related to the group's customer
-            customer_users = EnterpriseCustomerUser.objects.filter(
-                enterprise_customer=self.enterprise_customer,
-                active=True,
-            )
+            if not pending_users_only:
+                # No filtering query so get all ecus related to the group's customer
+                customer_users = EnterpriseCustomerUser.objects.filter(
+                    enterprise_customer=self.enterprise_customer,
+                    active=True,
+                )
         # Build an in memory array of all the implicit memberships
         for ent_user in customer_users:
             members.append(EnterpriseGroupMembership(
@@ -4330,7 +4334,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             ))
         return members
 
-    def _get_explicit_group_members(self, user_query=None, fetch_removed=False):
+    def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=False,):
         """
         Fetch explicitly defined members of a group, indicated by an existing membership record
         """
@@ -4345,9 +4349,16 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             # pecu has user_email as a field, so we can filter directly through the ORM with the user_query
             pecu_filter = Q(pending_enterprise_customer_user__user_email__icontains=user_query)
             members = members.filter(ecu_filter | pecu_filter)
+        if pending_users_only:
+            members = members.filter(is_removed=False, enterprise_customer_user_id__isnull=True)
         return members
 
-    def get_all_learners(self, user_query=None, sort_by=None, desc_order=False, fetch_removed=False):
+    def get_all_learners(self,
+                         user_query=None,
+                         sort_by=None,
+                         desc_order=False,
+                         fetch_removed=False,
+                         pending_users_only=False):
         """
         Returns all users associated with the group, whether the group specifies the entire org else all associated
         membership records.
@@ -4359,9 +4370,9 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             beginning of the sorting value ie `-memberStatus`.
         """
         if self.applies_to_all_contexts:
-            members = self._get_implicit_group_members(user_query)
+            members = self._get_implicit_group_members(user_query, pending_users_only)
         else:
-            members = self._get_explicit_group_members(user_query, fetch_removed)
+            members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
         if sort_by:
             lambda_keys = {
                 'member_details': lambda t: t.member_email,

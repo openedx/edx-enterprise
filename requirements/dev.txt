@@ -96,7 +96,7 @@ bleach==6.1.0
     #   -r requirements/test.txt
 build==1.2.1
     # via pip-tools
-celery==5.3.6
+celery==5.4.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
@@ -405,7 +405,7 @@ factory-boy==3.3.0
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==24.9.0
+faker==24.11.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -976,7 +976,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.25.1
+virtualenv==20.25.3
     # via tox
 wcwidth==0.2.13
     # via

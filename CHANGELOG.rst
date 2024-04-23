@@ -15,9 +15,42 @@ Change Log
 
 Unreleased
 ----------
+[4.15.11]
+---------
+* fix: support `force_enrollment` in serializers used by bulk enrollment (ENT-8788)
+
+[4.15.10]
+---------
+* fix: set default langauge for all learners linked with an enteprise customer
+
+[4.15.9]
+--------
+* fix: return a 404 response for inactive CSOD customers while fetching courses
+
+
+[4.15.8]
+--------
+* fix: SSO self-serve tool invalid entityId parsing
+
+[4.15.7]
+--------
+* feat: add send group membership invite and removal braze emails
+
+[4.15.6]
+--------
+* perf: update user preferences inside an async task to void request timeout
+
+[4.15.5]
+--------
+* fix: Improved the query to only fetch active configs for CSOD customers.
+
+[4.15.4]
+--------
+* fix: allowing for existing pecus to be added to enterprise groups
+
 [4.15.3]
 --------
-* feat: replacing non encrypted fields of degreed config model with encrypted ones 
+* feat: replacing non encrypted fields of degreed config model with encrypted ones
 
 [4.15.2]
 --------
