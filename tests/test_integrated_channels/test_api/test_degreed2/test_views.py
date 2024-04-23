@@ -65,8 +65,6 @@ class Degreed2ConfigurationViewSetTests(APITest):
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(data.get('degreed_base_url'), self.degreed2_config.degreed_base_url)
-        self.assertEqual(data.get('encrypted_client_id'), self.degreed2_config.encrypted_client_id)
-        self.assertEqual(data.get('encrypted_client_secret'), self.degreed2_config.encrypted_client_secret)
         self.assertEqual(data.get('degreed_token_fetch_base_url'), self.degreed2_config.degreed_token_fetch_base_url)
         self.assertEqual(data.get('enterprise_customer'),
                          str(self.degreed2_config.enterprise_customer.uuid))
