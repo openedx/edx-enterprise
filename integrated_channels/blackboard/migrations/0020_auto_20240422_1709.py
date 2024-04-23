@@ -22,4 +22,3 @@ class Migration(migrations.Migration):
             field=fernet_fields.fields.EncryptedCharField(blank=True, default='', help_text='The API Client Secret (encrypted at db level) provided to edX by the enterprise customer to be used to make API calls to Degreed on behalf of the customer.', max_length=255, verbose_name='API Client Secret encrypted at db level'),
         ),
     ]
-
