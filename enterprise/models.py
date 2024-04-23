@@ -4342,8 +4342,8 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             'enterprise_customer_user', 'pending_enterprise_customer_user'
         )
         if not fetch_removed:
-            members = members.filter(is_removed=False)
-        if user_query:
+            members = members.exclude(status='removed')
+        if user_query: 
             # filter the ecu's by joining the ecu table with the User table and selecting `where email like user_query`
             ecu_filter = Q(enterprise_customer_user__id__in=self._get_filtered_ecu_ids(user_query))
             # pecu has user_email as a field, so we can filter directly through the ORM with the user_query

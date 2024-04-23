@@ -338,7 +338,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             )
             records_deleted += len(records_to_delete)
             records_to_delete_uuids = [record.uuid for record in records_to_delete]
-            records_to_delete.delete()
+            # records_to_delete.delete()
             for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
                 send_group_membership_removal_notification.delay(
                     customer.uuid,

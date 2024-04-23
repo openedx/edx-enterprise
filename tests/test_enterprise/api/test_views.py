@@ -7493,6 +7493,43 @@ class TestEnterpriseGroupViewSet(APITest):
             'pending_learner_id'
         ) == pending_membership.pending_enterprise_customer_user.id
 
+    def test_list_removed_learners(self):
+        group = EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            applies_to_all_contexts=False,
+        )
+        memberships_to_delete = []
+        membership = EnterpriseGroupMembershipFactory(
+            group=group,
+            pending_enterprise_customer_user=None,
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+        )
+        memberships_to_delete.append(membership.enterprise_customer_user.user.email)
+        # first we remove the membership
+        remove_url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': group.uuid},
+        )
+        request_data = {'learner_emails': memberships_to_delete}
+        response = self.client.post(remove_url, data=request_data)
+        # then we're checking if the filter works
+        removed_users_query_string = f'?show_removed=true'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        ) + removed_users_query_string
+
+        response = self.client.get(url)
+        assert response.json().get('count') == 1
+        # but we're doing an extra check to make sure its not fetched normally
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': group.uuid},
+        )
+
+        response = self.client.get(url)
+        assert response.json().get('count') == 0
+
     def test_list_learners_sort_by(self):
         """
         Test that the list learners endpoint can be sorted by 'recentAction', 'status', 'memberDetails'
@@ -7842,7 +7879,7 @@ class TestEnterpriseGroupViewSet(APITest):
 
     def test_remove_learners_404(self):
         """
-        Test that the remove learners endpoint properly handles no finding the provided group
+        Test that the remove learners endpoint properly handles not finding the provided group
         """
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-remove-learners',
