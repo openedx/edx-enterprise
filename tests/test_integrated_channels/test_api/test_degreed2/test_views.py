@@ -3,34 +3,17 @@ Tests for the `integrated_channels` Degreed2 configuration api.
 """
 import json
 from uuid import uuid4
-import base64
 
 import mock
 
-from django.conf import settings
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
 from integrated_channels.degreed2.models import Degreed2EnterpriseCustomerConfiguration
 from test_utils import APITest, factories
-from cryptography.fernet import Fernet
-from fernet_fields.hkdf import derive_fernet_key
-
-from django.utils.encoding import force_str
 
 ENTERPRISE_ID = str(uuid4())
-def decrypt_string(string):
-    """
-    Decrypts a string that was encrypted using Fernet symmetric encryption.
-    """
-    fernet = Fernet(
-        derive_fernet_key(
-            'DUMMY KEY CHANGE BEFORE GOING TO PRODUCTION'
-        )
-    )
-
-    return force_str(fernet.decrypt(bytes(string, 'utf-8')))
 
 
 class Degreed2ConfigurationViewSetTests(APITest):
@@ -81,7 +64,7 @@ class Degreed2ConfigurationViewSetTests(APITest):
         url = reverse('api:v1:degreed2:configuration-detail', args=[self.degreed2_config.id])
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8'))
-        
+
         self.assertEqual(data.get('degreed_base_url'), self.degreed2_config.degreed_base_url)
         self.assertEqual(data.get('degreed_token_fetch_base_url'), self.degreed2_config.degreed_token_fetch_base_url)
         self.assertEqual(data.get('enterprise_customer'),
