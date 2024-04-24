@@ -4338,9 +4338,9 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         """
         Fetch explicitly defined members of a group, indicated by an existing membership record
         """
-        members = self.members.select_related(
-            'enterprise_customer_user', 'pending_enterprise_customer_user'
-        )
+        # note: self.members doesn't seem to surface soft deleted items
+        members = EnterpriseGroupMembership.all_objects.filter(
+            group__uuid=self.uuid).select_related('enterprise_customer_user', 'pending_enterprise_customer_user')
         if not fetch_removed:
             members = members.filter(is_removed=False)
         if user_query:

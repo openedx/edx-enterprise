@@ -15,7 +15,9 @@ Change Log
 
 Unreleased
 ----------
-* Nothing
+[4.16.3]
+--------
+* fix: fixing the removal logic for EnterpriseGroupMemberships, adding optional flag
 
 [4.16.2]
 ---------
