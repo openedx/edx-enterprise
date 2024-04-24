@@ -75,6 +75,39 @@ class BlackboardGlobalConfiguration(ConfigurationModel):
         )
     )
 
+    decrypted_app_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="API Client Secret or Application Secret",
+        help_text=(
+            "The application API secret used to make to identify ourselves as the edX integration app to customer "
+            "instances. Called Application Secret in Blackboard"
+        )
+    )
+
+    @property
+    def encrypted_app_secret(self):
+        """
+        Return encrypted app_secret as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_app_secret field. This method will encrypt the app_secret again before sending.
+        """
+        if self.decrypted_app_secret:
+            return force_str(
+                self._meta.get_field('decrypted_app_secret').fernet.encrypt(
+                    force_bytes(self.decrypted_app_secret)
+                )
+            )
+        return self.decrypted_app_secret
+
+    @encrypted_app_secret.setter
+    def encrypted_app_secret(self, value):
+        """
+        Set the encrypted app_secret.
+        """
+        self.decrypted_app_secret = value
+
     class Meta:
         app_label = 'blackboard'
 
