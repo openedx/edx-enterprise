@@ -37,8 +37,9 @@ attrs==23.2.0
     #   -r requirements/test-master.txt
     #   aiohttp
     #   pytest
-backports-zoneinfo[tzdata]==0.2.1
+backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     # via
+    #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
     #   celery
@@ -208,15 +209,15 @@ edx-django-utils==5.12.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
-edx-drf-extensions==10.2.0
+edx-drf-extensions==10.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.5.1
+edx-opaque-keys[django]==2.8.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-rbac==1.8.0
+edx-rbac==1.9.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.7.0
     # via -r requirements/test-master.txt
@@ -323,7 +324,7 @@ platformdirs==3.11.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pluggy==1.4.0
+pluggy==1.5.0
     # via
     #   diff-cover
     #   pytest
@@ -521,3 +522,6 @@ yarl==1.9.4
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

@@ -9,3 +9,4 @@ disable+ =
     logging-format-interpolation,
     no-member,
     missing-timeout,
+    use-yield-from,

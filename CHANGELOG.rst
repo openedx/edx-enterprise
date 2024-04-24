@@ -15,6 +15,15 @@ Change Log
 
 Unreleased
 ----------
+
+[4.16.1]
+---------
+* fix: add enterprise audit reporting status in plotly auth token
+
+[4.16.0]
+---------
+* feat: Adding python3.11 support. Dropped django32 support.
+
 [4.15.12]
 ---------
 * feat: update enterprise customer serializer to include active integration codes

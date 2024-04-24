@@ -12,6 +12,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 from django.http import JsonResponse
 
+from enterprise.models import EnterpriseCustomer
+
 
 class PlotlyAuthView(generics.GenericAPIView):
     """
@@ -41,8 +43,20 @@ class PlotlyAuthView(generics.GenericAPIView):
 
         jwt_payload = dict({
             'enterprise_uuid': enterprise_uuid,
+            'audit_data_reporting_enabled': self._is_audit_data_reporting_enabled(enterprise_uuid),
         }, **CLAIMS)
 
         token = jwt.encode(jwt_payload, secret_key, algorithm='HS512')
         json_payload = {'token': token}
         return JsonResponse(json_payload)
+
+    @staticmethod
+    def _is_audit_data_reporting_enabled(enterprise_uuid):
+        """
+        Check if audit data reporting is enabled for the enterprise.
+
+        Args:
+            enterprise_uuid (str): UUID of the enterprise.
+        """
+        enterprise = EnterpriseCustomer.objects.filter(uuid=enterprise_uuid).first()
+        return getattr(enterprise, 'enable_audit_data_reporting', False)
