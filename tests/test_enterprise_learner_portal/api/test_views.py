@@ -238,15 +238,45 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
                 )
             )
 
-    @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_resume_urls_for_course_enrollments')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
-    def test_patch_success(self, mock_get_overviews, mock_serializer):
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_emails_enabled')
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_url')
+    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user')
+    def test_patch_success(
+        self,
+        mock_get_cert,
+        mock_get_course_run_url,
+        mock_get_emails_enabled,
+        mock_get_course_run_status,
+        mock_get_overviews,
+        mock_get_resume_urls,
+    ):
         """
         View should update the enrollment's saved_for_later field and return serialized data from
          EnterpriseCourseEnrollmentSerializer for the enrollment (which we mock in this case)
         """
-        mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
-        mock_serializer.return_value = self.MockSerializer()
+        mock_get_overviews.return_value = [{
+            'id': self.course_run_id,
+            'start': 'a datetime object',
+            'end': 'a datetime object',
+            'display_name_with_default': 'a default name',
+            'pacing': 'instructor',
+            'display_org_with_default': 'my university',
+        }]
+        mock_get_resume_urls.return_value = {
+            self.course_run_id: '/courses/course-v1:MITx+6.86x+2T2024'
+        }
+        mock_get_cert.return_value = {
+            'download_url': 'example.com',
+            'is_passing': True,
+            'created': 'a datetime object',
+        }
+        mock_get_course_run_url.return_value = 'course-run-url'
+        mock_get_emails_enabled.return_value = True
+        mock_get_course_run_status.return_value = 'completed'
+
         query_params = {
             'enterprise_id': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,
@@ -255,18 +285,25 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
 
         assert not self.enterprise_enrollment.saved_for_later
 
-        resp = self.client.patch(
-            '{host}{path}?{query_params}'.format(
-                host=settings.TEST_SERVER,
-                path=reverse('enterprise-learner-portal-course-enrollment-list'),
-                query_params=urlencode(query_params),
+        with mock.patch(
+            'enterprise.models.EnterpriseCourseEnrollment.course_enrollment',
+            new_callable=mock.PropertyMock,
+        ) as mock_course_enrollment:
+            mock_course_enrollment.return_value = mock.Mock(
+                is_active=True,
+                mode='verified',
             )
-        )
+            resp = self.client.patch(
+                '{host}{path}?{query_params}'.format(
+                    host=settings.TEST_SERVER,
+                    path=reverse('enterprise-learner-portal-course-enrollment-list'),
+                    query_params=urlencode(query_params),
+                )
+            )
         assert resp.status_code == 200
-        assert resp.json() == [
-            SERIALIZED_MOCK_ACTIVE_ENROLLMENT,
-            SERIALIZED_MOCK_INACTIVE_ENROLLMENT,
-        ]
+        updated_record = resp.json()
+        assert updated_record['course_run_id'] == self.course_run_id
+        assert '/courses/course-v1:MITx+6.86x+2T2024' in updated_record['resume_course_run_url']
 
         self.enterprise_enrollment.refresh_from_db()
         assert self.enterprise_enrollment.saved_for_later
