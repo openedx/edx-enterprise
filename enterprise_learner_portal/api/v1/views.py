@@ -96,6 +96,8 @@ class EnterpriseCourseEnrollmentView(APIView):
                 user,
                 list(filtered_enterprise_enrollments)
             )
+        else:
+            course_enrollments_resume_urls = {}
 
         data = EnterpriseCourseEnrollmentSerializer(
             filtered_enterprise_enrollments,
@@ -103,9 +105,7 @@ class EnterpriseCourseEnrollmentView(APIView):
             context={
                 'request': request,
                 'course_overviews': course_overviews,
-                'course_enrollments_resume_urls': (
-                    course_enrollments_resume_urls if course_enrollments_resume_urls else None
-                )
+                'course_enrollments_resume_urls': course_enrollments_resume_urls,
             },
         ).data
 
@@ -158,13 +158,22 @@ class EnterpriseCourseEnrollmentView(APIView):
 
         # TODO: For now, this makes the change backward compatible, we will change this to true boolean support
         enterprise_enrollment.saved_for_later = saved_for_later.lower() == 'true'
-
         enterprise_enrollment.save()
 
         course_overviews = get_course_overviews([course_id])
+
+        if get_resume_urls_for_course_enrollments and enterprise_enrollment.course_enrollment:
+            course_enrollments_resume_urls = get_resume_urls_for_course_enrollments(user, [enterprise_enrollment])
+        else:
+            course_enrollments_resume_urls = {}
+
         data = EnterpriseCourseEnrollmentSerializer(
             enterprise_enrollment,
-            context={'request': request, 'course_overviews': course_overviews},
+            context={
+                'request': request,
+                'course_overviews': course_overviews,
+                'course_enrollments_resume_urls': course_enrollments_resume_urls,
+            },
         ).data
 
         return Response(data)

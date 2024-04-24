@@ -15,9 +15,13 @@ Change Log
 
 Unreleased
 ----------
-[4.16.2]
+[4.16.3]
 --------
 * fix: fixing the removal logic for EnterpriseGroupMemberships, adding optional flag
+
+[4.16.2]
+---------
+* fix: fix the PATCH method of ``EnterpriseCourseEnrollmentView``.
 
 [4.16.1]
 ---------
