@@ -15,6 +15,24 @@ Change Log
 
 Unreleased
 ----------
+* Nothing
+
+[4.16.2]
+---------
+* fix: fix the PATCH method of ``EnterpriseCourseEnrollmentView``.
+
+[4.16.1]
+---------
+* fix: add enterprise audit reporting status in plotly auth token
+
+[4.16.0]
+---------
+* feat: Adding python3.11 support. Dropped django32 support.
+
+[4.15.12]
+---------
+* feat: update enterprise customer serializer to include active integration codes
+
 [4.15.11]
 ---------
 * fix: support `force_enrollment` in serializers used by bulk enrollment (ENT-8788)
@@ -26,7 +44,6 @@ Unreleased
 [4.15.9]
 --------
 * fix: return a 404 response for inactive CSOD customers while fetching courses
-
 
 [4.15.8]
 --------

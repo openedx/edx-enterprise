@@ -14,6 +14,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
+import jwt
 import pytz
 import responses
 from edx_toggles.toggles.testutils import override_waffle_flag
@@ -1229,6 +1230,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
+                'active_integrations': [],
             }],
         ),
         (
@@ -1289,6 +1291,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_demo_data_for_analytics_and_lpr': False,
                     'enable_academies': False,
                     'enable_one_academy': False,
+                    'active_integrations': [],
                 },
                 'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
@@ -1387,6 +1390,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
+                'active_integrations': [],
             }],
         ),
         (
@@ -1455,6 +1459,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
+                'active_integrations': [],
             }],
         ),
         (
@@ -1476,6 +1481,81 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'primary_color': '#000000',
                 'secondary_color': '#ffffff',
                 'tertiary_color': '#888888',
+            }],
+        ),
+        (
+            factories.BlackboardEnterpriseCustomerConfigurationFactory,
+            ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
+            itemgetter('uuid'),
+            [{
+                'id': 1,
+                'enterprise_customer_id': FAKE_UUIDS[0],
+                'enterprise_customer__uuid': FAKE_UUIDS[0],
+                'blackboard_base_url': 'foobar',
+                'client_id': 'client_id',
+                'client_secret': 'client_secret',
+                'refresh_token': 'token',
+                'active': True,
+                'enterprise_customer__name': 'Test Enterprise Customer',
+                'enterprise_customer__slug': TEST_SLUG,
+                'enterprise_customer__active': True,
+                'enterprise_customer__enable_data_sharing_consent': True,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'enterprise_customer__site__domain': 'example.com',
+                'enterprise_customer__site__name': 'example.com',
+                'enterprise_customer__contact_email': 'fake@example.com',
+                'enterprise_customer__sender_alias': 'Test Sender Alias',
+                'enterprise_customer__reply_to': 'fake_reply@example.com',
+                'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
+            }],
+            [{
+                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
+                'slug': TEST_SLUG, 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'site': {
+                    'domain': 'example.com', 'name': 'example.com'
+                },
+                'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment',
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
+                'identity_provider': None,
+                'enable_audit_enrollment': False,
+                'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
+                'sync_learner_profile_data': False,
+                'enable_audit_data_reporting': False,
+                'enable_learner_portal': True,
+                'enable_learner_portal_offers': False,
+                'enable_portal_learner_credit_management_screen': False,
+                'enable_executive_education_2U_fulfillment': False,
+                'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
+                'contact_email': 'fake@example.com',
+                'enable_portal_subscription_management_screen': False,
+                'hide_course_original_price': False,
+                'enable_analytics_screen': True,
+                'enable_integrated_customer_learner_portal_search': True,
+                'enable_career_engagement_network_on_learner_portal': False,
+                'enable_portal_lms_configurations_screen': False,
+                'sender_alias': 'Test Sender Alias',
+                'identity_providers': [],
+                'enterprise_customer_catalogs': [],
+                'reply_to': 'fake_reply@example.com',
+                'enterprise_notification_banner': {'title': '', 'text': ''},
+                'hide_labor_market_data': False,
+                'modified': '2021-10-20T19:01:31Z',
+                'enable_universal_link': False,
+                'enable_browse_and_request': False,
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
+                'career_engagement_network_message': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
+                'enable_academies': False,
+                'enable_one_academy': False,
+                'active_integrations': ['BLACKBOARD']
             }],
         ),
     )
@@ -1716,6 +1796,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
+                'active_integrations': [],
             }
         else:
             mock_empty_200_success_response = {
@@ -6878,6 +6959,7 @@ class TestPlotlyAuthView(APITest):
         """
         Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
         """
+        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid, enable_audit_data_reporting=True)
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
 
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -6885,6 +6967,9 @@ class TestPlotlyAuthView(APITest):
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_200_OK
         assert 'token' in response.json()
+        token = response.json().get('token')
+        decoded_jwt = jwt.decode(token, settings.ENTERPRISE_PLOTLY_SECRET, algorithms=['HS512'])
+        assert decoded_jwt['audit_data_reporting_enabled'] is True
 
     def test_view_with_admin_user_tries(self):
         """
