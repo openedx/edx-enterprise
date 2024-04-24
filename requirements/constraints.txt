@@ -35,3 +35,6 @@ tox<4
 
 # upgrading django-simple-history
 django-simple-history<=3.1.1
+
+# Temporary to Support the python 3.11 Upgrade
+backports.zoneinfo;python_version<"3.9"  # Newer versions have zoneinfo available in the standard library

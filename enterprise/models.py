@@ -4342,7 +4342,6 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             group__uuid=self.uuid).select_related('enterprise_customer_user', 'pending_enterprise_customer_user')
         if not fetch_removed:
             members = members.filter(is_removed=False)
-            # members = members.exclude(status='removed')
         if user_query:
             # filter the ecu's by joining the ecu table with the User table and selecting `where email like user_query`
             ecu_filter = Q(enterprise_customer_user__id__in=self._get_filtered_ecu_ids(user_query))

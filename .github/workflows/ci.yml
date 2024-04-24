@@ -16,8 +16,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8']
-        toxenv: [quality, docs, django32-celery53, django42-celery53, django32-pii-annotations]
+        python-version:
+        - '3.8'
+        - '3.11'
+        toxenv: [quality, docs, django42-celery53, django42-pii-annotations]
     env:
       RUNJSHINT: true
     steps:
@@ -26,7 +28,7 @@ jobs:
       run: echo "NODE_VER=`cat .nvmrc`" >> $GITHUB_ENV
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: ${{ matrix.python-version }}
         architecture: x64
     - uses: actions/setup-node@v2
       with:
@@ -37,11 +39,12 @@ jobs:
         TOXENV: ${{ matrix.toxenv }}
       run: tox
     - name: Run code coverage
-      if: matrix.python-version == '3.8' && matrix.toxenv == 'django42'
-      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.8' && matrix.toxenv == 'django42-celery53'
+      uses: codecov/codecov-action@v4
       with:
         flags: unittests
         fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Run jshint
       if: matrix.toxenv=='django42-celery53'     # Only run this once as part of tests
       run: |
