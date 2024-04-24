@@ -4338,11 +4338,11 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         """
         Fetch explicitly defined members of a group, indicated by an existing membership record
         """
-        members = self.members.select_related(
-            'enterprise_customer_user', 'pending_enterprise_customer_user'
-        )
+        members = EnterpriseGroupMembership.all_objects.filter(
+            group__uuid=self.uuid).select_related('enterprise_customer_user', 'pending_enterprise_customer_user')
         if not fetch_removed:
-            members = members.exclude(status='removed')
+            members = members.filter(is_removed=False)
+            # members = members.exclude(status='removed')
         if user_query:
             # filter the ecu's by joining the ecu table with the User table and selecting `where email like user_query`
             ecu_filter = Q(enterprise_customer_user__id__in=self._get_filtered_ecu_ids(user_query))
