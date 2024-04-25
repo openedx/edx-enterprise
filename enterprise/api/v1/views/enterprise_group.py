@@ -112,6 +112,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
         beginning of the sorting value ie `-memberStatus`.
         - ``page`` (int, optional): Which page of paginated data to return.
+        - ``show_removed`` (bool, optional): Include removed learners in the response.
 
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
@@ -137,6 +138,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         """
         query_params = self.request.query_params.copy()
         is_reversed = bool(query_params.get('is_reversed', False))
+        show_removed = bool(query_params.get('show_removed', False))
 
         param_serializers = serializers.EnterpriseGroupLearnersRequestQuerySerializer(
             data=query_params
@@ -155,7 +157,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             members = group_object.get_all_learners(user_query,
                                                     sort_by,
                                                     desc_order=is_reversed,
-                                                    pending_users_only=pending_users_only)
+                                                    pending_users_only=pending_users_only,
+                                                    fetch_removed=show_removed)
 
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
