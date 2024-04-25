@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.16.4]
+--------
+* revert: fix: set default langauge for all learners linked with an enteprise customer
+
 [4.16.3]
 --------
 * fix: fixing the removal logic for EnterpriseGroupMemberships, adding optional flag
