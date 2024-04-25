@@ -2,6 +2,7 @@
 Middleware for enterprise app.
 """
 
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 from enterprise.utils import get_enterprise_customer_for_user
@@ -70,4 +71,6 @@ class EnterpriseLanguagePreferenceMiddleware(MiddlewareMixin):
                 # then set the default language as the learner's language
                 if not user_pref and not is_request_from_mobile_app(request):
                     # pylint: disable=protected-access
-                    request._anonymous_user_cookie_lang = enterprise_customer.default_language
+                    default_language = enterprise_customer.default_language
+                    request._anonymous_user_cookie_lang = default_language
+                    request.COOKIES[settings.LANGUAGE_COOKIE_NAME] = default_language
