@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.16.5]
+--------
+* fix: update langugae cookie with enterprise default language
+
 [4.16.4]
 --------
 * revert: fix: set default langauge for all learners linked with an enteprise customer
