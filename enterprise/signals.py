@@ -16,7 +16,7 @@ from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_default_catalog_content_filter,
     localized_utcnow,
-    set_enterprise_learner_language,
+    unset_enterprise_learner_language,
 )
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
@@ -104,15 +104,10 @@ def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: dis
     if instance.default_language:
         prev_state = models.EnterpriseCustomer.objects.filter(uuid=instance.uuid).first()
         if prev_state and prev_state.default_language != instance.default_language:
-            default_language = instance.default_language
             # Unset the language preference of all the learners linked with the enterprise customer.
             # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
-            logger.info(
-                '[SET_ENT_LANG] Task triggered to update user preference.. Enterprise: [%s], Language: [%s]',
-                instance.uuid,
-                default_language
-            )
-            update_enterprise_learners_user_preference.delay(instance.uuid, default_language)
+            logger.info('Task triggered to update user preference for learners. Enterprise: [%s]', instance.uuid)
+            update_enterprise_learners_user_preference.delay(instance.uuid)
 
 
 @receiver(pre_save, sender=models.EnterpriseCustomerBrandingConfiguration)
@@ -212,7 +207,7 @@ def update_learner_language_preference(sender, instance, created, **kwargs):    
     # Unset the language preference when a new learner is linked with the enterprise customer.
     # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
     if created and instance.enterprise_customer.default_language:
-        set_enterprise_learner_language(instance)
+        unset_enterprise_learner_language(instance)
 
 
 @receiver(post_save, sender=models.PendingEnterpriseCustomerAdminUser)

@@ -15,6 +15,17 @@ Change Log
 
 Unreleased
 ----------
+[4.16.4]
+--------
+* revert: fix: set default langauge for all learners linked with an enteprise customer
+
+[4.16.3]
+--------
+* fix: fixing the removal logic for EnterpriseGroupMemberships, adding optional flag
+
+[4.16.2]
+---------
+* fix: fix the PATCH method of ``EnterpriseCourseEnrollmentView``.
 
 [4.16.1]
 ---------
@@ -39,7 +50,6 @@ Unreleased
 [4.15.9]
 --------
 * fix: return a 404 response for inactive CSOD customers while fetching courses
-
 
 [4.15.8]
 --------

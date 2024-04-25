@@ -332,9 +332,9 @@ class TestEnterpriseCustomer(unittest.TestCase):
         wraps=update_enterprise_learners_user_preference
     )
     @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
-    def test_set_language_of_all_enterprise_learners(self, user_preference_mock, mock_task):
+    def test_unset_language_of_all_enterprise_learners(self, user_preference_mock, mock_task):
         """
-        Validate that set_language_of_all_enterprise_learners is called whenever default_language changes.
+        Validate that unset_language_of_all_enterprise_learners is called whenever default_language changes.
         """
         user = factories.UserFactory(email='user123@example.com')
         enterprise_customer = factories.EnterpriseCustomerFactory()
@@ -345,24 +345,22 @@ class TestEnterpriseCustomer(unittest.TestCase):
         enterprise_customer.default_language = 'es-419'
         enterprise_customer.save()
         mock_task.assert_called_once()
-        user_preference_mock.objects.filter.return_value.update.assert_called_with(value='es-419')
         user_preference_mock.objects.filter.assert_called_once()
 
-        # Make sure `set_language_of_all_enterprise_learners` is called each time `default_language` changes.
+        # Make sure `unset_language_of_all_enterprise_learners` is called each time `default_language` changes.
         enterprise_customer.default_language = 'es-417'
         enterprise_customer.save()
         assert mock_task.call_count == 2
-        user_preference_mock.objects.filter.return_value.update.assert_called_with(value='es-417')
         assert user_preference_mock.objects.filter.call_count == 2
 
-        # make sure `set_language_of_all_enterprise_learners` is not called if `default_language` is
+        # make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
         # not changed.
         enterprise_customer.default_language = 'es-417'
         enterprise_customer.save()
         assert mock_task.call_count == 2
         assert user_preference_mock.objects.filter.call_count == 2
 
-        # Make sure `set_language_of_all_enterprise_learners` is not called if `default_language` is
+        # Make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
         # set to `None`.
         enterprise_customer.default_language = None
         enterprise_customer.save()
@@ -1008,20 +1006,15 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
                     )
 
     @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
-    def test_set_enterprise_learner_language(self, user_preference_mock):
+    def test_unset_enterprise_learner_language(self, user_preference_mock):
         """
-        Validate that set_enterprise_learner_language is called whenever a nwe learner is linked to an enterprise
+        Validate that unset_enterprise_learner_language is called whenever a nwe learner is linked to an enterprise
         customer with Non-Null default language.
         """
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         user_preference_mock.objects.update_or_create.assert_called_once()
-        user_preference_mock.objects.update_or_create.assert_called_with(
-            key='pref-lang',
-            user_id=enterprise_customer_user.user_id,
-            defaults={'value': 'en'}
-        )
 
-        # Make sure `set_enterprise_learner_language` is not called if the enterprise customer does not have a
+        # Make sure `unset_enterprise_learner_language` is not called if the enterprise customer does not have a
         # default_language.
         enterprise_customer_user.enterprise_customer.default_language = None
         enterprise_customer_user.enterprise_customer.save()
