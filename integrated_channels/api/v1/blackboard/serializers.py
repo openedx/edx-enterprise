@@ -18,6 +18,8 @@ class BlackboardConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
         extra_fields = (
             'client_id',
             'client_secret',
+            'encrypted_client_id',
+            'encrypted_client_secret',
             'blackboard_base_url',
             'refresh_token',
             'uuid',
@@ -25,6 +27,8 @@ class BlackboardConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
         )
         fields = EnterpriseCustomerPluginConfigSerializer.Meta.fields + extra_fields
 
+    encrypted_client_id = serializers.CharField(required=False, allow_blank=False, read_only=False)
+    encrypted_client_secret = serializers.CharField(required=False, allow_blank=False, read_only=False)
 
 class BlackboardGlobalConfigSerializer(serializers.ModelSerializer):
 
