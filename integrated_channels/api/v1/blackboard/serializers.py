@@ -30,6 +30,7 @@ class BlackboardConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
     encrypted_client_id = serializers.CharField(required=False, allow_blank=False, read_only=False)
     encrypted_client_secret = serializers.CharField(required=False, allow_blank=False, read_only=False)
 
+
 class BlackboardGlobalConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
