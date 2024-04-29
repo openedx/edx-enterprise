@@ -35,7 +35,7 @@ class BlackboardConfigurationViewSetTests(APITest):
 
         self.global_config = factories.BlackboardGlobalConfigurationFactory(
             app_key='test_app_key',
-            app_secret='test_app_secret',
+            decrypted_app_secret='test_app_secret',
             enabled=True,
         )
 
@@ -212,3 +212,10 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.assertEqual(data.get('count'), 1)
         self.assertEqual(data.get('results')[0].get('app_key'), str(self.global_config.app_key))
         assert not data.get('results')[0].get('app_secret')
+
+        self.assertTrue(hasattr(self.global_config, 'decrypted_app_secret'))
+        self.assertTrue(self.global_config.encrypted_app_secret is not None)
+        self.global_config.decrypted_app_secret = ''
+        self.global_config.save()
+        self.assertTrue(hasattr(self.global_config, 'decrypted_app_secret'))
+        self.assertEqual(self.global_config.encrypted_app_secret, '')
