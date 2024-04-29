@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[4.16.5]
+--------
+* feat: splitting out group membership serializer learner id into lms user ID and ecu ID
+
 [4.16.4]
 --------
 * revert: fix: set default langauge for all learners linked with an enteprise customer

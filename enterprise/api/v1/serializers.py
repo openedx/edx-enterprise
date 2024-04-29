@@ -602,9 +602,13 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseGroupMembership model.
     """
-    learner_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
-    pending_learner_id = serializers.IntegerField(source='pending_enterprise_customer_user.id', allow_null=True)
+    enterprise_customer_user_id = serializers.IntegerField(source='enterprise_customer_user.id', allow_null=True)
+    lms_user_id = serializers.IntegerField(source='enterprise_customer_user.user_id', allow_null=True)
+    pending_enterprise_customer_user_id = serializers.IntegerField(
+        source='pending_enterprise_customer_user.id', allow_null=True
+    )
     enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
+    activated_at = serializers.DateTimeField(required=False)
 
     member_details = serializers.SerializerMethodField()
     recent_action = serializers.SerializerMethodField()
@@ -613,12 +617,14 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseGroupMembership
         fields = (
-            'learner_id',
-            'pending_learner_id',
+            'enterprise_customer_user_id',
+            'lms_user_id',
+            'pending_enterprise_customer_user_id',
             'enterprise_group_membership_uuid',
             'member_details',
             'recent_action',
             'status',
+            'activated_at',
         )
 
     def get_member_details(self, obj):
