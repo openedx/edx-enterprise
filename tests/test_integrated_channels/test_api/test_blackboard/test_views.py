@@ -214,7 +214,7 @@ class BlackboardConfigurationViewSetTests(APITest):
         assert not data.get('results')[0].get('app_secret')
 
         self.assertTrue(hasattr(self.global_config, 'decrypted_app_secret'))
-        self.assertTrue(self.global_config.encrypted_app_secret is not None)
+        self.assertIsNotNone(self.global_config.encrypted_app_secret)
         self.global_config.decrypted_app_secret = ''
         self.global_config.save()
         self.assertTrue(hasattr(self.global_config, 'decrypted_app_secret'))
