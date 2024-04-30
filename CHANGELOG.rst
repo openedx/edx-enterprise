@@ -15,6 +15,12 @@ Change Log
 
 Unreleased
 ----------
+* nothing unreleased
+
+[4.17.0]
+--------
+* feat: limit the number of resulting learners in Django admin manage learners view
+
 [4.16.5]
 --------
 * feat: splitting out group membership serializer learner id into lms user ID and ecu ID

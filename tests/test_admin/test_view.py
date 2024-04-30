@@ -584,6 +584,39 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         response = self.client.get(self.view_url)
         self._test_get_response(response, linked_learners, [])
 
+    def test_users_limit_enforced(self):
+        """
+        Tests that we only return/render up to a constant limit
+        of enterprise customer user records, both pending and "concrete".
+        """
+        self._login()
+
+        _ = [
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+        ]
+        _ = [
+            PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
+            PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
+            PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
+        ]
+        with mock.patch('enterprise.admin.views.DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT', 2):
+            response = self.client.get(self.view_url)
+
+        assert response.status_code == 200
+        assert len(list(response.context[self.context_parameters.LEARNERS])) == 2
+        assert len(list(response.context[self.context_parameters.PENDING_LEARNERS])) == 2
+
     def test_get_existing_and_pending_links(self):
         self._login()
 
