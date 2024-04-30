@@ -129,6 +129,8 @@ class BlackboardConfigurationViewSetTests(APITest):
         payload = {
             'client_secret': 1000,
             'client_id': 1001,
+            'encrypted_client_secret': 1000,
+            'encrypted_client_id': 1001,
             'blackboard_base_url': 'http://testing2',
             'enterprise_customer': FAKE_UUIDS[0],
         }
@@ -136,6 +138,8 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.enterprise_customer_conf.refresh_from_db()
         self.assertEqual(self.enterprise_customer_conf.client_secret, '1000')
         self.assertEqual(self.enterprise_customer_conf.client_id, '1001')
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, '1000')
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_id, '1001')
         self.assertEqual(self.enterprise_customer_conf.blackboard_base_url, 'http://testing2')
         self.assertEqual(response.status_code, 200)
 
@@ -215,7 +219,7 @@ class BlackboardConfigurationViewSetTests(APITest):
 
         self.assertTrue(hasattr(self.global_config, 'decrypted_app_secret'))
         self.assertIsNotNone(self.global_config.encrypted_app_secret)
-        self.global_config.decrypted_app_secret = ''
+        self.global_config.encrypted_app_secret = ''
         self.global_config.save()
         self.assertTrue(hasattr(self.global_config, 'decrypted_app_secret'))
         self.assertEqual(self.global_config.encrypted_app_secret, '')
