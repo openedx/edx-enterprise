@@ -7587,7 +7587,7 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
 
         assert response.json().get('count') == 1
-        assert response.json().get('results')[0].get('pending_learner_id') == pending_user.id
+        assert response.json().get('results')[0].get('pending_enterprise_customer_user_id') == pending_user.id
 
         group.applies_to_all_contexts = False
         group.save()
@@ -7614,7 +7614,7 @@ class TestEnterpriseGroupViewSet(APITest):
 
         assert response.json().get('count') == 1
         assert response.json().get('results')[0].get(
-            'learner_id'
+            'enterprise_customer_user_id'
         ) == existing_membership.enterprise_customer_user.id
 
         url = settings.TEST_SERVER + reverse(
@@ -7626,7 +7626,7 @@ class TestEnterpriseGroupViewSet(APITest):
 
         assert response.json().get('count') == 1
         assert response.json().get('results')[0].get(
-            'pending_learner_id'
+            'pending_enterprise_customer_user_id'
         ) == pending_membership.pending_enterprise_customer_user.id
 
     def test_list_removed_learners(self):
@@ -7720,8 +7720,9 @@ class TestEnterpriseGroupViewSet(APITest):
             member_user = self.enterprise_group_memberships[i].enterprise_customer_user
             results_list.append(
                 {
-                    'learner_id': member_user.id,
-                    'pending_learner_id': None,
+                    'enterprise_customer_user_id': member_user.id,
+                    'lms_user_id': member_user.user_id,
+                    'pending_enterprise_customer_user_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[i].uuid),
                     'member_details': {
                         'user_email': member_user.user_email,
@@ -7739,9 +7740,11 @@ class TestEnterpriseGroupViewSet(APITest):
         }
         response = self.client.get(url)
         for i in range(10):
-            assert response.json()['results'][i]['learner_id'] == expected_response['results'][i]['learner_id']
-            assert response.json()['results'][i]['pending_learner_id'] == (
-                expected_response['results'][i]['pending_learner_id'])
+            assert response.json()['results'][i]['enterprise_customer_user_id'] == expected_response['results'][i][
+                'enterprise_customer_user_id'
+            ]
+            assert response.json()['results'][i]['pending_enterprise_customer_user_id'] == (
+                expected_response['results'][i]['pending_enterprise_customer_user_id'])
             assert (response.json()['results'][i]['enterprise_group_membership_uuid']
                     == expected_response['results'][i]['enterprise_group_membership_uuid'])
 
@@ -7758,8 +7761,9 @@ class TestEnterpriseGroupViewSet(APITest):
             'previous': f'http://testserver/enterprise/api/v1/enterprise-group/{self.group_1.uuid}/learners',
             'results': [
                 {
-                    'learner_id': user.id,
-                    'pending_learner_id': None,
+                    'enterprise_customer_user_id': user.id,
+                    'lms_user_id': user.user_id,
+                    'pending_enterprise_customer_user_id': None,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
                     'member_details': {
                         'user_email': user.user_email,
@@ -7772,10 +7776,10 @@ class TestEnterpriseGroupViewSet(APITest):
         }
         assert page_2_response.json()['count'] == expected_response_page_2['count']
         assert page_2_response.json()['previous'] == expected_response_page_2['previous']
-        assert page_2_response.json()['results'][0]['learner_id'] == (
-            expected_response_page_2['results'][0]['learner_id'])
-        assert page_2_response.json()['results'][0]['pending_learner_id'] == (
-            expected_response_page_2['results'][0]['pending_learner_id'])
+        assert page_2_response.json()['results'][0]['enterprise_customer_user_id'] == (
+            expected_response_page_2['results'][0]['enterprise_customer_user_id'])
+        assert page_2_response.json()['results'][0]['pending_enterprise_customer_user_id'] == (
+            expected_response_page_2['results'][0]['pending_enterprise_customer_user_id'])
         assert (page_2_response.json()['results'][0]['enterprise_group_membership_uuid']
                 == expected_response_page_2['results'][0]['enterprise_group_membership_uuid'])
         self.enterprise_group_memberships[0].delete()
@@ -7801,7 +7805,7 @@ class TestEnterpriseGroupViewSet(APITest):
             'results': [
                 {
                     'learner_id': self.enterprise_group_memberships[0].enterprise_customer_user.id,
-                    'pending_learner_id': self.pending_enterprise_customer_user,
+                    'pending_enterprise_customer_user_id': self.pending_enterprise_customer_user,
                     'enterprise_group_membership_uuid': str(self.enterprise_group_memberships[0].uuid),
                     'enterprise_customer': {
                         'name': self.enterprise_customer.name,
@@ -8142,7 +8146,11 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
         results = response.json().get('results')
         for result in results:
-            assert (result.get('pending_learner_id') == pending_user.id) or (result.get('learner_id') == new_user.id)
+            assert (
+                result.get('pending_enterprise_customer_user_id') == pending_user.id
+            ) or (
+                result.get('enterprise_customer_user_id') == new_user.id
+            )
 
     def test_group_assign_realized_learner_adds_activated_at(self):
         """
