@@ -3,7 +3,7 @@ Utilities for Blackboard integrated channels.
 """
 
 
-def populate_decrypted_fields_blackboard(apps, schema_editor=None):  # pylint: unused-argument
+def populate_decrypted_fields_blackboard(apps, schema_editor=None):  # pylint: disable=unused-argument
     """
     Populates the encryption fields in Blackboard config with the data previously stored in database.
     """
