@@ -4,11 +4,13 @@ Tests for the `integrated_channels` blackboard configuration api.
 import json
 from unittest import mock
 
+from django.apps import apps
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.blackboard.utils import populate_decrypted_fields_blackboard
 from test_utils import FAKE_UUIDS, APITest, factories
 
 
@@ -129,6 +131,8 @@ class BlackboardConfigurationViewSetTests(APITest):
         payload = {
             'client_secret': 1000,
             'client_id': 1001,
+            'encrypted_client_secret': 1000,
+            'encrypted_client_id': 1001,
             'blackboard_base_url': 'http://testing2',
             'enterprise_customer': FAKE_UUIDS[0],
         }
@@ -136,8 +140,29 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.enterprise_customer_conf.refresh_from_db()
         self.assertEqual(self.enterprise_customer_conf.client_secret, '1000')
         self.assertEqual(self.enterprise_customer_conf.client_id, '1001')
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, '1000')
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_id, '1001')
         self.assertEqual(self.enterprise_customer_conf.blackboard_base_url, 'http://testing2')
         self.assertEqual(response.status_code, 200)
+    
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_populate_decrypted_fields(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
+        client_secret = self.enterprise_customer_conf.client_secret
+        payload = {
+            'encrypted_client_secret': '1000',
+            'enterprise_customer': FAKE_UUIDS[0],
+        }
+        self.client.put(url, payload)
+        self.enterprise_customer_conf.refresh_from_db()
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, '1000')
+        populate_decrypted_fields_blackboard(apps)
+        self.enterprise_customer_conf.refresh_from_db()
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, client_secret)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_partial_update(self, mock_current_request):
