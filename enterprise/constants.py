@@ -252,3 +252,6 @@ GROUP_MEMBERSHIP_STATUS_CHOICES = (
 )
 
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"
+
+# Max learners included in the Admin Manage Learners page
+DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT = 10000

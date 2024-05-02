@@ -123,7 +123,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 'results': [
                     {
                         'learner_id': integer or None,
-                        'pending_learner_id': integer or None,
+                        'pending_enterprise_customer_user_id': integer or None,
                         'enterprise_group_membership_uuid': UUID,
                         'member_details': {
                             'user_email': string,
@@ -204,7 +204,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         # act_by_date and catalog_uuid values are needed for Braze email trigger properties
         act_by_date = param_serializer.validated_data.get('act_by_date')
         catalog_uuid = param_serializer.validated_data.get('catalog_uuid')
-        learner_emails = param_serializer.validated_data.get('learner_emails')
+        learner_emails = param_serializer.validated_data.get('learner_emails', [])
         total_records_processed = 0
         total_existing_users_processed = 0
         total_new_users_processed = 0

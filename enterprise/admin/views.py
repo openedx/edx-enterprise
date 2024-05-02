@@ -37,7 +37,7 @@ from enterprise.admin.utils import (
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient, SsoOrchestratorClientError
-from enterprise.constants import PAGE_SIZE
+from enterprise.constants import DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT, PAGE_SIZE
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -357,7 +357,11 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
 
     def get_enterprise_customer_user_queryset(self, request, search_keyword, customer_uuid, page_size=PAGE_SIZE):
         """
-        Get the list of EnterpriseCustomerUsers we want to render.
+        Get the list of EnterpriseCustomerUsers we want to render. Note that,
+        if no ``search_keyword`` is provided, the resulting queryset will
+        only include up to some constant limit of results, so that we
+        can support searching for particular user records in customers
+        with very large numbers of learners.
 
         Arguments:
             request (HttpRequest): HTTP Request instance.
@@ -367,16 +371,29 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             page_size (int): Number of learners displayed in each paginated set.
         """
         page = request.GET.get('page', 1)
-        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
-        user_ids = learners.values_list('user_id', flat=True)
-        matching_users = User.objects.filter(pk__in=user_ids)
-        if search_keyword is not None:
-            matching_users = matching_users.filter(
-                Q(email__icontains=search_keyword) | Q(username__icontains=search_keyword)
+        if search_keyword:
+            enterprise_learners = self._get_searched_enterprise_customer_users(
+                search_keyword,
+                customer_uuid,
             )
-        matching_user_ids = matching_users.values_list('pk', flat=True)
-        learners = learners.filter(user_id__in=matching_user_ids)
-        return paginated_list(learners, page, page_size)
+        else:
+            enterprise_learners = EnterpriseCustomerUser.objects.filter(
+                enterprise_customer__uuid=customer_uuid,
+            )[:DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT]
+        return paginated_list(enterprise_learners, page, page_size)
+
+    def _get_searched_enterprise_customer_users(self, search_keyword, customer_uuid):
+        """
+        Helper to return a (possibly truncated) queryset of enterprise customer users
+        who match some search criteria based on corresponding ``core.User`` records.
+        """
+        matching_user_ids = User.objects.filter(
+            Q(email__icontains=search_keyword) | Q(username__icontains=search_keyword)
+        ).values_list('id', flat=True)
+        return EnterpriseCustomerUser.objects.filter(
+            enterprise_customer__uuid=customer_uuid,
+            user_id__in=matching_user_ids,
+        )[:DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT]
 
     def get_pending_users_queryset(self, search_keyword, customer_uuid):
         """
@@ -387,14 +404,15 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             customer_uuid (str): A unique identifier to filter down to only pending users
             linked to a particular EnterpriseCustomer.
         """
-        queryset = PendingEnterpriseCustomerUser.objects.filter(
-            enterprise_customer__uuid=customer_uuid
-        )
-
-        if search_keyword is not None:
-            queryset = queryset.filter(user_email__icontains=search_keyword)
-
-        return queryset
+        if search_keyword:
+            return PendingEnterpriseCustomerUser.objects.filter(
+                enterprise_customer__uuid=customer_uuid,
+                user_email__icontains=search_keyword,
+            )[:DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT]
+        else:
+            return PendingEnterpriseCustomerUser.objects.filter(
+                enterprise_customer__uuid=customer_uuid
+            )[:DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT]
 
     @classmethod
     def _handle_singular(cls, request, enterprise_customer, manage_learners_form):
