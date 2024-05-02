@@ -144,7 +144,7 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.assertEqual(self.enterprise_customer_conf.decrypted_client_id, '1001')
         self.assertEqual(self.enterprise_customer_conf.blackboard_base_url, 'http://testing2')
         self.assertEqual(response.status_code, 200)
-    
+
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_populate_decrypted_fields(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
