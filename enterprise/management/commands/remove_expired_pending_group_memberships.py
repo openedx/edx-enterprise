@@ -29,7 +29,7 @@ class Command(BaseCommand):
         parser.add_argument("-e", "--enterprise_customer")
 
     def handle(self, *args, **options):
-        queryset = EnterpriseGroupMembership.objects.all()
+        queryset = EnterpriseGroupMembership.all_objects.all()
         if enterprise_arg := options.get("enterprise_customer"):
             try:
                 enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_arg)
@@ -43,5 +43,8 @@ class Command(BaseCommand):
             created__lte=localized_utcnow() - timedelta(days=90)
         )
         for membership in expired_memberships:
-            membership.pending_enterprise_customer_user.delete()
-        expired_memberships.delete()
+            pecu_to_delete = membership.pending_enterprise_customer_user
+            pecu_to_delete.delete()
+            membership.refresh_from_db()
+            # https://github.com/jazzband/django-model-utils/blob/master/model_utils/models.py#L133-L158
+            membership.delete(soft=False)

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.5]
+--------
+* fix: hard deleting expired group memberships
+
 [4.17.4]
 --------
 * fix: update language cookie if langauge cookie is not same as user's language preference
