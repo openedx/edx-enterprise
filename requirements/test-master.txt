@@ -142,7 +142,7 @@ django-config-models==2.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-countries==7.5.1
+django-countries==7.6.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -157,7 +157,7 @@ django-fernet-fields-v2==0.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-filter==23.5
+django-filter==24.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -165,7 +165,7 @@ django-ipware==6.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-model-utils==4.4.0
+django-model-utils==4.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -222,7 +222,7 @@ edx-braze-client==0.2.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-django-utils==5.12.0
+edx-django-utils==5.13.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -235,7 +235,7 @@ edx-drf-extensions==10.3.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.8.0
+edx-opaque-keys[django]==2.9.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -319,12 +319,12 @@ openai==0.28.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-packaging==23.2
+packaging==24.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
     #   snowflake-connector-python
-path==16.10.0
+path==16.11.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   path-py

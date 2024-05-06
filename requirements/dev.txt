@@ -66,7 +66,7 @@ attrs==23.2.0
     #   -r requirements/test.txt
     #   aiohttp
     #   pytest
-babel==2.14.0
+babel==2.15.0
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
@@ -183,7 +183,7 @@ coreschema==0.0.4
     #   -r requirements/test.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.4.4
+coverage[toml]==7.5.1
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -246,7 +246,7 @@ django-config-models==2.7.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-countries==7.5.1
+django-countries==7.6.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -264,7 +264,7 @@ django-fernet-fields-v2==0.9
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-filter==23.5
+django-filter==24.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -274,7 +274,7 @@ django-ipware==6.0.4
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-model-utils==4.4.0
+django-model-utils==4.5.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -356,7 +356,7 @@ edx-braze-client==0.2.2
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-edx-django-utils==5.12.0
+edx-django-utils==5.13.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -371,11 +371,11 @@ edx-drf-extensions==10.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
-edx-i18n-tools==1.5.0
+edx-i18n-tools==1.6.0
     # via -r requirements/dev.in
 edx-lint==5.3.6
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.8.0
+edx-opaque-keys[django]==2.9.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -406,7 +406,7 @@ factory-boy==3.3.0
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==24.11.0
+faker==25.0.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -500,8 +500,12 @@ kombu==5.3.7
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml==5.2.1
-    # via edx-i18n-tools
+lxml[html-clean,html_clean]==5.2.1
+    # via
+    #   edx-i18n-tools
+    #   lxml-html-clean
+lxml-html-clean==0.1.1
+    # via lxml
 markupsafe==2.1.5
     # via
     #   -r requirements/doc.txt
@@ -542,7 +546,7 @@ openai==0.28.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-packaging==23.2
+packaging==24.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -554,7 +558,7 @@ packaging==23.2
     #   snowflake-connector-python
     #   sphinx
     #   tox
-path==16.10.0
+path==16.11.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -641,7 +645,7 @@ pydata-sphinx-theme==0.14.4
     #   sphinx-book-theme
 pydocstyle==6.3.0
     # via -r requirements/dev.in
-pygments==2.17.2
+pygments==2.18.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -692,7 +696,7 @@ pyopenssl==22.0.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-pyproject-hooks==1.0.0
+pyproject-hooks==1.1.0
     # via
     #   build
     #   pip-tools
@@ -906,7 +910,6 @@ tomli==2.0.1
     #   doc8
     #   pip-tools
     #   pylint
-    #   pyproject-hooks
     #   tox
 tomlkit==0.12.3
     # via
@@ -937,7 +940,6 @@ typing-extensions==4.9.0
     #   astroid
     #   django-countries
     #   edx-opaque-keys
-    #   faker
     #   jwcrypto
     #   kombu
     #   pydata-sphinx-theme
@@ -977,7 +979,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.25.3
+virtualenv==20.26.1
     # via tox
 wcwidth==0.2.13
     # via
