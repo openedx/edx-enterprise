@@ -12,7 +12,6 @@ from urllib.parse import urljoin
 import requests
 
 from django.apps import apps
-from django.conf import settings
 from django.db import transaction
 
 from integrated_channels.blackboard.exporters.content_metadata import BLACKBOARD_COURSE_CONTENT_NAME
@@ -427,12 +426,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         auth header in oauth2 token format as required by blackboard doc
         """
-        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
-        app_key = (
-            self.enterprise_configuration.decrypted_client_id
-            if use_encrypted_user_data
-            else self.enterprise_configuration.client_id
-        )
+        app_key = self.enterprise_configuration.decrypted_client_id
         if not app_key:
             if not self.global_blackboard_config.app_key:
                 raise ClientError(
@@ -441,11 +435,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 )
             app_key = self.global_blackboard_config.app_key
 
-        app_secret = (
-            self.enterprise_configuration.decrypted_client_secret
-            if use_encrypted_user_data
-            else self.enterprise_configuration.client_secret
-        )
+        app_secret = self.enterprise_configuration.decrypted_client_secret
         if not app_secret:
             if not self.global_blackboard_config.app_secret:
                 raise ClientError(

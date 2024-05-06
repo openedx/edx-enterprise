@@ -67,8 +67,8 @@ class TestBlackboardApiClient(unittest.TestCase):
 
     def test_client_pulls_auth_creds_from_global_if_not_found(self):
         enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
-            client_id='',
-            client_secret='',
+            decrypted_client_id='',
+            decrypted_client_secret='',
         )
         client = BlackboardAPIClient(enterprise_config)
         auth_header = client._create_auth_header()
