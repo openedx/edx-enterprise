@@ -34,7 +34,7 @@ importlib-metadata==6.11.0
     #   typeguard
 importlib-resources==6.4.0
     # via jaraco-text
-inflect==7.2.0
+inflect==7.2.1
     # via jaraco-text
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
@@ -80,7 +80,7 @@ pytz==2024.1
     # via tempora
 pyyaml==6.0.1
     # via jasmine
-selenium==4.19.0
+selenium==4.20.0
     # via jasmine
 sniffio==1.3.1
     # via trio
