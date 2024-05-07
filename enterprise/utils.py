@@ -2219,18 +2219,17 @@ def get_platform_logo_url():
     return urljoin(settings.LMS_ROOT_URL, logo_url)
 
 
-def unset_language_of_all_enterprise_learners(enterprise_customer_uuid):
+def unset_language_of_all_enterprise_learners(enterprise_customer):
     """
     Unset the language preference of all the learners belonging to the given enterprise customer.
 
     Arguments:
-        enterprise_customer_uuid (UUI): uuid of an enterprise customer
+        enterprise_customer (UUI): Instance of the enterprise customer.
     """
     if UserPreference:
-        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
         user_ids = list(enterprise_customer.enterprise_customer_users.values_list('user_id', flat=True))
 
-        LOGGER.info('Update user preference started for learners. Enterprise: [%s]', enterprise_customer_uuid)
+        LOGGER.info('Update user preference started for learners. Enterprise: [%s]', enterprise_customer.uuid)
 
         for chunk in batch(user_ids, batch_size=10000):
             UserPreference.objects.filter(
@@ -2241,7 +2240,7 @@ def unset_language_of_all_enterprise_learners(enterprise_customer_uuid):
             )
             LOGGER.info('Updated user preference for learners. Batch Size: [%s]', len(chunk))
 
-        LOGGER.info('Update user preference completed for learners. Enterprise: [%s]', enterprise_customer_uuid)
+        LOGGER.info('Update user preference completed for learners. Enterprise: [%s]', enterprise_customer.uuid)
 
 
 def unset_enterprise_learner_language(enterprise_customer_user):

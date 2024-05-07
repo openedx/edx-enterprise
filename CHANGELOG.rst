@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.1]
+--------
+* revert: revert async task functionality implemented in 4.15.6
+* fix: update language cookie for an enterprise learner
+
 [4.17.0]
 --------
 * feat: limit the number of resulting learners in Django admin manage learners view
