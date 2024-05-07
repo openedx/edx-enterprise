@@ -205,17 +205,17 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     @property
     def oauth_authorization_url(self):
         """
-        Returns: the oauth authorization url when the blackboard_base_url and client_id are available.
+        Returns: the oauth authorization url when the blackboard_base_url and decrypted_client_id are available.
 
         Args:
             obj: The instance of BlackboardEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
-        if self.blackboard_base_url and self.client_id:
+        if self.blackboard_base_url and self.decrypted_client_id:
             return (f'{self.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode'
                     f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
                     f'scope=read%20write%20delete%20offline&response_type=code&'
-                    f'client_id={self.client_id}&state={self.uuid}')
+                    f'client_id={self.decrypted_client_id}&state={self.uuid}')
         else:
             return None
 
