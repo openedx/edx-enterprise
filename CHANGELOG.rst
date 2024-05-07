@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.2]
+--------
+* feat: added fields for holding encrypted data in database for blackboard
+
 [4.17.1]
 --------
 * revert: revert async task functionality implemented in 4.15.6
