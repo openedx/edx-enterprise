@@ -138,7 +138,7 @@ class BlackboardConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
-        client_secret = self.enterprise_customer_conf.decrypted_client_secret
+        client_secret = getattr(self.enterprise_customer_conf, 'client_id', '')
         payload = {
             'encrypted_client_secret': '1000',
             'enterprise_customer': FAKE_UUIDS[0],
@@ -148,7 +148,8 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, '1000')
         populate_decrypted_fields_blackboard(apps)
         self.enterprise_customer_conf.refresh_from_db()
-        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, client_secret)
+        self.assertEqual(self.enterprise_customer_conf.encrypted_client_secret, client_secret)
+        self.assertEqual(self.enterprise_customer_conf.encrypted_client_id, '')
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_partial_update(self, mock_current_request):
