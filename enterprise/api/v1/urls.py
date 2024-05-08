@@ -22,8 +22,8 @@ from enterprise.api.v1.views import (
     enterprise_group,
     enterprise_subsidy_fulfillment,
     notifications,
-    pending_enterprise_customer_user,
     pending_enterprise_customer_admin_user,
+    pending_enterprise_customer_user,
     plotly_auth,
 )
 

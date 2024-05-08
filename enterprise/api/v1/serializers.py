@@ -30,8 +30,8 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    PendingEnterpriseCustomerAdminUser,
     SystemWideEnterpriseUserRoleAssignment,
-    PendingEnterpriseCustomerAdminUser
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
