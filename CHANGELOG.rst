@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.4]
+--------
+* feat: added endpoint for pending_enterprise_customer_admin_user.
+
 [4.17.3]
 --------
 * feat: replacing non encrypted fields of blackboard config model with encypted ones
