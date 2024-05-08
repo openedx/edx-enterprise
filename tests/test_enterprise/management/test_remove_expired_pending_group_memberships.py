@@ -93,7 +93,7 @@ class RemoveExpiredPendingGroupMembershipsCommandTests(TestCase):
 
         call_command(self.command)
 
-        # Assert that memberships and pending customers are removed
+        # Assert that pending memberships and pending customers are removed
         assert not models.EnterpriseGroupMembership.all_objects.filter(pk=membership_to_remove.pk)
         assert not models.PendingEnterpriseCustomerUser.objects.filter(
             pk=membership_to_remove.pending_enterprise_customer_user.pk

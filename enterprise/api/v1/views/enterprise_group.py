@@ -107,12 +107,14 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         Optional query params:
         - ``pending_users_only`` (string, optional): Specify that results should only contain pending learners
-        - ``q`` (string, optional): Filter the returned members by user email and name with a provided sub-string
+        - ``user_query`` (string, optional): Filter the returned members by user email and name with a provided
+        sub-string
         - ``sort_by`` (string, optional): Specify how the returned members should be ordered. Supported sorting values
         are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
         beginning of the sorting value ie `-memberStatus`.
         - ``page`` (int, optional): Which page of paginated data to return.
         - ``show_removed`` (bool, optional): Include removed learners in the response.
+        - ``is_reversed`` (bool, optional): Include to reverse the order of returned records.
 
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
@@ -136,10 +138,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             }
 
         """
-        query_params = self.request.query_params.copy()
-        is_reversed = bool(query_params.get('is_reversed', False))
-        show_removed = bool(query_params.get('show_removed', False))
-
+        query_params = self.request.query_params
         param_serializers = serializers.EnterpriseGroupLearnersRequestQuerySerializer(
             data=query_params
         )
@@ -148,8 +147,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             return Response(param_serializers.errors, status=400)
 
         user_query = param_serializers.validated_data.get('user_query')
+        show_removed = param_serializers.validated_data.get('show_removed', False)
+        is_reversed = param_serializers.validated_data.get('is_reversed', False)
+
         sort_by = param_serializers.validated_data.get('sort_by')
-        pending_users_only = param_serializers.validated_data.get('pending_users_only')
+        pending_users_only = param_serializers.validated_data.get('pending_users_only', False)
 
         group_uuid = kwargs.get('group_uuid')
         try:
