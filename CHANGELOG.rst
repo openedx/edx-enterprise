@@ -17,6 +17,27 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.5]
+--------
+* fix: hard deleting expired group memberships
+
+[4.17.4]
+--------
+* fix: update language cookie if langauge cookie is not same as user's language preference
+
+[4.17.3]
+--------
+* feat: replacing non encrypted fields of blackboard config model with encypted ones
+
+[4.17.2]
+--------
+* feat: added fields for holding encrypted data in database for blackboard
+
+[4.17.1]
+--------
+* revert: revert async task functionality implemented in 4.15.6
+* fix: update language cookie for an enterprise learner
+
 [4.17.0]
 --------
 * feat: limit the number of resulting learners in Django admin manage learners view
