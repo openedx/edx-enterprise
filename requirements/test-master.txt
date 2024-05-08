@@ -218,7 +218,7 @@ edx-api-doc-tools==1.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/test-master.in
-edx-braze-client==0.2.2
+edx-braze-client==0.2.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in

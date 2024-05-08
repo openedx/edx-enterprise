@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.18.0]
+--------
+* feat: updates tasks usage of create_recipient to create_recipients
+
 [4.17.5]
 --------
 * fix: hard deleting expired group memberships

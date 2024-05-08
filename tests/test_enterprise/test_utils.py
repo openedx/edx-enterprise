@@ -1,6 +1,7 @@
 """
 Tests for the `edx-enterprise` utils module.
 """
+import math
 import unittest
 from datetime import timedelta
 from unittest import mock
@@ -16,6 +17,7 @@ from django.forms.models import model_to_dict
 from enterprise.constants import MAX_ALLOWED_TEXT_LENGTH
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from enterprise.utils import (
+    batch_dict,
     enroll_subsidy_users_in_courses,
     get_default_invite_key_expiration_date,
     get_idiff_list,
@@ -27,6 +29,7 @@ from enterprise.utils import (
     truncate_string,
 )
 from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
+from test_utils.fake_user_id_by_emails import generate_emails_and_ids
 
 LMS_BASE_URL = 'https://lms.base.url'
 
@@ -650,3 +653,37 @@ class TestUtils(unittest.TestCase):
         (truncated_string, was_truncated) = truncate_string(test_string_2)
         self.assertTrue(was_truncated)
         self.assertEqual(len(truncated_string), MAX_ALLOWED_TEXT_LENGTH)
+
+    @ddt.unpack
+    @ddt.data(
+        (
+            50,
+            200
+        ),
+        (
+            50,
+            56
+        ),
+        (
+            50,
+            24
+        ),
+        (
+            1,
+            200
+        )
+    )
+    def test_batch_dict_multiple_batches(self, items_per_batch, generated_emails_count):
+        """
+        Test that `batch_dict` returns a set of batched dictionaries
+        """
+        fake_user_ids_by_emails = generate_emails_and_ids(generated_emails_count)
+        for fake_user_id_by_email_chunk in batch_dict(fake_user_ids_by_emails, items_per_batch):
+            if len(fake_user_id_by_email_chunk) != items_per_batch:
+                assert len(fake_user_id_by_email_chunk) == generated_emails_count % items_per_batch
+            else:
+                assert len(fake_user_id_by_email_chunk) == items_per_batch
+            assert isinstance(fake_user_id_by_email_chunk, dict)
+        assert sum(
+            1 for _ in batch_dict(fake_user_ids_by_emails, items_per_batch)
+        ) == math.ceil(generated_emails_count / items_per_batch )

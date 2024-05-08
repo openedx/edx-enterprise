@@ -13,10 +13,10 @@ from django.conf import settings
 from django.core import mail
 from django.db import IntegrityError
 
-from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, BrazeAPIClient
+from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, MAX_NUM_IDENTIFY_USERS_ALIASES, BrazeAPIClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
-from enterprise.utils import get_enterprise_customer, send_email_notification_message
+from enterprise.utils import batch_dict, get_enterprise_customer, send_email_notification_message
 
 LOGGER = getLogger(__name__)
 
@@ -209,6 +209,58 @@ def send_sso_configured_email(
         raise exc
 
 
+def _recipients_for_identified_users(
+    user_id_by_email,
+    maximum_aliases_per_batch=MAX_NUM_IDENTIFY_USERS_ALIASES,
+    alias_label=ENTERPRISE_BRAZE_ALIAS_LABEL
+):
+    """
+    Helper function for create_recipients that takes a dictionary of user_email keys and
+    user_id values, batches them in groups of the maximum number of users alias based
+    on the braze documentation, and destructures the individual recipient values from
+    recipients_by_email and returns a list of recipients.
+
+    Arguments:
+        * user_id_by_email (dict): A dictionary of user_email key and user_id values
+        * maximum_aliases_per_batch (int):  An integer denoting the max allowable aliases to identify
+                                            per create_recipients call to braze.
+                                            Default is MAX_NUM_IDENTIFY_USERS_ALIASES
+        * alias_label (string): A string denoting the alias label requried by braze.
+                                Default is ENTERPRISE_BRAZE_ALIAS_LABEL
+
+    Return:
+        * recipients (list): A list of dictionary recipients
+
+    Example:
+        Input:
+        user_id_by_email = {
+        'test@gmail.com': 12345
+        }
+        maximum_aliases_per_batch: 50
+        alias_label: Titans
+        Output: [
+            {
+                'external_user_id: 12345,
+                'attributes: {
+                    'user_alias': {
+                        'external_id': 12345,
+                        'alias_label': 'Titans'
+                    },
+                },
+            },
+        ]
+    """
+    braze_client_instance = BrazeAPIClient()
+    recipients = []
+    for user_id_by_email_chunk in batch_dict(user_id_by_email, maximum_aliases_per_batch):
+        recipients_by_email = braze_client_instance.create_recipients(
+            alias_label,
+            user_id_by_email=user_id_by_email_chunk
+        )
+        recipients.extend(recipients_by_email.values())
+    return recipients
+
+
 @shared_task
 @set_code_owner_attribute
 def send_group_membership_invitation_notification(
@@ -240,16 +292,15 @@ def send_group_membership_invitation_notification(
 
     braze_trigger_properties['act_by_date'] = act_by_date.strftime('%B %d, %Y')
     pecu_emails = []
-    ecus = []
+    user_id_by_email = {}
     membership_records = enterprise_group_membership_model().objects.filter(uuid__in=membership_uuids)
     for group_membership in membership_records:
         if group_membership.pending_enterprise_customer_user is not None:
             pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
         else:
-            ecus.append({
-                'user_email': group_membership.enterprise_customer_user.user_email,
-                'user_id': group_membership.enterprise_customer_user.user_id
-            })
+            user_id_by_email[
+                group_membership.enterprise_customer_user.user_email
+            ] = group_membership.enterprise_customer_user.user_id
     recipients = []
     for pecu_email in pecu_emails:
         recipients.append(braze_client_instance.create_recipient_no_external_id(pecu_email))
@@ -257,10 +308,7 @@ def send_group_membership_invitation_notification(
         [pecu_emails],
         ENTERPRISE_BRAZE_ALIAS_LABEL,
     )
-    for ecu in ecus:
-        recipients.append(braze_client_instance.create_recipient(
-            user_email=ecu['user_email'],
-            lms_user_id=ecu['user_id']))
+    recipients.extend(_recipients_for_identified_users(user_id_by_email))
     try:
         braze_client_instance.send_campaign_message(
             settings.BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID,
@@ -298,16 +346,15 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
         'catalog_content_count'
     ] = enterprise_catalog_client.get_catalog_content_count(catalog_uuid)
     pecu_emails = []
-    ecus = []
+    user_id_by_email = {}
     membership_records = enterprise_group_membership_model().objects.filter(uuid__in=membership_uuids)
     for group_membership in membership_records:
         if group_membership.pending_enterprise_customer_user is not None:
             pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
         else:
-            ecus.append({
-                'user_email': group_membership.enterprise_customer_user.user_email,
-                'user_id': group_membership.enterprise_customer_user.user_id
-            })
+            user_id_by_email[
+                group_membership.enterprise_customer_user.user_email
+            ] = group_membership.enterprise_customer_user.user_id
 
     recipients = []
     for pecu_email in pecu_emails:
@@ -316,11 +363,7 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
         [pecu_emails],
         ENTERPRISE_BRAZE_ALIAS_LABEL,
     )
-    for ecu in ecus:
-        recipients.append(braze_client_instance.create_recipient(
-            user_email=ecu['user_email'],
-            lms_user_id=ecu['user_id']
-        ))
+    recipients.extend(_recipients_for_identified_users(user_id_by_email))
     try:
         braze_client_instance.send_campaign_message(
             settings.BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID,

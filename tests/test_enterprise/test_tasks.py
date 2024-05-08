@@ -213,8 +213,29 @@ class TestEnterpriseTasks(unittest.TestCase):
             activated_at=datetime.now()
         )
         admin_email = 'edx@example.org'
-        mock_recipients = [self.pending_enterprise_customer_user.user_email,
-                           mock_braze_api_client().create_recipient.return_value]
+        mock_braze_api_client().create_recipients.return_value = {
+            self.user.email: {
+                "external_user_id": self.user.id,
+                "attributes": {
+                    "user_alias": {
+                        "external_id": self.user.id,
+                        "user_alias": self.user.email,
+                    },
+                }
+            }
+        }
+        mock_recipients = [
+            self.pending_enterprise_customer_user.user_email,
+            {
+                "external_user_id": self.user.id,
+                "attributes": {
+                    "user_alias": {
+                        "external_id": self.user.id,
+                        "user_alias": self.user.email,
+                    },
+                }
+            }
+        ]
         mock_catalog_content_count = 5
         mock_admin_mailto = f'mailto:{admin_email}'
         mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
@@ -261,8 +282,29 @@ class TestEnterpriseTasks(unittest.TestCase):
             activated_at=datetime.now()
         )
         admin_email = 'edx@example.org'
-        mock_recipients = [self.pending_enterprise_customer_user.user_email,
-                           mock_braze_api_client().create_recipient.return_value]
+        mock_braze_api_client().create_recipients.return_value = {
+            self.user.email: {
+                "external_user_id": self.user.id,
+                "attributes": {
+                    "user_alias": {
+                        "external_id": self.user.id,
+                        "user_alias": self.user.email,
+                    },
+                }
+            }
+        }
+        mock_recipients = [
+            self.pending_enterprise_customer_user.user_email,
+            {
+                "external_user_id": self.user.id,
+                "attributes": {
+                    "user_alias": {
+                        "external_id": self.user.id,
+                        "user_alias": self.user.email,
+                    },
+                }
+            }
+        ]
         mock_admin_mailto = f'mailto:{admin_email}'
         mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
         mock_braze_api_client().create_recipient_no_external_id.return_value = (
