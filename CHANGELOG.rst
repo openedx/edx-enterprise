@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.4]
+--------
+* fix: update language cookie if langauge cookie is not same as user's language preference
+
 [4.17.3]
 --------
 * feat: replacing non encrypted fields of blackboard config model with encypted ones
