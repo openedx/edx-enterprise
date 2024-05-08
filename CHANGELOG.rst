@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.6]
+--------
+* fix: allowing for search lookup of group members in django admin
+
 [4.17.5]
 --------
 * fix: hard deleting expired group memberships
