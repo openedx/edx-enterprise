@@ -31,6 +31,7 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
+    PendingEnterpriseCustomerAdminUser
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -1622,6 +1623,18 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
 
     # Parses from a dictionary to JSON
     content_filter = serializers.JSONField(required=False)
+
+
+class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCatalogQuery`` model.
+    """
+
+    class Meta:
+        model = PendingEnterpriseCustomerAdminUser
+        fields = (
+            'enterprise_customer', 'user_email'
+        )
 
 
 class AnalyticsSummarySerializer(serializers.Serializer):

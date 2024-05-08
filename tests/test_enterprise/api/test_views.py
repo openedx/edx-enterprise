@@ -152,6 +152,7 @@ ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT = reverse('enterprise-customer-unlink-users', kwargs={'pk': FAKE_UUIDS[0]})
 PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
+PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT = reverse('pending-enterprise-customer-admin-list')
 LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-license-revoke'
 )
@@ -835,6 +836,77 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             'username': self.user.username
         }
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == 401
+
+
+class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
+    """
+    Test PendingEnterpriseCustomerAdminUserViewSet
+    """
+
+    def setup_admin_user(self, is_staff=True):
+        """
+        Creates an admin user and logs them in
+        """
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
+    def test_post_pending_enterprise_customer_admin_user_creation(self):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerAdminUsers.
+        """
+
+        # create user making the request
+        self.setup_admin_user(True)
+
+        # Create fake enterprise
+        ent_uuid = fake.uuid4()
+        factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == 201
+        response = self.load_json(response.content)
+
+    def test_post_pending_enterprise_customer_unauthorized_user(self):
+        """
+        Make sure unauthorized users can't post PendingEnterpriseCustomerAdminUsers.
+        """
+        # create user making the request
+        self.setup_admin_user(False)
+
+        # create fake enterprise
+        ent_uuid = fake.uuid4()
+        factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == 403
+
+    def test_post_pending_enterprise_customer_user_logged_out(self):
+        """
+        Make sure users can't post PendingEnterpriseCustomerAdminUsers when logged out.
+        """
+        self.client.logout()
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'username': self.user.username
+        }
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
 
