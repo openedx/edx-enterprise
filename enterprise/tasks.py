@@ -253,10 +253,11 @@ def send_group_membership_invitation_notification(
     recipients = []
     for pecu_email in pecu_emails:
         recipients.append(braze_client_instance.create_recipient_no_external_id(pecu_email))
-    braze_client_instance.create_braze_alias(
-        [pecu_emails],
-        ENTERPRISE_BRAZE_ALIAS_LABEL,
-    )
+    if pecu_emails:
+        braze_client_instance.create_braze_alias(
+            pecu_emails,
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
     for ecu in ecus:
         recipients.append(braze_client_instance.create_recipient(
             user_email=ecu['user_email'],
@@ -310,12 +311,15 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
             })
 
     recipients = []
+
     for pecu_email in pecu_emails:
         recipients.append(braze_client_instance.create_recipient_no_external_id(pecu_email))
-    braze_client_instance.create_braze_alias(
-        [pecu_emails],
-        ENTERPRISE_BRAZE_ALIAS_LABEL,
-    )
+    if pecu_emails:
+        braze_client_instance.create_braze_alias(
+            pecu_emails,
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+
     for ecu in ecus:
         recipients.append(braze_client_instance.create_recipient(
             user_email=ecu['user_email'],
