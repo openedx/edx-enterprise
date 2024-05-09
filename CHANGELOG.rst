@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.8]
+--------
+* fix: adding missing migration file
+
 [4.17.7]
 --------
 * fix: update group invite and removal notification tasks
