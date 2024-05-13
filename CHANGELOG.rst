@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.18.2]
+--------
+* fix: update enterprise model lookup in removal email task
+
 [4.18.1]
 --------
 * chore: debugging log lines

@@ -273,17 +273,19 @@ class TestEnterpriseTasks(unittest.TestCase):
         """
         Verify send_group_membership_removal_notification hits braze client with expected args
         """
-        EnterpriseGroupMembershipFactory(
+        pecu_membership = EnterpriseGroupMembershipFactory(
             group=self.enterprise_group,
             pending_enterprise_customer_user=self.pending_enterprise_customer_user,
             enterprise_customer_user=None,
         )
-        EnterpriseGroupMembershipFactory(
+        ecu_membership = EnterpriseGroupMembershipFactory(
             group=self.enterprise_group,
             pending_enterprise_customer_user=None,
             enterprise_customer_user__enterprise_customer=self.enterprise_customer,
             activated_at=datetime.now()
         )
+        pecu_membership.delete()
+        ecu_membership.delete()
         admin_email = 'edx@example.org'
         mock_braze_api_client().create_recipients.return_value = {
             self.user.email: {
@@ -315,7 +317,7 @@ class TestEnterpriseTasks(unittest.TestCase):
         mock_catalog_content_count = 5
         mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
             mock_catalog_content_count)
-        membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
+        membership_uuids = EnterpriseGroupMembership.all_objects.values_list('uuid', flat=True)
         catalog_uuid = uuid.uuid4()
         send_group_membership_removal_notification(
             self.enterprise_customer.uuid,

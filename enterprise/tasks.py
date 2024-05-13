@@ -376,7 +376,7 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
     ] = enterprise_catalog_client.get_catalog_content_count(catalog_uuid)
     pecu_emails = []
     user_id_by_email = {}
-    membership_records = enterprise_group_membership_model().objects.filter(uuid__in=membership_uuids)
+    membership_records = enterprise_group_membership_model().all_objects.filter(uuid__in=membership_uuids)
     for group_membership in membership_records:
         if group_membership.pending_enterprise_customer_user is not None:
             pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
