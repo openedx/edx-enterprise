@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.18.1]
+--------
+* chore: debugging log lines
+
 [4.18.0]
 --------
 * feat: updates tasks usage of create_recipient to create_recipients
