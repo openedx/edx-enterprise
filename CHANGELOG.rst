@@ -20,6 +20,18 @@ Unreleased
 [4.18.0]
 --------
 * feat: updates tasks usage of create_recipient to create_recipients
+=======
+[4.17.8]
+--------
+* fix: adding missing migration file
+
+[4.17.7]
+--------
+* fix: update group invite and removal notification tasks
+
+[4.17.6]
+--------
+* fix: allowing for search lookup of group members in django admin
 
 [4.17.5]
 --------

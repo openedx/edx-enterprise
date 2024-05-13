@@ -1203,9 +1203,10 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
     list_display = ('group', 'membership_user',)
     search_fields = (
         'uuid',
-        'group__enterprise_customer_user',
-        'enterprise_customer_user',
-        'pending_enterprise_customer_user',
+        'group__uuid',
+        'group__enterprise_customer__uuid',
+        'enterprise_customer_user__id',
+        'pending_enterprise_customer_user__user_email',
     )
     autocomplete_fields = (
         'group',
