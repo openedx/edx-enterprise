@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.17.9]
+--------
+* fix: update enterprise model lookup in removal email task
+
 [4.17.8]
 --------
 * fix: adding missing migration file
