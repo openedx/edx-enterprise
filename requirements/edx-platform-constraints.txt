@@ -411,7 +411,7 @@ edx-auth-backends==4.3.0
     # via
     #   -r requirements/edx/kernel.in
     #   openedx-blockstore
-edx-braze-client==0.2.2
+edx-braze-client==0.2.5
     # via
     #   -r requirements/edx/bundled.in
     #   edx-enterprise

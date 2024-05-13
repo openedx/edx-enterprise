@@ -10,6 +10,8 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 ENTERPRISE_BRAZE_ALIAS_LABEL = 'Enterprise'  # Do Not change this, this is consistent with other uses across edX repos.
+# https://www.braze.com/docs/api/endpoints/user_data/post_user_identify/
+MAX_NUM_IDENTIFY_USERS_ALIASES = 50
 
 
 class BrazeAPIClient(BrazeClient):
@@ -40,45 +42,6 @@ class BrazeAPIClient(BrazeClient):
             return f'mailto:{",".join(emails)}'
 
         return None
-
-    def create_recipient(
-        self,
-        user_email,
-        lms_user_id,
-        trigger_properties=None,
-    ):
-        """
-        Create a recipient object using the given user_email and lms_user_id.
-        Identifies the given email address with any existing Braze alias records
-        via the provided ``lms_user_id``.
-        """
-
-        user_alias = {
-            'alias_label': ENTERPRISE_BRAZE_ALIAS_LABEL,
-            'alias_name': user_email,
-        }
-
-        # Identify the user alias in case it already exists. This is necessary so
-        # we don't accidentally create a duplicate Braze profile.
-        self.identify_users([{
-            'external_id': lms_user_id,
-            'user_alias': user_alias
-        }])
-
-        attributes = {
-            "user_alias": user_alias,
-            "email": user_email,
-            "is_enterprise_learner": True,
-            "_update_existing_only": False,
-        }
-
-        return {
-            'external_user_id': lms_user_id,
-            'attributes': attributes,
-            # If a profile does not already exist, Braze will create a new profile before sending a message.
-            'send_to_existing_only': False,
-            'trigger_properties': trigger_properties or {},
-        }
 
     def create_recipient_no_external_id(self, user_email):
         """
