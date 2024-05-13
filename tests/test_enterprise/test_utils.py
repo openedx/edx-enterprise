@@ -686,4 +686,4 @@ class TestUtils(unittest.TestCase):
             assert isinstance(fake_user_id_by_email_chunk, dict)
         assert sum(
             1 for _ in batch_dict(fake_user_ids_by_emails, items_per_batch)
-        ) == math.ceil(generated_emails_count / items_per_batch )
+        ) == math.ceil(generated_emails_count / items_per_batch)

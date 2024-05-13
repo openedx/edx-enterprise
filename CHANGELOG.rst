@@ -20,7 +20,7 @@ Unreleased
 [4.18.0]
 --------
 * feat: updates tasks usage of create_recipient to create_recipients
-=======
+
 [4.17.8]
 --------
 * fix: adding missing migration file

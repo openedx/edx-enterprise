@@ -309,10 +309,6 @@ def send_group_membership_invitation_notification(
             pecu_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
-    braze_client_instance.create_braze_alias(
-        [pecu_emails],
-        ENTERPRISE_BRAZE_ALIAS_LABEL,
-    )
     recipients.extend(_recipients_for_identified_users(user_id_by_email))
     try:
         braze_client_instance.send_campaign_message(
@@ -370,10 +366,6 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
             pecu_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
-    braze_client_instance.create_braze_alias(
-        [pecu_emails],
-        ENTERPRISE_BRAZE_ALIAS_LABEL,
-    )
     recipients.extend(_recipients_for_identified_users(user_id_by_email))
     try:
         braze_client_instance.send_campaign_message(
