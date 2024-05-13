@@ -252,12 +252,31 @@ def _recipients_for_identified_users(
     """
     braze_client_instance = BrazeAPIClient()
     recipients = []
+    LOGGER.info(
+        '_recipients_for_identified_users_1: user_id_by_email: {%s}, '
+        'maximum_aliases_per_batch: {%s}, alias_label: {%s} ',
+        user_id_by_email,
+        maximum_aliases_per_batch,
+        alias_label
+    )
     for user_id_by_email_chunk in batch_dict(user_id_by_email, maximum_aliases_per_batch):
+        LOGGER.info(
+            '_recipients_for_identified_users_2: user_id_by_email_chunk: {%s} ',
+            user_id_by_email_chunk
+        )
         recipients_by_email = braze_client_instance.create_recipients(
             alias_label,
             user_id_by_email=user_id_by_email_chunk
         )
-        recipients.extend(recipients_by_email.values())
+        LOGGER.info(
+            '_recipients_for_identified_users_3: recipients_by_email: {%s} ',
+            recipients_by_email
+        )
+    recipients.extend(recipients_by_email.values())
+    LOGGER.info(
+        '_recipients_for_identified_users_4: recipients: {%s} ',
+        recipients
+    )
     return recipients
 
 
@@ -298,6 +317,11 @@ def send_group_membership_invitation_notification(
         if group_membership.pending_enterprise_customer_user is not None:
             pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
         else:
+            LOGGER.info(
+                'send_group_membership_invitation_notification_1: user_email: {%s}, user_id: {%s} ',
+                group_membership.enterprise_customer_user.user_email,
+                group_membership.enterprise_customer_user.user_id
+            )
             user_id_by_email[
                 group_membership.enterprise_customer_user.user_email
             ] = group_membership.enterprise_customer_user.user_id
@@ -310,6 +334,10 @@ def send_group_membership_invitation_notification(
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
     recipients.extend(_recipients_for_identified_users(user_id_by_email))
+    LOGGER.info(
+        'send_group_membership_invitation_notification_2: recipients: {%s} ',
+        recipients
+    )
     try:
         braze_client_instance.send_campaign_message(
             settings.BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID,
@@ -353,6 +381,11 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
         if group_membership.pending_enterprise_customer_user is not None:
             pecu_emails.append(group_membership.pending_enterprise_customer_user.user_email)
         else:
+            LOGGER.info(
+                'send_group_membership_removal_notification_1: user_email: {%s}, user_id: {%s} ',
+                group_membership.enterprise_customer_user.user_email,
+                group_membership.enterprise_customer_user.user_id
+            )
             user_id_by_email[
                 group_membership.enterprise_customer_user.user_email
             ] = group_membership.enterprise_customer_user.user_id
@@ -366,7 +399,12 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
             pecu_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
+
     recipients.extend(_recipients_for_identified_users(user_id_by_email))
+    LOGGER.info(
+        'send_group_membership_removal_notification_2: recipients: {%s} ',
+        recipients
+    )
     try:
         braze_client_instance.send_campaign_message(
             settings.BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID,
