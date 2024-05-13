@@ -8084,12 +8084,17 @@ class TestEnterpriseGroupViewSet(APITest):
             membership = EnterpriseGroupMembershipFactory(group=self.group_2)
             memberships_to_delete.append(membership)
             existing_emails.append(membership.enterprise_customer_user.user.email)
-
-        request_data = {'learner_emails': existing_emails}
+        catalog_uuid = uuid.uuid4()
+        request_data = {'learner_emails': existing_emails, 'catalog_uuid': catalog_uuid}
         response = self.client.post(url, data=request_data)
         assert response.status_code == 200
         assert response.data == {'records_deleted': 10}
         assert mock_send_group_membership_removal_notification.call_count == 1
+        mock_send_group_membership_removal_notification.assert_called_once_with(
+            self.enterprise_customer.uuid,
+            [membership.uuid for membership in reversed(memberships_to_delete)],
+            catalog_uuid,
+        )
         for membership in memberships_to_delete:
             assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).status == 'removed'
             assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).removed_at
