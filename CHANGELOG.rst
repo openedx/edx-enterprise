@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.18.3]
+--------
+* fix: indentation error in for loop
+
 [4.18.2]
 --------
 * fix: update enterprise model lookup in removal email task

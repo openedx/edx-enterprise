@@ -272,7 +272,7 @@ def _recipients_for_identified_users(
             '_recipients_for_identified_users_3: recipients_by_email: {%s} ',
             recipients_by_email
         )
-    recipients.extend(recipients_by_email.values())
+        recipients.extend(recipients_by_email.values())
     LOGGER.info(
         '_recipients_for_identified_users_4: recipients: {%s} ',
         recipients
@@ -333,9 +333,13 @@ def send_group_membership_invitation_notification(
             pecu_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
+    LOGGER.info(
+        'send_group_membership_invitation_notification_2: user_id_by_email: {%s} ',
+        user_id_by_email,
+    )
     recipients.extend(_recipients_for_identified_users(user_id_by_email))
     LOGGER.info(
-        'send_group_membership_invitation_notification_2: recipients: {%s} ',
+        'send_group_membership_invitation_notification_3: recipients: {%s} ',
         recipients
     )
     try:
@@ -399,10 +403,13 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
             pecu_emails,
             ENTERPRISE_BRAZE_ALIAS_LABEL,
         )
-
+    LOGGER.info(
+        'send_group_membership_invitation_notification_2: user_id_by_email: {%s} ',
+        user_id_by_email,
+    )
     recipients.extend(_recipients_for_identified_users(user_id_by_email))
     LOGGER.info(
-        'send_group_membership_removal_notification_2: recipients: {%s} ',
+        'send_group_membership_removal_notification_3: recipients: {%s} ',
         recipients
     )
     try:
