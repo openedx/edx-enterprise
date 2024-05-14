@@ -26,5 +26,5 @@ tox==3.28.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/ci.in
-virtualenv==20.26.1
+virtualenv==20.26.2
     # via tox
