@@ -217,6 +217,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             ecus = []
             # Gather all existing User objects associated with the email batch
             existing_users = User.objects.filter(email__in=user_email_batch)
+
             # Build and create a list of EnterpriseCustomerUser objects for the emails of existing Users
             # Ignore conflicts in case any of the ent customer user objects already exist
             ecu_by_email = {
@@ -233,7 +234,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             # whether they were created above or already existed
             ecus.extend(
                 models.EnterpriseCustomerUser.objects.filter(
-                    user_id__in=existing_users.values_list('id', flat=True)
+                    user_id__in=existing_users.values_list('id', flat=True),
+                    enterprise_customer=customer,
                 )
             )
 

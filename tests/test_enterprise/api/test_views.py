@@ -7979,6 +7979,26 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 201
         assert response.json() == {'records_processed': 1, 'new_learners': 1, 'existing_learners': 0}
 
+    def test_assign_learners_to_group_with_multiple_enterprises(self):
+        """
+        Test that assigning learners to groups does not associated ECUs linked to different customers that share emails
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        user = UserFactory()
+        # Make two enterprise customers, both pointing to the same LMS user, but to different customers
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
+        EnterpriseCustomerUserFactory(user_id=user.id)
+
+        # Create a membership for the email
+        request_data = {
+            'learner_emails': [user.email],
+        }
+        self.client.post(url, data=request_data)
+        assert len(EnterpriseGroupMembership.objects.filter(group=self.group_2)) == 1
+
     @mock.patch('enterprise.tasks.send_group_membership_invitation_notification.delay', return_value=mock.MagicMock())
     def test_successful_assign_learners_to_group(self, mock_send_group_membership_invitation_notification):
         """
