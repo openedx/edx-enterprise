@@ -58,66 +58,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 content_metadata
             ): self.fake_catalog_modified_at for content_metadata in get_fake_content_metadata()
         }
-        super().setUp()
-
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
-    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
-    def test_exporter_transforms_metadata_of_items_to_be_deleted(
-        self,
-        mock_get_catalog_diff,
-        mock_get_content_metadata,
-    ):
-        """
-        Test that the exporter properly transforms the metadata of items that are to be deleted.
-        """
-        sap_config = factories.SAPSuccessFactorsEnterpriseCustomerConfiguration(
-            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
-        )
-
-        # Existing audit metadata, needs to be updated/transformed.
-        # According to the SAP channel, upon deletion we need to set each content metadata blob's status to `INACTIVE`.
-        # Additionally, according to the mocked catalog metadata, the transformed mappings of the record need ot be
-        # updated. We will assert that both of these transformations are applied by the exporter.
-        channel_metadata = {
-            "courseID": "NYIF+BOPC.4x",
-            "providerID": "EDX",
-            # This status should be transformed to `INACTIVE` by the exporter
-            "status": "ACTIVE",
-            "title": [{
-                "locale": "English",
-                "value": "Brokerage Operations Professional Certificate Examination"
-            }],
-            "content": [
-                {
-                    "providerID": "EDX",
-                    "contentTitle": "Brokerage Operations Professional Certificate Examination",
-                    "contentID": "NYIF+BOPC.4x",
-                    "launchType": 3,
-                    "mobileEnabled": True,
-                }
-            ],
-            "schedule": [
-                {
-                    "startDate": "",
-                    "endDate": "",
-                    "active": False,
-                    "duration": "0 days"
-                }
-            ],
-            "price": [
-                {
-                    "currency": "USD",
-                    "value": 0.0
-                }
-            ]
-        }
-        content_id = "NYIF+BOPC.4x"
-        content_id_to_skip = "CTIF+BOPC.4x"
-        mock_metadata = {
+        self.content_id = "NYIF+BOPC.4x"
+        self.mock_metadata = {
             "aggregation_key": "course:NYIF+BOPC.4x",
             "content_type": "course",
             "full_description": "ayylmao",
-            "key": content_id,
+            "key": self.content_id,
             "title": "Brokerage Operations Professional Certificate Examination",
             "course_runs": [
                 {
@@ -157,23 +103,81 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             ],
             "enrollment_url": "https://foobar.com"
         }
+        self.channel_metadata = {
+            "courseID": "NYIF+BOPC.4x",
+            "providerID": "EDX",
+            # This status should be transformed to `INACTIVE` by the exporter
+            "status": "ACTIVE",
+            "title": [{
+                "locale": "English",
+                "value": "Brokerage Operations Professional Certificate Examination"
+            }],
+            "content": [
+                {
+                    "providerID": "EDX",
+                    "contentTitle": "Brokerage Operations Professional Certificate Examination",
+                    "contentID": "NYIF+BOPC.4x",
+                    "launchType": 3,
+                    "mobileEnabled": True,
+                }
+            ],
+            "schedule": [
+                {
+                    "startDate": "",
+                    "endDate": "",
+                    "active": False,
+                    "duration": "0 days"
+                }
+            ],
+            "price": [
+                {
+                    "currency": "USD",
+                    "value": 0.0
+                }
+            ]
+        }
+        super().setUp()
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_exporter_transforms_metadata_of_items_to_be_deleted(
+        self,
+        mock_get_catalog_diff,
+        mock_get_content_metadata,
+    ):
+        """
+        Test that the exporter properly transforms the metadata of items that are to be deleted.
+        """
+        sap_config = factories.SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+        )
+
+        # Existing audit metadata, needs to be updated/transformed.
+        # According to the SAP channel, upon deletion we need to set each content metadata blob's status to `INACTIVE`.
+        # Additionally, according to the mocked catalog metadata, the transformed mappings of the record need ot be
+        # updated. We will assert that both of these transformations are applied by the exporter.
+
+        content_id_to_skip = "CTIF+BOPC.4x"
+
         # Create the transmission audit with the out of date channel metadata
         transmission_audit = factories.ContentMetadataItemTransmissionFactory(
-            content_id=content_id,
+            content_id=self.content_id,
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=sap_config.id,
             integrated_channel_code=sap_config.channel_code(),
-            channel_metadata=channel_metadata,
+            channel_metadata=self.channel_metadata,
             remote_created_at=datetime.datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             remote_errored_at=None,
         )
+        # explicitly set modified timestamp to a value older than remote_errored_at
+        self.config.enterprise_customer.modified = timezone.now() - timezone.timedelta(hours=40)
         transmission_audit_to_skip = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_to_skip,
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=sap_config.id,
             integrated_channel_code=sap_config.channel_code(),
-            channel_metadata=channel_metadata,
+            channel_metadata=self.channel_metadata,
             remote_created_at=datetime.datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             # failed within last 24hrs
@@ -181,13 +185,17 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         )
 
         # Mock the catalog service to return the metadata of the content to be deleted
-        mock_get_content_metadata.return_value = [mock_metadata]
+        mock_get_content_metadata.return_value = [self.mock_metadata]
         # Mock the catalog service to return the content to be deleted in the delete payload
-        mock_get_catalog_diff.return_value = ([], [{'content_key': transmission_audit.content_id}], [])
-        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', sap_config)
+        mock_get_catalog_diff.return_value = (
+            [], [{'content_key': transmission_audit.content_id}], [])
+        exporter = SapSuccessFactorsContentMetadataExporter(
+            'fake-user', sap_config)
         _, _, delete_payload = exporter.export()
-        assert delete_payload[transmission_audit.content_id].channel_metadata.get('schedule') == []
-        assert delete_payload[transmission_audit.content_id].channel_metadata.get('status') == 'INACTIVE'
+        assert delete_payload[transmission_audit.content_id].channel_metadata.get(
+            'schedule') == []
+        assert delete_payload[transmission_audit.content_id].channel_metadata.get(
+            'status') == 'INACTIVE'
 
         # if transmission was attempted in last 24hrs, it shouldn't be reattempted
         mock_get_catalog_diff.return_value = (
@@ -196,6 +204,58 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             'fake-user', sap_config)
         _, _, delete_payload = exporter.export()
         assert not delete_payload
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
+    def test_exporter_force_transmit_works(
+        self,
+        mock_get_catalog_diff,
+        mock_get_content_metadata,
+    ):
+        """
+        Test that the exporter properly exports failed transmission if customer configs are changed
+        within 24hrs after it was failed. It's decided based on enterprise_customer.modified 
+        and remote_created_at timestamp
+        """
+        sap_config = factories.SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
+        )
+
+        content_id_to_not_skip = "MTIF+BOPC.4x"
+
+        # explicitly set modified timestamp to a value greater than remote_errored_at
+        # to make sure that we're force transmitting failed transmissions if customer
+        # configs are changed before 24hrs are passed
+        self.config.enterprise_customer.modified = timezone.now() - \
+            timezone.timedelta(hours=20)
+        transmission_audit_to_skip = factories.ContentMetadataItemTransmissionFactory(
+            content_id=content_id_to_not_skip,
+            enterprise_customer=self.config.enterprise_customer,
+            plugin_configuration_id=sap_config.id,
+            integrated_channel_code=sap_config.channel_code(),
+            channel_metadata=self.channel_metadata,
+            remote_created_at=datetime.datetime.utcnow(),
+            enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
+            # failed within last 24hrs
+            remote_errored_at=timezone.now() - timezone.timedelta(hours=23),
+        )
+
+        # Mock the catalog service to return the metadata of the content to be deleted
+        mock_get_content_metadata.return_value = [self.mock_metadata]
+
+        # Mock the catalog service to return the content to be deleted in the delete payload
+        mock_get_catalog_diff.return_value = (
+            [], [{'content_key': transmission_audit_to_skip.content_id}], [])
+        exporter = SapSuccessFactorsContentMetadataExporter(
+            'fake-user', sap_config)
+
+        # We don't reattempt transmission if transmission it failed in last 24hrs
+        # But if within 24hrs, customer configurations are changed then we reattempt to transmit
+        # even though 24hrs aren't yet passed
+
+        _, _, delete_payload = exporter.export()
+        assert delete_payload == {
+            transmission_audit_to_skip.content_id: transmission_audit_to_skip}
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_diff')
     def test_exporter_get_catalog_diff_works_with_orphaned_content(self, mock_get_catalog_diff):
