@@ -976,7 +976,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         error_message = response.json().get('non_field_errors', [])[0]
         expected_message = 'A user with this email and enterprise customer already has admin permission.'
         self.assertEqual(error_message, expected_message)
-    
+
     def test_patch_pending_admin_user_with_existing_email(self):
         """
         Test patching a pending enterprise customer admin user with an email that already exists
@@ -1018,7 +1018,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
             'enterprise_customer': self.enterprise_customer.uuid,
             'user_email': self.user.email,
         }
-        
+
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
 
         self.assertEqual(response.status_code, 400)
