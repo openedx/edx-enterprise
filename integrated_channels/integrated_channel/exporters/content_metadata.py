@@ -203,8 +203,12 @@ class ContentMetadataExporter(Exporter):
                     remote_deleted_at__isnull=True,
                     remote_created_at__isnull=False,
                 )
-                content_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
-                    remote_errored_at__isnull=True), Q.AND)
+
+                content_query.add(
+                    Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+                    Q(remote_errored_at__lt=self.enterprise_customer.modified),
+                    Q.AND
+                )
                 # If not force_retrieve_all_catalogs, filter content records where `content last changed` is less than
                 # the matched item's `date_updated`, otherwise select the row regardless of what the updated at time is.
                 if not force_retrieve_all_catalogs:
@@ -408,8 +412,10 @@ class ContentMetadataExporter(Exporter):
                     plugin_configuration_id=self.enterprise_configuration.id,
                     content_id=content_id
                 )
-                past_content_query.add(Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(
-                    remote_errored_at__isnull=True), Q.AND)
+
+                past_content_query.add(
+                    Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+                    Q(remote_errored_at__lt=self.enterprise_customer.modified), Q.AND)
                 past_content = ContentMetadataItemTransmission.objects.filter(
                     past_content_query).first()
                 if past_content:
