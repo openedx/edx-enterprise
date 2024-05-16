@@ -21,6 +21,10 @@ Unreleased
 --------
 * feat: Introduce disable_expiry field on the enterprise customer model
 
+[4.18.6]
+--------
+* feat: allowing for group members to be revived by reassigning
+
 [4.18.5]
 --------
 * feat: force transmit content metadata if customer configs are modified

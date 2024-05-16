@@ -210,13 +210,23 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         total_records_processed = 0
         total_existing_users_processed = 0
         total_new_users_processed = 0
+        user_emails_to_create = []
+        memberships_to_create = []
         for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
-            user_emails_to_create = []
-            memberships_to_create = []
-            # ecus: enterprise customer users
-            ecus = []
             # Gather all existing User objects associated with the email batch
             existing_users = User.objects.filter(email__in=user_email_batch)
+
+            # Revive any previously deleted membership records connected to ECUs containing related emails
+            previously_removed_ecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
+                enterprise_customer_user__user_id__in=existing_users.values_list('id', flat=True),
+                is_removed=True,
+                group=group,
+            )
+            previously_removed_ecu_learners.update(
+                status=constants.GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+                removed_at=None,
+                is_removed=False,
+            )
 
             # Build and create a list of EnterpriseCustomerUser objects for the emails of existing Users
             # Ignore conflicts in case any of the ent customer user objects already exist
@@ -232,12 +242,10 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
             # Fetch all ent customer users related to existing users provided by requester
             # whether they were created above or already existed
-            ecus.extend(
-                models.EnterpriseCustomerUser.objects.filter(
-                    user_id__in=existing_users.values_list('id', flat=True),
-                    enterprise_customer=customer,
-                )
-            )
+            ecus = models.EnterpriseCustomerUser.objects.filter(
+                user_id__in=existing_users.values_list('id', flat=True),
+                enterprise_customer=customer,
+            ).exclude(pk__in=previously_removed_ecu_learners.values_list('pk', flat=True))
 
             # Extend the list of emails that don't have User objects associated and need to be turned into
             # new PendingEnterpriseCustomerUser objects
@@ -257,6 +265,18 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         # Go over (in batches) all emails that don't have User objects
         for emails_to_create_batch in utils.batch(user_emails_to_create, batch_size=200):
+            # Revive any previously deleted membership records connected to PECUs containing related emails
+            previously_removed_pecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
+                pending_enterprise_customer_user__user_email__in=emails_to_create_batch,
+                is_removed=True,
+                group=group,
+            )
+            previously_removed_pecu_learners.update(
+                status=constants.GROUP_MEMBERSHIP_PENDING_STATUS,
+                removed_at=None,
+                is_removed=False,
+            )
+
             # Create the PendingEnterpriseCustomerUser objects
             pecu_records = [
                 models.PendingEnterpriseCustomerUser(
@@ -269,7 +289,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             pecus = models.PendingEnterpriseCustomerUser.objects.filter(
                 user_email__in=emails_to_create_batch,
                 enterprise_customer=customer,
-            )
+            ).exclude(pk__in=previously_removed_pecu_learners.values_list("pk", flat=True))
             total_new_users_processed += len(pecus)
             # Extend the list of memberships that need to be created associated with the new pending users
             memberships_to_create.extend([
