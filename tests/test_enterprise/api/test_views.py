@@ -43,6 +43,8 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+    GROUP_MEMBERSHIP_PENDING_STATUS,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
@@ -8187,6 +8189,73 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 201
         assert response.json() == {'records_processed': 1, 'new_learners': 1, 'existing_learners': 0}
 
+    def test_assign_learners_to_group_with_multiple_enterprises(self):
+        """
+        Test that assigning learners to groups does not associated ECUs linked to different customers that share emails
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        user = UserFactory()
+        # Make two enterprise customers, both pointing to the same LMS user, but to different customers
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
+        EnterpriseCustomerUserFactory(user_id=user.id)
+
+        # Create a membership for the email
+        request_data = {
+            'learner_emails': [user.email],
+        }
+        self.client.post(url, data=request_data)
+        assert len(EnterpriseGroupMembership.objects.filter(group=self.group_2)) == 1
+
+    def test_assign_learners_revives_previously_removed_members(self):
+        """
+        Test that assigning learners to a group when the learner has already been removed as a member will revive the
+        membership
+        """
+        pending_membership = EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        membership = EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            enterprise_customer_user=EnterpriseCustomerUserFactory(),
+            pending_enterprise_customer_user=None,
+        )
+
+        # Remove the memberships
+        remove_url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        request_data = {'learner_emails': [membership.member_email, pending_membership.member_email]}
+        self.client.post(remove_url, data=request_data)
+
+        membership.refresh_from_db()
+        pending_membership.refresh_from_db()
+        assert membership.is_removed
+        assert pending_membership.is_removed
+
+        # Recreate the memberships for the emails
+        assign_url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        request_data = {
+            'learner_emails': [membership.member_email, pending_membership.member_email],
+        }
+        self.client.post(assign_url, data=request_data)
+
+        # Assert the memberships have been revived
+        membership.refresh_from_db()
+        pending_membership.refresh_from_db()
+        assert not pending_membership.is_removed
+        assert not membership.is_removed
+        assert pending_membership.status == GROUP_MEMBERSHIP_PENDING_STATUS
+        assert membership.status == GROUP_MEMBERSHIP_ACCEPTED_STATUS
+
     @mock.patch('enterprise.tasks.send_group_membership_invitation_notification.delay', return_value=mock.MagicMock())
     def test_successful_assign_learners_to_group(self, mock_send_group_membership_invitation_notification):
         """
@@ -8196,8 +8265,8 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-assign-learners',
             kwargs={'group_uuid': self.group_2.uuid},
         )
-        existing_emails = [UserFactory().email for _ in range(10)]
-        new_emails = [f"email_{x}@example.com" for x in range(10)]
+        existing_emails = [UserFactory(email=f"ayylmao{x}@example.com").email for x in range(400)]
+        new_emails = [f"email_{x}@example.com" for x in range(400)]
         act_by_date = datetime.now(pytz.UTC)
         catalog_uuid = uuid.uuid4()
         request_data = {
@@ -8207,24 +8276,38 @@ class TestEnterpriseGroupViewSet(APITest):
         }
         response = self.client.post(url, data=request_data)
         assert response.status_code == 201
-        assert response.data == {'records_processed': 20, 'new_learners': 10, 'existing_learners': 10}
+        assert response.data == {'records_processed': 800, 'new_learners': 400, 'existing_learners': 400}
         assert len(
             EnterpriseGroupMembership.objects.filter(
                 group=self.group_2,
                 pending_enterprise_customer_user__isnull=True
             )
-        ) == 10
+        ) == 400
         assert len(
             EnterpriseGroupMembership.objects.filter(
                 group=self.group_2,
                 enterprise_customer_user__isnull=True
             )
-        ) == 10
-        assert mock_send_group_membership_invitation_notification.call_count == 1
-        group_uuids = list(reversed(list(
-            EnterpriseGroupMembership.objects.filter(group=self.group_2).values_list('uuid', flat=True))))
-        mock_send_group_membership_invitation_notification.assert_has_calls([
-            mock.call(self.enterprise_customer.uuid, group_uuids, act_by_date, catalog_uuid)], any_order=True)
+        ) == 400
+
+        # Batch size for sending membership invitation notifications is 200, 800 total records means 4 iterations
+        group_uuids = list(
+            reversed(
+                list(EnterpriseGroupMembership.objects.filter(group=self.group_2).values_list('uuid', flat=True))
+            )
+        )
+        assert mock_send_group_membership_invitation_notification.call_count == len(group_uuids) / 200
+
+        for x in range(int(len(group_uuids) / 200)):
+            mock_send_group_membership_invitation_notification.assert_has_calls(
+                [mock.call(
+                    self.enterprise_customer.uuid,
+                    group_uuids[(x * 200):((x + 1) * 200)],
+                    act_by_date,
+                    catalog_uuid
+                )],
+                any_order=True,
+            )
 
     def test_remove_learners_404(self):
         """
@@ -8292,12 +8375,17 @@ class TestEnterpriseGroupViewSet(APITest):
             membership = EnterpriseGroupMembershipFactory(group=self.group_2)
             memberships_to_delete.append(membership)
             existing_emails.append(membership.enterprise_customer_user.user.email)
-
-        request_data = {'learner_emails': existing_emails}
+        catalog_uuid = uuid.uuid4()
+        request_data = {'learner_emails': existing_emails, 'catalog_uuid': catalog_uuid}
         response = self.client.post(url, data=request_data)
         assert response.status_code == 200
         assert response.data == {'records_deleted': 10}
         assert mock_send_group_membership_removal_notification.call_count == 1
+        mock_send_group_membership_removal_notification.assert_called_once_with(
+            self.enterprise_customer.uuid,
+            [membership.uuid for membership in reversed(memberships_to_delete)],
+            catalog_uuid,
+        )
         for membership in memberships_to_delete:
             assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).status == 'removed'
             assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).removed_at

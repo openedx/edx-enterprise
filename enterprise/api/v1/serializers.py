@@ -1779,3 +1779,10 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         required=False,
     )
     pending_users_only = serializers.BooleanField(required=False, default=False)
+    show_removed = serializers.BooleanField(required=False, default=False)
+    is_reversed = serializers.BooleanField(required=False, default=False)
+    page = serializers.IntegerField(required=False)
+    lms_users = serializers.ListField(
+        child=serializers.IntegerField(required=True),
+        required=False,
+    )

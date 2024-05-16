@@ -200,7 +200,7 @@ drf-yasg==1.21.5
     #   edx-api-doc-tools
 edx-api-doc-tools==1.8.0
     # via -r requirements/test-master.txt
-edx-braze-client==0.2.2
+edx-braze-client==0.2.5
     # via -r requirements/test-master.txt
 edx-django-utils==5.13.0
     # via

@@ -8,6 +8,7 @@ from unittest import mock
 import ddt
 from pytest import mark
 
+from django.conf import settings
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test.client import Client, RequestFactory
 
@@ -156,3 +157,19 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
 
             # Make sure the set cookie is not called for anonymous users
             assert getattr(self.request, '_anonymous_user_cookie_lang', None) is None
+
+    def test_middleware_when_cookie_lang_is_different_from_user_pref(self):
+        """
+        Validate that when user pref and cookie language are set but have different values
+        then the middleware updates the cookie with user preference value.
+        """
+        user_pref_lang = 'ar'
+        cookie_lang = 'en'
+        self.request.COOKIES[settings.LANGUAGE_COOKIE_NAME] = cookie_lang
+
+        with mock.patch('enterprise.middleware.get_user_preference') as mock_get_user_preference:
+            mock_get_user_preference.return_value = user_pref_lang
+            self.middleware.process_request(self.request)
+
+            assert self.request.COOKIES[settings.LANGUAGE_COOKIE_NAME] == user_pref_lang
+            assert getattr(self.request, '_anonymous_user_cookie_lang', None) == user_pref_lang

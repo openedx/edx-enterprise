@@ -767,10 +767,9 @@ class AdminNotificationForm(forms.ModelForm):
         if expiration_date < start_date:
             # `start_date` must always come before the `expiration_date`
             raise ValidationError({'expiration_date': ['Expiration date should be after start date.']})
-        # pylint: disable=unsupported-binary-operation
         admin_notification = AdminNotification.objects.filter(
-            Q(start_date__range=(start_date, expiration_date)) |
-            Q(expiration_date__range=(start_date, expiration_date)) |
+            Q(start_date__range=(start_date, expiration_date)) |  # pylint: disable=unsupported-binary-operation
+            Q(expiration_date__range=(start_date, expiration_date)) |  # pylint: disable=unsupported-binary-operation
             Q(start_date__lt=start_date, expiration_date__gt=expiration_date)
         ).exclude(
             pk=self.instance.id
