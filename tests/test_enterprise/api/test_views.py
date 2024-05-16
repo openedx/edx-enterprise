@@ -62,9 +62,9 @@ from enterprise.models import (
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
-    PendingEnterpriseCustomerUser,
     PendingEnterpriseCustomerAdminUser,
-    SystemWideEnterpriseUserRoleAssignment
+    PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.roles_api import admin_role
 from enterprise.toggles import (
