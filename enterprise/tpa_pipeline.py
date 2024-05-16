@@ -87,6 +87,7 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         **kwargs: Any remaining pipeline variables
 
     """
+
     LOGGER.info(f'Beginning enterprise logistration for LMS user {user.id}')
     request = backend.strategy.request
     pipeline = {'backend': backend.name, 'kwargs': kwargs}
@@ -199,7 +200,9 @@ def handle_redirect_after_social_auth_login(backend, user):
 
     """
     enterprise_customers_count = EnterpriseCustomerUser.objects.filter(user_id=user.id).count()
+
     next_url = backend.strategy.session_get('next')
+
     if next_url is None:
         using_enrollment_url = re.match(r'/enterprise/.*/course/.*/enroll', str(next_url))
         if (enterprise_customers_count > 1) and not using_enrollment_url:

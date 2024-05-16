@@ -275,6 +275,9 @@ class MoodleLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             )
         ]
         index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
+        indexes = [
+            models.Index(fields=['error_message', 'enterprise_course_enrollment_id'], name='moodle_course_error_idx'),
+        ]
 
     def __str__(self):
         """
