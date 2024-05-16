@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.0]
+--------
+* feat: Introduce disable_expiry field on the enterprise customer model
+
 [4.18.5]
 --------
 * feat: force transmit content metadata if customer configs are modified
