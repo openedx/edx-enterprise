@@ -214,7 +214,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     ):
         """
         Test that the exporter properly exports failed transmission if customer configs are changed
-        within 24hrs after it was failed. It's decided based on enterprise_customer.modified 
+        within 24hrs after it was failed. It's decided based on enterprise_customer.modified
         and remote_created_at timestamp
         """
         sap_config = factories.SAPSuccessFactorsEnterpriseCustomerConfiguration(
@@ -300,6 +300,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         Test the exporter considers audits that failed to update as existing content.
         """
+        self.enterprise_customer_catalog.enterprise_customer.modified = timezone.now() - timezone.timedelta(hours=40)
         test_failed_updated_content = ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,

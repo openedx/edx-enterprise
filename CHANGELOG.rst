@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.18.5]
+--------
+* feat: force transmit content metadata if customer configs are modified
+
+[4.18.4]
+--------
+* fix: only creating membership records for relevant ECUs
+
 [4.18.3]
 --------
 * fix: indentation error in for loop
