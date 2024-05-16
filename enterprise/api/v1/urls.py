@@ -46,9 +46,9 @@ router.register(
     'pending-enterprise-learner',
 )
 router.register(
-    "pending-enterprise-customer-admin",
+    "pending-enterprise-admin",
     pending_enterprise_customer_admin_user.PendingEnterpriseCustomerAdminUserViewSet,
-    'pending-enterprise-customer-admin',
+    'pending-enterprise-admin',
 )
 router.register(
     "enterprise-customer-branding",

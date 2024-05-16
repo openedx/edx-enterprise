@@ -1636,6 +1636,40 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
             'enterprise_customer', 'user_email'
         )
 
+    def validate(self, attrs):
+        """
+        Check if a pending user with the same email and enterprise_customer combination already exists.
+        If it exists, raise a ValidationError.
+        """
+        instance = self.instance
+        user_email = attrs.get('user_email', instance.user_email if instance else None)
+        enterprise_customer = attrs.get('enterprise_customer', instance.enterprise_customer if instance else None)
+
+        if instance:
+            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            ).exclude(id=instance.id)
+        else:
+            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            )
+
+        if existing_instances.exists():
+            raise serializers.ValidationError('A pending user with this email and enterprise customer already exists.')
+
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE, user__email=user_email, enterprise_customer=enterprise_customer
+        )
+
+        if admin_instance.exists():
+            raise serializers.ValidationError(
+                'A user with this email and enterprise customer already has admin permission.'
+            )
+
+        return attrs
+
 
 class AnalyticsSummarySerializer(serializers.Serializer):
     """
