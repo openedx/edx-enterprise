@@ -1641,11 +1641,11 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
         Validate the pending enterprise customer admin user data.
 
         This method performs two main checks:
-        
+
         1. Check if a pending user with the same email and enterprise_customer combination already exists.
         - If a record exists, it raises a ValidationError with the message:
             'A pending user with this email and enterprise customer already exists.'
-        
+
         2. Check if a user with the same email and enterprise_customer already has admin permission.
         - If a record exists, it raises a ValidationError with the message:
             'A user with this email and enterprise customer already has admin permission.'
