@@ -8315,6 +8315,42 @@ class TestEnterpriseGroupViewSet(APITest):
                 any_order=True,
             )
 
+    def test_specifying_group_members(self):
+        """
+        Test that the `/learners` API endpoint can take in an optional `learners` array query param and will only
+        return records that contain an email within that array.
+        """
+        pending_membership = EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        membership = EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            enterprise_customer_user=EnterpriseCustomerUserFactory(),
+            pending_enterprise_customer_user=None,
+        )
+
+        EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            enterprise_customer_user=EnterpriseCustomerUserFactory(),
+            pending_enterprise_customer_user=None,
+        )
+
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        learner_query_param = f"?learners={membership.member_email}&learners={pending_membership.member_email}"
+        specified_learner_response = self.client.get(url + learner_query_param)
+        response_json = specified_learner_response.json()
+        assert response_json.get('count') == 2
+
     def test_remove_learners_404(self):
         """
         Test that the remove learners endpoint properly handles not finding the provided group

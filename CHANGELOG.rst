@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.3]
+--------
+* feat: allowing for group members to be specified when fetched
+
 [4.19.2]
 --------
 * feat: added endpoint for pending_enterprise_customer_admin_user.
