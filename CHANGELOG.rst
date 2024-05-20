@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.0]
+--------
+* feat: Introduce disable_expiry field on the enterprise customer model
+
 [4.18.6]
 --------
 * feat: allowing for group members to be revived by reassigning
