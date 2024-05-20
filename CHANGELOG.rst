@@ -17,9 +17,57 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.17.4]
+[4.18.7]
 --------
 * feat: removed unencrypted columns of user data credentials in blackboard config ENT 8010
+
+[4.18.6]
+--------
+* feat: allowing for group members to be revived by reassigning
+
+[4.18.5]
+--------
+* feat: force transmit content metadata if customer configs are modified
+
+[4.18.4]
+--------
+* fix: only creating membership records for relevant ECUs
+
+[4.18.3]
+--------
+* fix: indentation error in for loop
+
+[4.18.2]
+--------
+* fix: update enterprise model lookup in removal email task
+
+[4.18.1]
+--------
+* chore: debugging log lines
+
+[4.18.0]
+--------
+* feat: updates tasks usage of create_recipient to create_recipients
+
+[4.17.8]
+--------
+* fix: adding missing migration file
+
+[4.17.7]
+--------
+* fix: update group invite and removal notification tasks
+
+[4.17.6]
+--------
+* fix: allowing for search lookup of group members in django admin
+
+[4.17.5]
+--------
+* fix: hard deleting expired group memberships
+
+[4.17.4]
+--------
+* fix: update language cookie if langauge cookie is not same as user's language preference
 
 [4.17.3]
 --------

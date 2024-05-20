@@ -4402,14 +4402,14 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         blank=True,
         null=True,
         related_name='memberships',
-        on_delete=models.deletion.CASCADE,
+        on_delete=models.deletion.SET_NULL,
     )
     pending_enterprise_customer_user = models.ForeignKey(
         PendingEnterpriseCustomerUser,
         blank=True,
         null=True,
         related_name='memberships',
-        on_delete=models.deletion.CASCADE,
+        on_delete=models.deletion.SET_NULL,
     )
     activated_at = models.DateTimeField(
         default=None,
