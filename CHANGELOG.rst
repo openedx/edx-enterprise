@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.1]
+--------
+* fix: Update language for disable_expiry_messaging_for_learner_credit field
+
 [4.19.0]
 --------
 * feat: Introduce disable_expiry field on the enterprise customer model
