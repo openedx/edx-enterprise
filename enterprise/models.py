@@ -315,8 +315,9 @@ class EnterpriseCustomer(TimeStampedModel):
     disable_expiry_messaging_for_learner_credit = models.BooleanField(
         verbose_name="Disable expiration messaging for learner credit",
         default=False,
-        help_text=_("If checked, learners and admins will not receive expiration-related email and "
-                    "other notifications regarding learner credit plans.")
+        help_text=_("If checked, learners and admins will not receive notifications leading up to the expiration "
+                    "date for learner credit plans. Notifications signaling the expiration (and loss of usability) "
+                    "itself will still appear.")
     )
 
     enable_portal_code_management_screen = models.BooleanField(
