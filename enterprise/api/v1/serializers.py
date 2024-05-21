@@ -1781,7 +1781,7 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
     show_removed = serializers.BooleanField(required=False, default=False)
     is_reversed = serializers.BooleanField(required=False, default=False)
     page = serializers.IntegerField(required=False)
-    lms_users = serializers.ListField(
-        child=serializers.IntegerField(required=True),
+    learners = serializers.ListField(
+        child=serializers.EmailField(required=True),
         required=False,
     )

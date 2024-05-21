@@ -115,6 +115,8 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         - ``page`` (int, optional): Which page of paginated data to return.
         - ``show_removed`` (bool, optional): Include removed learners in the response.
         - ``is_reversed`` (bool, optional): Include to reverse the order of returned records.
+        - ``learners`` (list[ email strings ], optional): Include to only return member records that are associated
+        with provided emails.
 
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
@@ -161,6 +163,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                                                     desc_order=is_reversed,
                                                     pending_users_only=pending_users_only,
                                                     fetch_removed=show_removed)
+
+            if learners := param_serializers.validated_data.get('learners'):
+                specified_members = []
+                for member in members:
+                    if member.member_email in learners:
+                        specified_members.append(member)
+                members = specified_members
 
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
