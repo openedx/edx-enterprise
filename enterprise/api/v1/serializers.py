@@ -1627,7 +1627,7 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
 
 class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
     """
-    Serializer for the ``EnterpriseCatalogQuery`` model.
+    Serializer for the ``PendingEnterpriseCustomerAdminUser`` model.
     """
 
     class Meta:
