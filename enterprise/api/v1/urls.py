@@ -22,6 +22,7 @@ from enterprise.api.v1.views import (
     enterprise_group,
     enterprise_subsidy_fulfillment,
     notifications,
+    pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
     plotly_auth,
 )
@@ -43,6 +44,11 @@ router.register(
     "pending-enterprise-learner",
     pending_enterprise_customer_user.PendingEnterpriseCustomerUserViewSet,
     'pending-enterprise-learner',
+)
+router.register(
+    "pending-enterprise-admin",
+    pending_enterprise_customer_admin_user.PendingEnterpriseCustomerAdminUserViewSet,
+    'pending-enterprise-admin',
 )
 router.register(
     "enterprise-customer-branding",

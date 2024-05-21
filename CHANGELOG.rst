@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.2]
+--------
+* feat: added endpoint for pending_enterprise_customer_admin_user.
+
 [4.19.1]
 --------
 * fix: Update language for disable_expiry_messaging_for_learner_credit field

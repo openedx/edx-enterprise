@@ -30,6 +30,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    PendingEnterpriseCustomerAdminUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import (
@@ -1622,6 +1623,51 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
 
     # Parses from a dictionary to JSON
     content_filter = serializers.JSONField(required=False)
+
+
+class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``PendingEnterpriseCustomerAdminUser`` model.
+    """
+
+    class Meta:
+        model = PendingEnterpriseCustomerAdminUser
+        fields = (
+            'enterprise_customer', 'user_email'
+        )
+
+    def validate(self, attrs):
+        """
+        Validate the pending enterprise customer admin user data.
+        """
+        instance = self.instance
+        user_email = attrs.get('user_email', instance.user_email if instance else None)
+        enterprise_customer = attrs.get('enterprise_customer', instance.enterprise_customer if instance else None)
+
+        if instance:
+            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            ).exclude(id=instance.id)
+        else:
+            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            )
+
+        if existing_instances.exists():
+            raise serializers.ValidationError('A pending user with this email and enterprise customer already exists.')
+
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE, user__email=user_email, enterprise_customer=enterprise_customer
+        )
+
+        if admin_instance.exists():
+            raise serializers.ValidationError(
+                'A user with this email and enterprise customer already has admin permission.'
+            )
+
+        return attrs
 
 
 class AnalyticsSummarySerializer(serializers.Serializer):
