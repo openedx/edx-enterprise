@@ -141,6 +141,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "invite_keys",
                 "hide_course_original_price",
                 "site",
+                "disable_expiry_messaging_for_learner_credit",
                 "enable_data_sharing_consent",
                 "enforce_data_sharing_consent",
                 "enable_audit_enrollment",
