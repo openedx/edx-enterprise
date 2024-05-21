@@ -80,7 +80,7 @@ pytz==2024.1
     # via tempora
 pyyaml==6.0.1
     # via jasmine
-selenium==4.20.0
+selenium==4.21.0
     # via jasmine
 sniffio==1.3.1
     # via trio
@@ -90,7 +90,7 @@ tempora==5.5.1
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.25.0
+trio==0.25.1
     # via
     #   selenium
     #   trio-websocket
@@ -109,7 +109,7 @@ wsproto==1.2.0
     # via trio-websocket
 zc-lockfile==3.0.post1
     # via cherrypy
-zipp==3.18.1
+zipp==3.18.2
     # via
     #   importlib-metadata
     #   importlib-resources
