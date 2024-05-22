@@ -12,6 +12,8 @@ def populate_decrypted_fields_blackboard(apps, schema_editor=None):  # pylint: d
     )
 
     for blackboard_enterprise_configuration in BlackboardEnterpriseCustomerConfiguration.objects.all():
-        blackboard_enterprise_configuration.decrypted_client_id = blackboard_enterprise_configuration.client_id
-        blackboard_enterprise_configuration.decrypted_client_secret = blackboard_enterprise_configuration.client_secret
+        blackboard_enterprise_configuration.decrypted_client_id = getattr(
+            blackboard_enterprise_configuration, 'client_id', '')
+        blackboard_enterprise_configuration.decrypted_client_secret = getattr(
+            blackboard_enterprise_configuration, 'client_secret', '')
         blackboard_enterprise_configuration.save()

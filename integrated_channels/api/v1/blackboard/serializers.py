@@ -16,8 +16,6 @@ class BlackboardConfigSerializer(EnterpriseCustomerPluginConfigSerializer):
     class Meta:
         model = BlackboardEnterpriseCustomerConfiguration
         extra_fields = (
-            'client_id',
-            'client_secret',
             'encrypted_client_id',
             'encrypted_client_secret',
             'blackboard_base_url',
