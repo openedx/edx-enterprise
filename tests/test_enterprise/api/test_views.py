@@ -62,8 +62,11 @@ from enterprise.models import (
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
+    PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseUserRoleAssignment,
 )
+from enterprise.roles_api import admin_role
 from enterprise.toggles import (
     ENTERPRISE_GROUPS_V1,
     FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
@@ -154,6 +157,7 @@ ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT = reverse('enterprise-customer-unlink-users', kwargs={'pk': FAKE_UUIDS[0]})
 PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
+PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT = reverse('pending-enterprise-admin-list')
 LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-license-revoke'
 )
@@ -840,6 +844,210 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         assert response.status_code == 401
 
 
+class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
+    """
+    Test PendingEnterpriseCustomerAdminUserViewSet
+    """
+
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.pending_admin_user = PendingEnterpriseCustomerAdminUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_email='test@example.com'
+        )
+
+    def setup_admin_user(self, is_staff=True):
+        """
+        Creates an admin user and logs them in
+        """
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
+    def test_post_pending_enterprise_customer_admin_user_creation(self):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerAdminUsers.
+        """
+        self.setup_admin_user(True)
+
+        data = {
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'user_email': self.user.email,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
+        assert response.status_code == 201
+        response = self.load_json(response.content)
+        data['enterprise_customer'] = str(data['enterprise_customer'])
+        self.assertDictEqual(data, response)
+
+    def test_post_pending_enterprise_customer_unauthorized_user(self):
+        """
+        Make sure unauthorized users can't post PendingEnterpriseCustomerAdminUsers.
+        """
+        self.setup_admin_user(False)
+
+        data = {
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'user_email': self.user.email,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
+        assert response.status_code == 403
+
+    def test_post_pending_enterprise_customer_user_logged_out(self):
+        """
+        Make sure users can't post PendingEnterpriseCustomerAdminUsers when logged out.
+        """
+        self.client.logout()
+        data = {
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'user_email': self.user.email,
+        }
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
+        assert response.status_code == 401
+
+    def test_delete_pending_enterprise_customer_admin_user(self):
+        """
+        Test deleting a pending enterprise customer admin user.
+        """
+        url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
+        response = self.client.delete(settings.TEST_SERVER + url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.assertFalse(PendingEnterpriseCustomerAdminUser.objects.filter(id=self.pending_admin_user.id).exists())
+
+    def test_get_pending_enterprise_customer_admin_user(self):
+        """
+        Test retrieving a pending enterprise customer admin user.
+        """
+        url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        expected_data = {
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'user_email': 'test@example.com'
+        }
+        self.assertEqual(response.data, expected_data)
+
+    def test_patch_pending_enterprise_customer_admin_user(self):
+        """
+        Test updating a pending enterprise customer admin user's email.
+        """
+        data = {
+            'user_email': 'updated@example.com'
+        }
+
+        url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
+        response = self.client.patch(url, data=data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(response.data['user_email'], 'updated@example.com')
+        self.assertEqual(response.data['enterprise_customer'], self.enterprise_customer.uuid)
+
+    def test_patch_pending_enterprise_customer_admin_user_existing_admin(self):
+        """
+        Test updating a pending enterprise customer admin user with an email that already has admin permissions.
+        """
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            role=admin_role(),
+            user=self.user,
+            enterprise_customer=self.enterprise_customer
+        )
+
+        data = {
+            'user_email': self.user.email
+        }
+
+        url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
+        response = self.client.patch(url, data=data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        error_message = response.json().get('non_field_errors', [])[0]
+        expected_message = 'A user with this email and enterprise customer already has admin permission.'
+        self.assertEqual(error_message, expected_message)
+
+    def test_patch_pending_admin_user_with_existing_email(self):
+        """
+        Test patching a pending enterprise customer admin user with an email that already exists
+        for the same enterprise customer, expecting a validation error.
+        """
+
+        new_user_email = 'newtest@example.com'
+        PendingEnterpriseCustomerAdminUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_email=new_user_email
+        )
+
+        data = {
+            'user_email': new_user_email
+        }
+
+        url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
+        response = self.client.patch(url, data=data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        error_message = response.json().get('non_field_errors', [])[0]
+        expected_message = 'A pending user with this email and enterprise customer already exists.'
+        self.assertEqual(error_message, expected_message)
+
+    def test_validate_existing_admin_user(self):
+        """
+        Test validation error when creating a pending admin user with an email that already has admin permissions.
+        """
+        self.setup_admin_user(True)
+
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            role=admin_role(),
+            user=self.user,
+            enterprise_customer=self.enterprise_customer
+        )
+
+        data = {
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'user_email': self.user.email,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
+
+        self.assertEqual(response.status_code, 400)
+        error_message = response.json().get('non_field_errors', [])
+        expected_message = "A user with this email and enterprise customer already has admin permission."
+        self.assertIn(expected_message, error_message)
+
+    def test_validate_duplicate_user(self):
+        """
+        Test validation error when creating a pending admin user that already exists.
+        """
+
+        self.setup_admin_user(True)
+
+        data = {
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'user_email': self.user.email,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
+        assert response.status_code == 201
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
+
+        self.assertEqual(response.status_code, 400)
+        error_message = response.json().get('non_field_errors', [])
+        expected_message = "A pending user with this email and enterprise customer already exists."
+        self.assertIn(expected_message, error_message)
+
+
 @ddt.ddt
 @mark.django_db
 class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterpriseAPIViews):
@@ -1201,6 +1409,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_audit_enrollment': False,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
                 'enable_audit_data_reporting': True,
                 'enable_learner_portal': True,
                 'enable_learner_portal_offers': False,
@@ -1269,6 +1478,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'identity_provider': None, 'enable_audit_enrollment': False,
                     'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                     'sync_learner_profile_data': False, 'enable_audit_data_reporting': False,
+                    'disable_expiry_messaging_for_learner_credit': False,
                     'enable_learner_portal': True, 'enable_learner_portal_offers': False,
                     'enable_portal_learner_credit_management_screen': False,
                     'enable_executive_education_2U_fulfillment': False,
@@ -1356,6 +1566,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'identity_provider': FAKE_UUIDS[0], 'enable_audit_enrollment': False,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
                 'enable_audit_data_reporting': False,
                 'enable_learner_portal': True,
                 'enable_learner_portal_offers': False,
@@ -1430,6 +1641,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'replace_sensitive_sso_username': False,
                 'enable_portal_code_management_screen': False,
                 'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
                 'enable_audit_data_reporting': False,
                 'enable_learner_portal': True,
                 'enable_learner_portal_offers': False,
@@ -1526,6 +1738,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_audit_enrollment': False,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
                 'enable_audit_data_reporting': False,
                 'enable_learner_portal': True,
                 'enable_learner_portal_offers': False,
@@ -1767,6 +1980,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'replace_sensitive_sso_username': False,
                 'enable_portal_code_management_screen': True,
                 'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
                 'enable_audit_data_reporting': False,
                 'enable_learner_portal': True,
                 'enable_learner_portal_offers': False,
@@ -8100,6 +8314,42 @@ class TestEnterpriseGroupViewSet(APITest):
                 )],
                 any_order=True,
             )
+
+    def test_specifying_group_members(self):
+        """
+        Test that the `/learners` API endpoint can take in an optional `learners` array query param and will only
+        return records that contain an email within that array.
+        """
+        pending_membership = EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        membership = EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            enterprise_customer_user=EnterpriseCustomerUserFactory(),
+            pending_enterprise_customer_user=None,
+        )
+
+        EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            pending_enterprise_customer_user=PendingEnterpriseCustomerUserFactory(),
+            enterprise_customer_user=None,
+        )
+        EnterpriseGroupMembershipFactory(
+            group=self.group_2,
+            enterprise_customer_user=EnterpriseCustomerUserFactory(),
+            pending_enterprise_customer_user=None,
+        )
+
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        learner_query_param = f"?learners={membership.member_email}&learners={pending_membership.member_email}"
+        specified_learner_response = self.client.get(url + learner_query_param)
+        response_json = specified_learner_response.json()
+        assert response_json.get('count') == 2
 
     def test_remove_learners_404(self):
         """

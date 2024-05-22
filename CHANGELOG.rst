@@ -17,9 +17,25 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.18.7]
+[4.18.4]
 --------
 * feat: removed unencrypted columns of user data credentials in blackboard config ENT 8010
+
+[4.19.3]
+--------
+* feat: allowing for group members to be specified when fetched
+
+[4.19.2]
+--------
+* feat: added endpoint for pending_enterprise_customer_admin_user.
+
+[4.19.1]
+--------
+* fix: Update language for disable_expiry_messaging_for_learner_credit field
+
+[4.19.0]
+--------
+* feat: Introduce disable_expiry field on the enterprise customer model
 
 [4.18.6]
 --------

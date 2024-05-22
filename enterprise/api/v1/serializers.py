@@ -30,6 +30,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    PendingEnterpriseCustomerAdminUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import (
@@ -211,7 +212,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         model = models.EnterpriseCustomer
         fields = (
             'uuid', 'name', 'slug', 'active', 'auth_org_id', 'site', 'enable_data_sharing_consent',
-            'enforce_data_sharing_consent', 'branding_configuration',
+            'enforce_data_sharing_consent', 'branding_configuration', 'disable_expiry_messaging_for_learner_credit',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
             'enable_learner_portal', 'enable_learner_portal_offers', 'enable_portal_learner_credit_management_screen',
@@ -1624,6 +1625,51 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
     content_filter = serializers.JSONField(required=False)
 
 
+class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``PendingEnterpriseCustomerAdminUser`` model.
+    """
+
+    class Meta:
+        model = PendingEnterpriseCustomerAdminUser
+        fields = (
+            'enterprise_customer', 'user_email'
+        )
+
+    def validate(self, attrs):
+        """
+        Validate the pending enterprise customer admin user data.
+        """
+        instance = self.instance
+        user_email = attrs.get('user_email', instance.user_email if instance else None)
+        enterprise_customer = attrs.get('enterprise_customer', instance.enterprise_customer if instance else None)
+
+        if instance:
+            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            ).exclude(id=instance.id)
+        else:
+            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            )
+
+        if existing_instances.exists():
+            raise serializers.ValidationError('A pending user with this email and enterprise customer already exists.')
+
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE, user__email=user_email, enterprise_customer=enterprise_customer
+        )
+
+        if admin_instance.exists():
+            raise serializers.ValidationError(
+                'A user with this email and enterprise customer already has admin permission.'
+            )
+
+        return attrs
+
+
 class AnalyticsSummarySerializer(serializers.Serializer):
     """
     Serializer for the payload data of analytics summary endpoint.
@@ -1735,7 +1781,7 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
     show_removed = serializers.BooleanField(required=False, default=False)
     is_reversed = serializers.BooleanField(required=False, default=False)
     page = serializers.IntegerField(required=False)
-    lms_users = serializers.ListField(
-        child=serializers.IntegerField(required=True),
+    learners = serializers.ListField(
+        child=serializers.EmailField(required=True),
         required=False,
     )
