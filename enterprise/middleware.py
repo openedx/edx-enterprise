@@ -67,6 +67,18 @@ class EnterpriseLanguagePreferenceMiddleware(MiddlewareMixin):
                     # Ignore errors related to user preferences not found.
                     pass
 
+                # This is to handle a bug where a user is logged in multiple tabs/browsers.
+                # User updates the language preference in one tab. After update, user's language preference
+                # in the database and language cookie in the browser is set to new language.
+                # But in the other tab/browser, user still has the old language cookie. So when the user
+                # refreshes the page, the language cookie is sent to the server and overrides the user's preference.
+                # NOTE: The assumption here is to consider user's language preference as the single source of truth.
+                cookie_lang = request.COOKIES.get(settings.LANGUAGE_COOKIE_NAME)
+                if user_pref and cookie_lang and cookie_lang != user_pref:
+                    # pylint: disable=protected-access
+                    request._anonymous_user_cookie_lang = user_pref
+                    request.COOKIES[settings.LANGUAGE_COOKIE_NAME] = user_pref
+
                 # If user's language preference is not set and enterprise customer has a default language configured
                 # then set the default language as the learner's language
                 if not user_pref and not is_request_from_mobile_app(request):

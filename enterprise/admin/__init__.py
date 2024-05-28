@@ -211,6 +211,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'enable_integrated_customer_learner_portal_search',
                        'enable_analytics_screen', 'enable_audit_enrollment',
                        'enable_audit_data_reporting', 'enable_learner_portal_offers',
+                       'disable_expiry_messaging_for_learner_credit',
                        'enable_executive_education_2U_fulfillment',
                        'enable_career_engagement_network_on_learner_portal',
                        'career_engagement_network_message', 'enable_pathways', 'enable_programs',
@@ -1203,9 +1204,10 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
     list_display = ('group', 'membership_user',)
     search_fields = (
         'uuid',
-        'group__enterprise_customer_user',
-        'enterprise_customer_user',
-        'pending_enterprise_customer_user',
+        'group__uuid',
+        'group__enterprise_customer__uuid',
+        'enterprise_customer_user__id',
+        'pending_enterprise_customer_user__user_email',
     )
     autocomplete_fields = (
         'group',

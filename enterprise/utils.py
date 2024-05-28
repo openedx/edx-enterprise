@@ -7,6 +7,7 @@ import json
 import os
 import re
 from collections import OrderedDict
+from itertools import islice
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID, uuid4
 
@@ -2295,6 +2296,22 @@ def batch(iterable, batch_size=1):
         iterable_len = len(iterable)
     for index in range(0, iterable_len, batch_size):
         yield iterable[index:min(index + batch_size, iterable_len)]
+
+
+def batch_dict(dict_data, chunk_size=1):
+    """
+    Breaks up a dictionary into equal-sized chunks.
+    No fillers values are added for any 'remainder' chunks
+
+    Arguments:
+        dict (dict): A dictionary to chunk
+        chunk_size (int): the size of each chunk. Defaults to 1.
+    Returns:
+        generator: iterates through each chunk of a dictionary
+    """
+    it = iter(dict_data.items())
+    for _ in range(0, len(dict_data), chunk_size):
+        yield dict(islice(it, chunk_size))
 
 
 def get_best_mode_from_course_key(course_key):
