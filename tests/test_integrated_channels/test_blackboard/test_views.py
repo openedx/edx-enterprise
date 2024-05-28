@@ -56,7 +56,7 @@ class TestBlackboardAPIViews(APITestCase):
         self.refresh_token = 'test-refresh-token'
         self.urlbase = reverse('blackboard-oauth-complete')
 
-        try: 
+        try:
             BlackboardEnterpriseCustomerConfiguration.objects.get(
                 uuid=SINGLE_CONFIG['uuid'],
                 blackboard_base_url=SINGLE_CONFIG['base_url'],
@@ -74,7 +74,7 @@ class TestBlackboardAPIViews(APITestCase):
                 active=True,
                 enterprise_customer_id=ENTERPRISE_ID,
             )
-        try: 
+        try:
             BlackboardEnterpriseCustomerConfiguration.objects.get(
                 uuid=SECOND_CONFIG['uuid'],
                 blackboard_base_url=SECOND_CONFIG['base_url'],
