@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.6]
+--------
+* feat: removed unencrypted columns of user data credentials from models in blackboard config ENT 8010
+
 [4.19.5]
 --------
 * feat: remove unencrypted user credentials from view and test
