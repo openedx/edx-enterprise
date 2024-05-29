@@ -518,6 +518,7 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     subsection_name = models.CharField(max_length=255, blank=False, null=True)
     status = models.CharField(max_length=100, blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
+    is_transmitted = models.BooleanField(default=False)
     friendly_status_message = models.CharField(
         help_text='A user-friendly API response status message.',
         max_length=255,
