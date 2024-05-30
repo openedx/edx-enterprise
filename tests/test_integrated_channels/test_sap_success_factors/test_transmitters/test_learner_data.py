@@ -54,7 +54,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
                 error_message='',
                 status=200,
                 enterprise_customer_uuid=self.enterprise_customer.uuid,
-                plugin_configuration_id=self.enterprise_config.id
+                plugin_configuration_id=self.enterprise_config.id,
+                is_transmitted=True
             )
         ]
         self.exporter = lambda payloads=self.payloads: mock.MagicMock(

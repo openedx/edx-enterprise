@@ -134,6 +134,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
+            learner_data.is_transmitted = False if code >= 400 else True
             learner_data.save()
 
     def assessment_level_transmit(self, exporter, **kwargs):
@@ -253,6 +254,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
+            learner_data.is_transmitted = False if code >= 400 else True
             learner_data.save()
 
     def transmit(self, payload, **kwargs):  # pylint: disable=arguments-differ
@@ -380,6 +382,7 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             was_successful = code < 300
             learner_data.status = str(code)
             learner_data.error_message = body if not was_successful else ''
+            learner_data.is_transmitted = was_successful
             learner_data.save()
             self.enterprise_configuration.update_learner_synced_at(action_happened_at, was_successful)
 
