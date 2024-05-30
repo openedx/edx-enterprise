@@ -23,7 +23,7 @@ Unreleased
 
 [4.19.5]
 --------
-* feat: remove unencrypted user credentials from view and test
+* feat: replaced unencrypted user credentials from view and test
 
 [4.19.4]
 --------
