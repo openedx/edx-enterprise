@@ -99,6 +99,17 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     The Enterprise-specific configuration we need for integrating with Blackboard.
     """
 
+    client_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="API Client ID or Blackboard Application Key",
+        help_text=(
+            "The API Client ID provided to edX by the enterprise customer to be used to make API "
+            "calls on behalf of the customer. Called Application Key in Blackboard"
+        )
+    )
+
     decrypted_client_id = EncryptedCharField(
         max_length=255,
         blank=True,
@@ -131,6 +142,17 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
         Set the encrypted client_id.
         """
         self.decrypted_client_id = value
+
+    client_secret = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="API Client Secret or Application Secret",
+        help_text=(
+            "The API Client Secret provided to edX by the enterprise customer to be used to make "
+            " API calls on behalf of the customer. Called Application Secret in Blackboard"
+        )
+    )
 
     decrypted_client_secret = EncryptedCharField(
         max_length=255,

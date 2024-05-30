@@ -17,11 +17,7 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.19.5]
---------
-* feat: removed unencrypted columns of user data credentials in blackboard config ENT 8010
-
-[4.19.4]
+[4.18.4]
 --------
 * feat: removed unencrypted columns of user data credentials in blackboard config ENT 8010
 

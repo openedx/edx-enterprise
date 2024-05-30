@@ -4,8 +4,8 @@ Unlink inactive enterprise learners of SAP Success Factors from related Enterpri
 """
 
 from logging import getLogger
-from django.apps import apps
 
+from django.apps import apps
 from django.core.management.base import BaseCommand
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
