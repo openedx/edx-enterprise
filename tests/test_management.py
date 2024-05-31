@@ -2161,3 +2161,25 @@ class TestRemoveStaleIntegratedChannelAPILogsCommand(unittest.TestCase, Enterpri
             created__lt=time_threshold
         ).exists()
         self.assertFalse(older_than_one_month)
+
+@mark.django_db
+class TestMarkLearnerTransmissionsTransmittedTrue(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``mark_learner_transmissions_transmitted_true`` management command.
+    """
+    def setUp(self):
+        self.user = factories.UserFactory(username='C-3PO')
+        super().setUp()
+
+    def test_handle_marks_transmitted_data(self):
+        """
+        Test that the command updates is_transmitted for successful transmissions.
+        """
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            subdomain='edx',
+            error_message='',
+            status=200,
+            user_id=self.user.id
+        )
+        call_command('mark_learner_transmissions_transmitted_true')
+        assert 1 == CornerstoneLearnerDataTransmissionAudit.objects.filter(is_transmitted=True).count()
