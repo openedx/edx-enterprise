@@ -1,6 +1,6 @@
 
 """
-Unlink inactive enterprise learners of SAP Success Factors from related EnterpriseCustomer(s).
+Mark already transmitted LearnerDataTransmission as is_trasmitted=True for all integrated channels
 """
 
 from logging import getLogger
