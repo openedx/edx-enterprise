@@ -17,13 +17,9 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.19.6]
---------
-* feat: allowing for group members removal endpoint to support remove all
-
 [4.19.5]
 --------
-* feat: replaced unencrypted user credentials from view and test
+* feat: allowing for group members removal endpoint to support remove all
 
 [4.19.4]
 --------

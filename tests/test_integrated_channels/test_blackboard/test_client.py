@@ -37,8 +37,8 @@ class TestBlackboardApiClient(unittest.TestCase):
         self.token = 'token'
         self.global_config = BlackboardGlobalConfigurationFactory()
         self.enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
-            decrypted_client_id='id',
-            decrypted_client_secret='secret',
+            client_id='id',
+            client_secret='secret',
             blackboard_base_url='https://base.url',
             refresh_token=self.token,
         )
@@ -78,8 +78,8 @@ class TestBlackboardApiClient(unittest.TestCase):
 
     def test_oauth_absent_refresh_token_fails(self):
         enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
-            decrypted_client_id='id2',
-            decrypted_client_secret='secret',
+            client_id='id2',
+            client_secret='secret',
             blackboard_base_url='https://base.url.2',
             refresh_token='',
         )
@@ -94,8 +94,8 @@ class TestBlackboardApiClient(unittest.TestCase):
         a valid refresh_token is used to replace it, and access_token is obtained
         """
         enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
-            decrypted_client_id='id3',
-            decrypted_client_secret='secret',
+            client_id='id3',
+            client_secret='secret',
             blackboard_base_url='https://base.url.3',
             refresh_token='a-token',
         )

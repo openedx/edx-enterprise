@@ -34,8 +34,8 @@ class TestBlackboardLearnerDataTransmitter(unittest.TestCase):
         self.enterprise_config = factories.BlackboardEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             blackboard_base_url='foobar',
-            decrypted_client_id='client_id',
-            decrypted_client_secret='client_secret',
+            client_id='client_id',
+            client_secret='client_secret',
             refresh_token='token',
         )
         self.completion_payload = BlackboardLearnerDataTransmissionAudit(
