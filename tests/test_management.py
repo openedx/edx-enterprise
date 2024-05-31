@@ -2162,6 +2162,7 @@ class TestRemoveStaleIntegratedChannelAPILogsCommand(unittest.TestCase, Enterpri
         ).exists()
         self.assertFalse(older_than_one_month)
 
+
 @mark.django_db
 class TestMarkLearnerTransmissionsTransmittedTrue(unittest.TestCase, EnterpriseMockMixin):
     """
