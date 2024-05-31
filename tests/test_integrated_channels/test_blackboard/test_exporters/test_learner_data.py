@@ -31,8 +31,8 @@ class TestBlackboardLearnerDataExporter(unittest.TestCase):
         self.config = factories.BlackboardEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             blackboard_base_url='foobar',
-            client_id='client_id',
-            client_secret='client_secret',
+            decrypted_client_id='client_id',
+            decrypted_client_secret='client_secret',
             refresh_token='token',
         )
 

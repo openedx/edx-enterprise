@@ -1761,7 +1761,10 @@ class EnterpriseGroupRequestDataSerializer(serializers.Serializer):
     act_by_date = serializers.DateTimeField(required=False, allow_null=True)
     learner_emails = serializers.ListField(
         child=serializers.EmailField(required=True),
-        allow_empty=False)
+        allow_empty=False,
+        required=False,
+    )
+    remove_all = serializers.BooleanField(required=False, default=False)
 
 
 class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):

@@ -194,7 +194,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         """
         Auth header in oauth2 token format as per Blackboard doc
         """
-        app_key = enterprise_config.client_id
+        app_key = enterprise_config.decrypted_client_id
         if not app_key:
             if not blackboard_global_config.app_key:
                 raise NotFound(
@@ -202,7 +202,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                     HTTPStatus.INTERNAL_SERVER_ERROR.value
                 )
             app_key = blackboard_global_config.app_key
-        app_secret = enterprise_config.client_secret
+        app_secret = enterprise_config.decrypted_client_secret
         if not app_secret:
             if not blackboard_global_config.app_secret:
                 raise NotFound(

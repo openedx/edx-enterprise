@@ -17,7 +17,15 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.18.4]
+[4.19.6]
+--------
+* feat: allowing for group members removal endpoint to support remove all
+
+[4.19.5]
+--------
+* feat: replaced unencrypted user credentials from view and test
+
+[4.19.4]
 --------
 * feat: removed unencrypted columns of user data credentials in blackboard config ENT 8010
 

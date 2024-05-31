@@ -134,7 +134,8 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
-            learner_data.is_transmitted = code < 400
+            if code < 400 and learner_data.error_message == '':
+                learner_data.is_transmitted = True
             learner_data.save()
 
     def assessment_level_transmit(self, exporter, **kwargs):
