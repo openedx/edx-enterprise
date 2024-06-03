@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.7]
+--------
+* feat: added is_in_provisioning_admin_group permission class
+* feat: updated exception handling in serializer
+
 [4.19.6]
 --------
 * feat: allowing for group members removal endpoint to support remove all
