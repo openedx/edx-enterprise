@@ -7,6 +7,7 @@ from rest_framework import filters, permissions
 
 from enterprise import models
 from enterprise.api.v1 import serializers
+from enterprise.api.v1.permissions import IsInProvisioningAdminGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
 
@@ -21,7 +22,7 @@ class PendingEnterpriseCustomerAdminUserViewSet(EnterpriseReadWriteModelViewSet)
     queryset = models.PendingEnterpriseCustomerAdminUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     serializer_class = serializers.PendingEnterpriseCustomerAdminUserSerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    permission_classes = (permissions.IsAuthenticated, IsInProvisioningAdminGroup)
 
     FIELDS = (
         'enterprise_customer', 'user_email',
