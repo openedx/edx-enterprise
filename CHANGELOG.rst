@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.8]
+--------
+* feat: remove client_id and client_secret columns from ``BlackboardEnterpriseCustomerConfiguration``
+
 [4.19.7]
 --------
 * feat: schema level improvement in integrated-channels
