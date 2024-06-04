@@ -888,7 +888,8 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def test_post_pending_enterprise_customer_unauthorized_user(self):
         """
-        Make sure unauthorized users can't post PendingEnterpriseCustomerAdminUsers.
+        Make sure unauthorized users, not added to IsInProvisioningAdminGroup, 
+        can't post PendingEnterpriseCustomerAdminUsers.
         """
 
         data = {
@@ -898,6 +899,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
         assert response.status_code == 403
+        error_message = response.json()['detail']
+        expected_message = "Access denied: You do not have the necessary permissions to access this."
+        self.assertIn(expected_message, error_message)
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
         """
