@@ -43,7 +43,7 @@ Unreleased
 
 [4.19.2]
 --------
-* rt: added endpoint for pending_enterprise_customer_admin_user.
+* feat: added endpoint for pending_enterprise_customer_admin_user.
 
 [4.19.1]
 --------
