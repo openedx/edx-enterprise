@@ -8361,7 +8361,7 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         assert self.client.post(url).status_code == 404
 
-    def test_remove_learners_requires_learner_emails(self):
+    def test_remove_learners_requires_learner_emails_or_remove_all(self):
         """
         Test that the remove learners endpoint requires a POST body param: `learner_emails`
         """
@@ -8371,7 +8371,7 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.post(url)
         assert response.status_code == 400
-        assert response.json() == {'learner_emails': ['This field is required.']}
+        assert response.json() == 'Must supply `remove_all` or `learner_email` but not both'
 
     def test_patch_with_bad_request_customer_to_change_to(self):
         """
@@ -8401,6 +8401,36 @@ class TestEnterpriseGroupViewSet(APITest):
         request_data = {'enterprise_customer': uuid.uuid4()}
         response = self.client.patch(url, data=request_data)
         assert response.status_code == 401
+
+    @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
+    def test_successful_remove_all_learners_from_group(self, mock_send_group_membership_removal_notification):
+        """
+        Test that both existing and new learners in groups are properly removed by the remove_learners endpoint
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        existing_emails = []
+        memberships_to_delete = []
+        for _ in range(10):
+            membership = EnterpriseGroupMembershipFactory(group=self.group_2)
+            memberships_to_delete.append(membership)
+            existing_emails.append(membership.enterprise_customer_user.user.email)
+        catalog_uuid = uuid.uuid4()
+        request_data = {'remove_all': True, 'catalog_uuid': catalog_uuid}
+        response = self.client.post(url, data=request_data)
+        assert response.data == {'records_deleted': 10}
+        mock_send_group_membership_removal_notification.assert_called_once_with(
+            self.enterprise_customer.uuid,
+            [membership.uuid for membership in reversed(memberships_to_delete)],
+            catalog_uuid,
+        )
+        for membership in memberships_to_delete:
+            assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).status == 'removed'
+            assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).removed_at
+            with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
+                EnterpriseGroupMembership.objects.get(pk=membership.pk)
 
     @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
     def test_successful_remove_learners_from_group(self, mock_send_group_membership_removal_notification):

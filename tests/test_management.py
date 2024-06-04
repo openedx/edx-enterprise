@@ -62,7 +62,10 @@ from integrated_channels.integrated_channel.models import (
 )
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerManger
-from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SapSuccessFactorsLearnerDataTransmissionAudit,
+)
 from test_utils import ReturnValueSpy, factories
 from test_utils.fake_catalog_api import (
     FAKE_COURSE_TO_CREATE,
@@ -2161,3 +2164,54 @@ class TestRemoveStaleIntegratedChannelAPILogsCommand(unittest.TestCase, Enterpri
             created__lt=time_threshold
         ).exists()
         self.assertFalse(older_than_one_month)
+
+
+@mark.django_db
+class TestMarkLearnerTransmissionsTransmittedTrue(unittest.TestCase, EnterpriseMockMixin):
+    """
+    Test the ``mark_learner_transmissions_transmitted_true`` management command.
+    """
+    def setUp(self):
+        self.user = factories.UserFactory(username='C-3PO')
+        super().setUp()
+
+    def test_handle_marks_cornerstone_transmitted_data(self):
+        """
+        Test that the command updates is_transmitted for successful Cornerstone Learner Data transmissions.
+        """
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            subdomain='edx',
+            error_message='',
+            status=200,
+            user_id=self.user.id
+        )
+        call_command('mark_learner_transmissions_transmitted_true')
+        assert 1 == CornerstoneLearnerDataTransmissionAudit.objects.filter(is_transmitted=True).count()
+
+    def test_handle_skips_pending_transmissions(self):
+        """
+        Test that the command skips pending transmissions if status code isn't < 400.
+        """
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            subdomain='edx',
+            error_message='',
+            status=400,
+            user_id=self.user.id
+        )
+        call_command('mark_learner_transmissions_transmitted_true')
+        assert 0 == CornerstoneLearnerDataTransmissionAudit.objects.filter(is_transmitted=True).count()
+
+    def test_handle_marks_sap_transmitted_data(self):
+        """
+        Test that the command updates is_transmitted for successful SAP Learner Data transmissions.
+        """
+        factories.SapSuccessFactorsLearnerDataTransmissionAuditFactory(
+            id=1,
+            enterprise_course_enrollment_id=5,
+            sapsf_user_id='sap_user',
+            course_id='course-v1:edX+DemoX+DemoCourse',
+            error_message='',
+            status=300
+        )
+        call_command('mark_learner_transmissions_transmitted_true')
+        assert 1 == SapSuccessFactorsLearnerDataTransmissionAudit.objects.filter(is_transmitted=True).count()
