@@ -18,8 +18,7 @@ Unreleased
 * nothing unreleased
 
 [4.19.8]
-* feat: updated exception handling in serializer
-* feat: added is_in_provisioning_admin_group permission class
+* chore: updated permission class ``IsInProvisioningAdminGroup`` for ``PendingEnterpriseCustomerAdminUser`` viewpoint and handled exceptions in serializer.
 
 [4.19.7]
 --------
