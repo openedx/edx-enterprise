@@ -1656,15 +1656,17 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def save(self):
+    def save(self, **kwargs):
         """
         Attempts to save the pending enterprise customer admin user data while handling potential integrity errors.
         """
         try:
             with transaction.atomic():
-                return super().save()
-        except IntegrityError:
-            raise serializers.ValidationError('A pending user with this email and enterprise customer already exists.')
+                return super().save(**kwargs)
+        except IntegrityError as exc:
+            raise serializers.ValidationError(
+                'A pending user with this email and enterprise customer already exists.'
+            ) from exc
         except Exception as e:
             error_message = f"An unexpected error occurred while saving PendingEnterpriseCustomerAdminUser: {e}"
             data = self.validated_data
