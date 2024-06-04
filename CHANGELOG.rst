@@ -17,10 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.8]
+* feat: updated exception handling in serializer
+* feat: added is_in_provisioning_admin_group permission class
+
 [4.19.7]
 --------
-* feat: added is_in_provisioning_admin_group permission class
-* feat: updated exception handling in serializer
+* feat: schema level improvement in integrated-channels
 
 [4.19.6]
 --------
@@ -40,7 +43,7 @@ Unreleased
 
 [4.19.2]
 --------
-* feat: added endpoint for pending_enterprise_customer_admin_user.
+* rt: added endpoint for pending_enterprise_customer_admin_user.
 
 [4.19.1]
 --------
