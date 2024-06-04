@@ -888,7 +888,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def test_post_pending_enterprise_customer_unauthorized_user(self):
         """
-        Make sure unauthorized users, not added to IsInProvisioningAdminGroup, 
+        Make sure unauthorized users, not added to IsInProvisioningAdminGroup,
         can't post PendingEnterpriseCustomerAdminUsers.
         """
 
