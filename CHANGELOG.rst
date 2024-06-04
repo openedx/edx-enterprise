@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.9]
+--------
+* fix: enrollment flow now atomically gets/creates enterprise enrollment record
+
 [4.19.8]
 --------
 * feat: remove client_id and client_secret columns from ``BlackboardEnterpriseCustomerConfiguration``

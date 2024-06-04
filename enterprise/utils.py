@@ -23,7 +23,7 @@ from django.contrib import auth
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
-from django.db import utils
+from django.db import transaction, utils
 from django.db.models.query import QuerySet
 from django.forms.models import model_to_dict
 from django.http import Http404
@@ -1866,13 +1866,14 @@ def customer_admin_enroll_user_with_status(
                 enterprise_enrollment_source_model().MANUAL
             )
 
-        obj, created = enterprise_course_enrollment_model().objects.get_or_create(
-            enterprise_customer_user=enterprise_customer_user,
-            course_id=course_id,
-            defaults={
-                'source': source
-            }
-        )
+        with transaction.atomic():
+            obj, created = enterprise_course_enrollment_model().objects.get_or_create(
+                enterprise_customer_user=enterprise_customer_user,
+                course_id=course_id,
+                defaults={
+                    'source': source
+                }
+            )
         if transaction_id:
             subsidy_enrollment_obj, subsidy_enrollment_created = \
                 subsidized_enterprise_course_enrollment_model().objects.get_or_create(
