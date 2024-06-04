@@ -14,10 +14,10 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.settings import api_settings
 
-from django.db import IntegrityError, transaction
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core import exceptions as django_exceptions
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
 
 from enterprise import models, utils  # pylint: disable=cyclic-import
