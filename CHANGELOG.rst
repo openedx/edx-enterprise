@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.8]
+--------
+* feat: making unencrypted client credentials nullable, so they can be removed
+
 [4.19.7]
 --------
 * feat: schema level improvement in integrated-channels
