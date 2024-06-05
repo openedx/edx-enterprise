@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.9]
+--------
+* feat: removing model reference of unencrypted client credentials from blackboard config.
+
 [4.19.8]
 --------
 * chore: updated permission class ``IsInProvisioningAdminGroup`` for ``PendingEnterpriseCustomerAdminUser`` viewpoint and handled exceptions in serializer.
