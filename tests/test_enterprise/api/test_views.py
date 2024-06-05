@@ -27,7 +27,7 @@ from rest_framework.test import APIClient
 from testfixtures import LogCapture
 
 from django.conf import settings
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group, Permission
 from django.core.cache import cache
 from django.test import override_settings
 from django.utils import timezone
@@ -107,7 +107,7 @@ from test_utils.factories import (
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
-from .constants import FAKE_SSO_METADATA_XML_WITH_ENTITY_ID
+from .constants import FAKE_SSO_METADATA_XML_WITH_ENTITY_ID, PROVISIONING_ADMINS_GROUP
 
 Application = get_application_model()
 fake = Faker()
@@ -859,21 +859,21 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=self.enterprise_customer,
             user_email='test@example.com'
         )
+        self.staff_user = factories.UserFactory(is_staff=True, is_active=True)
 
-    def setup_admin_user(self, is_staff=True):
+    def setup_provisioning_admin_permission(self):
         """
-        Creates an admin user and logs them in
+        Grants provisioning admin permissions to the staff user for testing purposes.
         """
-        client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
+        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+        self.staff_user.groups.add(allowed_group)
+        self.client.force_authenticate(user=self.staff_user)
 
     def test_post_pending_enterprise_customer_admin_user_creation(self):
         """
         Make sure service users can post new PendingEnterpriseCustomerAdminUsers.
         """
-        self.setup_admin_user(True)
+        self.setup_provisioning_admin_permission()
 
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
@@ -888,9 +888,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def test_post_pending_enterprise_customer_unauthorized_user(self):
         """
-        Make sure unauthorized users can't post PendingEnterpriseCustomerAdminUsers.
+        Make sure unauthorized users, not added to IsInProvisioningAdminGroup,
+        can't post PendingEnterpriseCustomerAdminUsers.
         """
-        self.setup_admin_user(False)
 
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
@@ -899,6 +899,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
         assert response.status_code == 403
+        error_message = response.json()['detail']
+        expected_message = "Access denied: You do not have the necessary permissions to access this."
+        self.assertIn(expected_message, error_message)
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
         """
@@ -916,6 +919,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         """
         Test deleting a pending enterprise customer admin user.
         """
+        self.setup_provisioning_admin_permission()
         url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
         response = self.client.delete(settings.TEST_SERVER + url)
 
@@ -927,6 +931,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         """
         Test retrieving a pending enterprise customer admin user.
         """
+        self.setup_provisioning_admin_permission()
         url = reverse('pending-enterprise-admin-detail', kwargs={'pk': self.pending_admin_user.id})
         response = self.client.get(url)
 
@@ -942,6 +947,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         """
         Test updating a pending enterprise customer admin user's email.
         """
+        self.setup_provisioning_admin_permission()
         data = {
             'user_email': 'updated@example.com'
         }
@@ -958,6 +964,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         """
         Test updating a pending enterprise customer admin user with an email that already has admin permissions.
         """
+        self.setup_provisioning_admin_permission()
         SystemWideEnterpriseUserRoleAssignment.objects.create(
             role=admin_role(),
             user=self.user,
@@ -982,7 +989,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         Test patching a pending enterprise customer admin user with an email that already exists
         for the same enterprise customer, expecting a validation error.
         """
-
+        self.setup_provisioning_admin_permission()
         new_user_email = 'newtest@example.com'
         PendingEnterpriseCustomerAdminUser.objects.create(
             enterprise_customer=self.enterprise_customer,
@@ -998,7 +1005,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        error_message = response.json().get('non_field_errors', [])[0]
+        error_message = response.json()[0]
         expected_message = 'A pending user with this email and enterprise customer already exists.'
         self.assertEqual(error_message, expected_message)
 
@@ -1006,7 +1013,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         """
         Test validation error when creating a pending admin user with an email that already has admin permissions.
         """
-        self.setup_admin_user(True)
+        self.setup_provisioning_admin_permission()
 
         SystemWideEnterpriseUserRoleAssignment.objects.create(
             role=admin_role(),
@@ -1031,7 +1038,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         Test validation error when creating a pending admin user that already exists.
         """
 
-        self.setup_admin_user(True)
+        self.setup_provisioning_admin_permission()
 
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
@@ -1043,7 +1050,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
 
         self.assertEqual(response.status_code, 400)
-        error_message = response.json().get('non_field_errors', [])
+        error_message = response.json()[0]
         expected_message = "A pending user with this email and enterprise customer already exists."
         self.assertIn(expected_message, error_message)
 

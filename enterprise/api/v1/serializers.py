@@ -17,6 +17,7 @@ from rest_framework.settings import api_settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core import exceptions as django_exceptions
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
 
 from enterprise import models, utils  # pylint: disable=cyclic-import
@@ -1644,20 +1645,6 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
         user_email = attrs.get('user_email', instance.user_email if instance else None)
         enterprise_customer = attrs.get('enterprise_customer', instance.enterprise_customer if instance else None)
 
-        if instance:
-            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
-                user_email=user_email,
-                enterprise_customer=enterprise_customer
-            ).exclude(id=instance.id)
-        else:
-            existing_instances = PendingEnterpriseCustomerAdminUser.objects.filter(
-                user_email=user_email,
-                enterprise_customer=enterprise_customer
-            )
-
-        if existing_instances.exists():
-            raise serializers.ValidationError('A pending user with this email and enterprise customer already exists.')
-
         admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role__name=ENTERPRISE_ADMIN_ROLE, user__email=user_email, enterprise_customer=enterprise_customer
         )
@@ -1668,6 +1655,23 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+    def save(self, **kwargs):
+        """
+        Attempts to save the pending enterprise customer admin user data while handling potential integrity errors.
+        """
+        try:
+            with transaction.atomic():
+                return super().save(**kwargs)
+        except IntegrityError as exc:
+            raise serializers.ValidationError(
+                'A pending user with this email and enterprise customer already exists.'
+            ) from exc
+        except Exception as e:
+            error_message = f"An unexpected error occurred while saving PendingEnterpriseCustomerAdminUser: {e}"
+            data = self.validated_data
+            LOGGER.error(error_message, extra={'data': data})
+            raise serializers.ValidationError('An unexpected error occurred. Please try again later.')
 
 
 class AnalyticsSummarySerializer(serializers.Serializer):
