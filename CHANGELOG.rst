@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.11]
+--------
+* feat: added migration to remove unencrypted client credentials
+
 [4.19.10]
 --------
 * feat: removing model reference of unencrypted client credentials from blackboard config.
