@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.19.9]
+[4.19.10]
 --------
 * feat: removing model reference of unencrypted client credentials from blackboard config.
+
+[4.19.9]
+--------
+* feat: making unencrypted client credentials nullable, so they can be removed
 
 [4.19.8]
 --------
