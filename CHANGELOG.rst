@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.11]
+--------
+* feat: added migration to remove unencrypted client credentials
+
+[4.19.10]
+--------
+* feat: removing model reference of unencrypted client credentials from blackboard config.
+
+[4.19.9]
+--------
+* feat: making unencrypted client credentials nullable, so they can be removed
+
 [4.19.8]
 --------
 * chore: updated permission class ``IsInProvisioningAdminGroup`` for ``PendingEnterpriseCustomerAdminUser`` viewpoint and handled exceptions in serializer.
