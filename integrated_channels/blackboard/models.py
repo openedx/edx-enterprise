@@ -102,7 +102,6 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     client_id = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
         default='',
         verbose_name="API Client ID or Blackboard Application Key",
         help_text=(
@@ -147,7 +146,6 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     client_secret = models.CharField(
         max_length=255,
         blank=True,
-        null=True,
         default='',
         verbose_name="API Client Secret or Application Secret",
         help_text=(
