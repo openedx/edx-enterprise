@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.1]
+---------
+* feat: Updating autocomplete field for Enteprise Group creation form
+
 [4.20.0]
 ---------
 * feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
