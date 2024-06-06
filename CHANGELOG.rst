@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.11]
+---------
+* revert: revert ' revert "remove blackboard unencrypted columns from models" ' in #2125
+
 [4.19.10]
 ---------
 * revert: revert "making blackboard unencrypted client credentials nullable" in #2126
