@@ -4,6 +4,7 @@ Django signal handlers.
 
 from logging import getLogger
 
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
@@ -383,16 +384,25 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
                 user_id,
                 instance.course_id,
             )
-        logger.info((
-            "User %s is an EnterpriseCustomerUser. "
-            "Spinning off task to check if course is within User's "
-            "Enterprise's EnterpriseCustomerCatalog."
-        ), user_id)
 
-        create_enterprise_enrollment.delay(
-            str(instance.course_id),
-            ecu.id,
-        )
+        def submit_task():
+            """
+            In-line helper to run the create_enterprise_enrollment task on commit.
+            """
+            logger.info((
+                "User %s is an EnterpriseCustomerUser. Spinning off task to check if course is within User's "
+                "Enterprise's EnterpriseCustomerCatalog."
+            ), user_id)
+            create_enterprise_enrollment.delay(
+                str(instance.course_id),
+                ecu.id,
+            )
+
+        # This receiver might be executed within a transaction that creates an ECE record.
+        # Ensure that the task is only submitted after a commit tasks place, because
+        # the task first checks if that ECE record exists and exits early, which we want it
+        # to do before later attempting to *create* the same record (which could lead to a race-condition error).
+        transaction.on_commit(submit_task)
 
 
 @receiver(pre_save, sender=models.EnterpriseCustomerSsoConfiguration)
