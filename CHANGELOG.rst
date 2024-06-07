@@ -17,6 +17,115 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.11]
+---------
+* revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
+
+[4.19.10]
+---------
+* revert: revert "making blackboard unencrypted client credentials nullable" in #2126
+
+[4.19.9]
+--------
+* feat: making unencrypted client credentials nullable, so they can be removed
+
+[4.19.8]
+--------
+* chore: updated permission class ``IsInProvisioningAdminGroup`` for ``PendingEnterpriseCustomerAdminUser`` viewpoint and handled exceptions in serializer.
+
+[4.19.7]
+--------
+* feat: schema level improvement in integrated-channels
+
+[4.19.6]
+--------
+* feat: allowing for group members removal endpoint to support remove all
+
+[4.19.5]
+--------
+* feat: replaced unencrypted user credentials from view and test
+
+[4.19.4]
+--------
+* feat: removed unencrypted columns of user data credentials in blackboard config ENT 8010
+
+[4.19.3]
+--------
+* feat: allowing for group members to be specified when fetched
+
+[4.19.2]
+--------
+* feat: added endpoint for pending_enterprise_customer_admin_user.
+
+[4.19.1]
+--------
+* fix: Update language for disable_expiry_messaging_for_learner_credit field
+
+[4.19.0]
+--------
+* feat: Introduce disable_expiry field on the enterprise customer model
+
+[4.18.6]
+--------
+* feat: allowing for group members to be revived by reassigning
+
+[4.18.5]
+--------
+* feat: force transmit content metadata if customer configs are modified
+
+[4.18.4]
+--------
+* fix: only creating membership records for relevant ECUs
+
+[4.18.3]
+--------
+* fix: indentation error in for loop
+
+[4.18.2]
+--------
+* fix: update enterprise model lookup in removal email task
+
+[4.18.1]
+--------
+* chore: debugging log lines
+
+[4.18.0]
+--------
+* feat: updates tasks usage of create_recipient to create_recipients
+
+[4.17.8]
+--------
+* fix: adding missing migration file
+
+[4.17.7]
+--------
+* fix: update group invite and removal notification tasks
+
+[4.17.6]
+--------
+* fix: allowing for search lookup of group members in django admin
+
+[4.17.5]
+--------
+* fix: hard deleting expired group memberships
+
+[4.17.4]
+--------
+* fix: update language cookie if langauge cookie is not same as user's language preference
+
+[4.17.3]
+--------
+* feat: replacing non encrypted fields of blackboard config model with encypted ones
+
+[4.17.2]
+--------
+* feat: added fields for holding encrypted data in database for blackboard
+
+[4.17.1]
+--------
+* revert: revert async task functionality implemented in 4.15.6
+* fix: update language cookie for an enterprise learner
+
 [4.17.0]
 --------
 * feat: limit the number of resulting learners in Django admin manage learners view

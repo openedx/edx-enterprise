@@ -518,6 +518,7 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     subsection_name = models.CharField(max_length=255, blank=False, null=True)
     status = models.CharField(max_length=100, blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
+    is_transmitted = models.BooleanField(default=False)
     friendly_status_message = models.CharField(
         help_text='A user-friendly API response status message.',
         max_length=255,
@@ -721,8 +722,10 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             integrated_channel_code=integrated_channel_code,
             remote_deleted_at__isnull=False,
         )
-        query.add(Q(remote_errored_at__lt=LAST_24_HRS) |
-                  Q(remote_errored_at__isnull=True), Q.AND)
+        query.add(
+            Q(remote_errored_at__lt=LAST_24_HRS)  # pylint: disable=unsupported-binary-operation
+            | Q(remote_errored_at__isnull=True)
+            | Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(query)
 
     @classmethod
@@ -757,7 +760,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         in_db_but_failed_to_send_query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+            Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         in_db_but_unsent_query.add(in_db_but_failed_to_send_query, Q.OR)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_unsent_query)
 
@@ -783,7 +787,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         in_db_but_failed_to_send_query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+            Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
     @classmethod
@@ -807,7 +812,9 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         in_db_but_failed_to_send_query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True), Q.AND)
+            Q(remote_errored_at__lt=LAST_24_HRS)  # pylint: disable=unsupported-binary-operation
+            | Q(remote_errored_at__isnull=True)
+            | Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
     def _mark_transmission(self, mark_for):

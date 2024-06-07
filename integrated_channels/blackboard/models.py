@@ -7,10 +7,12 @@ import uuid
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
+from fernet_fields import EncryptedCharField
 from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models
+from django.utils.encoding import force_bytes, force_str
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
 from integrated_channels.blackboard.exporters.learner_data import BlackboardLearnerExporter
@@ -97,27 +99,71 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     The Enterprise-specific configuration we need for integrating with Blackboard.
     """
 
-    client_id = models.CharField(
+    decrypted_client_id = EncryptedCharField(
         max_length=255,
         blank=True,
         default='',
-        verbose_name="API Client ID or Blackboard Application Key",
+        verbose_name="API Client ID encrypted at db level",
         help_text=(
-            "The API Client ID provided to edX by the enterprise customer to be used to make API "
-            "calls on behalf of the customer. Called Application Key in Blackboard"
+            "The API Client ID (encrypted at db level) provided to edX by the enterprise customer to be used"
+            " to make API calls to Degreed on behalf of the customer."
         )
     )
 
-    client_secret = models.CharField(
+    @property
+    def encrypted_client_id(self):
+        """
+        Return encrypted client_id as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_client_id field. This method will encrypt the client_id again before sending.
+        """
+        if self.decrypted_client_id:
+            return force_str(
+                self._meta.get_field('decrypted_client_id').fernet.encrypt(
+                    force_bytes(self.decrypted_client_id)
+                )
+            )
+        return self.decrypted_client_id
+
+    @encrypted_client_id.setter
+    def encrypted_client_id(self, value):
+        """
+        Set the encrypted client_id.
+        """
+        self.decrypted_client_id = value
+
+    decrypted_client_secret = EncryptedCharField(
         max_length=255,
         blank=True,
         default='',
-        verbose_name="API Client Secret or Application Secret",
+        verbose_name="API Client Secret encrypted at db level",
         help_text=(
-            "The API Client Secret provided to edX by the enterprise customer to be used to make "
-            " API calls on behalf of the customer. Called Application Secret in Blackboard"
-        )
+            "The API Client Secret (encrypted at db level) provided to edX by the enterprise customer to be "
+            "used to make API calls to Degreed on behalf of the customer."
+        ),
     )
+
+    @property
+    def encrypted_client_secret(self):
+        """
+        Return encrypted client_secret as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_client_secret field. This method will encrypt the client_secret again before sending.
+        """
+        if self.decrypted_client_secret:
+            return force_str(
+                self._meta.get_field('decrypted_client_secret').fernet.encrypt(
+                    force_bytes(self.decrypted_client_secret)
+                )
+            )
+        return self.decrypted_client_secret
+
+    @encrypted_client_secret.setter
+    def encrypted_client_secret(self, value):
+        """
+        Set the encrypted client_secret.
+        """
+        self.decrypted_client_secret = value
 
     blackboard_base_url = models.CharField(
         max_length=255,
@@ -159,17 +205,17 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     @property
     def oauth_authorization_url(self):
         """
-        Returns: the oauth authorization url when the blackboard_base_url and client_id are available.
+        Returns: the oauth authorization url when the blackboard_base_url and decrypted_client_id are available.
 
         Args:
             obj: The instance of BlackboardEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
-        if self.blackboard_base_url and self.client_id:
+        if self.blackboard_base_url and self.decrypted_client_id:
             return (f'{self.blackboard_base_url}/learn/api/public/v1/oauth2/authorizationcode'
                     f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
                     f'scope=read%20write%20delete%20offline&response_type=code&'
-                    f'client_id={self.client_id}&state={self.uuid}')
+                    f'client_id={self.decrypted_client_id}&state={self.uuid}')
         else:
             return None
 

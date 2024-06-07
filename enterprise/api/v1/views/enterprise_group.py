@@ -25,6 +25,45 @@ LOGGER = getEnterpriseLogger(__name__)
 User = auth.get_user_model()
 
 
+def remove_group_membership_records(group, catalog_uuid=None, user_emails=None):
+    """
+    Helper method to take a queryset of membership records, notify associated users of removal from the group,
+    and soft delete the data
+
+    params:
+    - group (EnterpriseGroup record, required): the Django ORM record related to the group from which members will be
+    removed
+    - catalog_uuid (UUID string, optional): Catalog UUID string used to email learners informing them of their removal.
+    If no catalog is supplied, email reminders will not be sent.
+    - user_emails (array[email strings], optional): List of user emails. If supplied, this method will remove
+    membership records related to ecu and pecu objects containing provided emails.
+    """
+    records_to_delete = models.EnterpriseGroupMembership.available_objects.filter(group=group)
+    if user_emails:
+        existing_users = User.objects.filter(email__in=user_emails).values_list("id", flat=True)
+        ecu_in_q = Q(enterprise_customer_user__user_id__in=existing_users)
+        pecu_in_q = Q(pending_enterprise_customer_user__user_email__in=user_emails)
+        records_to_delete = records_to_delete.filter((ecu_in_q | pecu_in_q))
+
+    records_to_delete_uuids = [record.uuid for record in records_to_delete]
+    records_to_delete.delete()
+    for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
+        send_group_membership_removal_notification.delay(
+            group.enterprise_customer.uuid,
+            records_to_delete_uuids_batch,
+            catalog_uuid
+        )
+    # Woohoo! Records removed! Now to update the soft deleted records
+    deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
+        uuid__in=records_to_delete_uuids,
+    )
+    deleted_records.update(
+        status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
+        removed_at=localized_utcnow()
+    )
+    return len(deleted_records)
+
+
 class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-group`` API endpoint.
@@ -107,12 +146,16 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         Optional query params:
         - ``pending_users_only`` (string, optional): Specify that results should only contain pending learners
-        - ``q`` (string, optional): Filter the returned members by user email and name with a provided sub-string
+        - ``user_query`` (string, optional): Filter the returned members by user email and name with a provided
+        sub-string
         - ``sort_by`` (string, optional): Specify how the returned members should be ordered. Supported sorting values
         are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
         beginning of the sorting value ie `-memberStatus`.
         - ``page`` (int, optional): Which page of paginated data to return.
         - ``show_removed`` (bool, optional): Include removed learners in the response.
+        - ``is_reversed`` (bool, optional): Include to reverse the order of returned records.
+        - ``learners`` (list[ email strings ], optional): Include to only return member records that are associated
+        with provided emails.
 
         Returns: Paginated list of learners that are associated with the enterprise group uuid::
 
@@ -136,10 +179,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             }
 
         """
-        query_params = self.request.query_params.copy()
-        is_reversed = bool(query_params.get('is_reversed', False))
-        show_removed = bool(query_params.get('show_removed', False))
-
+        query_params = self.request.query_params
         param_serializers = serializers.EnterpriseGroupLearnersRequestQuerySerializer(
             data=query_params
         )
@@ -148,8 +188,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             return Response(param_serializers.errors, status=400)
 
         user_query = param_serializers.validated_data.get('user_query')
+        show_removed = param_serializers.validated_data.get('show_removed', False)
+        is_reversed = param_serializers.validated_data.get('is_reversed', False)
+
         sort_by = param_serializers.validated_data.get('sort_by')
-        pending_users_only = param_serializers.validated_data.get('pending_users_only')
+        pending_users_only = param_serializers.validated_data.get('pending_users_only', False)
 
         group_uuid = kwargs.get('group_uuid')
         try:
@@ -159,6 +202,13 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                                                     desc_order=is_reversed,
                                                     pending_users_only=pending_users_only,
                                                     fetch_removed=show_removed)
+
+            if learners := param_serializers.validated_data.get('learners'):
+                specified_members = []
+                for member in members:
+                    if member.member_email in learners:
+                        specified_members.append(member)
+                members = specified_members
 
             page = self.paginate_queryset(members)
             serializer = serializers.EnterpriseGroupMembershipSerializer(page, many=True)
@@ -205,16 +255,31 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         act_by_date = param_serializer.validated_data.get('act_by_date')
         catalog_uuid = param_serializer.validated_data.get('catalog_uuid')
         learner_emails = param_serializer.validated_data.get('learner_emails', [])
+
+        if not learner_emails:
+            return Response({'learner_emails': ['This field is required.']}, status=400)
+
         total_records_processed = 0
         total_existing_users_processed = 0
         total_new_users_processed = 0
+        user_emails_to_create = []
+        memberships_to_create = []
         for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
-            user_emails_to_create = []
-            memberships_to_create = []
-            # ecus: enterprise customer users
-            ecus = []
             # Gather all existing User objects associated with the email batch
             existing_users = User.objects.filter(email__in=user_email_batch)
+
+            # Revive any previously deleted membership records connected to ECUs containing related emails
+            previously_removed_ecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
+                enterprise_customer_user__user_id__in=existing_users.values_list('id', flat=True),
+                is_removed=True,
+                group=group,
+            )
+            previously_removed_ecu_learners.update(
+                status=constants.GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+                removed_at=None,
+                is_removed=False,
+            )
+
             # Build and create a list of EnterpriseCustomerUser objects for the emails of existing Users
             # Ignore conflicts in case any of the ent customer user objects already exist
             ecu_by_email = {
@@ -229,11 +294,10 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
             # Fetch all ent customer users related to existing users provided by requester
             # whether they were created above or already existed
-            ecus.extend(
-                models.EnterpriseCustomerUser.objects.filter(
-                    user_id__in=existing_users.values_list('id', flat=True)
-                )
-            )
+            ecus = models.EnterpriseCustomerUser.objects.filter(
+                user_id__in=existing_users.values_list('id', flat=True),
+                enterprise_customer=customer,
+            ).exclude(pk__in=previously_removed_ecu_learners.values_list('pk', flat=True))
 
             # Extend the list of emails that don't have User objects associated and need to be turned into
             # new PendingEnterpriseCustomerUser objects
@@ -253,6 +317,18 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
         # Go over (in batches) all emails that don't have User objects
         for emails_to_create_batch in utils.batch(user_emails_to_create, batch_size=200):
+            # Revive any previously deleted membership records connected to PECUs containing related emails
+            previously_removed_pecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
+                pending_enterprise_customer_user__user_email__in=emails_to_create_batch,
+                is_removed=True,
+                group=group,
+            )
+            previously_removed_pecu_learners.update(
+                status=constants.GROUP_MEMBERSHIP_PENDING_STATUS,
+                removed_at=None,
+                is_removed=False,
+            )
+
             # Create the PendingEnterpriseCustomerUser objects
             pecu_records = [
                 models.PendingEnterpriseCustomerUser(
@@ -265,7 +341,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             pecus = models.PendingEnterpriseCustomerUser.objects.filter(
                 user_email__in=emails_to_create_batch,
                 enterprise_customer=customer,
-            )
+            ).exclude(pk__in=previously_removed_pecu_learners.values_list("pk", flat=True))
             total_new_users_processed += len(pecus)
             # Extend the list of memberships that need to be created associated with the new pending users
             memberships_to_create.extend([
@@ -318,40 +394,31 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         """
         try:
             group = self.get_queryset().get(uuid=group_uuid)
-            customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
         param_serializer = serializers.EnterpriseGroupRequestDataSerializer(data=request.data)
         param_serializer.is_valid(raise_exception=True)
 
         catalog_uuid = param_serializer.validated_data.get('catalog_uuid')
-        learner_emails = param_serializer.validated_data.get('learner_emails')
+        learner_emails = param_serializer.validated_data.get('learner_emails', [])
+        remove_all = param_serializer.validated_data.get('remove_all')
 
-        records_deleted = 0
-        for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
-            existing_users = User.objects.filter(email__in=user_email_batch).values_list("id", flat=True)
-            group_q = Q(group=group)
-            ecu_in_q = Q(enterprise_customer_user__user_id__in=existing_users)
-            pecu_in_q = Q(pending_enterprise_customer_user__user_email__in=user_email_batch)
-            records_to_delete = models.EnterpriseGroupMembership.objects.filter(
-                group_q & (ecu_in_q | pecu_in_q),
+        if bool(remove_all) == bool(learner_emails):
+            return Response("Must supply `remove_all` or `learner_email` but not both", status=400)
+
+        if remove_all:
+            records_deleted = remove_group_membership_records(
+                group=group,
+                catalog_uuid=catalog_uuid
             )
-            records_deleted += len(records_to_delete)
-            records_to_delete_uuids = [record.uuid for record in records_to_delete]
-            records_to_delete.delete()
-            for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
-                send_group_membership_removal_notification.delay(
-                    customer.uuid,
-                    records_to_delete_uuids_batch,
-                    catalog_uuid)
-            # Woohoo! Records removed! Now to update the soft deleted records
-            deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
-                uuid__in=records_to_delete_uuids,
-            )
-            deleted_records.update(
-                status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
-                removed_at=localized_utcnow()
-            )
+        else:
+            records_deleted = 0
+            for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
+                records_deleted += remove_group_membership_records(
+                    group=group,
+                    catalog_uuid=catalog_uuid,
+                    user_emails=user_email_batch,
+                )
         data = {
             'records_deleted': records_deleted,
         }

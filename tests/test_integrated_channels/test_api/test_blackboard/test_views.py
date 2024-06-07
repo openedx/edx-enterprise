@@ -4,11 +4,13 @@ Tests for the `integrated_channels` blackboard configuration api.
 import json
 from unittest import mock
 
+from django.apps import apps
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.blackboard.utils import populate_decrypted_fields_blackboard
 from test_utils import FAKE_UUIDS, APITest, factories
 
 
@@ -70,10 +72,6 @@ class BlackboardConfigurationViewSetTests(APITest):
         data = json.loads(response.content.decode('utf-8')).get('results')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0].get('client_id'),
-                         str(self.enterprise_customer_conf.client_id))
-        self.assertEqual(data[0].get('client_secret'),
-                         str(self.enterprise_customer_conf.client_secret))
         self.assertEqual(data[0].get('refresh_token'), '')
         self.assertEqual(data[0].get('enterprise_customer'),
                          self.enterprise_customer_conf.enterprise_customer.uuid)
@@ -90,10 +88,6 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data.get('blackboard_base_url'),
                          self.enterprise_customer_conf.blackboard_base_url)
-        self.assertEqual(data.get('client_id'),
-                         str(self.enterprise_customer_conf.client_id))
-        self.assertEqual(data.get('client_secret'),
-                         str(self.enterprise_customer_conf.client_secret))
         self.assertEqual(data.get('enterprise_customer'),
                          self.enterprise_customer_conf.enterprise_customer.uuid)
 
@@ -107,15 +101,13 @@ class BlackboardConfigurationViewSetTests(APITest):
         url = reverse('api:v1:blackboard:configuration-list')
         payload = {
             'active': True,
-            'client_id': 1,
-            'client_secret': 2,
+            'encrypted_client_id': 1,
+            'encrypted_client_secret': 2,
             'enterprise_customer': self.enterprise_customer.uuid,
         }
         response = self.client.post(url, payload, format='json')
         data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(data.get('client_id'), '1')
-        self.assertEqual(data.get('client_secret'), '2')
         self.assertEqual(data.get('active'), True)
         self.assertEqual(data.get('enterprise_customer'), self.enterprise_customer.uuid)
 
@@ -127,17 +119,37 @@ class BlackboardConfigurationViewSetTests(APITest):
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
         payload = {
-            'client_secret': 1000,
-            'client_id': 1001,
+            'encrypted_client_secret': 1000,
+            'encrypted_client_id': 1001,
             'blackboard_base_url': 'http://testing2',
             'enterprise_customer': FAKE_UUIDS[0],
         }
         response = self.client.put(url, payload)
         self.enterprise_customer_conf.refresh_from_db()
-        self.assertEqual(self.enterprise_customer_conf.client_secret, '1000')
-        self.assertEqual(self.enterprise_customer_conf.client_id, '1001')
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, '1000')
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_id, '1001')
         self.assertEqual(self.enterprise_customer_conf.blackboard_base_url, 'http://testing2')
         self.assertEqual(response.status_code, 200)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_populate_decrypted_fields(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
+        client_secret = getattr(self.enterprise_customer_conf, 'client_id', '')
+        payload = {
+            'encrypted_client_secret': '1000',
+            'enterprise_customer': FAKE_UUIDS[0],
+        }
+        self.client.put(url, payload)
+        self.enterprise_customer_conf.refresh_from_db()
+        self.assertEqual(self.enterprise_customer_conf.decrypted_client_secret, '1000')
+        populate_decrypted_fields_blackboard(apps)
+        self.enterprise_customer_conf.refresh_from_db()
+        self.assertEqual(self.enterprise_customer_conf.encrypted_client_secret, client_secret)
+        self.assertEqual(self.enterprise_customer_conf.encrypted_client_id, '')
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_partial_update(self, mock_current_request):
@@ -147,7 +159,7 @@ class BlackboardConfigurationViewSetTests(APITest):
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
         payload = {
-            'client_id': 10001,
+            'encrypted_client_id': 10001,
         }
         response = self.client.patch(url, payload)
         self.assertEqual(response.status_code, 200)
@@ -188,8 +200,8 @@ class BlackboardConfigurationViewSetTests(APITest):
         assert incorrect.get('incorrect') == ['blackboard_base_url', 'display_name']
 
         self.enterprise_customer_conf.refresh_token = 'ayylmao'
-        self.enterprise_customer_conf.client_id = '1'
-        self.enterprise_customer_conf.client_secret = '1'
+        self.enterprise_customer_conf.decrypted_client_id = '1'
+        self.enterprise_customer_conf.decrypted_client_secret = '1'
         self.enterprise_customer_conf.blackboard_base_url = 'http://better.com'
         self.enterprise_customer_conf.display_name = 'shortname'
         self.enterprise_customer_conf.save()

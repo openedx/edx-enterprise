@@ -102,7 +102,7 @@ coreschema==0.0.4
     #   -r requirements/test-master.txt
     #   coreapi
     #   drf-yasg
-coverage[toml]==7.4.4
+coverage[toml]==7.5.1
     # via pytest-cov
 cryptography==38.0.4
     # via
@@ -145,7 +145,7 @@ django-cache-memoize==0.2.0
     # via -r requirements/test-master.txt
 django-config-models==2.7.0
     # via -r requirements/test-master.txt
-django-countries==7.5.1
+django-countries==7.6.1
     # via -r requirements/test-master.txt
 django-crum==0.7.9
     # via
@@ -155,11 +155,11 @@ django-crum==0.7.9
     #   edx-toggles
 django-fernet-fields-v2==0.9
     # via -r requirements/test-master.txt
-django-filter==23.5
+django-filter==24.2
     # via -r requirements/test-master.txt
 django-ipware==6.0.4
     # via -r requirements/test-master.txt
-django-model-utils==4.4.0
+django-model-utils==4.5.0
     # via
     #   -r requirements/test-master.txt
     #   -r requirements/test.in
@@ -200,9 +200,9 @@ drf-yasg==1.21.5
     #   edx-api-doc-tools
 edx-api-doc-tools==1.8.0
     # via -r requirements/test-master.txt
-edx-braze-client==0.2.2
+edx-braze-client==0.2.5
     # via -r requirements/test-master.txt
-edx-django-utils==5.12.0
+edx-django-utils==5.13.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -213,7 +213,7 @@ edx-drf-extensions==10.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.8.0
+edx-opaque-keys[django]==2.9.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -229,7 +229,7 @@ factory-boy==3.3.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==24.11.0
+faker==25.0.1
     # via factory-boy
 filelock==3.13.1
     # via
@@ -300,13 +300,13 @@ oauthlib==3.2.2
     #   django-oauth-toolkit
 openai==0.28.1
     # via -r requirements/test-master.txt
-packaging==23.2
+packaging==24.0
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
     #   pytest
     #   snowflake-connector-python
-path==16.10.0
+path==16.11.0
     # via
     #   -r requirements/test-master.txt
     #   path-py
@@ -345,7 +345,7 @@ pycparser==2.21
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pygments==2.17.2
+pygments==2.18.0
     # via diff-cover
 pyjwt[crypto]==2.8.0
     # via
@@ -484,7 +484,6 @@ typing-extensions==4.9.0
     #   asgiref
     #   django-countries
     #   edx-opaque-keys
-    #   faker
     #   jwcrypto
     #   kombu
     #   snowflake-connector-python

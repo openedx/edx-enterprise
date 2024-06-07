@@ -17,6 +17,7 @@ from rest_framework.settings import api_settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core import exceptions as django_exceptions
+from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
 
 from enterprise import models, utils  # pylint: disable=cyclic-import
@@ -30,6 +31,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    PendingEnterpriseCustomerAdminUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import (
@@ -211,7 +213,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         model = models.EnterpriseCustomer
         fields = (
             'uuid', 'name', 'slug', 'active', 'auth_org_id', 'site', 'enable_data_sharing_consent',
-            'enforce_data_sharing_consent', 'branding_configuration',
+            'enforce_data_sharing_consent', 'branding_configuration', 'disable_expiry_messaging_for_learner_credit',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
             'enable_learner_portal', 'enable_learner_portal_offers', 'enable_portal_learner_credit_management_screen',
@@ -1624,6 +1626,54 @@ class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
     content_filter = serializers.JSONField(required=False)
 
 
+class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``PendingEnterpriseCustomerAdminUser`` model.
+    """
+
+    class Meta:
+        model = PendingEnterpriseCustomerAdminUser
+        fields = (
+            'enterprise_customer', 'user_email'
+        )
+
+    def validate(self, attrs):
+        """
+        Validate the pending enterprise customer admin user data.
+        """
+        instance = self.instance
+        user_email = attrs.get('user_email', instance.user_email if instance else None)
+        enterprise_customer = attrs.get('enterprise_customer', instance.enterprise_customer if instance else None)
+
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE, user__email=user_email, enterprise_customer=enterprise_customer
+        )
+
+        if admin_instance.exists():
+            raise serializers.ValidationError(
+                'A user with this email and enterprise customer already has admin permission.'
+            )
+
+        return attrs
+
+    def save(self, **kwargs):
+        """
+        Attempts to save the pending enterprise customer admin user data while handling potential integrity errors.
+        """
+        try:
+            with transaction.atomic():
+                return super().save(**kwargs)
+        except IntegrityError as exc:
+            raise serializers.ValidationError(
+                'A pending user with this email and enterprise customer already exists.'
+            ) from exc
+        except Exception as e:
+            error_message = f"An unexpected error occurred while saving PendingEnterpriseCustomerAdminUser: {e}"
+            data = self.validated_data
+            LOGGER.error(error_message, extra={'data': data})
+            raise serializers.ValidationError('An unexpected error occurred. Please try again later.')
+
+
 class AnalyticsSummarySerializer(serializers.Serializer):
     """
     Serializer for the payload data of analytics summary endpoint.
@@ -1715,7 +1765,10 @@ class EnterpriseGroupRequestDataSerializer(serializers.Serializer):
     act_by_date = serializers.DateTimeField(required=False, allow_null=True)
     learner_emails = serializers.ListField(
         child=serializers.EmailField(required=True),
-        allow_empty=False)
+        allow_empty=False,
+        required=False,
+    )
+    remove_all = serializers.BooleanField(required=False, default=False)
 
 
 class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
@@ -1732,3 +1785,10 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         required=False,
     )
     pending_users_only = serializers.BooleanField(required=False, default=False)
+    show_removed = serializers.BooleanField(required=False, default=False)
+    is_reversed = serializers.BooleanField(required=False, default=False)
+    page = serializers.IntegerField(required=False)
+    learners = serializers.ListField(
+        child=serializers.EmailField(required=True),
+        required=False,
+    )
