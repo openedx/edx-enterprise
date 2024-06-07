@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.11]
+---------
+* revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
+
 [4.19.10]
 ---------
 * revert: revert "making blackboard unencrypted client credentials nullable" in #2126
