@@ -1162,7 +1162,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Return linked user's name.
         """
-        if self.user is not None:
+        if self.user.profile is not None:
+            return f"{self.user.profile.name}"
+        elif self.user is not None:
             return f"{self.user.first_name} {self.user.last_name}"
         return None
 
