@@ -19,7 +19,7 @@ Unreleased
 
 [4.19.11]
 ---------
-* revert: revert ' revert "remove blackboard unencrypted columns from models" ' in #2125
+* revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
 
 [4.19.10]
 ---------
