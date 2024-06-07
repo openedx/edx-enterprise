@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.10]
+---------
+* revert: revert "making blackboard unencrypted client credentials nullable" in #2126
+
 [4.19.9]
 --------
 * feat: making unencrypted client credentials nullable, so they can be removed
