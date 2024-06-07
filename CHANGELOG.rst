@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.12]
+---------
+* refactor: renamed ``career_engagement_network_message`` to ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` model.
+* refactor: renamed ``enable_career_engagement_network_on_learner_portal`` to ``enable_learner_portal_sidebar_message`` in ``EnterpriseCustomer`` model.
+
 [4.19.11]
 ---------
 * revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
