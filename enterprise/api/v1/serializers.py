@@ -224,7 +224,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
-            'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
+            'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
             'enable_one_academy', 'active_integrations',
         )

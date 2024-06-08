@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.12]
+---------
+* refactor: renamed ``career_engagement_network_message`` and 1 related field in ``EnterpriseCustomer`` model.
+
 [4.19.11]
 ---------
 * revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
