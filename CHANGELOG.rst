@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.13]
+---------
+* feat: added more integrated channels in mark_learner_transmissions_transmitted_true management command
+
 [4.19.12]
 ---------
 * refactor: renamed ``career_engagement_network_message`` and 1 related field in ``EnterpriseCustomer`` model.
