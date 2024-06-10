@@ -384,11 +384,11 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    enable_learner_portal_sidebar_message = models.BooleanField(
-        verbose_name="Enable learner portal sidebar message",
+    enable_career_engagement_network_on_learner_portal = models.BooleanField(
+        verbose_name="Allow navigation to career engagement network from learner portal dashboard",
         default=False,
         help_text=_(
-            "If checked, learners will be able to see content in the Learner Portal Sidebar found in the HTML box."
+            "If checked, the learners will be able to see the link to CEN on the learner portal dashboard."
         )
     )
 
@@ -509,10 +509,10 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
-    learner_portal_sidebar_content = models.TextField(
+    career_engagement_network_message = models.TextField(
         blank=True,
         help_text=_(
-            'Text shown on the learner portal dashboard for customer specific purposes. Open HTML field.'
+            'Message text shown on the learner portal dashboard for career engagement network.'
         ),
     )
 
