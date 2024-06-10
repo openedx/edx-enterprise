@@ -122,6 +122,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
         assert payload.status == '200'
         assert payload.error_message == ''
+        assert payload.is_transmitted == True
 
     def test_transmit_failure(self):
         """
@@ -145,6 +146,8 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
         assert payload.status == '500'
         assert payload.error_message == 'error occurred'
+        assert payload.is_transmitted == False
+
 
     @ddt.data(
         ('user account is inactive', False),
