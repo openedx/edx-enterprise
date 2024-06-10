@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.14]
+---------
+* chore: added help text for the renamed fields in the ``EnterpriseCustomer`` model.
+
 [4.19.13]
 ---------
 * feat: added more integrated channels in mark_learner_transmissions_transmitted_true management command
