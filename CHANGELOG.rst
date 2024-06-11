@@ -19,7 +19,7 @@ Unreleased
 
 [4.19.15]
 ---------
-* feat: filter already transmitted records based on is_transmitted column
+* feat: added filtering for transmitted records using the is_transmitted column.
 
 [4.19.14]
 ---------
