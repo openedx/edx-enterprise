@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.15]
+---------
+* feat: added filtering for transmitted records using the is_transmitted column.
+
 [4.19.14]
 ---------
 * feat: reverts an errant 4.19.12
