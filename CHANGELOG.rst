@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.15]
+---------
+* feat: adds new fields EnterpriseCustomer to replace the ``career_engagement_network_message`` field
+
 [4.19.14]
 ---------
 * feat: reverts an errant 4.19.12
