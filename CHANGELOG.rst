@@ -19,7 +19,7 @@ Unreleased
 
 [4.19.15]
 ---------
-* feat: adds new fields EnterpriseCustomer to replace the ``career_engagement_network_message`` field
+* feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
 
 [4.19.14]
 ---------
