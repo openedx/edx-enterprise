@@ -17,9 +17,37 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.15]
+---------
+* feat: filter already transmitted records based on is_transmitted column
+
+[4.19.14]
+---------
+* feat: reverts an errant 4.19.12
+
+[4.19.13]
+---------
+* feat: added more integrated channels in mark_learner_transmissions_transmitted_true management command
+
+[4.19.12]
+---------
+* feat: (reverted)
+
+[4.19.11]
+---------
+* revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
+
+[4.19.10]
+---------
+* revert: revert "making blackboard unencrypted client credentials nullable" in #2126
+
+[4.19.9]
+--------
+* feat: making unencrypted client credentials nullable, so they can be removed
+
 [4.19.8]
 --------
-* feat: filter already transmitted records based on is_transmitted column
+* chore: updated permission class ``IsInProvisioningAdminGroup`` for ``PendingEnterpriseCustomerAdminUser`` viewpoint and handled exceptions in serializer.
 
 [4.19.7]
 --------
