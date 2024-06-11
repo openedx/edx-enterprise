@@ -10,9 +10,9 @@ filelock==3.14.0
     # via
     #   tox
     #   virtualenv
-packaging==24.0
+packaging==24.1
     # via tox
-platformdirs==4.2.1
+platformdirs==4.2.2
     # via virtualenv
 pluggy==1.5.0
     # via tox
@@ -26,5 +26,5 @@ tox==3.28.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/ci.in
-virtualenv==20.26.1
+virtualenv==20.26.2
     # via tox
