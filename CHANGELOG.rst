@@ -19,7 +19,7 @@ Unreleased
 
 [4.19.16]
 ---------
-* feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
+* feat: submit ``create_enterprise_enrollment`` task on commit
 
 [4.19.15]
 ---------
