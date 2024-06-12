@@ -1217,3 +1217,36 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'pending_enterprise_customer_user',
     )
+
+
+@admin.register(models.LearnerCreditEnterpriseCourseEnrollment)
+class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
+    """
+    Django admin model for LearnerCreditEnterpriseCourseEnrollmentAdmin.
+    """
+    list_display = (
+        'uuid',
+        'fulfillment_type',
+        'enterprise_course_enrollment',
+        'is_revoked',
+        'modified',
+    )
+
+    readonly_fields = (
+        'uuid',
+        'enterprise_course_enrollment',
+    )
+
+    list_filter = ('is_revoked',)
+
+    search_fields = (
+        'uuid',
+        'enterprise_course_enrollment__id'
+        'enterprise_course_enrollment__user_id',
+    )
+
+    ordering = ('-modified',)
+
+    class Meta:
+        fields = '__all__'
+        model = models.LearnerCreditEnterpriseCourseEnrollment
