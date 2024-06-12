@@ -384,15 +384,6 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    enable_career_engagement_network_on_learner_portal = models.BooleanField(
-        verbose_name="Allow navigation to career engagement network from learner portal dashboard",
-        null=True,
-        default=False,
-        help_text=_(
-            "If checked, the learners will be able to see the link to CEN on the learner portal dashboard."
-        )
-    )
-
     enable_learner_portal_sidebar_message = models.BooleanField(
         verbose_name="Enable learner portal sidebar message",
         default=False,
@@ -516,13 +507,6 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_generation_of_api_credentials = models.BooleanField(
         verbose_name="Allow generation of API credentials",
         default=False,
-    )
-
-    career_engagement_network_message = models.TextField(
-        blank=True,
-        help_text=_(
-            'Message text shown on the learner portal dashboard for career engagement network.'
-        ),
     )
 
     learner_portal_sidebar_content = models.TextField(
