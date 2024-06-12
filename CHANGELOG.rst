@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.17]
+---------
+* feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
+
+[4.19.16]
+---------
+* feat: submit ``create_enterprise_enrollment`` task on commit
+
+[4.19.15]
+---------
+* feat: added filtering for transmitted records using the is_transmitted column.
+
 [4.19.14]
 ---------
 * feat: reverts an errant 4.19.12

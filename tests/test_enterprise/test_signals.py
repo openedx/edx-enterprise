@@ -11,7 +11,7 @@ import ddt
 from pytest import mark
 
 from django.db import transaction
-from django.test import override_settings
+from django.test import TestCase, override_settings
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
@@ -824,7 +824,7 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
 
 
 @mark.django_db
-class TestCourseEnrollmentSignals(unittest.TestCase):
+class TestCourseEnrollmentSignals(TestCase):
     """
     Tests signals associated with CourseEnrollments (that are found in edx-platform).
     """
@@ -863,7 +863,8 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
             'created': True,
         }
 
-        create_enterprise_enrollment_receiver(sender, instance, **kwargs)
+        with self.captureOnCommitCallbacks(execute=True):
+            create_enterprise_enrollment_receiver(sender, instance, **kwargs)
         mock_task.assert_called_once_with(str(instance.course_id), self.enterprise_customer_user.id)
 
     @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
