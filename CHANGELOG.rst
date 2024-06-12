@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.18]
+---------
+* feat: Populates enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer and removes references to old fields.
+
 [4.19.17]
 ---------
 * feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
