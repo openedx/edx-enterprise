@@ -197,13 +197,16 @@ class BaseTestEnterpriseAPIViews(APITest):
         super().setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
 
-    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=True, **kwargs):
-        """
-        Create a test user and set its password.
-        """
-        self.user = factories.UserFactory(username=username, is_active=True, is_staff=is_staff, **kwargs)
-        self.user.set_password(password)
-        self.user.save()
+    @staticmethod
+    def create_user(username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+        # AED 2024-06-12: For simplicity, I've tried to refactor the test setup in the base APITest
+        # to create a test user only once per test class.
+        # However, the pre-existing state of this file had the test user created once
+        # per test function, and always as staff. Attempting to change the default to is_staff=False
+        # caused many, many tests to break.  We'll need to clean this up over time.
+        if 'is_staff' not in kwargs:
+            kwargs['is_staff'] = True
+        return APITest.create_user(username=username, password=password, **kwargs)
 
     def create_items(self, factory, items):
         """
@@ -632,9 +635,10 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         Creates an admin user and logs them in
         """
         client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
+        # pylint: disable=attribute-defined-outside-init
+        self.admin_user = self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.admin_client = APIClient()
+        self.admin_client.login(username=client_username, password=TEST_PASSWORD)
 
     @ddt.data(
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
@@ -676,7 +680,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer,
         )
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        response = self.admin_client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
         response = self.load_json(response.content)
         self.assertDictEqual(data, response)
@@ -729,7 +733,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer,
         )
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        response = self.admin_client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
         assert not response.content
 
@@ -768,7 +772,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer,
         )
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        response = self.admin_client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
 
     @ddt.data(
@@ -811,7 +815,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
                 'existing_user': existing_user
             })
 
-        response = self.client.post(
+        response = self.admin_client.post(
             settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT,
             data=data,
             format='json'
@@ -1078,14 +1082,15 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             )
         return user
 
-    def setup_admin_user(self):
+    def setup_admin_user(self, is_staff=True):
         """
         Creates an admin user and logs them in
         """
         client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
+        # pylint: disable=attribute-defined-outside-init
+        self.admin_user = self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.admin_client = APIClient()
+        self.admin_client.login(username=client_username, password=TEST_PASSWORD)
 
     @ddt.data(
         {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
@@ -1102,10 +1107,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         """
         Make sure service users can post new PendingEnterpriseCustomerUsers.
         """
-
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1159,10 +1160,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         """
         Make sure service users can post new PendingEnterpriseCustomerUsers.
         """
-
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1193,9 +1190,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         assert not response.content
 
     def test_post_pending_enterprise_customer_unauthorized_user(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1216,6 +1210,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             enterprise_customer=enterprise_customer,
         )
 
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, '')
         response = self.client.post(
             settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
@@ -1223,9 +1218,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         assert response.status_code == 403
 
     def test_post_pending_enterprise_customer_empty_bulk_payload(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1242,9 +1234,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         assert response.json() == 'At least one user email is required.'
 
     def test_post_pending_enterprise_customer_user_authorized_for_different_enterprise(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1287,7 +1276,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
     )
     @ddt.unpack
     def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
-        self.setup_admin_user()
         ent_uuid = fake.uuid4()
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1333,9 +1321,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
                 )
 
     def test_post_pending_enterprise_customer_user_cannot_create_users_for_different_enterprise(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         other_ent_uuid = fake.uuid4()
@@ -3858,18 +3843,25 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
     Test EnterpriseSubsidyFulfillmentViewSet
     """
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.unenrolled_after_filter = f'?unenrolled_after={str(datetime.now() - timedelta(hours=24))}'
+        cls.course_id = 'course-v1:edX+DemoX+Demo_Course'
+
+        # cls.user exists already due to APITest.setUpClass()
+        cls.enterprise_customer = factories.EnterpriseCustomerFactory()
+        cls.enterprise_user = factories.EnterpriseCustomerUserFactory(
+            user_id=cls.user.id,
+            enterprise_customer=cls.enterprise_customer,
+        )
+
     def setUp(self):
         super().setUp()
 
-        self._create_user_and_enterprise_customer('test_user', 'test_password')
-
-        self.client = APIClient()
-        self.client.login(username='test_user', password='test_password')
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, str(self.enterprise_customer.uuid))
 
-        self.unenrolled_after_filter = f'?unenrolled_after={str(datetime.now() - timedelta(hours=24))}'
-
-        self.course_id = 'course-v1:edX+DemoX+Demo_Course'
         self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_user,
             course_id=self.course_id,
@@ -3892,19 +3884,14 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         self.cancel_licensed_fulfillment_url = self.licensed_fulfillment_url + '/cancel-fulfillment'
         self.cancel_learner_credit_fulfillment_url = self.learner_credit_fulfillment_url + '/cancel-fulfillment'
 
-    def _create_user_and_enterprise_customer(self, username, password):
+    @classmethod
+    def _create_user_and_enterprise_customer(cls, username, password):
         """
         Helper method to create the User and Enterprise Customer used in tests.
         """
-        self.user = factories.UserFactory(username=username, is_active=True, is_staff=False)
-        self.user.set_password(password)
-        self.user.save()
-
-        self.enterprise_customer = factories.EnterpriseCustomerFactory()
-        self.enterprise_user = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
+        cls.user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        cls.user.set_password(password)
+        cls.user.save()
 
     def test_requested_recently_unenrolled_subsidy_fulfillment(self):
         """
@@ -4122,7 +4109,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             settings.TEST_SERVER + self.cancel_licensed_fulfillment_url,
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
         self.licensed_course_enrollment.refresh_from_db()
         assert self.licensed_course_enrollment.is_revoked
         mock_enrollment_api.update_enrollment.assert_called_once()
@@ -4142,7 +4129,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             settings.TEST_SERVER + self.cancel_learner_credit_fulfillment_url,
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
         self.learner_credit_course_enrollment.refresh_from_db()
         assert self.learner_credit_course_enrollment.is_revoked
         mock_enrollment_api.update_enrollment.assert_called_once()
@@ -4153,6 +4140,37 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
             'is_active': False,
         }
+
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
+    def test_idempotent_cancel_fulfillment(self, mock_enrollment_api):
+        """
+        Test that canceling an already revoked enrollment/fulfillment is idempotent
+        and returns a non-error resopnse code
+        """
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+        self.licensed_course_enrollment.is_revoked = True
+        self.licensed_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_licensed_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.licensed_course_enrollment.refresh_from_db()
+        assert self.licensed_course_enrollment.is_revoked
+        self.assertFalse(mock_enrollment_api.update_enrollment.called)
+
+        mock_enrollment_api.reset_mock()
+
+        self.learner_credit_course_enrollment.is_revoked = True
+        self.learner_credit_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_learner_credit_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.learner_credit_course_enrollment.refresh_from_db()
+        assert self.learner_credit_course_enrollment.is_revoked
+        self.assertFalse(mock_enrollment_api.update_enrollment.called)
 
     def test_cancel_fulfillment_nonexistent_enrollment(self):
         """
@@ -4171,20 +4189,16 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         Test that a non staff user cannot cancel a fulfillment belonging to a different enterprise.
         """
         self.user.is_staff = False
-        other_enterprise_user = factories.EnterpriseCustomerUserFactory()
-        other_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=other_enterprise_user
-        )
-        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
-            enterprise_course_enrollment=other_enrollment,
-        )
+        self.user.save()
+
+        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory()
         response = self.client.post(
             settings.TEST_SERVER + reverse(
                 'enterprise-subsidy-fulfillment',
                 kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
             ) + '/cancel-fulfillment',
         )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_staff_can_cancel_fulfillments_not_belonging_to_them(self, mock_enrollment_api):
@@ -4207,7 +4221,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
                 kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
             ) + '/cancel-fulfillment',
         )
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @ddt.ddt
@@ -5143,7 +5157,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                         content_type='application/json',
                     )
 
-        assert cancel_response.status_code == status.HTTP_200_OK
+        assert cancel_response.status_code == status.HTTP_204_NO_CONTENT
         assert second_enroll_response.status_code == status.HTTP_201_CREATED
 
         if old_transaction_id == new_transaction_id:
