@@ -1182,6 +1182,8 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('count', 'members',)
 
+    autocomplete_fields = ['enterprise_customer']
+
     def members(self, obj):
         """
         Return the non-deleted members of a group
