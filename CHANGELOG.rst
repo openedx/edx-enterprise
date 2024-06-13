@@ -17,12 +17,16 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.5]
+--------
+* fix: submit the ``create_enterprise_enrollment`` task with a configurable countdown
+
 [4.20.4]
----------
+--------
 * feat: Populates ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` and removes references to old fields.
 
 [4.20.3]
----------
+--------
 * feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
 
 [4.20.2]
