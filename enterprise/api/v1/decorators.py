@@ -3,7 +3,6 @@ Decorators for Enterprise API views.
 """
 
 from functools import wraps
-from django.contrib.auth.decorators import user_passes_test
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 

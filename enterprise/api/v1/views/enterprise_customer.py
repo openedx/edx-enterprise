@@ -29,10 +29,7 @@ from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
 from enterprise.api.pagination import PaginationWithFeatureFlags
 from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.decorators import (
-    has_permission_or_group,
-    require_at_least_one_query_parameter,
-)
+from enterprise.api.v1.decorators import has_permission_or_group, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT

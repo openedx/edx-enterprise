@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.0]
+---------
+* feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
+
 [4.19.17]
 ---------
 * feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.

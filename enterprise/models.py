@@ -432,6 +432,12 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    show_videos_in_learner_portal_search_results = models.BooleanField(
+        verbose_name="Show videos in learner portal search results",
+        default=False,
+        help_text=_("If checked, videos will be displayed in the search results on the learner portal.")
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,
