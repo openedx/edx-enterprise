@@ -2107,6 +2107,41 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             enterprise_customer = EnterpriseCustomer.objects.get(slug='test-create-customer')
             assert enterprise_customer.name == 'Test Create Customer'
 
+    def test_create_provisioning_admins(self):
+        """
+        Test that ``EnterpriseCustomer`` can be created by provisioning admins who are part of group.
+        """
+        self.set_jwt_cookie("provisioning-admin-role", str(FAKE_UUIDS[0]))
+        # auth error should be raised if user isn't part of provisioning admins group
+        failed_response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+        }, format='json')
+
+        assert failed_response.status_code == 403
+
+        # now make this use part of provisioning admins groups and retry
+        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+        self.user.groups.add(allowed_group)
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+        }, format='json')
+
+        assert response.status_code == 201
+
+        # First, smoke check the response body:
+        assert response.json()['name'] == 'Test Create Customer'
+        assert response.json()['slug'] == 'test-create-customer'
+        assert response.json()['site'] == {
+            'domain': 'example.com', 'name': 'example.com'}
+        # Then, look in the database to confirm the customer was created:
+        enterprise_customer = EnterpriseCustomer.objects.get(
+            slug='test-create-customer')
+        assert enterprise_customer.name == 'Test Create Customer'
+
     def test_create_missing_site(self):
         """
         Test creating an ``EnterpriseCustomer`` with missing/invalid site argument.
