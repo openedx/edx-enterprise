@@ -534,6 +534,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     learner_portal_sidebar_content = models.TextField(
         blank=True,
+        null=True,
         help_text=_(
             'Text shown on the learner portal dashboard for customer specific purposes. Open HTML field.'
         ),
