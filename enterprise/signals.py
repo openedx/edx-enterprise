@@ -4,6 +4,7 @@ Django signal handlers.
 
 from logging import getLogger
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
@@ -48,6 +49,10 @@ INTEGRATED_CHANNELS = [
     MoodleEnterpriseCustomerConfiguration,
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
 ]
+
+# Default number of seconds to use as task countdown
+# if not otherwise specified via Django settings.
+DEFAULT_COUNTDOWN = 3
 
 
 @disable_for_loaddata
@@ -385,6 +390,10 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
                 instance.course_id,
             )
 
+        # Number of seconds to tell celery to wait before the `create_enterprise_enrollment`
+        # task should begin execution.
+        countdown = getattr(settings, 'CREATE_ENTERPRISE_ENROLLMENT_TASK_COUNTDOWN', DEFAULT_COUNTDOWN)
+
         def submit_task():
             """
             In-line helper to run the create_enterprise_enrollment task on commit.
@@ -393,10 +402,11 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
                 "User %s is an EnterpriseCustomerUser. Spinning off task to check if course is within User's "
                 "Enterprise's EnterpriseCustomerCatalog."
             ), user_id)
-            create_enterprise_enrollment.delay(
-                str(instance.course_id),
-                ecu.id,
-            )
+            task_args = (str(instance.course_id), ecu.id)
+            # Submit the task with a countdown to help avoid possible race-conditions/deadlocks
+            # due to external processes that read or write the same
+            # records the task tries to read or write.
+            create_enterprise_enrollment.apply_async(task_args, countdown=countdown)
 
         # This receiver might be executed within a transaction that creates an ECE record.
         # Ensure that the task is only submitted after a commit tasks place, because
