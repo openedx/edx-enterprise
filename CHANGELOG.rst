@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.19.18]
+[4.20.1]
 ---------
 * feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
+
+[4.20.0]
+---------
+* feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
 
 [4.19.17]
 ---------

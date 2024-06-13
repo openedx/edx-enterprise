@@ -226,7 +226,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
             'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
-            'enable_one_academy', 'active_integrations',
+            'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
