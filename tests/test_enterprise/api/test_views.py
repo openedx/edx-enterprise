@@ -2211,6 +2211,23 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             enterprise_customer.refresh_from_db()
             assert enterprise_customer.slug == 'new-slug'
 
+    def test_partial_update_provisioning_admins(self):
+        """
+        Test that ``EnterpriseCustomer`` can be updated by provisioning admins.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+        self.user.groups.add(allowed_group)
+        self.set_jwt_cookie("provisioning-admin-role", str(FAKE_UUIDS[0]))
+        response = self.client.patch(ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT, {
+            "slug": 'new-slug'
+        })
+
+        assert response.status_code == 200
+        enterprise_customer.refresh_from_db()
+        assert enterprise_customer.slug == 'new-slug'
+
     @ddt.data(
         (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], False, 200),
         (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], True, 200),

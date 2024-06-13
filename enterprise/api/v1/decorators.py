@@ -3,6 +3,7 @@ Decorators for Enterprise API views.
 """
 
 from functools import wraps
+from django.contrib.auth.decorators import user_passes_test
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
@@ -47,27 +48,26 @@ def require_at_least_one_query_parameter(*query_parameter_names):
     return outer_wrapper
 
 
-def has_permission_to_create_enterprise_customer():
+def has_permission_or_group(permission, group_name, fn=None):
     """
-    Ensure that user has permission to create enterprise_customers.
-    Only provisioning admins or admins with can_access_admin_dashboard should be allowed
-    to create enterprise customers
+    Ensure that user has permission to access the endpoint OR is part of a group that has access.
     """
-    def outer_wrapper(view):
-        """ Allow the passing of parameters to has_permission_to_create_enterprise_customer. """
-        @wraps(view)
-        def wrapper(request, *args, **kwargs):
-            """
-            Checks for the existence of at least one of the permissions and raises
-            PermissionDenied error if none of them are availalable.
-            """
-            PROVISIONING_ADMIN_ALLOWED_API_GROUPS = ['provisioning-admins-group']
-            if request.user.groups.filter(name__in=PROVISIONING_ADMIN_ALLOWED_API_GROUPS).exists() or\
-                    request.user.has_perm('enterprise.can_access_admin_dashboard'):
-                return view(request, *args, **kwargs)
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            user = request.user
+            pk = fn(request, **kwargs) if fn else kwargs.get('pk')
+
+            if pk:
+                has_permission = user.has_perm(permission, pk)
+            else:
+                has_permission = user.has_perm(permission)
+
+            if has_permission or user.groups.filter(name=group_name).exists():
+                return view_func(request, *args, **kwargs)
 
             raise PermissionDenied(
-                detail='Access denied: Only admins are allowed to access this endpoint.'
-            )
-        return wrapper
-    return outer_wrapper
+                "Access denied: Only admins and provisioning admins are allowed to access this endpoint.")
+
+        return _wrapped_view
+    return decorator
