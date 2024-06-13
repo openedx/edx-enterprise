@@ -424,3 +424,14 @@ if CourseEnrollment is not None:
 
 if COURSE_UNENROLLMENT_COMPLETED is not None:
     COURSE_UNENROLLMENT_COMPLETED.connect(enterprise_unenrollment_receiver)
+
+
+@receiver(pre_save, sender=models.EnterpriseCustomer)
+def copy_data_from_career_engagement_network_message(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Copy data from `career_engagement_network_message` and `enable_career_engagement_network_on_learner_portal` to
+    `learner_portal_sidebar_content` and `enable_learner_portal_sidebar_message` respectively.
+    """
+    enable_cen = instance.enable_career_engagement_network_on_learner_portal
+    instance.learner_portal_sidebar_content = instance.career_engagement_network_message
+    instance.enable_learner_portal_sidebar_message = enable_cen
