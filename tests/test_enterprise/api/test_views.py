@@ -1449,6 +1449,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
             }],
         ),
         (
@@ -1511,6 +1512,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_academies': False,
                     'enable_one_academy': False,
                     'active_integrations': [],
+                    'show_videos_in_learner_portal_search_results': False,
                 },
                 'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
@@ -1611,6 +1613,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
             }],
         ),
         (
@@ -1681,6 +1684,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
             }],
         ),
         (
@@ -1777,7 +1781,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
-                'active_integrations': ['BLACKBOARD']
+                'active_integrations': ['BLACKBOARD'],
+                'show_videos_in_learner_portal_search_results': False
             }],
         ),
     )
@@ -2020,6 +2025,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
             }
         else:
             mock_empty_200_success_response = {
