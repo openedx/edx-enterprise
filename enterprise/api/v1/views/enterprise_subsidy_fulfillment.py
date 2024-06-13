@@ -171,10 +171,16 @@ class EnterpriseSubsidyFulfillmentViewSet(PermissionRequiredMixin, EnterpriseWra
 
         raise ValidationError('No enrollment found for the given fulfillment source uuid.', code=HTTP_404_NOT_FOUND)
 
-    def _get_unenrolled_fulfillment_queryset(self):
+    def _get_unenrolled_fulfillments(self):
         """
-        Return the queryset for unenrolled subsidy fulfillment records. Applies a modified timestamp filter to fetch
-        records modified after if provided from query params.
+        Return the unenrolled subsidy fulfillment records.
+
+        Optionally reads the "unenrolled_after" query param to return records unenrolled after a specified date.
+
+        Furthermore, filter out fulfillments with active related student.CourseEnrollment records.
+
+        Returns:
+          Generator of EnterpriseFulfillmentSource records representing only unenrolled fulfillments.
         """
         # Adding licensed enrollment support for future implementations
         if self.request.query_params.get('retrieve_licensed_enrollments'):
@@ -182,18 +188,31 @@ class EnterpriseSubsidyFulfillmentViewSet(PermissionRequiredMixin, EnterpriseWra
         else:
             enrollment_table = models.LearnerCreditEnterpriseCourseEnrollment
 
+        unenrolled_queryset = None
         # Apply a modified filter if one is provided via query params
         if self.request.query_params.get('unenrolled_after'):
             unenrolled_queryset = enrollment_table.objects.filter(
                 enterprise_course_enrollment__unenrolled_at__gte=self.request.query_params.get('unenrolled_after')
             )
-            return unenrolled_queryset
-
-        unenrolled_queryset = enrollment_table.objects.filter(
-            enterprise_course_enrollment__unenrolled_at__isnull=False,
+        else:
+            unenrolled_queryset = enrollment_table.objects.filter(
+                enterprise_course_enrollment__unenrolled_at__isnull=False,
+            )
+        # Make sure the related enrollment (if it exists) is not active, and exclude it from the results if so.
+        #
+        # Note: There's no FK between an enterprise enrollment and course enrollment, and the only way to join them is
+        # on two distinct join keys (user_id & course_id). There's no native ORM way to do this join, short of using a
+        # raw() SQL query. Therefore, we will just make O(N) SQL queries where N = number of recently unenrolled
+        # fulfillments.
+        unenrolled_fulfillments = (
+            fulfillment for fulfillment in unenrolled_queryset
+            if not (
+                fulfillment.enterprise_course_enrollment
+                and fulfillment.enterprise_course_enrollment.course_enrollment
+                and fulfillment.enterprise_course_enrollment.course_enrollment.is_active
+            )
         )
-
-        return unenrolled_queryset
+        return unenrolled_fulfillments
 
     def get_unenrolled_fulfillment_serializer_class(self):
         """
@@ -215,7 +234,7 @@ class EnterpriseSubsidyFulfillmentViewSet(PermissionRequiredMixin, EnterpriseWra
             retrieve_licensed_enrollments (bool): If true, return data related to licensed enrollments instead of
                 learner credit
         """
-        queryset = self._get_unenrolled_fulfillment_queryset()
+        queryset = self._get_unenrolled_fulfillments()
         serializer_class = self.get_unenrolled_fulfillment_serializer_class()
         serializer = serializer_class(queryset, many=True)
         return Response(serializer.data)
