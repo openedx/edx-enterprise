@@ -46,22 +46,18 @@ def remove_group_membership_records(group, catalog_uuid=None, user_emails=None):
         records_to_delete = records_to_delete.filter((ecu_in_q | pecu_in_q))
 
     records_to_delete_uuids = [record.uuid for record in records_to_delete]
-    records_to_delete.delete()
+    records_to_delete.update(
+        is_removed=True,
+        status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
+        removed_at=localized_utcnow()
+    )
     for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
         send_group_membership_removal_notification.delay(
             group.enterprise_customer.uuid,
             records_to_delete_uuids_batch,
             catalog_uuid
         )
-    # Woohoo! Records removed! Now to update the soft deleted records
-    deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
-        uuid__in=records_to_delete_uuids,
-    )
-    deleted_records.update(
-        status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
-        removed_at=localized_utcnow()
-    )
-    return len(deleted_records)
+    return len(records_to_delete)
 
 
 class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
