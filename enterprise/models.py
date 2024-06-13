@@ -520,6 +520,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     career_engagement_network_message = models.TextField(
         blank=True,
+        null=True,
         help_text=_(
             'Message text shown on the learner portal dashboard for career engagement network.'
         ),

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.19.18]
+---------
+* feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
+
 [4.19.17]
 ---------
 * feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
