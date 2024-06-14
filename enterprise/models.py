@@ -423,6 +423,12 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    show_videos_in_learner_portal_search_results = models.BooleanField(
+        verbose_name="Show videos in learner portal search results",
+        default=False,
+        help_text=_("If checked, videos will be displayed in the search results on the learner portal.")
+    )
+
     enable_analytics_screen = models.BooleanField(
         verbose_name="Display analytics page",
         default=True,
@@ -509,8 +515,17 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
+    career_engagement_network_message = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_(
+            'Message text shown on the learner portal dashboard for career engagement network.'
+        ),
+    )
+
     learner_portal_sidebar_content = models.TextField(
         blank=True,
+        null=True,
         help_text=_(
             'Text shown on the learner portal dashboard for customer specific purposes. Open HTML field.'
         ),

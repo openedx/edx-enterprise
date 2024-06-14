@@ -17,9 +17,33 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.19.18]
+[4.20.4]
 ---------
-* feat: Populates enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer and removes references to old fields.
+* feat: Populates ``enable_learner_portal_sidebar_message`` and 
+``learner_portal_sidebar_content`` in ``EnterpriseCustomer``
+and removes references to old fields.
+
+[4.20.3]
+---------
+* feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
+
+[4.20.2]
+--------
+* fix: cancel-fulfillment endpoint is now idempotent
+
+Additionally, this fixes a bug whereby users with the
+``enterprise.can_manage_enterprise_fulfillment`` or
+``enterprise.can_access_admin_dashboard`` permissions in at least
+one enterprise could successfully authenticate against these endpoints
+for *any* enterprise.
+
+[4.20.1]
+--------
+* feat: Updating autocomplete field for Enteprise Group creation form
+
+[4.20.0]
+--------
+* feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
 
 [4.19.17]
 ---------
