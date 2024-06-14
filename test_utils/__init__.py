@@ -274,12 +274,19 @@ class APITest(APITestCase):
     Base class for API Tests.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        """
+        Perform operations common to all test classes.
+        """
+        super().setUpClass()
+        cls.user = cls.create_user(username=TEST_USERNAME, email=TEST_EMAIL, password=TEST_PASSWORD)
+
     def setUp(self):
         """
-        Perform operations common to all tests.
+        Perform common operations to all tests.
         """
         super().setUp()
-        self.create_user(username=TEST_USERNAME, email=TEST_EMAIL, password=TEST_PASSWORD)
         self.client = APIClient()
         self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
 
@@ -291,13 +298,15 @@ class APITest(APITestCase):
         self.client.logout()
         super().tearDown()
 
-    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+    @staticmethod
+    def create_user(username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
         Create a test user and set its password.
         """
-        self.user = factories.UserFactory(username=username, is_active=True, **kwargs)
-        self.user.set_password(password)
-        self.user.save()
+        user = factories.UserFactory(username=username, is_active=True, **kwargs)
+        user.set_password(password)
+        user.save()
+        return user
 
     def load_json(self, content):
         """
