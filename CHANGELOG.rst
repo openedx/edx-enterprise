@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.4]
+---------
+* feat: Populates ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` and removes references to old fields.
+
 [4.20.3]
 ---------
 * feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
