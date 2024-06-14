@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.5]
+---------
+* refactor: Removes ``career_engagement_network_message`` from ``EnterpriseCustomer``.
+
 [4.20.4]
 ---------
 * feat: Populates ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` and removes references to old fields.
