@@ -515,17 +515,8 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
-    career_engagement_network_message = models.TextField(
-        blank=True,
-        null=True,
-        help_text=_(
-            'Message text shown on the learner portal dashboard for career engagement network.'
-        ),
-    )
-
     learner_portal_sidebar_content = models.TextField(
         blank=True,
-        null=True,
         help_text=_(
             'Text shown on the learner portal dashboard for customer specific purposes. Open HTML field.'
         ),

@@ -19,7 +19,7 @@ def copy_career_engagement_network_message_to_learner_portal_sidebar_content(app
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0210_enterprisecustomer_enable_learner_portal_sidebar_message_and_more'),
+        ('enterprise', '0212_alter_enterprisecustomer_career_engagement_network_message_and_more'),
     ]
 
     operations = [
