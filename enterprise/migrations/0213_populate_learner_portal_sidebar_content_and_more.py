@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def copy_career_engagement_network_message_to_learner_portal_sidebar_content(apps, schema_editor):
+def copy_career_engagement_network_message_to_learner_portal_sidebar_content(apps, schema_editor):  # pragma: no cover
     """
     Copies the Career Engagement Network message field to the Learner Portal Sidebar
     field in the Enterprise Customer model.
