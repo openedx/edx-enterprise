@@ -2289,6 +2289,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = True
+            self.enterprise_course_enrollment.unenrolled = True
             self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
             self.enterprise_course_enrollment.save()
 
@@ -2301,6 +2302,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = False
+            self.enterprise_course_enrollment.unenrolled = False
             self.enterprise_course_enrollment.unenrolled_at = None
             self.enterprise_course_enrollment.save()
 
