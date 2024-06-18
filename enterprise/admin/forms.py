@@ -404,8 +404,8 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_executive_education_2U_fulfillment",
             "hide_labor_market_data",
             "enable_integrated_customer_learner_portal_search",
-            "enable_career_engagement_network_on_learner_portal",
-            "career_engagement_network_message",
+            "enable_learner_portal_sidebar_message",
+            "learner_portal_sidebar_content",
             "enable_pathways",
             "enable_programs",
             "enable_demo_data_for_analytics_and_lpr",
@@ -416,6 +416,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_universal_link",
             "enable_browse_and_request",
             "enable_slug_login",
+            "show_videos_in_learner_portal_search_results",
             "contact_email",
             "default_contract_discount",
             "default_language",
@@ -769,8 +770,8 @@ class AdminNotificationForm(forms.ModelForm):
             # `start_date` must always come before the `expiration_date`
             raise ValidationError({'expiration_date': ['Expiration date should be after start date.']})
         admin_notification = AdminNotification.objects.filter(
-            Q(start_date__range=(start_date, expiration_date)) |  # pylint: disable=unsupported-binary-operation
-            Q(expiration_date__range=(start_date, expiration_date)) |  # pylint: disable=unsupported-binary-operation
+            Q(start_date__range=(start_date, expiration_date)) |
+            Q(expiration_date__range=(start_date, expiration_date)) |
             Q(start_date__lt=start_date, expiration_date__gt=expiration_date)
         ).exclude(
             pk=self.instance.id

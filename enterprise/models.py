@@ -384,11 +384,11 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    enable_career_engagement_network_on_learner_portal = models.BooleanField(
-        verbose_name="Allow navigation to career engagement network from learner portal dashboard",
+    enable_learner_portal_sidebar_message = models.BooleanField(
+        verbose_name="Enable learner portal sidebar message",
         default=False,
         help_text=_(
-            "If checked, the learners will be able to see the link to CEN on the learner portal dashboard."
+            "If checked, learners will be able to see content in the Learner Portal Sidebar found in the HTML box."
         )
     )
 
@@ -421,6 +421,12 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_(
             "If checked, search will be replaced with one academy on enterprise learner portal."
         )
+    )
+
+    show_videos_in_learner_portal_search_results = models.BooleanField(
+        verbose_name="Show videos in learner portal search results",
+        default=False,
+        help_text=_("If checked, videos will be displayed in the search results on the learner portal.")
     )
 
     enable_analytics_screen = models.BooleanField(
@@ -509,10 +515,10 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
-    career_engagement_network_message = models.TextField(
+    learner_portal_sidebar_content = models.TextField(
         blank=True,
         help_text=_(
-            'Message text shown on the learner portal dashboard for career engagement network.'
+            'Text shown on the learner portal dashboard for customer specific purposes. Open HTML field.'
         ),
     )
 
@@ -1126,9 +1132,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
         return super().save(*args, **kwargs)
 
-    def get(self, *args, **kwargs):
-        return super().select_related('profile').get(*args, **kwargs)
-
     @property
     def user(self):
         """
@@ -1139,7 +1142,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         try:
             return User.objects.get(pk=self.user_id)
-            # return User.objects.select_related('profile').get(pk=self.user_id)
         except User.DoesNotExist:
             return None
 

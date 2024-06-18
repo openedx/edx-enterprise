@@ -127,7 +127,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     hide_labor_market_data = False
     auth_org_id = factory.LazyAttribute(lambda x: FAKER.lexify(text='??????????'))
     enable_generation_of_api_credentials = False
-    career_engagement_network_message = 'Test message'
+    learner_portal_sidebar_content = 'Test message'
 
 
 class EnrollmentNotificationEmailTemplateFactory(factory.django.DjangoModelFactory):
@@ -251,6 +251,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_staff = False
     is_active = False
     date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
+
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     """

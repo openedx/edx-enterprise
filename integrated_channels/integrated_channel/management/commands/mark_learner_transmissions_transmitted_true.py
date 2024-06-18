@@ -28,8 +28,10 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             ('blackboard', 'BlackboardLearnerAssessmentDataTransmissionAudit'),
             ('canvas', 'CanvasLearnerDataTransmissionAudit'),
             ('degreed2', 'Degreed2LearnerDataTransmissionAudit'),
+            ('degreed', 'DegreedLearnerDataTransmissionAudit'),
             ('sap_success_factors', 'SapSuccessFactorsLearnerDataTransmissionAudit'),
             ('cornerstone', 'CornerstoneLearnerDataTransmissionAudit'),
+            ('canvas', 'CanvasLearnerAssessmentDataTransmissionAudit'),
         ]
         for app_label, model_name in channel_learner_audit_models:
             model_class = apps.get_model(app_label=app_label, model_name=model_name)

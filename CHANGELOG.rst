@@ -17,6 +17,68 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.5]
+--------
+* fix: submit the ``create_enterprise_enrollment`` task with a configurable countdown
+
+[4.20.4]
+--------
+* feat: Populates ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` and removes references to old fields.
+
+[4.20.3]
+--------
+* feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
+
+[4.20.2]
+--------
+* fix: cancel-fulfillment endpoint is now idempotent
+
+Additionally, this fixes a bug whereby users with the
+``enterprise.can_manage_enterprise_fulfillment`` or
+``enterprise.can_access_admin_dashboard`` permissions in at least
+one enterprise could successfully authenticate against these endpoints
+for *any* enterprise.
+
+[4.20.1]
+--------
+* feat: Updating autocomplete field for Enteprise Group creation form
+
+[4.20.0]
+--------
+* feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
+
+[4.19.17]
+---------
+* feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
+
+[4.19.16]
+---------
+* feat: submit ``create_enterprise_enrollment`` task on commit
+
+[4.19.15]
+---------
+* feat: added filtering for transmitted records using the is_transmitted column.
+
+[4.19.14]
+---------
+* feat: reverts an errant 4.19.12
+
+[4.19.13]
+---------
+* feat: added more integrated channels in mark_learner_transmissions_transmitted_true management command
+
+[4.19.12]
+---------
+* feat: (reverted)
+
+[4.19.11]
+---------
+* revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.
+
+[4.19.10]
+---------
+* revert: revert "making blackboard unencrypted client credentials nullable" in #2126
+
 [4.19.9]
 --------
 * feat: making unencrypted client credentials nullable, so they can be removed

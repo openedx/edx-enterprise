@@ -1015,6 +1015,7 @@ class TestLearnerExporter(unittest.TestCase):
             error_message='',
             created=datetime.datetime.fromtimestamp(1568877047),
             modified=datetime.datetime.fromtimestamp(1568877047),
+            is_transmitted=True
         )
         transmission_audit.save()
         learner_data = list(
