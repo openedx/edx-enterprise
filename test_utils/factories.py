@@ -252,7 +252,6 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_active = False
     date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
 
-
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     """
     EnterpriseCustomerUser factory.

@@ -1126,6 +1126,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
         return super().save(*args, **kwargs)
 
+    def get(self, *args, **kwargs):
+        return super().select_related('profile').get(*args, **kwargs)
+
     @property
     def user(self):
         """
@@ -1136,8 +1139,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         try:
             return User.objects.get(pk=self.user_id)
+            # return User.objects.select_related('profile').get(pk=self.user_id)
         except User.DoesNotExist:
             return None
+
+    @cached_property
+    def user_profile(self):
+        return getattr(self.user, 'profile', None)
 
     @property
     def user_email(self):
@@ -1162,8 +1170,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Return linked user's name.
         """
-        if self.user.profile is not None:
-            return f"{self.user.profile.name}"
+        if self.user_profile is not None:
+            return f"{self.user_profile.name}"
         elif self.user is not None:
             return f"{self.user.first_name} {self.user.last_name}"
         return None
