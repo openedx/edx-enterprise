@@ -1145,6 +1145,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
         except User.DoesNotExist:
             return None
 
+    @cached_property
+    def user_profile(self):
+        return getattr(self.user, 'profile', None)
+
     @property
     def user_email(self):
         """
@@ -1168,7 +1172,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Return linked user's name.
         """
-        if self.user is not None:
+        if self.user_profile is not None:
+            return f"{self.user_profile.name}"
+        elif self.user is not None:
             return f"{self.user.first_name} {self.user.last_name}"
         return None
 
