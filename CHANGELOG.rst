@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.7]
+--------
+* fix: Removed redundant check for group membership
+
 [4.20.6]
 --------
 * refactor: Removes ``career_engagement_network_message`` from ``EnterpriseCustomer``.
