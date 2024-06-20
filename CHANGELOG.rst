@@ -19,7 +19,7 @@ Unreleased
 
 [4.20.7]
 --------
-* fix: Removed redundant check for group membership
+* fix: add name from profile to group membership details 
 
 [4.20.6]
 --------
