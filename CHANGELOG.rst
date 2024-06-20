@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.6]
+--------
+* refactor: Removes ``career_engagement_network_message`` from ``EnterpriseCustomer``.
+
 [4.20.5]
 --------
 * fix: submit the ``create_enterprise_enrollment`` task with a configurable countdown
