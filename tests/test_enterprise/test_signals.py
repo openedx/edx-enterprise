@@ -843,7 +843,7 @@ class TestCourseEnrollmentSignals(TestCase):
         self.non_enterprise_user = UserFactory(id=999, email='user999@example.com')
         super().setUp()
 
-    @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
+    @mock.patch('enterprise.tasks.create_enterprise_enrollment.apply_async')
     def test_receiver_calls_task_if_ecu_exists(self, mock_task):
         """
         Receiver should call a task
@@ -863,11 +863,12 @@ class TestCourseEnrollmentSignals(TestCase):
             'created': True,
         }
 
-        with self.captureOnCommitCallbacks(execute=True):
+        with self.captureOnCommitCallbacks(execute=True), \
+             override_settings(CREATE_ENTERPRISE_ENROLLMENT_TASK_COUNTDOWN=42):
             create_enterprise_enrollment_receiver(sender, instance, **kwargs)
-        mock_task.assert_called_once_with(str(instance.course_id), self.enterprise_customer_user.id)
+        mock_task.assert_called_once_with((str(instance.course_id), self.enterprise_customer_user.id), countdown=42)
 
-    @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
+    @mock.patch('enterprise.tasks.create_enterprise_enrollment.apply_async')
     def test_receiver_does_not_call_task_if_ecu_not_exists(self, mock_task):
         """
         Receiver should NOT call a task
