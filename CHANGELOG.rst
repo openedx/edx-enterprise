@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.8]
+--------
+* feat: atomically re-activate ECE when re-activating SCE
+* feat: When listing unenrolled fulfillments, exclude ones with active enrollments
+
 [4.20.7]
 --------
 * fix: add name from profile to group membership details 
