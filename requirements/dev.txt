@@ -80,6 +80,12 @@ backports-zoneinfo[tzdata]==0.2.1 ; python_version < "3.9"
     #   celery
     #   django
     #   kombu
+bcrypt==4.1.3
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   paramiko
 beautifulsoup4==4.12.3
     # via
     #   -r requirements/doc.txt
@@ -181,6 +187,7 @@ cryptography==42.0.8
     #   -r requirements/test.txt
     #   django-fernet-fields-v2
     #   jwcrypto
+    #   paramiko
     #   pgpy
     #   pyjwt
     #   pyopenssl
@@ -193,7 +200,7 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.0.0
+diff-cover==9.1.0
     # via -r requirements/test.txt
 dill==0.3.8
     # via pylint
@@ -393,7 +400,7 @@ factory-boy==3.3.0
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==25.9.1
+faker==26.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -480,7 +487,7 @@ kombu==5.3.7
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean,html_clean]==5.2.2
+lxml[html_clean]==5.2.2
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
@@ -538,6 +545,11 @@ packaging==24.1
     #   snowflake-connector-python
     #   sphinx
     #   tox
+paramiko==3.4.0
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
 path==16.11.0
     # via
     #   -r requirements/doc.txt
@@ -644,7 +656,7 @@ pyjwt[crypto]==2.8.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==3.2.3
+pylint==3.2.4
     # via
     #   edx-lint
     #   pylint-celery
@@ -670,6 +682,7 @@ pynacl==1.5.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-django-utils
+    #   paramiko
 pyopenssl==24.1.0
     # via
     #   -r requirements/doc.txt
