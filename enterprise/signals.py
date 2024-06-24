@@ -32,10 +32,11 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
-    from openedx_events.learning.signals import COURSE_UNENROLLMENT_COMPLETED
+    from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
 
 except ImportError:
     CourseEnrollment = None
+    COURSE_ENROLLMENT_CHANGED = None
     COURSE_UNENROLLMENT_COMPLETED = None
 
 logger = getLogger(__name__)
@@ -350,6 +351,31 @@ def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
             break
 
 
+def course_enrollment_changed_receiver(sender, **kwargs):     # pylint: disable=unused-argument
+    """
+    Handle when a course enrollment is (de/re)activated.
+
+    Importantly, if a student.CourseEnrollment is being reactivated, take this opportunity to atomically reactivate
+    the corresponding EnterpriseCourseEnrollment.
+    """
+    enrollment = kwargs.get('enrollment')
+    enterprise_enrollment = models.EnterpriseCourseEnrollment.objects.filter(
+        course_id=enrollment.course.course_key,
+        enterprise_customer_user__user_id=enrollment.user.id,
+    ).first()
+    if enterprise_enrollment and enrollment.is_active:
+        logger.info(
+            f"Marking EnterpriseCourseEnrollment as enrolled (unenrolled_at=NULL) for user {enrollment.user} and "
+            f"course {enrollment.course.course_key}"
+        )
+        enterprise_enrollment.unenrolled = False
+        enterprise_enrollment.unenrolled_at = None
+        enterprise_enrollment.saved_for_later = False
+        enterprise_enrollment.save()
+    # Note: If the CourseEnrollment is being flipped to is_active=False, then this handler is a no-op.
+    # In that case, the `enterprise_unenrollment_receiver` signal handler below will run.
+
+
 def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=unused-argument
     """
     Mark the EnterpriseCourseEnrollment object as unenrolled when a user unenrolls from a course.
@@ -364,6 +390,7 @@ def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=un
             f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.user} and "
             f"course {enrollment.course.course_key}"
         )
+        enterprise_enrollment.unenrolled = True
         enterprise_enrollment.unenrolled_at = localized_utcnow()
         enterprise_enrollment.save()
 
@@ -434,3 +461,6 @@ if CourseEnrollment is not None:
 
 if COURSE_UNENROLLMENT_COMPLETED is not None:
     COURSE_UNENROLLMENT_COMPLETED.connect(enterprise_unenrollment_receiver)
+
+if COURSE_ENROLLMENT_CHANGED is not None:
+    COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)

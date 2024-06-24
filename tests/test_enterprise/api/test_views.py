@@ -3904,6 +3904,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         second_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=second_enterprise_user,
             course_id=self.course_id,
+            unenrolled=True,
             unenrolled_at=localized_utcnow(),
         )
         # Have a second enrollment that is under a different enterprise customer than the requesting
@@ -3912,6 +3913,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             enterprise_course_enrollment=second_enterprise_course_enrollment,
         )
 
+        self.enterprise_course_enrollment.unenrolled = True
         self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
         self.enterprise_course_enrollment.save()
         response = self.client.get(
@@ -3961,6 +3963,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         old_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_user,
             course_id=self.course_id + '2',
+            unenrolled=True,
             unenrolled_at=localized_utcnow() - timedelta(days=5),
         )
         old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
@@ -3996,10 +3999,69 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             ]),
         ]
 
+    @ddt.data(
+        {'related_enrollment_is_active': True, 'expect_included_in_response': False},
+        {'related_enrollment_is_active': None, 'expect_included_in_response': True},
+        {'related_enrollment_is_active': False, 'expect_included_in_response': True},
+    )
+    @ddt.unpack
+    def test_recently_unenrolled_fulfillment_endpoint_excludes_active_enrollments(
+        self,
+        related_enrollment_is_active,
+        expect_included_in_response,
+    ):
+        """
+        Test that unenrolled fulfillments that erroneously have a related active enrollment are not surfaced.
+        """
+        # Make the main test EnterpriseCourseEnrollment object unenrolled.
+        self.enterprise_course_enrollment.unenrolled = True
+        self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
+        self.enterprise_course_enrollment.save()
+
+        # Make it seem like the related CourseEnrollment is either active, inactive, or non-existent.
+        mock_course_enrollment = mock.MagicMock()
+        mock_course_enrollment.is_active = related_enrollment_is_active
+        patch_value = mock_course_enrollment if related_enrollment_is_active is not None else None
+        with mock.patch('enterprise.models.EnterpriseCourseEnrollment.course_enrollment', new=patch_value):
+            response = self.client.get(
+                reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
+            )
+
+        if not expect_included_in_response:
+            # Despite the EnterpriseCourseEnrollment object being unenrolled, it is not returned because it relates
+            # to a CourseEnrollment that is still active.
+            assert response.data == []
+        else:
+            # If related_enrollment_is_active is False, then ->
+            #   This is a normal happy case representing good database integrity.
+            # If related_enrollment_is_active is None, then ->
+            #   This is a weird case that has no clear course of action. Probably the safest thing to do in this
+            #   situation is to minimize changes to business logic, therefore we will treat it as if the related
+            #   enrollment was inactive (previous behavior).
+            ent_user = self.enterprise_course_enrollment.enterprise_customer_user.id
+            lc_unenrolled_at = self.enterprise_course_enrollment.unenrolled_at.strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
+            assert response.data == [
+                OrderedDict([
+                    ('enterprise_course_enrollment', OrderedDict([
+                        ('enterprise_customer_user', ent_user),
+                        ('course_id', self.enterprise_course_enrollment.course_id),
+                        ('unenrolled_at', lc_unenrolled_at),
+                        ('created', self.enterprise_course_enrollment.created.strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )),
+                    ])),
+                    ('transaction_id', self.learner_credit_course_enrollment.transaction_id),
+                    ('uuid', str(self.learner_credit_course_enrollment.uuid)),
+                ]),
+            ]
+
     def test_recently_unenrolled_licensed_fulfillment_object(self):
         """
         Test that the correct licensed fulfillment object is returned.
         """
+        self.enterprise_course_enrollment.unenrolled = True
         self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
         self.enterprise_course_enrollment.save()
         response = self.client.get(
