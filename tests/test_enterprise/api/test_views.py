@@ -8372,18 +8372,19 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.status_code == 201
         assert response.data == {'records_processed': 800, 'new_learners': 400, 'existing_learners': 400}
-        assert len(
-            EnterpriseGroupMembership.objects.filter(
-                group=self.group_2,
-                pending_enterprise_customer_user__isnull=True
-            )
-        ) == 400
-        assert len(
-            EnterpriseGroupMembership.objects.filter(
-                group=self.group_2,
-                enterprise_customer_user__isnull=True
-            )
-        ) == 400
+
+        pending_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            enterprise_customer_user__isnull=True
+        )
+        existing_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            pending_enterprise_customer_user__isnull=True
+        )
+        assert len(pending_memberships) == 400
+        assert len(existing_memberships) == 400
+        assert existing_memberships.first().status == GROUP_MEMBERSHIP_ACCEPTED_STATUS
+        assert pending_memberships.first().status == GROUP_MEMBERSHIP_PENDING_STATUS
 
         # Batch size for sending membership invitation notifications is 200, 800 total records means 4 iterations
         group_uuids = list(
