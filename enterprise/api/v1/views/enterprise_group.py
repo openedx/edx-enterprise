@@ -271,7 +271,6 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             # Revive any previously deleted membership records connected to ECUs containing related emails
             previously_removed_ecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
                 enterprise_customer_user__user_id__in=existing_users.values_list('id', flat=True),
-                is_removed=True,
                 group=group,
             )
             previously_removed_ecu_learners.update(
@@ -304,9 +303,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             user_emails_to_create.extend(set(user_email_batch).difference(set(ecu_by_email.keys())))
 
             # Extend the list of memberships that need to be created associated with existing Users
+            # All existing users will have the status automatically set to accepted
             ent_customer_users = [
                 models.EnterpriseGroupMembership(
                     activated_at=localized_utcnow(),
+                    status=constants.GROUP_MEMBERSHIP_ACCEPTED_STATUS,
                     enterprise_customer_user=ecu,
                     group=group
                 )
