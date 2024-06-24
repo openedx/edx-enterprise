@@ -213,10 +213,9 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'enable_audit_data_reporting', 'enable_learner_portal_offers',
                        'disable_expiry_messaging_for_learner_credit',
                        'enable_executive_education_2U_fulfillment',
-                       'enable_career_engagement_network_on_learner_portal',
-                       'career_engagement_network_message', 'enable_pathways', 'enable_programs',
-                       'enable_demo_data_for_analytics_and_lpr', 'enable_academies', 'enable_one_academy',
-                       'show_videos_in_learner_portal_search_results'),
+                       'enable_learner_portal_sidebar_message',
+                       'learner_portal_sidebar_content', 'enable_pathways', 'enable_programs',
+                       'enable_demo_data_for_analytics_and_lpr', 'enable_academies', 'enable_one_academy'),
             'description': ('The following default settings should be the same for '
                             'the majority of enterprise customers, '
                             'and are either rarely used, unlikely to be sold, '
@@ -1182,6 +1181,8 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('count', 'members',)
 
+    autocomplete_fields = ['enterprise_customer']
+
     def members(self, obj):
         """
         Return the non-deleted members of a group
@@ -1215,3 +1216,36 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'pending_enterprise_customer_user',
     )
+
+
+@admin.register(models.LearnerCreditEnterpriseCourseEnrollment)
+class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
+    """
+    Django admin model for LearnerCreditEnterpriseCourseEnrollmentAdmin.
+    """
+    list_display = (
+        'uuid',
+        'fulfillment_type',
+        'enterprise_course_enrollment',
+        'is_revoked',
+        'modified',
+    )
+
+    readonly_fields = (
+        'uuid',
+        'enterprise_course_enrollment',
+    )
+
+    list_filter = ('is_revoked',)
+
+    search_fields = (
+        'uuid',
+        'enterprise_course_enrollment__id'
+        'enterprise_course_enrollment__user_id',
+    )
+
+    ordering = ('-modified',)
+
+    class Meta:
+        fields = '__all__'
+        model = models.LearnerCreditEnterpriseCourseEnrollment

@@ -17,8 +17,47 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.8]
+--------
+* feat: atomically re-activate ECE when re-activating SCE
+* feat: When listing unenrolled fulfillments, exclude ones with active enrollments
+
+[4.20.7]
+--------
+* fix: add name from profile to group membership details 
+
+[4.20.6]
+--------
+* refactor: Removes ``career_engagement_network_message`` from ``EnterpriseCustomer``.
+
+[4.20.5]
+--------
+* fix: submit the ``create_enterprise_enrollment`` task with a configurable countdown
+
+[4.20.4]
+--------
+* feat: Populates ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` and removes references to old fields.
+
+[4.20.3]
+--------
+* feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
+
+[4.20.2]
+--------
+* fix: cancel-fulfillment endpoint is now idempotent
+
+Additionally, this fixes a bug whereby users with the
+``enterprise.can_manage_enterprise_fulfillment`` or
+``enterprise.can_access_admin_dashboard`` permissions in at least
+one enterprise could successfully authenticate against these endpoints
+for *any* enterprise.
+
+[4.20.1]
+--------
+* feat: Updating autocomplete field for Enteprise Group creation form
+
 [4.20.0]
----------
+--------
 * feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
 
 [4.19.17]

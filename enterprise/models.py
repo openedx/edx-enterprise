@@ -384,15 +384,6 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    enable_career_engagement_network_on_learner_portal = models.BooleanField(
-        verbose_name="Allow navigation to career engagement network from learner portal dashboard",
-        null=True,
-        default=False,
-        help_text=_(
-            "If checked, the learners will be able to see the link to CEN on the learner portal dashboard."
-        )
-    )
-
     enable_learner_portal_sidebar_message = models.BooleanField(
         verbose_name="Enable learner portal sidebar message",
         default=False,
@@ -522,13 +513,6 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_generation_of_api_credentials = models.BooleanField(
         verbose_name="Allow generation of API credentials",
         default=False,
-    )
-
-    career_engagement_network_message = models.TextField(
-        blank=True,
-        help_text=_(
-            'Message text shown on the learner portal dashboard for career engagement network.'
-        ),
     )
 
     learner_portal_sidebar_content = models.TextField(
@@ -1161,6 +1145,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
         except User.DoesNotExist:
             return None
 
+    @cached_property
+    def user_profile(self):
+        return getattr(self.user, 'profile', None)
+
     @property
     def user_email(self):
         """
@@ -1184,7 +1172,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Return linked user's name.
         """
-        if self.user is not None:
+        if self.user_profile is not None:
+            return f"{self.user_profile.name}"
+        elif self.user is not None:
             return f"{self.user.first_name} {self.user.last_name}"
         return None
 
@@ -2299,6 +2289,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = True
+            self.enterprise_course_enrollment.unenrolled = True
             self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
             self.enterprise_course_enrollment.save()
 
@@ -2311,6 +2302,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = False
+            self.enterprise_course_enrollment.unenrolled = False
             self.enterprise_course_enrollment.unenrolled_at = None
             self.enterprise_course_enrollment.save()
 
