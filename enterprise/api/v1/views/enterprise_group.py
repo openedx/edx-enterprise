@@ -271,6 +271,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             # Revive any previously deleted membership records connected to ECUs containing related emails
             previously_removed_ecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
                 enterprise_customer_user__user_id__in=existing_users.values_list('id', flat=True),
+                is_removed=True,
                 group=group,
             )
             previously_removed_ecu_learners.update(

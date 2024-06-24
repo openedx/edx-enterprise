@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.9]
+--------
+* fix: setting existing user group membership status
+
 [4.20.8]
 --------
 * feat: atomically re-activate ECE when re-activating SCE
