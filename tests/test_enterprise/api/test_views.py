@@ -8340,7 +8340,7 @@ class TestEnterpriseGroupViewSet(APITest):
 
         serializer = serializers.EnterpriseGroupMembershipSerializer(membership)
         assert serializer.data['recent_action'] == f"Removed: {membership.removed_at.strftime('%B %d, %Y')}"
-        
+
         # Recreate the memberships for the emails
         assign_url = settings.TEST_SERVER + reverse(
             'enterprise-group-assign-learners',
