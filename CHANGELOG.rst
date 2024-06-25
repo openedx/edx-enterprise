@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.9]
+--------
+* fix: fixing the status and datetime of removed group memberships
+
 [4.20.8]
 --------
 * feat: atomically re-activate ECE when re-activating SCE

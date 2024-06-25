@@ -45,6 +45,7 @@ from enterprise.constants import (
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     GROUP_MEMBERSHIP_ACCEPTED_STATUS,
     GROUP_MEMBERSHIP_PENDING_STATUS,
+    GROUP_MEMBERSHIP_REMOVED_STATUS,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
@@ -8332,7 +8333,14 @@ class TestEnterpriseGroupViewSet(APITest):
         pending_membership.refresh_from_db()
         assert membership.is_removed
         assert pending_membership.is_removed
+        assert membership.status == GROUP_MEMBERSHIP_REMOVED_STATUS
+        assert pending_membership.status == GROUP_MEMBERSHIP_REMOVED_STATUS
+        assert membership.recent_action == membership.removed_at
+        assert pending_membership.recent_action == pending_membership.removed_at
 
+        serializer = serializers.EnterpriseGroupMembershipSerializer(membership)
+        assert serializer.data['recent_action'] == f"Removed: {membership.removed_at.strftime('%B %d, %Y')}"
+        
         # Recreate the memberships for the emails
         assign_url = settings.TEST_SERVER + reverse(
             'enterprise-group-assign-learners',
