@@ -8491,6 +8491,30 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.patch(url, data=request_data)
         assert response.status_code == 401
 
+    def test_update_pending_learner_status(self):
+        """
+        Test that the PATCH endpoint updates pending learner status and errored at time
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        )
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+        request_data = {
+            'learner': 'edx@exampl.com',
+            'status': 'email_error',
+            'errored_at': localized_utcnow()}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 201
+        assert response.json() == 'Successfully updated learner record for learner email edx@exampl.com'
+
     @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
     def test_successful_remove_all_learners_from_group(self, mock_send_group_membership_removal_notification):
         """

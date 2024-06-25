@@ -641,6 +641,8 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         """
         Return the timestamp and name of the most recent action associated with the membership.
         """
+        if obj.errored_at:
+            return f"Errored: {obj.errored_at.strftime('%B %d, %Y')}"
         if obj.is_removed:
             return f"Removed: {obj.modified.strftime('%B %d, %Y')}"
         if obj.enterprise_customer_user and obj.activated_at:
