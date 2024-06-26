@@ -121,7 +121,6 @@ class Command(BaseCommand):
             )
         else:
             log.error(f"{options['role']} is not a valid role.")
-            return
 
     def _handle(self, batch_size, role_name, enterprise_customer_uuid=None, dry_run=False):
         """

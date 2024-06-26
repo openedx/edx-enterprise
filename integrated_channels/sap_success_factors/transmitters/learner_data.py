@@ -65,4 +65,3 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                         'and has been marked inactive in SAPSF. Now marking inactive internally.'
                     )
                 )
-                return

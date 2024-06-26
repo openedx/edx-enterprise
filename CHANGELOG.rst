@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.10]
+--------
+* fix: setting existing user group membership statuse
+
 [4.20.9]
 --------
-* fix: setting existing user group membership status
+* feat: Update permissions to grant access to provisioning admins
 
 [4.20.8]
 --------
