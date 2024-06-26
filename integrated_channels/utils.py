@@ -365,6 +365,8 @@ def refresh_session_if_expired(
         # expiry expected after `expires_in` seconds
         if expires_in is not None:
             new_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        else:
+            new_expires_at = None
         return new_session, new_expires_at
     return session, expires_at
 
