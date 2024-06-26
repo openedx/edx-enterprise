@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.9]
+--------
+* feat: Update permissions to grant access to provisioning admins
+
 [4.20.8]
 --------
 * feat: atomically re-activate ECE when re-activating SCE
