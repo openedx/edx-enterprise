@@ -143,17 +143,7 @@ class ContentMetadataTransmitter(Transmitter):
 
         # If we're deleting, fetch all orphaned, unresolved content transmissions
         is_delete_action = action_name == 'delete'
-        if is_delete_action:
-            OrphanedContentTransmissions = apps.get_model(
-                'integrated_channel',
-                'OrphanedContentTransmissions'
-            )
-            orphaned_items = OrphanedContentTransmissions.objects.filter(
-                integrated_channel_code=self.enterprise_configuration.channel_code(),
-                plugin_configuration_id=self.enterprise_configuration.id,
-                resolved=False,
-            )
-            successfully_removed_content_keys = []
+        successfully_removed_content_keys = []
 
         for chunk in islice(chunk_items, transmission_limit):
             json_payloads = [item.channel_metadata for item in list(chunk.values())]
@@ -260,6 +250,15 @@ class ContentMetadataTransmitter(Transmitter):
 
         if is_delete_action and successfully_removed_content_keys:
             # Mark any successfully deleted, orphaned content transmissions as resolved
+            OrphanedContentTransmissions = apps.get_model(
+                'integrated_channel',
+                'OrphanedContentTransmissions'
+            )
+            orphaned_items = OrphanedContentTransmissions.objects.filter(
+                integrated_channel_code=self.enterprise_configuration.channel_code(),
+                plugin_configuration_id=self.enterprise_configuration.id,
+                resolved=False,
+            )
             orphaned_items.filter(content_id__in=successfully_removed_content_keys).update(resolved=True)
 
         return results
