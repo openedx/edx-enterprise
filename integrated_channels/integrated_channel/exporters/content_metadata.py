@@ -482,6 +482,7 @@ class ContentMetadataExporter(Exporter):
         create_payload = {}
         update_payload = {}
         delete_payload = {}
+        key_to_content_metadata_mapping = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
 
             # if we're already at the max in a multi-catalog situation, break out
