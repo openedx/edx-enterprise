@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.10]
+---------
+* fix: fixing the status and datetime of removed group memberships
+
 [4.20.9]
 --------
 * feat: Update permissions to grant access to provisioning admins
