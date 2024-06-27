@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.11]
+---------
+* fix: setting existing user group membership statuses
+
 [4.20.10]
---------
-* fix: setting existing user group membership statuse
+---------
+* fix: fixing the status and datetime of removed group memberships
 
 [4.20.9]
 --------
