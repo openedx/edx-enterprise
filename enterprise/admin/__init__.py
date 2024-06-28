@@ -4,13 +4,14 @@ Django admin integration for enterprise app.
 
 import logging
 
+import paramiko
 from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
 from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from django.conf import settings
-from django.contrib import admin, auth
+from django.contrib import admin, auth, messages
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Q
@@ -974,6 +975,56 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
             return [f for f in fields if f not in {'decrypted_password', 'decrypted_sftp_password'}]
 
         return fields
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        Conditionally add the test_sftp_server to the readonly fields.
+        """
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if obj and obj.delivery_method == models.EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP:
+            readonly_fields.append('test_sftp_server')
+        return readonly_fields
+
+    def test_sftp_server(self, obj):
+        """
+        Add a button to test the SFTP server connection.
+        """
+        return format_html(
+            '<a class="button" href="{}">Test SFTP Server Connection</a>',
+            reverse('admin:test_sftp_connection', args=[obj.pk]),
+        )
+
+    test_sftp_server.short_description = 'Test SFTP Server'
+    test_sftp_server.allow_tags = True
+
+    def get_urls(self):
+        """
+        Extend the admin URLs to include the custom test server URL.
+        """
+        urls = super().get_urls()
+        custom_urls = [
+            path('test-sftp-connection/<int:pk>/', self.admin_site.admin_view(self.test_sftp_connection),
+                 name='test_sftp_connection'),
+        ]
+        return custom_urls + urls
+
+    def test_sftp_connection(self, request, pk):
+        """
+        Custom admin view to test the SFTP server connection.
+        """
+        config = self.get_object(request, pk)
+        if config:
+            try:
+                transport = paramiko.Transport((config.sftp_hostname, config.sftp_port))
+                transport.connect(username=config.sftp_username, password=config.decrypted_sftp_password)
+                sftp = paramiko.SFTPClient.from_transport(transport)
+                sftp.close()
+                transport.close()
+                self.message_user(request, "Successfully connected to the SFTP server.")
+            except Exception as e:  # pylint: disable=broad-except
+                self.message_user(request, f"Failed to connect to the SFTP server: {e}", level=messages.ERROR)
+
+        return HttpResponseRedirect(reverse('admin:enterprise_enterprisecustomerreportingconfiguration_changelist'))
 
 
 class BigTableMysqlPaginator(Paginator):
