@@ -348,9 +348,11 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             user_emails_to_create.extend(set(user_email_batch).difference(set(ecu_by_email.keys())))
 
             # Extend the list of memberships that need to be created associated with existing Users
+            # All existing users will have the status automatically set to accepted
             ent_customer_users = [
                 models.EnterpriseGroupMembership(
                     activated_at=localized_utcnow(),
+                    status=constants.GROUP_MEMBERSHIP_ACCEPTED_STATUS,
                     enterprise_customer_user=ecu,
                     group=group
                 )

@@ -4,7 +4,7 @@ Decorators for Enterprise API views.
 
 from functools import wraps
 
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
 
 def require_at_least_one_query_parameter(*query_parameter_names):
@@ -45,3 +45,28 @@ def require_at_least_one_query_parameter(*query_parameter_names):
             return view(request, *args, **kwargs)
         return wrapper
     return outer_wrapper
+
+
+def has_permission_or_group(permission, group_name, fn=None):
+    """
+    Ensure that user has permission to access the endpoint OR is part of a group that has access.
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            user = request.user
+            pk = fn(request, **kwargs) if fn else kwargs.get('pk')
+
+            if pk:
+                has_permission = user.has_perm(permission, pk)
+            else:
+                has_permission = user.has_perm(permission)
+
+            if has_permission or user.groups.filter(name=group_name).exists():
+                return view_func(request, *args, **kwargs)
+
+            raise PermissionDenied(
+                "Access denied: Only admins and provisioning admins are allowed to access this endpoint.")
+
+        return _wrapped_view
+    return decorator

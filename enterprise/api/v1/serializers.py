@@ -644,7 +644,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         if obj.errored_at:
             return f"Errored: {obj.errored_at.strftime('%B %d, %Y')}"
         if obj.is_removed:
-            return f"Removed: {obj.modified.strftime('%B %d, %Y')}"
+            return f"Removed: {obj.removed_at.strftime('%B %d, %Y')}"
         if obj.enterprise_customer_user and obj.activated_at:
             return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
         return f"Invited: {obj.created.strftime('%B %d, %Y')}"

@@ -29,7 +29,7 @@ from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
 from enterprise.api.pagination import PaginationWithFeatureFlags
 from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.decorators import require_at_least_one_query_parameter
+from enterprise.api.v1.decorators import has_permission_or_group, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
@@ -57,6 +57,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
     pagination_class = PaginationWithFeatureFlags
 
+    PROVISIONING_ADMINS_GROUP = 'provisioning-admins-group'
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
         'uuid', 'slug', 'name', 'active', 'site', 'enable_data_sharing_consent',
@@ -99,14 +100,15 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @permission_required('enterprise.can_access_admin_dashboard')
+    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP))
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-customer/
         """
         return super().create(request, *args, **kwargs)
 
-    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, pk: pk)
+    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP,
+                                              fn=lambda request, pk: pk))
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 

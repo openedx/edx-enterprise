@@ -45,6 +45,7 @@ from enterprise.constants import (
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     GROUP_MEMBERSHIP_ACCEPTED_STATUS,
     GROUP_MEMBERSHIP_PENDING_STATUS,
+    GROUP_MEMBERSHIP_REMOVED_STATUS,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
@@ -2098,6 +2099,41 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             enterprise_customer = EnterpriseCustomer.objects.get(slug='test-create-customer')
             assert enterprise_customer.name == 'Test Create Customer'
 
+    def test_create_provisioning_admins(self):
+        """
+        Test that ``EnterpriseCustomer`` can be created by provisioning admins who are part of group.
+        """
+        self.set_jwt_cookie("provisioning-admin-role", str(FAKE_UUIDS[0]))
+        # auth error should be raised if user isn't part of provisioning admins group
+        failed_response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+        }, format='json')
+
+        assert failed_response.status_code == 403
+
+        # now make this use part of provisioning admins groups and retry
+        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+        self.user.groups.add(allowed_group)
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+        }, format='json')
+
+        assert response.status_code == 201
+
+        # First, smoke check the response body:
+        assert response.json()['name'] == 'Test Create Customer'
+        assert response.json()['slug'] == 'test-create-customer'
+        assert response.json()['site'] == {
+            'domain': 'example.com', 'name': 'example.com'}
+        # Then, look in the database to confirm the customer was created:
+        enterprise_customer = EnterpriseCustomer.objects.get(
+            slug='test-create-customer')
+        assert enterprise_customer.name == 'Test Create Customer'
+
     def test_create_missing_site(self):
         """
         Test creating an ``EnterpriseCustomer`` with missing/invalid site argument.
@@ -2166,6 +2202,23 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         if expected_status_code == 200:
             enterprise_customer.refresh_from_db()
             assert enterprise_customer.slug == 'new-slug'
+
+    def test_partial_update_provisioning_admins(self):
+        """
+        Test that ``EnterpriseCustomer`` can be updated by provisioning admins.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
+        self.user.groups.add(allowed_group)
+        self.set_jwt_cookie("provisioning-admin-role", str(FAKE_UUIDS[0]))
+        response = self.client.patch(ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT, {
+            "slug": 'new-slug'
+        })
+
+        assert response.status_code == 200
+        enterprise_customer.refresh_from_db()
+        assert enterprise_customer.slug == 'new-slug'
 
     @ddt.data(
         (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], False, 200),
@@ -8332,6 +8385,13 @@ class TestEnterpriseGroupViewSet(APITest):
         pending_membership.refresh_from_db()
         assert membership.is_removed
         assert pending_membership.is_removed
+        assert membership.status == GROUP_MEMBERSHIP_REMOVED_STATUS
+        assert pending_membership.status == GROUP_MEMBERSHIP_REMOVED_STATUS
+        assert membership.recent_action == membership.removed_at
+        assert pending_membership.recent_action == pending_membership.removed_at
+
+        serializer = serializers.EnterpriseGroupMembershipSerializer(membership)
+        assert serializer.data['recent_action'] == f"Removed: {membership.removed_at.strftime('%B %d, %Y')}"
 
         # Recreate the memberships for the emails
         assign_url = settings.TEST_SERVER + reverse(
@@ -8372,18 +8432,19 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.status_code == 201
         assert response.data == {'records_processed': 800, 'new_learners': 400, 'existing_learners': 400}
-        assert len(
-            EnterpriseGroupMembership.objects.filter(
-                group=self.group_2,
-                pending_enterprise_customer_user__isnull=True
-            )
-        ) == 400
-        assert len(
-            EnterpriseGroupMembership.objects.filter(
-                group=self.group_2,
-                enterprise_customer_user__isnull=True
-            )
-        ) == 400
+
+        pending_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            enterprise_customer_user__isnull=True
+        )
+        existing_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            pending_enterprise_customer_user__isnull=True
+        )
+        assert len(pending_memberships) == 400
+        assert len(existing_memberships) == 400
+        assert existing_memberships.first().status == GROUP_MEMBERSHIP_ACCEPTED_STATUS
+        assert pending_memberships.first().status == GROUP_MEMBERSHIP_PENDING_STATUS
 
         # Batch size for sending membership invitation notifications is 200, 800 total records means 4 iterations
         group_uuids = list(

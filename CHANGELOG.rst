@@ -17,6 +17,26 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.13]
+---------
+* feat: added failed statuses for groups and new endpoint to update statuses
+
+[4.20.12]
+---------
+* feat: added support for testing sftp connection inside ``EnterpriseCustomerReportingConfiguration`` instance.
+
+[4.20.11]
+---------
+* fix: setting existing user group membership statuses
+
+[4.20.10]
+---------
+* fix: fixing the status and datetime of removed group memberships
+
+[4.20.9]
+--------
+* feat: Update permissions to grant access to provisioning admins
+
 [4.20.8]
 --------
 * feat: atomically re-activate ECE when re-activating SCE
