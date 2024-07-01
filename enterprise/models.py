@@ -4458,6 +4458,13 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
             "The moment at which the membership record was revoked by an Enterprise admin."
         ),
     )
+    errored_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=_(
+            "The last time the membership action was in an error state. Null means the membership is not errored."),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -4490,6 +4497,8 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         """
         Return the timestamp of the most recent action relating to the membership
         """
+        if self.errored_at:
+            return self.errored_at
         if self.is_removed:
             return self.removed_at
         if self.enterprise_customer_user and self.activated_at:

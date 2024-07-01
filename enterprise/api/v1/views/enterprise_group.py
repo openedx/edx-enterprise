@@ -46,22 +46,34 @@ def remove_group_membership_records(group, catalog_uuid=None, user_emails=None):
         records_to_delete = records_to_delete.filter((ecu_in_q | pecu_in_q))
 
     records_to_delete_uuids = [record.uuid for record in records_to_delete]
-    records_to_delete.delete()
-    for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
-        send_group_membership_removal_notification.delay(
-            group.enterprise_customer.uuid,
-            records_to_delete_uuids_batch,
-            catalog_uuid
+    try:
+        records_to_delete.delete()
+        for records_to_delete_uuids_batch in utils.batch(records_to_delete_uuids, batch_size=200):
+            send_group_membership_removal_notification.delay(
+                group.enterprise_customer.uuid,
+                records_to_delete_uuids_batch,
+                catalog_uuid
+            )
+        # Woohoo! Records removed! Now to update the soft deleted records
+        deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
+            uuid__in=records_to_delete_uuids,
         )
-    # Woohoo! Records removed! Now to update the soft deleted records
-    deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
-        uuid__in=records_to_delete_uuids,
-    )
-    deleted_records.update(
-        status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
-        removed_at=localized_utcnow()
-    )
-    return len(deleted_records)
+        deleted_records.update(
+            status=constants.GROUP_MEMBERSHIP_REMOVED_STATUS,
+            removed_at=localized_utcnow()
+        )
+        return len(deleted_records)
+    # This will error out all records even if only one failed.
+    except Exception as exc:
+        failed_deleted_records = models.EnterpriseGroupMembership.all_objects.filter(
+            uuid__in=records_to_delete_uuids,
+        )
+        failed_deleted_records.update(
+            status=constants.GROUP_MEMBERSHIP_INTERNAL_API_ERROR_STATUS,
+            errored_at=localized_utcnow()
+        )
+        LOGGER.exception(f'Failed to remove group membership records for group {group} with exception {exc}')
+        raise exc
 
 
 class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
@@ -132,6 +144,38 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         POST /enterprise/api/v1/enterprise-group/
         """
         return super().create(request, *args, **kwargs)
+
+    @action(methods=['patch'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+        fn=lambda request, group_uuid: get_enterprise_customer_from_enterprise_group_id(group_uuid)
+    )
+    def update_pending_learner_status(self, request, group_uuid):
+        """
+        Endpoint location to update the status and errored at time for a pending learner:
+        PATCH api/v1/enterprise-group/<group_uuid>/learners/
+
+        Request Arguments:
+        - ``group_uuid`` (URL location, required): The uuid of the group which learners should be updated
+
+        """
+        group = self.get_queryset().get(uuid=group_uuid)
+        request_data = self.request.data
+        learner = request_data.get("learner")
+        try:
+            pecu_in_q = Q(pending_enterprise_customer_user__user_email=learner)
+            learner_to_update = models.EnterpriseGroupMembership.objects.filter(
+                group=group,
+            ).filter(pecu_in_q)
+
+            learner_to_update.update(
+                status=request_data.get("status"),
+                errored_at=localized_utcnow(),
+            )
+            return Response(f'Successfully updated learner record for learner email {learner}', status=201)
+        except models.EnterpriseGroup.DoesNotExist as exc:
+            LOGGER.warning(f"group_uuid {group_uuid} does not exist")
+            raise Http404 from exc
 
     @action(detail=True, methods=['get'])
     def get_learners(self, request, *args, **kwargs):

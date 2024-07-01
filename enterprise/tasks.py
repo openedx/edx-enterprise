@@ -13,10 +13,11 @@ from django.conf import settings
 from django.core import mail
 from django.db import IntegrityError
 
+from enterprise import constants
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, MAX_NUM_IDENTIFY_USERS_ALIASES, BrazeAPIClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
-from enterprise.utils import batch_dict, get_enterprise_customer, send_email_notification_message
+from enterprise.utils import batch_dict, get_enterprise_customer, localized_utcnow, send_email_notification_message
 
 LOGGER = getLogger(__name__)
 
@@ -353,6 +354,9 @@ def send_group_membership_invitation_notification(
             "Groups learner invitation email could not be sent "
             f"to {recipients} for enterprise {enterprise_customer_name}."
         )
+        membership_records.update(
+            status=constants.GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS,
+            errored_at=localized_utcnow())
         LOGGER.exception(message)
         raise exc
 
@@ -420,8 +424,11 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
         )
     except BrazeClientError as exc:
         message = (
-            "Groups learner invitation email could not be sent "
+            "Groups learner removal email could not be sent "
             f"to {recipients} for enterprise {enterprise_customer_name}."
         )
+        membership_records.update(
+            status=constants.GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS,
+            errored_at=localized_utcnow())
         LOGGER.exception(message)
         raise exc

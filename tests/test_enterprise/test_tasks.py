@@ -8,7 +8,8 @@ import uuid
 from datetime import datetime
 from unittest import mock
 
-from pytest import mark
+from braze.exceptions import BrazeClientError
+from pytest import mark, raises
 
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
@@ -21,7 +22,7 @@ from enterprise.tasks import (
     send_group_membership_removal_notification,
     send_sso_configured_email,
 )
-from enterprise.utils import serialize_notification_content
+from enterprise.utils import localized_utcnow, serialize_notification_content
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -269,6 +270,58 @@ class TestEnterpriseTasks(unittest.TestCase):
 
     @mock.patch('enterprise.tasks.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
+    def test_fail_send_group_membership_invitation_notification(
+        self,
+        mock_braze_api_client,
+        mock_enterprise_catalog_client,
+    ):
+        """
+        Verify failed send group invitation email
+        """
+        pending_membership = EnterpriseGroupMembershipFactory(
+            group=self.enterprise_group,
+            pending_enterprise_customer_user=self.pending_enterprise_customer_user,
+            enterprise_customer_user=None,
+        )
+        admin_email = 'edx@example.org'
+        mock_braze_api_client().create_recipients.return_value = {
+            self.user.email: {
+                "external_user_id": self.user.id,
+                "attributes": {
+                    "user_alias": {
+                        "external_id": self.user.id,
+                        "user_alias": self.user.email,
+                    },
+                }
+            }
+        }
+
+        mock_catalog_content_count = 5
+        mock_admin_mailto = f'mailto:{admin_email}'
+        mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
+        mock_braze_api_client().create_recipient_no_external_id.return_value = (
+            self.pending_enterprise_customer_user.user_email)
+        mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
+            mock_catalog_content_count)
+        act_by_date = datetime.today()
+        catalog_uuid = uuid.uuid4()
+        membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
+        mock_braze_api_client().send_campaign_message.side_effect = BrazeClientError(
+            "Any thing that happens during email")
+        errored_at = localized_utcnow()
+        with raises(BrazeClientError):
+            send_group_membership_invitation_notification(
+                self.enterprise_customer.uuid,
+                membership_uuids,
+                act_by_date,
+                catalog_uuid)
+            pending_membership.refresh_from_db()
+            assert pending_membership.status == 'email_error'
+            assert pending_membership.errored_at == errored_at
+            assert pending_membership.recent_action == f"Errored: {errored_at.strftime('%B %d, %Y')}"
+
+    @mock.patch('enterprise.tasks.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
     def test_send_group_membership_removal_notification(self, mock_braze_api_client, mock_enterprise_catalog_client):
         """
         Verify send_group_membership_removal_notification hits braze client with expected args
@@ -337,6 +390,56 @@ class TestEnterpriseTasks(unittest.TestCase):
         mock_braze_api_client().create_braze_alias.assert_called_once_with(
             [self.pending_enterprise_customer_user.user_email], ENTERPRISE_BRAZE_ALIAS_LABEL)
         mock_braze_api_client().send_campaign_message.assert_has_calls(calls)
+
+    @mock.patch('enterprise.tasks.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
+    def test_fail_send_group_membership_removal_notification(
+        self,
+        mock_braze_api_client,
+        mock_enterprise_catalog_client,
+    ):
+        """
+        Verify failed send group removal email
+        """
+        pending_membership = EnterpriseGroupMembershipFactory(
+            group=self.enterprise_group,
+            pending_enterprise_customer_user=self.pending_enterprise_customer_user,
+            enterprise_customer_user=None,
+        )
+        admin_email = 'edx@example.org'
+        mock_braze_api_client().create_recipients.return_value = {
+            self.user.email: {
+                "external_user_id": self.user.id,
+                "attributes": {
+                    "user_alias": {
+                        "external_id": self.user.id,
+                        "user_alias": self.user.email,
+                    },
+                }
+            }
+        }
+
+        mock_catalog_content_count = 5
+        mock_admin_mailto = f'mailto:{admin_email}'
+        mock_braze_api_client().generate_mailto_link.return_value = mock_admin_mailto
+        mock_braze_api_client().create_recipient_no_external_id.return_value = (
+            self.pending_enterprise_customer_user.user_email)
+        mock_enterprise_catalog_client().get_catalog_content_count.return_value = (
+            mock_catalog_content_count)
+        catalog_uuid = uuid.uuid4()
+        membership_uuids = EnterpriseGroupMembership.objects.values_list('uuid', flat=True)
+        mock_braze_api_client().send_campaign_message.side_effect = BrazeClientError(
+            "Any thing that happens during email")
+        errored_at = localized_utcnow()
+        with raises(BrazeClientError):
+            send_group_membership_removal_notification(
+                self.enterprise_customer.uuid,
+                membership_uuids,
+                catalog_uuid)
+            pending_membership.refresh_from_db()
+            assert pending_membership.status == 'email_error'
+            assert pending_membership.errored_at == localized_utcnow()
+            assert pending_membership.recent_action == f"Errored: {errored_at.strftime('%B %d, %Y')}"
 
     @mock.patch('enterprise.tasks.BrazeAPIClient', return_value=mock.MagicMock())
     def test_sso_configuration_oauth_orchestration_email(self, mock_braze_client):
