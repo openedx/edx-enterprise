@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.14]
+---------
+* chore: Update requirements
+
 [4.20.13]
 ---------
 * feat: added failed statuses for groups and new endpoint to update statuses
