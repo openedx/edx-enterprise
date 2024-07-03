@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.20.15]
+---------
+* feat: Updated EnterpriseCustomerSerializer to include additional fields
+
 [4.20.14]
 ---------
 * chore: Update requirements
