@@ -2472,3 +2472,17 @@ def get_integrations_for_customers(customer_uuid):
         if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
             unique_integrations.append(code)
     return unique_integrations
+
+
+def get_active_api_credentials_for_customer(customer_uuid):
+    """
+    Helper method to active api credentials for each enterprise customer.
+
+    Arguments:
+        customer_uuid (UUI): uuid of an enterprise customer
+    Returns:
+        list: a list of active integrations.
+    """
+
+    active_integrations = []
+    
