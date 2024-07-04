@@ -7423,12 +7423,16 @@ class TestAnalyticsSummaryView(APITest):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
 
-    @mock.patch('enterprise.models.chat_completion')
-    def test_view_with_admin_user(self, mock_chat_completion):
+    @mock.patch('enterprise.api_client.xpert_ai.requests.post')
+    def test_view_with_admin_user(self, mock_post):
         """
         Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
         """
-        mock_chat_completion.return_value = 'Test Response.'
+        xpert_response = 'Response from Xpert AI'
+        mock_response = mock.Mock()
+        mock_response.json.return_value = {'content': xpert_response}
+        mock_post.return_value = mock_response
+
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
 
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -7436,8 +7440,8 @@ class TestAnalyticsSummaryView(APITest):
 
         response = self.client.post(self.url, data=self.payload, format='json')
         assert response.status_code == status.HTTP_200_OK
-        assert 'learner_progress' in response.json()
-        assert 'learner_engagement' in response.json()
+        assert response.json()['learner_progress'] == xpert_response
+        assert response.json()['learner_engagement'] == xpert_response
 
     @mock.patch('enterprise.models.chat_completion')
     def test_404_if_enterprise_customer_does_not_exist(self, mock_chat_completion):
