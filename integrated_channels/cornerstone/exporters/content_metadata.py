@@ -45,6 +45,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
         'Partners': 'organizations',
         'Languages': 'languages',
         'Subjects': 'subjects',
+        'IsMobile': 'is_mobile'
     }
     SKIP_KEY_IF_NONE = True
     MAX_PAYLOAD_COUNT = getattr(settings, "ENTERPRISE_CORNERSTONE_MAX_CONTENT_PAYLOAD_COUNT", 1000)
@@ -115,6 +116,13 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
                 is_active = True
                 break
         return is_active
+
+    def transform_is_mobile(self, content_metadata_item):
+        """
+        Returns IsMobile to True for all courses.
+        """
+        is_mobile = True
+        return is_mobile
 
     def transform_modified(self, content_metadata_item):
         """
