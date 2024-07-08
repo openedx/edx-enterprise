@@ -17,6 +17,26 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.1]
+---------
+* feat: add is_mobile transorfmer for CSOD content metadata exporter
+
+[4.21.0]
+---------
+* refactor: replace openai usage with xpert api
+
+[4.20.14]
+---------
+* chore: Update requirements
+
+[4.20.13]
+---------
+* feat: added failed statuses for groups and new endpoint to update statuses
+
+[4.20.12]
+---------
+* feat: added support for testing sftp connection inside ``EnterpriseCustomerReportingConfiguration`` instance.
+
 [4.20.11]
 ---------
 * fix: setting existing user group membership statuses

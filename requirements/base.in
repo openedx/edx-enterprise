@@ -31,6 +31,7 @@ edx-tincan-py35
 edx-toggles
 jsondiff
 jsonfield
+paramiko
 path.py
 pillow
 python-dateutil

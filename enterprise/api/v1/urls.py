@@ -183,7 +183,7 @@ urlpatterns = [
     re_path(
         r'^enterprise-group/(?P<group_uuid>[A-Za-z0-9-]+)/learners/?$',
         enterprise_group.EnterpriseGroupViewSet.as_view(
-            {'get': 'get_learners'}
+            {'get': 'get_learners', 'patch': 'update_pending_learner_status'}
         ),
         name='enterprise-group-learners'
     ),

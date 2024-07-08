@@ -44,8 +44,8 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_c
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
-from enterprise.api_client.open_ai import chat_completion
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
+from enterprise.api_client.xpert_ai import chat_completion
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
@@ -4458,6 +4458,13 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
             "The moment at which the membership record was revoked by an Enterprise admin."
         ),
     )
+    errored_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=_(
+            "The last time the membership action was in an error state. Null means the membership is not errored."),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -4490,6 +4497,8 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         """
         Return the timestamp of the most recent action relating to the membership
         """
+        if self.errored_at:
+            return self.errored_at
         if self.is_removed:
             return self.removed_at
         if self.enterprise_customer_user and self.activated_at:

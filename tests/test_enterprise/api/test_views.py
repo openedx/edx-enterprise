@@ -7423,12 +7423,16 @@ class TestAnalyticsSummaryView(APITest):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
 
-    @mock.patch('enterprise.models.chat_completion')
-    def test_view_with_admin_user(self, mock_chat_completion):
+    @mock.patch('enterprise.api_client.xpert_ai.requests.post')
+    def test_view_with_admin_user(self, mock_post):
         """
         Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
         """
-        mock_chat_completion.return_value = 'Test Response.'
+        xpert_response = 'Response from Xpert AI'
+        mock_response = mock.Mock()
+        mock_response.json.return_value = {'content': xpert_response}
+        mock_post.return_value = mock_response
+
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
 
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -7436,8 +7440,8 @@ class TestAnalyticsSummaryView(APITest):
 
         response = self.client.post(self.url, data=self.payload, format='json')
         assert response.status_code == status.HTTP_200_OK
-        assert 'learner_progress' in response.json()
-        assert 'learner_engagement' in response.json()
+        assert response.json()['learner_progress'] == xpert_response
+        assert response.json()['learner_engagement'] == xpert_response
 
     @mock.patch('enterprise.models.chat_completion')
     def test_404_if_enterprise_customer_does_not_exist(self, mock_chat_completion):
@@ -8551,6 +8555,30 @@ class TestEnterpriseGroupViewSet(APITest):
         request_data = {'enterprise_customer': uuid.uuid4()}
         response = self.client.patch(url, data=request_data)
         assert response.status_code == 401
+
+    def test_update_pending_learner_status(self):
+        """
+        Test that the PATCH endpoint updates pending learner status and errored at time
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        )
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+        request_data = {
+            'learner': 'edx@exampl.com',
+            'status': 'email_error',
+            'errored_at': localized_utcnow()}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 201
+        assert response.json() == 'Successfully updated learner record for learner email edx@exampl.com'
 
     @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
     def test_successful_remove_all_learners_from_group(self, mock_send_group_membership_removal_notification):

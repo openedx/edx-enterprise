@@ -117,7 +117,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):
                 break
         return is_active
 
-    def transform_is_mobile(self, content_metadata_item):
+    def transform_is_mobile(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Returns IsMobile to True for all courses.
         """
