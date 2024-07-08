@@ -43,6 +43,7 @@ from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.api_client.license_manager_client import LicenseManagerApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
 from enterprise.api_client.open_ai import chat_completion
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
@@ -758,6 +759,22 @@ class EnterpriseCustomer(TimeStampedModel):
             return True
 
         return False
+
+    @property
+    def active_subscriptions_for_customer(self):
+        """
+        Helper method to get active subscriptions for customer.
+
+        Arguments:
+            customer_uuid (UUID): uuid of an enterprise customer
+        Returns:
+            list: a list of active subscriptions.
+        """
+        try:
+            subscriptions = LicenseManagerApiClient().get_customer_subscriptions(self.uuid)
+        except:
+            raise
+        return subscriptions
 
     def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):
         """

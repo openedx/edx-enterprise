@@ -118,6 +118,33 @@ class EcommerceApiClient:
                 str(exc)
             )
 
+    def get_active_coupons(self, enterprise_customer_uuid):
+        """
+        Get active coupons for the enterprise customer.
+
+        Returns:
+            array of active coupons.
+        """
+        api_url = urljoin(f"{self.API_BASE_URL}/", "baskets/calculate/")
+        # try:
+        #     response = self.client.get(
+        #         api_url,
+        #         params={
+        #             "sku": [mode['sku']],
+        #             "username": self.user.username,
+        #             "catalog": enterprise_catalog_uuid,
+        #         }
+        #     )
+        #     response.raise_for_status()
+        #     price_details = response.json()
+        # except (RequestException, ConnectionError, Timeout) as exc:
+        #     LOGGER.exception('Failed to get price details for sku %s due to: %s', mode['sku'], str(exc))
+        #     price_details = {}
+        # price = price_details.get('total_incl_tax', mode['min_price'])
+        # if price != mode['min_price']:
+        #     return format_price(price, currency)
+        # return mode['original_price']
+
 
 class NoAuthEcommerceClient(NoAuthAPIClient):
     """
