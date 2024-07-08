@@ -1436,6 +1436,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
         (
@@ -1499,6 +1502,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_one_academy': False,
                     'active_integrations': [],
                     'show_videos_in_learner_portal_search_results': False,
+                    'default_language': 'en',
+                    'country': 'US',
+                    'enable_slug_login': False,
                 },
                 'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
@@ -1600,6 +1606,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
         (
@@ -1671,6 +1680,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
         (
@@ -1768,7 +1780,10 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': ['BLACKBOARD'],
-                'show_videos_in_learner_portal_search_results': False
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
     )
@@ -2012,6 +2027,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }
         else:
             mock_empty_200_success_response = {
@@ -2086,6 +2104,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'name': 'Test Create Customer',
             'slug': 'test-create-customer',
             'site': {'domain': 'example.com'},
+            'country': 'US',
         }, format='json')
 
         assert response.status_code == expected_status_code
@@ -2109,6 +2128,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'name': 'Test Create Customer',
             'slug': 'test-create-customer',
             'site': {'domain': 'example.com'},
+            'country': 'US',
         }, format='json')
 
         assert failed_response.status_code == 403
@@ -2120,6 +2140,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'name': 'Test Create Customer',
             'slug': 'test-create-customer',
             'site': {'domain': 'example.com'},
+            'country': 'US',
         }, format='json')
 
         assert response.status_code == 201
