@@ -12,7 +12,7 @@ autocommand==2.2.2
     # via jaraco-text
 backports-tarfile==1.2.0
     # via jaraco-context
-certifi==2024.6.2
+certifi==2024.7.4
     # via selenium
 cheroot==10.0.1
     # via cherrypy
@@ -34,7 +34,7 @@ importlib-metadata==6.11.0
     #   typeguard
 importlib-resources==6.4.0
     # via jaraco-text
-inflect==7.3.0
+inflect==7.3.1
     # via jaraco-text
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
@@ -88,7 +88,7 @@ tempora==5.6.0
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.25.1
+trio==0.26.0
     # via
     #   selenium
     #   trio-websocket
