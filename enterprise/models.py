@@ -45,8 +45,8 @@ from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.license_manager_client import LicenseManagerApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
-from enterprise.api_client.open_ai import chat_completion
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
+from enterprise.api_client.xpert_ai import chat_completion
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
