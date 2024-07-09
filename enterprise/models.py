@@ -43,7 +43,7 @@ from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.api_client.license_manager_client import LicenseManagerApiClient
+from enterprise.api_client.license_manager import LicenseManagerApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
 from enterprise.api_client.xpert_ai import chat_completion
@@ -775,6 +775,44 @@ class EnterpriseCustomer(TimeStampedModel):
         except:
             raise
         return subscriptions
+
+    @property
+    def active_coupons_for_customer(self):
+        """
+        Helper method to get active coupons for customer.
+
+        Arguments:
+            customer_uuid (UUID): uuid of an enterprise customer
+        Returns:
+            list: a list of active coupons
+        """
+        ecommerce_service_worker = get_ecommerce_worker_user()
+        try:
+            ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+        except:
+            LOGGER.exception('failed')
+        else:
+            coupons = ecommerce_api_client.get_active_coupons(self.uuid)
+        return coupons
+
+    @property
+    def active_offers_for_customer(self):
+        """
+        Helper method to get active offers for customer.
+
+        Arguments:
+            customer_uuid (UUID): uuid of an enterprise customer
+        Returns:
+            list: a list of active offers
+        """
+        ecommerce_service_worker = get_ecommerce_worker_user()
+        try:
+            ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+        except:
+            LOGGER.exception('failed')
+        else:
+            offers = ecommerce_api_client.get_active_offers(self.uuid)
+        return offers
 
     def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):
         """

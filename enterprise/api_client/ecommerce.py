@@ -125,25 +125,30 @@ class EcommerceApiClient:
         Returns:
             array of active coupons.
         """
-        api_url = urljoin(f"{self.API_BASE_URL}/", "baskets/calculate/")
-        # try:
-        #     response = self.client.get(
-        #         api_url,
-        #         params={
-        #             "sku": [mode['sku']],
-        #             "username": self.user.username,
-        #             "catalog": enterprise_catalog_uuid,
-        #         }
-        #     )
-        #     response.raise_for_status()
-        #     price_details = response.json()
-        # except (RequestException, ConnectionError, Timeout) as exc:
-        #     LOGGER.exception('Failed to get price details for sku %s due to: %s', mode['sku'], str(exc))
-        #     price_details = {}
-        # price = price_details.get('total_incl_tax', mode['min_price'])
-        # if price != mode['min_price']:
-        #     return format_price(price, currency)
-        # return mode['original_price']
+        api_url = urljoin(f"{self.API_BASE_URL}/", f"enterprise/coupons/{enterprise_customer_uuid}/overview/")
+        # loop through results and get active coupons only. format each result to include start date/end date,
+        # name, and uuid
+        try:
+            response = self.client.get(api_url)
+            return response.json().get('results')
+        except:
+            LOGGER.exception(f'failed to fetch at url {api_url}')
+
+    def get_active_offers(self, enterprise_customer_uuid):
+        """
+        Get active offers for the enterprise customer.
+
+        Returns:
+            array of active offers.
+        """
+        # loop through results and get active coupons only. format each result to include start date/end date,
+        # name, and uuid
+        api_url = urljoin(f"{self.API_BASE_URL}/", f"enterprise/{enterprise_customer_uuid}/enterprise-admin-offers/")
+        try:
+            response = self.client.get(api_url)
+            return response.json().get('results')
+        except:
+            LOGGER.exception(f'failed to fetch at url {api_url}')
 
 
 class NoAuthEcommerceClient(NoAuthAPIClient):

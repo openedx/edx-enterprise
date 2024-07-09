@@ -2489,9 +2489,10 @@ def get_active_api_credentials_for_customer(customer_uuid):
     Arguments:
         customer_uuid (UUID): uuid of an enterprise customer
     Returns:
-        list: a list of active integrations.
+        list: a list of active api credentials.
     """
-    active_integrations = []
+    active_api_credentials = []
+    return active_api_credentials
 
 
 def get_active_sso_configurations_for_customer(customer_uuid):

@@ -115,6 +115,8 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
 
         URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
+
+        ## TO-DO: unsure how to get this data per customer
         user_application = Application.objects.get(user=request.user)
         serializer = self.get_serializer(instance=user_application)
         return Response(serializer.data, status=status.HTTP_200_OK)
