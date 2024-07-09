@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.4]
+---------
+* fix: Updates messaging on disable expiry for learner credit
+
 [4.21.3]
 ---------
 * chore: rename PAs django group name
