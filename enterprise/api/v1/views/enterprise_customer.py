@@ -57,7 +57,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
     pagination_class = PaginationWithFeatureFlags
 
-    PROVISIONING_ADMINS_GROUP = 'provisioning-admins-group'
+    PROVISIONING_ADMINS_GROUP = 'provisioning_admins_group'
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
         'uuid', 'slug', 'name', 'active', 'site', 'enable_data_sharing_consent',

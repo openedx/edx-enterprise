@@ -24,7 +24,7 @@ class IsInProvisioningAdminGroup(permissions.BasePermission):
     """
     Grant access to those users only who are part of the license provisiioning django group
     """
-    ALLOWED_API_GROUPS = ['provisioning-admins-group']
+    ALLOWED_API_GROUPS = ['provisioning_admins_group']
     message = 'Access denied: You do not have the necessary permissions to access this.'
 
     def has_permission(self, request, view):
