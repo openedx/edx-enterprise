@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.2]
+---------
+* feat: Updated EnterpriseCustomerSerializer to include additional fields
+
+[4.21.1]
+---------
+* feat: add is_mobile transorfmer for CSOD content metadata exporter
+
+[4.21.0]
+---------
+* refactor: replace openai usage with xpert api
+
 [4.20.14]
 ---------
 * chore: Update requirements
