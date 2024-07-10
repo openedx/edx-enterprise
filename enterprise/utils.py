@@ -2474,25 +2474,17 @@ def get_integrations_for_customers(customer_uuid):
     Returns:
         list: a list of integration channel codes.
     """
+
+    '''
+    Currently, we are only returning an array of the integrated channel code. We need to 
+    update this to also return the an array of objects that includes a created and last modified date
+    '''
     unique_integrations = []
     integrated_channel_choices = get_integrated_channel_choices()
     for code, choice in integrated_channel_choices.items():
         if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
             unique_integrations.append(code)
     return unique_integrations
-
-
-def get_active_api_credentials_for_customer(customer_uuid):
-    """
-    Helper method to get active api credentials for each enterprise customer.
-
-    Arguments:
-        customer_uuid (UUID): uuid of an enterprise customer
-    Returns:
-        list: a list of active api credentials.
-    """
-    active_api_credentials = []
-    return active_api_credentials
 
 
 def get_active_sso_configurations_for_customer(customer_uuid):

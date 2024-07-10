@@ -37,7 +37,6 @@ from enterprise.models import (
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
-    get_active_api_credentials_for_customer,
     get_integrations_for_customers,
     get_active_sso_configurations_for_customer,
     get_last_course_run_end_date,
@@ -229,7 +228,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
             'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
-            'default_language', 'country', 'enable_slug_login', 'active_api_credentials', 'active_sso_configurations',
+            'default_language', 'country', 'enable_slug_login', 'active_sso_configurations',
             'subscriptions', 'coupons', 'offers', 'has_active_offers', 'has_active_coupons', 'has_active_subscriptions'
         )
 
@@ -240,7 +239,6 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     enterprise_notification_banner = serializers.SerializerMethodField()
     admin_users = serializers.SerializerMethodField()
     active_integrations = serializers.SerializerMethodField()
-    active_api_credentials = serializers.SerializerMethodField()
     active_sso_configurations = serializers.SerializerMethodField()
     subscriptions = serializers.SerializerMethodField()
     coupons = serializers.SerializerMethodField()
@@ -284,9 +282,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
 
     def get_active_integrations(self, obj):
         return get_integrations_for_customers(obj.uuid)
-    
-    def get_active_api_credentials(self, obj):
-        return get_active_api_credentials_for_customer(obj.uuid)
+
 
     def get_branding_configuration(self, obj):
         """
