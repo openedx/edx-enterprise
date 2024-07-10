@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.3]
+---------
+* chore: rename PAs django group name
+
 [4.21.2]
 ---------
 * feat: Updated EnterpriseCustomerSerializer to include additional fields
