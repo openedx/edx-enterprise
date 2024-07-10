@@ -761,14 +761,14 @@ class EnterpriseCustomer(TimeStampedModel):
         return False
 
     @property
-    def active_subscriptions_for_customer(self):
+    def subscriptions_for_customer(self):
         """
-        Helper method to get active subscriptions for customer.
+        Helper method to get subscriptions for customer.
 
         Arguments:
             customer_uuid (UUID): uuid of an enterprise customer
         Returns:
-            list: a list of active subscriptions.
+            list: a list of subscriptions.
         """
         try:
             subscriptions = LicenseManagerApiClient().get_customer_subscriptions(self.uuid)
@@ -777,7 +777,7 @@ class EnterpriseCustomer(TimeStampedModel):
         return subscriptions
 
     @property
-    def active_coupons_for_customer(self):
+    def coupons_for_customer(self):
         """
         Helper method to get active coupons for customer.
 
@@ -792,18 +792,18 @@ class EnterpriseCustomer(TimeStampedModel):
         except:
             LOGGER.exception('failed')
         else:
-            coupons = ecommerce_api_client.get_active_coupons(self.uuid)
+            coupons = ecommerce_api_client.get_coupons(self.uuid)
         return coupons
 
     @property
-    def active_offers_for_customer(self):
+    def offers_for_customer(self):
         """
-        Helper method to get active offers for customer.
+        Helper method to get offers for customer.
 
         Arguments:
             customer_uuid (UUID): uuid of an enterprise customer
         Returns:
-            list: a list of active offers
+            list: a list of offers
         """
         ecommerce_service_worker = get_ecommerce_worker_user()
         try:
@@ -811,7 +811,7 @@ class EnterpriseCustomer(TimeStampedModel):
         except:
             LOGGER.exception('failed')
         else:
-            offers = ecommerce_api_client.get_active_offers(self.uuid)
+            offers = ecommerce_api_client.get_offers(self.uuid)
         return offers
 
     def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):

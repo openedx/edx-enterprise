@@ -116,7 +116,15 @@ class APICredentialsViewSet(EnterpriseReadWriteModelViewSet):
         URL: /enterprise/api/v1/enterprise-customer-api-credentials/{enterprise_uuid}
         """
 
-        ## TO-DO: unsure how to get this data per customer
+        '''
+        Note: obtaining data for all API credentials created for a specific enterprise customer 
+        is not straightforward because the data is not stored on the enterprise customer. One potential 
+        method is to iterate through all users linked to the enterprise customer to identify the creator 
+        of the API credentials. However, this approach could impact performance, raise security concerns, and
+        expand the scope of this task. As an alternative, I recommend displaying a checkmark on the customer 
+        data table and API credentials card to indicate if API credentials are enabled for the enterprise customer.
+        '''
+
         user_application = Application.objects.get(user=request.user)
         serializer = self.get_serializer(instance=user_application)
         return Response(serializer.data, status=status.HTTP_200_OK)

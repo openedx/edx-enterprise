@@ -230,7 +230,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
             'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
             'default_language', 'country', 'enable_slug_login', 'active_api_credentials', 'active_sso_configurations',
-            'active_subscriptions', 'active_coupons', 'active_offers',
+            'subscriptions', 'coupons', 'offers', 'has_active_offers', 'has_active_coupons', 'has_active_subscriptions'
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -242,18 +242,42 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     active_integrations = serializers.SerializerMethodField()
     active_api_credentials = serializers.SerializerMethodField()
     active_sso_configurations = serializers.SerializerMethodField()
-    active_subscriptions = serializers.SerializerMethodField()
-    active_coupons = serializers.SerializerMethodField()
-    active_offers = serializers.SerializerMethodField()
+    subscriptions = serializers.SerializerMethodField()
+    coupons = serializers.SerializerMethodField()
+    offers = serializers.SerializerMethodField()
+    has_active_offers = serializers.SerializerMethodField()
+    has_active_coupons = serializers.SerializerMethodField()
+    has_active_subscriptions = serializers.SerializerMethodField()
 
-    def get_active_offers(self, obj):
-        return obj.active_coupons_for_customer
+    def get_offers(self, obj):
+        # we want to get both active and inactive offers to display data for the card
+        return obj.offers_for_customer
     
-    def get_active_coupons(self, obj):
-        return obj.active_offers_for_customer
+    def get_coupons(self, obj):
+        # we want to get both active and inactive coupons to display data for the card
+        return obj.coupons_for_customer
 
-    def get_active_subscriptions(self, obj):
-        return obj.active_subscriptions_for_customer
+    def get_subscriptions(self, obj):
+        # we want to get both active and inactive subs to display data for the card
+        return obj.subscriptions_for_customer
+    
+    def get_has_active_offers(self, obj):
+        # loop through offers and check if there is at least one
+        # active offer and return boolean. this is used for the
+        # checkmark on the support tools customer data table.
+        return
+    
+    def get_has_active_coupons(self, obj):
+        # loop through coupons and check if there is at least one
+        # active coupon and return boolean. this is used for the
+        # checkmark on the support tools customer data table.
+        return
+    
+    def get_has_active_subscriptions(self, obj):
+        # loop through subs and check if there is at least one
+        # active sub and return boolean. this is used for the
+        # checkmark on the support tools customer data table.
+        return
 
     def get_active_sso_configurations(self, obj):
         return get_active_sso_configurations_for_customer(obj.uuid)

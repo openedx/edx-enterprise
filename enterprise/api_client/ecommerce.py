@@ -118,31 +118,29 @@ class EcommerceApiClient:
                 str(exc)
             )
 
-    def get_active_coupons(self, enterprise_customer_uuid):
+    def get_coupons(self, enterprise_customer_uuid):
         """
-        Get active coupons for the enterprise customer.
+        Get coupons for the enterprise customer.
 
         Returns:
-            array of active coupons.
+            array of coupons.
         """
         api_url = urljoin(f"{self.API_BASE_URL}/", f"enterprise/coupons/{enterprise_customer_uuid}/overview/")
-        # loop through results and get active coupons only. format each result to include start date/end date,
-        # name, and uuid
+        # format each result to include start date/end date name, and uuid
         try:
             response = self.client.get(api_url)
             return response.json().get('results')
         except:
             LOGGER.exception(f'failed to fetch at url {api_url}')
 
-    def get_active_offers(self, enterprise_customer_uuid):
+    def get_offers(self, enterprise_customer_uuid):
         """
-        Get active offers for the enterprise customer.
+        Get offers for the enterprise customer.
 
         Returns:
-            array of active offers.
+            array of offers.
         """
-        # loop through results and get active coupons only. format each result to include start date/end date,
-        # name, and uuid
+        # format each result to include start date/end date, name, and uuid
         api_url = urljoin(f"{self.API_BASE_URL}/", f"enterprise/{enterprise_customer_uuid}/enterprise-admin-offers/")
         try:
             response = self.client.get(api_url)
