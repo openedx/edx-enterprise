@@ -316,8 +316,9 @@ class EnterpriseCustomer(TimeStampedModel):
         verbose_name="Disable expiration messaging for learner credit",
         default=False,
         help_text=_("If checked, learners and admins will not receive notifications leading up to the expiration "
-                    "date for learner credit plans. Notifications signaling the expiration (and loss of usability) "
-                    "itself will still appear.")
+                    "date for learner credit plans. This includes removing the expiration date from the subsidy "
+                    "box for upcoming expirations. The subsidy summary box will not display for expired plans. "
+                    "Other notifications signaling the expiration (and loss of usability) itself will still appear.")
     )
 
     enable_portal_code_management_screen = models.BooleanField(
