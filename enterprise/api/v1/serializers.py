@@ -1865,6 +1865,9 @@ class EnterpriseUserSerializer(serializers.Serializer):
     def get_is_admin(self, obj):
         enterprise_customer_uuid = obj.enterprise_customer.uuid
 
+        if not enterprise_customer_uuid:
+            return None
+
         admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role__name=ENTERPRISE_ADMIN_ROLE,
             enterprise_customer_id=enterprise_customer_uuid
@@ -1873,7 +1876,29 @@ class EnterpriseUserSerializer(serializers.Serializer):
         return admin_instance.exists()
 
     def get_pending_enterprise_customer_user_id(self, obj):
-        pass
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        enterprise_customer_email = obj.enterprise_customer.contact_email
+
+        if not enterprise_customer_uuid or not enterprise_customer_email:
+            return None
+
+        pending_enterprise_customer_instance = models.PendingEnterpriseCustomerUser.objects.filter(
+            user_email=enterprise_customer_email,
+            enterprise_customer_id=enterprise_customer_uuid
+        ).first()
+
+        return enterprise_customer_uuid if pending_enterprise_customer_instance else None
 
     def get_is_pending_admin(self, obj):
-        pass
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        enterprise_customer_email = obj.enterprise_customer.contact_email
+
+        if not enterprise_customer_uuid or not enterprise_customer_email:
+            return False
+
+        pending_admin_instance = models.PendingEnterpriseCustomerUser.objects.filter(
+            user_email=enterprise_customer_email,
+            enterprise_customer_id=enterprise_customer_uuid
+        )
+
+        return pending_admin_instance.exists()
