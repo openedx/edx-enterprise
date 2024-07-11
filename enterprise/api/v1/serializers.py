@@ -1829,6 +1829,7 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         required=False,
     )
 
+
 class EnterpriseUserSerializer(serializers.Serializer):
     """
     Serializer for EnterpriseCustomer model with additions.
