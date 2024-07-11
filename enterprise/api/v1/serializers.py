@@ -1828,3 +1828,32 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         child=serializers.EmailField(required=True),
         required=False,
     )
+
+class EnterpriseUserSerializer(serializers.Serializer):
+    """
+    Serializer for EnterpriseCustomer model with additions.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomerBrandingConfiguration
+        fields = (
+            'enterprise_customer',
+            'enterprise_slug',
+            'logo',
+            'primary_color',
+            'secondary_color',
+            'tertiary_color',
+        )
+
+    enterprise_customer = serializers.SerializerMethodField()
+    enterprise_slug = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
+    primary_color = serializers.SerializerMethodField()
+    secondary_color = serializers.SerializerMethodField()
+    tertiary_color = serializers.SerializerMethodField()
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return a string representation of the associated enterprise customer's UUID.
+        """
+        return str(obj.enterprise_customer.uuid)
