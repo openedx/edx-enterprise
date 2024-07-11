@@ -21,6 +21,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_user,
     enterprise_group,
     enterprise_subsidy_fulfillment,
+    enterprise_user,
     notifications,
     pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
@@ -81,6 +82,7 @@ router.register(
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
 )
+router.register("enterprise-user", enterprise_user.EnterpriseUserViewSet, 'enterprise-user')
 
 
 urlpatterns = [
