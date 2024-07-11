@@ -1836,25 +1836,44 @@ class EnterpriseUserSerializer(serializers.Serializer):
     """
 
     class Meta:
-        model = models.EnterpriseCustomerBrandingConfiguration
+        model = models.EnterpriseCustomer
         fields = (
-            'enterprise_customer',
-            'enterprise_slug',
-            'logo',
-            'primary_color',
-            'secondary_color',
-            'tertiary_color',
+            'enterprise_customer_user_id',
+            'user_name',
+            'user_email',
+            'is_admin',
+            'pending_enterprise_customer_user_id',
+            'is_pending_admin'
         )
 
-    enterprise_customer = serializers.SerializerMethodField()
-    enterprise_slug = serializers.SerializerMethodField()
-    logo = serializers.SerializerMethodField()
-    primary_color = serializers.SerializerMethodField()
-    secondary_color = serializers.SerializerMethodField()
-    tertiary_color = serializers.SerializerMethodField()
+    enterprise_customer_user_id = serializers.SerializerMethodField()
+    user_name = serializers.SerializerMethodField()
+    user_email = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+    pending_enterprise_customer_user_id = serializers.SerializerMethodField()
+    is_pending_admin = serializers.SerializerMethodField()
 
-    def get_enterprise_customer(self, obj):
-        """
-        Return a string representation of the associated enterprise customer's UUID.
-        """
-        return str(obj.enterprise_customer.uuid)
+    def get_enterprise_customer_user_id(self, obj):
+        return obj.enterprise_customer.uuid
+
+    def get_user_name(self, obj):
+        return obj.enterprise_customer.name
+
+    def get_user_email(self, obj):
+        return obj.enterprise_customer.contact_email
+
+    def get_is_admin(self, obj):
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE,
+            enterprise_customer_id=enterprise_customer_uuid
+        )
+
+        return admin_instance.exists()
+
+    def get_pending_enterprise_customer_user_id(self, obj):
+        pass
+
+    def get_is_pending_admin(self, obj):
+        pass
