@@ -1,5 +1,5 @@
 """
-Views for the ``pending-enterprise-customer-admin-user`` API endpoint.
+Views for the ``enterprise-user`` API endpoint.
 """
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -7,7 +7,6 @@ from rest_framework import filters, permissions
 
 from enterprise import models
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.permissions import IsInProvisioningAdminGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
 
