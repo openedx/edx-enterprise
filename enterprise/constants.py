@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 # used to ensure that signal receiver is only called once.
 USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
 
+PROVISIONING_ADMINS_GROUP = 'provisioning_admins_group'
+
 # Data sharing consent messages
 CONSENT_REQUEST_PROMPT = _(
     'To log in using this SSO identity provider and access special course offers, you must first '

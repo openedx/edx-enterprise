@@ -27,7 +27,7 @@ from rest_framework.test import APIClient
 from testfixtures import LogCapture
 
 from django.conf import settings
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.core.cache import cache
 from django.test import override_settings
 from django.utils import timezone
@@ -868,11 +868,17 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def setup_provisioning_admin_permission(self):
         """
-        Grants provisioning admin permissions to the staff user for testing purposes.
+        Create a new PA, add it to relevant group and then login.
         """
-        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
-        self.staff_user.groups.add(allowed_group)
-        self.client.force_authenticate(user=self.staff_user)
+        self.client.logout()
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+        group.user_set.add(user)
 
     def test_post_pending_enterprise_customer_admin_user_creation(self):
         """
@@ -2048,6 +2054,39 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             }
             assert response in (expected_error, mock_empty_200_success_response)
 
+    def test_provisioning_admin_list_all_enterprises_200(self):
+        """
+        Ensure that PAs are able to access all enterprise customers.
+        """
+        self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+            'country': 'US',
+            'active': True
+        }, format='json')
+        self.client.logout()
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+        group.user_set.add(user)
+        self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer 2',
+            'slug': 'test-create-customer-2',
+            'site': {'domain': 'example.com'},
+            'country': 'US',
+            'active': True
+        }, format='json')
+        response = self.client.get(
+            ENTERPRISE_CUSTOMER_LIST_ENDPOINT
+        )
+        response = self.load_json(response.content)
+        assert response['count'] == 2
+
     def test_enterprise_customer_branding_detail(self):
         """
         ``enterprise_customer_branding``'s get endpoint should get the config by looking up the enterprise slug and
@@ -2122,7 +2161,15 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         """
         Test that ``EnterpriseCustomer`` can be created by provisioning admins who are part of group.
         """
-        self.set_jwt_cookie("provisioning-admin-role", str(FAKE_UUIDS[0]))
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.logout()
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+
         # auth error should be raised if user isn't part of provisioning admins group
         failed_response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
             'name': 'Test Create Customer',
@@ -2134,8 +2181,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         assert failed_response.status_code == 403
 
         # now make this use part of provisioning admins groups and retry
-        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
-        self.user.groups.add(allowed_group)
+        group.user_set.add(user)
         response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
             'name': 'Test Create Customer',
             'slug': 'test-create-customer',
@@ -2230,9 +2276,15 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
-        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
-        self.user.groups.add(allowed_group)
-        self.set_jwt_cookie("provisioning-admin-role", str(FAKE_UUIDS[0]))
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.logout()
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+        group.user_set.add(user)
         response = self.client.patch(ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT, {
             "slug": 'new-slug'
         })

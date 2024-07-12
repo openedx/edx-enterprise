@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.5]
+---------
+* feat: allow PAs to access all enterprise customers
+
 [4.21.4]
 ---------
 * fix: Updates messaging on disable expiry for learner credit
