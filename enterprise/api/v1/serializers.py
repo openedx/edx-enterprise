@@ -8,6 +8,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 import pytz
+from django_countries.serializers import CountryFieldMixin
 from edx_rest_api_client.exceptions import HttpClientError
 from oauth2_provider.generators import generate_client_id, generate_client_secret
 from rest_framework import serializers
@@ -204,7 +205,7 @@ class SiteField(serializers.Field):
             raise serializers.ValidationError({"domain": "No Site with the provided domain was found."}) from exc
 
 
-class EnterpriseCustomerSerializer(serializers.ModelSerializer):
+class EnterpriseCustomerSerializer(CountryFieldMixin, serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomer model.
     """

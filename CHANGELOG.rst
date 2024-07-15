@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.6]
+---------
+* fix: Add CountryFieldMixin to the EnterpriseCustomer serializer
+
 [4.21.5]
 ---------
 * feat: allow PAs to access all enterprise customers
