@@ -4,8 +4,9 @@ Views for the ``enterprise-customer`` API endpoint.
 
 from urllib.parse import quote_plus, unquote
 
+from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
-from rest_framework import permissions
+from rest_framework import filters, permissions
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -32,7 +33,7 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import has_permission_or_group, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
-from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
+from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, PROVISIONING_ADMINS_GROUP
 from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
 from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
@@ -54,10 +55,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     throttle_classes = (HighServiceUserThrottle, )
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
-    filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
     pagination_class = PaginationWithFeatureFlags
-
-    PROVISIONING_ADMINS_GROUP = 'provisioning_admins_group'
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
         'uuid', 'slug', 'name', 'active', 'site', 'enable_data_sharing_consent',
@@ -65,6 +63,21 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     )
     filterset_fields = FIELDS
     ordering_fields = FIELDS
+
+    def get_queryset(self):
+        """
+        Allow PAs to access all enterprise customers by modifying filter_backends
+        """
+        queryset = self.queryset
+        if self.action in ('create', 'partial_update', 'update', 'retrieve', 'list') and \
+                self.request.user.groups.filter(name=PROVISIONING_ADMINS_GROUP).exists():
+            self.filter_backends = (
+                filters.OrderingFilter, DjangoFilterBackend)
+            return queryset
+
+        self.filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + \
+            (EnterpriseLinkedUserFilterBackend,)
+        return queryset
 
     def get_permissions(self):
         if self.action == 'create':
