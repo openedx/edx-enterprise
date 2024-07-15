@@ -1896,7 +1896,7 @@ class EnterpriseUserSerializer(serializers.Serializer):
         if not enterprise_customer_uuid or not enterprise_customer_email:
             return False
 
-        pending_admin_instance = models.PendingEnterpriseCustomerUser.objects.filter(
+        pending_admin_instance = models.PendingEnterpriseCustomerAdminUser.objects.filter(
             user_email=enterprise_customer_email,
             enterprise_customer_id=enterprise_customer_uuid
         )
