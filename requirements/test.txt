@@ -97,7 +97,7 @@ code-annotations==1.8.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.5.4
+coverage[toml]==7.6.0
     # via pytest-cov
 cryptography==42.0.8
     # via
