@@ -43,6 +43,18 @@ ENTERPRISE_GROUPS_V1 = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.enterprise_customer_support_tool
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables the enterprise customer support tool
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2024-07-16
+ENTERPRISE_CUSTOMER_SUPPORT_TOOL = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.enterprise_customer_support_tool',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -65,6 +77,13 @@ def enterprise_groups_v1():
     return ENTERPRISE_GROUPS_V1.is_enabled()
 
 
+def enterprise_customer_support_tool():
+    """
+    Returns whether the enterprise customer support tool is enabled.
+    """
+    return ENTERPRISE_CUSTOMER_SUPPORT_TOOL.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -73,4 +92,5 @@ def enterprise_features():
         'top_down_assignment_real_time_lcm': top_down_assignment_real_time_lcm(),
         'feature_prequery_search_suggestions': feature_prequery_search_suggestions(),
         'enterprise_groups_v1': enterprise_groups_v1(),
+        'enterprise_customer_support_tool': enterprise_customer_support_tool(),
     }
