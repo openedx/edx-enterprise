@@ -82,7 +82,6 @@ router.register(
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
 )
-router.register("enterprise-user", enterprise_user.EnterpriseUserViewSet, 'enterprise-user')
 
 
 urlpatterns = [
@@ -198,6 +197,13 @@ urlpatterns = [
         r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/remove_learners/?$',
         enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'remove_learners'}),
         name='enterprise-group-remove-learners'
+    ),
+    re_path(
+        r'^enterprise-user/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_user.EnterpriseUserViewSet.as_view(
+            {'get': 'retrieve'}
+        ),
+        name='enterprise-user'
     ),
 ]
 
