@@ -1836,7 +1836,7 @@ class EnterpriseUserSerializer(serializers.Serializer):
     """
 
     class Meta:
-        model = models.EnterpriseCustomer
+        model = models.EnterpriseCustomerUser
         fields = (
             'enterprise_customer_user_id',
             'user_name',
@@ -1854,16 +1854,16 @@ class EnterpriseUserSerializer(serializers.Serializer):
     is_pending_admin = serializers.SerializerMethodField()
 
     def get_enterprise_customer_user_id(self, obj):
-        return obj.uuid
+        return obj.user_id
 
     def get_user_name(self, obj):
         return obj.name
 
     def get_user_email(self, obj):
-        return obj.contact_email
+        return obj.user_email
 
     def get_is_admin(self, obj):
-        enterprise_customer_uuid = obj.uuid
+        enterprise_customer_uuid = obj.enterprise_customer_id
 
         if not enterprise_customer_uuid:
             return None
@@ -1876,8 +1876,8 @@ class EnterpriseUserSerializer(serializers.Serializer):
         return admin_instance.exists()
 
     def get_pending_enterprise_customer_user_id(self, obj):
-        enterprise_customer_uuid = obj.uuid
-        enterprise_customer_email = obj.contact_email
+        enterprise_customer_uuid = obj.enterprise_customer_id
+        enterprise_customer_email = obj.user_email
 
         if not enterprise_customer_uuid or not enterprise_customer_email:
             return None
@@ -1890,8 +1890,8 @@ class EnterpriseUserSerializer(serializers.Serializer):
         return enterprise_customer_uuid if pending_enterprise_customer_instance else None
 
     def get_is_pending_admin(self, obj):
-        enterprise_customer_uuid = obj.uuid
-        enterprise_customer_email = obj.contact_email
+        enterprise_customer_uuid = obj.enterprise_customer_id
+        enterprise_customer_email = obj.user_email
 
         if not enterprise_customer_uuid or not enterprise_customer_email:
             return False
