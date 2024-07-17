@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.6]
+---------
+* feat: add waffle flag for enterprise customer support tool
+
 [4.21.5]
 ---------
 * feat: allow PAs to access all enterprise customers
