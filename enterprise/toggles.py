@@ -48,7 +48,7 @@ ENTERPRISE_GROUPS_V1 = WaffleFlag(
 # .. toggle_default: False
 # .. toggle_description: Enables the enterprise customer support tool
 # .. toggle_use_cases: open_edx
-# .. toggle_creation_date: 2024-07-16
+# .. toggle_creation_date: 2024-07-17
 ENTERPRISE_CUSTOMER_SUPPORT_TOOL = WaffleFlag(
     f'{ENTERPRISE_NAMESPACE}.enterprise_customer_support_tool',
     __name__,
