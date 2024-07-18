@@ -43,6 +43,7 @@ from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.api_client.license_manager import LicenseManagerApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
 from enterprise.api_client.xpert_ai import chat_completion
@@ -759,6 +760,60 @@ class EnterpriseCustomer(TimeStampedModel):
             return True
 
         return False
+
+    @property
+    def subscriptions_for_customer(self):
+        """
+        Helper method to get subscriptions for customer.
+
+        Arguments:
+            customer_uuid (UUID): uuid of an enterprise customer
+        Returns:
+            list: a list of subscriptions.
+        """
+        try:
+            subscriptions = LicenseManagerApiClient().get_customer_subscriptions(self.uuid)
+        except:
+            raise
+        return subscriptions
+
+    @property
+    def coupons_for_customer(self):
+        """
+        Helper method to get active coupons for customer.
+
+        Arguments:
+            customer_uuid (UUID): uuid of an enterprise customer
+        Returns:
+            list: a list of active coupons
+        """
+        ecommerce_service_worker = get_ecommerce_worker_user()
+        try:
+            ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+        except:
+            LOGGER.exception('failed')
+        else:
+            coupons = ecommerce_api_client.get_coupons(self.uuid)
+        return coupons
+
+    @property
+    def offers_for_customer(self):
+        """
+        Helper method to get offers for customer.
+
+        Arguments:
+            customer_uuid (UUID): uuid of an enterprise customer
+        Returns:
+            list: a list of offers
+        """
+        ecommerce_service_worker = get_ecommerce_worker_user()
+        try:
+            ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+        except:
+            LOGGER.exception('failed')
+        else:
+            offers = ecommerce_api_client.get_offers(self.uuid)
+        return offers
 
     def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):
         """

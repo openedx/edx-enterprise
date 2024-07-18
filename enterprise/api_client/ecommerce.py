@@ -118,6 +118,36 @@ class EcommerceApiClient:
                 str(exc)
             )
 
+    def get_coupons(self, enterprise_customer_uuid):
+        """
+        Get coupons for the enterprise customer.
+
+        Returns:
+            array of coupons.
+        """
+        api_url = urljoin(f"{self.API_BASE_URL}/", f"enterprise/coupons/{enterprise_customer_uuid}/overview/")
+        # format each result to include start date/end date name, and uuid
+        try:
+            response = self.client.get(api_url)
+            return response.json().get('results')
+        except:
+            LOGGER.exception(f'failed to fetch at url {api_url}')
+
+    def get_offers(self, enterprise_customer_uuid):
+        """
+        Get offers for the enterprise customer.
+
+        Returns:
+            array of offers.
+        """
+        # format each result to include start date/end date, name, and uuid
+        api_url = urljoin(f"{self.API_BASE_URL}/", f"enterprise/{enterprise_customer_uuid}/enterprise-admin-offers/")
+        try:
+            response = self.client.get(api_url)
+            return response.json().get('results')
+        except:
+            LOGGER.exception(f'failed to fetch at url {api_url}')
+
 
 class NoAuthEcommerceClient(NoAuthAPIClient):
     """

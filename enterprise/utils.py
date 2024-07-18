@@ -47,6 +47,7 @@ from enterprise.constants import (
     CourseModes,
 )
 from enterprise.logging import getEnterpriseLogger
+# from enterprise.api_client.license_manager_client import LicenseManagerApiClient
 
 try:
     from openedx.features.enterprise_support.enrollments.utils import lms_update_or_create_enrollment
@@ -726,6 +727,13 @@ def enterprise_customer_invite_key_model():
     Returns the ``EnterpriseCustomerInviteKey`` class.
     """
     return apps.get_model('enterprise', 'EnterpriseCustomerInviteKey')
+
+
+def enterprise_customer_sso_configuration_model():
+    """
+    Returns the ``EnterpriseCustomerSsoConfiguration`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomerSsoConfiguration')
 
 
 def get_enterprise_customer(uuid):
@@ -2466,9 +2474,40 @@ def get_integrations_for_customers(customer_uuid):
     Returns:
         list: a list of integration channel codes.
     """
+
+    '''
+    Currently, we are only returning an array of the integrated channel code. We need to 
+    update this to also return the an array of objects that includes a created and last modified date
+    '''
     unique_integrations = []
     integrated_channel_choices = get_integrated_channel_choices()
     for code, choice in integrated_channel_choices.items():
         if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
             unique_integrations.append(code)
     return unique_integrations
+
+
+def get_active_sso_configurations_for_customer(customer_uuid):
+    """
+    Helper method to get active sso configurations for each enterprise customer
+
+    Arguments:
+        customer_uuid (UUID): uuid of an enterprise customer
+    Returns:
+        list: a list of active sso configurations
+    """
+    SsoConfigurations = enterprise_customer_sso_configuration_model()
+    sso_configurations = SsoConfigurations.objects.filter(enterprise_customer__uuid=customer_uuid,
+                                                active=True).values()
+    active_configurations = []
+    if sso_configurations:
+        for sso_configuration in sso_configurations:
+            active_configurations.append({
+                'created': sso_configuration.get('created'),
+                'modified': sso_configuration.get('modified'),
+                'is_removed': sso_configuration.get('is_removed'),
+                'display_name': sso_configuration.get('display_name'),
+                'uuid': sso_configuration.get('uuid'),
+                'enterprise_customer_id': sso_configuration.get('enterprise_customer_id'),
+            })
+    return active_configurations
