@@ -35,7 +35,6 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
     filterset_fields = FILTER_FIELDS
     ordering_fields = ORDER_FIELDS
 
-
     def retrieve(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         """
         - Filter down the queryset of groups available to the requesting uuid.
