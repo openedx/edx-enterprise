@@ -20,7 +20,6 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
     """
     queryset = models.EnterpriseCustomerUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend,)
-    serializer_class = serializers.EnterpriseUserSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
@@ -42,13 +41,27 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
         - Filter down the queryset of groups available to the requesting uuid.
         """
         enterprise_uuid = kwargs.get('enterprise_uuid', None)
-        try:
-            queryset = self.queryset.filter(enterprise_customer__uuid=enterprise_uuid)
-            serializer = self.serializer_class(queryset, many=True)
+
+        enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
+            enterprise_customer__uuid=enterprise_uuid
+        )
+
+        if enterprise_customer_queryset.exists():
+            serializer = serializers.EnterpriseUserSerializer(enterprise_customer_queryset, many=True)
             return response.Response(serializer.data)
 
-        except ValidationError:
-            return response.Response(
-                {'detail': f'Could not find enterprise uuid {enterprise_uuid}'},
-                status=status.HTTP_404_NOT_FOUND
+        pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
+            enterprise_customer_id=enterprise_uuid
+        )
+
+        if pending_enterprise_customer_queryset.exists():
+            serializer = serializers.EnterprisePendingCustomerUserSerializer(
+                pending_enterprise_customer_queryset,
+                many=True
             )
+            return response.Response(serializer.data)
+
+        return response.Response(
+            {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
+            status=status.HTTP_404_NOT_FOUND
+        )

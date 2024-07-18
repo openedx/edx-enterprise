@@ -1832,7 +1832,7 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
 
 class EnterpriseUserSerializer(serializers.Serializer):
     """
-    Serializer for EnterpriseCustomer model with additions.
+    Serializer for EnterpriseCustomerUser model with additions.
     """
 
     class Meta:
@@ -1850,20 +1850,20 @@ class EnterpriseUserSerializer(serializers.Serializer):
     user_name = serializers.SerializerMethodField()
     user_email = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
-    pending_enterprise_customer_user_id = serializers.SerializerMethodField()
-    is_pending_admin = serializers.SerializerMethodField()
+    pending_enterprise_customer_user_id = serializers.CharField(required=False, default=None)
+    is_pending_admin = serializers.BooleanField(required=False, default=False)
 
     def get_enterprise_customer_user_id(self, obj):
         return obj.user_id
 
     def get_user_name(self, obj):
-        return obj.name
+        return obj.enterprise_customer.name
 
     def get_user_email(self, obj):
-        return obj.user_email
+        return obj.enterprise_customer.contact_email
 
     def get_is_admin(self, obj):
-        enterprise_customer_uuid = obj.enterprise_customer_id
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
 
         if not enterprise_customer_uuid:
             return None
@@ -1875,26 +1875,39 @@ class EnterpriseUserSerializer(serializers.Serializer):
 
         return admin_instance.exists()
 
+
+class EnterprisePendingCustomerUserSerializer(serializers.Serializer):
+    """
+    Serializer for PendingEnterpriseCustomerUser model with additions.
+    """
+
+    class Meta:
+        model = models.PendingEnterpriseCustomerUser
+        fields = (
+            'enterprise_customer_user_id',
+            'user_name',
+            'user_email',
+            'is_admin',
+            'pending_enterprise_customer_user_id',
+            'is_pending_admin'
+        )
+
+    enterprise_customer_user_id = serializers.CharField(required=False, default=None)
+    user_name = serializers.CharField(required=False, default=None)
+    user_email = serializers.SerializerMethodField()
+    is_admin = serializers.BooleanField(required=False, default=False)
+    pending_enterprise_customer_user_id = serializers.SerializerMethodField()
+    is_pending_admin = serializers.SerializerMethodField()
+
+    def get_user_email(self, obj):
+        return obj.user_email
+
     def get_pending_enterprise_customer_user_id(self, obj):
-        enterprise_customer_uuid = obj.enterprise_customer_id
-        enterprise_customer_email = obj.user_email
-
-        if not enterprise_customer_uuid or not enterprise_customer_email:
-            return None
-
-        pending_enterprise_customer_instance = models.PendingEnterpriseCustomerUser.objects.filter(
-            user_email=enterprise_customer_email,
-            enterprise_customer_id=enterprise_customer_uuid
-        ).first()
-
-        return enterprise_customer_uuid if pending_enterprise_customer_instance else None
+        return obj.id
 
     def get_is_pending_admin(self, obj):
-        enterprise_customer_uuid = obj.enterprise_customer_id
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
         enterprise_customer_email = obj.user_email
-
-        if not enterprise_customer_uuid or not enterprise_customer_email:
-            return False
 
         pending_admin_instance = models.PendingEnterpriseCustomerAdminUser.objects.filter(
             user_email=enterprise_customer_email,
