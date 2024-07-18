@@ -42,26 +42,34 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
         """
         enterprise_uuid = kwargs.get('enterprise_uuid', None)
 
-        enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
-            enterprise_customer__uuid=enterprise_uuid
-        )
-
-        if enterprise_customer_queryset.exists():
-            serializer = serializers.EnterpriseUserSerializer(enterprise_customer_queryset, many=True)
-            return response.Response(serializer.data)
-
-        pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
-            enterprise_customer_id=enterprise_uuid
-        )
-
-        if pending_enterprise_customer_queryset.exists():
-            serializer = serializers.EnterprisePendingCustomerUserSerializer(
-                pending_enterprise_customer_queryset,
-                many=True
+        try:
+            enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
+                enterprise_customer__uuid=enterprise_uuid
             )
-            return response.Response(serializer.data)
 
-        return response.Response(
-            {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
-            status=status.HTTP_404_NOT_FOUND
-        )
+            if enterprise_customer_queryset.exists():
+                serializer = serializers.EnterpriseUserSerializer(enterprise_customer_queryset, many=True)
+                return response.Response(serializer.data)
+
+        except ValidationError:
+            # did not find UUID match in EnterpriseCustomerUser, try in PendingEnterpriseCustomerUser
+            pass
+
+        try:
+            pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
+                enterprise_customer_id=enterprise_uuid
+            )
+
+            if pending_enterprise_customer_queryset.exists():
+                serializer = serializers.EnterprisePendingCustomerUserSerializer(
+                    pending_enterprise_customer_queryset,
+                    many=True
+                )
+                return response.Response(serializer.data)
+
+        except ValidationError:
+            # did not find UUID match in either EnterpriseCustomerUser or  PendingEnterpriseCustomerUser
+            return response.Response(
+                {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
+                status=status.HTTP_404_NOT_FOUND
+            )
