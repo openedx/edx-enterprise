@@ -144,6 +144,7 @@ ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT = reverse(
     kwargs={'pk': FAKE_UUIDS[0]}
 )
 ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT = reverse('enterprise-customer-basic-list')
+ENTERPRISE_CUSTOMER_SUPPORT_TOOL_ENDPOINT = reverse('enterprise-customer-support-tool')
 ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-customer-contains-content-items',
     kwargs={'pk': FAKE_UUIDS[0]}
@@ -1785,7 +1786,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
-                'active_integrations': ['BLACKBOARD'],
+                'active_integrations': [{
+                    'channel_code': 'BLACKBOARD',
+                    'created': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'display_name': 'BLACKBOARD 1',
+                    'active': True,
+                }],
                 'show_videos_in_learner_portal_search_results': False,
                 'default_language': 'en',
                 'country': 'US',
@@ -1841,6 +1848,103 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         ]
         response = self.client.get(url, {'name_or_uuid': name_or_uuid})
         assert name_or_uuid_enterprise_customers == self.load_json(response.content)
+
+    @ddt.data(
+        (
+            factories.EnterpriseCustomerSsoConfigurationFactory,
+            ENTERPRISE_CUSTOMER_SUPPORT_TOOL_ENDPOINT,
+            itemgetter('uuid'),
+            [{
+                'active': True,
+                'display_name': 'Test SSO',
+                'enterprise_customer__uuid': FAKE_UUIDS[0],
+                'enterprise_customer__name': 'Test Enterprise Customer',
+                'enterprise_customer__slug': TEST_SLUG,
+                'enterprise_customer__active': True,
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
+                'enterprise_customer__enable_data_sharing_consent': True,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'enterprise_customer__enable_audit_data_reporting': True,
+                'enterprise_customer__contact_email': 'fake@example.com',
+                'enterprise_customer__sender_alias': 'Test Sender Alias',
+                'enterprise_customer__reply_to': 'fake_reply@example.com',
+                'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__site__domain': 'example.com',
+                'enterprise_customer__site__name': 'example.com',
+            }],
+            [{
+                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
+                'slug': TEST_SLUG, 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'site': {
+                    'domain': 'example.com', 'name': 'example.com'
+                },
+                'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment',
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
+                'identity_provider': None,
+                'enable_audit_enrollment': False,
+                'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
+                'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
+                'enable_audit_data_reporting': True,
+                'enable_learner_portal': True,
+                'enable_learner_portal_offers': False,
+                'enable_portal_learner_credit_management_screen': False,
+                'enable_executive_education_2U_fulfillment': False,
+                'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
+                'contact_email': 'fake@example.com',
+                'enable_portal_subscription_management_screen': False,
+                'hide_course_original_price': False,
+                'enable_analytics_screen': True,
+                'enable_integrated_customer_learner_portal_search': True,
+                'enable_learner_portal_sidebar_message': False,
+                'enable_portal_lms_configurations_screen': False,
+                'sender_alias': 'Test Sender Alias',
+                'identity_providers': [],
+                'enterprise_customer_catalogs': [],
+                'reply_to': 'fake_reply@example.com',
+                'enterprise_notification_banner': {'title': '', 'text': ''},
+                'hide_labor_market_data': False,
+                'modified': '2021-10-20T19:01:31Z',
+                'enable_universal_link': False,
+                'enable_browse_and_request': False,
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
+                'learner_portal_sidebar_content': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
+                'enable_academies': False,
+                'enable_one_academy': False,
+                'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
+                'active_sso_configurations': [{
+                    'created': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'display_name': 'Test SSO',
+                    'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'active': True,
+                }],
+            }],
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.utils.get_logo_url')
+    def test_enterprise_customer_support_tool(
+        self, factory, url, sorting_key, model_items, expected_json, mock_get_logo_url):
+        """
+        Test support tool endpoint of enterprise_customers
+        """
+        mock_get_logo_url.return_value = 'http://fake.url'
+        self.create_items(factory, model_items)
+        response = self.client.get(settings.TEST_SERVER + url)
+        response = self.load_json(response.content)
+        assert sorted(expected_json, key=sorting_key) == sorted(response, key=sorting_key)
 
     @ddt.data(
         # Request missing required permissions query param.

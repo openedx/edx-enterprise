@@ -686,6 +686,13 @@ def enterprise_customer_model():
     return apps.get_model('enterprise', 'EnterpriseCustomer')
 
 
+def enterprise_customer_sso_configuration_model():
+    """
+    Returns the ``EnterpriseCustomerSsoConfiguration`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomerSsoConfiguration')
+
+
 def enterprise_enrollment_source_model():
     """
     Returns the ``EnterpriseEnrollmentSource`` class.
@@ -2459,16 +2466,46 @@ def get_integrated_channel_choices():
 
 def get_integrations_for_customers(customer_uuid):
     """
-    Helper method to return channel code for each enterprise customer with active integrations.
+    Helper method to return active integrations code for each enterprise customer.
 
     Arguments:
         customer_uuid (UUI): uuid of an enterprise customer
     Returns:
-        list: a list of integration channel codes.
+        list: a list of integrations.
     """
     unique_integrations = []
     integrated_channel_choices = get_integrated_channel_choices()
     for code, choice in integrated_channel_choices.items():
-        if choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True):
-            unique_integrations.append(code)
+        integration = choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True).values().first()
+        if integration is not None:
+            unique_integrations.append({
+                'channel_code': code,
+                'created': datetime.datetime.strftime(integration.get('created'), '%B %d, %Y'),
+                'modified': datetime.datetime.strftime(integration.get('modified'), '%B %d, %Y'),
+                'display_name': integration.get('display_name'),
+                'active': integration.get('active'),
+            })
     return unique_integrations
+
+
+def get_active_sso_configurations_for_customer(customer_uuid):
+    """
+    Helper method to get active sso configurations for each enterprise customer
+    Arguments:
+        customer_uuid (UUID): uuid of an enterprise customer
+    Returns:
+        list: a list of active sso configurations
+    """
+    SsoConfigurations = enterprise_customer_sso_configuration_model()
+    sso_configurations = SsoConfigurations.objects.filter(enterprise_customer__uuid=customer_uuid,
+                                                          active=True).values()
+    active_configurations = []
+    if sso_configurations:
+        for sso_configuration in sso_configurations:
+            active_configurations.append({
+                'created': datetime.datetime.strftime(sso_configuration.get('created'), '%B %d, %Y'),
+                'modified': datetime.datetime.strftime(sso_configuration.get('modified'), '%B %d, %Y'),
+                'active': sso_configuration.get('active'),
+                'display_name': sso_configuration.get('display_name'),
+            })
+    return active_configurations
