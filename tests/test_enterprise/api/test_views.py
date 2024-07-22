@@ -1937,7 +1937,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
     def test_enterprise_customer_support_tool(
-        self, factory, url, sorting_key, model_items, expected_json, mock_get_logo_url):
+            self, factory, url, sorting_key, model_items, expected_json, mock_get_logo_url):
         """
         Test support tool endpoint of enterprise_customers
         """
