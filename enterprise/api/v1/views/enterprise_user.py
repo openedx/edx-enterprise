@@ -35,7 +35,7 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
     filterset_fields = FILTER_FIELDS
     ordering_fields = ORDER_FIELDS
 
-    def retrieve(self, request, *args, **kwargs):  # pylint: disable=unused-argument
+    def retrieve(self, request, *args, **kwargs):
         """
         - Filter down the queryset of groups available to the requesting uuid.
         """
@@ -68,7 +68,9 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
 
         except ValidationError:
             # did not find UUID match in either EnterpriseCustomerUser or  PendingEnterpriseCustomerUser
-            return response.Response(
-                {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            pass
+
+        return response.Response(
+            {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
+            status=status.HTTP_404_NOT_FOUND
+        )
