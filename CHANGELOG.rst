@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.21.6]
+[4.21.7]
 ---------
 * feat: extend enterprise customer serializer to add detail for support tool
+
+[4.21.6]
+---------
+* feat: add waffle flag for enterprise customer support tool
 
 [4.21.5]
 ---------
