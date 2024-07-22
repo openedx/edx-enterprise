@@ -90,6 +90,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def get_serializer_class(self):
         if self.action == 'basic_list':
             return serializers.EnterpriseCustomerBasicSerializer
+        if self.action == 'support_tool':
+            return serializers.EnterpriseCustomerSupportToolSerializer
         return self.serializer_class
 
     @action(detail=False)
@@ -110,6 +112,22 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             queryset = queryset.filter(name__istartswith=startswith)
         if name_or_uuid:
             queryset = queryset.filter(Q(name__icontains=name_or_uuid) | Q(uuid__icontains=name_or_uuid))
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False)
+    # pylint: disable=unused-argument
+    def support_tool(self, request, *arg, **kwargs):
+        """
+        Enterprise Customer's detail data for the support tool
+
+        Supported query param:
+        - uuid: filter the enterprise customer uuid .
+        """
+        enterprise_uuid = request.GET.get('uuid')
+        queryset = self.get_queryset().order_by('name')
+        if enterprise_uuid:
+            queryset = queryset.filter(uuid=enterprise_uuid)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
