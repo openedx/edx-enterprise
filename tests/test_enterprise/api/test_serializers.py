@@ -18,9 +18,9 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
-    ImmutableStateSerializer,
-    EnterpriseUserSerializer,
     EnterprisePendingCustomerUserSerializer,
+    EnterpriseUserSerializer,
+    ImmutableStateSerializer,
 )
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
