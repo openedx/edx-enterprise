@@ -4,7 +4,7 @@ Views for the ``enterprise-user`` API endpoint.
 
 from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions, response, status
+from rest_framework import permissions, response, status
 
 from enterprise import models
 from enterprise.api.v1 import serializers
