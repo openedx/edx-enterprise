@@ -37,6 +37,7 @@ from enterprise.models import (
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
+    get_active_sso_configurations_for_customer,
     get_integrations_for_customers,
     get_last_course_run_end_date,
     has_course_run_available_for_enrollment,
@@ -339,6 +340,38 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
                 if not getattr(obj, notification_filter.filter, None):
                     notification_queryset = None
         return AdminNotificationSerializer(notification_queryset).data
+
+
+class EnterpriseCustomerSupportToolSerializer(EnterpriseCustomerSerializer):
+    """
+    Extends the EnterpriseCustomerSerializer with additional fields to needed in the
+    MFE Support tool.
+    """
+    class Meta:
+        model = models.EnterpriseCustomer
+        fields = (
+            'uuid', 'name', 'slug', 'active', 'auth_org_id', 'site', 'enable_data_sharing_consent',
+            'enforce_data_sharing_consent', 'branding_configuration', 'disable_expiry_messaging_for_learner_credit',
+            'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
+            'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
+            'enable_learner_portal', 'enable_learner_portal_offers', 'enable_portal_learner_credit_management_screen',
+            'enable_executive_education_2U_fulfillment', 'enable_portal_reporting_config_screen',
+            'enable_portal_saml_configuration_screen', 'contact_email',
+            'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
+            'enable_integrated_customer_learner_portal_search', 'enable_generation_of_api_credentials',
+            'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
+            'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
+            'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
+            'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
+            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
+            'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
+            'default_language', 'country', 'enable_slug_login', 'active_sso_configurations'
+        )
+
+    active_sso_configurations = serializers.SerializerMethodField()
+
+    def get_active_sso_configurations(self, obj):
+        return get_active_sso_configurations_for_customer(obj.uuid)
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
