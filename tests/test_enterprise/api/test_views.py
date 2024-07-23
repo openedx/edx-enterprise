@@ -9652,7 +9652,7 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         """
         Assert whether the response is valid.
         """
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
         pending_user = PendingEnterpriseCustomerUserFactory(
             enterprise_customer=enterprise_customer,
         )
