@@ -105,7 +105,8 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
     ]
     search_fields = [
         "status_code",
-        "enterprise_customer",
+        "enterprise_customer__name",
+        "enterprise_customer__uuid",
         "enterprise_customer_configuration_id",
         "endpoint",
         "time_taken",
