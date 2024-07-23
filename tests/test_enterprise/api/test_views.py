@@ -168,6 +168,7 @@ EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
 VERIFIED_SUBSCRIPTION_COURSE_MODE = 'verified'
+ENTERPRISE_USER_ENDPOINT = reverse('enterprise-user', kwargs={'enterprise_uuid': FAKE_UUIDS[0]})
 
 
 def side_effect(url, query_parameters):
@@ -9578,3 +9579,42 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         """
         actual_entity_id = fetch_entity_id_from_metadata_xml(metadata_xml)
         assert actual_entity_id == expected_entity_id
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise user list endpoint
+    """
+
+    def test_get_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        expected_json = {
+            'enterprise_customer_user_id': user.id,
+            'user_name': enterprise_customer.name,
+            'user_email': enterprise_customer.contact_email,
+            'is_admin': False,
+            'pending_enterprise_customer_user_id': None,
+            'is_pending_admin': False
+        }
+
+        response = self.client.get(
+            '{host}{path}?{enterprise_uuid}'.format(
+                host=settings.TEST_SERVER,
+                path=ENTERPRISE_USER_ENDPOINT,
+                enterprise_uuid=FAKE_UUIDS[0]
+            )
+        )
+        response = self.load_json(response.content)
+
+        assert expected_json == response[0]
