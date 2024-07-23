@@ -1854,15 +1854,27 @@ class EnterpriseUserSerializer(serializers.Serializer):
     is_pending_admin = serializers.BooleanField(required=False, default=False)
 
     def get_enterprise_customer_user_id(self, obj):
+        """
+        Get enterprise customer user id
+        """
         return obj.user_id
 
     def get_user_name(self, obj):
+        """
+        Get enterprise customer user name
+        """
         return obj.enterprise_customer.name
 
     def get_user_email(self, obj):
+        """
+        Get enterprise customer user email
+        """
         return obj.enterprise_customer.contact_email
 
     def get_is_admin(self, obj):
+        """
+        Make admin determination based on Enterprise role in SystemWideEnterpriseUserRoleAssignment
+        """
         enterprise_customer_uuid = obj.enterprise_customer.uuid
 
         if not enterprise_customer_uuid:
@@ -1900,12 +1912,21 @@ class EnterprisePendingCustomerUserSerializer(serializers.Serializer):
     is_pending_admin = serializers.SerializerMethodField()
 
     def get_user_email(self, obj):
+        """
+        Get pending enterprise customer email
+        """
         return obj.user_email
 
     def get_pending_enterprise_customer_user_id(self, obj):
+        """
+        Get pending enterprise customer user id
+        """
         return obj.id
 
     def get_is_pending_admin(self, obj):
+        """
+        Make admin determination based on existence in PendingEnterpriseCustomerAdminUser
+        """
         enterprise_customer_uuid = obj.enterprise_customer.uuid
         enterprise_customer_email = obj.user_email
 
