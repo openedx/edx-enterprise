@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.8]
+---------
+* fix: fixed 500 error for search filter for api request logs in admin view.
+
 [4.21.7]
 ---------
 * feat: extend enterprise customer serializer to add detail for support tool
