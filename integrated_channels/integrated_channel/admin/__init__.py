@@ -142,7 +142,7 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
         Handle non-integer search terms and filter by 'enterprise_customer_configuration_id' if valid.
         """
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
-        
+
         try:
             enterprise_customer_configuration_id = int(search_term)
             queryset |= self.model.objects.filter(
@@ -150,7 +150,7 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
             )
         except ValueError:
             pass
-        
+
         return queryset, use_distinct
 
     class Meta:
