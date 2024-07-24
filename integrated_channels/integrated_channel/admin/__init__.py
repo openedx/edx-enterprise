@@ -104,14 +104,9 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
         "status_code",
     ]
     search_fields = [
-        "status_code",
-        "enterprise_customer__name",
-        "enterprise_customer__uuid",
-        "enterprise_customer_configuration_id",
-        "endpoint",
-        "time_taken",
-        "response_body",
-        "payload",
+        "enterprise_customer__name__icontains",
+        "enterprise_customer__uuid__iexact",
+        "endpoint__icontains",
     ]
     readonly_fields = [
         "status_code",
@@ -122,12 +117,41 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
         "response_body",
         "payload",
     ]
+    list_filter = ('status_code',)
 
     list_per_page = 20
 
     def get_queryset(self, request):
+        """
+        Optimize queryset by selecting related 'enterprise_customer' and limiting fields.
+        """
         queryset = super().get_queryset(request)
-        return queryset.select_related('enterprise_customer')
+        return queryset.select_related('enterprise_customer').only(
+            'id',
+            'endpoint',
+            'enterprise_customer_id',
+            'time_taken',
+            'status_code',
+            'enterprise_customer__name',
+            'enterprise_customer__uuid',
+            'enterprise_customer_configuration_id'
+        )
+
+    def get_search_results(self, request, queryset, search_term):
+        """
+        Handle non-integer search terms and filter by 'enterprise_customer_configuration_id' if valid.
+        """
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        
+        try:
+            enterprise_customer_configuration_id = int(search_term)
+            queryset |= self.model.objects.filter(
+                enterprise_customer_configuration_id=enterprise_customer_configuration_id
+            )
+        except ValueError:
+            pass
+        
+        return queryset, use_distinct
 
     class Meta:
         model = IntegratedChannelAPIRequestLogs
