@@ -7,7 +7,7 @@ import logging
 import paramiko
 from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
-from edx_rbac.admin import UserRoleAssignmentAdmin
+from safedelete.admin import SafeDeleteAdmin, highlight_deleted
 from simple_history.admin import SimpleHistoryAdmin
 
 from django.conf import settings
@@ -1249,12 +1249,13 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.EnterpriseGroupMembership)
-class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
+class EnterpriseGroupMembershipAdmin(SafeDeleteAdmin):
     """
     Django admin for EnterpriseGroupMembership model.
     """
     model = models.EnterpriseGroupMembership
-    list_display = ('group', 'membership_user',)
+    list_display = (highlight_deleted, 'group',) + SafeDeleteAdmin.list_display
+    list_filter = SafeDeleteAdmin.list_filter
     search_fields = (
         'uuid',
         'group__uuid',
