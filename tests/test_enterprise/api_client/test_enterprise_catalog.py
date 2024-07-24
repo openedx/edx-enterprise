@@ -17,6 +17,7 @@ from test_utils.factories import EnterpriseCustomerCatalogFactory
 
 TEST_ENTERPRISE_ID = '1840e1dc-59cf-4a78-82c5-c5bbc0b5df0f'
 TEST_ENTERPRISE_CATALOG_UUID = 'cde8287a-1001-457c-b9d5-f9f5bd535427'
+TEST_ENTERPRISE_CATALOG_NAME = 'Test Catalog'
 TEST_ENTERPRISE_NAME = 'Test Enterprise'
 
 
@@ -98,6 +99,89 @@ def test_get_enterprise_catalog():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.get_enterprise_catalog(TEST_ENTERPRISE_CATALOG_UUID)
     assert actual_response == expected_response
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+def test_get_enterprise_catalog_by_hash():
+    TEST_CONTENT_FILTER_HASH = 'abcd1234'
+    expected_response = {
+        'uuid': TEST_ENTERPRISE_CATALOG_UUID,
+        'title': TEST_ENTERPRISE_CATALOG_NAME,
+        'content_filter': {"content_type": "course"},
+        'content_filter_hash': TEST_CONTENT_FILTER_HASH,
+    }
+    responses.add(
+        responses.GET,
+        _url(f"catalog-queries/get_query_by_hash?hash={TEST_CONTENT_FILTER_HASH}"),
+        json=expected_response,
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    actual_response = client.get_enterprise_catalog_by_hash(TEST_CONTENT_FILTER_HASH)
+    assert actual_response == expected_response
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+@mark.parametrize('exception', (RequestException, ConnectionError, Timeout))
+def test_get_enterprise_catalog_by_hash_error(exception):
+    TEST_CONTENT_FILTER_HASH = 'abcd1234'
+    responses.add_callback(
+        responses.GET,
+        _url(f"catalog-queries/get_query_by_hash?hash={TEST_CONTENT_FILTER_HASH}"),
+        callback=exception,
+        content_type='application/json'
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    logger = logging.getLogger('enterprise.api_client.enterprise_catalog')
+    handler = MockLoggingHandler(level="ERROR")
+    logger.addHandler(handler)
+    expected_message = (
+        f"Failed to get EnterpriseCustomer Catalog by hash [{TEST_CONTENT_FILTER_HASH}]"
+        " in enterprise-catalog due to: ["
+    )
+
+    with raises(exception):
+        client.get_enterprise_catalog_by_hash(TEST_CONTENT_FILTER_HASH)
+    assert expected_message in handler.messages['error'][0]
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+def test_get_catalog_query_hash():
+    TEST_CONTENT_FILTER_HASH = 'abcd1234'
+    responses.add(
+        responses.GET,
+        _url("catalog-queries/get_content_filter_hash"),
+        json=TEST_CONTENT_FILTER_HASH,
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    actual_response = client.get_catalog_query_hash({"content_type": "course"})
+    assert actual_response == TEST_CONTENT_FILTER_HASH
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+@mark.parametrize('exception', (RequestException, ConnectionError, Timeout))
+def test_get_catalog_query_hash_error(exception):
+    TEST_QUERY_HASH = {"content_type": "course"}
+    responses.add_callback(
+        responses.GET,
+        _url("catalog-queries/get_content_filter_hash"),
+        callback=exception,
+        content_type='application/json'
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    logger = logging.getLogger('enterprise.api_client.enterprise_catalog')
+    handler = MockLoggingHandler(level="ERROR")
+    logger.addHandler(handler)
+    expected_message = (
+        f"Failed to get catalog query hash for \"[{TEST_QUERY_HASH}]\" due to: ["
+    )
+
+    with raises(exception):
+        client.get_catalog_query_hash(TEST_QUERY_HASH)
+    assert expected_message in handler.messages['error'][0]
 
 
 @responses.activate

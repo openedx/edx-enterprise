@@ -2566,6 +2566,34 @@ class TestEnterpriseCatalogQuery(unittest.TestCase):
         catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
         catalog_query.full_clean()
 
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_query_hash')
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_enterprise_catalog_by_hash')
+    def test_clean_duplicate_query_check(self, mock_get_enterprise_catalog_by_hash, mock_get_catalog_query_hash):
+        mock_get_enterprise_catalog_by_hash.return_value = {'uuid': 'abcd', 'title': 'test catalog'}
+        mock_get_catalog_query_hash.side_effect = ['hash', 'differenthash']
+        content_filter = '{"a":"b"}'
+        catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
+        catalog_query.save()
+        saved_catalog_query = EnterpriseCatalogQuery.objects.filter(id=catalog_query.id).first()
+        saved_catalog_query.content_filter = '{"c":"d"}'
+        with self.assertRaises(ValidationError) as cm:
+            saved_catalog_query.clean()
+        expected_exception = "{'content_filter': ['Duplicate value, see abcd(test catalog)']}"
+        assert str(cm.exception) == expected_exception
+
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_catalog_query_hash')
+    def test_clean_call_failure(self, mock_get_catalog_query_hash):
+        mock_get_catalog_query_hash.side_effect = [Exception('Exception!')]
+        content_filter = '{"a":"b"}'
+        catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
+        catalog_query.save()
+        saved_catalog_query = EnterpriseCatalogQuery.objects.filter(id=catalog_query.id).first()
+        saved_catalog_query.content_filter = '{"c":"d"}'
+        with self.assertRaises(ValidationError) as cm:
+            saved_catalog_query.clean()
+        expected_exception = "{'content_filter': ['Failed to validate with exception: Exception!']}"
+        assert str(cm.exception) == expected_exception
+
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_sync_catalog_query_content_filter(self, mock_api_client):  # pylint: disable=unused-argument
         enterprise_customer = factories.EnterpriseCustomerFactory()

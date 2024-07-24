@@ -31,6 +31,9 @@ class EnterpriseCatalogApiClient(UserAPIClient):
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     CONTENT_METADATA_IDENTIFIER_ENDPOINT = ENTERPRISE_CUSTOMER_ENDPOINT + \
         "/{}/content-metadata/" + "{}"
+    CATALOG_QUERIES_ENDPOINT = 'catalog-queries'
+    GET_CONTENT_FILTER_HASH_ENDPOINT = CATALOG_QUERIES_ENDPOINT + '/get_content_filter_hash'
+    GET_QUERY_BY_HASH_ENDPOINT = CATALOG_QUERIES_ENDPOINT + '/get_query_by_hash?hash={}'
     APPEND_SLASH = True
     GET_CONTENT_METADATA_PAGE_SIZE = getattr(settings, 'ENTERPRISE_CATALOG_GET_CONTENT_METADATA_PAGE_SIZE', 50)
 
@@ -108,6 +111,60 @@ class EnterpriseCatalogApiClient(UserAPIClient):
                     'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
                     catalog_uuid, str(exc)
                 )
+            return {}
+
+    @UserAPIClient.refresh_token
+    def get_enterprise_catalog_by_hash(self, catalog_query_hash, should_raise_exception=True):
+        """
+        Gets an enterprise catalog by its content query hash.
+
+        Arguments:
+            catalog_query_hash (str): The hash of an EnterpriseCatalog instance's query
+            should_raise_exception (bool): Whether an exception should be logged if
+                a catalog does not yet exist in enterprise-catalog. Defaults to True.
+
+        Returns:
+            dict: a dictionary representing an enterprise catalog
+        """
+        api_url = self.get_api_url(self.GET_QUERY_BY_HASH_ENDPOINT.format(catalog_query_hash), append_slash=False)
+        try:
+            response = self.client.get(api_url)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to get EnterpriseCustomer Catalog by hash [%s] in enterprise-catalog due to: [%s]',
+                catalog_query_hash, str(exc)
+            )
+            if should_raise_exception:
+                raise
+            return {}
+
+    @UserAPIClient.refresh_token
+    def get_catalog_query_hash(self, catalog_query, should_raise_exception=True):
+        """
+        Gets hash for content query.
+
+        Arguments:
+            catalog_query (obj): content query json
+            should_raise_exception (bool): Whether an exception should be logged if
+                a catalog does not yet exist in enterprise-catalog. Defaults to True.
+
+        Returns:
+            dict: a dictionary representing an enterprise catalog
+        """
+        api_url = self.get_api_url(self.GET_CONTENT_FILTER_HASH_ENDPOINT, append_slash=False)
+        try:
+            response = self.client.get(api_url, data=catalog_query)
+            response.raise_for_status()
+            return response.json()
+        except (RequestException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to get catalog query hash for "[%s]" due to: [%s]',
+                catalog_query, str(exc)
+            )
+            if should_raise_exception:
+                raise
             return {}
 
     @UserAPIClient.refresh_token
