@@ -199,7 +199,7 @@ urlpatterns = [
         name='enterprise-group-remove-learners'
     ),
     re_path(
-        r'^enterprise-user/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        r'^enterprise-customer/(?P<enterprise_uuid>[A-Za-z0-9-]+)/users/?$',
         enterprise_user.EnterpriseUserViewSet.as_view(
             {'get': 'retrieve'}
         ),

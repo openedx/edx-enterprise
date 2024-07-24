@@ -42,6 +42,7 @@ from enterprise.utils import (
     get_last_course_run_end_date,
     has_course_run_available_for_enrollment,
     track_enrollment,
+    get_pending_enterprise_customer_users,
 )
 from enterprise.validators import validate_pgp_key
 
@@ -1834,105 +1835,53 @@ class EnterpriseUserSerializer(serializers.Serializer):
     """
     Serializer for EnterpriseCustomerUser model with additions.
     """
-
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'enterprise_customer_user_id',
-            'user_name',
-            'user_email',
-            'is_admin',
-            'pending_enterprise_customer_user_id',
-            'is_pending_admin'
+            'enterprise_customer_user'
+            'pending_enterprise_customer_user',
+            'role_assignments'
+            'is_admin'
         )
-
-    enterprise_customer_user_id = serializers.SerializerMethodField()
-    user_name = serializers.SerializerMethodField()
-    user_email = serializers.SerializerMethodField()
+    enterprise_customer_user = UserSerializer(source="user", required=False, default=None)
+    pending_enterprise_customer_user = serializers.SerializerMethodField(required=False, default=None)
+    role_assignments = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
-    pending_enterprise_customer_user_id = serializers.CharField(required=False, default=None)
-    is_pending_admin = serializers.BooleanField(required=False, default=False)
-
-    def get_enterprise_customer_user_id(self, obj):
+    
+    def get_pending_enterprise_customer_user(self, obj):
         """
-        Get enterprise customer user id
+        Return either the pending user info
         """
-        return obj.user_id
-
-    def get_user_name(self, obj):
-        """
-        Get enterprise customer user name
-        """
-        return obj.enterprise_customer.name
-
-    def get_user_email(self, obj):
-        """
-        Get enterprise customer user email
-        """
-        return obj.enterprise_customer.contact_email
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        # if the obj has a user id, this means that it is a realized user, not pending
+        if hasattr(obj, 'user_id'):
+            return None
+        return get_pending_enterprise_customer_users(obj.user_email, enterprise_customer_uuid)
 
     def get_is_admin(self, obj):
         """
         Make admin determination based on Enterprise role in SystemWideEnterpriseUserRoleAssignment
         """
         enterprise_customer_uuid = obj.enterprise_customer.uuid
-
-        if not enterprise_customer_uuid:
-            return None
-
+        user_email = obj.user_email
         admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role__name=ENTERPRISE_ADMIN_ROLE,
-            enterprise_customer_id=enterprise_customer_uuid
+            enterprise_customer_id=enterprise_customer_uuid,
+            user__email=user_email
         )
-
         return admin_instance.exists()
 
+    def get_role_assignments(self, obj):
+        if hasattr(obj, 'user_id'):
+            user_id = obj.user_id
+            enterprise_customer_uuid = obj.enterprise_customer.uuid
 
-class EnterprisePendingCustomerUserSerializer(serializers.Serializer):
-    """
-    Serializer for PendingEnterpriseCustomerUser model with additions.
-    """
-
-    class Meta:
-        model = models.PendingEnterpriseCustomerUser
-        fields = (
-            'enterprise_customer_user_id',
-            'user_name',
-            'user_email',
-            'is_admin',
-            'pending_enterprise_customer_user_id',
-            'is_pending_admin'
-        )
-
-    enterprise_customer_user_id = serializers.CharField(required=False, default=None)
-    user_name = serializers.CharField(required=False, default=None)
-    user_email = serializers.SerializerMethodField()
-    is_admin = serializers.BooleanField(required=False, default=False)
-    pending_enterprise_customer_user_id = serializers.SerializerMethodField()
-    is_pending_admin = serializers.SerializerMethodField()
-
-    def get_user_email(self, obj):
-        """
-        Get pending enterprise customer email
-        """
-        return obj.user_email
-
-    def get_pending_enterprise_customer_user_id(self, obj):
-        """
-        Get pending enterprise customer user id
-        """
-        return obj.id
-
-    def get_is_pending_admin(self, obj):
-        """
-        Make admin determination based on existence in PendingEnterpriseCustomerAdminUser
-        """
-        enterprise_customer_uuid = obj.enterprise_customer.uuid
-        enterprise_customer_email = obj.user_email
-
-        pending_admin_instance = models.PendingEnterpriseCustomerAdminUser.objects.filter(
-            user_email=enterprise_customer_email,
-            enterprise_customer_id=enterprise_customer_uuid
-        )
-
-        return pending_admin_instance.exists()
+            role_assignments = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user_id=user_id
+            ).select_related('role')
+            role_assignments_by_ecu_id = [
+                    role_assignment.role.name for role_assignment in role_assignments if
+                    role_assignment.user_id == user_id and
+                    role_assignment.enterprise_customer_id == enterprise_customer_uuid
+                ]
+            return role_assignments_by_ecu_id
