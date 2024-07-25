@@ -106,6 +106,7 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
     search_fields = [
         "enterprise_customer__name__icontains",
         "enterprise_customer__uuid__iexact",
+        "enterprise_customer_configuration_id__iexact",
         "endpoint__icontains",
     ]
     readonly_fields = [
@@ -136,22 +137,6 @@ class IntegratedChannelAPIRequestLogAdmin(admin.ModelAdmin):
             'enterprise_customer__uuid',
             'enterprise_customer_configuration_id'
         )
-
-    def get_search_results(self, request, queryset, search_term):
-        """
-        Handle non-integer search terms and filter by 'enterprise_customer_configuration_id' if valid.
-        """
-        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
-
-        try:
-            enterprise_customer_configuration_id = int(search_term)
-            queryset |= self.model.objects.filter(
-                enterprise_customer_configuration_id=enterprise_customer_configuration_id
-            )
-        except ValueError:
-            pass
-
-        return queryset, use_distinct
 
     class Meta:
         model = IntegratedChannelAPIRequestLogs
