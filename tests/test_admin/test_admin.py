@@ -68,5 +68,8 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         self.assertEqual(log_entry.endpoint, "http://test.com")
         self.assertEqual(log_entry.enterprise_customer.name, "Test Enterprise")
         
-        with self.assertRaises(AttributeError):
+        # Verify that accessing an unselected field causes an additional query
+        with CaptureQueriesContext(connection) as queries:
             _ = log_entry.payload
+
+        self.assertEqual(len(queries), 1, "Accessing unselected field should cause exactly one additional query")
