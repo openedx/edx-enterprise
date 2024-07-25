@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.9]
+---------
+* created migration to `update_or_create` a system-wide enterprise role named `enterprise_provisioning_admin.
+
 [4.21.8]
 ---------
 * fix: fixed 500 error for search filter for api request logs in admin view.
