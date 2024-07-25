@@ -3,9 +3,12 @@ Views for the ``enterprise-user`` API endpoint.
 """
 
 from django_filters.rest_framework import DjangoFilterBackend
+from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework import permissions, response, status
 
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.utils.functional import cached_property
 
 from enterprise import models
 from enterprise.api.v1 import serializers
@@ -15,6 +18,16 @@ from enterprise.logging import getEnterpriseLogger
 LOGGER = getEnterpriseLogger(__name__)
 
 
+class PaginatorWithFixedCount(Paginator):
+    @cached_property
+    def count(self):
+        return 8
+
+
+class EnterpriseUserPagination(DefaultPagination):
+    django_paginator_class = PaginatorWithFixedCount
+
+
 class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API views for the ``enterprise-user`` API endpoint.
@@ -22,6 +35,7 @@ class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
     queryset = models.EnterpriseCustomerUser.objects.all()
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (permissions.IsAuthenticated,)
+    pagination_class = EnterpriseUserPagination
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
 

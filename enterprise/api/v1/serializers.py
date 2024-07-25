@@ -1863,13 +1863,13 @@ class EnterpriseUserSerializer(serializers.Serializer):
         """
         Get enterprise customer user name
         """
-        return obj.enterprise_customer.name
+        return obj.username
 
     def get_user_email(self, obj):
         """
         Get enterprise customer user email
         """
-        return obj.enterprise_customer.contact_email
+        return obj.user_email
 
     def get_is_admin(self, obj):
         """

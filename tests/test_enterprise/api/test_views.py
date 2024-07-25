@@ -9594,18 +9594,18 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         """
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
-        factories.EnterpriseCustomerUserFactory(
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=user.id,
             enterprise_customer=enterprise_customer
         )
 
         expected_json = {
             'enterprise_customer_user_id': user.id,
-            'user_name': enterprise_customer.name,
-            'user_email': enterprise_customer.contact_email,
+            'user_name': enterprise_customer_user.username,
+            'user_email': enterprise_customer_user.user_email,
             'is_admin': False,
             'pending_enterprise_customer_user_id': None,
-            'is_pending_admin': False
+            'is_pending_admin': False,
         }
 
         # Test valid UUID
@@ -9622,21 +9622,20 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         # Test Admin UUID
         user_2 = factories.UserFactory()
         enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
-        factories.EnterpriseCustomerUserFactory(
+        enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(
             user_id=user_2.id,
             enterprise_customer=enterprise_customer_2
         )
 
         expected_json_2 = {
             'enterprise_customer_user_id': user_2.id,
-            'user_name': enterprise_customer_2.name,
-            'user_email': enterprise_customer_2.contact_email,
+            'user_name': enterprise_customer_user_2.username,
+            'user_email': enterprise_customer_user_2.user_email,
             'is_admin': True,
             'pending_enterprise_customer_user_id': None,
             'is_pending_admin': False
         }
 
-        # self.setup_provisioning_admin_permission()
         SystemWideEnterpriseUserRoleAssignment.objects.create(
             role=admin_role(),
             user=user_2,
