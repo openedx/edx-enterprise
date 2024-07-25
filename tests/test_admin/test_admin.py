@@ -1,9 +1,15 @@
-from django.test import TestCase
+"""
+Tests for the IntegratedChannelAPIRequest admin module in `edx-enterprise`.
+"""
+
 from django.contrib.admin.sites import AdminSite
 from django.db import connection
+from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
+
 from integrated_channels.integrated_channel.admin import IntegratedChannelAPIRequestLogAdmin
-from integrated_channels.integrated_channel.models import IntegratedChannelAPIRequestLogs, EnterpriseCustomer
+from integrated_channels.integrated_channel.models import IntegratedChannelAPIRequestLogs
+from test_utils import factories
 
 
 class IntegratedChannelAPIRequestLogAdminTest(TestCase):
@@ -17,9 +23,9 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         """
         self.site = AdminSite()
         self.admin = IntegratedChannelAPIRequestLogAdmin(IntegratedChannelAPIRequestLogs, self.site)
-        
+
         # Create test data
-        self.enterprise_customer = EnterpriseCustomer.objects.create(name="Test Enterprise", uuid="test-uuid")
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.log_entry = IntegratedChannelAPIRequestLogs.objects.create(
             enterprise_customer=self.enterprise_customer,
             enterprise_customer_configuration_id=1,
@@ -32,10 +38,10 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
 
     def test_get_queryset_optimization(self):
         """
-        Test that the get_queryset method optimizes the query by using select_related and only selecting specified fields.
+        Test that the get_queryset method optimizes query by using select_related and only selecting specified fields.
         """
         request = None  # or mock a request object if needed
-        
+
         with CaptureQueriesContext(connection) as queries:
             queryset = self.admin.get_queryset(request)
             # Force evaluation of the queryset
@@ -67,7 +73,7 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         log_entry = queryset.get(id=self.log_entry.id)
         self.assertEqual(log_entry.endpoint, "http://test.com")
         self.assertEqual(log_entry.enterprise_customer.name, "Test Enterprise")
-        
+
         # Verify that accessing an unselected field raises an error
         with self.assertRaises(AttributeError):
             _ = log_entry.payload
