@@ -24,8 +24,7 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         self.site = AdminSite()
         self.admin = IntegratedChannelAPIRequestLogAdmin(IntegratedChannelAPIRequestLogs, self.site)
 
-        # Create test data
-        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name='Test Enterprise')
         self.log_entry = IntegratedChannelAPIRequestLogs.objects.create(
             enterprise_customer=self.enterprise_customer,
             enterprise_customer_configuration_id=1,
@@ -40,7 +39,7 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         """
         Test that the get_queryset method optimizes query by using select_related and only selecting specified fields.
         """
-        request = None  # or mock a request object if needed
+        request = None
         
         with CaptureQueriesContext(connection) as queries:
             queryset = self.admin.get_queryset(request)
