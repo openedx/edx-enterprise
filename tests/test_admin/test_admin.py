@@ -40,7 +40,7 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         Test that the get_queryset method optimizes query by using select_related and only selecting specified fields.
         """
         request = None
-        
+
         with CaptureQueriesContext(connection) as queries:
             queryset = self.admin.get_queryset(request)
 
@@ -59,7 +59,9 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         self.assertIn('"integrated_channel_integratedchannelapirequestlogs"."status_code"', query)
         self.assertIn('"enterprise_enterprisecustomer"."name"', query)
         self.assertIn('"enterprise_enterprisecustomer"."uuid"', query)
-        self.assertIn('"integrated_channel_integratedchannelapirequestlogs"."enterprise_customer_configuration_id"', query)
+        self.assertIn(
+            '"integrated_channel_integratedchannelapirequestlogs"."enterprise_customer_configuration_id"', query
+        )
 
         self.assertNotIn('payload', query)
         self.assertNotIn('response_body', query)
@@ -67,7 +69,7 @@ class IntegratedChannelAPIRequestLogAdminTest(TestCase):
         log_entry = queryset.get(id=self.log_entry.id)
         self.assertEqual(log_entry.endpoint, "http://test.com")
         self.assertEqual(log_entry.enterprise_customer.name, "Test Enterprise")
-        
+
         # Verify that accessing an unselected field causes an additional query
         with CaptureQueriesContext(connection) as queries:
             _ = log_entry.payload
