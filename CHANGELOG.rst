@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.9]
+---------
+* fix: fixed search fetch crashing because of server taking too long for api request logs.
+
 [4.21.8]
 ---------
 * fix: fixed 500 error for search filter for api request logs in admin view.
