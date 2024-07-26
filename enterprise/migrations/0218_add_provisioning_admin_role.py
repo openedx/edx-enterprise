@@ -18,9 +18,9 @@ def create_enterprise_provisioning_admin_role(apps, schema_editor):  # pylint: d
 
 def delete_enterprise_provisioning_admin_role(apps, schema_editor):  # pylint: disable=unused-argument
     """Delete the `enterprise_provisioining_admin` system-wide role"""
-    SystemWideEnterpriseRole = apps.get_model(
+    SystemWideEnterpriseRole = apps.get_model(  # pragma: no cover
         'enterprise', 'SystemWideEnterpriseRole')
-    SystemWideEnterpriseRole.objects.filter(
+    SystemWideEnterpriseRole.objects.filter(  # pragma: no cover
         name=SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE).delete()
 
 

@@ -2368,6 +2368,22 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
 
         assert ['*'] == enterprise_role_assignment.get_context()
 
+    def test_get_context_applies_for_provisioning_admins(self):
+        """
+        Verify that having a PA role assignment with ``applies_to_all_contexts`` set to True gives
+        the user a context of "*".
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        user = self._create_and_link_user('edx@example.com', enterprise_customer)
+
+        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user,
+            role=roles_api.provisioning_admin_role(),
+            applies_to_all_contexts=True,
+        )
+
+        assert ['*'] == enterprise_role_assignment.get_context()
+
     @ddt.data(
         {
             'role_name': ENTERPRISE_LEARNER_ROLE,

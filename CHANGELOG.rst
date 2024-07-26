@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.10]
+----------
+* created migration to create a system-wide enterprise role named `enterprise_provisioning_admin`.
+
 [4.21.9]
 ---------
-* created migration to `update_or_create` a system-wide enterprise role named `enterprise_provisioning_admin.
+* fix: fixed search fetch crashing because of server taking too long for api request logs.
 
 [4.21.8]
 ---------
