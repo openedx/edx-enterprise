@@ -9583,7 +9583,7 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCustomerSupport(BaseTestEnterpriseAPIViews):
     """
     Test enterprise user list endpoint
     """
@@ -9609,13 +9609,13 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         }
 
         # Test valid UUID
-        url = reverse('enterprise-user', kwargs={'enterprise_uuid': enterprise_customer.uuid})
+        url = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': enterprise_customer.uuid})
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert expected_json == response[0]
 
         # Test invalid UUID
-        url = reverse('enterprise-user', kwargs={'enterprise_uuid': 123})
+        url = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': 123})
         response = self.client.get(settings.TEST_SERVER + url)
         self.assertEqual(response.status_code, 404)
 
@@ -9642,7 +9642,7 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer_2
         )
 
-        url_2 = reverse('enterprise-user', kwargs={'enterprise_uuid': enterprise_customer_2.uuid})
+        url_2 = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': enterprise_customer_2.uuid})
         response_2 = self.client.get(settings.TEST_SERVER + url_2)
         response_2 = self.load_json(response_2.content)
         assert expected_json_2 == response_2[0]
@@ -9666,7 +9666,7 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         }
 
         # Test valid pending customer UUID
-        url = reverse('enterprise-user', kwargs={'enterprise_uuid': enterprise_customer.uuid})
+        url = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': enterprise_customer.uuid})
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert expected_json == response[0]

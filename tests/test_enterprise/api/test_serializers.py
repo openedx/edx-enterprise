@@ -459,9 +459,9 @@ class TestEnterpriseCustomerAPICredentialsSerializer(APITest):
 
 
 @mark.django_db
-class TestEnterpriseUserSerializer(TestCase):
+class TestEnterpriseCustomerSupportSerializer(TestCase):
     """
-    Tests for EnterpriseCustomerSerializer.
+    Tests for EnterpriseCustomerSupportSerializer.
     """
     def setUp(self):
         """

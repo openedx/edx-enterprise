@@ -21,7 +21,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_user,
     enterprise_group,
     enterprise_subsidy_fulfillment,
-    enterprise_user,
+    enterprise_customer_support,
     notifications,
     pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
@@ -199,11 +199,11 @@ urlpatterns = [
         name='enterprise-group-remove-learners'
     ),
     re_path(
-        r'^enterprise-user/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
-        enterprise_user.EnterpriseUserViewSet.as_view(
+        r'^enterprise-customer-support/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_customer_support.EnterpriseCustomerSupportViewSet.as_view(
             {'get': 'retrieve'}
         ),
-        name='enterprise-user'
+        name='enterprise-customer-support'
     ),
 ]
 

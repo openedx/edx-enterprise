@@ -24,18 +24,18 @@ class PaginatorWithFixedCount(Paginator):
         return 8
 
 
-class EnterpriseUserPagination(DefaultPagination):
+class EnterpriseCustomerSupportPagination(DefaultPagination):
     django_paginator_class = PaginatorWithFixedCount
 
 
-class EnterpriseUserViewSet(EnterpriseReadOnlyModelViewSet):
+class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API views for the ``enterprise-user`` API endpoint.
     """
     queryset = models.EnterpriseCustomerUser.objects.all()
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (permissions.IsAuthenticated,)
-    pagination_class = EnterpriseUserPagination
+    pagination_class = EnterpriseCustomerSupportPagination
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
 
