@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.22.1]
+----------
+* bump enterprise to 4.22.1.
+
 [4.21.10]
 ----------
 * created migration to create a system-wide enterprise role named `enterprise_provisioning_admin`.
