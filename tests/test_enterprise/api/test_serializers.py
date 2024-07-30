@@ -19,7 +19,6 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
-    EnterprisePendingCustomerUserSerializer,
     EnterpriseUserSerializer,
     ImmutableStateSerializer,
 )

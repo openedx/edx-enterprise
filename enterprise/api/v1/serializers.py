@@ -1873,6 +1873,9 @@ class EnterpriseUserSerializer(serializers.Serializer):
         return admin_instance.exists()
 
     def get_role_assignments(self, obj):
+        """
+        Fetch user's role assignments
+        """
         if hasattr(obj, 'user_id'):
             user_id = obj.user_id
             enterprise_customer_uuid = obj.enterprise_customer.uuid
@@ -1886,3 +1889,5 @@ class EnterpriseUserSerializer(serializers.Serializer):
                     role_assignment.enterprise_customer_id == enterprise_customer_uuid
                 ]
             return role_assignments_by_ecu_id
+        else:
+            return None
