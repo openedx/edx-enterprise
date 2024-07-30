@@ -50,28 +50,25 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
                 enterprise_customer__uuid=enterprise_uuid
             )
 
+            enterprise_customer_serializer = []
             if enterprise_customer_queryset.exists():
-                serializer = serializers.EnterpriseUserSerializer(enterprise_customer_queryset, many=True)
-                return response.Response(serializer.data)
+                enterprise_customer_serializer = serializers.EnterpriseUserSerializer(enterprise_customer_queryset, many=True)
 
-        except ValidationError:
-            # did not find UUID match in EnterpriseCustomerUser, try in PendingEnterpriseCustomerUser
-            pass
-
-        try:
             pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
                 enterprise_customer_id=enterprise_uuid
             )
 
+            pending_customer_serializer = []
             if pending_enterprise_customer_queryset.exists():
-                serializer = serializers.EnterprisePendingCustomerUserSerializer(
+                pending_customer_serializer = serializers.EnterprisePendingCustomerUserSerializer(
                     pending_enterprise_customer_queryset,
                     many=True
                 )
-                return response.Response(serializer.data)
+
+            return response.Response(enterprise_customer_serializer.data + pending_customer_serializer.data)
 
         except ValidationError:
-            # did not find UUID match in either EnterpriseCustomerUser or  PendingEnterpriseCustomerUser
+            # did not find UUID match in either EnterpriseCustomerUser or PendingEnterpriseCustomerUser
             pass
 
         return response.Response(
