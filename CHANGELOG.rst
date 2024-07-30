@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.21.11]
+[4.22.2]
 ----------
-* feat: Serializes `course-key` field from the federated-content-metadata, CourseDetails model
+* fix: Serializes `course_key` field from the federated-content-metadata, `CourseDetails` model within the `EnterpriseCourseEnrollmentSerializer`.
+
+[4.22.1]
+----------
+* bump enterprise to 4.22.1.
 
 [4.21.10]
 ----------
