@@ -8,6 +8,7 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
 
@@ -46,6 +47,11 @@ def catalog_admin_role():
     return get_or_create_system_wide_role(SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE)
 
 
+def provisioning_admin_role():
+    """ Returns the provisioning admin role. """
+    return get_or_create_system_wide_role(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE)
+
+
 def roles_by_name():
     """
     Returns a mapping of system wide roles by name.
@@ -55,6 +61,7 @@ def roles_by_name():
         ENTERPRISE_LEARNER_ROLE: learner_role(),
         ENTERPRISE_OPERATOR_ROLE: openedx_operator_role(),
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE: catalog_admin_role(),
+        SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE: provisioning_admin_role(),
     }
 
 
