@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.21.11]
+----------
+* feat: Serializes `course-key` field from the federated-content-metadata, CourseDetails model
+
 [4.21.10]
 ----------
 * created migration to create a system-wide enterprise role named `enterprise_provisioning_admin`.
