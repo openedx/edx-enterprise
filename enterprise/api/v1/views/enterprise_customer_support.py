@@ -24,8 +24,10 @@ class PaginatorWithFixedCount(Paginator):
     def count(self):
         return 8
 
+
 class EnterpriseCustomerSupportPagination(DefaultPagination):
     django_paginator_class = PaginatorWithFixedCount
+
 
 class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     """

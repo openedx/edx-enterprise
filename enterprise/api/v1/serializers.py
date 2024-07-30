@@ -1884,10 +1884,10 @@ class EnterpriseUserSerializer(serializers.Serializer):
                 user_id=user_id
             ).select_related('role')
             role_assignments_by_ecu_id = [
-                    role_assignment.role.name for role_assignment in role_assignments if
-                    role_assignment.user_id == user_id and
-                    role_assignment.enterprise_customer_id == enterprise_customer_uuid
-                ]
+                role_assignment.role.name for role_assignment in role_assignments if
+                role_assignment.user_id == user_id and
+                role_assignment.enterprise_customer_id == enterprise_customer_uuid
+            ]
             return role_assignments_by_ecu_id
         else:
             return None

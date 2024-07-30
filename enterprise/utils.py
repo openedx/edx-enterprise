@@ -741,6 +741,7 @@ def pending_enterprise_customer_admin_user_model():
     """
     return apps.get_model('enterprise', 'PendingEnterpriseCustomerAdminUser')
 
+
 def get_enterprise_customer(uuid):
     """
     Get the ``EnterpriseCustomer`` instance associated with ``uuid``.
