@@ -168,7 +168,6 @@ EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
 VERIFIED_SUBSCRIPTION_COURSE_MODE = 'verified'
-ENTERPRISE_USER_ENDPOINT = reverse('enterprise-user', kwargs={'enterprise_uuid': FAKE_UUIDS[0]})
 
 
 def side_effect(url, query_parameters):
@@ -9583,10 +9582,12 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriseCustomerSupport(BaseTestEnterpriseAPIViews):
+class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
     """
     Test enterprise user list endpoint
     """
+    ECS_ENDPOINT = 'enterprise-customer-support'
+    ECS_KWARG = 'enterprise_uuid'
 
     def test_get_enterprise_user(self):
         """
@@ -9594,47 +9595,46 @@ class TestEnterpriseCustomerSupport(BaseTestEnterpriseAPIViews):
         """
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+        factories.EnterpriseCustomerUserFactory(
             user_id=user.id,
             enterprise_customer=enterprise_customer
         )
 
         expected_json = {
-            'enterprise_customer_user_id': user.id,
-            'user_name': enterprise_customer_user.username,
-            'user_email': enterprise_customer_user.user_email,
-            'is_admin': False,
-            'pending_enterprise_customer_user_id': None,
-            'is_pending_admin': False,
+            'enterprise_customer_user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE],
+            'is_admin': False
         }
 
         # Test valid UUID
-        url = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': enterprise_customer.uuid})
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
+
         assert expected_json == response[0]
 
         # Test invalid UUID
-        url = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': 123})
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: 123})
         response = self.client.get(settings.TEST_SERVER + url)
         self.assertEqual(response.status_code, 404)
 
         # Test Admin UUID
         user_2 = factories.UserFactory()
         enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
-        enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(
+        factories.EnterpriseCustomerUserFactory(
             user_id=user_2.id,
             enterprise_customer=enterprise_customer_2
         )
-
-        expected_json_2 = {
-            'enterprise_customer_user_id': user_2.id,
-            'user_name': enterprise_customer_user_2.username,
-            'user_email': enterprise_customer_user_2.user_email,
-            'is_admin': True,
-            'pending_enterprise_customer_user_id': None,
-            'is_pending_admin': False
-        }
 
         SystemWideEnterpriseUserRoleAssignment.objects.create(
             role=admin_role(),
@@ -9642,9 +9642,26 @@ class TestEnterpriseCustomerSupport(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer_2
         )
 
-        url_2 = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': enterprise_customer_2.uuid})
+        expected_json_2 = {
+            'enterprise_customer_user': {
+                'id': user_2.id,
+                'username': user_2.username,
+                'first_name': user_2.first_name,
+                'last_name': user_2.last_name,
+                'email': user_2.email,
+                'is_staff': user_2.is_staff,
+                'is_active': user_2.is_active,
+                'date_joined': user_2.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE],
+            'is_admin': True
+        }
+
+        url_2 = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer_2.uuid})
         response_2 = self.client.get(settings.TEST_SERVER + url_2)
         response_2 = self.load_json(response_2.content)
+
         assert expected_json_2 == response_2[0]
 
     def test_get_pending_enterprise_user(self):
@@ -9657,16 +9674,19 @@ class TestEnterpriseCustomerSupport(BaseTestEnterpriseAPIViews):
         )
 
         expected_json = {
-            'enterprise_customer_user_id': None,
-            'user_name': None,
-            'user_email': pending_user.user_email,
-            'is_admin': False,
-            'pending_enterprise_customer_user_id': pending_user.id,
-            'is_pending_admin': False
+            'enterprise_customer_user': None,
+            'pending_enterprise_customer_user': {
+                'is_pending_admin': False,
+                'is_pending_learner': True,
+                'user_email': pending_user.user_email,
+            },
+            'role_assignments': None,
+            'is_admin': False
         }
 
         # Test valid pending customer UUID
-        url = reverse('enterprise-customer-support', kwargs={'enterprise_uuid': enterprise_customer.uuid})
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
+
         assert expected_json == response[0]

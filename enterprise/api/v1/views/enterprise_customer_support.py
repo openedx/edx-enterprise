@@ -1,3 +1,4 @@
+
 """
 Views for the ``enterprise-user`` API endpoint.
 """
@@ -23,10 +24,8 @@ class PaginatorWithFixedCount(Paginator):
     def count(self):
         return 8
 
-
 class EnterpriseCustomerSupportPagination(DefaultPagination):
     django_paginator_class = PaginatorWithFixedCount
-
 
 class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     """
@@ -44,34 +43,26 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
         - Filter down the queryset of groups available to the requesting uuid.
         """
         enterprise_uuid = kwargs.get('enterprise_uuid', None)
-
+        users = []
         try:
             enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
-                enterprise_customer__uuid=enterprise_uuid
+                enterprise_customer__uuid=enterprise_uuid,
             )
-
-            enterprise_customer_serializer = []
-            if enterprise_customer_queryset.exists():
-                enterprise_customer_serializer = serializers.EnterpriseUserSerializer(enterprise_customer_queryset, many=True)
-
+            users.extend(enterprise_customer_queryset)
             pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
-                enterprise_customer_id=enterprise_uuid
-            )
-
-            pending_customer_serializer = []
-            if pending_enterprise_customer_queryset.exists():
-                pending_customer_serializer = serializers.EnterprisePendingCustomerUserSerializer(
-                    pending_enterprise_customer_queryset,
-                    many=True
-                )
-
-            return response.Response(enterprise_customer_serializer.data + pending_customer_serializer.data)
-
+                enterprise_customer__uuid=enterprise_uuid
+            ).order_by('user_email')
+            users.extend(pending_enterprise_customer_queryset)
         except ValidationError:
-            # did not find UUID match in either EnterpriseCustomerUser or PendingEnterpriseCustomerUser
-            pass
-
-        return response.Response(
-            {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
-            status=status.HTTP_404_NOT_FOUND
+            # did not find UUID match in either EnterpriseCustomerUser or  PendingEnterpriseCustomerUser
+            return response.Response(
+                {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = serializers.EnterpriseUserSerializer(
+            users,
+            many=True
         )
+        serializer_data = sorted(
+            serializer.data, key=lambda k: k['is_admin'], reverse=True)
+        return response.Response(serializer_data)
