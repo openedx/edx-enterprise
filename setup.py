@@ -24,46 +24,95 @@ def get_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-def get_requirements(requirements_file):
+def load_requirements(*requirements_paths):
     """
-    Get the contents of a file listing the requirements
+    Load all requirements from the specified requirements files.
+
+    Requirements will include any constraints from files specified
+    with -c in the requirements files.
+    Returns a list of requirement strings.
     """
-    lines = open(requirements_file).readlines()
-    dependencies = []
-    dependency_links = []
+    # e.g. {"django": "Django", "confluent-kafka": "confluent_kafka[avro]"}
+    by_canonical_name = {}
 
-    for line in lines:
-        package = line.strip()
-        if package.startswith('#'):
-            # Skip pure comment lines
-            continue
+    def check_name_consistent(package):
+        """
+        Raise exception if package is named different ways.
 
-        package, __, __ = package.partition(' #')
-        package = package.strip()
+        This ensures that packages are named consistently so we can match
+        constraints to packages. It also ensures that if we require a package
+        with extras we don't constrain it without mentioning the extras (since
+        that too would interfere with matching constraints.)
+        """
+        canonical = package.lower().replace('_', '-').split('[')[0]
+        seen_spelling = by_canonical_name.get(canonical)
+        if seen_spelling is None:
+            by_canonical_name[canonical] = package
+        elif seen_spelling != package:
+            raise Exception(
+                f'Encountered both "{seen_spelling}" and "{package}" in requirements '
+                'and constraints files; please use just one or the other.'
+            )
 
-        if any(package.startswith(prefix) for prefix in VCS_PREFIXES):
-            # VCS reference for dev purposes, expect a trailing comment
-            # with the normal requirement
-            package_link, __, package = package.rpartition('#')
+    requirements = {}
+    constraint_files = set()
 
-            # Remove -e <version_control> string
-            package_link = re.sub(r'(.*)(?P<dependency_link>https?.*$)', r'\g<dependency_link>', package_link)
-            package = re.sub(r'(egg=)?(?P<package_name>.*)==.*$', r'\g<package_name>', package)
-            package_version = re.sub(r'.*[^=]==', '', line.strip())
+    # groups "pkg<=x.y.z,..." into ("pkg", "<=x.y.z,...")
+    re_package_name_base_chars = r"a-zA-Z0-9\-_."  # chars allowed in base package name
+    # Two groups: name[maybe,extras], and optionally a constraint
+    requirement_line_regex = re.compile(
+        r"([%s]+(?:\[[%s,\s]+\])?)([<>=][^#\s]+)?"
+        % (re_package_name_base_chars, re_package_name_base_chars)
+    )
 
-            if package:
-                dependency_links.append(
-                    f'{package_link}#egg={package}-{package_version}'
-                )
-        else:
-            # Ignore any trailing comment
-            package, __, __ = package.partition('#')
-            # Remove any whitespace and assume non-empty results are dependencies
-            package = package.strip()
+    def add_version_constraint_or_raise(current_line, current_requirements, add_if_not_present):
+        regex_match = requirement_line_regex.match(current_line)
+        if regex_match:
+            package = regex_match.group(1)
+            version_constraints = regex_match.group(2)
+            check_name_consistent(package)
+            existing_version_constraints = current_requirements.get(package, None)
+            # It's fine to add constraints to an unconstrained package,
+            # but raise an error if there are already constraints in place.
+            if existing_version_constraints and existing_version_constraints != version_constraints:
+                raise BaseException(f'Multiple constraint definitions found for {package}:'
+                                    f' "{existing_version_constraints}" and "{version_constraints}".'
+                                    f'Combine constraints into one location with {package}'
+                                    f'{existing_version_constraints},{version_constraints}.')
+            if add_if_not_present or package in current_requirements:
+                current_requirements[package] = version_constraints
 
-        if package:
-            dependencies.append(package)
-    return dependencies, dependency_links
+    # Read requirements from .in files and store the path to any
+    # constraint files that are pulled in.
+    for path in requirements_paths:
+        with open(path) as reqs:
+            for line in reqs:
+                if is_requirement(line):
+                    add_version_constraint_or_raise(line, requirements, True)
+                if line and line.startswith('-c') and not line.startswith('-c http'):
+                    constraint_files.add(os.path.dirname(path) + '/' + line.split('#')[0].replace('-c', '').strip())
+
+    # process constraint files: add constraints to existing requirements
+    for constraint_file in constraint_files:
+        with open(constraint_file) as reader:
+            for line in reader:
+                if is_requirement(line):
+                    add_version_constraint_or_raise(line, requirements, False)
+
+    # process back into list of pkg><=constraints strings
+    constrained_requirements = [f'{pkg}{version or ""}' for (pkg, version) in sorted(requirements.items())]
+    return constrained_requirements
+
+
+def is_requirement(line):
+    """
+    Return True if the requirement line is a package requirement.
+
+    Returns:
+        bool: True if the line is not blank, a comment,
+        a URL, or an included file
+    """
+    return line and line.strip() and not line.startswith(("-r", "#", "-e", "git+", "-c"))
 
 
 VERSION = get_version("enterprise", "__init__.py")
@@ -78,7 +127,6 @@ base_path = os.path.dirname(__file__)
 
 README = open(os.path.join(base_path, "README.rst")).read()
 CHANGELOG = open(os.path.join(base_path, "CHANGELOG.rst")).read()
-REQUIREMENTS, DEPENDENCY_LINKS = get_requirements(os.path.join(base_path, 'requirements', 'base.in'))
 
 setup(
     name="edx-enterprise",
@@ -104,8 +152,7 @@ setup(
         "enterprise_learner_portal",
     ],
     include_package_data=True,
-    install_requires=REQUIREMENTS,
-    dependency_links=DEPENDENCY_LINKS,
+    install_requires=load_requirements('requirements/base.in'),
     license="AGPL 3.0",
     zip_safe=False,
     keywords="Django edx",
