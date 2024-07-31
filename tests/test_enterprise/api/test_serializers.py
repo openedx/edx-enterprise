@@ -2,8 +2,8 @@
 Tests for the `edx-enterprise` serializer module.
 """
 
-from collections import OrderedDict
 import json
+from collections import OrderedDict
 
 import ddt
 from oauth2_provider.models import get_application_model
