@@ -98,6 +98,8 @@ check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platfo
 	sed -i.tmp '/^prompt-toolkit==/d' $(LOCAL_EDX_PINS)
 	sed -i.tmp '/^vine==/d' $(LOCAL_EDX_PINS)
 	sed -i.tmp '/^django-simple-history==/d' $(LOCAL_EDX_PINS)
+	# openedx-events requirement pin is removed until 9.12.0 can be required in platform.
+	sed -i.tmp '/^openedx-events==/d' $(LOCAL_EDX_PINS)
 
 
 	rm requirements/*.txt.tmp
