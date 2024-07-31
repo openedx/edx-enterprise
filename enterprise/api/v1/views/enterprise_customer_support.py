@@ -3,13 +3,13 @@
 Views for the ``enterprise-user`` API endpoint.
 """
 
+from collections import OrderedDict
+
 from django_filters.rest_framework import DjangoFilterBackend
-from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework import permissions, response, status
+from rest_framework.pagination import PageNumberPagination
 
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
-from django.utils.functional import cached_property
 
 from enterprise import models
 from enterprise.api.v1 import serializers
@@ -19,14 +19,35 @@ from enterprise.logging import getEnterpriseLogger
 LOGGER = getEnterpriseLogger(__name__)
 
 
-class PaginatorWithFixedCount(Paginator):
-    @cached_property
-    def count(self):
-        return 8
+class EnterpriseCustomerSupportPaginator(PageNumberPagination):
+    """Custom paginator for the enterprise customer support."""
+    page_size = 8
 
+    def get_paginated_response(self, data):
+        """Return a paginated style `Response` object for the given output data."""
+        return response.Response(
+            OrderedDict([
+                ('count', self.page.paginator.count),
+                ('num_pages', self.page.paginator.num_pages),
+                ('next', self.get_next_link()),
+                ('previous', self.get_previous_link()),
+                ('results', data),
+            ])
+        )
 
-class EnterpriseCustomerSupportPagination(DefaultPagination):
-    django_paginator_class = PaginatorWithFixedCount
+    def paginate_queryset(self, queryset, request, view=None):
+        """
+        Paginate a queryset if required, either returning a page object,
+        or `None` if pagination is not configured for this view.
+
+        This method is a modified version of the original `paginate_queryset` method
+        from the `PageNumberPagination` class. The original method was modified to
+        handle the case where the `queryset` is a `filter` object.
+        """
+        if isinstance(queryset, filter):
+            queryset = list(queryset)
+
+        return super().paginate_queryset(queryset, request, view)
 
 
 class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
@@ -36,7 +57,7 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     queryset = models.EnterpriseCustomerUser.objects.all()
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (permissions.IsAuthenticated,)
-    pagination_class = EnterpriseCustomerSupportPagination
+    paginator = EnterpriseCustomerSupportPaginator()
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
 
@@ -61,10 +82,17 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
                 {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
                 status=status.HTTP_404_NOT_FOUND
             )
-        serializer = serializers.EnterpriseUserSerializer(
+
+        users_page = self.paginator.paginate_queryset(
             users,
+            request,
+            view=self
+        )
+        serializer = serializers.EnterpriseUserSerializer(
+            users_page,
             many=True
         )
         serializer_data = sorted(
             serializer.data, key=lambda k: k['is_admin'], reverse=True)
-        return response.Response(serializer_data)
+
+        return self.paginator.get_paginated_response(serializer_data)

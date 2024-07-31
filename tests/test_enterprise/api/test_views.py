@@ -9619,9 +9619,8 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         # Test valid UUID
         url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
         response = self.client.get(settings.TEST_SERVER + url)
-        response = self.load_json(response.content)
 
-        assert expected_json == response[0]
+        assert expected_json == response.json().get('results')[0]
 
         # Test invalid UUID
         url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: 123})
@@ -9660,9 +9659,8 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
         url_2 = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer_2.uuid})
         response_2 = self.client.get(settings.TEST_SERVER + url_2)
-        response_2 = self.load_json(response_2.content)
 
-        assert expected_json_2 == response_2[0]
+        assert expected_json_2 == response_2.json().get('results')[0]
 
     def test_get_pending_enterprise_user(self):
         """
@@ -9687,6 +9685,5 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         # Test valid pending customer UUID
         url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
         response = self.client.get(settings.TEST_SERVER + url)
-        response = self.load_json(response.content)
 
-        assert expected_json == response[0]
+        assert expected_json == response.json().get('results')[0]
