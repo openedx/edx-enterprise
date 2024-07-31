@@ -168,6 +168,7 @@ EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
 VERIFIED_SUBSCRIPTION_COURSE_MODE = 'verified'
+ENTERPRISE_USER_ENDPOINT = reverse('enterprise-user', kwargs={'enterprise_uuid': FAKE_UUIDS[0]})
 
 
 def side_effect(url, query_parameters):
@@ -9578,3 +9579,95 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         """
         actual_entity_id = fetch_entity_id_from_metadata_xml(metadata_xml)
         assert actual_entity_id == expected_entity_id
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise user list endpoint
+    """
+
+    def test_get_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        expected_json = {
+            'enterprise_customer_user_id': user.id,
+            'user_name': enterprise_customer.name,
+            'user_email': enterprise_customer.contact_email,
+            'is_admin': False,
+            'pending_enterprise_customer_user_id': None,
+            'is_pending_admin': False
+        }
+
+        # Test valid UUID
+        url = reverse('enterprise-user', kwargs={'enterprise_uuid': enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+        response = self.load_json(response.content)
+        assert expected_json == response[0]
+
+        # Test invalid UUID
+        url = reverse('enterprise-user', kwargs={'enterprise_uuid': 123})
+        response = self.client.get(settings.TEST_SERVER + url)
+        self.assertEqual(response.status_code, 404)
+
+        # Test Admin UUID
+        user_2 = factories.UserFactory()
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        expected_json_2 = {
+            'enterprise_customer_user_id': user_2.id,
+            'user_name': enterprise_customer_2.name,
+            'user_email': enterprise_customer_2.contact_email,
+            'is_admin': True,
+            'pending_enterprise_customer_user_id': None,
+            'is_pending_admin': False
+        }
+
+        # self.setup_provisioning_admin_permission()
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            role=admin_role(),
+            user=user_2,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        url_2 = reverse('enterprise-user', kwargs={'enterprise_uuid': enterprise_customer_2.uuid})
+        response_2 = self.client.get(settings.TEST_SERVER + url_2)
+        response_2 = self.load_json(response_2.content)
+        assert expected_json_2 == response_2[0]
+
+    def test_get_pending_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        pending_user = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+        )
+
+        expected_json = {
+            'enterprise_customer_user_id': None,
+            'user_name': None,
+            'user_email': pending_user.user_email,
+            'is_admin': False,
+            'pending_enterprise_customer_user_id': pending_user.id,
+            'is_pending_admin': False
+        }
+
+        # Test valid pending customer UUID
+        url = reverse('enterprise-user', kwargs={'enterprise_uuid': enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+        response = self.load_json(response.content)
+        assert expected_json == response[0]
