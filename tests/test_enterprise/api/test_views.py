@@ -4401,9 +4401,9 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert update_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
-    def test_successful_cancel_fulfillment(self, mock_enrollment_api):
+    def test_successful_cancel_licensed_fulfillment(self, mock_enrollment_api):
         """
-        Test that we can successfully cancel both licensed and learner credit fulfillments.
+        Test that we can successfully cancel licensed fulfillments.
         """
         mock_enrollment_api.update_enrollment.return_value = mock.Mock()
         self.licensed_course_enrollment.is_revoked = False
@@ -4424,8 +4424,12 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'is_active': False,
         }
 
-        mock_enrollment_api.reset_mock()
-
+    @mock.patch("enterprise.models.send_learner_credit_course_enrollment_revoked_event")
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
+    def test_successful_cancel_learner_credit_fulfillment(self, mock_enrollment_api, mock_send_revoked_event):
+        """
+        Test that we can successfully cancel learner credit fulfillments, and an openedx event is emitted.
+        """
         self.learner_credit_course_enrollment.is_revoked = False
         self.learner_credit_course_enrollment.save()
         response = self.client.post(
@@ -4443,6 +4447,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
             'is_active': False,
         }
+        mock_send_revoked_event.assert_called_once_with(self.learner_credit_course_enrollment)
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_idempotent_cancel_fulfillment(self, mock_enrollment_api):
