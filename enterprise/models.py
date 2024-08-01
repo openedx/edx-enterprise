@@ -59,6 +59,7 @@ from enterprise.constants import (
     json_serialized_course_modes,
 )
 from enterprise.errors import LinkUserToEnterpriseError
+from enterprise.event_bus import send_learner_credit_course_enrollment_revoked_event
 from enterprise.logging import getEnterpriseLogger
 from enterprise.tasks import send_enterprise_email_notification
 from enterprise.utils import (
@@ -2286,6 +2287,8 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         Marks this object as revoked and marks the associated EnterpriseCourseEnrollment
         as "saved for later".  This object and the associated EnterpriseCourseEnrollment are both saved.
 
+        Subclasses may override this function to additionally emit revokation events.
+
         TODO: revoke entitlements as well?
         """
         if self.enterprise_course_enrollment:
@@ -2328,6 +2331,13 @@ class LearnerCreditEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
 
     .. no_pii:
     """
+
+    def revoke(self):
+        """
+        Revoke this LearnerCreditEnterpriseCourseEnrollment, and emit a revoked event.
+        """
+        super().revoke()
+        send_learner_credit_course_enrollment_revoked_event(self)
 
     def reactivate(self, transaction_id=None, **kwargs):
         """

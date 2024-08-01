@@ -31,6 +31,7 @@ edx-tincan-py35
 edx-toggles
 jsondiff
 jsonfield
+# openedx-events
 paramiko
 path.py
 pillow
@@ -48,3 +49,6 @@ openai
 django-oauth-toolkit
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.
+
+# Temporary pin to a fork to use new enterprise events
+git+https://github.com/pwnage101/openedx-events.git@f00926ae93e84a114779a0e9c98c152e8927706d#egg=openedx_events

@@ -234,6 +234,9 @@ class EnterpriseSubsidyFulfillmentViewSet(PermissionRequiredMixin, EnterpriseWra
             retrieve_licensed_enrollments (bool): If true, return data related to licensed enrollments instead of
                 learner credit
         """
+        LOGGER.warning(
+            "[DEPRECATION] This view is deprecated for lack of purpose. Logging to confirm utilization drop-off.",
+        )
         queryset = self._get_unenrolled_fulfillments()
         serializer_class = self.get_unenrolled_fulfillment_serializer_class()
         serializer = serializer_class(queryset, many=True)
