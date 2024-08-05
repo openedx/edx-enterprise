@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.22.4]
+----------
+* feat: Adding enterprise-customer-support endpoint updates
+
 [4.22.3]
 ----------
 * feat: Adding enterprise-customer-support endpoint
