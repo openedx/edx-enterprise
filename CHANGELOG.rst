@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.22.3]
+[4.22.4]
 ----------
 * feat: Adding enterprise-customer-support endpoint
+
+[4.22.3]
+----------
+* bump enterprise to 4.22.3.
 
 [4.22.2]
 ----------
