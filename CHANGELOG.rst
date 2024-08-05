@@ -19,11 +19,11 @@ Unreleased
 
 [4.22.4]
 ----------
-* feat: Adding enterprise-customer-support endpoint updates
+* feat: Adding enterprise-customer-support endpoint
 
 [4.22.3]
 ----------
-* feat: Adding enterprise-customer-support endpoint
+* bump enterprise to 4.22.3.
 
 [4.22.2]
 ----------
