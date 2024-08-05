@@ -3,6 +3,7 @@ Tests for the `edx-enterprise` serializer module.
 """
 
 import json
+from collections import OrderedDict
 
 import ddt
 from oauth2_provider.models import get_application_model
@@ -18,6 +19,7 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
+    EnterpriseUserSerializer,
     ImmutableStateSerializer,
 )
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
@@ -454,3 +456,120 @@ class TestEnterpriseCustomerAPICredentialsSerializer(APITest):
         self.assertEqual(updated_instance.authorization_grant_type, self.data['authorization_grant_type'])
         self.assertEqual(updated_instance.client_type, self.data['client_type'])
         self.assertEqual(updated_instance.redirect_uris, self.data['redirect_uris'])
+
+
+@mark.django_db
+class TestEnterpriseUserSerializer(TestCase):
+    """
+    Tests for EnterpriseCustomerSerializer.
+    """
+    def setUp(self):
+        """
+        Perform operations common for all tests.
+        """
+
+        super().setUp()
+
+        # setup Enteprise Customer
+        self.user_1 = factories.UserFactory()
+        self.user_2 = factories.UserFactory()
+        self.enterprise_customer_user_1 = factories.EnterpriseCustomerUserFactory(user_id=self.user_1.id)
+        self.enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(user_id=self.user_2.id)
+        self.enterprise_customer_1 = self.enterprise_customer_user_1.enterprise_customer
+        self.enterprise_customer_2 = self.enterprise_customer_user_2.enterprise_customer
+
+        self.enterprise_admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name=ENTERPRISE_ADMIN_ROLE,
+        )
+        self.enterprise_learner_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name=ENTERPRISE_LEARNER_ROLE,
+        )
+
+        # Clear all current assignments
+        SystemWideEnterpriseUserRoleAssignment.objects.all().delete()
+
+        # user 1 has admin and learner role for enterprise 1
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_admin_role,
+            user=self.user_1,
+            enterprise_customer=self.enterprise_customer_1
+        )
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_learner_role,
+            user=self.user_1,
+            enterprise_customer=self.enterprise_customer_1
+        )
+
+        # user 2 has learner role for enterprise 2
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=self.enterprise_learner_role,
+            user=self.user_2,
+            enterprise_customer=self.enterprise_customer_2
+        )
+
+        # setup Pending Enterprise Customer
+        self.email_one = 'test_email_1@example.com'
+        self.email_two = "test_email_2@example.com"
+        self.enterprise_customer_one = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_two = factories.EnterpriseCustomerFactory()
+        # admin pending customer user
+        self.pending_customer_user_one = factories.PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer_one,
+            user_email=self.email_one
+        )
+        # non-admin pending customer user
+        self.pending_customer_user_two = factories.PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer_two,
+            user_email=self.email_two
+        )
+
+    def test_serialize_users(self):
+        for customer_user, is_admin, role_assignments in [
+            # test admin user
+            (self.enterprise_customer_user_1, True, [ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE]),
+            # test non-admin user
+            (self.enterprise_customer_user_2, False, [ENTERPRISE_LEARNER_ROLE]),
+        ]:
+            user = customer_user.user
+            expected_admin_user = {
+                'enterprise_customer_user': OrderedDict([
+                    ('id', user.id),
+                    ('username', user.username),
+                    ('first_name', user.first_name),
+                    ('last_name', user.last_name),
+                    ('email', user.email),
+                    ('is_staff', user.is_staff),
+                    ('is_active', user.is_active),
+                    ('date_joined', user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"))
+                ]),
+                'pending_enterprise_customer_user': None,
+                'role_assignments': role_assignments,
+                'is_admin': is_admin
+            }
+
+            serializer = EnterpriseUserSerializer(customer_user)
+            serialized_admin_user = serializer.data
+
+            self.assertEqual(expected_admin_user, serialized_admin_user)
+
+    def test_serialize_pending_users(self):
+        for pending_customer_user, is_pending_admin in [
+            # test pending admin user
+            (self.pending_customer_user_one, True),
+            # test pending non-admin user
+            (self.pending_customer_user_two, False),
+        ]:
+            expected_pending_admin_user = {
+                'enterprise_customer_user': None,
+                'pending_enterprise_customer_user': {
+                    'is_pending_admin': is_pending_admin,
+                    'is_pending_learner': True,
+                    'user_email': pending_customer_user.user_email,
+                },
+                'role_assignments': None,
+                'is_admin': False
+            }
+            serializer = EnterpriseUserSerializer(pending_customer_user)
+            serialized_pending_admin_user = serializer.data
+
+            self.assertEqual(expected_pending_admin_user, serialized_pending_admin_user)
