@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.22.3]
+----------
+* feat: Adding enterprise-customer-support endpoint
+
 [4.22.2]
 ----------
 * fix: Serializes `course_key` field from the federated-content-metadata, `CourseDetails` model within the `EnterpriseCourseEnrollmentSerializer`.
