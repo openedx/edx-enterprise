@@ -9578,3 +9578,112 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         """
         actual_entity_id = fetch_entity_id_from_metadata_xml(metadata_xml)
         assert actual_entity_id == expected_entity_id
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise user list endpoint
+    """
+    ECS_ENDPOINT = 'enterprise-customer-support'
+    ECS_KWARG = 'enterprise_uuid'
+
+    def test_get_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        expected_json = {
+            'enterprise_customer_user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE],
+            'is_admin': False
+        }
+
+        # Test valid UUID
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')[0]
+
+        # Test invalid UUID
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: 123})
+        response = self.client.get(settings.TEST_SERVER + url)
+        self.assertEqual(response.status_code, 404)
+
+        # Test Admin UUID
+        user_2 = factories.UserFactory()
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            role=admin_role(),
+            user=user_2,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        expected_json_2 = {
+            'enterprise_customer_user': {
+                'id': user_2.id,
+                'username': user_2.username,
+                'first_name': user_2.first_name,
+                'last_name': user_2.last_name,
+                'email': user_2.email,
+                'is_staff': user_2.is_staff,
+                'is_active': user_2.is_active,
+                'date_joined': user_2.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE],
+            'is_admin': True
+        }
+
+        url_2 = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer_2.uuid})
+        response_2 = self.client.get(settings.TEST_SERVER + url_2)
+
+        assert expected_json_2 == response_2.json().get('results')[0]
+
+    def test_get_pending_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        pending_user = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+        )
+
+        expected_json = {
+            'enterprise_customer_user': None,
+            'pending_enterprise_customer_user': {
+                'is_pending_admin': False,
+                'is_pending_learner': True,
+                'user_email': pending_user.user_email,
+            },
+            'role_assignments': None,
+            'is_admin': False
+        }
+
+        # Test valid pending customer UUID
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')[0]

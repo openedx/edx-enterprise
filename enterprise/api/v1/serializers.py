@@ -40,6 +40,7 @@ from enterprise.utils import (
     get_active_sso_configurations_for_customer,
     get_integrations_for_customers,
     get_last_course_run_end_date,
+    get_pending_enterprise_customer_users,
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
@@ -1828,3 +1829,65 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         child=serializers.EmailField(required=True),
         required=False,
     )
+
+
+class EnterpriseUserSerializer(serializers.Serializer):
+    """
+    Serializer for EnterpriseCustomerUser model with additions.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerUser
+        fields = (
+            'enterprise_customer_user'
+            'pending_enterprise_customer_user',
+            'role_assignments'
+            'is_admin'
+        )
+
+    enterprise_customer_user = UserSerializer(source="user", required=False, default=None)
+    pending_enterprise_customer_user = serializers.SerializerMethodField(required=False, default=None)
+    role_assignments = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+
+    def get_pending_enterprise_customer_user(self, obj):
+        """
+        Return either the pending user info
+        """
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        # if the obj has a user id, this means that it is a realized user, not pending
+        if hasattr(obj, 'user_id'):
+            return None
+        return get_pending_enterprise_customer_users(obj.user_email, enterprise_customer_uuid)
+
+    def get_is_admin(self, obj):
+        """
+        Make admin determination based on Enterprise role in SystemWideEnterpriseUserRoleAssignment
+        """
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        user_email = obj.user_email
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE,
+            enterprise_customer_id=enterprise_customer_uuid,
+            user__email=user_email
+        )
+        return admin_instance.exists()
+
+    def get_role_assignments(self, obj):
+        """
+        Fetch user's role assignments
+        """
+        if hasattr(obj, 'user_id'):
+            user_id = obj.user_id
+            enterprise_customer_uuid = obj.enterprise_customer.uuid
+
+            role_assignments = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user_id=user_id
+            ).select_related('role')
+            role_assignments_by_ecu_id = [
+                role_assignment.role.name for role_assignment in role_assignments if
+                role_assignment.user_id == user_id and
+                role_assignment.enterprise_customer_id == enterprise_customer_uuid
+            ]
+            return role_assignments_by_ecu_id
+        else:
+            return None
