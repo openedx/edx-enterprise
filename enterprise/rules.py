@@ -15,7 +15,7 @@ from enterprise.constants import (
     ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
-    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -35,6 +35,7 @@ def has_implicit_access_to_sso_orchestration_configs(user, obj):  # pylint: disa
     request = crum.get_current_request()
     decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
     return request_user_has_implicit_access_via_jwt(decoded_jwt, ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE, obj)
+
 
 @rules.predicate
 def has_implicit_access_as_provisioning_admin(user, obj):  # pylint: disable=unused-argument
