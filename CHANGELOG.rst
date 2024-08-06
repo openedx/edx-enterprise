@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.22.5]
+----------
+* chore: requirement updates
+
 [4.22.4]
 ----------
 * feat: Adding enterprise-customer-support endpoint
