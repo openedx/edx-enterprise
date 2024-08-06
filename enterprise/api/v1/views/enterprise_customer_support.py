@@ -6,7 +6,7 @@ Views for the ``enterprise-user`` API endpoint.
 from collections import OrderedDict
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, response, status
+from rest_framework import filters, permissions, response, status
 from rest_framework.pagination import PageNumberPagination
 
 from django.core.exceptions import ValidationError
@@ -52,14 +52,68 @@ class EnterpriseCustomerSupportPaginator(PageNumberPagination):
 
 class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     """
-    API views for the ``enterprise-user`` API endpoint.
+    API views for the ``enterprise-customer-support`` API endpoint.
     """
-    queryset = models.EnterpriseCustomerUser.objects.all()
-    filter_backends = (DjangoFilterBackend,)
+    queryset = models.PendingEnterpriseCustomerUser.objects.all()
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     permission_classes = (permissions.IsAuthenticated,)
     paginator = EnterpriseCustomerSupportPaginator()
 
-    USER_ID_FILTER = 'enterprise_customer_users__user_id'
+    ordering_fields = ['id']
+    filterset_fields = ['user_email']
+
+    def filter_by_email(self, data):
+        """
+        Filter dataset by email
+        """
+        filter_email = self.request.query_params.get('user_email', None)
+
+        if filter_email:
+            results = []
+            for elem in data:
+                if (
+                    elem['enterprise_customer_user'] and
+                    elem['enterprise_customer_user']['email'] == filter_email
+                ):
+                    results.append(elem)
+
+                elif (
+                    elem['pending_enterprise_customer_user'] and
+                    elem['pending_enterprise_customer_user']['user_email'] == filter_email
+                ):
+                    results.append(elem)
+
+            return results
+
+        else:
+            return data
+
+    def order_by_attribute(self, data):
+        """
+        Order by ID if passed in by user, else default to is_admin ordering
+        """
+        ordering_criteria = self.request.query_params.get('ordering', None)
+
+        if ordering_criteria:
+            reverse = '-' in ordering_criteria
+            data = sorted(
+                data,
+                key=(
+                    lambda k:
+                    k['enterprise_customer_user']['id']
+                    if k['enterprise_customer_user']
+                    else k['is_admin']
+                ),
+                reverse=reverse
+            )
+        else:
+            data = sorted(
+                data,
+                key=lambda k: k['is_admin'],
+                reverse=True
+            )
+
+        return data
 
     def retrieve(self, request, *args, **kwargs):
         """
@@ -71,6 +125,7 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
             enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
                 enterprise_customer__uuid=enterprise_uuid,
             )
+
             users.extend(enterprise_customer_queryset)
             pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
                 enterprise_customer__uuid=enterprise_uuid
@@ -92,7 +147,11 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
             users_page,
             many=True
         )
-        serializer_data = sorted(
-            serializer.data, key=lambda k: k['is_admin'], reverse=True)
+
+        serializer_data = serializer.data
+        # apply filter criteria
+        serializer_data = self.filter_by_email(serializer_data)
+        # apply order criteria
+        serializer_data = self.order_by_attribute(serializer_data)
 
         return self.paginator.get_paginated_response(serializer_data)
