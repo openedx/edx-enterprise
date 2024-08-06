@@ -5,6 +5,8 @@ Views for the ``enterprise-user`` API endpoint.
 
 from collections import OrderedDict
 
+from django.contrib import auth
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, response, status
 from rest_framework.pagination import PageNumberPagination
@@ -15,6 +17,7 @@ from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadOnlyModelViewSet
 from enterprise.logging import getEnterpriseLogger
+User = auth.get_user_model()
 
 LOGGER = getEnterpriseLogger(__name__)
 
@@ -62,31 +65,18 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     ordering_fields = ['id']
     filterset_fields = ['user_email']
 
-    def filter_by_email(self, data):
-        """
-        Filter dataset by email
-        """
+    def filter_queryset_by_email(self, queryset, is_pending_user=False):
         filter_email = self.request.query_params.get('user_email', None)
 
         if filter_email:
-            results = []
-            for elem in data:
-                if (
-                    elem['enterprise_customer_user'] and
-                    elem['enterprise_customer_user']['email'] == filter_email
-                ):
-                    results.append(elem)
+            if not is_pending_user:
+                queryset = queryset.filter(
+                    user_id__in=User.objects.filter(Q(email__icontains=filter_email))
+                )
+            else:
+                queryset = queryset.filter(user_email=filter_email)
 
-                elif (
-                    elem['pending_enterprise_customer_user'] and
-                    elem['pending_enterprise_customer_user']['user_email'] == filter_email
-                ):
-                    results.append(elem)
-
-            return results
-
-        else:
-            return data
+        return queryset
 
     def order_by_attribute(self, data):
         """
@@ -125,14 +115,20 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
             enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
                 enterprise_customer__uuid=enterprise_uuid,
             )
-
+            enterprise_customer_queryset = self.filter_queryset_by_email(enterprise_customer_queryset)
             users.extend(enterprise_customer_queryset)
+
             pending_enterprise_customer_queryset = models.PendingEnterpriseCustomerUser.objects.filter(
                 enterprise_customer__uuid=enterprise_uuid
             ).order_by('user_email')
+            pending_enterprise_customer_queryset = self.filter_queryset_by_email(
+                pending_enterprise_customer_queryset,
+                is_pending_user=True
+            )
             users.extend(pending_enterprise_customer_queryset)
+
         except ValidationError:
-            # did not find UUID match in either EnterpriseCustomerUser or  PendingEnterpriseCustomerUser
+            # did not find UUID match in either EnterpriseCustomerUser or PendingEnterpriseCustomerUser
             return response.Response(
                 {'detail': 'Could not find enterprise uuid {}'.format(enterprise_uuid)},
                 status=status.HTTP_404_NOT_FOUND
@@ -148,10 +144,7 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
             many=True
         )
 
-        serializer_data = serializer.data
-        # apply filter criteria
-        serializer_data = self.filter_by_email(serializer_data)
         # apply order criteria
-        serializer_data = self.order_by_attribute(serializer_data)
+        serializer_data = self.order_by_attribute(serializer.data)
 
         return self.paginator.get_paginated_response(serializer_data)
