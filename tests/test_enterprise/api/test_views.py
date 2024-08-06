@@ -1873,6 +1873,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__modified': '2021-10-20T19:01:31Z',
                 'enterprise_customer__site__domain': 'example.com',
                 'enterprise_customer__site__name': 'example.com',
+                'enterprise_customer__created': '2021-10-20T19:01:31Z',
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
@@ -1931,6 +1932,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
                     'active': True,
                 }],
+                'created': '2021-10-20T19:01:31Z',
             }],
         ),
     )
