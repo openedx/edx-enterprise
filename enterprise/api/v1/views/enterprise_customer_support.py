@@ -136,12 +136,10 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
         )
         serializer_data = serializer.data
 
-        '''
-        Apply default ordering criteria (by is_admin) only if user does not 
-        specify ordering criteria;
-        Process this after the data has been serialized since the is_admin 
-        field is computed/available only after serialization step
-        '''
+        # Apply default ordering criteria (by is_admin) only if user does not
+        # specify ordering criteria;
+        # Process this after the data has been serialized since the is_admin
+        # field is computed/available only after serialization step
         if not ordering_criteria:
             serializer_data = sorted(
                 serializer_data,
