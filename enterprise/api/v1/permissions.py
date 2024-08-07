@@ -20,16 +20,15 @@ class IsInEnterpriseGroup(permissions.BasePermission):
         )
 
 
-class IsInProvisioningAdminGroup(permissions.BasePermission):
+class IsProvisioningAdmin(permissions.BasePermission):
     """
-    Grant access to those users only who are part of the license provisiioning django group
+    Grant access to those users only who have provisioning_admin role assigned to them.
     """
-    ALLOWED_API_GROUPS = ['provisioning_admins_group']
     message = 'Access denied: You do not have the necessary permissions to access this.'
 
     def has_permission(self, request, view):
         return (
             super().has_permission(request, view) and (
-                request.user.groups.filter(name__in=self.ALLOWED_API_GROUPS).exists()
+                request.user.has_perm('enterprise.has_provisioning_admin_access')
             )
         )

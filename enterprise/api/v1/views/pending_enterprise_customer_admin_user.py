@@ -7,14 +7,16 @@ from rest_framework import filters, permissions
 
 from enterprise import models
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.permissions import IsInProvisioningAdminGroup
+from enterprise.api.v1.permissions import IsProvisioningAdmin
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
+from edx_rbac.mixins import PermissionRequiredMixin
+from enterprise.constants import ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION
 
 LOGGER = getEnterpriseLogger(__name__)
 
 
-class PendingEnterpriseCustomerAdminUserViewSet(EnterpriseReadWriteModelViewSet):
+class PendingEnterpriseCustomerAdminUserViewSet(PermissionRequiredMixin, EnterpriseReadWriteModelViewSet):
     """
     API views for the ``pending-enterprise-customer-admin-user`` API endpoint.
     Requires staff permissions
@@ -22,7 +24,8 @@ class PendingEnterpriseCustomerAdminUserViewSet(EnterpriseReadWriteModelViewSet)
     queryset = models.PendingEnterpriseCustomerAdminUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     serializer_class = serializers.PendingEnterpriseCustomerAdminUserSerializer
-    permission_classes = (permissions.IsAuthenticated, IsInProvisioningAdminGroup)
+    permission_classes = (permissions.IsAuthenticated,)
+    permission_required = ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION
 
     FIELDS = (
         'enterprise_customer', 'user_email',

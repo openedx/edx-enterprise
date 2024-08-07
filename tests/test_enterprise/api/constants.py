@@ -11,5 +11,3 @@ FAKE_SSO_METADATA_XML_WITH_ENTITY_ID = [
     ('<md:EntitiesDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"> <md:EntityDescriptor entityID="https://idp1.example.com"> <md:IDPSSODescriptor></md:IDPSSODescriptor> </md:EntityDescriptor> <md:EntityDescriptor entityID="https://idp2.example.com"> <md:IDPSSODescriptor></md:IDPSSODescriptor> </md:EntityDescriptor> </md:EntitiesDescriptor>', "https://idp1.example.com"),  # pylint: disable=line-too-long
     ('<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"><EntityDescriptor entityID="https://example.com"></EntityDescriptor></EntitiesDescriptor>', "https://example.com")  # pylint: disable=line-too-long
 ]
-
-PROVISIONING_ADMINS_GROUP = "provisioning_admins_group"
