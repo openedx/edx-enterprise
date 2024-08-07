@@ -5,18 +5,19 @@ Views for the ``enterprise-user`` API endpoint.
 
 from collections import OrderedDict
 
-from django.contrib import auth
-from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, response, status
 from rest_framework.pagination import PageNumberPagination
 
+from django.contrib import auth
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadOnlyModelViewSet
 from enterprise.logging import getEnterpriseLogger
+
 User = auth.get_user_model()
 
 LOGGER = getEnterpriseLogger(__name__)
@@ -63,6 +64,9 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
     filterset_fields = ['user_email']
 
     def filter_queryset_by_email(self, queryset, is_pending_user=False):
+        """
+        Filter queryset based on user provided email address
+        """
         filter_email = self.request.query_params.get('user_email', None)
 
         if filter_email:
