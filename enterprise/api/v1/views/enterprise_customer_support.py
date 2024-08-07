@@ -43,9 +43,6 @@ class EnterpriseCustomerSupportPaginator(PageNumberPagination):
         Paginate a queryset if required, either returning a page object,
         or `None` if pagination is not configured for this view.
 
-        This method is a modified version of the original `paginate_queryset` method
-        from the `PageNumberPagination` class. The original method was modified to
-        handle the case where the `queryset` is a `filter` object.
         """
         if isinstance(queryset, filter):
             queryset = list(queryset)
@@ -144,7 +141,7 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
             many=True
         )
 
-        # apply order criteria
+        # apply ordering criteria
         serializer_data = self.order_by_attribute(serializer.data)
 
         return self.paginator.get_paginated_response(serializer_data)
