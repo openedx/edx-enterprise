@@ -366,7 +366,7 @@ class EnterpriseCustomerSupportToolSerializer(EnterpriseCustomerSerializer):
             'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
             'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
-            'default_language', 'country', 'enable_slug_login', 'active_sso_configurations'
+            'default_language', 'country', 'enable_slug_login', 'active_sso_configurations', 'created',
         )
 
     active_sso_configurations = serializers.SerializerMethodField()

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.22.6]
+----------
+* feat: add created time to reponse
+
 [4.22.5]
 ----------
 * chore: requirement updates
