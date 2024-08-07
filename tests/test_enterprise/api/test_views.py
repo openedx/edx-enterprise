@@ -903,16 +903,16 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         """
         Ensure that only provisioning admins can post otherwise expect a 403.
         """
-
+        self.set_jwt_cookie(system_wide_role='test_unknown_role', context=None,)
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
             'user_email': self.user.email,
         }
-
+  
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
         assert response.status_code == 403
         error_message = response.json()['detail']
-        expected_message = "Access denied: You do not have the necessary permissions to access this."
+        expected_message = "MISSING: provisioning.has_pending_enterprise_customer_admin_access"
         self.assertIn(expected_message, error_message)
 
     def test_post_pending_enterprise_customer_user_logged_out(self):

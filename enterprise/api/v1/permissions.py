@@ -18,17 +18,3 @@ class IsInEnterpriseGroup(permissions.BasePermission):
                 request.user.groups.filter(name__in=request.query_params.getlist('permissions')).exists()
             )
         )
-
-
-class IsProvisioningAdmin(permissions.BasePermission):
-    """
-    Grant access to those users only who have provisioning_admin role assigned to them.
-    """
-    message = 'Access denied: You do not have the necessary permissions to access this.'
-
-    def has_permission(self, request, view):
-        return (
-            super().has_permission(request, view) and (
-                request.user.has_perm('enterprise.has_provisioning_admin_access')
-            )
-        )

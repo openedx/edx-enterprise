@@ -33,7 +33,10 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import has_any_permissions, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
-from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
+from enterprise.constants import (
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION
+)
 from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
 from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
@@ -69,7 +72,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Allow PAs to access all enterprise customers by modifying filter_backends
         """
         queryset = self.queryset
-        is_provisioning_admin = self.request.user.has_perm('enterprise.has_provisioning_admin_access')
+        is_provisioning_admin = self.request.user.has_perm(ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
         if is_provisioning_admin:
             self.filter_backends = (
                 filters.OrderingFilter, DjangoFilterBackend)
@@ -132,7 +135,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return Response(serializer.data)
 
     @method_decorator(has_any_permissions('enterprise.can_access_admin_dashboard',
-                                          'enterprise.has_provisioning_admin_access'))
+                                          ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION))
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-customer/
@@ -140,7 +143,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return super().create(request, *args, **kwargs)
 
     @method_decorator(has_any_permissions('enterprise.can_access_admin_dashboard',
-                                          'enterprise.has_provisioning_admin_access'))
+                                          ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION))
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 

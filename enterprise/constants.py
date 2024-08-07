@@ -150,6 +150,13 @@ ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 ENTERPRISE_FULFILLMENT_OPERATOR_ROLE = 'fulfillment_operator'
 ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE = 'sso_orchestrator_operator'
+# Provisioning admins roles:
+PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_enterprise_customer_admin'
+PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_USER_ROLE = 'provisioning_pending_enterprise_customer_users_admin'
+# Provisioning admins permissions:
+ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_enterprise_customer_admin_access'
+ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION = \
+    'provisioning.has_pending_enterprise_customer_admin_access'
 
 # Tracking related
 PATHWAY_CUSTOMER_ADMIN_ENROLLMENT = 'customer-admin-enrollment'
