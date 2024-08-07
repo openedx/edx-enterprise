@@ -79,39 +79,13 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
 
         return queryset
 
-    def order_by_attribute(self, data):
-        """
-        Order by ID if passed in by user, else default to is_admin ordering
-        """
-        ordering_criteria = self.request.query_params.get('ordering', None)
-
-        if ordering_criteria:
-            reverse = '-' in ordering_criteria
-            data = sorted(
-                data,
-                key=(
-                    lambda k:
-                    k['enterprise_customer_user']['id']
-                    if k['enterprise_customer_user']
-                    else k['is_admin']
-                ),
-                reverse=reverse
-            )
-        else:
-            data = sorted(
-                data,
-                key=lambda k: k['is_admin'],
-                reverse=True
-            )
-
-        return data
-
     def retrieve(self, request, *args, **kwargs):
         """
-        - Filter down the queryset of groups available to the requesting uuid.
+        Filter down the queryset of groups available to the requesting uuid.
         """
         enterprise_uuid = kwargs.get('enterprise_uuid', None)
         users = []
+
         try:
             enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
                 enterprise_customer__uuid=enterprise_uuid,
@@ -135,17 +109,44 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # apply ordering by user criteria before the users get divvied up by pagination
+        ordering_criteria = self.request.query_params.get('ordering', None)
+        if ordering_criteria:
+            is_reversed = '-' in ordering_criteria
+            users = sorted(
+                users,
+                key=(
+                    lambda k:
+                    k.user_id
+                    if hasattr(k, 'user_id')
+                    else k.id
+                ),
+                reverse=is_reversed
+            )
+
         users_page = self.paginator.paginate_queryset(
             users,
             request,
             view=self
         )
+
         serializer = serializers.EnterpriseUserSerializer(
             users_page,
             many=True
         )
+        serializer_data = serializer.data
 
-        # apply ordering criteria
-        serializer_data = self.order_by_attribute(serializer.data)
+        '''
+        Apply default ordering criteria (by is_admin) only if user does not 
+        specify ordering criteria;
+        Process this after the data has been serialized since the is_admin 
+        field is computed/available only after serialization step
+        '''
+        if not ordering_criteria:
+            serializer_data = sorted(
+                serializer_data,
+                key=lambda k: k['is_admin'],
+                reverse=True
+            )
 
         return self.paginator.get_paginated_response(serializer_data)
