@@ -109,42 +109,60 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # apply ordering by user criteria before the users get divvied up by pagination
+        # default sort criteria
+        is_reversed = False
+        sort_field = 'first_name'
+
         ordering_criteria = self.request.query_params.get('ordering', None)
+
+        # apply pre-serialization ordering by user criteria before the users
+        # get divvied up by pagination
         if ordering_criteria:
             is_reversed = '-' in ordering_criteria
-            users = sorted(
-                users,
-                key=(
-                    lambda k:
-                    k.user_id
-                    if hasattr(k, 'user_id')
-                    else k.id
-                ),
-                reverse=is_reversed
-            )
+            sort_field = 'user_id'
 
+        # sort the users by default or specified criteria since the queryset will get
+        # split up during pagination and the post-serialization sort operations
+        # will be only applied to a single page of results
+        users = sorted(
+            users,
+            key=(
+                lambda k:
+                getattr(k, sort_field)
+                if hasattr(k, sort_field)
+                else k.id
+            ),
+            reverse=is_reversed
+        )
+
+        # paginate the queryset
         users_page = self.paginator.paginate_queryset(
             users,
             request,
             view=self
         )
 
+        # serialize the paged dataset
         serializer = serializers.EnterpriseUserSerializer(
             users_page,
             many=True
         )
         serializer_data = serializer.data
 
-        # Apply default ordering criteria (by is_admin) only if user does not
-        # specify ordering criteria;
+        # Apply post-serialization default ordering criteria (first by is_admin,
+        # then first name) only if user does not specify ordering criteria;
         # Process this after the data has been serialized since the is_admin
         # field is computed/available only after serialization step
         if not ordering_criteria:
             serializer_data = sorted(
                 serializer_data,
-                key=lambda k: k['is_admin'],
-                reverse=True
+                key=lambda k: (
+                    # sort by is_admin = True first (i.e. -1),
+                    # then sort by first_name lexicographically
+                    (-1 * k['is_admin'], k['enterprise_customer_user']['first_name'])
+                    if k['enterprise_customer_user'] is not None
+                    else -1 * k['is_admin']
+                )
             )
 
         return self.paginator.get_paginated_response(serializer_data)
