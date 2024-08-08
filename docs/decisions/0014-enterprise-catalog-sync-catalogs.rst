@@ -14,7 +14,7 @@ We would like to have a way to reuse a saved set of courses configured by a quer
 Decisions
 =========
 
-- **Sync catalog/customer data with enterprise-catalog**
+**Sync catalog/customer data with enterprise-catalog**
 As the catalog data is saved in both edx-enterprise and enterprise-catalog, we need to make sure that catalog data is consistent across both.
 In the context of edx-enterprise, changes to EnterpriseCatalogQuery and EnterpriseCustomerCatalog will be propagated to their counterparts
 in the enterprise-catalog service.
@@ -23,7 +23,7 @@ in the enterprise-catalog service.
 Consequences
 ============
 
-- **EnterpriseCatalogQuery Sync Process**
+**EnterpriseCatalogQuery Sync Process**
 The enterprise-catalog service enforces a uniqueness constraint for the `content_filter` field, and so edx-enterprise must enforce it as well
 or the sync operation will fail and the entities will be out of sync with each other.
 
@@ -35,7 +35,7 @@ them to enterprise-catalog.
 If the `content_filter` is *not* unique, we display an error on the EnterpriseCatalogQuery edit page and don't commit the change. 
 
 
-- **EnterpriseCustomerCatalog Sync Process**
+**EnterpriseCustomerCatalog Sync Process**
 In the Django Admin console, whenever a EnterpriseCustomerCatalog is created, or an existing one is edited, we simply pass the changes on to 
 enterprise-catalog without doing any checks for duplicates.
 
