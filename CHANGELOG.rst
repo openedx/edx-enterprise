@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.1]
+---------
+* fix: don't allow saving duplicate EnterpriseCatalogQuery content_filter
+
 [4.22.6]
 ----------
 * feat: add created time to reponse
