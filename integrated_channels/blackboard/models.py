@@ -279,7 +279,9 @@ class BlackboardLearnerAssessmentDataTransmissionAudit(LearnerDataTransmissionAu
     The payload correlated to a courses subsection learner data we send to blackboard at a given point in time for an
     enterprise course enrollment.
 
-    .. no_pii:
+    .. pii: user_email and blackboard_user_email contain PII. Declaring "retained" because I don't know if it's retired.
+    .. pii_types: email_address
+    .. pii_retirement: retained
     """
     blackboard_user_email = models.CharField(
         max_length=255,

@@ -181,7 +181,9 @@ class CanvasLearnerAssessmentDataTransmissionAudit(LearnerDataTransmissionAudit)
     The payload correlated to a courses subsection learner data we send to canvas at a given point in time for an
     enterprise course enrollment.
 
-    .. no_pii:
+    .. pii: user_email and canvas_user_email contains PII. Declaring "retained" because I don't know if it's retired.
+    .. pii_types: email_address
+    .. pii_retirement: retained
     """
     canvas_user_email = models.CharField(
         max_length=255,

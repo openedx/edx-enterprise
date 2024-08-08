@@ -18,7 +18,7 @@ jobs:
       matrix:
         python-version:
         - '3.11'
-        toxenv: [quality, docs, django42-celery53, django42-pii-annotations]
+        toxenv: [quality, docs, django42-celery53, pii_check]
     env:
       RUNJSHINT: true
     steps:

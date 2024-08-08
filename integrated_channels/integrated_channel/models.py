@@ -497,8 +497,9 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
 
-    .. pii: The user_email model field contains PII
-
+    .. pii: The user_email model field contains PII. Declaring "retained" because I don't know if it's retired.
+    .. pii_types: email_address
+    .. pii_retirement: retained
     """
 
     # TODO: index customer uuid + plugin coinfig id together, with enrollment id?

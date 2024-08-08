@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.2]
+---------
+* test: pii check stage actually checks PII instead of not at all.
+
 [4.23.1]
 ---------
 * fix: don't allow saving duplicate EnterpriseCatalogQuery content_filter
