@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.3]
+---------
+* fix: add missing migration for content_filter help text
+
 [4.23.2]
 ---------
 * test: pii check stage actually checks PII instead of not at all.
