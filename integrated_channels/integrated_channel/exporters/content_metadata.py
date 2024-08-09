@@ -205,7 +205,7 @@ class ContentMetadataExporter(Exporter):
                 )
 
                 content_query.add(
-                    Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+                    Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(remote_errored_at__isnull=True) |
                     Q(remote_errored_at__lt=self.enterprise_customer.modified),
                     Q.AND
                 )
@@ -414,7 +414,7 @@ class ContentMetadataExporter(Exporter):
                 )
 
                 past_content_query.add(
-                    Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+                    Q(remote_errored_at__lt=self.LAST_24_HRS) | Q(remote_errored_at__isnull=True) |
                     Q(remote_errored_at__lt=self.enterprise_customer.modified), Q.AND)
                 past_content = ContentMetadataItemTransmission.objects.filter(
                     past_content_query).first()
@@ -482,6 +482,7 @@ class ContentMetadataExporter(Exporter):
         create_payload = {}
         update_payload = {}
         delete_payload = {}
+        key_to_content_metadata_mapping = {}
         for enterprise_customer_catalog in enterprise_customer_catalogs:
 
             # if we're already at the max in a multi-catalog situation, break out

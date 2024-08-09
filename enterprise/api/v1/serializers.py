@@ -37,8 +37,10 @@ from enterprise.models import (
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
+    get_active_sso_configurations_for_customer,
     get_integrations_for_customers,
     get_last_course_run_end_date,
+    get_pending_enterprise_customer_users,
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
@@ -224,9 +226,10 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
             'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
             'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
-            'enable_career_engagement_network_on_learner_portal', 'career_engagement_network_message',
+            'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
-            'enable_one_academy', 'active_integrations',
+            'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
+            'default_language', 'country', 'enable_slug_login',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
@@ -338,6 +341,38 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
                 if not getattr(obj, notification_filter.filter, None):
                     notification_queryset = None
         return AdminNotificationSerializer(notification_queryset).data
+
+
+class EnterpriseCustomerSupportToolSerializer(EnterpriseCustomerSerializer):
+    """
+    Extends the EnterpriseCustomerSerializer with additional fields to needed in the
+    MFE Support tool.
+    """
+    class Meta:
+        model = models.EnterpriseCustomer
+        fields = (
+            'uuid', 'name', 'slug', 'active', 'auth_org_id', 'site', 'enable_data_sharing_consent',
+            'enforce_data_sharing_consent', 'branding_configuration', 'disable_expiry_messaging_for_learner_credit',
+            'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
+            'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
+            'enable_learner_portal', 'enable_learner_portal_offers', 'enable_portal_learner_credit_management_screen',
+            'enable_executive_education_2U_fulfillment', 'enable_portal_reporting_config_screen',
+            'enable_portal_saml_configuration_screen', 'contact_email',
+            'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
+            'enable_integrated_customer_learner_portal_search', 'enable_generation_of_api_credentials',
+            'enable_portal_lms_configurations_screen', 'sender_alias', 'identity_providers',
+            'enterprise_customer_catalogs', 'reply_to', 'enterprise_notification_banner', 'hide_labor_market_data',
+            'modified', 'enable_universal_link', 'enable_browse_and_request', 'admin_users',
+            'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
+            'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
+            'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
+            'default_language', 'country', 'enable_slug_login', 'active_sso_configurations', 'created',
+        )
+
+    active_sso_configurations = serializers.SerializerMethodField()
+
+    def get_active_sso_configurations(self, obj):
+        return get_active_sso_configurations_for_customer(obj.uuid)
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
@@ -641,8 +676,10 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         """
         Return the timestamp and name of the most recent action associated with the membership.
         """
+        if obj.errored_at:
+            return f"Errored: {obj.errored_at.strftime('%B %d, %Y')}"
         if obj.is_removed:
-            return f"Removed: {obj.modified.strftime('%B %d, %Y')}"
+            return f"Removed: {obj.removed_at.strftime('%B %d, %Y')}"
         if obj.enterprise_customer_user and obj.activated_at:
             return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
         return f"Invited: {obj.created.strftime('%B %d, %Y')}"
@@ -1792,3 +1829,65 @@ class EnterpriseGroupLearnersRequestQuerySerializer(serializers.Serializer):
         child=serializers.EmailField(required=True),
         required=False,
     )
+
+
+class EnterpriseUserSerializer(serializers.Serializer):
+    """
+    Serializer for EnterpriseCustomerUser model with additions.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerUser
+        fields = (
+            'enterprise_customer_user'
+            'pending_enterprise_customer_user',
+            'role_assignments'
+            'is_admin'
+        )
+
+    enterprise_customer_user = UserSerializer(source="user", required=False, default=None)
+    pending_enterprise_customer_user = serializers.SerializerMethodField(required=False, default=None)
+    role_assignments = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+
+    def get_pending_enterprise_customer_user(self, obj):
+        """
+        Return either the pending user info
+        """
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        # if the obj has a user id, this means that it is a realized user, not pending
+        if hasattr(obj, 'user_id'):
+            return None
+        return get_pending_enterprise_customer_users(obj.user_email, enterprise_customer_uuid)
+
+    def get_is_admin(self, obj):
+        """
+        Make admin determination based on Enterprise role in SystemWideEnterpriseUserRoleAssignment
+        """
+        enterprise_customer_uuid = obj.enterprise_customer.uuid
+        user_email = obj.user_email
+        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role__name=ENTERPRISE_ADMIN_ROLE,
+            enterprise_customer_id=enterprise_customer_uuid,
+            user__email=user_email
+        )
+        return admin_instance.exists()
+
+    def get_role_assignments(self, obj):
+        """
+        Fetch user's role assignments
+        """
+        if hasattr(obj, 'user_id'):
+            user_id = obj.user_id
+            enterprise_customer_uuid = obj.enterprise_customer.uuid
+
+            role_assignments = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user_id=user_id
+            ).select_related('role')
+            role_assignments_by_ecu_id = [
+                role_assignment.role.name for role_assignment in role_assignments if
+                role_assignment.user_id == user_id and
+                role_assignment.enterprise_customer_id == enterprise_customer_uuid
+            ]
+            return role_assignments_by_ecu_id
+        else:
+            return None

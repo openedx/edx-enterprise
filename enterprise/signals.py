@@ -4,6 +4,8 @@ Django signal handlers.
 
 from logging import getLogger
 
+from django.conf import settings
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
@@ -30,10 +32,11 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
-    from openedx_events.learning.signals import COURSE_UNENROLLMENT_COMPLETED
+    from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
 
 except ImportError:
     CourseEnrollment = None
+    COURSE_ENROLLMENT_CHANGED = None
     COURSE_UNENROLLMENT_COMPLETED = None
 
 logger = getLogger(__name__)
@@ -47,6 +50,10 @@ INTEGRATED_CHANNELS = [
     MoodleEnterpriseCustomerConfiguration,
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
 ]
+
+# Default number of seconds to use as task countdown
+# if not otherwise specified via Django settings.
+DEFAULT_COUNTDOWN = 3
 
 
 @disable_for_loaddata
@@ -344,6 +351,31 @@ def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
             break
 
 
+def course_enrollment_changed_receiver(sender, **kwargs):     # pylint: disable=unused-argument
+    """
+    Handle when a course enrollment is (de/re)activated.
+
+    Importantly, if a student.CourseEnrollment is being reactivated, take this opportunity to atomically reactivate
+    the corresponding EnterpriseCourseEnrollment.
+    """
+    enrollment = kwargs.get('enrollment')
+    enterprise_enrollment = models.EnterpriseCourseEnrollment.objects.filter(
+        course_id=enrollment.course.course_key,
+        enterprise_customer_user__user_id=enrollment.user.id,
+    ).first()
+    if enterprise_enrollment and enrollment.is_active:
+        logger.info(
+            f"Marking EnterpriseCourseEnrollment as enrolled (unenrolled_at=NULL) for user {enrollment.user} and "
+            f"course {enrollment.course.course_key}"
+        )
+        enterprise_enrollment.unenrolled = False
+        enterprise_enrollment.unenrolled_at = None
+        enterprise_enrollment.saved_for_later = False
+        enterprise_enrollment.save()
+    # Note: If the CourseEnrollment is being flipped to is_active=False, then this handler is a no-op.
+    # In that case, the `enterprise_unenrollment_receiver` signal handler below will run.
+
+
 def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=unused-argument
     """
     Mark the EnterpriseCourseEnrollment object as unenrolled when a user unenrolls from a course.
@@ -358,6 +390,7 @@ def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=un
             f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.user} and "
             f"course {enrollment.course.course_key}"
         )
+        enterprise_enrollment.unenrolled = True
         enterprise_enrollment.unenrolled_at = localized_utcnow()
         enterprise_enrollment.save()
 
@@ -383,16 +416,30 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
                 user_id,
                 instance.course_id,
             )
-        logger.info((
-            "User %s is an EnterpriseCustomerUser. "
-            "Spinning off task to check if course is within User's "
-            "Enterprise's EnterpriseCustomerCatalog."
-        ), user_id)
 
-        create_enterprise_enrollment.delay(
-            str(instance.course_id),
-            ecu.id,
-        )
+        # Number of seconds to tell celery to wait before the `create_enterprise_enrollment`
+        # task should begin execution.
+        countdown = getattr(settings, 'CREATE_ENTERPRISE_ENROLLMENT_TASK_COUNTDOWN', DEFAULT_COUNTDOWN)
+
+        def submit_task():
+            """
+            In-line helper to run the create_enterprise_enrollment task on commit.
+            """
+            logger.info((
+                "User %s is an EnterpriseCustomerUser. Spinning off task to check if course is within User's "
+                "Enterprise's EnterpriseCustomerCatalog."
+            ), user_id)
+            task_args = (str(instance.course_id), ecu.id)
+            # Submit the task with a countdown to help avoid possible race-conditions/deadlocks
+            # due to external processes that read or write the same
+            # records the task tries to read or write.
+            create_enterprise_enrollment.apply_async(task_args, countdown=countdown)
+
+        # This receiver might be executed within a transaction that creates an ECE record.
+        # Ensure that the task is only submitted after a commit tasks place, because
+        # the task first checks if that ECE record exists and exits early, which we want it
+        # to do before later attempting to *create* the same record (which could lead to a race-condition error).
+        transaction.on_commit(submit_task)
 
 
 @receiver(pre_save, sender=models.EnterpriseCustomerSsoConfiguration)
@@ -414,3 +461,6 @@ if CourseEnrollment is not None:
 
 if COURSE_UNENROLLMENT_COMPLETED is not None:
     COURSE_UNENROLLMENT_COMPLETED.connect(enterprise_unenrollment_receiver)
+
+if COURSE_ENROLLMENT_CHANGED is not None:
+    COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)

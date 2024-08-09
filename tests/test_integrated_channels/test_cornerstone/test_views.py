@@ -161,7 +161,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         keys = {key for item in response.data for key in item.keys()}
         expected_keys = [
             "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
-            "Thumbnail", "Partners", "Languages", "Subjects",
+            "Thumbnail", "Partners", "Languages", "Subjects", "IsMobile"
         ]
         for key in expected_keys:
             self.assertIn(key, keys)

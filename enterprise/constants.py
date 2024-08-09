@@ -8,6 +8,8 @@ from django.utils.translation import gettext_lazy as _
 # used to ensure that signal receiver is only called once.
 USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
 
+PROVISIONING_ADMINS_GROUP = 'provisioning_admins_group'
+
 # Data sharing consent messages
 CONSENT_REQUEST_PROMPT = _(
     'To log in using this SSO identity provider and access special course offers, you must first '
@@ -141,6 +143,7 @@ ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
 ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
 ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE = 'enterprise_catalog_admin'
+SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE = 'enterprise_provisioning_admin'
 
 ENTERPRISE_DASHBOARD_ADMIN_ROLE = 'dashboard_admin'
 ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'
@@ -245,10 +248,14 @@ MAX_ALLOWED_TEXT_LENGTH = 16_000_000
 GROUP_MEMBERSHIP_PENDING_STATUS = 'pending'
 GROUP_MEMBERSHIP_REMOVED_STATUS = 'removed'
 GROUP_MEMBERSHIP_ACCEPTED_STATUS = 'accepted'
+GROUP_MEMBERSHIP_INTERNAL_API_ERROR_STATUS = 'internal_api_error'
+GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS = 'email_error'
 GROUP_MEMBERSHIP_STATUS_CHOICES = (
     (GROUP_MEMBERSHIP_REMOVED_STATUS, 'Removed'),
     (GROUP_MEMBERSHIP_ACCEPTED_STATUS, 'Accepted'),
     (GROUP_MEMBERSHIP_PENDING_STATUS, 'Pending'),
+    (GROUP_MEMBERSHIP_INTERNAL_API_ERROR_STATUS, 'Internal API error'),
+    (GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS, 'Email error')
 )
 
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"

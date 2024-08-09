@@ -201,7 +201,7 @@ class Degreed2LearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     The payload we sent to Degreed2 at a given point in time for an enterprise course enrollment.
     Ref: https://api.degreed.com/docs/#create-a-new-completion
 
-    .. pii: The degreed_user_email model field contains PII.
+    .. pii: The user_email AND degreed_user_email model fields contain PII.
     .. pii_types: email_address
     .. pii_retirement: consumer_api
     """

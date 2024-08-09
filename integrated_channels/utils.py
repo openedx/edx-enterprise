@@ -216,8 +216,7 @@ def is_already_transmitted(
         already_transmitted = transmission.objects.filter(
             enterprise_course_enrollment_id=enterprise_enrollment_id,
             plugin_configuration_id=enterprise_configuration_id,
-            error_message='',
-            status__lt=400,
+            is_transmitted=True,
         )
         if subsection_id:
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
@@ -366,6 +365,8 @@ def refresh_session_if_expired(
         # expiry expected after `expires_in` seconds
         if expires_in is not None:
             new_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        else:
+            new_expires_at = None
         return new_session, new_expires_at
     return session, expires_at
 

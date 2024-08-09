@@ -4,8 +4,9 @@ Views for the ``enterprise-customer`` API endpoint.
 
 from urllib.parse import quote_plus, unquote
 
+from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
-from rest_framework import permissions
+from rest_framework import filters, permissions
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -29,10 +30,10 @@ from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
 from enterprise.api.pagination import PaginationWithFeatureFlags
 from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.decorators import require_at_least_one_query_parameter
+from enterprise.api.v1.decorators import has_permission_or_group, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
-from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT
+from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, PROVISIONING_ADMINS_GROUP
 from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
 from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
@@ -54,9 +55,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     throttle_classes = (HighServiceUserThrottle, )
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
-    filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
     pagination_class = PaginationWithFeatureFlags
-
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
         'uuid', 'slug', 'name', 'active', 'site', 'enable_data_sharing_consent',
@@ -64,6 +63,21 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     )
     filterset_fields = FIELDS
     ordering_fields = FIELDS
+
+    def get_queryset(self):
+        """
+        Allow PAs to access all enterprise customers by modifying filter_backends
+        """
+        queryset = self.queryset
+        if self.action in ('create', 'partial_update', 'update', 'retrieve', 'list') and \
+                self.request.user.groups.filter(name=PROVISIONING_ADMINS_GROUP).exists():
+            self.filter_backends = (
+                filters.OrderingFilter, DjangoFilterBackend)
+            return queryset
+
+        self.filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + \
+            (EnterpriseLinkedUserFilterBackend,)
+        return queryset
 
     def get_permissions(self):
         if self.action == 'create':
@@ -76,6 +90,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def get_serializer_class(self):
         if self.action == 'basic_list':
             return serializers.EnterpriseCustomerBasicSerializer
+        if self.action == 'support_tool':
+            return serializers.EnterpriseCustomerSupportToolSerializer
         return self.serializer_class
 
     @action(detail=False)
@@ -99,14 +115,31 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @permission_required('enterprise.can_access_admin_dashboard')
+    @action(detail=False)
+    # pylint: disable=unused-argument
+    def support_tool(self, request, *arg, **kwargs):
+        """
+        Enterprise Customer's detail data for the support tool
+
+        Supported query param:
+        - uuid: filter the enterprise customer uuid .
+        """
+        enterprise_uuid = request.GET.get('uuid')
+        queryset = self.get_queryset().order_by('name')
+        if enterprise_uuid:
+            queryset = queryset.filter(uuid=enterprise_uuid)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP))
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-customer/
         """
         return super().create(request, *args, **kwargs)
 
-    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, pk: pk)
+    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP,
+                                              fn=lambda request, pk: pk))
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 

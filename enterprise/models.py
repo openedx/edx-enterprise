@@ -18,6 +18,7 @@ from fernet_fields import EncryptedCharField
 from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
+from requests.exceptions import HTTPError
 from simple_history.models import HistoricalRecords
 
 from django.apps import apps
@@ -44,8 +45,8 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_c
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
-from enterprise.api_client.open_ai import chat_completion
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
+from enterprise.api_client.xpert_ai import chat_completion
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
@@ -316,8 +317,9 @@ class EnterpriseCustomer(TimeStampedModel):
         verbose_name="Disable expiration messaging for learner credit",
         default=False,
         help_text=_("If checked, learners and admins will not receive notifications leading up to the expiration "
-                    "date for learner credit plans. Notifications signaling the expiration (and loss of usability) "
-                    "itself will still appear.")
+                    "date for learner credit plans. This includes removing the expiration date from the subsidy "
+                    "box for upcoming expirations. The subsidy summary box will not display for expired plans. "
+                    "Other notifications signaling the expiration (and loss of usability) itself will still appear.")
     )
 
     enable_portal_code_management_screen = models.BooleanField(
@@ -384,11 +386,11 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    enable_career_engagement_network_on_learner_portal = models.BooleanField(
-        verbose_name="Allow navigation to career engagement network from learner portal dashboard",
+    enable_learner_portal_sidebar_message = models.BooleanField(
+        verbose_name="Enable learner portal sidebar message",
         default=False,
         help_text=_(
-            "If checked, the learners will be able to see the link to CEN on the learner portal dashboard."
+            "If checked, learners will be able to see content in the Learner Portal Sidebar found in the HTML box."
         )
     )
 
@@ -421,6 +423,12 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_(
             "If checked, search will be replaced with one academy on enterprise learner portal."
         )
+    )
+
+    show_videos_in_learner_portal_search_results = models.BooleanField(
+        verbose_name="Show videos in learner portal search results",
+        default=False,
+        help_text=_("If checked, videos will be displayed in the search results on the learner portal.")
     )
 
     enable_analytics_screen = models.BooleanField(
@@ -509,10 +517,10 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
-    career_engagement_network_message = models.TextField(
+    learner_portal_sidebar_content = models.TextField(
         blank=True,
         help_text=_(
-            'Message text shown on the learner portal dashboard for career engagement network.'
+            'Text shown on the learner portal dashboard for customer specific purposes. Open HTML field.'
         ),
     )
 
@@ -1139,6 +1147,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
         except User.DoesNotExist:
             return None
 
+    @cached_property
+    def user_profile(self):
+        return getattr(self.user, 'profile', None)
+
     @property
     def user_email(self):
         """
@@ -1162,7 +1174,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Return linked user's name.
         """
-        if self.user is not None:
+        if self.user_profile is not None:
+            return f"{self.user_profile.name}"
+        elif self.user is not None:
             return f"{self.user.first_name} {self.user.last_name}"
         return None
 
@@ -2277,6 +2291,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = True
+            self.enterprise_course_enrollment.unenrolled = True
             self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
             self.enterprise_course_enrollment.save()
 
@@ -2289,6 +2304,7 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
         """
         if self.enterprise_course_enrollment:
             self.enterprise_course_enrollment.saved_for_later = False
+            self.enterprise_course_enrollment.unenrolled = False
             self.enterprise_course_enrollment.unenrolled_at = None
             self.enterprise_course_enrollment.save()
 
@@ -2376,7 +2392,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         help_text=_(
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a JSON object. An empty JSON object means that all available content items will be "
-            "included in the catalog."
+            "included in the catalog.  Must be unique."
         ),
         validators=[validate_content_filter_fields]
     )
@@ -2406,6 +2422,33 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         Return human-readable string representation.
         """
         return "<EnterpriseCatalogQuery '{title}' >".format(title=self.title)
+
+    def clean(self):
+        """
+        Before saving (and syncing with enterprise-catalog), check whether we're attempting to change
+        the content_filter to one that is a duplicate of an existing entry in enterprise-catalog
+        """
+        previous_values = EnterpriseCatalogQuery.objects.filter(id=self.id).first()
+        if previous_values:
+            old_filter = previous_values.content_filter
+            new_filter = self.content_filter
+            if not old_filter == new_filter:
+                catalog_client = EnterpriseCatalogApiClient()
+                hash_catalog_response = None
+                try:
+                    old_hash = catalog_client.get_catalog_query_hash(old_filter)
+                    new_hash = catalog_client.get_catalog_query_hash(new_filter)
+                    if not old_hash == new_hash:
+                        hash_catalog_response = catalog_client.get_enterprise_catalog_by_hash(new_hash)
+                except HTTPError:
+                    # If no results returned for querying by hash, we're safe to commit
+                    return
+                except Exception as exc:
+                    raise ValidationError({'content_filter': f'Failed to validate with exception: {exc}'}) from exc
+                if hash_catalog_response:
+                    print(f'hash_catalog_response: {hash_catalog_response}')
+                    err_msg = f'Duplicate value, see {hash_catalog_response["uuid"]}({hash_catalog_response["title"]})'
+                    raise ValidationError({'content_filter': err_msg})
 
     def delete(self, *args, **kwargs):
         """
@@ -4444,6 +4487,13 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
             "The moment at which the membership record was revoked by an Enterprise admin."
         ),
     )
+    errored_at = models.DateTimeField(
+        default=None,
+        null=True,
+        blank=True,
+        help_text=_(
+            "The last time the membership action was in an error state. Null means the membership is not errored."),
+    )
     history = HistoricalRecords()
 
     class Meta:
@@ -4476,6 +4526,8 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         """
         Return the timestamp of the most recent action relating to the membership
         """
+        if self.errored_at:
+            return self.errored_at
         if self.is_removed:
             return self.removed_at
         if self.enterprise_customer_user and self.activated_at:

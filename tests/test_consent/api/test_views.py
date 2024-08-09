@@ -42,13 +42,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         self.addCleanup(discovery_client_class.stop)
         super().setUp()
 
-    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+    @staticmethod
+    def create_user(username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
         Create a test user and set its password.
         """
-        self.user = factories.UserFactory(username=username, is_active=True, is_staff=True, id=TEST_USER_ID)
-        self.user.set_password(password)
-        self.user.save()
+        kwargs['is_staff'] = True
+        kwargs['id'] = TEST_USER_ID
+        return APITest.create_user(username=username, password=password, **kwargs)
 
     def _assert_expectations(self, response, expected_body, expected_status):
         """

@@ -17,6 +17,177 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.3]
+---------
+* fix: add missing migration for content_filter help text
+
+[4.23.2]
+---------
+* test: pii check stage actually checks PII instead of not at all.
+
+[4.23.1]
+---------
+* fix: don't allow saving duplicate EnterpriseCatalogQuery content_filter
+
+[4.22.6]
+----------
+* feat: add created time to reponse
+
+[4.22.5]
+----------
+* chore: requirement updates
+
+[4.22.4]
+----------
+* feat: Adding enterprise-customer-support endpoint
+
+[4.22.3]
+----------
+* bump enterprise to 4.22.3.
+
+[4.22.2]
+----------
+* fix: Serializes `course_key` field from the federated-content-metadata, `CourseDetails` model within the `EnterpriseCourseEnrollmentSerializer`.
+
+[4.22.1]
+----------
+* bump enterprise to 4.22.1.
+
+[4.21.10]
+----------
+* created migration to create a system-wide enterprise role named `enterprise_provisioning_admin`.
+
+[4.21.9]
+---------
+* fix: fixed search fetch crashing because of server taking too long for api request logs.
+
+[4.21.8]
+---------
+* fix: fixed 500 error for search filter for api request logs in admin view.
+
+[4.21.7]
+---------
+* feat: extend enterprise customer serializer to add detail for support tool
+
+[4.21.6]
+---------
+* feat: add waffle flag for enterprise customer support tool
+
+[4.21.5]
+---------
+* feat: allow PAs to access all enterprise customers
+
+[4.21.4]
+---------
+* fix: Updates messaging on disable expiry for learner credit
+
+[4.21.3]
+---------
+* chore: rename PAs django group name
+
+[4.21.2]
+---------
+* feat: Updated EnterpriseCustomerSerializer to include additional fields
+
+[4.21.1]
+---------
+* feat: add is_mobile transorfmer for CSOD content metadata exporter
+
+[4.21.0]
+---------
+* refactor: replace openai usage with xpert api
+
+[4.20.14]
+---------
+* chore: Update requirements
+
+[4.20.13]
+---------
+* feat: added failed statuses for groups and new endpoint to update statuses
+
+[4.20.12]
+---------
+* feat: added support for testing sftp connection inside ``EnterpriseCustomerReportingConfiguration`` instance.
+
+[4.20.11]
+---------
+* fix: setting existing user group membership statuses
+
+[4.20.10]
+---------
+* fix: fixing the status and datetime of removed group memberships
+
+[4.20.9]
+--------
+* feat: Update permissions to grant access to provisioning admins
+
+[4.20.8]
+--------
+* feat: atomically re-activate ECE when re-activating SCE
+* feat: When listing unenrolled fulfillments, exclude ones with active enrollments
+
+[4.20.7]
+--------
+* fix: add name from profile to group membership details 
+
+[4.20.6]
+--------
+* refactor: Removes ``career_engagement_network_message`` from ``EnterpriseCustomer``.
+
+[4.20.5]
+--------
+* fix: submit the ``create_enterprise_enrollment`` task with a configurable countdown
+
+[4.20.4]
+--------
+* feat: Populates ``learner_portal_sidebar_content`` in ``EnterpriseCustomer`` and removes references to old fields.
+
+[4.20.3]
+--------
+* feat: Makes ``career_engagement_network_message`` field nullable in ``EnterpriseCustomer``.
+
+[4.20.2]
+--------
+* fix: cancel-fulfillment endpoint is now idempotent
+
+Additionally, this fixes a bug whereby users with the
+``enterprise.can_manage_enterprise_fulfillment`` or
+``enterprise.can_access_admin_dashboard`` permissions in at least
+one enterprise could successfully authenticate against these endpoints
+for *any* enterprise.
+
+[4.20.1]
+--------
+* feat: Updating autocomplete field for Enteprise Group creation form
+
+[4.20.0]
+--------
+* feat: Added a new field show_videos_in_learner_portal_search_results in the EnterpriseCustomer model.
+
+[4.19.17]
+---------
+* feat: Adds new fields enable_learner_portal_sidebar_message and learner_portal_sidebar_content in EnterpriseCustomer.
+
+[4.19.16]
+---------
+* feat: submit ``create_enterprise_enrollment`` task on commit
+
+[4.19.15]
+---------
+* feat: added filtering for transmitted records using the is_transmitted column.
+
+[4.19.14]
+---------
+* feat: reverts an errant 4.19.12
+
+[4.19.13]
+---------
+* feat: added more integrated channels in mark_learner_transmissions_transmitted_true management command
+
+[4.19.12]
+---------
+* feat: (reverted)
+
 [4.19.11]
 ---------
 * revert: Reversed the previous reversion of PR #2125, removing blackboard unencrypted columns again.

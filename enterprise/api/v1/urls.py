@@ -18,6 +18,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_invite_key,
     enterprise_customer_reporting,
     enterprise_customer_sso_configuration,
+    enterprise_customer_support,
     enterprise_customer_user,
     enterprise_group,
     enterprise_subsidy_fulfillment,
@@ -183,7 +184,7 @@ urlpatterns = [
     re_path(
         r'^enterprise-group/(?P<group_uuid>[A-Za-z0-9-]+)/learners/?$',
         enterprise_group.EnterpriseGroupViewSet.as_view(
-            {'get': 'get_learners'}
+            {'get': 'get_learners', 'patch': 'update_pending_learner_status'}
         ),
         name='enterprise-group-learners'
     ),
@@ -196,6 +197,13 @@ urlpatterns = [
         r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/remove_learners/?$',
         enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'remove_learners'}),
         name='enterprise-group-remove-learners'
+    ),
+    re_path(
+        r'^enterprise-customer-support/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_customer_support.EnterpriseCustomerSupportViewSet.as_view(
+            {'get': 'retrieve'}
+        ),
+        name='enterprise-customer-support'
     ),
 ]
 

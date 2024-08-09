@@ -4,14 +4,14 @@ Tests for the `edx-enterprise` models module.
 
 import unittest
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
 import ddt
 from pytest import mark
 
 from django.db import transaction
-from django.test import override_settings
+from django.test import TestCase, override_settings
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
@@ -25,12 +25,18 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
+from enterprise.signals import (
+    course_enrollment_changed_receiver,
+    create_enterprise_enrollment_receiver,
+    enterprise_unenrollment_receiver,
+    handle_user_post_save,
+)
 from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
 from test_utils import EmptyCacheMixin
 from test_utils.factories import (
     ContentMetadataItemTransmissionFactory,
     EnterpriseCatalogQueryFactory,
+    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -824,7 +830,7 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
 
 
 @mark.django_db
-class TestCourseEnrollmentSignals(unittest.TestCase):
+class TestCourseEnrollmentSignals(TestCase):
     """
     Tests signals associated with CourseEnrollments (that are found in edx-platform).
     """
@@ -843,8 +849,8 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
         self.non_enterprise_user = UserFactory(id=999, email='user999@example.com')
         super().setUp()
 
-    @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
-    def test_receiver_calls_task_if_ecu_exists(self, mock_task):
+    @mock.patch('enterprise.tasks.create_enterprise_enrollment.apply_async')
+    def test_create_ece_receiver_calls_task_if_ecu_exists(self, mock_task):
         """
         Receiver should call a task
         if user tied to the CourseEnrollment that is handed into the function
@@ -863,11 +869,13 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
             'created': True,
         }
 
-        create_enterprise_enrollment_receiver(sender, instance, **kwargs)
-        mock_task.assert_called_once_with(str(instance.course_id), self.enterprise_customer_user.id)
+        with self.captureOnCommitCallbacks(execute=True), \
+             override_settings(CREATE_ENTERPRISE_ENROLLMENT_TASK_COUNTDOWN=42):
+            create_enterprise_enrollment_receiver(sender, instance, **kwargs)
+        mock_task.assert_called_once_with((str(instance.course_id), self.enterprise_customer_user.id), countdown=42)
 
-    @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
-    def test_receiver_does_not_call_task_if_ecu_not_exists(self, mock_task):
+    @mock.patch('enterprise.tasks.create_enterprise_enrollment.apply_async')
+    def test_create_ece_receiver_does_not_call_task_if_ecu_not_exists(self, mock_task):
         """
         Receiver should NOT call a task
         if user tied to the CourseEnrollment that is handed into the function
@@ -888,6 +896,60 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
 
         create_enterprise_enrollment_receiver(sender, instance, **kwargs)
         mock_task.assert_not_called()
+
+    def test_course_enrollment_changed_receiver(self):
+        """
+        Test receiver that is supposed to handle course enrollments being reactivated (re-enrolled).
+        """
+        # Create an unenrolled EnterpriseCourseEnrollment.
+        enterprise_enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            unenrolled=True,
+            unenrolled_at=datetime.now() - timedelta(days=1),
+        )
+
+        # Simulate a previously inactive course enrollment being re-activated.
+        mock_enrollment_data = mock.Mock()
+        mock_enrollment_data.course.course_key = enterprise_enrollment.course_id
+        mock_enrollment_data.user.id = self.enterprise_customer_user.user.id
+        mock_enrollment_data.is_active = True
+        kwargs = {
+            'enrollment': mock_enrollment_data,
+        }
+        course_enrollment_changed_receiver(mock.Mock(), **kwargs)
+
+        # Make sure the previously inactive enterprise enrollment has now been re-activated in response to the system
+        # enrollment being re-activated.
+        enterprise_enrollment.refresh_from_db()
+        assert enterprise_enrollment.unenrolled is False
+        assert enterprise_enrollment.unenrolled_at is None
+
+    def test_enterprise_unenrollment_receiver(self):
+        """
+        Test receiver that is supposed to handle course enrollments being deactivated (unenrolled).
+        """
+        # Create an enrolled EnterpriseCourseEnrollment.
+        enterprise_enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            unenrolled=None,
+            unenrolled_at=None,
+        )
+
+        # Simulate a previously active course enrollment being deactivated.
+        mock_enrollment_data = mock.Mock()
+        mock_enrollment_data.course.course_key = enterprise_enrollment.course_id
+        mock_enrollment_data.user.id = self.enterprise_customer_user.user.id
+        mock_enrollment_data.is_active = False
+        kwargs = {
+            'enrollment': mock_enrollment_data,
+        }
+        enterprise_unenrollment_receiver(mock.Mock(), **kwargs)
+
+        # Make sure the previously active enterprise enrollment has now been deactivated in response to the system
+        # enrollment being deactivated.
+        enterprise_enrollment.refresh_from_db()
+        assert enterprise_enrollment.unenrolled is True
+        assert enterprise_enrollment.unenrolled_at is not None
 
 
 @mark.django_db

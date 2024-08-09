@@ -269,7 +269,7 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
             enterprise_customer=self.enterprise_customer,
             remote_deleted_at__isnull=True,
             remote_created_at__isnull=False,
-        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)  # pylint: disable=unsupported-binary-operation
+        ).filter(~non_existent_catalogs_filter | null_catalogs_filter)
 
     def update_content_synced_at(self, action_happened_at, was_successful):
         """
@@ -497,8 +497,9 @@ class LearnerDataTransmissionAudit(TimeStampedModel):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
 
-    .. pii: The user_email model field contains PII
-
+    .. pii: The user_email model field contains PII. Declaring "retained" because I don't know if it's retired.
+    .. pii_types: email_address
+    .. pii_retirement: retained
     """
 
     # TODO: index customer uuid + plugin coinfig id together, with enrollment id?
@@ -723,7 +724,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             remote_deleted_at__isnull=False,
         )
         query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS)  # pylint: disable=unsupported-binary-operation
+            Q(remote_errored_at__lt=LAST_24_HRS)
             | Q(remote_errored_at__isnull=True)
             | Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(query)
@@ -760,7 +761,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         in_db_but_failed_to_send_query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True) |
             Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         in_db_but_unsent_query.add(in_db_but_failed_to_send_query, Q.OR)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_unsent_query)
@@ -787,7 +788,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         in_db_but_failed_to_send_query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True) |  # pylint: disable=unsupported-binary-operation
+            Q(remote_errored_at__lt=LAST_24_HRS) | Q(remote_errored_at__isnull=True) |
             Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)
 
@@ -812,7 +813,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
             api_response_status_code__gte=400,
         )
         in_db_but_failed_to_send_query.add(
-            Q(remote_errored_at__lt=LAST_24_HRS)  # pylint: disable=unsupported-binary-operation
+            Q(remote_errored_at__lt=LAST_24_HRS)
             | Q(remote_errored_at__isnull=True)
             | Q(remote_errored_at__lt=enterprise_customer.modified), Q.AND)
         return ContentMetadataItemTransmission.objects.filter(in_db_but_failed_to_send_query)

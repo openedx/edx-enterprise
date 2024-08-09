@@ -27,7 +27,7 @@ from rest_framework.test import APIClient
 from testfixtures import LogCapture
 
 from django.conf import settings
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.core.cache import cache
 from django.test import override_settings
 from django.utils import timezone
@@ -45,6 +45,7 @@ from enterprise.constants import (
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     GROUP_MEMBERSHIP_ACCEPTED_STATUS,
     GROUP_MEMBERSHIP_PENDING_STATUS,
+    GROUP_MEMBERSHIP_REMOVED_STATUS,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
 )
 from enterprise.models import (
@@ -68,6 +69,7 @@ from enterprise.models import (
 )
 from enterprise.roles_api import admin_role
 from enterprise.toggles import (
+    ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
     ENTERPRISE_GROUPS_V1,
     FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
     TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
@@ -143,6 +145,7 @@ ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT = reverse(
     kwargs={'pk': FAKE_UUIDS[0]}
 )
 ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT = reverse('enterprise-customer-basic-list')
+ENTERPRISE_CUSTOMER_SUPPORT_TOOL_ENDPOINT = reverse('enterprise-customer-support-tool')
 ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-customer-contains-content-items',
     kwargs={'pk': FAKE_UUIDS[0]}
@@ -197,13 +200,16 @@ class BaseTestEnterpriseAPIViews(APITest):
         super().setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
 
-    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=True, **kwargs):
-        """
-        Create a test user and set its password.
-        """
-        self.user = factories.UserFactory(username=username, is_active=True, is_staff=is_staff, **kwargs)
-        self.user.set_password(password)
-        self.user.save()
+    @staticmethod
+    def create_user(username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+        # AED 2024-06-12: For simplicity, I've tried to refactor the test setup in the base APITest
+        # to create a test user only once per test class.
+        # However, the pre-existing state of this file had the test user created once
+        # per test function, and always as staff. Attempting to change the default to is_staff=False
+        # caused many, many tests to break.  We'll need to clean this up over time.
+        if 'is_staff' not in kwargs:
+            kwargs['is_staff'] = True
+        return APITest.create_user(username=username, password=password, **kwargs)
 
     def create_items(self, factory, items):
         """
@@ -632,9 +638,10 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         Creates an admin user and logs them in
         """
         client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
+        # pylint: disable=attribute-defined-outside-init
+        self.admin_user = self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.admin_client = APIClient()
+        self.admin_client.login(username=client_username, password=TEST_PASSWORD)
 
     @ddt.data(
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
@@ -676,7 +683,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer,
         )
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        response = self.admin_client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
         response = self.load_json(response.content)
         self.assertDictEqual(data, response)
@@ -729,7 +736,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer,
         )
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        response = self.admin_client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
         assert not response.content
 
@@ -768,7 +775,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             enterprise_customer=enterprise_customer,
         )
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        response = self.admin_client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
 
     @ddt.data(
@@ -811,7 +818,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
                 'existing_user': existing_user
             })
 
-        response = self.client.post(
+        response = self.admin_client.post(
             settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT,
             data=data,
             format='json'
@@ -863,11 +870,17 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def setup_provisioning_admin_permission(self):
         """
-        Grants provisioning admin permissions to the staff user for testing purposes.
+        Create a new PA, add it to relevant group and then login.
         """
-        allowed_group = Group.objects.create(name=PROVISIONING_ADMINS_GROUP)
-        self.staff_user.groups.add(allowed_group)
-        self.client.force_authenticate(user=self.staff_user)
+        self.client.logout()
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+        group.user_set.add(user)
 
     def test_post_pending_enterprise_customer_admin_user_creation(self):
         """
@@ -1078,14 +1091,15 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             )
         return user
 
-    def setup_admin_user(self):
+    def setup_admin_user(self, is_staff=True):
         """
         Creates an admin user and logs them in
         """
         client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
+        # pylint: disable=attribute-defined-outside-init
+        self.admin_user = self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.admin_client = APIClient()
+        self.admin_client.login(username=client_username, password=TEST_PASSWORD)
 
     @ddt.data(
         {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
@@ -1102,10 +1116,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         """
         Make sure service users can post new PendingEnterpriseCustomerUsers.
         """
-
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1159,10 +1169,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         """
         Make sure service users can post new PendingEnterpriseCustomerUsers.
         """
-
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1193,9 +1199,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         assert not response.content
 
     def test_post_pending_enterprise_customer_unauthorized_user(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1216,6 +1219,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             enterprise_customer=enterprise_customer,
         )
 
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, '')
         response = self.client.post(
             settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
@@ -1223,9 +1227,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         assert response.status_code == 403
 
     def test_post_pending_enterprise_customer_empty_bulk_payload(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1242,9 +1243,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         assert response.json() == 'At least one user email is required.'
 
     def test_post_pending_enterprise_customer_user_authorized_for_different_enterprise(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # create fake enterprise
         ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1287,7 +1285,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
     )
     @ddt.unpack
     def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
-        self.setup_admin_user()
         ent_uuid = fake.uuid4()
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
@@ -1333,9 +1330,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
                 )
 
     def test_post_pending_enterprise_customer_user_cannot_create_users_for_different_enterprise(self):
-        # create user making the request
-        self.setup_admin_user()
-
         # Create fake enterprise
         ent_uuid = fake.uuid4()
         other_ent_uuid = fake.uuid4()
@@ -1429,7 +1423,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
-                'enable_career_engagement_network_on_learner_portal': False,
+                'enable_learner_portal_sidebar_message': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1442,13 +1436,17 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
-                'career_engagement_network_message': 'Test message',
+                'learner_portal_sidebar_content': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
         (
@@ -1495,7 +1493,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_portal_subscription_management_screen': False,
                     'hide_course_original_price': False, 'enable_analytics_screen': True,
                     'enable_integrated_customer_learner_portal_search': True,
-                    'enable_career_engagement_network_on_learner_portal': False,
+                    'enable_learner_portal_sidebar_message': False,
                     'enable_portal_lms_configurations_screen': False,
                     'sender_alias': 'Test Sender Alias', 'identity_providers': [],
                     'enterprise_customer_catalogs': [], 'reply_to': 'fake_reply@example.com',
@@ -1504,13 +1502,17 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_universal_link': False, 'enable_browse_and_request': False,
                     'admin_users': [],
                     'enable_generation_of_api_credentials': False,
-                    'career_engagement_network_message': 'Test message',
+                    'learner_portal_sidebar_content': 'Test message',
                     'enable_pathways': True,
                     'enable_programs': True,
                     'enable_demo_data_for_analytics_and_lpr': False,
                     'enable_academies': False,
                     'enable_one_academy': False,
                     'active_integrations': [],
+                    'show_videos_in_learner_portal_search_results': False,
+                    'default_language': 'en',
+                    'country': 'US',
+                    'enable_slug_login': False,
                 },
                 'enterprise_group': [],
                 'active': True, 'user_id': 0, 'user': None,
@@ -1586,7 +1588,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
-                'enable_career_engagement_network_on_learner_portal': False,
+                'enable_learner_portal_sidebar_message': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [
@@ -1604,13 +1606,17 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
-                'career_engagement_network_message': 'Test message',
+                'learner_portal_sidebar_content': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
         (
@@ -1661,7 +1667,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
-                'enable_career_engagement_network_on_learner_portal': False,
+                'enable_learner_portal_sidebar_message': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1674,13 +1680,17 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
-                'career_engagement_network_message': 'Test message',
+                'learner_portal_sidebar_content': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
         (
@@ -1758,7 +1768,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': True,
                 'enable_integrated_customer_learner_portal_search': True,
-                'enable_career_engagement_network_on_learner_portal': False,
+                'enable_learner_portal_sidebar_message': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -1771,13 +1781,23 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
-                'career_engagement_network_message': 'Test message',
+                'learner_portal_sidebar_content': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
-                'active_integrations': ['BLACKBOARD']
+                'active_integrations': [{
+                    'channel_code': 'BLACKBOARD',
+                    'created': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'display_name': 'BLACKBOARD 1',
+                    'active': True,
+                }],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }],
         ),
     )
@@ -1831,62 +1851,162 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         assert name_or_uuid_enterprise_customers == self.load_json(response.content)
 
     @ddt.data(
+        (
+            factories.EnterpriseCustomerSsoConfigurationFactory,
+            ENTERPRISE_CUSTOMER_SUPPORT_TOOL_ENDPOINT,
+            itemgetter('uuid'),
+            [{
+                'active': True,
+                'display_name': 'Test SSO',
+                'enterprise_customer__uuid': FAKE_UUIDS[0],
+                'enterprise_customer__name': 'Test Enterprise Customer',
+                'enterprise_customer__slug': TEST_SLUG,
+                'enterprise_customer__active': True,
+                'enterprise_customer__auth_org_id': 'asdf3e2wdas',
+                'enterprise_customer__enable_data_sharing_consent': True,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'enterprise_customer__enable_audit_data_reporting': True,
+                'enterprise_customer__contact_email': 'fake@example.com',
+                'enterprise_customer__sender_alias': 'Test Sender Alias',
+                'enterprise_customer__reply_to': 'fake_reply@example.com',
+                'enterprise_customer__hide_labor_market_data': False,
+                'enterprise_customer__modified': '2021-10-20T19:01:31Z',
+                'enterprise_customer__site__domain': 'example.com',
+                'enterprise_customer__site__name': 'example.com',
+                'enterprise_customer__created': '2021-10-20T19:01:31Z',
+            }],
+            [{
+                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
+                'slug': TEST_SLUG, 'active': True,
+                'auth_org_id': 'asdf3e2wdas',
+                'site': {
+                    'domain': 'example.com', 'name': 'example.com'
+                },
+                'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment',
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
+                'identity_provider': None,
+                'enable_audit_enrollment': False,
+                'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
+                'sync_learner_profile_data': False,
+                'disable_expiry_messaging_for_learner_credit': False,
+                'enable_audit_data_reporting': True,
+                'enable_learner_portal': True,
+                'enable_learner_portal_offers': False,
+                'enable_portal_learner_credit_management_screen': False,
+                'enable_executive_education_2U_fulfillment': False,
+                'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
+                'contact_email': 'fake@example.com',
+                'enable_portal_subscription_management_screen': False,
+                'hide_course_original_price': False,
+                'enable_analytics_screen': True,
+                'enable_integrated_customer_learner_portal_search': True,
+                'enable_learner_portal_sidebar_message': False,
+                'enable_portal_lms_configurations_screen': False,
+                'sender_alias': 'Test Sender Alias',
+                'identity_providers': [],
+                'enterprise_customer_catalogs': [],
+                'reply_to': 'fake_reply@example.com',
+                'enterprise_notification_banner': {'title': '', 'text': ''},
+                'hide_labor_market_data': False,
+                'modified': '2021-10-20T19:01:31Z',
+                'enable_universal_link': False,
+                'enable_browse_and_request': False,
+                'admin_users': [],
+                'enable_generation_of_api_credentials': False,
+                'learner_portal_sidebar_content': 'Test message',
+                'enable_pathways': True,
+                'enable_programs': True,
+                'enable_demo_data_for_analytics_and_lpr': False,
+                'enable_academies': False,
+                'enable_one_academy': False,
+                'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
+                'active_sso_configurations': [{
+                    'created': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'display_name': 'Test SSO',
+                    'modified': datetime.strftime(datetime.now(), '%B %d, %Y'),
+                    'active': True,
+                }],
+                'created': '2021-10-20T19:01:31Z',
+            }],
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.utils.get_logo_url')
+    def test_enterprise_customer_support_tool(
+            self, factory, url, sorting_key, model_items, expected_json, mock_get_logo_url):
+        """
+        Test support tool endpoint of enterprise_customers
+        """
+        mock_get_logo_url.return_value = 'http://fake.url'
+        self.create_items(factory, model_items)
+        response = self.client.get(settings.TEST_SERVER + url)
+        response = self.load_json(response.content)
+        assert sorted(expected_json, key=sorting_key) == sorted(response, key=sorting_key)
+
+    @ddt.data(
         # Request missing required permissions query param.
-        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False, False, False),
+        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}, False, False, False, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False),
+         True, None, False, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, None, False, False, False),
+         False, None, False, False, False, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False),
+         True, None, False, False, False, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False,
-         False, False),
+         False, False, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         None, False, False, False),
+         None, False, False, False, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
-         None, False, False, False),
+         None, False, False, False, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         None, False, False, False),
+         None, False, False, False, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
-         None, False, False, False),
+         None, False, False, False, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, False, False, False),
+         None, False, False, False, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         None, False, False, False),
+         None, False, False, False, False),
         # Staff user with group permission filtering on slug with results, with
         # top down assignment & real-time LCM feature enabled,
         # prequery search results enabled and
         # enterprise groups v1 feature enabled
+        # enterprise customer support tool enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, True, True, True),
+         None, True, True, True, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -1901,6 +2021,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             is_top_down_assignment_real_time_lcm_enabled,
             feature_prequery_search_suggestions_enabled,
             enterprise_groups_v1_enabled,
+            enterprise_customer_support_tool,
             mock_get_logo_url,
     ):
         """
@@ -1970,6 +2091,14 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             response = client.get(
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
+        with override_waffle_flag(
+            ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
+            active=enterprise_customer_support_tool
+        ):
+
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
         response = self.load_json(response.content)
         if has_access_to_enterprise:
             assert response['results'][0] == {
@@ -2000,7 +2129,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'hide_course_original_price': False,
                 'enable_analytics_screen': False,
                 'enable_integrated_customer_learner_portal_search': True,
-                'enable_career_engagement_network_on_learner_portal': False,
+                'enable_learner_portal_sidebar_message': False,
                 'enable_portal_lms_configurations_screen': False,
                 'sender_alias': 'Test Sender Alias',
                 'identity_providers': [],
@@ -2013,13 +2142,17 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_browse_and_request': False,
                 'admin_users': [],
                 'enable_generation_of_api_credentials': False,
-                'career_engagement_network_message': 'Test message',
+                'learner_portal_sidebar_content': 'Test message',
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
                 'enable_academies': False,
                 'enable_one_academy': False,
                 'active_integrations': [],
+                'show_videos_in_learner_portal_search_results': False,
+                'default_language': 'en',
+                'country': 'US',
+                'enable_slug_login': False,
             }
         else:
             mock_empty_200_success_response = {
@@ -2034,9 +2167,43 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
                     'feature_prequery_search_suggestions': feature_prequery_search_suggestions_enabled,
                     'enterprise_groups_v1': enterprise_groups_v1_enabled,
+                    'enterprise_customer_support_tool': enterprise_customer_support_tool,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
+
+    def test_provisioning_admin_list_all_enterprises_200(self):
+        """
+        Ensure that PAs are able to access all enterprise customers.
+        """
+        self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+            'country': 'US',
+            'active': True
+        }, format='json')
+        self.client.logout()
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+        group.user_set.add(user)
+        self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer 2',
+            'slug': 'test-create-customer-2',
+            'site': {'domain': 'example.com'},
+            'country': 'US',
+            'active': True
+        }, format='json')
+        response = self.client.get(
+            ENTERPRISE_CUSTOMER_LIST_ENDPOINT
+        )
+        response = self.load_json(response.content)
+        assert response['count'] == 2
 
     def test_enterprise_customer_branding_detail(self):
         """
@@ -2094,6 +2261,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'name': 'Test Create Customer',
             'slug': 'test-create-customer',
             'site': {'domain': 'example.com'},
+            'country': 'US',
         }, format='json')
 
         assert response.status_code == expected_status_code
@@ -2106,6 +2274,50 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             # Then, look in the database to confirm the customer was created:
             enterprise_customer = EnterpriseCustomer.objects.get(slug='test-create-customer')
             assert enterprise_customer.name == 'Test Create Customer'
+
+    def test_create_provisioning_admins(self):
+        """
+        Test that ``EnterpriseCustomer`` can be created by provisioning admins who are part of group.
+        """
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.logout()
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+
+        # auth error should be raised if user isn't part of provisioning admins group
+        failed_response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+            'country': 'US',
+        }, format='json')
+
+        assert failed_response.status_code == 403
+
+        # now make this use part of provisioning admins groups and retry
+        group.user_set.add(user)
+        response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
+            'name': 'Test Create Customer',
+            'slug': 'test-create-customer',
+            'site': {'domain': 'example.com'},
+            'country': 'US',
+        }, format='json')
+
+        assert response.status_code == 201
+
+        # First, smoke check the response body:
+        assert response.json()['name'] == 'Test Create Customer'
+        assert response.json()['slug'] == 'test-create-customer'
+        assert response.json()['site'] == {
+            'domain': 'example.com', 'name': 'example.com'}
+        # Then, look in the database to confirm the customer was created:
+        enterprise_customer = EnterpriseCustomer.objects.get(
+            slug='test-create-customer')
+        assert enterprise_customer.name == 'Test Create Customer'
 
     def test_create_missing_site(self):
         """
@@ -2175,6 +2387,29 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         if expected_status_code == 200:
             enterprise_customer.refresh_from_db()
             assert enterprise_customer.slug == 'new-slug'
+
+    def test_partial_update_provisioning_admins(self):
+        """
+        Test that ``EnterpriseCustomer`` can be updated by provisioning admins.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+        user = factories.UserFactory(
+            username='test_provisioning_admin', is_active=True, is_staff=False)
+        user.set_password('test_password')
+        user.save()
+        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.client.logout()
+        self.client.login(username='test_provisioning_admin',
+                          password='test_password')
+        group.user_set.add(user)
+        response = self.client.patch(ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT, {
+            "slug": 'new-slug'
+        })
+
+        assert response.status_code == 200
+        enterprise_customer.refresh_from_db()
+        assert enterprise_customer.slug == 'new-slug'
 
     @ddt.data(
         (ENTERPRISE_ADMIN_ROLE, FAKE_UUIDS[0], False, 200),
@@ -3852,18 +4087,25 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
     Test EnterpriseSubsidyFulfillmentViewSet
     """
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.unenrolled_after_filter = f'?unenrolled_after={str(datetime.now() - timedelta(hours=24))}'
+        cls.course_id = 'course-v1:edX+DemoX+Demo_Course'
+
+        # cls.user exists already due to APITest.setUpClass()
+        cls.enterprise_customer = factories.EnterpriseCustomerFactory()
+        cls.enterprise_user = factories.EnterpriseCustomerUserFactory(
+            user_id=cls.user.id,
+            enterprise_customer=cls.enterprise_customer,
+        )
+
     def setUp(self):
         super().setUp()
 
-        self._create_user_and_enterprise_customer('test_user', 'test_password')
-
-        self.client = APIClient()
-        self.client.login(username='test_user', password='test_password')
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, str(self.enterprise_customer.uuid))
 
-        self.unenrolled_after_filter = f'?unenrolled_after={str(datetime.now() - timedelta(hours=24))}'
-
-        self.course_id = 'course-v1:edX+DemoX+Demo_Course'
         self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_user,
             course_id=self.course_id,
@@ -3886,19 +4128,14 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         self.cancel_licensed_fulfillment_url = self.licensed_fulfillment_url + '/cancel-fulfillment'
         self.cancel_learner_credit_fulfillment_url = self.learner_credit_fulfillment_url + '/cancel-fulfillment'
 
-    def _create_user_and_enterprise_customer(self, username, password):
+    @classmethod
+    def _create_user_and_enterprise_customer(cls, username, password):
         """
         Helper method to create the User and Enterprise Customer used in tests.
         """
-        self.user = factories.UserFactory(username=username, is_active=True, is_staff=False)
-        self.user.set_password(password)
-        self.user.save()
-
-        self.enterprise_customer = factories.EnterpriseCustomerFactory()
-        self.enterprise_user = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
+        cls.user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        cls.user.set_password(password)
+        cls.user.save()
 
     def test_requested_recently_unenrolled_subsidy_fulfillment(self):
         """
@@ -3911,6 +4148,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         second_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=second_enterprise_user,
             course_id=self.course_id,
+            unenrolled=True,
             unenrolled_at=localized_utcnow(),
         )
         # Have a second enrollment that is under a different enterprise customer than the requesting
@@ -3919,6 +4157,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             enterprise_course_enrollment=second_enterprise_course_enrollment,
         )
 
+        self.enterprise_course_enrollment.unenrolled = True
         self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
         self.enterprise_course_enrollment.save()
         response = self.client.get(
@@ -3968,6 +4207,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         old_enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_user,
             course_id=self.course_id + '2',
+            unenrolled=True,
             unenrolled_at=localized_utcnow() - timedelta(days=5),
         )
         old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
@@ -4003,10 +4243,69 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             ]),
         ]
 
+    @ddt.data(
+        {'related_enrollment_is_active': True, 'expect_included_in_response': False},
+        {'related_enrollment_is_active': None, 'expect_included_in_response': True},
+        {'related_enrollment_is_active': False, 'expect_included_in_response': True},
+    )
+    @ddt.unpack
+    def test_recently_unenrolled_fulfillment_endpoint_excludes_active_enrollments(
+        self,
+        related_enrollment_is_active,
+        expect_included_in_response,
+    ):
+        """
+        Test that unenrolled fulfillments that erroneously have a related active enrollment are not surfaced.
+        """
+        # Make the main test EnterpriseCourseEnrollment object unenrolled.
+        self.enterprise_course_enrollment.unenrolled = True
+        self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
+        self.enterprise_course_enrollment.save()
+
+        # Make it seem like the related CourseEnrollment is either active, inactive, or non-existent.
+        mock_course_enrollment = mock.MagicMock()
+        mock_course_enrollment.is_active = related_enrollment_is_active
+        patch_value = mock_course_enrollment if related_enrollment_is_active is not None else None
+        with mock.patch('enterprise.models.EnterpriseCourseEnrollment.course_enrollment', new=patch_value):
+            response = self.client.get(
+                reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
+            )
+
+        if not expect_included_in_response:
+            # Despite the EnterpriseCourseEnrollment object being unenrolled, it is not returned because it relates
+            # to a CourseEnrollment that is still active.
+            assert response.data == []
+        else:
+            # If related_enrollment_is_active is False, then ->
+            #   This is a normal happy case representing good database integrity.
+            # If related_enrollment_is_active is None, then ->
+            #   This is a weird case that has no clear course of action. Probably the safest thing to do in this
+            #   situation is to minimize changes to business logic, therefore we will treat it as if the related
+            #   enrollment was inactive (previous behavior).
+            ent_user = self.enterprise_course_enrollment.enterprise_customer_user.id
+            lc_unenrolled_at = self.enterprise_course_enrollment.unenrolled_at.strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
+            assert response.data == [
+                OrderedDict([
+                    ('enterprise_course_enrollment', OrderedDict([
+                        ('enterprise_customer_user', ent_user),
+                        ('course_id', self.enterprise_course_enrollment.course_id),
+                        ('unenrolled_at', lc_unenrolled_at),
+                        ('created', self.enterprise_course_enrollment.created.strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )),
+                    ])),
+                    ('transaction_id', self.learner_credit_course_enrollment.transaction_id),
+                    ('uuid', str(self.learner_credit_course_enrollment.uuid)),
+                ]),
+            ]
+
     def test_recently_unenrolled_licensed_fulfillment_object(self):
         """
         Test that the correct licensed fulfillment object is returned.
         """
+        self.enterprise_course_enrollment.unenrolled = True
         self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
         self.enterprise_course_enrollment.save()
         response = self.client.get(
@@ -4116,7 +4415,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             settings.TEST_SERVER + self.cancel_licensed_fulfillment_url,
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
         self.licensed_course_enrollment.refresh_from_db()
         assert self.licensed_course_enrollment.is_revoked
         mock_enrollment_api.update_enrollment.assert_called_once()
@@ -4136,7 +4435,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             settings.TEST_SERVER + self.cancel_learner_credit_fulfillment_url,
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
         self.learner_credit_course_enrollment.refresh_from_db()
         assert self.learner_credit_course_enrollment.is_revoked
         mock_enrollment_api.update_enrollment.assert_called_once()
@@ -4147,6 +4446,37 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
             'is_active': False,
         }
+
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
+    def test_idempotent_cancel_fulfillment(self, mock_enrollment_api):
+        """
+        Test that canceling an already revoked enrollment/fulfillment is idempotent
+        and returns a non-error resopnse code
+        """
+        mock_enrollment_api.update_enrollment.return_value = mock.Mock()
+        self.licensed_course_enrollment.is_revoked = True
+        self.licensed_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_licensed_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.licensed_course_enrollment.refresh_from_db()
+        assert self.licensed_course_enrollment.is_revoked
+        self.assertFalse(mock_enrollment_api.update_enrollment.called)
+
+        mock_enrollment_api.reset_mock()
+
+        self.learner_credit_course_enrollment.is_revoked = True
+        self.learner_credit_course_enrollment.save()
+        response = self.client.post(
+            settings.TEST_SERVER + self.cancel_learner_credit_fulfillment_url,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        self.learner_credit_course_enrollment.refresh_from_db()
+        assert self.learner_credit_course_enrollment.is_revoked
+        self.assertFalse(mock_enrollment_api.update_enrollment.called)
 
     def test_cancel_fulfillment_nonexistent_enrollment(self):
         """
@@ -4165,20 +4495,16 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         Test that a non staff user cannot cancel a fulfillment belonging to a different enterprise.
         """
         self.user.is_staff = False
-        other_enterprise_user = factories.EnterpriseCustomerUserFactory()
-        other_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=other_enterprise_user
-        )
-        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
-            enterprise_course_enrollment=other_enrollment,
-        )
+        self.user.save()
+
+        other_licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory()
         response = self.client.post(
             settings.TEST_SERVER + reverse(
                 'enterprise-subsidy-fulfillment',
                 kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
             ) + '/cancel-fulfillment',
         )
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_staff_can_cancel_fulfillments_not_belonging_to_them(self, mock_enrollment_api):
@@ -4201,7 +4527,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
                 kwargs={'fulfillment_source_uuid': str(other_licensed_course_enrollment.uuid)}
             ) + '/cancel-fulfillment',
         )
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 @ddt.ddt
@@ -5137,7 +5463,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                         content_type='application/json',
                     )
 
-        assert cancel_response.status_code == status.HTTP_200_OK
+        assert cancel_response.status_code == status.HTTP_204_NO_CONTENT
         assert second_enroll_response.status_code == status.HTTP_201_CREATED
 
         if old_transaction_id == new_transaction_id:
@@ -7288,12 +7614,16 @@ class TestAnalyticsSummaryView(APITest):
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
 
-    @mock.patch('enterprise.models.chat_completion')
-    def test_view_with_admin_user(self, mock_chat_completion):
+    @mock.patch('enterprise.api_client.xpert_ai.requests.post')
+    def test_view_with_admin_user(self, mock_post):
         """
         Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
         """
-        mock_chat_completion.return_value = 'Test Response.'
+        xpert_response = 'Response from Xpert AI'
+        mock_response = mock.Mock()
+        mock_response.json.return_value = {'content': xpert_response}
+        mock_post.return_value = mock_response
+
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
 
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
@@ -7301,8 +7631,8 @@ class TestAnalyticsSummaryView(APITest):
 
         response = self.client.post(self.url, data=self.payload, format='json')
         assert response.status_code == status.HTTP_200_OK
-        assert 'learner_progress' in response.json()
-        assert 'learner_engagement' in response.json()
+        assert response.json()['learner_progress'] == xpert_response
+        assert response.json()['learner_engagement'] == xpert_response
 
     @mock.patch('enterprise.models.chat_completion')
     def test_404_if_enterprise_customer_does_not_exist(self, mock_chat_completion):
@@ -8250,6 +8580,13 @@ class TestEnterpriseGroupViewSet(APITest):
         pending_membership.refresh_from_db()
         assert membership.is_removed
         assert pending_membership.is_removed
+        assert membership.status == GROUP_MEMBERSHIP_REMOVED_STATUS
+        assert pending_membership.status == GROUP_MEMBERSHIP_REMOVED_STATUS
+        assert membership.recent_action == membership.removed_at
+        assert pending_membership.recent_action == pending_membership.removed_at
+
+        serializer = serializers.EnterpriseGroupMembershipSerializer(membership)
+        assert serializer.data['recent_action'] == f"Removed: {membership.removed_at.strftime('%B %d, %Y')}"
 
         # Recreate the memberships for the emails
         assign_url = settings.TEST_SERVER + reverse(
@@ -8290,18 +8627,19 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.status_code == 201
         assert response.data == {'records_processed': 800, 'new_learners': 400, 'existing_learners': 400}
-        assert len(
-            EnterpriseGroupMembership.objects.filter(
-                group=self.group_2,
-                pending_enterprise_customer_user__isnull=True
-            )
-        ) == 400
-        assert len(
-            EnterpriseGroupMembership.objects.filter(
-                group=self.group_2,
-                enterprise_customer_user__isnull=True
-            )
-        ) == 400
+
+        pending_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            enterprise_customer_user__isnull=True
+        )
+        existing_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.group_2,
+            pending_enterprise_customer_user__isnull=True
+        )
+        assert len(pending_memberships) == 400
+        assert len(existing_memberships) == 400
+        assert existing_memberships.first().status == GROUP_MEMBERSHIP_ACCEPTED_STATUS
+        assert pending_memberships.first().status == GROUP_MEMBERSHIP_PENDING_STATUS
 
         # Batch size for sending membership invitation notifications is 200, 800 total records means 4 iterations
         group_uuids = list(
@@ -8408,6 +8746,30 @@ class TestEnterpriseGroupViewSet(APITest):
         request_data = {'enterprise_customer': uuid.uuid4()}
         response = self.client.patch(url, data=request_data)
         assert response.status_code == 401
+
+    def test_update_pending_learner_status(self):
+        """
+        Test that the PATCH endpoint updates pending learner status and errored at time
+        """
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-learners',
+            kwargs={'group_uuid': self.group_1.uuid},
+        )
+        new_uuid = uuid.uuid4()
+        new_customer = EnterpriseCustomerFactory(uuid=new_uuid)
+        self.set_multiple_enterprise_roles_to_jwt([
+            (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk),
+            (ENTERPRISE_ADMIN_ROLE, new_customer.pk),
+        ])
+        request_data = {
+            'learner': 'edx@exampl.com',
+            'status': 'email_error',
+            'errored_at': localized_utcnow()}
+        response = self.client.patch(url, data=request_data)
+        assert response.status_code == 201
+        assert response.json() == 'Successfully updated learner record for learner email edx@exampl.com'
 
     @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
     def test_successful_remove_all_learners_from_group(self, mock_send_group_membership_removal_notification):
@@ -9218,3 +9580,112 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         """
         actual_entity_id = fetch_entity_id_from_metadata_xml(metadata_xml)
         assert actual_entity_id == expected_entity_id
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise user list endpoint
+    """
+    ECS_ENDPOINT = 'enterprise-customer-support'
+    ECS_KWARG = 'enterprise_uuid'
+
+    def test_get_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        expected_json = {
+            'enterprise_customer_user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE],
+            'is_admin': False
+        }
+
+        # Test valid UUID
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')[0]
+
+        # Test invalid UUID
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: 123})
+        response = self.client.get(settings.TEST_SERVER + url)
+        self.assertEqual(response.status_code, 404)
+
+        # Test Admin UUID
+        user_2 = factories.UserFactory()
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            role=admin_role(),
+            user=user_2,
+            enterprise_customer=enterprise_customer_2
+        )
+
+        expected_json_2 = {
+            'enterprise_customer_user': {
+                'id': user_2.id,
+                'username': user_2.username,
+                'first_name': user_2.first_name,
+                'last_name': user_2.last_name,
+                'email': user_2.email,
+                'is_staff': user_2.is_staff,
+                'is_active': user_2.is_active,
+                'date_joined': user_2.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE],
+            'is_admin': True
+        }
+
+        url_2 = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer_2.uuid})
+        response_2 = self.client.get(settings.TEST_SERVER + url_2)
+
+        assert expected_json_2 == response_2.json().get('results')[0]
+
+    def test_get_pending_enterprise_user(self):
+        """
+        Assert whether the response is valid.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[1])
+        pending_user = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+        )
+
+        expected_json = {
+            'enterprise_customer_user': None,
+            'pending_enterprise_customer_user': {
+                'is_pending_admin': False,
+                'is_pending_learner': True,
+                'user_email': pending_user.user_email,
+            },
+            'role_assignments': None,
+            'is_admin': False
+        }
+
+        # Test valid pending customer UUID
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')[0]

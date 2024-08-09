@@ -2,7 +2,7 @@ name: Upgrade Requirements
 
 on:
   schedule:
-     - cron: "15 0 * * 2"
+     - cron: "0 2 * * 1"
   workflow_dispatch:
      inputs:
        branch:
