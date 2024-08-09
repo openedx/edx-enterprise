@@ -10,7 +10,6 @@ from enterprise.logging import getEnterpriseLogger
 LOGGER = getEnterpriseLogger(__name__)
 
 
-
 def require_at_least_one_query_parameter(*query_parameter_names):
     """
     Ensure at least one of the specified query parameters are included in the request.
