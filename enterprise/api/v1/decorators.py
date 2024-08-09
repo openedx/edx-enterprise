@@ -5,6 +5,7 @@ Decorators for Enterprise API views.
 from functools import wraps
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
+
 from enterprise.logging import getEnterpriseLogger
 
 LOGGER = getEnterpriseLogger(__name__)
