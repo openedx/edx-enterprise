@@ -62,7 +62,7 @@ def has_permission_or_group(permission, group_name, fn=None):
             pk = fn(request, **kwargs) if fn else kwargs.get('pk')
 
             LOGGER.info(
-                f"Checking permissions for user {user.username}, "
+                f"[User_Permissions_Check] Checking permissions for user {user.username}, "
                 f"permission: {permission}, "
                 f"group: {group_name}, "
                 f"pk: {pk}"
@@ -73,16 +73,17 @@ def has_permission_or_group(permission, group_name, fn=None):
             else:
                 has_permission = user.has_perm(permission)
 
-            LOGGER.info(f"User {user.username} has permission: {has_permission}")
+            LOGGER.info(f"[User_Permissions_Check] User {user.username} has permission: {has_permission}")
 
             is_in_group = user.groups.filter(name=group_name).exists()
-            LOGGER.info(f"User {user.username} is in group {group_name}: {is_in_group}")
+            LOGGER.info(f"[User_Permissions_Check] User {user.username} is in group {group_name}: {is_in_group}")
 
             if has_permission or is_in_group:
                 return view_func(request, *args, **kwargs)
 
             LOGGER.error(
-                f"Access denied for user {user.username} to {view_func.__name__}. Method: {request.method}, "
+                f"[User_Permissions_Check] Access denied for user {user.username} to {view_func.__name__}. "
+                f"Method: {request.method}, "
                 f"URL: {request.get_full_path()}"
             )
             raise PermissionDenied(
