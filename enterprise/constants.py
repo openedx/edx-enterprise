@@ -143,6 +143,7 @@ ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
 ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
 ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE = 'enterprise_catalog_admin'
+SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE = 'enterprise_provisioning_admin'
 
 ENTERPRISE_DASHBOARD_ADMIN_ROLE = 'dashboard_admin'
 ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'

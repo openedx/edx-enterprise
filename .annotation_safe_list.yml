@@ -37,3 +37,23 @@ enterprise.HistoricalPendingEnrollment:
     ".. no_pii:": ""
 moodle.HistoricalMoodleEnterpriseCustomerConfiguration:
     ".. no_pii:": ""
+enterprise.EnterpriseCourseEntitlement:
+    ".. no_pii:": ""
+enterprise.EnterpriseCustomerSsoConfiguration:
+    ".. no_pii:": ""
+enterprise.HistoricalEnterpriseCourseEntitlement:
+    ".. no_pii:": ""
+enterprise.HistoricalEnterpriseCustomerInviteKey:
+    ".. no_pii:": ""
+enterprise.HistoricalEnterpriseCustomerSsoConfiguration:
+    ".. no_pii:": ""
+enterprise.HistoricalEnterpriseCustomerUser:
+    ".. no_pii:": ""
+enterprise.HistoricalEnterpriseGroup:
+    ".. no_pii:": ""
+enterprise.HistoricalEnterpriseGroupMembership:
+    ".. no_pii:": ""
+enterprise.HistoricalLearnerCreditEnterpriseCourseEnrollment:
+    ".. no_pii:": ""
+enterprise.HistoricalSystemWideEnterpriseUserRoleAssignment:
+    ".. no_pii:": ""

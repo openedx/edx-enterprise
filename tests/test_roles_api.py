@@ -9,6 +9,7 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 from enterprise.models import SystemWideEnterpriseRole
 
@@ -22,6 +23,7 @@ class TestUpdateRoleAssignmentsCommand(TestCase):
         ENTERPRISE_LEARNER_ROLE,
         ENTERPRISE_OPERATOR_ROLE,
         SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+        SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE
     )
 
     def setUp(self):

@@ -17,6 +17,46 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.3]
+---------
+* fix: add missing migration for content_filter help text
+
+[4.23.2]
+---------
+* test: pii check stage actually checks PII instead of not at all.
+
+[4.23.1]
+---------
+* fix: don't allow saving duplicate EnterpriseCatalogQuery content_filter
+
+[4.22.6]
+----------
+* feat: add created time to reponse
+
+[4.22.5]
+----------
+* chore: requirement updates
+
+[4.22.4]
+----------
+* feat: Adding enterprise-customer-support endpoint
+
+[4.22.3]
+----------
+* bump enterprise to 4.22.3.
+
+[4.22.2]
+----------
+* fix: Serializes `course_key` field from the federated-content-metadata, `CourseDetails` model within the `EnterpriseCourseEnrollmentSerializer`.
+
+[4.22.1]
+----------
+* bump enterprise to 4.22.1.
+
+[4.21.10]
+----------
+* created migration to create a system-wide enterprise role named `enterprise_provisioning_admin`.
+
 [4.21.9]
 ---------
 * fix: fixed search fetch crashing because of server taking too long for api request logs.

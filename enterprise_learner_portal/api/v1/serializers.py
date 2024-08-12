@@ -83,6 +83,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         if CourseDetails:
             course_details = CourseDetails.objects.filter(id=course_run_id).first()
             if course_details:
+                representation['course_key'] = course_details.course_key
                 representation['course_type'] = course_details.course_type
                 representation['product_source'] = course_details.product_source
                 representation['start_date'] = course_details.start_date or representation['start_date']
