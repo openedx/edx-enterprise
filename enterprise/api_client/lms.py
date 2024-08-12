@@ -6,6 +6,7 @@ import logging
 import time
 from urllib.parse import urljoin
 
+import requests
 from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import (  # pylint: disable=redefined-builtin
     ConnectionError,
@@ -272,6 +273,34 @@ class EnrollmentApiClient(BackendServiceAPIClient):
         api_url = self.get_api_url("enrollment")
         response = self.client.get(api_url, params={"user": username})
         response.raise_for_status()
+        return response.json()
+
+    def allow_enrollment(self, email, course_id, auto_enroll=False):
+        """
+        Call the enrollment API to allow enrollment for the given email and course_id.
+
+        Args:
+            email (str): The email address of the user to be allowed to enroll in the course.
+            course_id (str): The string value of the course's unique identifier.
+            auto_enroll (bool): Whether to auto-enroll the user in the course upon registration / activation.
+
+        Returns:
+            dict: A dictionary containing details of the created CourseEnrollmentAllowed object.
+
+        """
+        api_url = self.get_api_url("enrollment_allowed")
+        response = self.client.post(
+            f"{api_url}/",
+            json={
+                'email': email,
+                'course_id': course_id,
+                'auto_enroll': auto_enroll,
+            }
+        )
+        if response.status_code == requests.codes.conflict:
+            LOGGER.info(response.json()["message"])
+        else:
+            response.raise_for_status()
         return response.json()
 
 

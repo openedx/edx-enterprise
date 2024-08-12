@@ -90,6 +90,30 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'You will not be able to log back into your account until you have activated it.'
             )
 
+    def _assert_allow_enrollment_is_called_correctly(
+        self,
+        mock_enrollment_api_client,
+        license_is_present,
+        course_invite_only,
+        enrollment_in_invite_only_courses_allowed,
+    ):
+        """
+        Verify that the allow_enrollment endpoint is called only when:
+            - License is present
+            - Course is invite only
+            - Enrollment in invite only courses is allowed
+        """
+        if license_is_present:
+            if course_invite_only:
+                if enrollment_in_invite_only_courses_allowed:
+                    mock_enrollment_api_client.return_value.allow_enrollment.assert_called_once()
+                else:
+                    mock_enrollment_api_client.return_value.allow_enrollment.assert_not_called()
+            else:
+                mock_enrollment_api_client.return_value.allow_enrollment.assert_not_called()
+        else:
+            mock_enrollment_api_client.return_value.allow_enrollment.assert_not_called()
+
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -398,12 +422,21 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @ddt.data(
-        str(uuid.uuid4()),
-        '',
+        (str(uuid.uuid4()), True, True),
+        (str(uuid.uuid4()), True, False),
+        (str(uuid.uuid4()), False, True),
+        (str(uuid.uuid4()), False, False),
+        ('', True, True),
+        ('', True, False),
+        ('', False, True),
+        ('', False, False),
     )
+    @ddt.unpack
     def test_get_course_specific_data_sharing_consent_not_enabled(
             self,
             license_uuid,
+            course_invite_only,
+            allow_enrollment_in_invite_only_courses,
             course_catalog_api_client_mock,
             mock_get_course_mode,
             mock_enrollment_api_client,
@@ -414,6 +447,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=False,
+            allow_enrollment_in_invite_only_courses=allow_enrollment_in_invite_only_courses,
         )
         content_filter = {
             'key': [
@@ -431,6 +465,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = course_id
+
+        mock_enrollment_api_client.return_value.get_course_details.return_value = {"invite_only": course_invite_only}
 
         course_mode = 'verified'
         mock_get_course_mode.return_value = course_mode
@@ -466,6 +502,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
         else:
             assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
+
+        self._assert_allow_enrollment_is_called_correctly(
+            mock_enrollment_api_client,
+            bool(license_uuid),
+            course_invite_only,
+            allow_enrollment_in_invite_only_courses
+        )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.get_best_mode_from_course_key')

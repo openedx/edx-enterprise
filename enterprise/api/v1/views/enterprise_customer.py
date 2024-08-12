@@ -38,6 +38,7 @@ from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
     enroll_subsidy_users_in_courses,
     get_best_mode_from_course_key,
+    get_course_details_from_course_keys,
     track_enrollment,
     validate_email_to_link,
 )
@@ -241,6 +242,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         for course_run in course_runs_modes:
             course_runs_modes[course_run] = get_best_mode_from_course_key(course_run)
 
+        course_details = get_course_details_from_course_keys(course_runs_modes.keys())
+
         emails = set()
 
         for info in enrollments_info:
@@ -254,6 +257,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             else:
                 emails.add(info['email'])
             info['course_mode'] = course_runs_modes[info['course_run_key']]
+            info['invitation_only'] = course_details[info['course_run_key']].invitation_only
 
         for email in emails:
             try:

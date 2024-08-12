@@ -1623,10 +1623,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
-    @mock.patch('enterprise.utils.CourseEnrollmentAllowed')
     def test_post_course_specific_enrollment_view_invite_only_courses(
             self,
-            mock_cea,
             registry_mock,
             get_data_sharing_consent_mock,
             enrollment_api_client_mock,
@@ -1664,9 +1662,9 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             }
         )
 
-        mock_cea.objects.update_or_create.assert_called_with(
-            course_id=course_id,
-            email=self.user.email
+        enrollment_api_client_mock.return_value.allow_enrollment.assert_called_with(
+            self.user.email,
+            course_id,
         )
         assert response.status_code == 302
 

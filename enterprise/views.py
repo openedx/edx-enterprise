@@ -683,6 +683,15 @@ class GrantDataSharingPermissions(View):
                         existing_enrollment.get('mode') == constants.CourseModes.AUDIT or
                         existing_enrollment.get('is_active') is False
                 ):
+                    if enterprise_customer.allow_enrollment_in_invite_only_courses:
+                        ensure_course_enrollment_is_allowed(course_id, request.user.email, enrollment_api_client)
+                        LOGGER.info(
+                            'User {user} is allowed to enroll in Course {course_id}.'.format(
+                                user=request.user.username,
+                                course_id=course_id
+                            )
+                        )
+
                     course_mode = get_best_mode_from_course_key(course_id)
                     LOGGER.info(
                         'Retrieved Course Mode: {course_modes} for Course {course_id}'.format(
