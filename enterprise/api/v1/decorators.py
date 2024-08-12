@@ -6,6 +6,10 @@ from functools import wraps
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
+from enterprise.logging import getEnterpriseLogger
+
+LOGGER = getEnterpriseLogger(__name__)
+
 
 def require_at_least_one_query_parameter(*query_parameter_names):
     """
@@ -57,13 +61,23 @@ def has_any_permissions(*permissions, fn=None):
         def _wrapped_view(request, *args, **kwargs):
             user = request.user
             pk = fn(request, **kwargs) if fn else kwargs.get('pk')
+            LOGGER.info(
+                f"[User_Permissions_Check] Checking permissions for user {user.username}, "
+                f"permission: {permissions}, "
+                f"pk: {pk}"
+            )
             if pk:
                 has_permission = any(user.has_perm(perm, pk) for perm in permissions)
             else:
                 has_permission = any(user.has_perm(perm) for perm in permissions)
-
+            LOGGER.info(f"[User_Permissions_Check] User {user.username} has permission: {has_permission}")
             if has_permission:
                 return view_func(request, *args, **kwargs)
+            LOGGER.error(
+                f"[User_Permissions_Check] Access denied for user {user.username} to {view_func.__name__}. "
+                f"Method: {request.method}, "
+                f"URL: {request.get_full_path()}"
+            )
             raise PermissionDenied(
                 "Access denied: Only admins and provisioning admins are allowed to access this endpoint.")
         return _wrapped_view

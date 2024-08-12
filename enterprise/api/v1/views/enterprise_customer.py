@@ -34,8 +34,8 @@ from enterprise.api.v1.decorators import has_any_permissions, require_at_least_o
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.constants import (
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
-    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION
 )
 from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
 from enterprise.logging import getEnterpriseLogger

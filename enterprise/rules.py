@@ -10,15 +10,15 @@ from edx_rest_framework_extensions.auth.jwt.cookies import get_decoded_jwt
 
 from enterprise.constants import (
     ENTERPRISE_CATALOG_ADMIN_ROLE,
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
+    ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
     PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
-    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_USER_ROLE,
-    ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -60,7 +60,7 @@ def has_implicit_access_to_provisioning_enterprise_customers(user, obj):  # pyli
 @rules.predicate
 def has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users(user, obj):  # pylint: disable=unused-argument
     """
-    Check if a requesting user has implicit access to 
+    Check if a requesting user has implicit access to
     the `PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_USER_ROLE` feature role.
 
     Params:
