@@ -6,6 +6,10 @@ from functools import wraps
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
+from enterprise.logging import getEnterpriseLogger
+
+LOGGER = getEnterpriseLogger(__name__)
+
 
 def require_at_least_one_query_parameter(*query_parameter_names):
     """
@@ -57,14 +61,31 @@ def has_permission_or_group(permission, group_name, fn=None):
             user = request.user
             pk = fn(request, **kwargs) if fn else kwargs.get('pk')
 
+            LOGGER.info(
+                f"[User_Permissions_Check] Checking permissions for user {user.username}, "
+                f"permission: {permission}, "
+                f"group: {group_name}, "
+                f"pk: {pk}"
+            )
+
             if pk:
                 has_permission = user.has_perm(permission, pk)
             else:
                 has_permission = user.has_perm(permission)
 
-            if has_permission or user.groups.filter(name=group_name).exists():
+            LOGGER.info(f"[User_Permissions_Check] User {user.username} has permission: {has_permission}")
+
+            is_in_group = user.groups.filter(name=group_name).exists()
+            LOGGER.info(f"[User_Permissions_Check] User {user.username} is in group {group_name}: {is_in_group}")
+
+            if has_permission or is_in_group:
                 return view_func(request, *args, **kwargs)
 
+            LOGGER.error(
+                f"[User_Permissions_Check] Access denied for user {user.username} to {view_func.__name__}. "
+                f"Method: {request.method}, "
+                f"URL: {request.get_full_path()}"
+            )
             raise PermissionDenied(
                 "Access denied: Only admins and provisioning admins are allowed to access this endpoint.")
 
