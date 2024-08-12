@@ -71,7 +71,9 @@ class XAPILearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     """
     The payload we sent to XAPI at a given point in time for an enterprise course enrollment.
 
-    .. no_pii:
+    .. pii: The user_email model field contains PII. Declaring "retained" because I don't know if it's retired.
+    .. pii_types: email_address
+    .. pii_retirement: retained
     """
 
     user = models.ForeignKey(

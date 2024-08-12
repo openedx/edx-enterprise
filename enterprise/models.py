@@ -18,6 +18,7 @@ from fernet_fields import EncryptedCharField
 from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
+from requests.exceptions import HTTPError
 from simple_history.models import HistoricalRecords
 
 from django.apps import apps
@@ -2391,7 +2392,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         help_text=_(
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a JSON object. An empty JSON object means that all available content items will be "
-            "included in the catalog."
+            "included in the catalog.  Must be unique."
         ),
         validators=[validate_content_filter_fields]
     )
@@ -2421,6 +2422,33 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         Return human-readable string representation.
         """
         return "<EnterpriseCatalogQuery '{title}' >".format(title=self.title)
+
+    def clean(self):
+        """
+        Before saving (and syncing with enterprise-catalog), check whether we're attempting to change
+        the content_filter to one that is a duplicate of an existing entry in enterprise-catalog
+        """
+        previous_values = EnterpriseCatalogQuery.objects.filter(id=self.id).first()
+        if previous_values:
+            old_filter = previous_values.content_filter
+            new_filter = self.content_filter
+            if not old_filter == new_filter:
+                catalog_client = EnterpriseCatalogApiClient()
+                hash_catalog_response = None
+                try:
+                    old_hash = catalog_client.get_catalog_query_hash(old_filter)
+                    new_hash = catalog_client.get_catalog_query_hash(new_filter)
+                    if not old_hash == new_hash:
+                        hash_catalog_response = catalog_client.get_enterprise_catalog_by_hash(new_hash)
+                except HTTPError:
+                    # If no results returned for querying by hash, we're safe to commit
+                    return
+                except Exception as exc:
+                    raise ValidationError({'content_filter': f'Failed to validate with exception: {exc}'}) from exc
+                if hash_catalog_response:
+                    print(f'hash_catalog_response: {hash_catalog_response}')
+                    err_msg = f'Duplicate value, see {hash_catalog_response["uuid"]}({hash_catalog_response["title"]})'
+                    raise ValidationError({'content_filter': err_msg})
 
     def delete(self, *args, **kwargs):
         """

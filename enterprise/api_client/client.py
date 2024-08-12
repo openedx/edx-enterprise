@@ -31,14 +31,15 @@ class APIClientMixin:
     APPEND_SLASH = False
     API_BASE_URL = ""
 
-    def get_api_url(self, path):
+    def get_api_url(self, path, append_slash=None):
         """
         Helper method to construct the API URL.
 
         Args:
             path (str): the API endpoint path string.
         """
-        return urljoin(f"{self.API_BASE_URL}/", f"{path.strip('/')}{'/' if self.APPEND_SLASH else ''}")
+        _APPEND_SLASH = self.APPEND_SLASH if append_slash is None else append_slash
+        return urljoin(f"{self.API_BASE_URL}/", f"{path.strip('/')}{'/' if _APPEND_SLASH else ''}")
 
 
 class BackendServiceAPIClient(APIClientMixin):
