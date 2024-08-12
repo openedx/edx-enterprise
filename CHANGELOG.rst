@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.4]
+---------
+* refactor: added logs for data dog inspection for permission check in handler function.
+
 [4.23.3]
 ---------
 * fix: add missing migration for content_filter help text
