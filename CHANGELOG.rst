@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.6]
+---------
+* feat: replace PAs group based permission with edx-rbac
+
+[4.23.5]
+---------
+* chore: requirement updates
+
 [4.23.4]
 ---------
 * refactor: added logs for data dog inspection for permission check in handler function.

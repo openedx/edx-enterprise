@@ -14,11 +14,11 @@ from enterprise.constants import (
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
-    ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
+    PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
-    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_USER_ROLE,
+    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -61,7 +61,7 @@ def has_implicit_access_to_provisioning_enterprise_customers(user, obj):  # pyli
 def has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users(user, obj):  # pylint: disable=unused-argument
     """
     Check if a requesting user has implicit access to
-    the `PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_USER_ROLE` feature role.
+    the `PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE` feature role.
 
     Params:
         user: An ``auth.User`` instance.
@@ -73,7 +73,7 @@ def has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users(
     request = crum.get_current_request()
     decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
     return request_user_has_implicit_access_via_jwt(decoded_jwt,
-                                                    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_USER_ROLE,
+                                                    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
                                                     obj)
 
 
@@ -267,6 +267,6 @@ rules.add_perm(
 )
 
 rules.add_perm(
-    ENTERPRISE_PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users,
 )

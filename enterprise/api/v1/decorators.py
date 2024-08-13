@@ -66,10 +66,7 @@ def has_any_permissions(*permissions, fn=None):
                 f"permission: {permissions}, "
                 f"pk: {pk}"
             )
-            if pk:
-                has_permission = any(user.has_perm(perm, pk) for perm in permissions)
-            else:
-                has_permission = any(user.has_perm(perm) for perm in permissions)
+            has_permission = any(user.has_perm(perm, pk) for perm in permissions)
             LOGGER.info(f"[User_Permissions_Check] User {user.username} has permission: {has_permission}")
             if has_permission:
                 return view_func(request, *args, **kwargs)
