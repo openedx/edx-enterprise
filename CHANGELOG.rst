@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.8]
+----------
+* feat: updating enterprise-customer-support endpoint
+
 [4.23.7]
 ---------
 * feat: add migration for model updateroleassignmentswithcustomersconfig
