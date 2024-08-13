@@ -51,36 +51,25 @@ def require_at_least_one_query_parameter(*query_parameter_names):
     return outer_wrapper
 
 
-def has_permission_or_group(permission, group_name, fn=None):
+def has_any_permissions(*permissions, fn=None):
     """
-    Ensure that user has permission to access the endpoint OR is part of a group that has access.
+    Decorator that allows access if the user has at least one of the specified permissions,
+    and optionally checks object-level permissions if a `fn` is provided to get the object.
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             user = request.user
             pk = fn(request, **kwargs) if fn else kwargs.get('pk')
-
             LOGGER.info(
                 f"[User_Permissions_Check] Checking permissions for user {user.username}, "
-                f"permission: {permission}, "
-                f"group: {group_name}, "
+                f"permission: {permissions}, "
                 f"pk: {pk}"
             )
-
-            if pk:
-                has_permission = user.has_perm(permission, pk)
-            else:
-                has_permission = user.has_perm(permission)
-
+            has_permission = any(user.has_perm(perm, pk) for perm in permissions)
             LOGGER.info(f"[User_Permissions_Check] User {user.username} has permission: {has_permission}")
-
-            is_in_group = user.groups.filter(name=group_name).exists()
-            LOGGER.info(f"[User_Permissions_Check] User {user.username} is in group {group_name}: {is_in_group}")
-
-            if has_permission or is_in_group:
+            if has_permission:
                 return view_func(request, *args, **kwargs)
-
             LOGGER.error(
                 f"[User_Permissions_Check] Access denied for user {user.username} to {view_func.__name__}. "
                 f"Method: {request.method}, "
@@ -88,6 +77,5 @@ def has_permission_or_group(permission, group_name, fn=None):
             )
             raise PermissionDenied(
                 "Access denied: Only admins and provisioning admins are allowed to access this endpoint.")
-
         return _wrapped_view
     return decorator

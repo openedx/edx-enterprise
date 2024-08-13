@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.6]
+---------
+* feat: replace PAs group based permission with edx-rbac
+
 [4.23.5]
 ---------
 * chore: requirement updates
