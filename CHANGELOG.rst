@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.7]
+---------
+* feat: add migration for model updateroleassignmentswithcustomersconfig
+
 [4.23.6]
 ---------
 * feat: replace PAs group based permission with edx-rbac
