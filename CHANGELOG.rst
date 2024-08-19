@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.9]
+----------
+* feat: Add option to show soft deleted group memberships in django admin
+
 [4.23.8]
 ----------
 * feat: updating enterprise-customer-support endpoint
