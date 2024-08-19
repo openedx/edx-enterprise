@@ -1255,6 +1255,7 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
     """
     model = models.EnterpriseGroupMembership
     list_display = ('group', 'membership_user',)
+    list_filter = ('is_removed',)
     search_fields = (
         'uuid',
         'group__uuid',
@@ -1267,6 +1268,18 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'pending_enterprise_customer_user',
     )
+
+    def get_queryset(self, request):
+        """
+        Return a QuerySet of all model instances.
+        """
+        qs = self.model.available_objects.get_queryset()
+
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+
+        return qs
 
 
 @admin.register(models.LearnerCreditEnterpriseCourseEnrollment)
