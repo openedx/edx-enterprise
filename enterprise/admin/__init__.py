@@ -1273,7 +1273,11 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
         """
         Return a QuerySet of all model instances.
         """
-        qs = self.model.available_objects.get_queryset()
+        show_soft_deletes = request.GET.get('is_removed__exact', False)
+        if show_soft_deletes:
+            qs = self.model.all_objects.get_queryset()
+        else:
+            qs = self.model.available_objects.get_queryset()
 
         ordering = self.get_ordering(request)
         if ordering:
