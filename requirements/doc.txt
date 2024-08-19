@@ -235,11 +235,11 @@ edx-tincan-py35==1.0.0
     # via -r requirements/test-master.txt
 edx-toggles==5.2.0
     # via -r requirements/test-master.txt
-factory-boy==3.3.0
+factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==26.3.0
+faker==27.0.0
     # via factory-boy
 filelock==3.15.4
     # via
@@ -447,7 +447,7 @@ sortedcontainers==2.4.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 sphinx==8.0.2
     # via
