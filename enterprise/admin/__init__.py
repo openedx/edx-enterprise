@@ -1254,7 +1254,7 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
     Django admin for EnterpriseGroupMembership model.
     """
     model = models.EnterpriseGroupMembership
-    list_display = ('group', 'membership_user',)
+    list_display = ('group', 'membership_user', 'is_removed')
     list_filter = ('is_removed',)
     search_fields = (
         'uuid',
