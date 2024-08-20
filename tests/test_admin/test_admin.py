@@ -3,11 +3,11 @@ Tests for the IntegratedChannelAPIRequest admin module in `edx-enterprise`.
 """
 from django.contrib.admin.sites import AdminSite
 from django.db import connection
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from django.test.utils import CaptureQueriesContext
 
-from enterprise.models import EnterpriseGroupMembership
 from enterprise.admin import EnterpriseGroupMembershipAdmin
+from enterprise.models import EnterpriseGroupMembership
 from integrated_channels.integrated_channel.admin import IntegratedChannelAPIRequestLogAdmin
 from integrated_channels.integrated_channel.models import IntegratedChannelAPIRequestLogs
 from test_utils import factories
@@ -122,4 +122,4 @@ class EnterpriseGroupMembershipAdminTest(TestCase):
         # should return both results
         self.assertEqual(len(results), 2)
         # is_removed value should differ between the two results
-        self.assertNotEquals(results[0].is_removed, results[1].is_removed)
+        self.assertNotEqual(results[0].is_removed, results[1].is_removed)
