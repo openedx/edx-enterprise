@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.9]
+----------
+* feat: implement back-off and retry for SAP SuccessFactors
+
 [4.23.8]
 ----------
 * feat: updating enterprise-customer-support endpoint

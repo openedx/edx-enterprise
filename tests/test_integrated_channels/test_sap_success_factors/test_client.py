@@ -353,3 +353,100 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert actual_response == expected_response
 
         sap_client._call_post_with_session.assert_called_with(expected_completion_url, expected_payload)  # pylint: disable=protected-access
+
+    @responses.activate
+    def test_sync_content_metadata_success(self):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        expected_course_response_body = self.content_payload
+        expected_course_response_body["@odata.context"] = "$metadata#OcnCourses/$entity"
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            json=expected_course_response_body,
+            status=200
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        status, body = sap_client._sync_content_metadata(self.content_payload)
+        assert status == 200
+        assert json.loads(body) == expected_course_response_body
+        assert len(responses.calls) == 2
+
+    @responses.activate
+    def test_sync_content_metadata_too_many_requests(self):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            status=429
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        with freeze_time(NOW):
+            status, body = sap_client._sync_content_metadata(self.content_payload)
+        assert status == 429
+        assert len(responses.calls) == sap_client.MAX_RETRIES + 1 + 1  # 1 for the auth call
+
+    @responses.activate
+    def test_sync_content_metadata_bad_request(self):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            json={"message": "error"},
+            status=400
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        status, body = sap_client._sync_content_metadata(self.content_payload)
+        assert status == 400
+        assert json.loads(body) == {'message': 'error'}
+        assert len(responses.calls) == 2
+
+    @responses.activate
+    def test_sync_content_metadata_retry_logic(self):
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            status=429
+        )
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            json=self.content_payload,
+            status=200
+        )
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        with freeze_time(NOW):
+            status, body = sap_client._sync_content_metadata(self.content_payload)
+        assert status == 200
+        assert json.loads(body) == self.content_payload
+        assert len(responses.calls) == 3
