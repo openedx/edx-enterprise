@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.10]
+----------
+* feat: added encrypted columns for user credentials for SAP config
+
 [4.23.9]
 ----------
 * feat: Add option to show soft deleted group memberships in django admin
