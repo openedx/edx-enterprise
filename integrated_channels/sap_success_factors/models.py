@@ -94,6 +94,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         ),
         null=True
     )
+
     @property
     def encrypted_key(self):
         """
@@ -156,6 +157,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         ),
         null=True
     )
+
     @property
     def encrypted_secret(self):
         """
