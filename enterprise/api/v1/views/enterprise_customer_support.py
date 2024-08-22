@@ -154,15 +154,23 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
         # Process this after the data has been serialized since the is_admin
         # field is computed/available only after serialization step
         if not ordering_criteria:
-            serializer_data = sorted(
-                serializer_data,
-                key=lambda k: (
-                    # sort by is_admin = True first (i.e. -1),
-                    # then sort by first_name lexicographically
-                    (-1 * k['is_admin'], k['enterprise_customer_user']['first_name'])
-                    if k['enterprise_customer_user'] is not None
-                    else -1 * k['is_admin']
+            try:
+                serializer_data = sorted(
+                    serializer_data,
+                    key=lambda k: (
+                        # sort by is_admin = True first (i.e. -1),
+                        # then sort by first_name lexicographically
+                        (-1 * k['is_admin'], k['enterprise_customer_user']['first_name'])
+                        if k['enterprise_customer_user'] is not None
+                        and k['is_admin'] is not None
+                        # fall back to sorting by is_admin if applicable
+                        else -1 * k['is_admin']
+                        if k['is_admin'] is not None
+                        # otherwise resort to sorting by id
+                        else k['id']
+                    )
                 )
-            )
+            except TypeError:
+                pass
 
         return self.paginator.get_paginated_response(serializer_data)
