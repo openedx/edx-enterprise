@@ -13,6 +13,7 @@ import requests
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.apps import apps
+from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -31,9 +32,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
      completion status endpoints.
     """
 
-    SESSION_TIMEOUT = 5
-    MAX_RETRIES = 3
-    BACKOFF_FACTOR = 1
+    SESSION_TIMEOUT = getattr(settings, "ENTERPRISE_SAPSF_SESSION_TIMEOUT", 5)
+    MAX_RETRIES = getattr(settings, "ENTERPRISE_SAPSF_MAX_RETRIES", 3)
+    BACKOFF_FACTOR = getattr(settings, "ENTERPRISE_SAPSF_BACKOFF_FACTOR", 1)
 
     GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
 
