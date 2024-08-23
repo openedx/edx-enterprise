@@ -91,16 +91,16 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             'sapsf_company_id': 'test',
             'enterprise_customer': ENTERPRISE_ID,
             'sapsf_user_id': 893489,
-            'key': 'testing',
-            'secret': 'secret',
+            'key': '',
+            'secret': '',
             'user_type': 'user',
         }
         response = self.client.put(url, payload)
         self.sap_config.refresh_from_db()
         self.assertEqual(self.sap_config.sapsf_base_url, 'http://testing2')
         self.assertEqual(self.sap_config.sapsf_company_id, 'test')
-        self.assertEqual(self.sap_config.key, 'testing')
-        self.assertEqual(self.sap_config.secret, 'secret')
+        self.assertEqual(self.sap_config.key, '')
+        self.assertEqual(self.sap_config.secret, '')
         self.assertEqual(self.sap_config.user_type, 'user')
         self.assertEqual(self.sap_config.sapsf_user_id, '893489')
         self.assertEqual(response.status_code, 200)
