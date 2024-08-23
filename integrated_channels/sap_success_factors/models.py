@@ -94,6 +94,13 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         null=True
     )
 
+    @encrypted_key.setter
+    def encrypted_key(self, value):
+        """
+        Set the encrypted key.
+        """
+        self.decrypted_key = value
+
     sapsf_base_url = models.CharField(
         max_length=255,
         blank=True,
@@ -134,6 +141,13 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         ),
         null=True
     )
+
+    @encrypted_secret.setter
+    def encrypted_secret(self, value):
+        """
+        Set the encrypted secret.
+        """
+        self.decrypted_secret = value
 
     user_type = models.CharField(
         max_length=20,
