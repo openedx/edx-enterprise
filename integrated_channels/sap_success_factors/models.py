@@ -9,6 +9,7 @@ from config_models.models import ConfigurationModel
 from fernet_fields import EncryptedCharField
 
 from django.db import models
+from django.utils.encoding import force_bytes, force_str
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.exceptions import ClientError
@@ -94,6 +95,21 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         null=True
     )
 
+    @property
+    def encrypted_key(self):
+        """
+        Return encrypted key as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_key field. This method will encrypt the key again before sending.
+        """
+        if self.decrypted_key:
+            return force_str(
+                self._meta.get_field('decrypted_key').fernet.encrypt(
+                    force_bytes(self.decrypted_key)
+                )
+            )
+        return self.decrypted_key
+
     @encrypted_key.setter
     def encrypted_key(self, value):
         """
@@ -141,6 +157,21 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         ),
         null=True
     )
+
+    @property
+    def encrypted_secret(self):
+        """
+        Return encrypted secret as a string.
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_secret field. This method will encrypt the secret again before sending.
+        """
+        if self.decrypted_secret:
+            return force_str(
+                self._meta.get_field('decrypted_secret').fernet.encrypt(
+                    force_bytes(self.decrypted_secret)
+                )
+            )
+        return self.decrypted_secret
 
     @encrypted_secret.setter
     def encrypted_secret(self, value):
