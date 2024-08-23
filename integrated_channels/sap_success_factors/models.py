@@ -9,7 +9,6 @@ from config_models.models import ConfigurationModel
 from fernet_fields import EncryptedCharField
 
 from django.db import models
-from django.utils.encoding import force_bytes, force_str
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.exceptions import ClientError
