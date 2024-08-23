@@ -467,7 +467,7 @@ if COURSE_ENROLLMENT_CHANGED is not None:
 
 
 @receiver(pre_save, sender=SAPSuccessFactorsEnterpriseCustomerConfiguration)
-def update_decrypted_credentials(sender, instance, **kwargs):
+def update_decrypted_credentials(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Ensure that the decrypted credentials have same values as unencrypted credentials.
     """
