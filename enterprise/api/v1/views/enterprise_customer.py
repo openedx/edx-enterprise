@@ -4,6 +4,7 @@ Views for the ``enterprise-customer`` API endpoint.
 
 from urllib.parse import quote_plus, unquote
 
+import crum
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from rest_framework import filters, permissions
@@ -72,6 +73,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Allow PAs to access all enterprise customers by modifying filter_backends
         """
         queryset = self.queryset
+        crum.set_current_request(self.request)
         is_provisioning_admin = self.request.user.has_perm(ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
         if is_provisioning_admin:
             self.filter_backends = (
@@ -134,16 +136,17 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @method_decorator(has_any_permissions('enterprise.can_access_admin_dashboard',
-                                          ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION))
+    @has_any_permissions('enterprise.can_access_admin_dashboard',
+                         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-customer/
         """
         return super().create(request, *args, **kwargs)
 
-    @method_decorator(has_any_permissions('enterprise.can_access_admin_dashboard',
-                                          ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION))
+    @has_any_permissions('enterprise.can_access_admin_dashboard',
+                         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+                         fn=lambda request, pk: pk)
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
