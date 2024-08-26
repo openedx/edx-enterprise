@@ -6,6 +6,7 @@ import json
 import uuid
 from logging import getLogger
 
+from fernet_fields import EncryptedCharField
 from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
@@ -44,6 +45,18 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
+    decrypted_client_id = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted API Client ID",
+        help_text=(
+            "The encrypted API Client ID provided to edX by the enterprise customer to be used to make API "
+            "calls to Canvas on behalf of the customer. It will be encrypted when stored in the database."
+        ),
+        null=True,
+    )
+
     client_secret = models.CharField(
         max_length=255,
         blank=True,
@@ -53,6 +66,18 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
             "The API Client Secret provided to edX by the enterprise customer to be used to make "
             " API calls to Canvas on behalf of the customer."
         )
+    )
+
+    decrypted_client_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted API Client Secret",
+        help_text=(
+            "The encrypted API Client Secret provided to edX by the enterprise customer to be used to make "
+            " API calls to Canvas on behalf of the customer. It will be encrypted when stored in the database."
+        ),
+        null=True,
     )
 
     canvas_account_id = models.BigIntegerField(

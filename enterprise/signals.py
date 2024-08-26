@@ -455,6 +455,17 @@ def generate_default_orchestration_record_display_name(sender, instance, **kwarg
             instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
 
 
+@receiver(pre_save, sender=CanvasEnterpriseCustomerConfiguration)
+def mirror_id_and_secret_to_decrypted_fields(sender, instance, **kwargs):   # pylint: disable=unused-argument
+    """
+    Mirror the client_id and client_secret to the decrypted fields.
+    """
+    if instance.client_id != instance.decrypted_client_id:
+        instance.decrypted_client_id = instance.client_id
+    if instance.client_secret != instance.decrypted_client_secret:
+        instance.decrypted_client_secret = instance.client_secret
+
+
 # Don't connect this receiver if we dont have access to CourseEnrollment model
 if CourseEnrollment is not None:
     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
