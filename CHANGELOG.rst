@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.13]
+----------
+* feat: added encrypted columns for user credentials for SAP config
+
 [4.23.12]
 ----------
 * feat: feat: added encrypted client id and secret for canvas integration
