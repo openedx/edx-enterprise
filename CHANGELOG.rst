@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.14]
+----------
+* feat: replaced references from unencrypted to encrypted columns
+* feat: added data migration to populate encrypted columns
+
 [4.23.13]
 ----------
 * feat: added encrypted columns for user credentials for SAP config
