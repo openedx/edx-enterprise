@@ -95,21 +95,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         null=True
     )
 
-    @property
-    def encrypted_key(self):
-        """
-        Return encrypted key as a string.
-        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        decrypted_key field. This method will encrypt the key again before sending.
-        """
-        if self.decrypted_key:
-            return force_str(
-                self._meta.get_field('decrypted_key').fernet.encrypt(
-                    force_bytes(self.decrypted_key)
-                )
-            )
-        return self.decrypted_key
-
     sapsf_base_url = models.CharField(
         max_length=255,
         blank=True,
@@ -150,21 +135,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         ),
         null=True
     )
-
-    @property
-    def encrypted_secret(self):
-        """
-        Return encrypted secret as a string.
-        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
-        decrypted_secret field. This method will encrypt the secret again before sending.
-        """
-        if self.decrypted_secret:
-            return force_str(
-                self._meta.get_field('decrypted_secret').fernet.encrypt(
-                    force_bytes(self.decrypted_secret)
-                )
-            )
-        return self.decrypted_secret
 
     user_type = models.CharField(
         max_length=20,
