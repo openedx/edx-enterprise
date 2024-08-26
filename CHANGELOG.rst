@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.23.10]
+[4.23.11]
 ----------
 * feat: implement back-off and retry for SAP SuccessFactors
+
+[4.23.10]
+----------
+* fix: 403 for provisioning-admins due to crum and middleware
 
 [4.23.9]
 ----------

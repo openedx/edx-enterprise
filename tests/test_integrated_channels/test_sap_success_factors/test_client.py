@@ -356,6 +356,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
     @responses.activate
     def test_sync_content_metadata_success(self):
+        """
+        Test that the sync content metadata method works as expected
+        """
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -381,6 +384,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
     @responses.activate
     def test_sync_content_metadata_too_many_requests(self):
+        """
+        Test that the sync content metadata method retries when it gets a 429 response.
+        """
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -402,6 +408,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
     @responses.activate
     def test_sync_content_metadata_bad_request(self):
+        """
+        Test that the sync content metadata method returns the response body when it gets a 400 response.
+        """
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -424,6 +433,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
     @responses.activate
     def test_sync_content_metadata_retry_logic(self):
+        """
+        Test that the sync content metadata method retries when it gets a 429 response and then succeeds.
+        """
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
