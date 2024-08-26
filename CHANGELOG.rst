@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.12]
+----------
+* feat: feat: added encrypted client id and secret for canvas integration
+
 [4.23.11]
 ----------
 * feat: implement back-off and retry for SAP SuccessFactors
