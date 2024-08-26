@@ -374,7 +374,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         )
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-        status, body = sap_client._sync_content_metadata(self.content_payload)
+        status, body = sap_client._sync_content_metadata(self.content_payload)  # pylint: disable=protected-access
         assert status == 200
         assert json.loads(body) == expected_course_response_body
         assert len(responses.calls) == 2
@@ -396,7 +396,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
         with freeze_time(NOW):
-            status, body = sap_client._sync_content_metadata(self.content_payload)
+            status, body = sap_client._sync_content_metadata(self.content_payload)  # pylint: disable=protected-access,unused-variable
         assert status == 429
         assert len(responses.calls) == sap_client.MAX_RETRIES + 1 + 1  # 1 for the auth call
 
@@ -417,7 +417,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         )
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-        status, body = sap_client._sync_content_metadata(self.content_payload)
+        status, body = sap_client._sync_content_metadata(self.content_payload)  # pylint: disable=protected-access
         assert status == 400
         assert json.loads(body) == {'message': 'error'}
         assert len(responses.calls) == 2
@@ -446,7 +446,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
         with freeze_time(NOW):
-            status, body = sap_client._sync_content_metadata(self.content_payload)
+            status, body = sap_client._sync_content_metadata(self.content_payload)  # pylint: disable=protected-access
         assert status == 200
         assert json.loads(body) == self.content_payload
         assert len(responses.calls) == 3

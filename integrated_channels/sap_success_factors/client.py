@@ -226,7 +226,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             ClientError: If SuccessFactors API call fails.
         """
         return self._sync_content_metadata(serialized_data)
-    
+
     def _calculate_backoff(self, attempt_count):
         """
         Calculate the seconds to sleep based on attempt_count.
