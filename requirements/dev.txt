@@ -8,13 +8,13 @@ accessible-pygments==0.0.5
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
-aiohappyeyeballs==2.3.4
+aiohappyeyeballs==2.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   aiohttp
-aiohttp==3.10.1
+aiohttp==3.10.5
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -364,7 +364,7 @@ edx-drf-extensions==10.3.0
     #   edx-rbac
 edx-i18n-tools==1.6.2
     # via -r requirements/dev.in
-edx-lint==5.3.7
+edx-lint==5.4.0
     # via -r requirements/dev.in
 edx-opaque-keys[django]==2.10.0
     # via
@@ -392,12 +392,12 @@ edx-toggles==5.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-factory-boy==3.3.0
+factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==26.3.0
+faker==28.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -499,7 +499,7 @@ multidict==6.0.5
     #   -r requirements/test.txt
     #   aiohttp
     #   yarl
-newrelic==9.12.0
+newrelic==9.13.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -532,7 +532,7 @@ packaging==24.1
     #   snowflake-connector-python
     #   sphinx
     #   tox
-paramiko==3.4.0
+paramiko==3.4.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -720,7 +720,7 @@ pytz==2024.1
     #   drf-yasg
     #   edx-tincan-py35
     #   snowflake-connector-python
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -802,7 +802,7 @@ sortedcontainers==2.4.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-soupsieve==2.5
+soupsieve==2.6
     # via
     #   -r requirements/doc.txt
     #   beautifulsoup4
@@ -869,7 +869,7 @@ toml==0.10.2
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
-tomlkit==0.13.0
+tomlkit==0.13.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt

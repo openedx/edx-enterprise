@@ -1254,7 +1254,8 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
     Django admin for EnterpriseGroupMembership model.
     """
     model = models.EnterpriseGroupMembership
-    list_display = ('group', 'membership_user',)
+    list_display = ('group', 'membership_user', 'is_removed')
+    list_filter = ('is_removed',)
     search_fields = (
         'uuid',
         'group__uuid',
@@ -1267,6 +1268,22 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'pending_enterprise_customer_user',
     )
+
+    def get_queryset(self, request):
+        """
+        Return a QuerySet of all model instances.
+        """
+        show_soft_deletes = request.GET.get('is_removed__exact', False)
+        if show_soft_deletes:
+            qs = self.model.all_objects.get_queryset()
+        else:
+            qs = self.model.available_objects.get_queryset()
+
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+
+        return qs
 
 
 @admin.register(models.LearnerCreditEnterpriseCourseEnrollment)

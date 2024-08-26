@@ -19,7 +19,7 @@ Unreleased
 
 [4.23.9]
 ----------
-* feat: implement back-off and retry for SAP SuccessFactors
+* feat: Add option to show soft deleted group memberships in django admin
 
 [4.23.8]
 ----------
