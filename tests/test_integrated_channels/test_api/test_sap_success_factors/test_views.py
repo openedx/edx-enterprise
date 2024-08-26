@@ -70,10 +70,6 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
                          self.sap_config.sapsf_company_id)
         self.assertEqual(int(data.get('sapsf_user_id')),
                          self.sap_config.sapsf_user_id)
-        self.assertEqual(data.get('key'),
-                         self.sap_config.key)
-        self.assertEqual(data.get('secret'),
-                         self.sap_config.secret)
         self.assertEqual(data.get('user_type'),
                          self.sap_config.user_type)
         self.assertEqual(data.get('enterprise_customer'),
@@ -91,16 +87,16 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             'sapsf_company_id': 'test',
             'enterprise_customer': ENTERPRISE_ID,
             'sapsf_user_id': 893489,
-            'key': '',
-            'secret': '',
+            'encrypted_key': '',
+            'encrypted_secret': '',
             'user_type': 'user',
         }
         response = self.client.put(url, payload)
         self.sap_config.refresh_from_db()
         self.assertEqual(self.sap_config.sapsf_base_url, 'http://testing2')
         self.assertEqual(self.sap_config.sapsf_company_id, 'test')
-        self.assertEqual(self.sap_config.key, '')
-        self.assertEqual(self.sap_config.secret, '')
+        self.assertEqual(self.sap_config.decrypted_key, '')
+        self.assertEqual(self.sap_config.decrypted_secret, '')
         self.assertEqual(self.sap_config.user_type, 'user')
         self.assertEqual(self.sap_config.sapsf_user_id, '893489')
         self.assertEqual(response.status_code, 200)
@@ -164,8 +160,8 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
         missing, _ = data[0].get('is_valid')
         assert missing.get('missing') == ['key', 'sapsf_base_url', 'sapsf_company_id', 'sapsf_user_id', 'secret']
 
-        self.sap_config.key = 'ayy'
-        self.sap_config.secret = 'lmao'
+        self.sap_config.decrypted_key = 'ayy'
+        self.sap_config.decrypted_secret = 'lmao'
         self.sap_config.sapsf_company_id = '1'
         self.sap_config.sapsf_user_id = '1'
         self.sap_config.sapsf_base_url = 'http://happy.com'

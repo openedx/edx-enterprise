@@ -11,12 +11,10 @@ class SAPSuccessFactorsConfigSerializer(EnterpriseCustomerPluginConfigSerializer
     class Meta:
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
         extra_fields = (
-            'key',
             'encrypted_key',
             'sapsf_base_url',
             'sapsf_company_id',
             'sapsf_user_id',
-            'secret',
             'encrypted_secret',
             'user_type',
             'additional_locales',

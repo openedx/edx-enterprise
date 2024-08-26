@@ -75,14 +75,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         (USER_TYPE_ADMIN, 'Admin'),
     )
 
-    key = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        verbose_name="Client ID",
-        help_text=_("OAuth client identifier.")
-    )
-
     decrypted_key = EncryptedCharField(
         max_length=255,
         verbose_name="Encrypted Client ID",
@@ -137,13 +129,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         default='',
         verbose_name="SAP User ID",
         help_text=_("Success factors user identifier.")
-    )
-    secret = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        verbose_name="Client Secret",
-        help_text=_("OAuth client secret.")
     )
 
     decrypted_secret = models.CharField(
@@ -250,7 +235,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         """
         missing_items = {'missing': []}
         incorrect_items = {'incorrect': []}
-        if not self.key:
+        if not self.decrypted_key:
             missing_items.get('missing').append('key')
         if not self.sapsf_base_url:
             missing_items.get('missing').append('sapsf_base_url')
@@ -258,7 +243,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             missing_items.get('missing').append('sapsf_company_id')
         if not self.sapsf_user_id:
             missing_items.get('missing').append('sapsf_user_id')
-        if not self.secret:
+        if not self.decrypted_secret:
             missing_items.get('missing').append('secret')
         if not is_valid_url(self.sapsf_base_url):
             incorrect_items.get('incorrect').append('sapsf_base_url')
