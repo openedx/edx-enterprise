@@ -6,11 +6,11 @@
 #
 accessible-pygments==0.0.5
     # via pydata-sphinx-theme
-aiohappyeyeballs==2.3.4
+aiohappyeyeballs==2.4.0
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
-aiohttp==3.10.1
+aiohttp==3.10.5
     # via
     #   -r requirements/test-master.txt
     #   openai
@@ -235,11 +235,11 @@ edx-tincan-py35==1.0.0
     # via -r requirements/test-master.txt
 edx-toggles==5.2.0
     # via -r requirements/test-master.txt
-factory-boy==3.3.0
+factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==26.3.0
+faker==28.0.0
     # via factory-boy
 filelock==3.15.4
     # via
@@ -290,7 +290,7 @@ multidict==6.0.5
     #   -r requirements/test-master.txt
     #   aiohttp
     #   yarl
-newrelic==9.12.0
+newrelic==9.13.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -310,7 +310,7 @@ packaging==24.1
     #   pytest
     #   snowflake-connector-python
     #   sphinx
-paramiko==3.4.0
+paramiko==3.4.1
     # via -r requirements/test-master.txt
 path==16.11.0
     # via
@@ -403,7 +403,7 @@ pytz==2024.1
     #   drf-yasg
     #   edx-tincan-py35
     #   snowflake-connector-python
-pyyaml==6.0.1
+pyyaml==6.0.2
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -447,7 +447,7 @@ sortedcontainers==2.4.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 sphinx==8.0.2
     # via
@@ -487,7 +487,7 @@ text-unidecode==1.3
     #   python-slugify
 toml==0.10.2
     # via pytest
-tomlkit==0.13.0
+tomlkit==0.13.2
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python

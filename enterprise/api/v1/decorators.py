@@ -66,6 +66,7 @@ def has_any_permissions(*permissions, **decorator_kwargs):
         @wraps(view)
         def wrapped_view(self, request, *args, **kwargs):
             """Wrap for the view function."""
+            user = request.user
             fn = decorator_kwargs.get('fn', None)
             if callable(fn):
                 obj = fn(request, *args, **kwargs)
@@ -76,8 +77,14 @@ def has_any_permissions(*permissions, **decorator_kwargs):
 
             has_permission = [perm for perm in permissions
                               if request.user.has_perm(perm, obj)]
+            LOGGER.info(f"[User_Permissions_Check] User {user.username} has permission: {has_permission}")
             if any(has_permission):
                 return view(self, request, *args, **kwargs)
+            LOGGER.error(
+                f"[User_Permissions_Check] Access denied for user {user.username}."
+                f"Method: {request.method}, "
+                f"URL: {request.get_full_path()}"
+            )
             raise PermissionDenied(
                 "Access denied: Only admins and provisioning admins are allowed to access this endpoint.")
         return wrapped_view
