@@ -71,12 +71,10 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         self.expected_token_response_body = {"expires_in": self.expires_in, "access_token": self.access_token}
         self.enterprise_config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
             key=self.client_id,
-            encrypted_key=self.client_id,
             sapsf_base_url=self.url_base,
             sapsf_company_id=self.company_id,
             sapsf_user_id=self.user_id,
-            secret=self.client_secret,
-            encrypted_secret=self.client_secret
+            secret=self.client_secret
         )
         self.enterprise_config.enterprise_customer = EnterpriseCustomerFactory()
         self.completion_payload = {

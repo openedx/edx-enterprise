@@ -472,6 +472,6 @@ def update_decrypted_credentials(sender, instance, **kwargs):     # pylint: disa
     Ensure that the decrypted credentials have same values as unencrypted credentials.
     """
     if instance.key != instance.decrypted_key:
-        instance.encrypted_key = instance.key
+        instance.decrypted_key = instance.key
     if instance.secret != instance.decrypted_secret:
-        instance.encrypted_secret = instance.secret
+        instance.decrypted_secret = instance.secret
