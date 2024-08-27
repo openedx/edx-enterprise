@@ -58,8 +58,8 @@ class TestCanvasAPIViews(APITestCase):
 
         CanvasEnterpriseCustomerConfiguration.objects.get_or_create(
             uuid=SINGLE_CANVAS_CONFIG['uuid'],
-            client_id=SINGLE_CANVAS_CONFIG['client_id'],
-            client_secret=SINGLE_CANVAS_CONFIG['client_secret'],
+            decrypted_client_id=SINGLE_CANVAS_CONFIG['client_id'],
+            decrypted_client_secret=SINGLE_CANVAS_CONFIG['client_secret'],
             canvas_account_id=SINGLE_CANVAS_CONFIG['canvas_account_id'],
             canvas_base_url=SINGLE_CANVAS_CONFIG['canvas_base_url'],
             enterprise_customer=self.enterprise_customer,
@@ -69,8 +69,8 @@ class TestCanvasAPIViews(APITestCase):
 
         CanvasEnterpriseCustomerConfiguration.objects.get_or_create(
             uuid=SECOND_CANVAS_CONFIG['uuid'],
-            client_id=SECOND_CANVAS_CONFIG['client_id'],
-            client_secret=SECOND_CANVAS_CONFIG['client_secret'],
+            decrypted_client_id=SECOND_CANVAS_CONFIG['client_id'],
+            decrypted_client_secret=SECOND_CANVAS_CONFIG['client_secret'],
             canvas_account_id=SECOND_CANVAS_CONFIG['canvas_account_id'],
             canvas_base_url=SECOND_CANVAS_CONFIG['canvas_base_url'],
             enterprise_customer=self.enterprise_customer,
