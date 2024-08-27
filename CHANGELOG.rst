@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.15]
+----------
+* feat: added migration for removing unencrypted client credentials
+
 [4.23.14]
 ----------
 * feat: replaced references from unencrypted to encrypted columns
