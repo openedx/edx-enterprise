@@ -3,6 +3,7 @@
 from django.db import migrations
 from integrated_channels.sap_success_factors.utils import populate_decrypted_fields_sap_success_factors
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
