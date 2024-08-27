@@ -5,11 +5,13 @@ import json
 from unittest import mock
 from uuid import uuid4
 
+from django.apps import apps
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
+from integrated_channels.sap_success_factors.utils import populate_decrypted_fields_sap_success_factors
 from test_utils import APITest, factories
 
 ENTERPRISE_ID = str(uuid4())
@@ -100,6 +102,30 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
         self.assertEqual(self.sap_config.user_type, 'user')
         self.assertEqual(self.sap_config.sapsf_user_id, '893489')
         self.assertEqual(response.status_code, 200)
+    
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_populate_decrypted_fields(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:sap_success_factors:configuration-detail', args=[self.sap_config.id])
+        client_secret = getattr(self.enterprise_customer_conf, 'client_id', '')
+        payload = {
+            'sapsf_base_url': 'http://testing2',
+            'sapsf_company_id': 'test',
+            'enterprise_customer': ENTERPRISE_ID,
+            'sapsf_user_id': 893489,
+            'user_type': 'user',
+            'encrypted_secret': '1000',
+        }
+        self.client.put(url, payload)
+        self.enterprise_customer_conf.refresh_from_db()
+        self.assertEqual(self.enterprise_customer_conf.decrypted_secret, '1000')
+        populate_decrypted_fields_sap_success_factors(apps)
+        self.enterprise_customer_conf.refresh_from_db()
+        self.assertEqual(self.enterprise_customer_conf.encrypted_secret, client_secret)
+        self.assertEqual(self.enterprise_customer_conf.encrypted_key, '')
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_patch(self, mock_current_request):
