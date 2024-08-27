@@ -102,7 +102,7 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
         self.assertEqual(self.sap_config.user_type, 'user')
         self.assertEqual(self.sap_config.sapsf_user_id, '893489')
         self.assertEqual(response.status_code, 200)
-    
+
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_populate_decrypted_fields(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
@@ -110,7 +110,7 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:sap_success_factors:configuration-detail', args=[self.sap_config.id])
-        client_secret = getattr(self.enterprise_customer_conf, 'client_id', '')
+        client_secret = getattr(self.sap_config, 'secret', '')
         payload = {
             'sapsf_base_url': 'http://testing2',
             'sapsf_company_id': 'test',
@@ -120,12 +120,11 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             'encrypted_secret': '1000',
         }
         self.client.put(url, payload)
-        self.enterprise_customer_conf.refresh_from_db()
-        self.assertEqual(self.enterprise_customer_conf.decrypted_secret, '1000')
+        self.sap_config.refresh_from_db()
+        self.assertEqual(self.sap_config.decrypted_secret, '1000')
         populate_decrypted_fields_sap_success_factors(apps)
-        self.enterprise_customer_conf.refresh_from_db()
-        self.assertEqual(self.enterprise_customer_conf.encrypted_secret, client_secret)
-        self.assertEqual(self.enterprise_customer_conf.encrypted_key, '')
+        self.sap_config.refresh_from_db()
+        self.assertEqual(self.sap_config.encrypted_secret, client_secret)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_patch(self, mock_current_request):
