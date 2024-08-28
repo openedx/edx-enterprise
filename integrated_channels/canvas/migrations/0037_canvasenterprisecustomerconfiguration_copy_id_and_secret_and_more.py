@@ -5,7 +5,7 @@ from django.db import migrations
 
 def populate_decrypted_client_id_and_secret(apps, schema_editor):  # pragma: no cover
     """
-    Populate the decrypted_client_id and decrypted_client_secret fields for all 
+    Populate the decrypted_client_id and decrypted_client_secret fields for all
     existing CanvasEnterpriseCustomerConfiguration
     """
     CanvasEnterpriseCustomerConfiguration = apps.get_model('canvas', 'CanvasEnterpriseCustomerConfiguration')

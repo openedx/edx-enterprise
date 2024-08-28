@@ -177,11 +177,11 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
             obj: The instance of CanvasEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
-        if self.canvas_base_url and self.client_id:
+        if self.canvas_base_url and self.decrypted_client_id:
             return (f'{self.canvas_base_url}/login/oauth2/auth'
                     f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
                     f'response_type=code&'
-                    f'client_id={self.client_id}&state={self.uuid}')
+                    f'client_id={self.decrypted_client_id}&state={self.uuid}')
         else:
             return None
 
@@ -196,9 +196,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         """
         missing_items = {'missing': []}
         incorrect_items = {'incorrect': []}
-        if not self.client_id:
+        if not self.decrypted_client_id:
             missing_items.get('missing').append('client_id')
-        if not self.client_secret:
+        if not self.decrypted_client_secret:
             missing_items.get('missing').append('client_secret')
         if not self.canvas_base_url:
             missing_items.get('missing').append('canvas_base_url')
