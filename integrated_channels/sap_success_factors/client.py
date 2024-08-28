@@ -135,7 +135,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         client_id = (
             self.enterprise_configuration.decrypted_key
             if use_encrypted_user_data 
-            else self.enterprise_configuration.client_id
+            else self.enterprise_configuration.key
         )
 
         client_secret = (
@@ -316,7 +316,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         client_id = (
             self.enterprise_configuration.decrypted_key
             if use_encrypted_user_data 
-            else self.enterprise_configuration.client_id
+            else self.enterprise_configuration.key
         )
 
         client_secret = (
