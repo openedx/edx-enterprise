@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sap_success_factors', '0019_auto_20240827_0807'),
+        ('sap_success_factors', '0019_auto_20240829_1044'),
     ]
 
     operations = [
