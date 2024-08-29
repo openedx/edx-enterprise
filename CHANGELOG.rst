@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.14]
+----------
+* feat: altered decrypted_secret to be encrypted and made credentials nullable
+
 [4.23.13]
 ----------
 * feat: added encrypted columns for user credentials for SAP config
