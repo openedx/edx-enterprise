@@ -17,10 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.23.14]
+[4.23.15]
 ----------
 * feat: replaced references from unencrypted to encrypted columns
 * feat: added data migration to populate encrypted columns
+
+[4.23.14]
+----------
+* feat: altered decrypted_secret to be encrypted and made credentials nullable
 
 [4.23.13]
 ----------
