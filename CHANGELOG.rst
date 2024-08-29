@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.16]
+----------
+* refactor: removed unencrypted credentials from sap config model
+
 [4.23.15]
 ----------
 * feat: replaced references from unencrypted to encrypted columns
