@@ -79,7 +79,8 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         blank=True,
         default='',
         verbose_name="Client ID",
-        help_text=_("OAuth client identifier.")
+        help_text=_("OAuth client identifier."),
+        null=True
     )
 
     decrypted_key = EncryptedCharField(
@@ -120,10 +121,11 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         blank=True,
         default='',
         verbose_name="Client Secret",
-        help_text=_("OAuth client secret.")
+        help_text=_("OAuth client secret."),
+        null=True
     )
 
-    decrypted_secret = models.CharField(
+    decrypted_secret = EncryptedCharField(
         max_length=255,
         blank=True,
         default='',
