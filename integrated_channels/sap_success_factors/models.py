@@ -131,7 +131,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         help_text=_("Success factors user identifier.")
     )
 
-    decrypted_secret = models.CharField(
+    decrypted_secret = EncryptedCharField(
         max_length=255,
         blank=True,
         default='',

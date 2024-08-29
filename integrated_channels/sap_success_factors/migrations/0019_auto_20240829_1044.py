@@ -7,7 +7,7 @@ from integrated_channels.sap_success_factors.utils import populate_decrypted_fie
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sap_success_factors', '0017_auto_20240823_0936'),
+        ('sap_success_factors', '0018_auto_20240829_0910'),
     ]
 
     operations = [

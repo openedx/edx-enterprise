@@ -131,26 +131,14 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Instantiate a new session object for use in connecting with SAP SuccessFactors
         """
         now = datetime.datetime.utcnow()
-        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
-        client_id = (
-            self.enterprise_configuration.decrypted_key
-            if use_encrypted_user_data 
-            else self.enterprise_configuration.client_id
-        )
-
-        client_secret = (
-            self.enterprise_configuration.decrypted_secret
-            if use_encrypted_user_data 
-            else self.enterprise_configuration.secret
-        )
         if self.session is None or self.expires_at is None or now >= self.expires_at:
             # Create a new session with a valid token
             if self.session:
                 self.session.close()
 
             oauth_access_token, expires_at = self.get_oauth_access_token(
-                client_id,
-                client_secret,
+                self.enterprise_configuration.decrypted_key,
+                self.enterprise_configuration.decrypted_secret,
                 self.enterprise_configuration.sapsf_company_id,
                 self.enterprise_configuration.sapsf_user_id,
                 self.enterprise_configuration.user_type,
@@ -312,21 +300,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             'sap_success_factors',
             'SAPSuccessFactorsEnterpriseCustomerConfiguration'
         )
-        use_encrypted_user_data = getattr(settings, 'FEATURES', {}).get('USE_ENCRYPTED_USER_DATA', False)
-        client_id = (
-            self.enterprise_configuration.decrypted_key
-            if use_encrypted_user_data 
-            else self.enterprise_configuration.client_id
-        )
-
-        client_secret = (
-            self.enterprise_configuration.decrypted_secret
-            if use_encrypted_user_data 
-            else self.enterprise_configuration.secret
-        )
         oauth_access_token, _ = self.get_oauth_access_token(
-            client_id,
-            client_secret,
+            self.enterprise_configuration.decrypted_key,
+            self.enterprise_configuration.decrypted_secret,
             self.enterprise_configuration.sapsf_company_id,
             sap_user_id,
             SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER,
