@@ -56,42 +56,25 @@ class TestBlackboardAPIViews(APITestCase):
         self.refresh_token = 'test-refresh-token'
         self.urlbase = reverse('blackboard-oauth-complete')
 
-        try:
-            BlackboardEnterpriseCustomerConfiguration.objects.get(
-                uuid=SINGLE_CONFIG['uuid'],
-                blackboard_base_url=SINGLE_CONFIG['base_url'],
-                enterprise_customer=self.enterprise_customer,
-                active=True,
-                enterprise_customer_id=ENTERPRISE_ID,
-            )
-        except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
-            BlackboardEnterpriseCustomerConfiguration.objects.create(
-                uuid=SINGLE_CONFIG['uuid'],
-                decrypted_client_id=SINGLE_CONFIG['client_id'],
-                decrypted_client_secret=SINGLE_CONFIG['client_secret'],
-                blackboard_base_url=SINGLE_CONFIG['base_url'],
-                enterprise_customer=self.enterprise_customer,
-                active=True,
-                enterprise_customer_id=ENTERPRISE_ID,
-            )
-        try:
-            BlackboardEnterpriseCustomerConfiguration.objects.get(
-                uuid=SECOND_CONFIG['uuid'],
-                blackboard_base_url=SECOND_CONFIG['base_url'],
-                enterprise_customer=self.enterprise_customer,
-                active=True,
-                enterprise_customer_id=ENTERPRISE_ID,
-            )
-        except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
-            BlackboardEnterpriseCustomerConfiguration.objects.create(
-                uuid=SECOND_CONFIG['uuid'],
-                decrypted_client_id=SECOND_CONFIG['client_id'],
-                decrypted_client_secret=SECOND_CONFIG['client_secret'],
-                blackboard_base_url=SECOND_CONFIG['base_url'],
-                enterprise_customer=self.enterprise_customer,
-                active=True,
-                enterprise_customer_id=ENTERPRISE_ID,
-            )
+        BlackboardEnterpriseCustomerConfiguration.objects.get_or_create(
+            uuid=SINGLE_CONFIG['uuid'],
+            decrypted_client_id=SINGLE_CONFIG['client_id'],
+            decrypted_client_secret=SINGLE_CONFIG['client_secret'],
+            blackboard_base_url=SINGLE_CONFIG['base_url'],
+            enterprise_customer=self.enterprise_customer,
+            active=True,
+            enterprise_customer_id=ENTERPRISE_ID,
+        )
+
+        BlackboardEnterpriseCustomerConfiguration.objects.get_or_create(
+            uuid=SECOND_CONFIG['uuid'],
+            decrypted_client_id=SECOND_CONFIG['client_id'],
+            decrypted_client_secret=SECOND_CONFIG['client_secret'],
+            blackboard_base_url=SECOND_CONFIG['base_url'],
+            enterprise_customer=self.enterprise_customer,
+            active=True,
+            enterprise_customer_id=ENTERPRISE_ID,
+        )
 
     def test_successful_refresh_token_by_uuid_request(self):
         """
