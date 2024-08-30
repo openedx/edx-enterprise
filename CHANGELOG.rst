@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.15]
+----------
+* feat: altered decrypted_secret to be encrypted and made credentials nullable
+
 [4.23.14]
 ----------
 * feat: populate encrypted client id and secret for canvas integration and remove references to unencrypted fields
