@@ -11,6 +11,7 @@ from six.moves.urllib.parse import urljoin
 
 from django.conf import settings
 from django.db import models
+from django.utils.encoding import force_bytes, force_str
 from django.utils.translation import gettext_lazy as _
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
@@ -57,6 +58,28 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         null=True,
     )
 
+    @property
+    def encrypted_client_id(self):
+        """
+        Returns encrypted client_id as a string.
+        The data is encrypted in the DB at rest, but unencrypted in the app when retrieved through
+        `decrypted_client_id`. This method will encrypt the `client_id` again before sending.
+        """
+        if self.decrypted_client_id:
+            return force_str(
+                self._meta.get_field('decrypted_client_id').fernet.encrypt(
+                    force_bytes(self.decrypted_client_id)
+                )
+            )
+        return self.decrypted_client_id
+
+    @encrypted_client_id.setter
+    def encrypted_client_id(self, value):
+        """
+        Set the `decrypted_client_id` from the encrypted value.
+        """
+        self.decrypted_client_id = value
+
     client_secret = models.CharField(
         max_length=255,
         blank=True,
@@ -79,6 +102,28 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         ),
         null=True,
     )
+
+    @property
+    def encrypted_client_secret(self):
+        """
+        Returns encrypted client_secret as a string.
+        The data is encrypted in the DB at rest, but unencrypted in the app when retrieved through
+        `decrypted_client_secret`. This method will encrypt the `client_secret` again before sending.
+        """
+        if self.decrypted_client_secret:
+            return force_str(
+                self._meta.get_field('decrypted_client_secret').fernet.encrypt(
+                    force_bytes(self.decrypted_client_secret)
+                )
+            )
+        return self.decrypted_client_secret
+
+    @encrypted_client_secret.setter
+    def encrypted_client_secret(self, value):
+        """
+        Set the `decrypted_client_secret` from the encrypted value.
+        """
+        self.decrypted_client_secret = value
 
     canvas_account_id = models.BigIntegerField(
         null=True,
@@ -132,11 +177,11 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
             obj: The instance of CanvasEnterpriseCustomerConfiguration
                 being rendered with this admin form.
         """
-        if self.canvas_base_url and self.client_id:
+        if self.canvas_base_url and self.decrypted_client_id:
             return (f'{self.canvas_base_url}/login/oauth2/auth'
                     f'?redirect_uri={LMS_OAUTH_REDIRECT_URL}&'
                     f'response_type=code&'
-                    f'client_id={self.client_id}&state={self.uuid}')
+                    f'client_id={self.decrypted_client_id}&state={self.uuid}')
         else:
             return None
 
@@ -151,9 +196,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         """
         missing_items = {'missing': []}
         incorrect_items = {'incorrect': []}
-        if not self.client_id:
+        if not self.decrypted_client_id:
             missing_items.get('missing').append('client_id')
-        if not self.client_secret:
+        if not self.decrypted_client_secret:
             missing_items.get('missing').append('client_secret')
         if not self.canvas_base_url:
             missing_items.get('missing').append('canvas_base_url')

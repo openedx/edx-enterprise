@@ -959,8 +959,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             HTTPError: If we received a failure response code from Canvas.
             ClientError: If an unexpected response format was received that we could not parse.
         """
-        client_id = self.enterprise_configuration.client_id
-        client_secret = self.enterprise_configuration.client_secret
+        client_id = self.enterprise_configuration.decrypted_client_id
+        client_secret = self.enterprise_configuration.decrypted_client_secret
 
         if not client_id:
             raise ClientError(

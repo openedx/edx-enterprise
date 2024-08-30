@@ -17,14 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.23.15]
+[4.23.16]
 ----------
 * feat: replaced references from unencrypted to encrypted columns
 * feat: added data migration to populate encrypted columns
 
-[4.23.14]
+[4.23.15]
 ----------
 * feat: altered decrypted_secret to be encrypted and made credentials nullable
+
+[4.23.14]
+----------
+* feat: populate encrypted client id and secret for canvas integration and remove references to unencrypted fields
 
 [4.23.13]
 ----------
