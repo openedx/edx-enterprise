@@ -28,13 +28,13 @@ class TestCanvasUtils(unittest.TestCase):
         self.account_id = random.randint(9223372036854775800, 9223372036854775807)
         self.course_id = "edx+111"
         self.url_base = "http://betatest.instructure.com"
-        self.client_id = "client_id"
-        self.client_secret = "client_secret"
+        self.decrypted_client_id = "client_id"
+        self.decrypted_client_secret = "client_secret"
         self.access_token = "access_token"
         self.refresh_token = "refresh_token"
         self.enterprise_config = factories.CanvasEnterpriseCustomerConfigurationFactory(
-            client_id=self.client_id,
-            client_secret=self.client_secret,
+            decrypted_client_id=self.decrypted_client_id,
+            decrypted_client_secret=self.decrypted_client_secret,
             canvas_account_id=self.account_id,
             canvas_base_url=self.url_base,
             refresh_token=self.refresh_token,
