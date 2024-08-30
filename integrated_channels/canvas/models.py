@@ -35,17 +35,6 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     Based on: https://canvas.instructure.com/doc/api/file.oauth.html#oauth2-flow-3
     """
 
-    client_id = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        verbose_name="API Client ID",
-        help_text=_(
-            "The API Client ID provided to edX by the enterprise customer to be used to make API "
-            "calls to Canvas on behalf of the customer."
-        )
-    )
-
     decrypted_client_id = EncryptedCharField(
         max_length=255,
         blank=True,
@@ -79,17 +68,6 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Set the `decrypted_client_id` from the encrypted value.
         """
         self.decrypted_client_id = value
-
-    client_secret = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        verbose_name="API Client Secret",
-        help_text=_(
-            "The API Client Secret provided to edX by the enterprise customer to be used to make "
-            " API calls to Canvas on behalf of the customer."
-        )
-    )
 
     decrypted_client_secret = EncryptedCharField(
         max_length=255,
