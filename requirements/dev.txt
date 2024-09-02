@@ -397,7 +397,7 @@ factory-boy==3.3.1
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==28.0.0
+faker==28.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -643,7 +643,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==3.2.6
+pylint==3.2.7
     # via
     #   edx-lint
     #   pylint-celery

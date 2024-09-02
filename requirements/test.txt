@@ -221,7 +221,7 @@ factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==28.0.0
+faker==28.1.0
     # via factory-boy
 filelock==3.15.4
     # via
