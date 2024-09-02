@@ -17,6 +17,26 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.16]
+----------
+* feat: remove references to client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.15]
+----------
+* feat: altered decrypted_secret to be encrypted and made credentials nullable
+
+[4.23.14]
+----------
+* feat: populate encrypted client id and secret for canvas integration and remove references to unencrypted fields
+
+[4.23.13]
+----------
+* feat: added encrypted columns for user credentials for SAP config
+
+[4.23.12]
+----------
+* feat: feat: added encrypted client id and secret for canvas integration
+
 [4.23.11]
 ----------
 * feat: implement back-off and retry for SAP SuccessFactors
