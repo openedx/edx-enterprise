@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.18]
+----------
+* revert: revert "altered decrypted_secret to be encrypted and made credentials nullable" in #2219
+
 [4.23.17]
 ----------
 * feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
