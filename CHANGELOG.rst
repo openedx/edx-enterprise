@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.17]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
 [4.23.16]
 ----------
 * feat: remove references to client_id and client_secret from CanvasEnterpriseCustomerConfiguration
