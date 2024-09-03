@@ -113,8 +113,8 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
 
         access_token_request_params = {
             'grant_type': 'authorization_code',
-            'client_id': enterprise_config.client_id,
-            'client_secret': enterprise_config.client_secret,
+            'client_id': enterprise_config.decrypted_client_id,
+            'client_secret': enterprise_config.decrypted_client_secret,
             'redirect_uri': settings.LMS_INTERNAL_ROOT_URL + "/canvas/oauth-complete",
             'code': client_code,
         }
