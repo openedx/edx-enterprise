@@ -3,6 +3,7 @@ Views for the ``enterprise-customer`` API endpoint.
 """
 
 from urllib.parse import quote_plus, unquote
+import uuid
 
 import crum
 from django_filters.rest_framework import DjangoFilterBackend
@@ -124,17 +125,25 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=unused-argument
     def support_tool(self, request, *arg, **kwargs):
         """
-        Enterprise Customer's detail data for the support tool
+        Enterprise Customer's detail data with pagination for the support tool
 
         Supported query param:
-        - uuid: filter the enterprise customer uuid .
+        - user_query: filter the enterprise customer name.
         """
-        enterprise_uuid = request.GET.get('uuid')
+
+        user_query = self.request.query_params.get("user_query", None)
         queryset = self.get_queryset().order_by('name')
-        if enterprise_uuid:
-            queryset = queryset.filter(uuid=enterprise_uuid)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+
+        if user_query:
+            try:
+                # check that the user query is a valid uuid, else, filter by slug or name
+                if uuid.UUID(str(user_query)):
+                    queryset = queryset.filter(uuid=user_query)
+            except ValueError:
+                queryset = queryset.filter(Q(slug__icontains=user_query) | Q(name__icontains=user_query))
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @has_any_permissions('enterprise.can_access_admin_dashboard',
                          ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
