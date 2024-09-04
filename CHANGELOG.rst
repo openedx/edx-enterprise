@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.22]
+----------
+* feat: added migration file for removing char field decrypted_secret
+
 [4.23.21]
 ----------
 * feat: removed char field decrypted_secret references
