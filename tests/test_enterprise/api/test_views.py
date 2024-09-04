@@ -9686,3 +9686,41 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         response = self.client.get(settings.TEST_SERVER + url)
 
         assert expected_json == response.json().get('results')[0]
+
+    def test_list_users_filtered(self):
+        """
+        Test that the list support tool users endpoint can be filtered by user details
+        """
+        user = factories.UserFactory()
+        user_2 = factories.UserFactory()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer
+        )
+        expected_json = [{
+            'enterprise_customer_user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE],
+            'is_admin': False
+        }]
+        user_query_string = f'?user_query={enterprise_customer_user.user_email}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_string
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')
+        assert response.json().get('count') == 1
