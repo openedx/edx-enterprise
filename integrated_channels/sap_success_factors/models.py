@@ -122,6 +122,18 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         verbose_name="Client Secret",
         help_text=_("OAuth client secret.")
     )
+    
+    decrypted_secret = EncryptedCharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name="Encrypted Client Secret",
+        help_text=_(
+            "The encrypted OAuth client secret."
+            " It will be encrypted when stored in the database."
+        ),
+        null=True
+    )
 
     user_type = models.CharField(
         max_length=20,
