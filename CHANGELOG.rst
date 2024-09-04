@@ -21,6 +21,10 @@ Unreleased
 ----------
 * fix: customer sorting error in customer support tool endpoint and added user query param
 
+[4.23.20]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
 [4.23.19]
 ----------
 * revert: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
