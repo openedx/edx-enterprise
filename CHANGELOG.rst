@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.23.20]
+[4.23.21]
 ----------
 * feat: removed char field decrypted_secret references
+
+[4.23.20]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
 
 [4.23.19]
 ----------
