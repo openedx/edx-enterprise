@@ -19,7 +19,7 @@ Unreleased
 
 [4.23.20]
 ----------
-* feat: removed char field decrypted_secret from code
+* feat: removed char field decrypted_secret references
 
 [4.23.19]
 ----------
