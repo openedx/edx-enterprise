@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.23.23]
+----------
+* feat: added encrypted client secret for SAP config
+
 [4.23.22]
 ----------
 * feat: added migration file for removing char field decrypted_secret
