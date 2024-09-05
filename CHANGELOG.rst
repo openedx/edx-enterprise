@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.0]
+----------
+* feat: emit learner credit unenrollment event
+
 [4.24.0]
 ----------
 * fix: customer sorting error in customer support tool endpoint and added user query param
