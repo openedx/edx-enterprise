@@ -47,6 +47,7 @@ from enterprise.constants import (
     GROUP_MEMBERSHIP_PENDING_STATUS,
     GROUP_MEMBERSHIP_REMOVED_STATUS,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 from enterprise.models import (
     ChatGPTResponse,
@@ -109,7 +110,7 @@ from test_utils.factories import (
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
-from .constants import FAKE_SSO_METADATA_XML_WITH_ENTITY_ID, PROVISIONING_ADMINS_GROUP
+from .constants import FAKE_SSO_METADATA_XML_WITH_ENTITY_ID
 
 Application = get_application_model()
 fake = Faker()
@@ -870,17 +871,16 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def setup_provisioning_admin_permission(self):
         """
-        Create a new PA, add it to relevant group and then login.
+        Create a new user add assign it PA role.
         """
         self.client.logout()
         user = factories.UserFactory(
             username='test_provisioning_admin', is_active=True, is_staff=False)
         user.set_password('test_password')
         user.save()
-        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.set_jwt_cookie(system_wide_role=SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, context=ALL_ACCESS_CONTEXT,)
         self.client.login(username='test_provisioning_admin',
                           password='test_password')
-        group.user_set.add(user)
 
     def test_post_pending_enterprise_customer_admin_user_creation(self):
         """
@@ -901,10 +901,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
     def test_post_pending_enterprise_customer_unauthorized_user(self):
         """
-        Make sure unauthorized users, not added to IsInProvisioningAdminGroup,
-        can't post PendingEnterpriseCustomerAdminUsers.
+        Ensure that only provisioning admins can post otherwise expect a 403.
         """
-
+        self.set_jwt_cookie(system_wide_role='test_unknown_role', context=None,)
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
             'user_email': self.user.email,
@@ -913,7 +912,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
         assert response.status_code == 403
         error_message = response.json()['detail']
-        expected_message = "Access denied: You do not have the necessary permissions to access this."
+        expected_message = "MISSING: provisioning.has_pending_enterprise_customer_admin_access"
         self.assertIn(expected_message, error_message)
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
@@ -2188,10 +2187,9 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             username='test_provisioning_admin', is_active=True, is_staff=False)
         user.set_password('test_password')
         user.save()
-        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
+        self.set_jwt_cookie(system_wide_role=SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, context=ALL_ACCESS_CONTEXT,)
         self.client.login(username='test_provisioning_admin',
                           password='test_password')
-        group.user_set.add(user)
         self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
             'name': 'Test Create Customer 2',
             'slug': 'test-create-customer-2',
@@ -2283,7 +2281,6 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             username='test_provisioning_admin', is_active=True, is_staff=False)
         user.set_password('test_password')
         user.save()
-        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
         self.client.logout()
         self.client.login(username='test_provisioning_admin',
                           password='test_password')
@@ -2299,7 +2296,8 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         assert failed_response.status_code == 403
 
         # now make this use part of provisioning admins groups and retry
-        group.user_set.add(user)
+        self.set_jwt_cookie(system_wide_role=SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, context=ALL_ACCESS_CONTEXT,)
+
         response = self.client.post(ENTERPRISE_CUSTOMER_LIST_ENDPOINT, {
             'name': 'Test Create Customer',
             'slug': 'test-create-customer',
@@ -2398,11 +2396,10 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             username='test_provisioning_admin', is_active=True, is_staff=False)
         user.set_password('test_password')
         user.save()
-        group = factories.GroupFactory(name=PROVISIONING_ADMINS_GROUP)
         self.client.logout()
         self.client.login(username='test_provisioning_admin',
                           password='test_password')
-        group.user_set.add(user)
+        self.set_jwt_cookie(system_wide_role=SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, context=ALL_ACCESS_CONTEXT,)
         response = self.client.patch(ENTERPRISE_CUSTOMER_DETAIL_ENDPOINT, {
             "slug": 'new-slug'
         })
@@ -4404,9 +4401,9 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert update_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
-    def test_successful_cancel_fulfillment(self, mock_enrollment_api):
+    def test_successful_cancel_licensed_fulfillment(self, mock_enrollment_api):
         """
-        Test that we can successfully cancel both licensed and learner credit fulfillments.
+        Test that we can successfully cancel licensed fulfillments.
         """
         mock_enrollment_api.update_enrollment.return_value = mock.Mock()
         self.licensed_course_enrollment.is_revoked = False
@@ -4427,8 +4424,12 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'is_active': False,
         }
 
-        mock_enrollment_api.reset_mock()
-
+    @mock.patch("enterprise.models.send_learner_credit_course_enrollment_revoked_event")
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
+    def test_successful_cancel_learner_credit_fulfillment(self, mock_enrollment_api, mock_send_revoked_event):
+        """
+        Test that we can successfully cancel learner credit fulfillments, and an openedx event is emitted.
+        """
         self.learner_credit_course_enrollment.is_revoked = False
         self.learner_credit_course_enrollment.save()
         response = self.client.post(
@@ -4446,6 +4447,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
             'is_active': False,
         }
+        mock_send_revoked_event.assert_called_once_with(self.learner_credit_course_enrollment)
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_idempotent_cancel_fulfillment(self, mock_enrollment_api):
@@ -9689,3 +9691,41 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         response = self.client.get(settings.TEST_SERVER + url)
 
         assert expected_json == response.json().get('results')[0]
+
+    def test_list_users_filtered(self):
+        """
+        Test that the list support tool users endpoint can be filtered by user details
+        """
+        user = factories.UserFactory()
+        user_2 = factories.UserFactory()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer
+        )
+        expected_json = [{
+            'enterprise_customer_user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE],
+            'is_admin': False
+        }]
+        user_query_string = f'?user_query={enterprise_customer_user.user_email}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_string
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')
+        assert response.json().get('count') == 1

@@ -4,6 +4,7 @@ Views for the ``enterprise-customer`` API endpoint.
 
 from urllib.parse import quote_plus, unquote
 
+import crum
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from rest_framework import filters, permissions
@@ -30,10 +31,13 @@ from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
 from enterprise.api.pagination import PaginationWithFeatureFlags
 from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.decorators import has_permission_or_group, require_at_least_one_query_parameter
+from enterprise.api.v1.decorators import has_any_permissions, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
-from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, PROVISIONING_ADMINS_GROUP
+from enterprise.constants import (
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+)
 from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
 from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
@@ -69,8 +73,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Allow PAs to access all enterprise customers by modifying filter_backends
         """
         queryset = self.queryset
-        if self.action in ('create', 'partial_update', 'update', 'retrieve', 'list') and \
-                self.request.user.groups.filter(name=PROVISIONING_ADMINS_GROUP).exists():
+        crum.set_current_request(self.request)
+        is_provisioning_admin = self.request.user.has_perm(ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
+        if is_provisioning_admin:
             self.filter_backends = (
                 filters.OrderingFilter, DjangoFilterBackend)
             return queryset
@@ -131,15 +136,17 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP))
+    @has_any_permissions('enterprise.can_access_admin_dashboard',
+                         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-customer/
         """
         return super().create(request, *args, **kwargs)
 
-    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP,
-                                              fn=lambda request, pk: pk))
+    @has_any_permissions('enterprise.can_access_admin_dashboard',
+                         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+                         fn=lambda request, pk: pk)
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 

@@ -17,6 +17,82 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.0]
+----------
+* feat: emit learner credit unenrollment event
+
+[4.24.0]
+----------
+* fix: customer sorting error in customer support tool endpoint and added user query param
+
+[4.23.20]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.19]
+----------
+* revert: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.18]
+----------
+* revert: revert "altered decrypted_secret to be encrypted and made credentials nullable" in #2219
+
+[4.23.17]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.16]
+----------
+* feat: remove references to client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.15]
+----------
+* feat: altered decrypted_secret to be encrypted and made credentials nullable
+
+[4.23.14]
+----------
+* feat: populate encrypted client id and secret for canvas integration and remove references to unencrypted fields
+
+[4.23.13]
+----------
+* feat: added encrypted columns for user credentials for SAP config
+
+[4.23.12]
+----------
+* feat: feat: added encrypted client id and secret for canvas integration
+
+[4.23.11]
+----------
+* feat: implement back-off and retry for SAP SuccessFactors
+
+[4.23.10]
+----------
+* fix: 403 for provisioning-admins due to crum and middleware
+
+[4.23.9]
+----------
+* feat: Add option to show soft deleted group memberships in django admin
+
+[4.23.8]
+----------
+* feat: updating enterprise-customer-support endpoint
+
+[4.23.7]
+---------
+* feat: add migration for model updateroleassignmentswithcustomersconfig
+
+[4.23.6]
+---------
+* feat: replace PAs group based permission with edx-rbac
+
+[4.23.5]
+---------
+* chore: requirement updates
+
+[4.23.4]
+---------
+* refactor: added logs for data dog inspection for permission check in handler function.
+
 [4.23.3]
 ---------
 * fix: add missing migration for content_filter help text

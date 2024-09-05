@@ -1,6 +1,8 @@
 """
 Serializers for Canvas.
 """
+from rest_framework import serializers
+
 from integrated_channels.api.serializers import EnterpriseCustomerPluginConfigSerializer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 
@@ -9,8 +11,8 @@ class CanvasEnterpriseCustomerConfigurationSerializer(EnterpriseCustomerPluginCo
     class Meta:
         model = CanvasEnterpriseCustomerConfiguration
         extra_fields = (
-            'client_id',
-            'client_secret',
+            'encrypted_client_id',
+            'encrypted_client_secret',
             'canvas_account_id',
             'canvas_base_url',
             'refresh_token',
@@ -18,3 +20,6 @@ class CanvasEnterpriseCustomerConfigurationSerializer(EnterpriseCustomerPluginCo
             'oauth_authorization_url',
         )
         fields = EnterpriseCustomerPluginConfigSerializer.Meta.fields + extra_fields
+
+    encrypted_client_id = serializers.CharField(required=False, allow_blank=False, read_only=False)
+    encrypted_client_secret = serializers.CharField(required=False, allow_blank=False, read_only=False)

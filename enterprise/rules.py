@@ -10,11 +10,15 @@ from edx_rest_framework_extensions.auth.jwt.cookies import get_decoded_jwt
 
 from enterprise.constants import (
     ENTERPRISE_CATALOG_ADMIN_ROLE,
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
     ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
+    PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
+    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -34,6 +38,43 @@ def has_implicit_access_to_sso_orchestration_configs(user, obj):  # pylint: disa
     request = crum.get_current_request()
     decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
     return request_user_has_implicit_access_via_jwt(decoded_jwt, ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE, obj)
+
+
+@rules.predicate
+def has_implicit_access_to_provisioning_enterprise_customers(user, obj):  # pylint: disable=unused-argument
+    """
+    Check if a requesting user has implicit access to the `PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE` feature role.
+
+    Params:
+        user: An ``auth.User`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
+
+    Returns:
+        boolean: whether the request user has access or not
+    """
+    request = crum.get_current_request()
+    decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
+    return request_user_has_implicit_access_via_jwt(decoded_jwt, PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE, obj)
+
+
+@rules.predicate
+def has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users(user, obj):  # pylint: disable=unused-argument
+    """
+    Check if a requesting user has implicit access to
+    the `PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE` feature role.
+
+    Params:
+        user: An ``auth.User`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
+
+    Returns:
+        boolean: whether the request user has access or not
+    """
+    request = crum.get_current_request()
+    decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
+    return request_user_has_implicit_access_via_jwt(decoded_jwt,
+                                                    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
+                                                    obj)
 
 
 @rules.predicate
@@ -218,4 +259,14 @@ rules.add_perm('enterprise.can_manage_enterprise_fulfillments', has_implicit_acc
 rules.add_perm(
     'enterprise.can_manage_enterprise_orchestration_configs',
     has_implicit_access_to_sso_orchestration_configs,
+)
+
+rules.add_perm(
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    has_implicit_access_to_provisioning_enterprise_customers,
+)
+
+rules.add_perm(
+    PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users,
 )
