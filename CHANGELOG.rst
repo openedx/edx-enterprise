@@ -17,17 +17,25 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.23.23]
+[4.25.3]
 ----------
 * feat: added encrypted client secret for SAP config
 
-[4.23.22]
+[4.25.2]
 ----------
 * feat: added migration file for removing char field decrypted_secret
 
-[4.23.21]
+[4.25.1]
 ----------
 * feat: removed char field decrypted_secret references
+
+[4.25.0]
+----------
+* feat: emit learner credit unenrollment event
+
+[4.24.0]
+----------
+* fix: customer sorting error in customer support tool endpoint and added user query param
 
 [4.23.20]
 ----------
