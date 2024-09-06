@@ -122,7 +122,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         verbose_name="Client Secret",
         help_text=_("OAuth client secret.")
     )
-    
+
     decrypted_secret = EncryptedCharField(
         max_length=255,
         blank=True,
