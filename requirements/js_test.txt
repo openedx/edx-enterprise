@@ -12,7 +12,7 @@ autocommand==2.2.2
     # via jaraco-text
 backports-tarfile==1.2.0
     # via jaraco-context
-certifi==2024.7.4
+certifi==2024.8.30
     # via selenium
 cheroot==10.0.1
     # via cherrypy
@@ -67,7 +67,7 @@ python-dateutil==2.9.0.post0
     # via tempora
 pyyaml==6.0.2
     # via jasmine
-selenium==4.23.1
+selenium==4.24.0
     # via jasmine
 six==1.16.0
     # via python-dateutil
