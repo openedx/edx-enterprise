@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.1]
+----------
+* feat: removed char field decrypted_secret references
+
 [4.25.0]
 ----------
 * feat: emit learner credit unenrollment event
