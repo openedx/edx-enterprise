@@ -4152,6 +4152,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         # user. Because the requesting user is an operator user, they should be able to see this enrollment.
         second_lc_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=second_enterprise_course_enrollment,
+            is_revoked=True,
         )
 
         self.enterprise_course_enrollment.unenrolled = True
@@ -4209,6 +4210,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         )
         old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=old_enterprise_course_enrollment,
+            is_revoked=True,
         )
         response = self.client.get(
             reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter

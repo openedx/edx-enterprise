@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.9]
+----------
+* fix: send LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED from the correct place.
+
 [4.25.8]
 ----------
 * feat: added migration for removing unencrypted client credentials
