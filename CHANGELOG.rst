@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.4]
+----------
+* feat: changing django enterprise customer summary columns
+
 [4.25.3]
 ----------
 * feat: added encrypted client secret for SAP config
