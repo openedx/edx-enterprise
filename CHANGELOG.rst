@@ -23,8 +23,8 @@ Unreleased
 
 [4.25.4]
 ----------
-* feat: replaced references from unencrypted to encrypted columns
-* feat: added data migration to populate encrypted columns
+* feat: replaced references from unencrypted to encrypted columns.
+* feat: added data migration to populate encrypted columns.
 
 [4.25.3]
 ----------
