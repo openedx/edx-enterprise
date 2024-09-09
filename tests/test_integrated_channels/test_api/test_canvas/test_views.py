@@ -33,8 +33,8 @@ class CanvasConfigurationViewSetTests(APITest):
 
         self.enterprise_customer_conf = factories.CanvasEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            client_id='ayy',
-            client_secret='lmao',
+            encrypted_client_id='ayy',
+            encrypted_client_secret='lmao',
         )
 
     @mock.patch('enterprise.rules.crum.get_current_request')
@@ -120,6 +120,8 @@ class CanvasConfigurationViewSetTests(APITest):
         payload = {
             'canvas_account_id': 1000,
             'enterprise_customer': ENTERPRISE_ID,
+            'encrypted_client_id': '',
+            'encrypted_client_secret': '',
         }
         response = self.client.put(url, payload)
         self.enterprise_customer_conf.refresh_from_db()
@@ -169,8 +171,8 @@ class CanvasConfigurationViewSetTests(APITest):
         assert missing.get('missing') == ['refresh_token']
         assert incorrect.get('incorrect') == ['canvas_base_url', 'display_name']
 
-        self.enterprise_customer_conf.client_id = ''
-        self.enterprise_customer_conf.client_secret = ''
+        self.enterprise_customer_conf.decrypted_client_id = ''
+        self.enterprise_customer_conf.decrypted_client_secret = ''
         self.enterprise_customer_conf.canvas_base_url = ''
         self.enterprise_customer_conf.canvas_account_id = None
         self.enterprise_customer_conf.save()
@@ -184,8 +186,8 @@ class CanvasConfigurationViewSetTests(APITest):
         # Add a refresh token and assert that is_valid now passes
         self.enterprise_customer_conf.refresh_token = 'ayylmao'
         self.enterprise_customer_conf.canvas_base_url = 'http://lovely.com'
-        self.enterprise_customer_conf.client_id = '1'
-        self.enterprise_customer_conf.client_secret = '1'
+        self.enterprise_customer_conf.decrypted_client_id = '1'
+        self.enterprise_customer_conf.decrypted_client_secret = '1'
         self.enterprise_customer_conf.canvas_account_id = 1
         self.enterprise_customer_conf.display_name = 'nice<3'
         self.enterprise_customer_conf.save()

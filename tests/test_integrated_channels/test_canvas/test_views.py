@@ -56,27 +56,47 @@ class TestCanvasAPIViews(APITestCase):
         self.refresh_token = 'test-refresh-token'
         self.urlbase = reverse('canvas-oauth-complete')
 
-        CanvasEnterpriseCustomerConfiguration.objects.get_or_create(
-            uuid=SINGLE_CANVAS_CONFIG['uuid'],
-            client_id=SINGLE_CANVAS_CONFIG['client_id'],
-            client_secret=SINGLE_CANVAS_CONFIG['client_secret'],
-            canvas_account_id=SINGLE_CANVAS_CONFIG['canvas_account_id'],
-            canvas_base_url=SINGLE_CANVAS_CONFIG['canvas_base_url'],
-            enterprise_customer=self.enterprise_customer,
-            active=True,
-            enterprise_customer_id=ENTERPRISE_ID,
-        )
+        try:
+            CanvasEnterpriseCustomerConfiguration.objects.get(
+                uuid=SINGLE_CANVAS_CONFIG['uuid'],
+                canvas_account_id=SINGLE_CANVAS_CONFIG['canvas_account_id'],
+                canvas_base_url=SINGLE_CANVAS_CONFIG['canvas_base_url'],
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+                enterprise_customer_id=ENTERPRISE_ID,
+            )
+        except CanvasEnterpriseCustomerConfiguration.DoesNotExist:
+            CanvasEnterpriseCustomerConfiguration.objects.create(
+                uuid=SINGLE_CANVAS_CONFIG['uuid'],
+                decrypted_client_id=SINGLE_CANVAS_CONFIG['client_id'],
+                decrypted_client_secret=SINGLE_CANVAS_CONFIG['client_secret'],
+                canvas_account_id=SINGLE_CANVAS_CONFIG['canvas_account_id'],
+                canvas_base_url=SINGLE_CANVAS_CONFIG['canvas_base_url'],
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+                enterprise_customer_id=ENTERPRISE_ID,
+            )
 
-        CanvasEnterpriseCustomerConfiguration.objects.get_or_create(
-            uuid=SECOND_CANVAS_CONFIG['uuid'],
-            client_id=SECOND_CANVAS_CONFIG['client_id'],
-            client_secret=SECOND_CANVAS_CONFIG['client_secret'],
-            canvas_account_id=SECOND_CANVAS_CONFIG['canvas_account_id'],
-            canvas_base_url=SECOND_CANVAS_CONFIG['canvas_base_url'],
-            enterprise_customer=self.enterprise_customer,
-            active=True,
-            enterprise_customer_id=ENTERPRISE_ID,
-        )
+        try:
+            CanvasEnterpriseCustomerConfiguration.objects.get(
+                uuid=SECOND_CANVAS_CONFIG['uuid'],
+                canvas_account_id=SECOND_CANVAS_CONFIG['canvas_account_id'],
+                canvas_base_url=SECOND_CANVAS_CONFIG['canvas_base_url'],
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+                enterprise_customer_id=ENTERPRISE_ID,
+            )
+        except CanvasEnterpriseCustomerConfiguration.DoesNotExist:
+            CanvasEnterpriseCustomerConfiguration.objects.create(
+                uuid=SECOND_CANVAS_CONFIG['uuid'],
+                decrypted_client_id=SECOND_CANVAS_CONFIG['client_id'],
+                decrypted_client_secret=SECOND_CANVAS_CONFIG['client_secret'],
+                canvas_account_id=SECOND_CANVAS_CONFIG['canvas_account_id'],
+                canvas_base_url=SECOND_CANVAS_CONFIG['canvas_base_url'],
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+                enterprise_customer_id=ENTERPRISE_ID,
+            )
 
     def test_successful_refresh_token_by_uuid_request(self):
         """
