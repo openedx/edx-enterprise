@@ -41,11 +41,11 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         )
         self.enterprise_config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=enterprise_customer,
-            key='client_id',
+            decrypted_key='client_id',
             sapsf_base_url=self.url_base,
             sapsf_company_id='company_id',
             sapsf_user_id='user_id',
-            secret='client_secret',
+            decrypted_secret='client_secret',
         )
         factories.SAPSuccessFactorsGlobalConfiguration.objects.create(
             completion_status_api_path=self.completion_status_api_path,

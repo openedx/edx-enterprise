@@ -5,11 +5,13 @@ import json
 from unittest import mock
 from uuid import uuid4
 
+from django.apps import apps
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
+from integrated_channels.sap_success_factors.utils import populate_decrypted_fields_sap_success_factors
 from test_utils import APITest, factories
 
 ENTERPRISE_ID = str(uuid4())
@@ -70,10 +72,6 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
                          self.sap_config.sapsf_company_id)
         self.assertEqual(int(data.get('sapsf_user_id')),
                          self.sap_config.sapsf_user_id)
-        self.assertEqual(data.get('key'),
-                         self.sap_config.key)
-        self.assertEqual(data.get('secret'),
-                         self.sap_config.secret)
         self.assertEqual(data.get('user_type'),
                          self.sap_config.user_type)
         self.assertEqual(data.get('enterprise_customer'),
@@ -91,19 +89,42 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
             'sapsf_company_id': 'test',
             'enterprise_customer': ENTERPRISE_ID,
             'sapsf_user_id': 893489,
-            'key': 'testing',
-            'secret': 'secret',
+            'encrypted_key': '',
+            'encrypted_secret': '',
             'user_type': 'user',
         }
         response = self.client.put(url, payload)
         self.sap_config.refresh_from_db()
         self.assertEqual(self.sap_config.sapsf_base_url, 'http://testing2')
         self.assertEqual(self.sap_config.sapsf_company_id, 'test')
-        self.assertEqual(self.sap_config.key, 'testing')
-        self.assertEqual(self.sap_config.secret, 'secret')
+        self.assertEqual(self.sap_config.decrypted_key, '')
+        self.assertEqual(self.sap_config.decrypted_secret, '')
         self.assertEqual(self.sap_config.user_type, 'user')
         self.assertEqual(self.sap_config.sapsf_user_id, '893489')
         self.assertEqual(response.status_code, 200)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_populate_decrypted_fields(self, mock_current_request):
+        mock_current_request.return_value = self.get_request_with_jwt_cookie(
+            system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
+        )
+        url = reverse('api:v1:sap_success_factors:configuration-detail', args=[self.sap_config.id])
+        client_secret = getattr(self.sap_config, 'secret', '')
+        payload = {
+            'sapsf_base_url': 'http://testing2',
+            'sapsf_company_id': 'test',
+            'enterprise_customer': ENTERPRISE_ID,
+            'sapsf_user_id': 893489,
+            'user_type': 'user',
+            'encrypted_secret': '1000',
+        }
+        self.client.put(url, payload)
+        self.sap_config.refresh_from_db()
+        self.assertEqual(self.sap_config.decrypted_secret, '1000')
+        populate_decrypted_fields_sap_success_factors(apps)
+        self.sap_config.refresh_from_db()
+        self.assertEqual(self.sap_config.encrypted_secret, client_secret)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
     def test_patch(self, mock_current_request):
@@ -164,8 +185,8 @@ class SAPSuccessFactorsConfigurationViewSetTests(APITest):
         missing, _ = data[0].get('is_valid')
         assert missing.get('missing') == ['key', 'sapsf_base_url', 'sapsf_company_id', 'sapsf_user_id', 'secret']
 
-        self.sap_config.key = 'ayy'
-        self.sap_config.secret = 'lmao'
+        self.sap_config.decrypted_key = 'ayy'
+        self.sap_config.decrypted_secret = 'lmao'
         self.sap_config.sapsf_company_id = '1'
         self.sap_config.sapsf_user_id = '1'
         self.sap_config.sapsf_base_url = 'http://happy.com'
