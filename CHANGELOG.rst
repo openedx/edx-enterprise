@@ -19,7 +19,7 @@ Unreleased
 
 [4.25.5]
 ----------
-* refactor: removed unencrypted credentials from sap config model
+* refactor: removed unencrypted credentials from sap config model.
 
 [4.25.4]
 ----------
