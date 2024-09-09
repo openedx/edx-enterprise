@@ -19,8 +19,8 @@ class CanvasEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
     """
     list_display = (
         "enterprise_customer_name",
-        "client_id",
-        "client_secret",
+        "decrypted_client_id",
+        "decrypted_client_secret",
         "canvas_account_id",
         "canvas_base_url",
     )
