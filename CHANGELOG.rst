@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.5]
+----------
+* refactor: making unencrypted credentials nullable so after removing refs tests can run
+
 [4.25.4]
 ----------
 * feat: replaced references from unencrypted to encrypted columns.
