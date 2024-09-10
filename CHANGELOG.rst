@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.7]
+----------
+* refactor: removed unencrypted credentials from sap config model
+
 [4.25.6]
 ----------
 * refactor: making unencrypted credentials nullable so after removing refs tests can run
