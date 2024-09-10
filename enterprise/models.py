@@ -2117,11 +2117,16 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         return associated_fulfillment
 
     @property
-    def fulfillment(self):
+    def fulfillments(self):
         """
-        Find and return the related EnterpriseFulfillmentSource subclass, or None.
+        Find and return the related EnterpriseFulfillmentSource subclass, or empty list if there are none.
+
+        Returns:
+            list of EnterpriseFulfillmentSource subclass instances: all existing related fulfillments
         """
-        return self.license or self.learner_credit_fulfillment
+        possible_fulfillments = [self.license, self.learner_credit_fulfillment]
+        existing_fulfillments = [f for f in possible_fulfillments if f]
+        return existing_fulfillments
 
     @cached_property
     def course_enrollment(self):
@@ -2245,14 +2250,16 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
                 f"and course {self.course_id}"
             )
             self.save()
-            # Find and revoke/reactivate any related fulfillment.
+            # Find and revoke/reactivate any related fulfillment if unenrolling the EnterpriseCourseEnrollment.
             # By only updating the related object on updates to self, we prevent infinite recursion.
-            if fulfillment := self.fulfillment:
-                if desired_unenrolled and not fulfillment.is_revoked:
-                    fulfillment.revoke()
-                # Fulfillment reactivation on ECE reenrollment is unsupported. We'd need to collect a
-                # transaction UUID from the caller, but the caller at the time of writing is not aware of any
-                # transaction.
+            if desired_unenrolled:
+                for fulfillment in self.fulfillments:
+                    if not fulfillment.is_revoked:  # redundant base case to terminate loops.
+                        fulfillment.revoke()
+            # Fulfillment reactivation on ECE reenrollment is unsupported. We'd need to collect a
+            # transaction UUID from the caller, but the caller at the time of writing is not aware of any
+            # transaction. Furthermore, we wouldn't know which fulfillment to reactivate, if there were multiple
+            # related fulfillment types.
 
     def __str__(self):
         """
