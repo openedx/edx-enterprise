@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.5]
+----------
+* feat: changing django enterprise customer summary columns
+
 [4.25.4]
 ----------
 * feat: replaced references from unencrypted to encrypted columns.
