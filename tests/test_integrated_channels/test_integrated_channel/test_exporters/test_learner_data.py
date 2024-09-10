@@ -298,8 +298,8 @@ class TestLearnerExporter(unittest.TestCase):
         self.config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             sapsf_base_url='enterprise.successfactors.com',
-            key='key',
-            secret='secret',
+            decrypted_key='key',
+            decrypted_secret='secret',
             active=True,
         )
         self.exporter = self.config.get_learner_data_exporter('dummy-user')

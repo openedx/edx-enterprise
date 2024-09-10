@@ -31,11 +31,11 @@ class TestContentMetadataTransmitter(unittest.TestCase):
         # so it's okay for it to be any arbitrary channel. We randomly choose SAPSF.
         self.enterprise_config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            key="client_id",
+            decrypted_key="client_id",
             sapsf_base_url="http://test.successfactors.com/",
             sapsf_company_id="company_id",
             sapsf_user_id="user_id",
-            secret="client_secret",
+            decrypted_secret="client_secret",
             transmission_chunk_size=5,
         )
         self.enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
