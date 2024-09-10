@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.8]
+----------
+* feat: added migration for removing unencrypted client credentials
+
 [4.25.7]
 ----------
 * refactor: removed unencrypted credentials from sap config model
