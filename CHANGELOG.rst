@@ -17,17 +17,21 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.25.7]
+[4.25.8]
 ----------
 * feat: added migration for removing unencrypted client credentials
 
-[4.25.6]
+[4.25.7]
 ----------
 * refactor: removed unencrypted credentials from sap config model.
 
-[4.25.5]
+[4.25.6]
 ----------
 * refactor: making unencrypted credentials nullable so after removing refs tests can run
+
+[4.25.5]
+----------
+* feat: changing django enterprise customer summary columns
 
 [4.25.4]
 ----------
