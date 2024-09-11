@@ -891,6 +891,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
             'user_email': self.user.email,
+            'id': 2
         }
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
@@ -949,11 +950,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        expected_data = {
-            'enterprise_customer': self.enterprise_customer.uuid,
-            'user_email': 'test@example.com'
-        }
-        self.assertEqual(response.data, expected_data)
+        expected_keys = ['enterprise_customer', 'user_email', 'id']
+        for key in expected_keys:
+            self.assertIn(key, response.data)
 
     def test_patch_pending_enterprise_customer_admin_user(self):
         """

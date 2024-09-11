@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.10]
+----------
+* fix: add id in pending_enterprise_customer_admin_user serializer.
+
 [4.25.9]
 ----------
 * fix: send LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED from the correct place.
