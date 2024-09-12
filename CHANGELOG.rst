@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.10]
+----------
+* feat: add username query to enterprise customer user query
+
 [4.25.9]
 ----------
 * fix: send LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED from the correct place.
