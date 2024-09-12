@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.25.10]
+[4.25.11]
 ----------
 * feat: add username query to enterprise customer user query
+
+[4.25.10]
+----------
+* feat: update Enterprise Braze API key
 
 [4.25.9]
 ----------
