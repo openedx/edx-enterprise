@@ -19,9 +19,9 @@ class BrazeAPIClient(BrazeClient):
     API client for calls to Braze.
     """
     def __init__(self):
-        braze_api_key = getattr(settings, 'EDX_BRAZE_API_KEY', None)
+        braze_api_key = getattr(settings, 'ENTERPRISE_BRAZE_API_KEY', None)
         braze_api_url = getattr(settings, 'EDX_BRAZE_API_SERVER', None)
-        required_settings = ['EDX_BRAZE_API_KEY', 'EDX_BRAZE_API_SERVER']
+        required_settings = ['ENTERPRISE_BRAZE_API_KEY', 'EDX_BRAZE_API_SERVER']
         for setting in required_settings:
             if not getattr(settings, setting, None):
                 msg = f'Missing {setting} in settings required for Braze API Client.'
