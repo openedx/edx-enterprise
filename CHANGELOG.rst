@@ -17,7 +17,7 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.26.1]
+[4.25.10]
 ----------
 * feat: update Enterprise Braze API key
 
