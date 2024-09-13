@@ -891,6 +891,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
             'user_email': self.user.email,
+            'id': 2
         }
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
@@ -949,11 +950,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        expected_data = {
-            'enterprise_customer': self.enterprise_customer.uuid,
-            'user_email': 'test@example.com'
-        }
-        self.assertEqual(response.data, expected_data)
+        expected_keys = ['enterprise_customer', 'user_email', 'id']
+        for key in expected_keys:
+            self.assertIn(key, response.data)
 
     def test_patch_pending_enterprise_customer_admin_user(self):
         """
@@ -4152,6 +4151,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         # user. Because the requesting user is an operator user, they should be able to see this enrollment.
         second_lc_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=second_enterprise_course_enrollment,
+            is_revoked=True,
         )
 
         self.enterprise_course_enrollment.unenrolled = True
@@ -4209,6 +4209,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         )
         old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=old_enterprise_course_enrollment,
+            is_revoked=True,
         )
         response = self.client.get(
             reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
@@ -9723,8 +9724,17 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
             'role_assignments': [ENTERPRISE_LEARNER_ROLE],
             'is_admin': False
         }]
-        user_query_string = f'?user_query={enterprise_customer_user.user_email}'
-        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_string
+        # search by email
+        user_query_email = f'?user_query={enterprise_customer_user.user_email}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_email
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')
+        assert response.json().get('count') == 1
+
+        # search by username
+        user_query_username = f'?user_query={enterprise_customer_user.username}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_username
         response = self.client.get(settings.TEST_SERVER + url)
 
         assert expected_json == response.json().get('results')

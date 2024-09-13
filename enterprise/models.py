@@ -2097,13 +2097,36 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     @property
     def license(self):
         """
-        Returns the license associated with this enterprise course enrollment if one exists.
+        Returns the license fulfillment associated with this enterprise course enrollment if one exists.
         """
         try:
             associated_license = self.licensedenterprisecourseenrollment_enrollment_fulfillment  # pylint: disable=no-member
         except LicensedEnterpriseCourseEnrollment.DoesNotExist:
             associated_license = None
         return associated_license
+
+    @property
+    def learner_credit_fulfillment(self):
+        """
+        Returns the Learner Credit fulfillment associated with this enterprise course enrollment if one exists.
+        """
+        try:
+            associated_fulfillment = self.learnercreditenterprisecourseenrollment_enrollment_fulfillment  # pylint: disable=no-member
+        except LearnerCreditEnterpriseCourseEnrollment.DoesNotExist:
+            associated_fulfillment = None
+        return associated_fulfillment
+
+    @property
+    def fulfillments(self):
+        """
+        Find and return the related EnterpriseFulfillmentSource subclass, or empty list if there are none.
+
+        Returns:
+            list of EnterpriseFulfillmentSource subclass instances: all existing related fulfillments
+        """
+        possible_fulfillments = [self.license, self.learner_credit_fulfillment]
+        existing_fulfillments = [f for f in possible_fulfillments if f]
+        return existing_fulfillments
 
     @cached_property
     def course_enrollment(self):
@@ -2196,6 +2219,48 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
             )
             return []
 
+    def set_unenrolled(self, desired_unenrolled):
+        """
+        Idempotently set this object's fields to appear (un)enrolled and (un)saved-for-later.
+
+        Also, attempt to revoke any related fulfillment, which in turn is also idempotent.
+
+        This method and the fulfillment's revoke() call each other!!! If you edit either method, make sure to preserve
+        base cases that terminate infinite recursion.
+
+        TODO: revoke entitlements as well?
+        """
+        changed = False
+        if desired_unenrolled:
+            if not self.unenrolled or not self.saved_for_later:
+                self.saved_for_later = True
+                self.unenrolled = True
+                self.unenrolled_at = localized_utcnow()
+                changed = True
+        else:
+            if self.unenrolled or self.saved_for_later:
+                self.saved_for_later = False
+                self.unenrolled = False
+                self.unenrolled_at = None
+                changed = True
+        if changed:
+            LOGGER.info(
+                f"Marking EnterpriseCourseEnrollment as unenrolled={desired_unenrolled} "
+                f"for LMS user {self.enterprise_customer_user.user_id} "
+                f"and course {self.course_id}"
+            )
+            self.save()
+            # Find and revoke/reactivate any related fulfillment if unenrolling the EnterpriseCourseEnrollment.
+            # By only updating the related object on updates to self, we prevent infinite recursion.
+            if desired_unenrolled:
+                for fulfillment in self.fulfillments:
+                    if not fulfillment.is_revoked:  # redundant base case to terminate loops.
+                        fulfillment.revoke()
+            # Fulfillment reactivation on ECE reenrollment is unsupported. We'd need to collect a
+            # transaction UUID from the caller, but the caller at the time of writing is not aware of any
+            # transaction. Furthermore, we wouldn't know which fulfillment to reactivate, if there were multiple
+            # related fulfillment types.
+
     def __str__(self):
         """
         Create string representation of the enrollment.
@@ -2285,34 +2350,50 @@ class EnterpriseFulfillmentSource(TimeStampedModel):
 
     def revoke(self):
         """
-        Marks this object as revoked and marks the associated EnterpriseCourseEnrollment
-        as "saved for later".  This object and the associated EnterpriseCourseEnrollment are both saved.
+        Idempotently unenroll/revoke this fulfillment and associated EnterpriseCourseEnrollment.
 
-        Subclasses may override this function to additionally emit revocation events.
+        This method and EnterpriseCourseEnrollment.set_unenrolled() call each other!!! If you edit either method, make
+        sure to preserve base cases that terminate infinite recursion.
 
-        TODO: revoke entitlements as well?
+        Notes:
+        * This object and the associated EnterpriseCourseEnrollment may both be saved.
+        * Subclasses may override this function to additionally emit revocation events.
+
+        Returns:
+            bool: True if self.is_revoked was changed.
         """
-        if self.enterprise_course_enrollment:
-            self.enterprise_course_enrollment.saved_for_later = True
-            self.enterprise_course_enrollment.unenrolled = True
-            self.enterprise_course_enrollment.unenrolled_at = localized_utcnow()
-            self.enterprise_course_enrollment.save()
-
-        self.is_revoked = True
-        self.save()
+        changed = False
+        if not self.is_revoked:
+            LOGGER.info(f"Marking fulfillment {str(self)} as revoked.")
+            changed = True
+            self.is_revoked = True
+            self.save()
+            # Find and unenroll any related EnterpriseCourseEnrollment.
+            # By only updating the related object on updates to self, we prevent infinite recursion.
+            if ece := self.enterprise_course_enrollment:
+                if not ece.unenrolled:  # redundant base case to terminate loops.
+                    ece.set_unenrolled(True)
+        return changed
 
     def reactivate(self, **kwargs):
         """
         Idempotently reactivates this enterprise fulfillment source.
-        """
-        if self.enterprise_course_enrollment:
-            self.enterprise_course_enrollment.saved_for_later = False
-            self.enterprise_course_enrollment.unenrolled = False
-            self.enterprise_course_enrollment.unenrolled_at = None
-            self.enterprise_course_enrollment.save()
 
-        self.is_revoked = False
-        self.save()
+        Returns:
+            bool: True if self.is_revoked was changed.
+        """
+        changed = False
+        if self.is_revoked:
+            LOGGER.info(f"Marking fulfillment {str(self)} as reactivated.")
+            changed = True
+            self.is_revoked = False
+            self.save()
+            # Find and REenroll any related EnterpriseCourseEnrollment.
+            # By only updating the related object on updates to self, we prevent infinite recursion.
+            if ece := self.enterprise_course_enrollment:
+                if ece.unenrolled:  # redundant base case to terminate loops.
+                    ece.set_unenrolled(False)
+        return changed
 
     def __str__(self):
         """
@@ -2337,8 +2418,9 @@ class LearnerCreditEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
         """
         Revoke this LearnerCreditEnterpriseCourseEnrollment, and emit a revoked event.
         """
-        super().revoke()
-        send_learner_credit_course_enrollment_revoked_event(self)
+        if changed := super().revoke():
+            send_learner_credit_course_enrollment_revoked_event(self)
+        return changed
 
     def reactivate(self, transaction_id=None, **kwargs):
         """
@@ -2354,7 +2436,7 @@ class LearnerCreditEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
                 f"getting this enrollment for free."
             )
         self.transaction_id = transaction_id
-        super().reactivate()
+        return super().reactivate()
 
     transaction_id = models.UUIDField(
         primary_key=False,

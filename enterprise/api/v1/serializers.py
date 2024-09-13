@@ -1671,7 +1671,7 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PendingEnterpriseCustomerAdminUser
         fields = (
-            'enterprise_customer', 'user_email'
+            'id', 'enterprise_customer', 'user_email'
         )
 
     def validate(self, attrs):
