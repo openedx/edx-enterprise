@@ -17,9 +17,17 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.12]
+----------
+* feat: add username query to enterprise customer user query
+
+[4.25.11]
+----------
+* feat: add username query to enterprise customer user query
+
 [4.25.10]
 ----------
-* fix: add id in pending_enterprise_customer_admin_user serializer.
+* feat: update Enterprise Braze API key
 
 [4.25.9]
 ----------
