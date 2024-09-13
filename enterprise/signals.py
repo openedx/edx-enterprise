@@ -17,7 +17,6 @@ from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_default_catalog_content_filter,
-    localized_utcnow,
     unset_enterprise_learner_language,
     unset_language_of_all_enterprise_learners,
 )
@@ -364,14 +363,7 @@ def course_enrollment_changed_receiver(sender, **kwargs):     # pylint: disable=
         enterprise_customer_user__user_id=enrollment.user.id,
     ).first()
     if enterprise_enrollment and enrollment.is_active:
-        logger.info(
-            f"Marking EnterpriseCourseEnrollment as enrolled (unenrolled_at=NULL) for user {enrollment.user} and "
-            f"course {enrollment.course.course_key}"
-        )
-        enterprise_enrollment.unenrolled = False
-        enterprise_enrollment.unenrolled_at = None
-        enterprise_enrollment.saved_for_later = False
-        enterprise_enrollment.save()
+        enterprise_enrollment.set_unenrolled(False)
     # Note: If the CourseEnrollment is being flipped to is_active=False, then this handler is a no-op.
     # In that case, the `enterprise_unenrollment_receiver` signal handler below will run.
 
@@ -386,13 +378,7 @@ def enterprise_unenrollment_receiver(sender, **kwargs):     # pylint: disable=un
         enterprise_customer_user__user_id=enrollment.user.id,
     ).first()
     if enterprise_enrollment:
-        logger.info(
-            f"Marking EnterpriseCourseEnrollment as unenrolled for user {enrollment.user} and "
-            f"course {enrollment.course.course_key}"
-        )
-        enterprise_enrollment.unenrolled = True
-        enterprise_enrollment.unenrolled_at = localized_utcnow()
-        enterprise_enrollment.save()
+        enterprise_enrollment.set_unenrolled(True)
 
 
 def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
@@ -464,14 +450,3 @@ if COURSE_UNENROLLMENT_COMPLETED is not None:
 
 if COURSE_ENROLLMENT_CHANGED is not None:
     COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
-
-
-@receiver(pre_save, sender=SAPSuccessFactorsEnterpriseCustomerConfiguration)
-def update_decrypted_credentials(sender, instance, **kwargs):     # pylint: disable=unused-argument
-    """
-    Ensure that the decrypted credentials have same values as unencrypted credentials.
-    """
-    if instance.key != instance.decrypted_key:
-        instance.decrypted_key = instance.key
-    if instance.secret != instance.decrypted_secret:
-        instance.decrypted_secret = instance.secret

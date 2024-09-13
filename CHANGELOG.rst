@@ -17,6 +17,83 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.12]
+----------
+* feat: add username query to enterprise customer user query
+
+[4.25.11]
+----------
+* feat: add username query to enterprise customer user query
+
+[4.25.10]
+----------
+* feat: update Enterprise Braze API key
+
+[4.25.9]
+----------
+* fix: send LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED from the correct place.
+
+[4.25.8]
+----------
+* feat: added migration for removing unencrypted client credentials
+
+[4.25.7]
+----------
+* refactor: removed unencrypted credentials from sap config model
+
+[4.25.6]
+----------
+* refactor: making unencrypted credentials nullable so after removing refs tests can run
+
+[4.25.5]
+----------
+* feat: changing django enterprise customer summary columns
+
+[4.25.4]
+----------
+* feat: replaced references from unencrypted to encrypted columns.
+* feat: added data migration to populate encrypted columns.
+
+[4.25.3]
+----------
+* feat: added encrypted client secret for SAP config
+
+[4.25.2]
+----------
+* feat: added migration file for removing char field decrypted_secret
+
+[4.25.1]
+----------
+* feat: removed char field decrypted_secret references
+
+[4.25.0]
+----------
+* feat: emit learner credit unenrollment event
+
+[4.24.0]
+----------
+* fix: customer sorting error in customer support tool endpoint and added user query param
+
+[4.23.20]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.19]
+----------
+* revert: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.18]
+----------
+* revert: revert "altered decrypted_secret to be encrypted and made credentials nullable" in #2219
+
+[4.23.17]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.16]
+----------
+* feat: remove references to client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
 [4.23.15]
 ----------
 * feat: altered decrypted_secret to be encrypted and made credentials nullable

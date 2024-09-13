@@ -163,8 +163,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             sapsf_base_url='http://enterprise.successfactors.com/',
-            key='key',
-            secret='secret',
+            decrypted_key='key',
+            decrypted_secret='secret',
             active=True,
         )
         self.sapsf_global_configuration = factories.SAPSuccessFactorsGlobalConfigurationFactory()
@@ -255,8 +255,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         dummy_sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=dummy_enterprise_customer,
             sapsf_base_url='http://enterprise.successfactors.com/',
-            key='key',
-            secret='secret',
+            decrypted_key='key',
+            decrypted_secret='secret',
             active=True,
         )
 
@@ -436,8 +436,8 @@ class TestTransmitLearnerData(unittest.TestCase):
         self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             sapsf_base_url='http://enterprise.successfactors.com/',
-            key='key',
-            secret='secret',
+            decrypted_key='key',
+            decrypted_secret='secret',
             active=True,
         )
         self.sapsf_global_configuration = factories.SAPSuccessFactorsGlobalConfigurationFactory()
@@ -1136,8 +1136,8 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             sapsf_base_url='http://enterprise.successfactors.com/',
-            key='key',
-            secret='secret',
+            decrypted_key='key',
+            decrypted_secret='secret',
             active=True,
         )
         self.sapsf_global_configuration = factories.SAPSuccessFactorsGlobalConfigurationFactory(
@@ -1972,8 +1972,8 @@ class TestMarkOrphanedContentMetadataAuditsManagementCommand(unittest.TestCase, 
         self.customer_config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             sapsf_base_url='http://enterprise.successfactors.com/',
-            key='key',
-            secret='secret',
+            decrypted_key='key',
+            decrypted_secret='secret',
             active=True,
         )
         self.orphaned_content = factories.ContentMetadataItemTransmissionFactory(

@@ -41,6 +41,7 @@ attrs==24.2.0
     # via
     #   -r requirements/test-master.txt
     #   aiohttp
+    #   openedx-events
     #   pytest
 babel==2.16.0
     # via
@@ -138,6 +139,7 @@ django==4.2.15
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
+    #   openedx-events
 django-cache-memoize==0.2.0
     # via -r requirements/test-master.txt
 django-config-models==2.7.0
@@ -190,9 +192,9 @@ dnspython==2.6.1
     # via
     #   -r requirements/test-master.txt
     #   pymongo
-doc8==1.1.1
+doc8==1.1.2
     # via -r requirements/doc.in
-docutils==0.20.1
+docutils==0.21.2
     # via
     #   -r requirements/doc.in
     #   doc8
@@ -212,6 +214,10 @@ edx-api-doc-tools==1.8.0
     # via -r requirements/test-master.txt
 edx-braze-client==0.2.5
     # via -r requirements/test-master.txt
+edx-ccx-keys==1.3.0
+    # via
+    #   -r requirements/test-master.txt
+    #   openedx-events
 edx-django-utils==5.15.0
     # via
     #   -r requirements/test-master.txt
@@ -219,6 +225,7 @@ edx-django-utils==5.15.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   edx-toggles
+    #   openedx-events
 edx-drf-extensions==10.3.0
     # via
     #   -r requirements/test-master.txt
@@ -226,7 +233,9 @@ edx-drf-extensions==10.3.0
 edx-opaque-keys[django]==2.10.0
     # via
     #   -r requirements/test-master.txt
+    #   edx-ccx-keys
     #   edx-drf-extensions
+    #   openedx-events
 edx-rbac==1.9.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.7.1
@@ -239,8 +248,12 @@ factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==28.1.0
+faker==28.4.1
     # via factory-boy
+fastavro==1.9.5
+    # via
+    #   -r requirements/test-master.txt
+    #   openedx-events
 filelock==3.15.4
     # via
     #   -r requirements/test-master.txt
@@ -301,6 +314,8 @@ oauthlib==3.2.2
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
 openai==0.28.1
+    # via -r requirements/test-master.txt
+openedx-events==9.12.0
     # via -r requirements/test-master.txt
 packaging==24.1
     # via
@@ -409,7 +424,7 @@ pyyaml==6.0.2
     #   code-annotations
     #   drf-yasg
     #   jsondiff
-readme-renderer==43.0
+readme-renderer==44.0
     # via -r requirements/doc.in
 requests==2.32.3
     # via
@@ -433,6 +448,7 @@ six==1.16.0
     # via
     #   -r requirements/test-master.txt
     #   bleach
+    #   edx-ccx-keys
     #   edx-rbac
     #   python-dateutil
 slumber==0.7.1

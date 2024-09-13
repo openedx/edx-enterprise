@@ -891,6 +891,7 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
         data = {
             'enterprise_customer': self.enterprise_customer.uuid,
             'user_email': self.user.email,
+            'id': 2
         }
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT, data=data)
@@ -949,11 +950,9 @@ class TestPendingEnterpriseCustomerAdminUser(BaseTestEnterpriseAPIViews):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        expected_data = {
-            'enterprise_customer': self.enterprise_customer.uuid,
-            'user_email': 'test@example.com'
-        }
-        self.assertEqual(response.data, expected_data)
+        expected_keys = ['enterprise_customer', 'user_email', 'id']
+        for key in expected_keys:
+            self.assertIn(key, response.data)
 
     def test_patch_pending_enterprise_customer_admin_user(self):
         """
@@ -4152,6 +4151,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         # user. Because the requesting user is an operator user, they should be able to see this enrollment.
         second_lc_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=second_enterprise_course_enrollment,
+            is_revoked=True,
         )
 
         self.enterprise_course_enrollment.unenrolled = True
@@ -4209,6 +4209,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         )
         old_learner_credit_enrollment = factories.LearnerCreditEnterpriseCourseEnrollmentFactory(
             enterprise_course_enrollment=old_enterprise_course_enrollment,
+            is_revoked=True,
         )
         response = self.client.get(
             reverse('enterprise-subsidy-fulfillment-unenrolled') + self.unenrolled_after_filter
@@ -4401,9 +4402,9 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert update_response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
-    def test_successful_cancel_fulfillment(self, mock_enrollment_api):
+    def test_successful_cancel_licensed_fulfillment(self, mock_enrollment_api):
         """
-        Test that we can successfully cancel both licensed and learner credit fulfillments.
+        Test that we can successfully cancel licensed fulfillments.
         """
         mock_enrollment_api.update_enrollment.return_value = mock.Mock()
         self.licensed_course_enrollment.is_revoked = False
@@ -4424,8 +4425,12 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
             'is_active': False,
         }
 
-        mock_enrollment_api.reset_mock()
-
+    @mock.patch("enterprise.models.send_learner_credit_course_enrollment_revoked_event")
+    @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
+    def test_successful_cancel_learner_credit_fulfillment(self, mock_enrollment_api, mock_send_revoked_event):
+        """
+        Test that we can successfully cancel learner credit fulfillments, and an openedx event is emitted.
+        """
         self.learner_credit_course_enrollment.is_revoked = False
         self.learner_credit_course_enrollment.save()
         response = self.client.post(
@@ -4443,6 +4448,7 @@ class TestEnterpriseSubsidyFulfillmentViewSet(BaseTestEnterpriseAPIViews):
         assert mock_enrollment_api.update_enrollment.call_args.kwargs == {
             'is_active': False,
         }
+        mock_send_revoked_event.assert_called_once_with(self.learner_credit_course_enrollment)
 
     @mock.patch("enterprise.api.v1.views.enterprise_subsidy_fulfillment.enrollment_api")
     def test_idempotent_cancel_fulfillment(self, mock_enrollment_api):
@@ -9686,3 +9692,50 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         response = self.client.get(settings.TEST_SERVER + url)
 
         assert expected_json == response.json().get('results')[0]
+
+    def test_list_users_filtered(self):
+        """
+        Test that the list support tool users endpoint can be filtered by user details
+        """
+        user = factories.UserFactory()
+        user_2 = factories.UserFactory()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_2.id,
+            enterprise_customer=enterprise_customer
+        )
+        expected_json = [{
+            'enterprise_customer_user': {
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'date_joined': user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+            'pending_enterprise_customer_user': None,
+            'role_assignments': [ENTERPRISE_LEARNER_ROLE],
+            'is_admin': False
+        }]
+        # search by email
+        user_query_email = f'?user_query={enterprise_customer_user.user_email}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_email
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')
+        assert response.json().get('count') == 1
+
+        # search by username
+        user_query_username = f'?user_query={enterprise_customer_user.username}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_username
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')
+        assert response.json().get('count') == 1

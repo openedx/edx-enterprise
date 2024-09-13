@@ -137,8 +137,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 self.session.close()
 
             oauth_access_token, expires_at = self.get_oauth_access_token(
-                self.enterprise_configuration.key,
-                self.enterprise_configuration.secret,
+                self.enterprise_configuration.decrypted_key,
+                self.enterprise_configuration.decrypted_secret,
                 self.enterprise_configuration.sapsf_company_id,
                 self.enterprise_configuration.sapsf_user_id,
                 self.enterprise_configuration.user_type,
@@ -301,8 +301,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             'SAPSuccessFactorsEnterpriseCustomerConfiguration'
         )
         oauth_access_token, _ = self.get_oauth_access_token(
-            self.enterprise_configuration.key,
-            self.enterprise_configuration.secret,
+            self.enterprise_configuration.decrypted_key,
+            self.enterprise_configuration.decrypted_secret,
             self.enterprise_configuration.sapsf_company_id,
             sap_user_id,
             SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER,
