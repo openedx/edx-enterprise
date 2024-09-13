@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.12]
+----------
+* feat: add username query to enterprise customer user query
+
 [4.25.11]
 ----------
 * feat: add username query to enterprise customer user query
