@@ -230,7 +230,7 @@ edx-drf-extensions==10.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.10.0
+edx-opaque-keys[django]==2.11.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ccx-keys
@@ -290,7 +290,7 @@ jwcrypto==1.5.6
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-kombu==5.4.0
+kombu==5.4.1
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -315,7 +315,7 @@ oauthlib==3.2.2
     #   django-oauth-toolkit
 openai==0.28.1
     # via -r requirements/test-master.txt
-openedx-events==9.12.0
+openedx-events==9.14.0
     # via -r requirements/test-master.txt
 packaging==24.1
     # via

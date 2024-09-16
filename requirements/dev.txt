@@ -93,7 +93,7 @@ bleach==6.1.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-build==1.2.1
+build==1.2.2
     # via pip-tools
 celery==5.4.0
     # via
@@ -192,7 +192,7 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.1.1
+diff-cover==9.2.0
     # via -r requirements/test.txt
 dill==0.3.8
     # via pylint
@@ -371,11 +371,11 @@ edx-drf-extensions==10.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-rbac
-edx-i18n-tools==1.6.2
+edx-i18n-tools==1.6.3
     # via -r requirements/dev.in
 edx-lint==5.4.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.10.0
+edx-opaque-keys[django]==2.11.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -489,14 +489,18 @@ jwcrypto==1.5.6
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-oauth-toolkit
-kombu==5.4.0
+kombu==5.4.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml==5.3.0
-    # via edx-i18n-tools
+lxml[html-clean,html_clean]==5.3.0
+    # via
+    #   edx-i18n-tools
+    #   lxml-html-clean
+lxml-html-clean==0.2.2
+    # via lxml
 markupsafe==2.1.5
     # via
     #   -r requirements/doc.txt
@@ -537,7 +541,7 @@ openai==0.28.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-openedx-events==9.12.0
+openedx-events==9.14.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -953,7 +957,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.26.3
+virtualenv==20.26.4
     # via tox
 wcwidth==0.2.13
     # via
