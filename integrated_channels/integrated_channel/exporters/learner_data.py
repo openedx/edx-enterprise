@@ -124,6 +124,15 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         # Create a record of each subsection from every enterprise enrollment
         for enterprise_enrollment in enrollment_queryset:
             if not LearnerExporter.has_data_sharing_consent(enterprise_enrollment):
+                # Adding logging to debug the issue we are having with a customer using SAPSF channel
+                LOGGER.info(generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'[SAPSF] Transmission skipped for {enterprise_enrollment.enterprise_customer_user.user_id}'
+                    'due to missing data sharing consent.'
+                ))
                 continue
 
             assessment_grade_data = self._collect_assessment_grades_data(enterprise_enrollment)
@@ -192,6 +201,16 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
         )
 
+        # Adding logging to debug the issue we are having with a customer using SAPSF channel
+        LOGGER.info(generate_formatted_log(     # pragma: no cover
+            self.enterprise_configuration.channel_code(),
+            self.enterprise_configuration.enterprise_customer.uuid,
+            None,
+            None,
+            f'[SAPSF] Transmission already sent for {enterprise_enrollment.enterprise_customer_user.user_id}'
+            f'is_already_transmitted returned {already_transmitted}'
+        ))
+
         if not (TransmissionAudit and already_transmitted) and LearnerExporter.has_data_sharing_consent(
                 enterprise_enrollment):
 
@@ -202,6 +221,14 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 assessment_grade_data=assessment_grade_data,
             )
             if records:
+                # Adding logging to debug the issue we are having with a customer using SAPSF channel
+                LOGGER.info(generate_formatted_log(     # pragma: no cover
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'[SAPSF] Transmission sent for {enterprise_enrollment.enterprise_customer_user.user_id}'
+                ))
                 # There are some cases where we won't receive a record from the above
                 # method; right now, that should only happen if we have an Enterprise-linked
                 # user for the integrated channel, and transmission of that user's
@@ -497,6 +524,15 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                         grade,
                         detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
                     ):
+                # Adding logging to debug the issue we are having with a customer using SAPSF channel
+                LOGGER.info(generate_formatted_log(
+                    self.enterprise_configuration.channel_code(),
+                    self.enterprise_configuration.enterprise_customer.uuid,
+                    None,
+                    None,
+                    f'[SAPSF] Transmission skipped for {enterprise_enrollment.enterprise_customer_user.user_id}'
+                    'transmission_audit and already_transmitted returned True.'
+                ))
                 # We've already sent a completion status for this enrollment
                 LOGGER.info(generate_formatted_log(
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
