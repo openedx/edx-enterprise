@@ -53,7 +53,7 @@ bcrypt==4.2.0
     #   paramiko
 beautifulsoup4==4.12.3
     # via pydata-sphinx-theme
-billiard==4.2.0
+billiard==4.2.1
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -248,7 +248,7 @@ factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==28.4.1
+faker==29.0.0
     # via factory-boy
 fastavro==1.9.5
     # via
@@ -290,7 +290,7 @@ jwcrypto==1.5.6
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-kombu==5.4.1
+kombu==5.4.2
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -523,6 +523,7 @@ tzdata==2024.1
     # via
     #   -r requirements/test-master.txt
     #   celery
+    #   kombu
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
 uritemplate==4.1.1
