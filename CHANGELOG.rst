@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.14]
+---------
+* feat: add a waffle flag for enterprise groups v2 feature
+
 [4.25.13]
 ----------
 * feat: add logging to debug SAP SuccessFactors transmission issues
