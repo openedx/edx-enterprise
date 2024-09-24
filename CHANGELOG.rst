@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.13]
+----------
+* feat: add logging to debug SAP SuccessFactors transmission issues
+
+[4.25.12]
+----------
+* feat: add username query to enterprise customer user query
+
+[4.25.11]
+----------
+* feat: add username query to enterprise customer user query
+
 [4.25.10]
 ----------
 * feat: update Enterprise Braze API key
