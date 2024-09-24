@@ -2197,7 +2197,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             'active': True
         }, format='json')
         response = self.client.get(
-            ENTERPRISE_CUSTOMER_LIST_ENDPOINT
+            ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
         )
         response = self.load_json(response.content)
         assert response['count'] == 2
