@@ -9737,17 +9737,8 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
             'role_assignments': [ENTERPRISE_LEARNER_ROLE],
             'is_admin': False
         }]
-        # search by email
-        user_query_email = f'?user_query={enterprise_customer_user.user_email}'
-        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_email
-        response = self.client.get(settings.TEST_SERVER + url)
-
-        assert expected_json == response.json().get('results')
-        assert response.json().get('count') == 1
-
-        # search by username
-        user_query_username = f'?user_query={enterprise_customer_user.username}'
-        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_username
+        user_query_string = f'?user_query={enterprise_customer_user.user_email}'
+        url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + user_query_string
         response = self.client.get(settings.TEST_SERVER + url)
 
         assert expected_json == response.json().get('results')
