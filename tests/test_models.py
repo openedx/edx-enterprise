@@ -15,11 +15,11 @@ from uuid import UUID
 
 import ddt
 import responses
-from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
 from freezegun.api import freeze_time
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
+from slumber.exceptions import HttpClientError
 from testfixtures import LogCapture
 
 from django.conf import settings

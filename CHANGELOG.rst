@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.14]
+---------
+* fix: Don't import HttpClientError from edx-rest-api-client
+
 [4.25.13]
 ----------
 * feat: add logging to debug SAP SuccessFactors transmission issues
@@ -257,7 +261,7 @@ Unreleased
 
 [4.20.7]
 --------
-* fix: add name from profile to group membership details 
+* fix: add name from profile to group membership details
 
 [4.20.6]
 --------
