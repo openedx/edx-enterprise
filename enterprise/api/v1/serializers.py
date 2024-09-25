@@ -8,11 +8,11 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 import pytz
-from edx_rest_api_client.exceptions import HttpClientError
 from oauth2_provider.generators import generate_client_id, generate_client_secret
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.settings import api_settings
+from slumber.exceptions import HttpClientError
 
 from django.contrib import auth
 from django.contrib.sites.models import Site
