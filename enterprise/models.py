@@ -54,6 +54,8 @@ from enterprise.constants import (
     GROUP_MEMBERSHIP_ACCEPTED_STATUS,
     GROUP_MEMBERSHIP_PENDING_STATUS,
     GROUP_MEMBERSHIP_STATUS_CHOICES,
+    GROUP_TYPE_CHOICES,
+    GROUP_TYPE_FLEX,
     MAX_INVITE_KEYS,
     DefaultColors,
     FulfillmentTypes,
@@ -4404,6 +4406,15 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         help_text=_(
             "When enabled, all learners connected to the org will be considered a member."
         )
+    )
+    group_type = models.CharField(
+        verbose_name="Group Type",
+        max_length=20,
+        blank=True,
+        null=True,
+        choices=GROUP_TYPE_CHOICES,
+        default=GROUP_TYPE_FLEX,
+        help_text=_("The type of enterprise group"),
     )
 
     history = HistoricalRecords()

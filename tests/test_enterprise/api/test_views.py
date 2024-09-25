@@ -8042,6 +8042,8 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.get(url)
         assert response.json().get('count') == 2
+        assert response.json().get('results')[0].get('group_type') == 'flex'
+        assert response.json().get('results')[0].get('accepted_members_count') == 10
 
     def test_successful_retrieve_group(self):
         """
