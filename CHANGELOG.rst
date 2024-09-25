@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.25.14]
+[4.25.15]
 ---------
 * fix: Don't import HttpClientError from edx-rest-api-client
+
+[4.25.14]
+---------
+* This version was incorretly tagged and so wasn't properly released.
 
 [4.25.13]
 ----------
