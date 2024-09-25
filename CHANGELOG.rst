@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.16]
+---------
+* feat: add a waffle flag for enterprise groups v2 feature
+
 [4.25.15]
 ---------
 * fix: Don't import HttpClientError from edx-rest-api-client
