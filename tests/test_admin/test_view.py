@@ -9,8 +9,8 @@ from unittest.mock import ANY
 from urllib.parse import urlencode
 
 import ddt
-from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
+from slumber.exceptions import HttpClientError
 
 from django.conf import settings
 from django.contrib import auth
