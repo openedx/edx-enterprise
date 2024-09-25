@@ -13,9 +13,9 @@ import pytz
 import waffle  # pylint: disable=invalid-django-waffle-import
 from dateutil.parser import parse
 from edx_django_utils import monitoring
-from edx_rest_api_client.exceptions import HttpClientError
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
+from slumber.exceptions import HttpClientError
 
 from django.apps import apps
 from django.conf import settings

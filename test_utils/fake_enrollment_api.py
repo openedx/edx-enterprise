@@ -6,7 +6,7 @@ import datetime
 import json
 import re
 
-from edx_rest_api_client.exceptions import HttpClientError
+from slumber.exceptions import HttpClientError
 
 from django.conf import settings
 

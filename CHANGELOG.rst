@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.26.0]
+---------
+* feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
+
+[4.25.15]
+---------
+* fix: Don't import HttpClientError from edx-rest-api-client
+
+[4.25.14]
+---------
+* This version was incorretly tagged and so wasn't properly released.
+
 [4.25.13]
 ----------
 * feat: add logging to debug SAP SuccessFactors transmission issues
@@ -257,7 +269,7 @@ Unreleased
 
 [4.20.7]
 --------
-* fix: add name from profile to group membership details 
+* fix: add name from profile to group membership details
 
 [4.20.6]
 --------
