@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.17]
+---------
+* feat: add pagination to the support tool customer list
+
 [4.25.16]
 ---------
 * feat: add a waffle flag for enterprise groups v2 feature
