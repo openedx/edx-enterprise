@@ -1946,7 +1946,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         self.create_items(factory, model_items)
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
-        assert sorted(expected_json, key=sorting_key) == sorted(response, key=sorting_key)
+        assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
 
     @ddt.data(
         # Request missing required permissions query param.
