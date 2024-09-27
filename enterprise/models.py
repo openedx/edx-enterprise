@@ -13,13 +13,13 @@ from uuid import UUID, uuid4
 from config_models.models import ConfigurationModel
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
-from edx_rest_api_client.exceptions import HttpClientError
 from fernet_fields import EncryptedCharField
 from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from requests.exceptions import HTTPError
 from simple_history.models import HistoricalRecords
+from slumber.exceptions import HttpClientError
 
 from django.apps import apps
 from django.conf import settings

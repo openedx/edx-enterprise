@@ -17,6 +17,26 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.17]
+---------
+* feat: add pagination to the support tool customer list
+
+[4.25.16]
+---------
+* feat: add a waffle flag for enterprise groups v2 feature
+
+[4.25.15]
+---------
+* fix: Don't import HttpClientError from edx-rest-api-client
+
+[4.25.14]
+---------
+* This version was incorretly tagged and so wasn't properly released.
+
+[4.25.13]
+----------
+* feat: add logging to debug SAP SuccessFactors transmission issues
+
 [4.25.12]
 ----------
 * feat: add username query to enterprise customer user query
@@ -253,7 +273,7 @@ Unreleased
 
 [4.20.7]
 --------
-* fix: add name from profile to group membership details 
+* fix: add name from profile to group membership details
 
 [4.20.6]
 --------

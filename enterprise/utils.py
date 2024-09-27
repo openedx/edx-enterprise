@@ -15,7 +15,7 @@ import bleach
 import pytz
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
-from edx_rest_api_client.exceptions import HttpClientError
+from slumber.exceptions import HttpClientError
 
 from django.apps import apps
 from django.conf import settings
