@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.25.18]
+---------
+* chore: requirement updates
+
 [4.25.17]
 ---------
 * feat: add pagination to the support tool customer list

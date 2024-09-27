@@ -230,7 +230,7 @@ factory-boy==3.3.1
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==28.4.1
+faker==29.0.0
     # via factory-boy
 fastavro==1.9.5
     # via
@@ -486,6 +486,7 @@ tzdata==2024.1
     # via
     #   -r requirements/test-master.txt
     #   celery
+    #   kombu
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
 uritemplate==4.1.1
