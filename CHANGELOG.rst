@@ -18,8 +18,8 @@ Unreleased
 * nothing unreleased
 
 [4.25.18]
-----------
-* feat: remove logging to debug SAP SuccessFactors transmission issues
+---------
+* chore: requirement updates
 
 [4.25.17]
 ---------

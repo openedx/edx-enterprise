@@ -6,13 +6,13 @@
 #
 distlib==0.3.8
     # via virtualenv
-filelock==3.16.0
+filelock==3.16.1
     # via
     #   tox
     #   virtualenv
 packaging==24.1
     # via tox
-platformdirs==4.3.3
+platformdirs==4.3.6
     # via virtualenv
 pluggy==1.5.0
     # via tox
@@ -24,5 +24,5 @@ tox==3.28.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/ci.in
-virtualenv==20.26.4
+virtualenv==20.26.5
     # via tox
