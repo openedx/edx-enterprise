@@ -67,7 +67,7 @@ python-dateutil==2.9.0.post0
     # via tempora
 pyyaml==6.0.2
     # via jasmine
-selenium==4.24.0
+selenium==4.25.0
     # via jasmine
 six==1.16.0
     # via python-dateutil

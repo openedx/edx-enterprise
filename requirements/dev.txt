@@ -55,7 +55,7 @@ asn1crypto==1.5.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-astroid==3.2.4
+astroid==3.3.3
     # via
     #   pylint
     #   pylint-celery
@@ -82,7 +82,7 @@ beautifulsoup4==4.12.3
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
-billiard==4.2.0
+billiard==4.2.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -408,7 +408,7 @@ factory-boy==3.3.1
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==28.4.1
+faker==29.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -489,7 +489,7 @@ jwcrypto==1.5.6
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-oauth-toolkit
-kombu==5.4.1
+kombu==5.4.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -669,7 +669,7 @@ pyjwt[crypto]==2.9.0
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==3.2.7
+pylint==3.3.0
     # via
     #   edx-lint
     #   pylint-celery
@@ -932,6 +932,7 @@ tzdata==2024.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
+    #   kombu
 unicodecsv==0.14.1
     # via
     #   -r requirements/doc.txt
@@ -957,7 +958,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.26.4
+virtualenv==20.26.5
     # via tox
 wcwidth==0.2.13
     # via
