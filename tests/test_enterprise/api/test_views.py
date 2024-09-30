@@ -8030,7 +8030,8 @@ class TestEnterpriseGroupViewSet(APITest):
                 group=self.group_1,
                 pending_enterprise_customer_user=None,
                 enterprise_customer_user__enterprise_customer=self.enterprise_customer,
-                activated_at=datetime.now()
+                activated_at=datetime.now(),
+                status='accepted',
             ))
 
     def test_group_permissions(self):
@@ -8054,6 +8055,9 @@ class TestEnterpriseGroupViewSet(APITest):
         )
         response = self.client.get(url)
         assert response.json().get('count') == 2
+        assert response.json().get('results')[0].get('group_type') == 'flex'
+        serializer = serializers.EnterpriseGroupSerializer(self.group_1)
+        assert serializer.data['accepted_members_count'] == 11
 
     def test_successful_retrieve_group(self):
         """
