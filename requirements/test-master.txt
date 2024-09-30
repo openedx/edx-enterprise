@@ -8,7 +8,7 @@ aiohappyeyeballs==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   aiohttp
-aiohttp==3.10.5
+aiohttp==3.10.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   openai
@@ -50,12 +50,12 @@ celery==5.4.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
-certifi==2024.7.4
+certifi==2024.8.30
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
     #   snowflake-connector-python
-cffi==1.17.0
+cffi==1.17.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cryptography
@@ -87,7 +87,7 @@ code-annotations==1.8.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-toggles
-cryptography==42.0.8
+cryptography==43.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -102,7 +102,7 @@ defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-django==4.2.15
+django==4.2.16
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -156,7 +156,7 @@ django-ipware==7.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-model-utils==4.5.1
+django-model-utils==5.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -169,7 +169,7 @@ django-oauth-toolkit==1.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-object-actions==4.2.0
+django-object-actions==4.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -209,7 +209,7 @@ drf-yasg==1.21.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-api-doc-tools
-edx-api-doc-tools==1.8.0
+edx-api-doc-tools==2.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/test-master.in
@@ -230,7 +230,7 @@ edx-django-utils==5.15.0
     #   edx-rest-api-client
     #   edx-toggles
     #   openedx-events
-edx-drf-extensions==10.3.0
+edx-drf-extensions==10.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -242,11 +242,11 @@ edx-opaque-keys[django]==2.11.0
     #   edx-ccx-keys
     #   edx-drf-extensions
     #   openedx-events
-edx-rbac==1.9.0
+edx-rbac==1.10.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-edx-rest-api-client==5.7.1
+edx-rest-api-client==6.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -258,11 +258,11 @@ edx-toggles==5.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-fastavro==1.9.5
+fastavro==1.9.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   openedx-events
-filelock==3.15.4
+filelock==3.16.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -271,7 +271,7 @@ frozenlist==1.4.1
     #   -c requirements/edx-platform-constraints.txt
     #   aiohttp
     #   aiosignal
-idna==3.7
+idna==3.10
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
@@ -285,7 +285,7 @@ jinja2==3.1.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-jsondiff==2.2.0
+jsondiff==2.2.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -303,7 +303,7 @@ markupsafe==2.1.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-multidict==6.0.5
+multidict==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   aiohttp
@@ -320,7 +320,7 @@ openai==0.28.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-openedx-events==9.14.0
+openedx-events==9.14.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -329,7 +329,7 @@ packaging==24.1
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
     #   snowflake-connector-python
-paramiko==3.4.1
+paramiko==3.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -341,7 +341,7 @@ path-py==12.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-pbr==6.0.0
+pbr==6.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   stevedore
@@ -353,17 +353,17 @@ pillow==10.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-platformdirs==4.2.2
+platformdirs==4.3.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via click-repl
 psutil==6.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
-pyasn1==0.6.0
+pyasn1==0.6.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   pgpy
@@ -404,7 +404,7 @@ python-slugify==8.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-pytz==2024.1
+pytz==2024.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -428,7 +428,7 @@ requests==2.32.3
     #   openai
     #   slumber
     #   snowflake-connector-python
-rules==3.4
+rules==3.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -447,8 +447,7 @@ slumber==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-    #   edx-rest-api-client
-snowflake-connector-python==3.12.0
+snowflake-connector-python==3.12.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -460,7 +459,7 @@ sqlparse==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
-stevedore==5.2.0
+stevedore==5.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -490,7 +489,7 @@ typing-extensions==4.12.2
     #   edx-opaque-keys
     #   jwcrypto
     #   snowflake-connector-python
-tzdata==2024.1
+tzdata==2024.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   celery
@@ -503,7 +502,7 @@ uritemplate==4.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
-urllib3==1.26.19
+urllib3==1.26.20
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
@@ -520,7 +519,7 @@ webencodings==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
-yarl==1.9.4
+yarl==1.12.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   aiohttp
