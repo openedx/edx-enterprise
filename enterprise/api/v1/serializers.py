@@ -23,7 +23,12 @@ from django.utils.translation import gettext_lazy as _
 from enterprise import models, utils  # pylint: disable=cyclic-import
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_PERMISSION_GROUPS, DefaultColors
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_PERMISSION_GROUPS,
+    GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+    DefaultColors,
+)
 from enterprise.logging import getEnterpriseLogger
 from enterprise.models import (
     AdminNotification,
@@ -632,7 +637,16 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = models.EnterpriseGroup
-        fields = ('enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts')
+        fields = (
+            'enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts',
+            'accepted_members_count', 'group_type')
+
+    accepted_members_count = serializers.SerializerMethodField()
+
+    def get_accepted_members_count(self, obj):
+        "Returns count for accepted members"
+        all_members = obj.get_all_learners().filter(status=GROUP_MEMBERSHIP_ACCEPTED_STATUS)
+        return len(all_members)
 
 
 class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):

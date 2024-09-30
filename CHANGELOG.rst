@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.26.0]
+---------
+* feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
+
 [4.25.19]
 ---------
 * feat: remove logging to debug SAP SuccessFactors transmission issues
