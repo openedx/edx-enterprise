@@ -11,7 +11,7 @@ from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from enterprise.views import LMS_LOGIN_URL
+from enterprise.views import LMS_REGISTER_URL
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -138,7 +138,7 @@ class TestEnterpriseProxyLoginView(TestCase):
             learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
             query_params['next'] = learner_portal_url + '/' + customer_without_tpa.slug
         query_params['proxy_login'] = True
-        expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
+        expected_url = LMS_REGISTER_URL + '?' + query_params.urlencode()
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
     @ddt.data(
@@ -181,7 +181,7 @@ class TestEnterpriseProxyLoginView(TestCase):
             learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
             next_url = learner_portal_url + '/' + self.enterprise_customer.slug
         query_params['next'] = f'{next_url}?tpa_hint={self.enterprise_customer.identity_provider}'
-        expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
+        expected_url = LMS_REGISTER_URL + '?' + query_params.urlencode()
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
     @ddt.data(
@@ -225,5 +225,5 @@ class TestEnterpriseProxyLoginView(TestCase):
             query_params['enterprise_customer'] = str(enterprise_customer.uuid)
             query_params['proxy_login'] = True
             query_params['next'] = next_url
-        expected_url = f'{LMS_LOGIN_URL}?{query_params.urlencode()}'
+        expected_url = f'{LMS_REGISTER_URL}?{query_params.urlencode()}'
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)

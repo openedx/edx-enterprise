@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.26.1]
+---------
+* feat: proxy login now redirects to LMS register page instead of login page
+
 [4.26.0]
 ---------
 * feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
