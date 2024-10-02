@@ -263,6 +263,12 @@ GROUP_MEMBERSHIP_STATUS_CHOICES = (
     (GROUP_MEMBERSHIP_INTERNAL_API_ERROR_STATUS, 'Internal API error'),
     (GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS, 'Email error')
 )
+GROUP_TYPE_BUDGET = 'budget'
+GROUP_TYPE_FLEX = 'flex'
+GROUP_TYPE_CHOICES = (
+    (GROUP_TYPE_BUDGET, 'Budget'),
+    (GROUP_TYPE_FLEX, 'Flex')
+)
 
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"
 
