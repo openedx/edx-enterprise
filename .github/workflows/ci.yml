@@ -19,7 +19,6 @@ jobs:
         python-version:
         - '3.11'
         toxenv: [quality, docs, django42-celery53, pii_check]
-        node: [18, 20]
     env:
       RUNJSHINT: true
     steps:
@@ -31,7 +30,7 @@ jobs:
     - name: Setup Nodejs
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node }}
+        node-version-file: '.nvmrc'
     - run: pip install -r requirements/ci.txt
     - name: Run tox
       env:
