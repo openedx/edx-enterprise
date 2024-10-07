@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.0]
+---------
+* chore: Add index to the username field in the `Consent` model
+
 [4.26.1]
 ---------
 * feat: proxy login now redirects to LMS register page instead of login page
