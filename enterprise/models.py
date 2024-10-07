@@ -2461,6 +2461,103 @@ class LicensedEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
     )
 
 
+class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel):
+    """
+    Specific to an enterprise customer, this model defines a course or course run
+    that should be auto-enrolled for any enterprise customer user linked to the customer.
+
+    .. no_pii:
+    """
+    DEFAULT_ENROLLMENT_CONTENT_TYPE_CHOICES = [
+        ('course', 'Course'),
+        ('course_run', 'Course Run'),
+    ]
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False,
+    )
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name="default_enrollment_intentions",
+        on_delete=models.deletion.CASCADE,
+        help_text=_(
+            "The customer for which this default enrollment will be realized.",
+        )
+    )
+    content_type = models.CharField(
+        max_length=127,
+        blank=False,
+        null=False,
+        choices=DEFAULT_ENROLLMENT_CONTENT_TYPE_CHOICES,
+        help_text=_(
+            "The type of content (e.g. a course vs. a course run)."
+        ),
+    )
+    content_key = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_(
+            "A course or course run that related users should be automatically enrolled into."
+        ),
+    )
+    realized_enrollments = models.ManyToManyField(
+        EnterpriseCourseEnrollment,
+        through='DefaultEnterpriseEnrollmentRealization',
+        through_fields=("intended_enrollment", "realized_enrollment"),
+    )
+    history = HistoricalRecords()
+
+    @cached_property
+    def current_course_run(self):  # pragma: no cover
+        """
+        Metadata describing the current course run for this default enrollment intention.
+        """
+        return {}
+
+    @property
+    def current_course_run_key(self):  # pragma: no cover
+        """
+        The current course run key to use for realized course enrollments.
+        """
+        return self.current_course_run.get('key')
+
+    @property
+    def current_course_run_enrollable(self):  # pragma: no cover
+        """
+        Whether the current course run is enrollable.
+        """
+        return False
+
+    @property
+    def current_course_run_enroll_by_date(self):  # pragma: no cover
+        """
+        The enrollment deadline for this course.
+        """
+        return datetime.datetime.min
+
+
+class DefaultEnterpriseEnrollmentRealization(TimeStampedModel):
+    """
+    Represents the relationship between a `DefaultEnterpriseEnrollmentIntention`
+    and a realized course enrollment that exists because of that intention record.
+
+    .. no_pii:
+    """
+    intended_enrollment = models.ForeignKey(
+        DefaultEnterpriseEnrollmentIntention,
+        on_delete=models.CASCADE,
+    )
+    realized_enrollment = models.ForeignKey(
+        EnterpriseCourseEnrollment,
+        on_delete=models.CASCADE,
+    )
+    history = HistoricalRecords()
+
+
 class EnterpriseCatalogQuery(TimeStampedModel):
     """
     Stores a re-usable catalog query.
