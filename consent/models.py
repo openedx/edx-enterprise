@@ -195,6 +195,9 @@ class Consent(TimeStampedModel):
 
         abstract = True
         app_label = 'consent'
+        indexes = [
+            models.Index(fields=['username'])
+        ]
 
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
