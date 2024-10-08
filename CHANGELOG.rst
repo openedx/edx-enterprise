@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.2]
+---------
+* fix: updates `get_all_learners` to remove `_get_implicit_group_members`
+
 [4.27.1]
 ---------
 * chore: remove `replaces` sections from squashing migrations.
