@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.1]
+---------
+* fix: update logic to correct getting the accepted members count from a group
+
 [4.27.0]
 ---------
 * chore: Add index to the username field in the `Consent` model
