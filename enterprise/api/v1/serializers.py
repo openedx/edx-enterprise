@@ -645,9 +645,6 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
 
     def get_accepted_members_count(self, obj):
         "Returns count for accepted members"
-
-        # groups that have applies_to_all_contexts enabled returns a list of of objects
-        # so we need to loop through the list to check for the status
         accepted_members = obj.get_all_learners().filter(status=GROUP_MEMBERSHIP_ACCEPTED_STATUS)
         return len(accepted_members)
 

@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.2]
+---------
+* fix: updates `get_all_learners` to remove `_get_implicit_group_members`
+
 [4.27.1]
 ---------
-* fix: update logic to correct getting the accepted members count from a group
+* chore: remove `replaces` sections from squashing migrations.
 
 [4.27.0]
 ---------

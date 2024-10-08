@@ -7,7 +7,8 @@ import model_utils.fields
 
 class Migration(migrations.Migration):
 
-    replaces = [('sap_success_factors', '0004_auto_20220324_1550'), ('sap_success_factors', '0005_auto_20220325_1757'), ('sap_success_factors', '0006_auto_20220330_1157')]
+    # Commenting out `replaces` to allow --prune to function correctly and clean up the migrations table.
+    # replaces = [('sap_success_factors', '0004_auto_20220324_1550'), ('sap_success_factors', '0005_auto_20220325_1757'), ('sap_success_factors', '0006_auto_20220330_1157')]
 
     dependencies = [
         ('sap_success_factors', '0003_alter_sapsuccessfactorslearnerdatatransmissionaudit_completed_timestamp'),
