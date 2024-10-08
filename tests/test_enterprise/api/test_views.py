@@ -8158,8 +8158,7 @@ class TestEnterpriseGroupViewSet(APITest):
         ) + pending_user_query_string
         response = self.client.get(url)
 
-        assert response.json().get('count') == 1
-        assert response.json().get('results')[0].get('pending_enterprise_customer_user_id') == pending_user.id
+        assert response.json().get('count') == 0
 
         group.applies_to_all_contexts = False
         group.save()

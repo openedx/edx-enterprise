@@ -645,8 +645,8 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
 
     def get_accepted_members_count(self, obj):
         "Returns count for accepted members"
-        all_members = obj.get_all_learners().filter(status=GROUP_MEMBERSHIP_ACCEPTED_STATUS)
-        return len(all_members)
+        accepted_members = obj.get_all_learners().filter(status=GROUP_MEMBERSHIP_ACCEPTED_STATUS)
+        return len(accepted_members)
 
 
 class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
