@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.3]
+---------
+* fix: Updating the EnterpriseGroup serializer with created variable
+
 [4.27.0]
 ---------
 * chore: Add index to the username field in the `Consent` model

@@ -8063,7 +8063,7 @@ class TestEnterpriseGroupViewSet(APITest):
         """
         Test retrieving a single group record
         """
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/'
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-detail',
             kwargs={'pk': self.group_1.uuid},
@@ -8476,7 +8476,7 @@ class TestEnterpriseGroupViewSet(APITest):
         """
         Test patching an existing group record
         """
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/'
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-detail',
             kwargs={'pk': self.group_1.uuid},
@@ -8499,7 +8499,7 @@ class TestEnterpriseGroupViewSet(APITest):
         """
         Test patching an existing group record display name
         """
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/'
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-detail',
             kwargs={'pk': self.group_1.uuid},
@@ -8514,7 +8514,7 @@ class TestEnterpriseGroupViewSet(APITest):
         Test deleting a group record
         """
         group_to_delete_uuid = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer).uuid
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/'
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-detail',
             kwargs={'pk': group_to_delete_uuid},
@@ -8756,7 +8756,7 @@ class TestEnterpriseGroupViewSet(APITest):
         Test that the PATCH endpoint will not allow the user to update a group to a customer that the requester
         doesn't have access to
         """
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>'
+        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/'
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-detail',
             kwargs={'pk': self.group_1.uuid},
