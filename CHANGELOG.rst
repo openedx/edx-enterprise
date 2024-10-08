@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.1]
+---------
+* chore: remove `replaces` sections from squashing migrations.
+
 [4.27.0]
 ---------
 * chore: Add index to the username field in the `Consent` model
