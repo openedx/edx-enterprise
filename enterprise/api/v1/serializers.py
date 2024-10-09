@@ -639,7 +639,7 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
         model = models.EnterpriseGroup
         fields = (
             'enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts',
-            'accepted_members_count', 'group_type')
+            'accepted_members_count', 'group_type', 'created')
 
     accepted_members_count = serializers.SerializerMethodField()
 

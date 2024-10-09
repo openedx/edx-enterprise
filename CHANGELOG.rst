@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.27.3]
+---------
+* fix: Updating the EnterpriseGroup serializer with created variable
+
 [4.27.2]
 ---------
 * fix: updates `get_all_learners` to remove `_get_implicit_group_members`
