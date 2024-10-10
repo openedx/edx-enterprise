@@ -1316,3 +1316,34 @@ class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     class Meta:
         fields = '__all__'
         model = models.LearnerCreditEnterpriseCourseEnrollment
+
+
+@admin.register(models.DefaultEnterpriseEnrollmentIntention)
+class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
+    """
+    Django admin model for DefaultEnterpriseEnrollmentIntentions.
+    """
+    list_display = (
+        'uuid',
+        'enterprise_customer',
+        'content_type',
+        'content_key',
+    )
+
+    readonly_fields = (
+        'current_course_run_key',
+        'current_course_run_enrollable',
+        'current_course_run_enroll_by_date',
+    )
+
+    search_fields = (
+        'uuid',
+        'enterprise_customer__uuid',
+        'content_key',
+    )
+
+    ordering = ('-modified',)
+
+    class Meta:
+        fields = '__all__'
+        model = models.DefaultEnterpriseEnrollmentIntention
