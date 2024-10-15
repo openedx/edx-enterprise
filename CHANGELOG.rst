@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.29.0]
+--------
+* feat: Create django admin for default enrollments
+
 [4.28.4]
 --------
 * feat: updating the character count for group name to 255

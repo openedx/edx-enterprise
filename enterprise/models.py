@@ -61,6 +61,7 @@ from enterprise.constants import (
     FulfillmentTypes,
     json_serialized_course_modes,
 )
+from enterprise.content_metadata.api import get_and_cache_customer_content_metadata
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.event_bus import send_learner_credit_course_enrollment_revoked_event
 from enterprise.logging import getEnterpriseLogger
@@ -71,6 +72,7 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
+    get_advertised_course_run,
     get_configuration_value,
     get_default_invite_key_expiration_date,
     get_ecommerce_worker_user,
@@ -2511,12 +2513,33 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
     )
     history = HistoricalRecords()
 
-    @cached_property
+    @property
+    def content_metadata_for_content_key(self):
+        """
+        Retrieves the cached content metadata for the instance content_key
+        Determines catalog from the catalogs associated to the enterprise customer
+        """
+        return get_and_cache_customer_content_metadata(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            content_key=self.content_key,
+        )
+
+    @property
     def current_course_run(self):  # pragma: no cover
         """
         Metadata describing the current course run for this default enrollment intention.
         """
-        return {}
+        content_metadata = self.content_metadata_for_content_key
+        if not content_metadata:
+            return {}
+        if self.content_type == 'course':
+            if course_run := get_advertised_course_run(content_metadata):
+                return course_run
+            return {}
+        course_runs = content_metadata.get('course_runs', [])
+        return next(
+            (course_run for course_run in course_runs if course_run['key'].lower() == self.content_key.lower()), {}
+        )
 
     @property
     def current_course_run_key(self):  # pragma: no cover
@@ -2524,6 +2547,22 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         The current course run key to use for realized course enrollments.
         """
         return self.current_course_run.get('key')
+
+    @property
+    def get_content_type(self):
+        """
+        Determines the content_type for a given content_key by validating a return value
+        from `get_content_metadata_content_identifier` and first checking if the passed content_key
+        is a top level course key, if not and the API call resolved correctly, we can assume the content_type
+        is a `course_run`
+        """
+        content_metadata = self.content_metadata_for_content_key
+        if not content_metadata:
+            return None
+        content_metadata_key = content_metadata.get('key').lower()
+        if content_metadata_key == self.content_key.lower():
+            return 'course'
+        return 'course_run'
 
     @property
     def current_course_run_enrollable(self):  # pragma: no cover
@@ -2538,6 +2577,15 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         The enrollment deadline for this course.
         """
         return datetime.datetime.min
+
+    def clean(self):
+        if not (self.content_type or self.get_content_type):
+            raise ValidationError('The content key did match a valid course or course-run')
+
+    def save(self, *args, **kwargs):
+        if not self.content_type:
+            self.content_type = self.get_content_type
+        super().save(*args, **kwargs)
 
 
 class DefaultEnterpriseEnrollmentRealization(TimeStampedModel):
