@@ -43,6 +43,7 @@ from enterprise.admin.views import (
 )
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
+from enterprise.models import DefaultEnterpriseEnrollmentIntention
 from enterprise.utils import (
     discovery_query_url,
     get_all_field_names,
@@ -107,6 +108,31 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
         formset = super().get_formset(request, obj, **kwargs)
         formset.form.base_fields['content_filter'].initial = get_default_catalog_content_filter()
         return formset
+
+
+class EnterpriseCustomerDefaultEnterpriseEnrollmentIntentionInline(admin.TabularInline):
+    """
+    Django admin model for EnterpriseCustomerCatalog.
+    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
+    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
+    """
+
+    model = models.DefaultEnterpriseEnrollmentIntention
+    fields = ('content_key', 'course_run_key_for_enrollment',)
+    readonly_fields = ('course_run_key_for_enrollment',)
+    extra = 0
+    can_delete = True
+
+    @admin.display(description='Course run key for enrollment')
+    def course_run_key_for_enrollment(self, obj):
+        """
+        Returns the course run key based on the content type.
+        If the content type is a course, we retrieve the advertised_course_run key.
+        """
+        content_type = obj.content_type
+        if content_type == 'course_run':
+            return obj.content_key
+        return obj.current_course_run_key
 
 
 class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
@@ -227,6 +253,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         EnterpriseCustomerBrandingConfigurationInline,
         EnterpriseCustomerIdentityProviderInline,
         EnterpriseCustomerCatalogInline,
+        EnterpriseCustomerDefaultEnterpriseEnrollmentIntentionInline,
         PendingEnterpriseCustomerAdminUserInline,
     ]
 
@@ -1294,7 +1321,6 @@ class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'uuid',
         'fulfillment_type',
         'enterprise_course_enrollment',
-        'is_revoked',
         'modified',
     )
 
@@ -1332,8 +1358,7 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         'current_course_run_key',
-        'current_course_run_enrollable',
-        'current_course_run_enroll_by_date',
+        'is_removed',
     )
 
     search_fields = (

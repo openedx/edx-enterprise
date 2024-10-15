@@ -10,6 +10,7 @@ import shutil
 import unittest
 from datetime import timedelta
 from unittest import mock
+from unittest.mock import PropertyMock
 from urllib.parse import urljoin
 from uuid import UUID
 
@@ -43,6 +44,7 @@ from enterprise.constants import (
 )
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
+    DefaultEnterpriseEnrollmentIntention,
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
@@ -201,6 +203,119 @@ class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):
         Test the license property on the Enterprise Course Enrollment.
         """
         assert self.enrollment.license.license_uuid == self.LICENSE_UUID
+
+
+@mark.django_db
+@ddt.ddt
+class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
+    """
+    Tests for DefaultEnterpriseEnrollmentIntention
+    """
+    def setUp(self):
+        self.test_enterprise_customer_1 = factories.EnterpriseCustomerFactory()
+
+        self.faker = FakerFactory.create()
+        self.advertised_course_run_uuid = self.faker.uuid4()
+        self.course_run_1_uuid = self.faker.uuid4()
+        self.mock_course_run_1 = {
+            'key': 'course-v1:edX+demoX+2T2023',
+            'title': 'Demo Course',
+            'parent_content_key': 'edX+demoX',
+            'uuid': self.course_run_1_uuid
+        }
+        self.mock_advertised_course_run = {
+            'key': 'course-v1:edX+demoX+3T2024',
+            'title': 'Demo Course',
+            'parent_content_key': 'edX+demoX',
+            'uuid': self.advertised_course_run_uuid
+        }
+        self.mock_course_runs = [
+            self.mock_course_run_1,
+            self.mock_advertised_course_run,
+        ]
+        self.mock_course = {
+            'key': 'edX+demoX',
+            'content_type': 'course',
+            'course_runs': self.mock_course_runs,
+            'advertised_course_run_uuid': self.advertised_course_run_uuid
+        }
+        super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+        DefaultEnterpriseEnrollmentIntention.objects.all().delete()
+
+    @mock.patch(
+        'enterprise.models.DefaultEnterpriseEnrollmentIntention.content_metadata_for_content_key',
+        new_callable=PropertyMock
+    )
+    def test_retrieve_current_course_run_advertised_course_run(self, mock_content_metadata_for_content_key):
+        mock_content_metadata_for_content_key.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='edX+demoX',
+        )
+        assert default_enterprise_enrollment_intention.current_course_run == self.mock_advertised_course_run
+
+    @mock.patch(
+        'enterprise.models.DefaultEnterpriseEnrollmentIntention.content_metadata_for_content_key',
+        new_callable=PropertyMock
+    )
+    def test_retrieve_current_course_run_with_course_run(self, mock_content_metadata_for_content_key):
+        mock_content_metadata_for_content_key.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='course-v1:edX+demoX+2T2023',
+        )
+        assert default_enterprise_enrollment_intention.current_course_run == self.mock_course_run_1
+
+    @mock.patch(
+        'enterprise.models.DefaultEnterpriseEnrollmentIntention.content_metadata_for_content_key',
+        new_callable=PropertyMock
+    )
+    def test_retrieve_current_course_run_key_advertised_course_run(self, mock_content_metadata_for_content_key):
+        mock_content_metadata_for_content_key.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='edX+demoX',
+        )
+        assert default_enterprise_enrollment_intention.current_course_run_key == self.mock_advertised_course_run['key']
+
+    @mock.patch(
+        'enterprise.models.DefaultEnterpriseEnrollmentIntention.content_metadata_for_content_key',
+        new_callable=PropertyMock
+    )
+    def test_retrieve_current_course_run_key_with_course_run(self, mock_content_metadata_for_content_key):
+        mock_content_metadata_for_content_key.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='course-v1:edX+demoX+2T2023',
+        )
+        assert default_enterprise_enrollment_intention.current_course_run_key == self.mock_course_run_1['key']
+
+    @mock.patch(
+        'enterprise.models.DefaultEnterpriseEnrollmentIntention.content_metadata_for_content_key',
+        new_callable=PropertyMock
+    )
+    def test_get_content_type_course(self, mock_content_metadata_for_content_key):
+        mock_content_metadata_for_content_key.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='edX+demoX',
+        )
+        assert default_enterprise_enrollment_intention.get_content_type == 'course'
+
+    @mock.patch(
+        'enterprise.models.DefaultEnterpriseEnrollmentIntention.content_metadata_for_content_key',
+        new_callable=PropertyMock
+    )
+    def test_get_content_type_course_run(self, mock_content_metadata_for_content_key):
+        mock_content_metadata_for_content_key.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='course-v1:edX+demoX+2T2023',
+        )
+        assert default_enterprise_enrollment_intention.get_content_type == 'course_run'
 
 
 @mark.django_db
