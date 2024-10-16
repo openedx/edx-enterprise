@@ -17,28 +17,32 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.0]
+--------
+* feat: add default enrollment models
+
 [4.27.3]
----------
+--------
 * fix: Updating the EnterpriseGroup serializer with created variable
 
 [4.27.2]
----------
+--------
 * fix: updates `get_all_learners` to remove `_get_implicit_group_members`
 
 [4.27.1]
----------
+--------
 * chore: remove `replaces` sections from squashing migrations.
 
 [4.27.0]
----------
+--------
 * chore: Add index to the username field in the `Consent` model
 
 [4.26.1]
----------
+--------
 * feat: proxy login now redirects to LMS register page instead of login page
 
 [4.26.0]
----------
+--------
 * feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
 
 [4.25.19]
