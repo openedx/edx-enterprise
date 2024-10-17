@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.1]
+--------
+* feat: Create django admin for default enrollments
+
 [4.28.0]
 --------
 * feat: add default enrollment models
