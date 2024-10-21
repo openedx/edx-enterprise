@@ -44,7 +44,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.course_key = 'edX+DemoX'
         self.progress_status = 'In Progress'
-        self.content_title='DemoX',
+        self.content_title='DemoX'
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
             enable_audit_enrollment=True,
             enable_audit_data_reporting=True,
