@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.2]
+--------
+* fix: added content_title, progress_status in get_learner_data_records for derived classed of learner data exporters.
+
 [4.28.1]
 --------
 * feat: making to-be-deleted model field nullable
