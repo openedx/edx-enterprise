@@ -129,7 +129,10 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             progress_status='In Progress'
         )[0]
         learner_data_records_1.save()
-        learner_data_records_2 = exporter.get_learner_data_records(self.enterprise_course_enrollment)[0]
+        learner_data_records_2 = exporter.get_learner_data_records(
+            self.enterprise_course_enrollment,
+            progress_status='In Progress'
+        )[0]
         learner_data_records_2.save()
 
         assert learner_data_records_1.id == learner_data_records_2.id

@@ -55,8 +55,8 @@ class CornerstoneLearnerExporter(LearnerExporter):
             csod_learner_data_transmission.grade = grade
             csod_learner_data_transmission.course_completed = course_completed
             csod_learner_data_transmission.completed_timestamp = completed_date
-            csod_learner_data_transmission.content_title=content_title
-            csod_learner_data_transmission.progress_status=progress_status
+            csod_learner_data_transmission.content_title = content_title
+            csod_learner_data_transmission.progress_status = progress_status
 
             # Used for api error reporting
             csod_learner_data_transmission.user_email = enterprise_enrollment.enterprise_customer_user.user_email
