@@ -76,7 +76,10 @@ class TestMoodleLearnerDataExporter(unittest.TestCase):
         )
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         exporter = MoodleLearnerExporter('fake-user', self.config)
-        learner_data_records_1 = exporter.get_learner_data_records(enterprise_course_enrollment)[0]
+        learner_data_records_1 = exporter.get_learner_data_records(
+            enterprise_course_enrollment,
+            progress_status='In Progress'
+        )[0]
         learner_data_records_1.save()
         learner_data_records_2 = exporter.get_learner_data_records(enterprise_course_enrollment)[0]
         learner_data_records_2.save()
