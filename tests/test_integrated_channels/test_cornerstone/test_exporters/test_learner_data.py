@@ -44,7 +44,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.course_key = 'edX+DemoX'
         self.progress_status = 'In Progress'
-        self.content_title='DemoX'
+        self.content_title = 'DemoX'
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
             enable_audit_enrollment=True,
             enable_audit_data_reporting=True,
@@ -107,6 +107,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         learner_data_records = exporter.get_learner_data_records(
             self.enterprise_course_enrollment,
             completed_date=completed_date,
+            progress_status=self.progress_status,
+            content_title=self.content_title,
             course_completed=True,
         )
         assert learner_data_records[0].course_id == self.course_key
