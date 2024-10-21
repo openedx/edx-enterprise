@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.2]
+--------
+* feat: removing all references of to-be-deleted field
+
+[4.28.1]
+--------
+* feat: making to-be-deleted model field nullable
+
 [4.28.0]
 --------
 * feat: add default enrollment models
