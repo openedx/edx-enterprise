@@ -1156,6 +1156,5 @@ class DefaultEnterpriseEnrollmentIntentionFactory(factory.django.DjangoModelFact
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    content_type = "course"
-    content_key = "edX+demoX"
-    factory.SubFactory(EnterpriseCourseEnrollmentFactory)
+    content_type = DefaultEnterpriseEnrollmentIntention.COURSE
+    content_key = "edX+DemoX"

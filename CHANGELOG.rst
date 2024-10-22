@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.30.0]
+--------
+* feat: REST APIs for default-enterprise-enrollment-intentions
+
 [4.29.0]
 --------
 * feat: Create django admin for default enrollments

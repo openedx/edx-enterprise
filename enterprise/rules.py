@@ -19,6 +19,8 @@ from enterprise.constants import (
     PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
     PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
+    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
+    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -241,6 +243,25 @@ def has_explicit_access_to_reporting_api(user, obj):
         obj,
     )
 
+@rules.predicate
+def has_implicit_access_to_default_enterprise_enrollment_intentions(user, obj):  # pylint: disable=unused-argument
+    """
+    Check that if request user has implicit access to `ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE` feature role.
+
+    Params:
+        user: An ``auth.User`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
+
+    Returns:
+        boolean: whether the request user has access or not
+    """
+    request = crum.get_current_request()
+    decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
+    return request_user_has_implicit_access_via_jwt(
+        decoded_jwt,
+        DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
+        str(obj)
+    )
 
 rules.add_perm('enterprise.can_access_admin_dashboard',
                has_implicit_access_to_dashboard | has_explicit_access_to_dashboard)
@@ -269,4 +290,9 @@ rules.add_perm(
 rules.add_perm(
     PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     has_implicit_access_to_provisioning_pending_enterprise_customer_admin_users,
+)
+
+rules.add_perm(
+    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
+    has_implicit_access_to_default_enterprise_enrollment_intentions,
 )

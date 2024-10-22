@@ -416,11 +416,11 @@ def test_contains_content_items():
 @responses.activate
 @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_enterprise_contains_content_items():
-    url = _url("enterprise-customer/{enterprise_uuid}/contains_content_items/?course_run_ids=demoX".format(
-        enterprise_uuid=TEST_ENTERPRISE_ID
-    ))
+    query_params = '?course_run_ids=demoX&get_catalogs_containing_specified_content_ids=True'
+    url = _url(f"enterprise-customer/{TEST_ENTERPRISE_ID}/contains_content_items/{query_params}")
     expected_response = {
         'contains_content_items': True,
+        'catalog_list': [],
     }
     responses.add(
         responses.GET,
@@ -429,7 +429,10 @@ def test_enterprise_contains_content_items():
     )
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.enterprise_contains_content_items(TEST_ENTERPRISE_ID, ['demoX'])
-    assert actual_response == expected_response['contains_content_items']
+    actual_contains_content_items = actual_response['contains_content_items']
+    actual_catalog_list = actual_response['catalog_list']
+    assert actual_contains_content_items == expected_response['contains_content_items']
+    assert actual_catalog_list == expected_response['catalog_list']
 
 
 @responses.activate

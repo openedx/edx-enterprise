@@ -376,11 +376,14 @@ class EnterpriseCatalogApiClient(UserAPIClient):
         The endpoint does not differentiate between course_run_ids and program_uuids so they can be used
         interchangeably. The two query parameters are left in for backwards compatability with edx-enterprise.
         """
-        query_params = {'course_run_ids': content_ids}
+        query_params = {
+            'course_run_ids': content_ids,
+            'get_catalogs_containing_specified_content_ids': True,
+        }
         api_url = self.get_api_url(f"{self.ENTERPRISE_CUSTOMER_ENDPOINT}/{enterprise_uuid}/contains_content_items")
         response = self.client.get(api_url, params=query_params)
         response.raise_for_status()
-        return response.json()['contains_content_items']
+        return response.json()
 
     @UserAPIClient.refresh_token
     def get_content_metadata_content_identifier(self, enterprise_uuid, content_id):

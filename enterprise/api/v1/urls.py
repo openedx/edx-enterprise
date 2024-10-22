@@ -26,6 +26,7 @@ from enterprise.api.v1.views import (
     pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
     plotly_auth,
+    default_enterprise_enrollments,
 )
 
 router = DefaultRouter()
@@ -81,6 +82,11 @@ router.register(
 )
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
+)
+router.register(
+    "default-enterprise-enrollment-intentions",
+    default_enterprise_enrollments.DefaultEnterpriseEnrollmentIntentionViewSet,
+    'default-enterprise-enrollment-intentions'
 )
 
 

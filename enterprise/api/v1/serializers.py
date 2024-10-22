@@ -1894,3 +1894,133 @@ class EnterpriseUserSerializer(serializers.Serializer):
             return role_assignments_by_ecu_id
         else:
             return None
+
+
+class DefaultEnterpriseEnrollmentIntentionSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the DefaultEnterpriseEnrollmentIntention model.
+    """
+
+    course_run_key = serializers.SerializerMethodField()
+    is_course_run_enrollable = serializers.SerializerMethodField()
+    course_run_normalized_metadata = serializers.SerializerMethodField()
+    applicable_enterprise_catalog_uuids = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.DefaultEnterpriseEnrollmentIntention
+        fields = (
+            'uuid',
+            'content_key',
+            'enterprise_customer',
+            'course_key',
+            'course_run_key',
+            'is_course_run_enrollable',
+            'applicable_enterprise_catalog_uuids',
+            'course_run_normalized_metadata',
+            'created',
+            'modified',
+        )
+
+    def get_course_run_key(self, obj):
+        """
+        Get the course run key for the enrollment intention
+        """
+        return obj.course_run_key
+
+    def get_is_course_run_enrollable(self, obj):
+        """
+        Get the course run enrollable status for the enrollment intention
+        """
+        return obj.is_course_run_enrollable
+
+    def get_course_run_normalized_metadata(self, obj):
+        """
+        Get the course run for the enrollment intention
+        """
+        return obj.course_run_normalized_metadata
+
+    def get_applicable_enterprise_catalog_uuids(self, obj):
+        return obj.applicable_enterprise_catalog_uuids
+
+
+class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Serializer):
+    """
+    Serializer for the DefaultEnterpriseEnrollmentIntentionLearnerStatus model.
+    """
+
+    lms_user_id = serializers.IntegerField()
+    user_email = serializers.EmailField()
+    enterprise_customer_uuid = serializers.UUIDField()
+    enrollment_statuses = serializers.SerializerMethodField()
+    metadata = serializers.SerializerMethodField()
+
+    def needs_enrollment_counts(self):
+        """
+        Return the counts of needs_enrollment.
+        """
+        needs_enrollment = self.context.get('needs_enrollment', {})
+        needs_enrollment_enrollable = needs_enrollment.get('enrollable', [])
+        needs_enrollment_not_enrollable = needs_enrollment.get('not_enrollable', [])
+
+        return {
+            'enrollable': len(needs_enrollment_enrollable),
+            'not_enrollable': len(needs_enrollment_not_enrollable),
+        }
+
+    def already_enrolled_count(self):
+        """
+        Return the count of already enrolled.
+        """
+        already_enrolled = self.context.get('already_enrolled', {})
+        return len(already_enrolled)
+
+    def total_default_enrollment_intention_count(self):
+        """
+        Return the total count of default enrollment intentions.
+        """
+        needs_enrollment_counts = self.needs_enrollment_counts()
+        total_needs_enrollment_enrollable = needs_enrollment_counts['enrollable']
+        total_needs_enrollment_not_enrollable = needs_enrollment_counts['not_enrollable']
+        return total_needs_enrollment_enrollable + total_needs_enrollment_not_enrollable + self.already_enrolled_count()
+
+    def get_enrollment_statuses(self, obj):  # pylint: disable=unused-argument
+        """
+        Serialize the enrollment statuses by converting querysets to serialized data.
+        """
+        needs_enrollment = self.context.get('needs_enrollment', {})
+        needs_enrollment_enrollable = needs_enrollment.get('enrollable', [])
+        needs_enrollment_not_enrollable = needs_enrollment.get('not_enrollable', [])
+        already_enrolled = self.context.get('already_enrolled', {})
+
+        needs_enrollment_enrollable_data = DefaultEnterpriseEnrollmentIntentionSerializer(
+            needs_enrollment_enrollable,
+            many=True
+        ).data
+        needs_enrollment_unenrollable_data = DefaultEnterpriseEnrollmentIntentionSerializer(
+            needs_enrollment_not_enrollable,
+            many=True
+        ).data
+        already_enrolled_data = DefaultEnterpriseEnrollmentIntentionSerializer(
+            already_enrolled,
+            many=True
+        ).data
+
+        return {
+            'needs_enrollment': {
+                'enrollable': needs_enrollment_enrollable_data,
+                'not_enrollable': needs_enrollment_unenrollable_data,
+            },
+            'already_enrolled': already_enrolled_data,
+        }
+
+    def get_metadata(self, obj):  # pylint: disable=unused-argument
+        """
+        Return the metadata for the default enterprise enrollment intention, including
+        number of default enterprise enrollment intentions that need enrollment, are already
+        enrolled by the learner.
+        """
+        return {
+            'total_default_enterprise_course_enrollments': self.total_default_enrollment_intention_count(),
+            'total_needs_enrollment': self.needs_enrollment_counts(),
+            'total_already_enrolled': self.already_enrolled_count(),
+        }

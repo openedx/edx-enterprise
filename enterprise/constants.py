@@ -150,6 +150,11 @@ ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 ENTERPRISE_FULFILLMENT_OPERATOR_ROLE = 'fulfillment_operator'
 ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE = 'sso_orchestrator_operator'
+
+# Default enterprise enrollment roles/permissions
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE = 'default_enterprise_enrollment_intentions_learner'
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION = 'enterprise.can_view_default_enterprise_enrollment_intentions'
+
 # Provisioning admins roles:
 PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_enterprise_customer_admin'
 PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_pending_enterprise_customer_users_admin'

@@ -170,7 +170,15 @@ EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
 VERIFIED_SUBSCRIPTION_COURSE_MODE = 'verified'
-
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT = reverse('default-enterprise-enrollment-intentions-list')
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT = reverse(
+    'default-enterprise-enrollment-intentions-learner-status'
+)
+def get_default_enterprise_enrollment_intention_detail_endpoint(enrollment_intention_uuid=None):
+    return reverse(
+        'default-enterprise-enrollment-intentions-detail',
+        kwargs={'pk': enrollment_intention_uuid if enrollment_intention_uuid else FAKE_UUIDS[0]}
+    )
 
 def side_effect(url, query_parameters):
     """
@@ -9738,3 +9746,380 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
         assert expected_json == response.json().get('results')
         assert response.json().get('count') == 1
+
+@ddt.ddt
+@mark.django_db
+class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test DefaultEnterpriseEnrollmentIntentionViewSet
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+
+    def create_mock_default_enterprise_enrollment_intention(
+        self,
+        mock_catalog_api_client,
+        content_metadata=None,
+        contains_content_items=False,
+        catalog_list=None,
+    ):
+        """
+        Create a mock default enterprise enrollment intention.
+        """
+        mock_content_metadata = content_metadata or fake_catalog_api.FAKE_COURSE
+        mock_contains_content_items = contains_content_items
+        mock_catalog_list = (
+            catalog_list
+            if catalog_list is not None
+            else [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
+        )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_content_metadata_content_identifier=mock.Mock(
+                return_value=mock_content_metadata,
+            ),
+            enterprise_contains_content_items=mock.Mock(
+                return_value=fake_catalog_api.get_fake_enterprise_contains_content_items_response(
+                    contains_content_items=mock_contains_content_items,
+                    catalog_list=mock_catalog_list,
+                ),
+            ),
+        )
+        enrollment_intention = factories.DefaultEnterpriseEnrollmentIntentionFactory(
+            enterprise_customer=self.enterprise_customer,
+            content_key=mock_content_metadata.get('key', 'edX+DemoX'),
+        )
+        return enrollment_intention
+
+    def test_default_enterprise_enrollment_intentions_missing_enterprise_uuid(self):
+        """
+        Test expected response when successfully listing existing default enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'detail': 'enterprise_customer_uuid is a required query parameter.'}
+
+    def test_default_enterprise_enrollment_intentions_invalid_enterprise_uuid(self):
+        """
+        Test expected response when successfully listing existing default enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        query_params = 'enterprise_customer_uuid=invalid-uuid'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'detail': 'enterprise_customer_uuid query parameter is not a valid UUID.'}
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_list(self, mock_catalog_api_client):
+        """
+        Test expected response when successfully listing existing default enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['count'] == 1
+        result = response_data['results'][0]
+        assert result['content_key'] == enrollment_intention.content_key
+        assert result['applicable_enterprise_catalog_uuids'] == [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_detail(self, mock_catalog_api_client):
+        """
+        Test expected response when unauthorized user attempts to list default
+        enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        base_url = get_default_enterprise_enrollment_intention_detail_endpoint(str(enrollment_intention.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{base_url}?{query_params}")
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['content_key'] == enrollment_intention.content_key
+        assert response_data['applicable_enterprise_catalog_uuids'] == \
+            [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_list_unauthorized(self, mock_catalog_api_client):
+        """
+        Test expected response when unauthorized user attempts to list default
+        enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(uuid.uuid4())}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['count'] == 0
+        assert response_data['results'] == []
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_detail_403_forbidden(self, mock_catalog_api_client):
+        """
+        Test expected response when unauthorized user attempts to list default
+        enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(uuid.uuid4())}'
+        base_url = get_default_enterprise_enrollment_intention_detail_endpoint(str(enrollment_intention.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{base_url}?{query_params}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_not_in_catalog(self, mock_catalog_api_client):
+        """
+        Test expected response when default enterprise enrollment intention is not in catalog.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
+            mock_catalog_api_client,
+            contains_content_items=False,
+            catalog_list=[],
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        base_url = get_default_enterprise_enrollment_intention_detail_endpoint(str(enrollment_intention.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{base_url}?{query_params}")
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['content_key'] == enrollment_intention.content_key
+        assert response_data['applicable_enterprise_catalog_uuids'] == []
+
+    def test_default_enterprise_enrollment_intentions_learner_status_not_linked(self):
+        """
+        Test default enterprise enrollment intentions for specific learner not linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response_data = response.json()
+        assert response_data['detail'] == (
+            f'User with lms_user_id {self.user.id} is not associated with '
+            f'the enterprise customer {str(self.enterprise_customer.uuid)}.'
+        )
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_learner_status_enrollable(self, mock_catalog_api_client):
+        """
+        Test default enterprise enrollment intentions for specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [
+                    {
+                        'uuid': str(enrollment_intention.uuid),
+                        'content_key': enrollment_intention.content_key,
+                        'enterprise_customer': str(self.enterprise_customer.uuid),
+                        'course_key': enrollment_intention.course_key,
+                        'course_run_key': enrollment_intention.course_run_key,
+                        'is_course_run_enrollable': True,
+                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
+                        'course_run_normalized_metadata': {},  # TODO
+                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    }
+                ],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 1,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enrollment_intentions_learner_status_content_not_enrollable(self, mock_catalog_api_client):
+        """
+        Test default enterprise enrollment intentions (not enrollable) for
+        specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        mock_course_run = fake_catalog_api.FAKE_COURSE_RUN.copy()
+        mock_course_run.update({'is_enrollable': False})
+        mock_course = fake_catalog_api.FAKE_COURSE.copy()
+        mock_course.update({'course_runs': [mock_course_run]})
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
+            mock_catalog_api_client,
+            content_metadata=mock_course,
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [],
+                'not_enrollable': [
+                    {
+                        'uuid': str(enrollment_intention.uuid),
+                        'content_key': enrollment_intention.content_key,
+                        'enterprise_customer': str(self.enterprise_customer.uuid),
+                        'course_key': enrollment_intention.course_key,
+                        'course_run_key': enrollment_intention.course_run_key,
+                        'is_course_run_enrollable': False,
+                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
+                        'course_run_normalized_metadata': {},  # TODO
+                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    }
+                ],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 0,
+                'not_enrollable': 1,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enrollment_intentions_learner_status_content_not_in_catalog(self, mock_catalog_api_client):
+        """
+        Test default enterprise enrollment intentions (not enrollable) for
+        specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
+            mock_catalog_api_client,
+            contains_content_items=False,
+            catalog_list=[],
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [],
+                'not_enrollable': [
+                    {
+                        'uuid': str(enrollment_intention.uuid),
+                        'content_key': enrollment_intention.content_key,
+                        'enterprise_customer': str(self.enterprise_customer.uuid),
+                        'course_key': enrollment_intention.course_key,
+                        'course_run_key': enrollment_intention.course_run_key,
+                        'is_course_run_enrollable': True,
+                        'applicable_enterprise_catalog_uuids': [],
+                        'course_run_normalized_metadata': {},  # TODO
+                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    }
+                ],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 0,
+                'not_enrollable': 1,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enrollment_intentions_learner_status_already_enrolled(self, mock_catalog_api_client):
+        """
+        Test default enterprise enrollment intentions (already enrolled) for
+        specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=fake_catalog_api.FAKE_COURSE_RUN.get('key'),
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [
+                {
+                    'uuid': str(enrollment_intention.uuid),
+                    'content_key': enrollment_intention.content_key,
+                    'enterprise_customer': str(self.enterprise_customer.uuid),
+                    'course_key': enrollment_intention.course_key,
+                    'course_run_key': enrollment_intention.course_run_key,
+                    'is_course_run_enrollable': True,
+                    'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
+                    'course_run_normalized_metadata': {},  # TODO
+                    'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
+                }
+            ],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 0,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 1,
+        }

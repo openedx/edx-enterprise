@@ -136,6 +136,8 @@ FAKE_COURSE_RUN = {
     'pacing_type': 'instructor_paced',
     'type': 'verified',
     'status': 'published',
+    "is_enrollable": True,
+    "is_marketable": True,
     'course': 'edX+DemoX',
     'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
     'announcement': None,
@@ -265,6 +267,7 @@ FAKE_COURSE_TO_CREATE = {
 
 FAKE_COURSE = {
     'key': 'edX+DemoX',
+    'course_type': 'course',
     'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
     'title': 'edX Demonstration Course',
     'course_runs': [FAKE_COURSE_RUN],
@@ -298,7 +301,8 @@ FAKE_COURSE = {
     'content_type': 'course',
     'enrollment_url': FAKE_URL,
     'programs': [],
-    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+    'content_last_modified': '2020-08-18T00:32:33.754662Z',
+    'advertised_course_run_uuid': FAKE_COURSE_RUN.get('uuid'),
 }
 
 FAKE_PROGRAM_RESPONSE1 = {
@@ -1272,7 +1276,6 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_2 = {
     "is_program_eligible_for_one_click_purchase": True
 }
 
-
 FAKE_SEARCH_ALL_RESULTS = {
     "count": 3,
     "next": None,
@@ -1374,6 +1377,11 @@ FAKE_CATALOG_RESULT = {
     'catalog_query_uuid': None,
     'content_last_modified': '2020-05-13T14:28:54.679517Z',
     'catalog_modified': '2020-07-16T15:11:10.521611Z'
+}
+
+FAKE_ENTERPRISE_CONTAINS_CONTENT_ITEMS_RESPONSE = {
+    'contains_content_items': False,
+    'catalog_list': []
 }
 
 
@@ -1643,6 +1651,17 @@ def get_fake_content_metadata_no_program():
     content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
     return list(content_metadata.values())
 
+
+def get_fake_enterprise_contains_content_items_response(contains_content_items=False, catalog_list=None):
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.enterprise_contains_content_items.
+    """
+    mock_response = FAKE_ENTERPRISE_CONTAINS_CONTENT_ITEMS_RESPONSE.copy()
+    if contains_content_items is not None:
+        mock_response['contains_content_items'] = contains_content_items
+    if catalog_list:
+        mock_response['catalog_list'] = catalog_list
+    return mock_response
 
 class CourseDiscoveryApiTestMixin:
     """
