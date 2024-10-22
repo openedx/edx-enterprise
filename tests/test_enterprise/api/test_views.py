@@ -6806,7 +6806,6 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             format='json',
         )
         # validate the existing associated catalogs.
-        print(response.content)
         assert response.status_code == status.HTTP_200_OK
         ec_catalog_uuids = [item['uuid'] for item in response.json()['enterprise_customer_catalogs']]
         assert [str(enterprise_catalog.uuid)] == ec_catalog_uuids

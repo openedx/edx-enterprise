@@ -1680,7 +1680,6 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         bulk_upload_errors = []
         if manage_learners_form:
             bulk_upload_errors = manage_learners_form.errors[ManageLearnersForm.Fields.BULK_UPLOAD]
-            print('bulk_upload_errors', bulk_upload_errors)
 
         if valid_course_id and course_in_catalog:
             # valid input, no errors
