@@ -638,7 +638,7 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseGroup
         fields = (
-            'enterprise_customer', 'name', 'uuid', 'applies_to_all_contexts',
+            'enterprise_customer', 'name', 'uuid',
             'accepted_members_count', 'group_type', 'created')
 
     accepted_members_count = serializers.SerializerMethodField()
@@ -786,22 +786,11 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         """
         Return the enterprise group membership for this enterprise customer user.
         """
-        related_customer = obj.enterprise_customer
-        # Find any groups that have ``applies_to_all_contexts`` set to True that are connected to the customer
-        # that's related to the customer associated with this customer user record.
-        all_context_groups = models.EnterpriseGroup.objects.filter(
-            enterprise_customer=related_customer,
-            applies_to_all_contexts=True
-        ).values_list('uuid', flat=True)
         enterprise_groups_from_memberships = obj.memberships.select_related('group').all().values_list(
             'group',
             flat=True
         )
-        # Combine both sets of group UUIDs
         group_uuids = set(enterprise_groups_from_memberships)
-        for group in all_context_groups:
-            group_uuids.add(group)
-
         return list(group_uuids)
 
 

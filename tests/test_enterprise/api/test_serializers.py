@@ -314,21 +314,6 @@ class TestEnterpriseCustomerUserReadOnlySerializer(BaseSerializerTestWithEnterpr
         assert len(serializer.data['enterprise_group']) == 1
         assert serializer.data['enterprise_group'][0] == membership.group.uuid
 
-    def test_group_membership_when_applies_to_all_contexts(self):
-        """
-        Test that when a group has ``applies_to_all_contexts`` set to True, that group is included in the enterprise
-        customer user serializer data when there is an associated via an enterprise customer object.
-        """
-        enterprise_group = factories.EnterpriseGroupFactory(
-            enterprise_customer=self.enterprise_customer_1,
-            applies_to_all_contexts=True,
-        )
-        serializer = EnterpriseCustomerUserReadOnlySerializer(self.enterprise_customer_user_1)
-        # Assert the enterprise customer user serializer found the group
-        assert serializer.data.get('enterprise_group') == [enterprise_group.uuid]
-        # Assert the group has no memberships that could be read by the serializer
-        assert not enterprise_group.members.all()
-
     def test_multi_group_membership(self):
         """
         Test that multiple group memberships are associated properly with a single instance.

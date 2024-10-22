@@ -1221,8 +1221,8 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
     Django admin for EnterpriseGroup model.
     """
     model = models.EnterpriseGroup
-    list_display = ('uuid', 'enterprise_customer', 'applies_to_all_contexts', )
-    list_filter = ('applies_to_all_contexts',)
+    list_display = ('uuid', 'enterprise_customer', )
+    list_filter = ('group_type',)
     search_fields = (
         'uuid',
         'name',
