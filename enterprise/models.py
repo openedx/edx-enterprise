@@ -4496,7 +4496,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         null=False,
         related_name='groups',
         on_delete=models.deletion.CASCADE
-    ) 
+    )
     group_type = models.CharField(
         verbose_name="Group Type",
         max_length=20,

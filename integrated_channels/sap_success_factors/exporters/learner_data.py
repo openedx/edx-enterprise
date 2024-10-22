@@ -31,6 +31,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             enterprise_enrollment,
             completed_date=None,
             grade=None,
+            content_title=None,
+            progress_status=None,
             course_completed=False,
             **kwargs,
     ):   # pylint: disable=arguments-differ
@@ -74,6 +76,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     completed_timestamp=completed_date,
                     sap_completed_timestamp=sap_completed_timestamp,
                     grade=grade,
+                    content_title=content_title,
+                    progress_status=progress_status,
                     total_hours=total_hours,
                     credit_hours=total_hours,
                     enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,

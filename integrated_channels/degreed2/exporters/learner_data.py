@@ -24,6 +24,8 @@ class Degreed2LearnerExporter(LearnerExporter):
             self,
             enterprise_enrollment,
             completed_date=None,
+            content_title=None,
+            progress_status=None,
             course_completed=False,
             **kwargs
     ):  # pylint: disable=arguments-differ
@@ -70,6 +72,8 @@ class Degreed2LearnerExporter(LearnerExporter):
                     user_email=enterprise_enrollment.enterprise_customer_user.user_email,
                     course_id=get_course_id_for_enrollment(enterprise_enrollment),
                     completed_timestamp=completed_date,
+                    content_title=content_title,
+                    progress_status=progress_status,
                     degreed_completed_timestamp=degreed_completed_timestamp,
                     course_completed=course_completed,
                     grade=percent_grade,
