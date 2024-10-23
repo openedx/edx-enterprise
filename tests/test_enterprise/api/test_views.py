@@ -9768,3 +9768,41 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
         assert expected_json == response.json().get('results')
         assert response.json().get('count') == 1
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerMembers(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise customer members list endpoint
+    """
+    ECM_ENDPOINT = 'enterprise-customer-members'
+    ECM_KWARG = 'enterprise_uuid'
+
+    def test_get_enterprise_org_members(self):
+        """
+        Assert whether the response is valid.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCourseEnrollment(
+            enterprise_customer_user=user,
+        )
+
+        expected_json = {'this-is-going-to-fail': False}
+        # Test valid UUID
+        url = reverse(self.ECM_ENDPOINT, kwargs={self.ECM_KWARG: enterprise_customer.uuid})
+        response = self.client.get(settings.TEST_SERVER + url)
+
+        assert expected_json == response.json().get('results')[0]
+
+        # Test invalid UUID
+        url = reverse(self.ECM_ENDPOINT, kwargs={self.ECM_KWARG: 123})
+        response = self.client.get(settings.TEST_SERVER + url)
+        self.assertEqual(response.status_code, 404)
+
+    
