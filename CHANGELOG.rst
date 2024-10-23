@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.4]
+--------
+* feat: updating the character count for group name to 255
+
 [4.28.3]
 --------
 * feat: removing all references of to-be-deleted field
