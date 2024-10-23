@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.3]
+--------
+* feat: removing all references of to-be-deleted field
+
 [4.28.2]
 --------
 * fix: added content_title, progress_status in get_learner_data_records for derived classed of learner data exporters.

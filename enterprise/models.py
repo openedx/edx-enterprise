@@ -4497,14 +4497,6 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         related_name='groups',
         on_delete=models.deletion.CASCADE
     )
-    applies_to_all_contexts = models.BooleanField(
-        verbose_name="Set group membership to the entire org of learners.",
-        default=False,
-        null=True,
-        help_text=_(
-            "When enabled, all learners connected to the org will be considered a member."
-        )
-    )
     group_type = models.CharField(
         verbose_name="Group Type",
         max_length=20,
