@@ -1905,3 +1905,31 @@ class EnterpriseUserSerializer(serializers.Serializer):
             return role_assignments_by_ecu_id
         else:
             return None
+
+class EnterpriseMemberSerializer(serializers.Serializer):
+    """
+    Serializer for EnterpriseCustomerUser model with additions.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerUser
+        fields = (
+            'enterprise_customer_user',
+            # 'user_email',
+            # 'enrollments',
+            # 'created',
+        )
+        enterprise_customer_user = UserSerializer() 
+        # user_email = serializers.EmailField()
+        # enrollments = serializers.SerializerMethodField()
+
+
+    def get_enrollments(self, obj):
+        """
+        Fetch all of user's enterprise enrollments
+        """
+        if hasattr(obj, 'user_id'):
+            user_id = obj.user_id
+            enrollments = models.EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=user_id,
+            )
+            return len(enrollments)
