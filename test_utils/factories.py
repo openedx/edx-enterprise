@@ -1115,7 +1115,6 @@ class EnterpriseGroupFactory(factory.django.DjangoModelFactory):
         model = EnterpriseGroup
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
-    applies_to_all_contexts = False
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     name = factory.LazyAttribute(lambda x: FAKER.company())
 

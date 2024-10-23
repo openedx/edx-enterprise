@@ -8145,7 +8145,6 @@ class TestEnterpriseGroupViewSet(APITest):
         """
         group = EnterpriseGroupFactory(
             enterprise_customer=self.enterprise_customer,
-            applies_to_all_contexts=True,
         )
         pending_user = PendingEnterpriseCustomerUserFactory(
             user_email="foobar@example.com",
@@ -8160,7 +8159,6 @@ class TestEnterpriseGroupViewSet(APITest):
 
         assert response.json().get('count') == 0
 
-        group.applies_to_all_contexts = False
         group.save()
         pending_membership = EnterpriseGroupMembershipFactory(
             group=group,
@@ -8203,7 +8201,6 @@ class TestEnterpriseGroupViewSet(APITest):
     def test_list_removed_learners(self):
         group = EnterpriseGroupFactory(
             enterprise_customer=self.enterprise_customer,
-            applies_to_all_contexts=False,
         )
         memberships_to_delete = []
         membership = EnterpriseGroupMembershipFactory(
@@ -8894,32 +8891,6 @@ class TestEnterpriseGroupViewSet(APITest):
         with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
             EnterpriseGroupMembership.objects.get(pk=membership_to_remove.pk)
         assert EnterpriseGroupMembership.objects.get(pk=existing_membership.pk)
-
-    def test_group_applies_to_all_contexts_learner_list(self):
-        """
-        Test that hitting the enterprise-group `/learners/` endpoint for a group that has ``applies_to_all_contexts``
-        will return all learners in the group's org regardless of what membership records exist.
-        """
-        new_group = EnterpriseGroupFactory(applies_to_all_contexts=True)
-        new_user = EnterpriseCustomerUserFactory(
-            user_id=self.user.id, enterprise_customer=new_group.enterprise_customer,
-            active=True
-        )
-        pending_user = PendingEnterpriseCustomerUserFactory(
-            enterprise_customer=new_group.enterprise_customer,
-        )
-        url = settings.TEST_SERVER + reverse(
-            'enterprise-group-learners',
-            kwargs={'group_uuid': new_group.uuid},
-        )
-        response = self.client.get(url)
-        results = response.json().get('results')
-        for result in results:
-            assert (
-                result.get('pending_enterprise_customer_user_id') == pending_user.id
-            ) or (
-                result.get('enterprise_customer_user_id') == new_user.id
-            )
 
     def test_group_assign_realized_learner_adds_activated_at(self):
         """
