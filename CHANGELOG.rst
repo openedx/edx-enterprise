@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.28.4]
+--------
+* fix: fixed query for monthly_impact_report command
+
 [4.28.3]
 --------
 * feat: removing all references of to-be-deleted field

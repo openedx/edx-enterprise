@@ -865,17 +865,17 @@ QUERY = '''
         FROM (
 
         SELECT
-            acc.integration_enterprise_uuid__c as uuid,
-            MAX(opp.contract_end_date__c) latest_contract_end_date
+            acc.integration_enterprise_uuid_c as uuid,
+            MAX(opp.contract_end_date_c) latest_contract_end_date
         FROM
             salesforce_prod_pii.opportunity as opp
         LEFT JOIN
             salesforce_prod_pii._account as acc
         ON
-            opp.accountid = acc.id
+            opp.account_id = acc.id
         WHERE
             -- only closed won contracts
-            opp.stagename = 'Closed Won'
+            opp.stage_name = 'Closed Won'
         GROUP BY
             1
         HAVING
