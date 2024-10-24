@@ -34,10 +34,10 @@ Core requirements
 Decision
 ========
 We will implement two new models:
-* ``DefaultEnterpriseEnrollmentIntention`` to represent the course/runs that
-  learners should be automatically enrolled into, post-logistration, for a given enterprise.
-* ``DefaultEnterpriseEnrollmentRealization``which represents the mapping between the intention
-  and actual, **realized** enrollment record(s) for the learner/customer.
+  * ``DefaultEnterpriseEnrollmentIntention`` to represent the course/runs that learners
+    should be automatically enrolled into, post-logistration, for a given enterprise.
+  * ``DefaultEnterpriseEnrollmentRealization`` which represents the mapping between the intention
+    and actual, **realized** enrollment record(s) for the learner/customer.
 
 Qualities
 ---------
@@ -58,6 +58,7 @@ however, we will always discern the correct course run key to use for enrollment
 
 Post-enrollment related models (e.g., ``EnterpriseCourseEnrollment`` and ``DefaultEnterpriseEnrollmentRealization``)
 will always primarily be associated with the course run associated with the ``DefaultEnterpriseEnrollmentIntention``:
+
 * If content_key is a top-level course, the course run key used when enrolling
   (converting to ``EnterpriseCourseEnrollment`` and ``DefaultEnterpriseEnrollmentRealization``)
   is the currently advertised course run.
