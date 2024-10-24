@@ -2596,8 +2596,7 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         
         Returns either COURSE, COURSE_RUN, or None (if neither can be determined).
         """
-        content_metadata = self.content_metadata_for_content_key
-        if not content_metadata:
+        if not (content_metadata := self.content_metadata_for_content_key):
             return None
 
         # Determine whether the returned key matches the configured content_key and
@@ -2642,6 +2641,8 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
             })
 
         if not self.course_run:
+            # NOTE: This validation check also acts as an inferred check on the derived content_type
+            # from the content metadata.
             raise ValidationError({
                 'content_key': _('The content key did not resolve to a valid course run.')
             })
