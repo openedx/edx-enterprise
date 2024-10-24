@@ -4484,7 +4484,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
     """
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(
-        max_length=25,
+        max_length=255,
         blank=False,
         help_text=_(
             'Specifies enterprise group name.'
