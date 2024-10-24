@@ -61,6 +61,7 @@ from enterprise.constants import (
     FulfillmentTypes,
     json_serialized_course_modes,
 )
+from enterprise.content_metadata.api import get_and_cache_customer_content_metadata
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.event_bus import send_learner_credit_course_enrollment_revoked_event
 from enterprise.logging import getEnterpriseLogger
@@ -71,6 +72,7 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
+    get_advertised_course_run,
     get_configuration_value,
     get_default_invite_key_expiration_date,
     get_ecommerce_worker_user,
@@ -2468,9 +2470,11 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
 
     .. no_pii:
     """
+    COURSE = 'course'
+    COURSE_RUN = 'course_run'
     DEFAULT_ENROLLMENT_CONTENT_TYPE_CHOICES = [
-        ('course', 'Course'),
-        ('course_run', 'Course Run'),
+        (COURSE, 'Course'),
+        (COURSE_RUN, 'Course Run'),
     ]
     uuid = models.UUIDField(
         primary_key=True,
@@ -2489,8 +2493,8 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
     )
     content_type = models.CharField(
         max_length=127,
-        blank=False,
-        null=False,
+        blank=True,
+        null=True,
         choices=DEFAULT_ENROLLMENT_CONTENT_TYPE_CHOICES,
         help_text=_(
             "The type of content (e.g. a course vs. a course run)."
@@ -2511,33 +2515,151 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
     )
     history = HistoricalRecords()
 
-    @cached_property
-    def current_course_run(self):  # pragma: no cover
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['enterprise_customer', 'content_key'],
+                name='unique_default_enrollment_intention',
+            )
+        ]
+
+    @property
+    def content_metadata_for_content_key(self):
+        """
+        Retrieves the content metadata for the instance's enterprise customer and content key.
+        """
+        try:
+            return get_and_cache_customer_content_metadata(
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                content_key=self.content_key,
+            )
+        except HTTPError as e:
+            LOGGER.error(
+                f"Error retrieving content metadata for content key {self.content_key} "
+                f"and enterprise customer {self.enterprise_customer}: {e}"
+            )
+            return {}
+
+    @property
+    def course_run(self):
         """
         Metadata describing the current course run for this default enrollment intention.
         """
-        return {}
+        if not (content_metadata := self.content_metadata_for_content_key):
+            return {}
+
+        if self.determine_content_type() == self.COURSE:
+            course_run = get_advertised_course_run(content_metadata)
+            return course_run or {}
+
+        course_runs = content_metadata.get('course_runs', [])
+        return next(
+            (course_run for course_run in course_runs if course_run['key'].lower() == self.content_key.lower()),
+            {}
+        )
 
     @property
-    def current_course_run_key(self):  # pragma: no cover
+    def course_key(self):
         """
-        The current course run key to use for realized course enrollments.
+        The resolved course key derived from the content_key.
         """
-        return self.current_course_run.get('key')
+        return self.content_metadata_for_content_key.get('key')
 
     @property
-    def current_course_run_enrollable(self):  # pragma: no cover
+    def course_run_key(self):
         """
-        Whether the current course run is enrollable.
+        The resolved course run key derived from the content_key. This property will return the advertised
+        course run key if the configured content_key is a course; otherwise, it will return the key of the
+        course run that matches the content_key (i.e., course_run_key == content_key).
+        """
+        return self.course_run.get('key')
+
+    @property
+    def is_course_run_enrollable(self):  # pragma: no cover
+        """
+        Whether the course run is enrollable.
         """
         return False
 
     @property
-    def current_course_run_enroll_by_date(self):  # pragma: no cover
+    def course_run_enroll_by_date(self):  # pragma: no cover
         """
-        The enrollment deadline for this course.
+        The enrollment deadline for the course run.
         """
         return datetime.datetime.min
+
+    def determine_content_type(self):
+        """
+        Determines the content_type for a given content_key by validating the return value
+        from `content_metadata_for_content_key`. First determines if the configured content_key
+        matches the returned key, then checks if it matches any of the returned course runs.
+
+        Returns either COURSE, COURSE_RUN, or None (if neither can be determined).
+        """
+        if not (content_metadata := self.content_metadata_for_content_key):
+            return None
+
+        # Determine whether the returned key matches the configured content_key and
+        # the returned metadata denotes the content type as a course.
+        content_metadata_key = content_metadata.get('key', '')
+        content_metadata_content_type = content_metadata.get('content_type', '')
+        if content_metadata_key.lower() == self.content_key.lower() and content_metadata_content_type == self.COURSE:
+            return self.COURSE
+
+        # Determine if the content_key matches any of the course runs
+        # in the content metadata.
+        course_runs = content_metadata.get('course_runs', [])
+        course_run = next(
+            (course_run for course_run in course_runs if course_run['key'].lower() == self.content_key.lower()),
+            None
+        )
+        return self.COURSE_RUN if course_run is not None else None
+
+    def clean(self):
+        """
+        Raise ValidationError if no course run or content type exists.
+        """
+        super().clean()
+
+        existing_record = DefaultEnterpriseEnrollmentIntention.all_objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            content_key=self.content_key,
+        ).exclude(uuid=self.uuid).first()
+
+        if existing_record and existing_record.is_removed:
+            existing_record_admin_url = reverse(
+                'admin:enterprise_defaultenterpriseenrollmentintention_change',
+                args=[existing_record.uuid],
+            )
+            message = _(
+                'A default enrollment intention with this enterprise customer and '
+                'content key already exists, but is soft-deleted. Please restore '
+                'it <a href="{existing_record_admin_url}">here</a>.',
+            ).format(existing_record_admin_url=existing_record_admin_url)
+            raise ValidationError({
+                'content_key': mark_safe(message)
+            })
+
+        if not self.course_run:
+            # NOTE: This validation check also acts as an inferred check on the derived content_type
+            # from the content metadata.
+            raise ValidationError({
+                'content_key': _('The content key did not resolve to a valid course run.')
+            })
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure that the content_type is set correctly before saving.
+        """
+        # Ensure the model instance is cleaned before saving
+        self.full_clean()
+
+        # Set content_type field
+        if content_type := self.determine_content_type():
+            self.content_type = content_type
+
+        # Call the superclass save method
+        super().save(*args, **kwargs)
 
 
 class DefaultEnterpriseEnrollmentRealization(TimeStampedModel):
@@ -2637,7 +2759,6 @@ class EnterpriseCatalogQuery(TimeStampedModel):
                 except Exception as exc:
                     raise ValidationError({'content_filter': f'Failed to validate with exception: {exc}'}) from exc
                 if hash_catalog_response:
-                    print(f'hash_catalog_response: {hash_catalog_response}')
                     err_msg = f'Duplicate value, see {hash_catalog_response["uuid"]}({hash_catalog_response["title"]})'
                     raise ValidationError({'content_filter': err_msg})
 
