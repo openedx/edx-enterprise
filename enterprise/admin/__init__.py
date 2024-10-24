@@ -118,21 +118,24 @@ class EnterpriseCustomerDefaultEnterpriseEnrollmentIntentionInline(admin.Tabular
     """
 
     model = models.DefaultEnterpriseEnrollmentIntention
-    fields = ('content_key', 'course_run_key_for_enrollment',)
-    readonly_fields = ('course_run_key_for_enrollment',)
+    fields = ('content_key', 'course_key', 'course_run_key_for_enrollment',)
+    readonly_fields = ('course_key', 'course_run_key_for_enrollment',)
     extra = 0
     can_delete = True
+
+    @admin.display(description='Course key')
+    def course_key(self, obj):
+        """
+        Returns the course run key.
+        """
+        return obj.course_key
 
     @admin.display(description='Course run key for enrollment')
     def course_run_key_for_enrollment(self, obj):
         """
-        Returns the course run key based on the content type.
-        If the content type is a course, we retrieve the advertised_course_run key.
+        Returns the course run key.
         """
-        content_type = obj.content_type
-        if content_type == 'course_run':
-            return obj.content_key
-        return obj.current_course_run_key
+        return obj.course_run_key
 
 
 class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
@@ -1352,13 +1355,32 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
     list_display = (
         'uuid',
         'enterprise_customer',
-        'content_type',
         'content_key',
+        'content_type',
+        'is_removed',
+    )
+
+    list_filter = ('is_removed',)
+
+    fields = (
+        'enterprise_customer',
+        'content_key',
+        'uuid',
+        'is_removed',
+        'content_type',
+        'course_key',
+        'course_run_key',
+        'created',
+        'modified',
     )
 
     readonly_fields = (
-        'current_course_run_key',
-        'is_removed',
+        'uuid',
+        'content_type',
+        'course_key',
+        'course_run_key',
+        'created',
+        'modified',
     )
 
     search_fields = (
@@ -1370,5 +1392,22 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
     ordering = ('-modified',)
 
     class Meta:
-        fields = '__all__'
         model = models.DefaultEnterpriseEnrollmentIntention
+
+    def get_queryset(self, request):  # pylint: disable=unused-argument
+        """
+        Return a QuerySet of all model instances.
+        """
+        return self.model.all_objects.get_queryset()
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        """
+        Customize the form field for the `is_removed` field.
+        """
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if db_field.name == 'is_removed':
+            formfield.help_text = 'Whether this record is soft-deleted. Soft-deleted records ' \
+                'are not used but may be re-enabled if needed.'
+
+        return formfield

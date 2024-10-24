@@ -42,6 +42,14 @@ def get_and_cache_customer_content_metadata(enterprise_customer_uuid, content_ke
     except HTTPError as exc:
         raise exc
 
+    if not result:
+        logger.warning(
+            'No content found for customer %s and content_key %s',
+            enterprise_customer_uuid,
+            content_key,
+        )
+        return {}
+
     logger.info(
         'Fetched catalog for customer %s and content_key %s. Result = %s',
         enterprise_customer_uuid,
