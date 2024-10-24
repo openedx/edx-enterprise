@@ -19,9 +19,9 @@ from faker import Factory as FakerFactory
 from freezegun.api import freeze_time
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
+from requests.exceptions import HTTPError
 from slumber.exceptions import HttpClientError
 from testfixtures import LogCapture
-from requests.exceptions import HTTPError
 
 from django.conf import settings
 from django.core.exceptions import ValidationError

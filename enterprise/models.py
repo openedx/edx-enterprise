@@ -2593,7 +2593,7 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         Determines the content_type for a given content_key by validating the return value
         from `content_metadata_for_content_key`. First determines if the configured content_key
         matches the returned key, then checks if it matches any of the returned course runs.
-        
+
         Returns either COURSE, COURSE_RUN, or None (if neither can be determined).
         """
         if not (content_metadata := self.content_metadata_for_content_key):
@@ -2632,10 +2632,10 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
                 args=[existing_record.uuid],
             )
             message = _(
-                f'A default enrollment intention with this enterprise customer and '
-                f'content key already exists, but is soft-deleted. Please restore '
-                f'it <a href="{existing_record_admin_url}">here</a>.',
-            )
+                'A default enrollment intention with this enterprise customer and '
+                'content key already exists, but is soft-deleted. Please restore '
+                'it <a href="{existing_record_admin_url}">here</a>.',
+            ).format(existing_record_admin_url=existing_record_admin_url)
             raise ValidationError({
                 'content_key': mark_safe(message)
             })
