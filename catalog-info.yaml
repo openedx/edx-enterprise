@@ -12,6 +12,6 @@ metadata:
     - library
 spec:
   owner: group:openedx-unmaintained
-  type: 'service'
+  type: 'library'
   lifecycle: 'production'
   
