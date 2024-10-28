@@ -174,11 +174,14 @@ DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT = reverse('default-enterpr
 DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT = reverse(
     'default-enterprise-enrollment-intentions-learner-status'
 )
+
+
 def get_default_enterprise_enrollment_intention_detail_endpoint(enrollment_intention_uuid=None):
     return reverse(
         'default-enterprise-enrollment-intentions-detail',
         kwargs={'pk': enrollment_intention_uuid if enrollment_intention_uuid else FAKE_UUIDS[0]}
     )
+
 
 def side_effect(url, query_parameters):
     """
@@ -9747,6 +9750,7 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
         assert expected_json == response.json().get('results')
         assert response.json().get('count') == 1
 
+
 @ddt.ddt
 @mark.django_db
 class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews):
@@ -9953,7 +9957,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                             'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
                             'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
                             'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'), 
+                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
                         },
                         'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
                         'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -10016,7 +10020,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                             'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
                             'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
                             'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'), 
+                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
                         },
                         'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
                         'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -10075,7 +10079,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                             'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
                             'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
                             'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'), 
+                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
                         },
                         'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
                         'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -10146,7 +10150,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                         'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
                         'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
                         'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                        'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'), 
+                        'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
                     },
                     'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -10212,7 +10216,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                             'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
                             'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
                             'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'), 
+                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
                         },
                         'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
                         'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -10281,7 +10285,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                             'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
                             'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
                             'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'), 
+                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
                         },
                         'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
                         'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ")

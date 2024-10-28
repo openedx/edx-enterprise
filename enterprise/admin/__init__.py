@@ -1394,7 +1394,7 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
     class Meta:
         model = models.DefaultEnterpriseEnrollmentIntention
 
-    def get_queryset(self, request):  # pylint: disable=unused-argument
+    def get_queryset(self, request):
         """
         Return a QuerySet of all model instances.
         """

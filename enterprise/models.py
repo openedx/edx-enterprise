@@ -2563,7 +2563,7 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         )
 
     @property
-    def course_run_normalized_metadata(self): # pragma: no cover
+    def course_run_normalized_metadata(self):
         """
         Normalized metadata for the course run.
         """

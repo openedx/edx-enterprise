@@ -1680,6 +1680,7 @@ def get_fake_enterprise_contains_content_items_response(contains_content_items=F
         mock_response['catalog_list'] = catalog_list
     return mock_response
 
+
 class CourseDiscoveryApiTestMixin:
     """
     Mixin for course discovery API test classes.

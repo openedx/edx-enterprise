@@ -59,12 +59,13 @@ def get_and_cache_customer_content_metadata(enterprise_customer_uuid, content_ke
     TieredCache.set_all_tiers(cache_key, result, timeout or DEFAULT_CACHE_TIMEOUT)
     return result
 
+
 def get_and_cache_enterprise_contains_content_items(enterprise_customer_uuid, content_keys, timeout=None):
     """
     Returns whether the provided content keys are present in the catalogs
     associated with the provided enterprise customer, in addition to a list
     of catalog UUIDs containing the content keys.
-    
+
     The response is cached in a ``TieredCache``.
 
     Returns: Dict containing `contains_content_items` and `catalog_list` properties.

@@ -8,12 +8,12 @@ import ddt
 from pytest import mark
 
 from enterprise.constants import (
+    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
-    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
 )
 from enterprise.models import EnterpriseFeatureRole, EnterpriseFeatureUserRoleAssignment
 from test_utils import TEST_UUID, APITest, factories

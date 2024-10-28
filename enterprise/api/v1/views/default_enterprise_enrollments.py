@@ -4,11 +4,11 @@ Views for default enterprise enrollments.
 
 from uuid import UUID
 
+from edx_rbac.mixins import PermissionRequiredForListingMixin
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
-from rest_framework import status, viewsets
-from edx_rbac.mixins import PermissionRequiredForListingMixin
 
 from django.contrib.auth import get_user_model
 
@@ -94,7 +94,7 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         return str(self.requested_enterprise_customer_uuid)
 
     @action(detail=False, methods=['get'], url_path='learner-status')
-    def learner_status(self, request):  # pylint: disable=unused-argument
+    def learner_status(self, request):
         """
         Get the status of the learner's enrollment in the default enterprise course.
         """
@@ -164,10 +164,10 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         ]
 
     def _get_serializer_context_for_learner_status(
-            self,
-            default_enrollment_intentions_for_customer,
-            enterprise_course_enrollments_for_learner,
-        ):
+        self,
+        default_enrollment_intentions_for_customer,
+        enterprise_course_enrollments_for_learner,
+    ):
         """
         Get the serializer context for learner status, grouping the  default enrollment intentions
         based on the learner's enrollment status and whether the course run is currently enrollable.

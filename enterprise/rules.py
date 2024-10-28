@@ -9,6 +9,8 @@ from edx_rest_framework_extensions.auth.jwt.authentication import get_decoded_jw
 from edx_rest_framework_extensions.auth.jwt.cookies import get_decoded_jwt
 
 from enterprise.constants import (
+    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
+    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
@@ -19,8 +21,6 @@ from enterprise.constants import (
     PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION,
     PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
     PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
-    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
-    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -243,6 +243,7 @@ def has_explicit_access_to_reporting_api(user, obj):
         obj,
     )
 
+
 @rules.predicate
 def has_implicit_access_to_default_enterprise_enrollment_intentions(user, obj):  # pylint: disable=unused-argument
     """
@@ -262,6 +263,7 @@ def has_implicit_access_to_default_enterprise_enrollment_intentions(user, obj): 
         DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
         str(obj)
     )
+
 
 rules.add_perm('enterprise.can_access_admin_dashboard',
                has_implicit_access_to_dashboard | has_explicit_access_to_dashboard)

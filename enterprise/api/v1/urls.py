@@ -9,6 +9,7 @@ from django.urls import re_path
 from enterprise.api.v1.views import (
     analytics_summary,
     coupon_codes,
+    default_enterprise_enrollments,
     enterprise_catalog_query,
     enterprise_course_enrollment,
     enterprise_customer,
@@ -26,7 +27,6 @@ from enterprise.api.v1.views import (
     pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
     plotly_auth,
-    default_enterprise_enrollments,
 )
 
 router = DefaultRouter()
