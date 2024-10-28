@@ -25,7 +25,7 @@ from enterprise.constants import (
 class DefaultEnterpriseEnrollmentIntentionViewSet(
     PermissionRequiredForListingMixin,
     EnterpriseViewSet,
-    viewsets.ModelViewSet,
+    viewsets.ReadOnlyModelViewSet,
 ):
     """
     API views for default enterprise enrollment intentions
@@ -35,7 +35,6 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
     list_lookup_field = 'enterprise_customer__uuid'
     allowed_roles = [DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE]
     serializer_class = serializers.DefaultEnterpriseEnrollmentIntentionSerializer
-    http_method_names = ['get', 'post', 'delete']
 
     @property
     def requested_enterprise_customer_uuid(self):
