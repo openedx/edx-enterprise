@@ -2563,6 +2563,15 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         )
 
     @property
+    def best_mode_for_course_run(self):
+        """
+        Returns the best mode for the course run.
+        """
+        if not self.course_run_key:
+            return None
+        return utils.get_best_mode_from_course_key(self.course_run_key)
+
+    @property
     def course_run_normalized_metadata(self):
         """
         Normalized metadata for the course run.

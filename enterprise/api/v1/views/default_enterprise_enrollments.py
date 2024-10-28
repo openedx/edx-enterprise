@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from enterprise import models
@@ -153,15 +154,99 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def _course_ids_for_active_enterprise_course_enrollments(self, enterprise_course_enrollments):
+    def _partition_course_enrollments_by_audit(self, enterprise_course_enrollments):
         """
-        Get active enterprise course enrollments (i.e., actively enrolled, not audit).
+        Partition active enterprise course enrollments into audit and non-audit.
+
+        Arguments:
+            enterprise_enrollments: List of tuples containing course_id and whether enrollment is audit.
+
+        Returns:
+            Tuple of two lists containing course ids: (enrolled_non_audit, enrolled_audit)
         """
-        return [
-            enrollment.course_id
-            for enrollment in enterprise_course_enrollments
-            if enrollment.is_active and not enrollment.is_audit_enrollment
-        ]
+        enrolled_non_audit = []
+        enrolled_audit = []
+        for enrollment in enterprise_course_enrollments:
+            (enrolled_audit if enrollment.is_audit_enrollment else enrolled_non_audit).append(enrollment)
+        return enrolled_non_audit, enrolled_audit
+
+    def _get_audit_modes(self):
+        """
+        Get the configured audit modes from settings.
+        """
+        return getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
+
+    def _partition_default_enrollment_intentions_by_enrollment_status(
+        self,
+        default_enrollment_intentions,
+        enrolled_non_audit,
+        enrolled_audit,
+    ):
+        """
+        Partition default enrollment intentions into enrollable and non-enrollable.
+
+        Arguments:
+            default_enrollment_intentiosn: List of default enrollment intentions.
+            enrolled_non_audit: List of course runs in which the learner is enrolled in non-audit mode.
+            enrolled_audit: List of course runs in which the learner is enrolled in audit mode.
+
+        Returns:
+            Tuple of three lists: (already_enrolled, needs_enrollment_enrollable, needs_enrollment_not_enrollable)
+        """
+        already_enrolled = []
+        needs_enrollment_enrollable = []
+        needs_enrollment_not_enrollable = []
+
+        for intention in default_enrollment_intentions:
+            has_applicable_catalogs = intention.applicable_enterprise_catalog_uuids
+            non_audit_enrollment = next(
+                (enrollment for enrollment in enrolled_non_audit if enrollment.course_id == intention.course_run_key),
+                None
+            )
+            audit_enrollment = next(
+                (enrollment for enrollment in enrolled_audit if enrollment.course_id == intention.course_run_key),
+                None
+            )
+
+            print('DEBUG?!?!?!', {
+                'non_audit_enrollment': non_audit_enrollment,
+                'audit_enrollment': audit_enrollment,
+            })
+
+            if non_audit_enrollment and non_audit_enrollment.is_active:
+                # Learner is already enrolled  (is_active=True) in non-audit mode for this course run
+                already_enrolled.append((intention, non_audit_enrollment))
+                continue
+
+            if not intention.is_course_run_enrollable:
+                # Course run is not enrollable
+                needs_enrollment_not_enrollable.append((intention, audit_enrollment))
+                continue
+
+            has_non_audit_mode_for_course_run = intention.best_mode_for_course_run not in self._get_audit_modes()
+            is_audit_enrollment_with_non_audit_modes = audit_enrollment and has_non_audit_mode_for_course_run
+
+            if is_audit_enrollment_with_non_audit_modes and has_applicable_catalogs:
+                # Learner is enrolled in this course run in audit, there exists a non-audit mode, and
+                # there are applicable catalogs for potential upgrade to paid mode.
+                needs_enrollment_enrollable.append((intention, audit_enrollment))
+            elif is_audit_enrollment_with_non_audit_modes and not has_applicable_catalogs:
+                # Learner is enrolled in this course run in audit, there exists a non-audit mode, but
+                # there are no applicable catalogs.
+                needs_enrollment_not_enrollable.append((intention, audit_enrollment))
+            elif audit_enrollment and audit_enrollment.is_active and not has_non_audit_mode_for_course_run:
+                # Learner is enrolled in this course run in audit, there are no non-audit modes. As such,
+                # there's no potential upgrade needed and should be considered already enrolled.
+                already_enrolled.append((intention, audit_enrollment))
+            elif not has_applicable_catalogs:
+                # Learner is not enrolled in this course run, audit or otherwise; though enrollment is needed
+                # there are no applicable catalogs containing the course run (not enrollable).
+                needs_enrollment_not_enrollable.append((intention, non_audit_enrollment or audit_enrollment))
+            else:
+                # Learner is not yet enrolled in this course run, audit or otherwise; enrollment is needed (enrollable).
+                needs_enrollment_enrollable.append((intention, non_audit_enrollment or audit_enrollment))
+
+        return already_enrolled, needs_enrollment_enrollable, needs_enrollment_not_enrollable
 
     def _get_serializer_context_for_learner_status(
         self,
@@ -169,35 +254,19 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         enterprise_course_enrollments_for_learner,
     ):
         """
-        Get the serializer context for learner status, grouping the  default enrollment intentions
+        Get the serializer context for learner status, grouping the default enrollment intentions
         based on the learner's enrollment status and whether the course run is currently enrollable.
         """
-        already_enrolled = []
-        needs_enrollment_enrollable = []
-        needs_enrollment_not_enrollable = []
-
-        enrolled_course_ids_for_learner = self._course_ids_for_active_enterprise_course_enrollments(
+        enrolled_non_audit, enrolled_audit = self._partition_course_enrollments_by_audit(
             enterprise_course_enrollments_for_learner
         )
-
-        # Iterate through the default enrollment intentions and categorize them based
-        # on the learner's enrollment status (already enrolled, needs enrollment, etc.)
-        # and whether the course run is enrollable.
-        for default_enrollment_intention in default_enrollment_intentions_for_customer:
-            course_run_key = default_enrollment_intention.course_run_key
-            is_course_run_enrollable = default_enrollment_intention.is_course_run_enrollable
-            applicable_enterprise_catalog_uuids = default_enrollment_intention.applicable_enterprise_catalog_uuids
-
-            if course_run_key in enrolled_course_ids_for_learner:
-                # Learner is already enrolled in this course run
-                already_enrolled.append(default_enrollment_intention)
-            elif is_course_run_enrollable and applicable_enterprise_catalog_uuids:
-                # Learner needs enrollment, the course run is enrollable, and there are applicable catalogs
-                needs_enrollment_enrollable.append(default_enrollment_intention)
-            else:
-                # Learner needs enrollment, but the course run is not enrollable and/or there are no applicable catalogs
-                needs_enrollment_not_enrollable.append(default_enrollment_intention)
-
+        already_enrolled, needs_enrollment_enrollable, needs_enrollment_not_enrollable = (
+            self._partition_default_enrollment_intentions_by_enrollment_status(
+                default_enrollment_intentions_for_customer,
+                enrolled_non_audit,
+                enrolled_audit,
+            )
+        )
         return {
             'needs_enrollment': {
                 'enrollable': needs_enrollment_enrollable,

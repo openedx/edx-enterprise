@@ -1943,6 +1943,37 @@ class DefaultEnterpriseEnrollmentIntentionSerializer(serializers.ModelSerializer
         return obj.applicable_enterprise_catalog_uuids
 
 
+class DefaultEnterpriseEnrollmentIntentionWithEnrollmentStateSerializer(DefaultEnterpriseEnrollmentIntentionSerializer):
+    """
+    Serializer for the DefaultEnterpriseEnrollmentIntention model with enrollment state.
+    """
+    has_existing_enrollment = serializers.SerializerMethodField()
+    is_existing_enrollment_active = serializers.SerializerMethodField()
+    is_existing_enrollment_audit = serializers.SerializerMethodField()
+
+    class Meta(DefaultEnterpriseEnrollmentIntentionSerializer.Meta):
+        fields = DefaultEnterpriseEnrollmentIntentionSerializer.Meta.fields + (
+            'has_existing_enrollment',
+            'is_existing_enrollment_active',
+            'is_existing_enrollment_audit',
+        )
+
+    def get_has_existing_enrollment(self, obj):  # pylint: disable=unused-argument
+        return bool(self.context.get('existing_enrollment', None))
+
+    def get_is_existing_enrollment_active(self, obj):  # pylint: disable=unused-argument
+        existing_enrollment = self.context.get('existing_enrollment', None)
+        if not existing_enrollment:
+            return None
+        return existing_enrollment.is_active
+
+    def get_is_existing_enrollment_audit(self, obj):  # pylint: disable=unused-argument
+        existing_enrollment = self.context.get('existing_enrollment', None)
+        if not existing_enrollment:
+            return None
+        return existing_enrollment.is_audit_enrollment
+
+
 class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Serializer):
     """
     Serializer for the DefaultEnterpriseEnrollmentIntentionLearnerStatus model.
@@ -1983,32 +2014,38 @@ class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Se
         total_needs_enrollment_not_enrollable = needs_enrollment_counts['not_enrollable']
         return total_needs_enrollment_enrollable + total_needs_enrollment_not_enrollable + self.already_enrolled_count()
 
+    def serialize_intentions(self, default_enrollment_intentions):
+        """
+        Helper function to handle tuple unpacking and serialization.
+        """
+        serialized_data = []
+        for intention_tuple in default_enrollment_intentions:
+            intention, existing_enrollment = intention_tuple
+            data = DefaultEnterpriseEnrollmentIntentionWithEnrollmentStateSerializer(
+                intention,
+                context={'existing_enrollment': existing_enrollment},
+            ).data
+            serialized_data.append(data)
+        return serialized_data
+
     def get_enrollment_statuses(self, obj):  # pylint: disable=unused-argument
         """
-        Serialize the enrollment statuses by converting querysets to serialized data.
+        Return default enterprise enrollment intentions partitioned by
+        the enrollment statuses for the learner.
         """
         needs_enrollment = self.context.get('needs_enrollment', {})
         needs_enrollment_enrollable = needs_enrollment.get('enrollable', [])
         needs_enrollment_not_enrollable = needs_enrollment.get('not_enrollable', [])
         already_enrolled = self.context.get('already_enrolled', {})
 
-        needs_enrollment_enrollable_data = DefaultEnterpriseEnrollmentIntentionSerializer(
-            needs_enrollment_enrollable,
-            many=True
-        ).data
-        needs_enrollment_unenrollable_data = DefaultEnterpriseEnrollmentIntentionSerializer(
-            needs_enrollment_not_enrollable,
-            many=True
-        ).data
-        already_enrolled_data = DefaultEnterpriseEnrollmentIntentionSerializer(
-            already_enrolled,
-            many=True
-        ).data
+        needs_enrollment_enrollable_data = self.serialize_intentions(needs_enrollment_enrollable)
+        needs_enrollment_not_enrollable_data = self.serialize_intentions(needs_enrollment_not_enrollable)
+        already_enrolled_data = self.serialize_intentions(already_enrolled)
 
         return {
             'needs_enrollment': {
                 'enrollable': needs_enrollment_enrollable_data,
-                'not_enrollable': needs_enrollment_unenrollable_data,
+                'not_enrollable': needs_enrollment_not_enrollable_data,
             },
             'already_enrolled': already_enrolled_data,
         }
