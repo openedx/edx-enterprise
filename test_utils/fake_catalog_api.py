@@ -111,7 +111,7 @@ FAKE_COURSE_RUN = {
     'seats': [
         {
             'type': 'audit',
-            'price': '0.00',
+            'price': 0,
             'currency': 'USD',
             'upgrade_deadline': None,
             'credit_provider': None,
@@ -120,7 +120,7 @@ FAKE_COURSE_RUN = {
         },
         {
             'type': 'verified',
-            'price': '149.00',
+            'price': 149,
             'currency': 'USD',
             'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
             'credit_provider': None,
@@ -128,6 +128,7 @@ FAKE_COURSE_RUN = {
             'sku': '8CF08E5'
         }
     ],
+    'first_enrollable_paid_seat_price': 149,
     'start': '2013-02-05T05:00:00Z',
     'end': '3000-12-31T18:00:00Z',
     'enrollment_start': None,
@@ -303,6 +304,22 @@ FAKE_COURSE = {
     'programs': [],
     'content_last_modified': '2020-08-18T00:32:33.754662Z',
     'advertised_course_run_uuid': FAKE_COURSE_RUN.get('uuid'),
+    'normalized_metadata': {
+        'start_date': FAKE_COURSE_RUN.get('start'),
+        'end_date': FAKE_COURSE_RUN.get('end'),
+        'enroll_by_date': FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
+        'enroll_start_date': FAKE_COURSE_RUN.get('enrollment_start'),
+        'content_price': FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
+    },
+    'normalized_metadata_by_run': {
+        FAKE_COURSE_RUN.get('key'): {
+            'start_date': FAKE_COURSE_RUN.get('start'),
+            'end_date': FAKE_COURSE_RUN.get('end'),
+            'enroll_by_date': FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
+            'enroll_start_date': FAKE_COURSE_RUN.get('enrollment_start'),
+            'content_price': FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
+        }
+    }
 }
 
 FAKE_PROGRAM_RESPONSE1 = {

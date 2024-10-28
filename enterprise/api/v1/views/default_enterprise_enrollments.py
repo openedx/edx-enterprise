@@ -17,9 +17,6 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseViewSet
 from enterprise.constants import (
     DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION,
-    ENTERPRISE_LEARNER_ROLE,
-    ENTERPRISE_ADMIN_ROLE,
-    ENTERPRISE_OPERATOR_ROLE,
     DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
 )
 
@@ -79,12 +76,14 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         Get the user for learner status based on the request.
         """
         if self.request.user.is_staff and self.requested_lms_user_id is not None:
+            # If the user is staff and a lms_user_id is provided, return the specified user.
             User = get_user_model()
             try:
                 return User.objects.get(id=self.requested_lms_user_id)
             except User.DoesNotExist:
                 return None
 
+        # Otherwise, return the request user.
         return self.request.user
 
     def get_permission_object(self):
@@ -138,11 +137,48 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         enterprise_course_enrollments_for_learner = models.EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user=enterprise_customer_user,
         )
-        enrolled_course_ids_for_learner = enterprise_course_enrollments_for_learner.values_list('course_id', flat=True)
 
+        serializer_data = {
+            'lms_user_id': user_for_learner_status.id,
+            'user_email': user_for_learner_status.email,
+            'enterprise_customer_uuid': enterprise_customer_uuid,
+        }
+        serializer = serializers.DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(
+            data=serializer_data,
+            context=self._get_serializer_context_for_learner_status(
+                default_enrollment_intentions_for_customer,
+                enterprise_course_enrollments_for_learner,
+            ),
+        )
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _course_ids_for_active_enterprise_course_enrollments(self, enterprise_course_enrollments):
+        """
+        Get active enterprise course enrollments (i.e., actively enrolled, not audit).
+        """
+        return [
+            enrollment.course_id
+            for enrollment in enterprise_course_enrollments
+            if enrollment.is_active and not enrollment.is_audit_enrollment
+        ]
+
+    def _get_serializer_context_for_learner_status(
+            self,
+            default_enrollment_intentions_for_customer,
+            enterprise_course_enrollments_for_learner,
+        ):
+        """
+        Get the serializer context for learner status, grouping the  default enrollment intentions
+        based on the learner's enrollment status and whether the course run is currently enrollable.
+        """
         already_enrolled = []
         needs_enrollment_enrollable = []
         needs_enrollment_not_enrollable = []
+
+        enrolled_course_ids_for_learner = self._course_ids_for_active_enterprise_course_enrollments(
+            enterprise_course_enrollments_for_learner
+        )
 
         # Iterate through the default enrollment intentions and categorize them based
         # on the learner's enrollment status (already enrolled, needs enrollment, etc.)
@@ -162,21 +198,10 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
                 # Learner needs enrollment, but the course run is not enrollable and/or there are no applicable catalogs
                 needs_enrollment_not_enrollable.append(default_enrollment_intention)
 
-        serializer_data = {
-            'lms_user_id': user_for_learner_status.id,
-            'user_email': user_for_learner_status.email,
-            'enterprise_customer_uuid': enterprise_customer_uuid,
-        }
-        serializer_context = {
+        return {
             'needs_enrollment': {
                 'enrollable': needs_enrollment_enrollable,
                 'not_enrollable': needs_enrollment_not_enrollable,
             },
             'already_enrolled': already_enrolled,
         }
-        serializer = serializers.DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(
-            data=serializer_data,
-            context=serializer_context,
-        )
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)

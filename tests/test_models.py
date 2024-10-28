@@ -436,11 +436,15 @@ class TestEnterpriseCustomer(unittest.TestCase):
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
 
         # Test when content is in the enterprise customer's catalog(s)
-        api_client_mock.return_value.enterprise_contains_content_items.return_value = True
+        api_client_mock.return_value.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
 
         # Test when content is NOT in the enterprise customer's catalog(s)
-        api_client_mock.return_value.enterprise_contains_content_items.return_value = False
+        api_client_mock.return_value.enterprise_contains_content_items.return_value = {
+            'contains_content_items': False,
+        }
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
     @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
