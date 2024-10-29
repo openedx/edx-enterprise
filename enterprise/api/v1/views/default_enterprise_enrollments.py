@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.functional import cached_property
 
 from enterprise import models
 from enterprise.api.v1 import serializers
@@ -65,12 +66,11 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
-        kwargs = {}
-        if self.requested_enterprise_customer_uuid:
-            kwargs['enterprise_customer'] = self.requested_enterprise_customer_uuid
-        return models.DefaultEnterpriseEnrollmentIntention.objects.filter(**kwargs)
+        return models.DefaultEnterpriseEnrollmentIntention.objects.filter(
+            enterprise_customer=self.requested_enterprise_customer_uuid,
+        )
 
-    @property
+    @cached_property
     def user_for_learner_status(self):
         """
         Get the user for learner status based on the request.
@@ -206,11 +206,6 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
                 (enrollment for enrollment in enrolled_audit if enrollment.course_id == intention.course_run_key),
                 None
             )
-
-            print('DEBUG?!?!?!', {
-                'non_audit_enrollment': non_audit_enrollment,
-                'audit_enrollment': audit_enrollment,
-            })
 
             if non_audit_enrollment and non_audit_enrollment.is_active:
                 # Learner is already enrolled  (is_active=True) in non-audit mode for this course run
