@@ -196,19 +196,16 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         needs_enrollment_enrollable = []
         needs_enrollment_not_enrollable = []
 
+        non_audit_enrollments_dict = {enrollment.course_id: enrollment for enrollment in enrolled_non_audit}
+        audit_enrollments_dict = {enrollment.course_id: enrollment for enrollment in enrolled_audit}
+
         for intention in default_enrollment_intentions:
             has_applicable_catalogs = intention.applicable_enterprise_catalog_uuids
-            non_audit_enrollment = next(
-                (enrollment for enrollment in enrolled_non_audit if enrollment.course_id == intention.course_run_key),
-                None
-            )
-            audit_enrollment = next(
-                (enrollment for enrollment in enrolled_audit if enrollment.course_id == intention.course_run_key),
-                None
-            )
+            non_audit_enrollment = non_audit_enrollments_dict.get(intention.course_run_key, None)
+            audit_enrollment = audit_enrollments_dict.get(intention.course_run_key, None)
 
             if non_audit_enrollment and non_audit_enrollment.is_active:
-                # Learner is already enrolled  (is_active=True) in non-audit mode for this course run
+                # Learner is already enrolled (is_active=True) in non-audit mode for this course run
                 already_enrolled.append((intention, non_audit_enrollment))
                 continue
 
@@ -220,6 +217,11 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
             has_non_audit_mode_for_course_run = intention.best_mode_for_course_run not in self._get_audit_modes()
             is_audit_enrollment_with_non_audit_modes = audit_enrollment and has_non_audit_mode_for_course_run
 
+            # NOTE: The order of the following conditions is crucial for correctly categorizing
+            # default enrollment intentions based on the learner's enrollment state. Changing the
+            # order may result in incorrect handling of different enrollment scenarios, such as
+            # unenrolled vs. enrolled states (audit vs. verified). If you need to modify the order,
+            # ensure you understand, verify, and test the changes.
             if is_audit_enrollment_with_non_audit_modes and has_applicable_catalogs:
                 # Learner is enrolled in this course run in audit, there exists a non-audit mode, and
                 # there are applicable catalogs for potential upgrade to paid mode.

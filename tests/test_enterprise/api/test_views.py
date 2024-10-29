@@ -9767,6 +9767,46 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         self.user = self.create_user(username=username, is_staff=False)
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
 
+    def get_default_enrollment_intention_with_learner_enrollment_state(self, enrollment_intention, **kwargs):
+        """
+        Returns the expected serialized default enrollment intention with learner enrollment state.
+
+        Args:
+            enrollment_intention: The enrollment intention to serialize.
+            **kwargs: Additional parameters to customize the response.
+                - applicable_enterprise_catalog_uuids: List of applicable enterprise catalog UUIDs.
+                - is_course_run_enrollable: Boolean indicating if the course run is enrollable.
+                - has_existing_enrollment: Boolean indicating if there is an existing enrollment.
+                - is_existing_enrollment_active: Boolean indicating if the existing enrollment is
+                  active, or None if no existing enrollment.
+                - is_existing_enrollment_audit: Boolean indicating if the existing enrollment is
+                  audit, or None if no existing enrollment.
+        """
+        return {
+            'uuid': str(enrollment_intention.uuid),
+            'content_key': enrollment_intention.content_key,
+            'enterprise_customer': str(self.enterprise_customer.uuid),
+            'course_key': enrollment_intention.course_key,
+            'course_run_key': enrollment_intention.course_run_key,
+            'is_course_run_enrollable': kwargs.get('is_course_run_enrollable', True),
+            'applicable_enterprise_catalog_uuids': kwargs.get(
+                'applicable_enterprise_catalog_uuids',
+                [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
+            ),
+            'course_run_normalized_metadata': {
+                'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
+                'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
+                'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
+                'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
+                'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
+            },
+            'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            'has_existing_enrollment': kwargs.get('has_existing_enrollment', False),
+            'is_existing_enrollment_active': kwargs.get('is_existing_enrollment_active', None),
+            'is_existing_enrollment_audit': kwargs.get('is_existing_enrollment_audit', None),
+        }
+
     def create_mock_default_enterprise_enrollment_intention(
         self,
         mock_catalog_api_client,
@@ -9931,7 +9971,8 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         mock_catalog_api_client,
     ):
         """
-        Test default enterprise enrollment intentions for specific learner linked to enterprise customer.
+        Test default enterprise enrollment intentions for specific learner linked to enterprise customer, where
+        the course run associated with the default enrollment intention is enrollable.
         """
         self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
         enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
@@ -9951,27 +9992,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         assert response_data['enrollment_statuses'] == {
             'needs_enrollment': {
                 'enrollable': [
-                    {
-                        'uuid': str(enrollment_intention.uuid),
-                        'content_key': enrollment_intention.content_key,
-                        'enterprise_customer': str(self.enterprise_customer.uuid),
-                        'course_key': enrollment_intention.course_key,
-                        'course_run_key': enrollment_intention.course_run_key,
-                        'is_course_run_enrollable': True,
-                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-                        'course_run_normalized_metadata': {
-                            'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                            'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                            'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                            'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                        },
-                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'has_existing_enrollment': False,
-                        'is_existing_enrollment_active': None,
-                        'is_existing_enrollment_audit': None,
-                    }
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(enrollment_intention)
                 ],
                 'not_enrollable': [],
             },
@@ -10023,27 +10044,10 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
             'needs_enrollment': {
                 'enrollable': [],
                 'not_enrollable': [
-                    {
-                        'uuid': str(enrollment_intention.uuid),
-                        'content_key': enrollment_intention.content_key,
-                        'enterprise_customer': str(self.enterprise_customer.uuid),
-                        'course_key': enrollment_intention.course_key,
-                        'course_run_key': enrollment_intention.course_run_key,
-                        'is_course_run_enrollable': False,
-                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-                        'course_run_normalized_metadata': {
-                            'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                            'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                            'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                            'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                        },
-                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'has_existing_enrollment': False,
-                        'is_existing_enrollment_active': None,
-                        'is_existing_enrollment_audit': None,
-                    }
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(
+                        enrollment_intention,
+                        is_course_run_enrollable=False,
+                    )
                 ],
             },
             'already_enrolled': [],
@@ -10065,8 +10069,8 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         mock_catalog_api_client,
     ):
         """
-        Test default enterprise enrollment intentions (not enrollable) for
-        specific learner linked to enterprise customer.
+        Test default enterprise enrollment intentions (not enrollable, no applicable
+        catalog) for specific learner linked to enterprise customer.
         """
         self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
         enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
@@ -10091,27 +10095,14 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
             'needs_enrollment': {
                 'enrollable': [],
                 'not_enrollable': [
-                    {
-                        'uuid': str(enrollment_intention.uuid),
-                        'content_key': enrollment_intention.content_key,
-                        'enterprise_customer': str(self.enterprise_customer.uuid),
-                        'course_key': enrollment_intention.course_key,
-                        'course_run_key': enrollment_intention.course_run_key,
-                        'is_course_run_enrollable': True,
-                        'applicable_enterprise_catalog_uuids': [],
-                        'course_run_normalized_metadata': {
-                            'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                            'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                            'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                            'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                        },
-                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'has_existing_enrollment': False,
-                        'is_existing_enrollment_active': None,
-                        'is_existing_enrollment_audit': None,
-                    }
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(
+                        enrollment_intention,
+                        applicable_enterprise_catalog_uuids=[],
+                        is_course_run_enrollable=True,
+                        has_existing_enrollment=False,
+                        is_existing_enrollment_active=None,
+                        is_existing_enrollment_audit=None,
+                    )
                 ],
             },
             'already_enrolled': [],
@@ -10168,27 +10159,12 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
                 'not_enrollable': [],
             },
             'already_enrolled': [
-                {
-                    'uuid': str(enrollment_intention.uuid),
-                    'content_key': enrollment_intention.content_key,
-                    'enterprise_customer': str(self.enterprise_customer.uuid),
-                    'course_key': enrollment_intention.course_key,
-                    'course_run_key': enrollment_intention.course_run_key,
-                    'is_course_run_enrollable': True,
-                    'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-                    'course_run_normalized_metadata': {
-                        'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                        'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                        'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                        'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                        'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                    },
-                    'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    'has_existing_enrollment': True,
-                    'is_existing_enrollment_active': True,
-                    'is_existing_enrollment_audit': False,
-                }
+                self.get_default_enrollment_intention_with_learner_enrollment_state(
+                    enrollment_intention,
+                    has_existing_enrollment=True,
+                    is_existing_enrollment_active=True,
+                    is_existing_enrollment_audit=False,
+                )
             ],
         }
         assert response_data['metadata'] == {
@@ -10240,27 +10216,12 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         assert response_data['enrollment_statuses'] == {
             'needs_enrollment': {
                 'enrollable': [
-                    {
-                        'uuid': str(enrollment_intention.uuid),
-                        'content_key': enrollment_intention.content_key,
-                        'enterprise_customer': str(self.enterprise_customer.uuid),
-                        'course_key': enrollment_intention.course_key,
-                        'course_run_key': enrollment_intention.course_run_key,
-                        'is_course_run_enrollable': True,
-                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-                        'course_run_normalized_metadata': {
-                            'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                            'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                            'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                            'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                        },
-                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'has_existing_enrollment': True,
-                        'is_existing_enrollment_active': False,
-                        'is_existing_enrollment_audit': False,
-                    }
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(
+                        enrollment_intention,
+                        has_existing_enrollment=True,
+                        is_existing_enrollment_active=False,
+                        is_existing_enrollment_audit=False,
+                    )
                 ],
                 'not_enrollable': [],
             },
@@ -10276,8 +10237,8 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         }
 
     @ddt.data(
-        {'is_audit_only': True},
-        {'is_audit_only': False},
+        {'has_audit_mode_only': True},
+        {'has_audit_mode_only': False},
     )
     @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
@@ -10288,7 +10249,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         mock_course_enrollment,
         mock_get_best_mode_from_course_key,
         mock_catalog_api_client,
-        is_audit_only,
+        has_audit_mode_only,
     ):
         """
         Test default enterprise enrollment intentions (already enrolled, active
@@ -10297,7 +10258,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
         enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
 
-        if is_audit_only:
+        if has_audit_mode_only:
             mock_get_best_mode_from_course_key.return_value = AUDIT_COURSE_MODE
         else:
             mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
@@ -10327,29 +10288,14 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         expected_enrollable = []
         expected_already_enrolled = []
 
-        expected_serialized_intention = {
-            'uuid': str(enrollment_intention.uuid),
-            'content_key': enrollment_intention.content_key,
-            'enterprise_customer': str(self.enterprise_customer.uuid),
-            'course_key': enrollment_intention.course_key,
-            'course_run_key': enrollment_intention.course_run_key,
-            'is_course_run_enrollable': True,
-            'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-            'course_run_normalized_metadata': {
-                'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-            },
-            'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            'has_existing_enrollment': True,
-            'is_existing_enrollment_active': True,
-            'is_existing_enrollment_audit': True,
-        }
+        expected_serialized_intention = self.get_default_enrollment_intention_with_learner_enrollment_state(
+            enrollment_intention,
+            has_existing_enrollment=True,
+            is_existing_enrollment_active=True,
+            is_existing_enrollment_audit=True,
+        )
 
-        if is_audit_only:
+        if has_audit_mode_only:
             expected_already_enrolled.append(expected_serialized_intention)
         else:
             expected_enrollable.append(expected_serialized_intention)
@@ -10378,7 +10324,8 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         mock_catalog_api_client,
     ):
         """
-        Test default enterprise enrollment intentions for specific staff user linked to enterprise customer.
+        Test default enterprise enrollment intentions for staff user, requesting a specific user
+        linked to enterprise customer via lms_user_id query parameter.
         """
         self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
 
@@ -10394,6 +10341,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         )
         query_params = (
             f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+            # Validates staff user can get back data for another user (i.e., request user is `staff_user`)
             f'&lms_user_id={self.user.id}'
         )
         response = self.client.get(
@@ -10406,27 +10354,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         assert response_data['enrollment_statuses'] == {
             'needs_enrollment': {
                 'enrollable': [
-                    {
-                        'uuid': str(enrollment_intention.uuid),
-                        'content_key': enrollment_intention.content_key,
-                        'enterprise_customer': str(self.enterprise_customer.uuid),
-                        'course_key': enrollment_intention.course_key,
-                        'course_run_key': enrollment_intention.course_run_key,
-                        'is_course_run_enrollable': True,
-                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-                        'course_run_normalized_metadata': {
-                            'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                            'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                            'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                            'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                        },
-                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'has_existing_enrollment': False,
-                        'is_existing_enrollment_active': None,
-                        'is_existing_enrollment_audit': None,
-                    },
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(enrollment_intention)
                 ],
                 'not_enrollable': [],
             },
@@ -10449,7 +10377,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         mock_catalog_api_client
     ):
         """
-        Test default enterprise enrollment intentions for specific staff user linked to enterprise customer.
+        Test default enterprise enrollment intentions for non-staff user linked to enterprise customer.
         """
         self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
         enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
@@ -10460,7 +10388,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         )
         query_params = (
             f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
-            f'&lms_user_id=5'
+            f'&lms_user_id={self.user.id + 1}'  # Validates non-staff user can't get back data for another user
         )
         response = self.client.get(
             f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
@@ -10473,27 +10401,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         assert response_data['enrollment_statuses'] == {
             'needs_enrollment': {
                 'enrollable': [
-                    {
-                        'uuid': str(enrollment_intention.uuid),
-                        'content_key': enrollment_intention.content_key,
-                        'enterprise_customer': str(self.enterprise_customer.uuid),
-                        'course_key': enrollment_intention.course_key,
-                        'course_run_key': enrollment_intention.course_run_key,
-                        'is_course_run_enrollable': True,
-                        'applicable_enterprise_catalog_uuids': [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
-                        'course_run_normalized_metadata': {
-                            'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
-                            'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
-                            'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
-                            'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
-                            'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
-                        },
-                        'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        'has_existing_enrollment': False,
-                        'is_existing_enrollment_active': None,
-                        'is_existing_enrollment_audit': None,
-                    },
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(enrollment_intention)
                 ],
                 'not_enrollable': [],
             },
