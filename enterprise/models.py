@@ -61,7 +61,10 @@ from enterprise.constants import (
     FulfillmentTypes,
     json_serialized_course_modes,
 )
-from enterprise.content_metadata.api import get_and_cache_customer_content_metadata
+from enterprise.content_metadata.api import (
+    get_and_cache_customer_content_metadata,
+    get_and_cache_enterprise_contains_content_items,
+)
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.event_bus import send_learner_credit_course_enrollment_revoked_event
 from enterprise.logging import getEnterpriseLogger
@@ -761,10 +764,11 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             bool: Whether the enterprise catalog includes the given course run.
         """
-        if EnterpriseCatalogApiClient().enterprise_contains_content_items(self.uuid, [course_run_id]):
-            return True
-
-        return False
+        contains_content_items_response = EnterpriseCatalogApiClient().enterprise_contains_content_items(
+            self.uuid,
+            [course_run_id],
+        )
+        return contains_content_items_response.get('contains_content_items', False)
 
     def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):
         """
@@ -2559,6 +2563,28 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         )
 
     @property
+    def best_mode_for_course_run(self):
+        """
+        Returns the best mode for the course run.
+        """
+        if not self.course_run_key:
+            return None
+        return utils.get_best_mode_from_course_key(self.course_run_key)
+
+    @property
+    def course_run_normalized_metadata(self):
+        """
+        Normalized metadata for the course run.
+        """
+        metadata = self.content_metadata_for_content_key
+        if not metadata:
+            return {}
+
+        course_run_key = self.course_run_key
+        normalized_metadata_by_run = metadata.get('normalized_metadata_by_run', {})
+        return normalized_metadata_by_run.get(course_run_key, {})
+
+    @property
     def course_key(self):
         """
         The resolved course key derived from the content_key.
@@ -2579,7 +2605,7 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         """
         Whether the course run is enrollable.
         """
-        return False
+        return self.course_run.get('is_enrollable', False)
 
     @property
     def course_run_enroll_by_date(self):  # pragma: no cover
@@ -2587,6 +2613,17 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         The enrollment deadline for the course run.
         """
         return datetime.datetime.min
+
+    @property
+    def applicable_enterprise_catalog_uuids(self):
+        """
+        Returns a list of UUIDs for applicable enterprise catalogs.
+        """
+        contains_content_items_response = get_and_cache_enterprise_contains_content_items(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            content_keys=[self.course_run_key],
+        )
+        return contains_content_items_response.get('catalog_list', [])
 
     def determine_content_type(self):
         """
@@ -2636,9 +2673,7 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
                 'content key already exists, but is soft-deleted. Please restore '
                 'it <a href="{existing_record_admin_url}">here</a>.',
             ).format(existing_record_admin_url=existing_record_admin_url)
-            raise ValidationError({
-                'content_key': mark_safe(message)
-            })
+            raise ValidationError({'content_key': mark_safe(message)})
 
         if not self.course_run:
             # NOTE: This validation check also acts as an inferred check on the derived content_type

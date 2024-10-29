@@ -19,7 +19,7 @@ def versioned_cache_key(*args):
     """
     components = [str(arg) for arg in args]
     components.append(code_version)
-    if stamp_from_settings := getattr(settings, 'CACHE_KEY_VERSION_STAMP', None):
+    if stamp_from_settings := getattr(settings, 'ENTERPRISE_CACHE_KEY_VERSION_STAMP', None):
         components.append(stamp_from_settings)
     decoded_cache_key = CACHE_KEY_SEP.join(components)
     return hashlib.sha512(decoded_cache_key.encode()).hexdigest()

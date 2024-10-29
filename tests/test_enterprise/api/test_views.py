@@ -169,7 +169,19 @@ LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
 EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
-VERIFIED_SUBSCRIPTION_COURSE_MODE = 'verified'
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT = reverse('default-enterprise-enrollment-intentions-list')
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT = reverse(
+    'default-enterprise-enrollment-intentions-learner-status'
+)
+VERIFIED_COURSE_MODE = 'verified'
+AUDIT_COURSE_MODE = 'audit'
+
+
+def get_default_enterprise_enrollment_intention_detail_endpoint(enrollment_intention_uuid=None):
+    return reverse(
+        'default-enterprise-enrollment-intentions-detail',
+        kwargs={'pk': enrollment_intention_uuid if enrollment_intention_uuid else FAKE_UUIDS[0]}
+    )
 
 
 def side_effect(url, query_parameters):
@@ -3345,7 +3357,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             False,
             True,
             None,
-            [{'course_mode': 'audit', 'course_run_id': 'course-v1:edX+DemoX+Demo_Course'}],
+            [{'course_mode': AUDIT_COURSE_MODE, 'course_run_id': 'course-v1:edX+DemoX+Demo_Course'}],
             [{
                 'non_field_errors': [
                     'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
@@ -3358,7 +3370,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
             }],
@@ -3374,7 +3386,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'tpa_user_id': 'abc',
             }],
@@ -3390,7 +3402,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             False,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
             }],
@@ -3406,7 +3418,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'tpa_user_id': 'abc',
@@ -3421,9 +3433,9 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
         (
             True,
             True,
-            {'is_active': True, 'mode': VERIFIED_SUBSCRIPTION_COURSE_MODE},
+            {'is_active': True, 'mode': VERIFIED_COURSE_MODE},
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
             }],
@@ -3437,9 +3449,9 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
         (
             True,
             True,
-            {'is_active': False, 'mode': 'audit'},
+            {'is_active': False, 'mode': AUDIT_COURSE_MODE},
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'cohort': 'masters'
@@ -3499,7 +3511,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             False,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'tpa_user_id': 'abc',
@@ -3510,7 +3522,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
             }],
@@ -3519,7 +3531,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'tpa_user_id': 'abc',
             }],
@@ -3528,7 +3540,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'user_email': 'abc@test.com',
             }],
@@ -3537,7 +3549,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'email_students': True
@@ -3547,7 +3559,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'email_students': True,
@@ -3558,7 +3570,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             True,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'user_email': 'foo@bar.com',
                 'email_students': True,
@@ -3567,18 +3579,18 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
         ),
         (
             True,
-            {'is_active': True, 'mode': 'audit'},
+            {'is_active': True, 'mode': AUDIT_COURSE_MODE},
             [{
-                'course_mode': VERIFIED_SUBSCRIPTION_COURSE_MODE,
+                'course_mode': VERIFIED_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
             }],
         ),
         (
             True,
-            {'is_active': False, 'mode': 'audit'},
+            {'is_active': False, 'mode': AUDIT_COURSE_MODE},
             [{
-                'course_mode': VERIFIED_SUBSCRIPTION_COURSE_MODE,
+                'course_mode': VERIFIED_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'is_active': False,
@@ -3588,7 +3600,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
             False,
             None,
             [{
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'user_email': 'foo@bar.com',
                 'is_active': False,
@@ -3728,44 +3740,44 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
         payload = [
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'tpa_user_id': tpa_user_id,
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'user_email': new_user_email,
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'lms_user_id': lms_user_id,
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'user_email': pending_email,
                 'cohort': 'test'
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'user_email': pending_email,
                 'is_active': False,
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'user_email': pending_email,
                 'is_active': True,
             },
             {
-                'course_mode': 'audit',
+                'course_mode': AUDIT_COURSE_MODE,
                 'course_run_id': course_run_id,
                 'user_email': pending_email,
                 'is_active': False,
@@ -3823,7 +3835,7 @@ class TestEnterprisesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
         # Set up EnrollmentAPI responses
         mock_enrollment_client.return_value = mock.Mock(
             get_course_enrollment=mock.Mock(
-                side_effect=[None, {'is_active': True, 'mode': VERIFIED_SUBSCRIPTION_COURSE_MODE}]
+                side_effect=[None, {'is_active': True, 'mode': VERIFIED_COURSE_MODE}]
             ),
             enroll_user_in_course=mock.Mock()
         )
@@ -5178,7 +5190,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
         response = self.client.post(
@@ -5231,7 +5243,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
         body = {
@@ -5313,7 +5325,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
         body = {
@@ -5364,7 +5376,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
         body = {
@@ -5431,7 +5443,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         results in expected state and payload.
         """
         mock_platform_enrollment.return_value = True
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
         # Needed for the cancel endpoint:
         mock_update_or_create_enrollment.update_enrollment.return_value = mock.Mock()
 
@@ -5555,7 +5567,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         user.user_permissions.add(permission)
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         enrollment_url = reverse(
             'enterprise-customer-enroll-learners-in-courses',
@@ -5670,7 +5682,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
 
@@ -5752,7 +5764,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
             'failures': [{'email': 'xyz@test.com', 'course_run_key': course}]
         }
         mock_enroll_user.return_value = enrollment_response
-        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
+        mock_get_course_mode.return_value = VERIFIED_COURSE_MODE
 
         body = {
             'licenses_info': [
@@ -9738,3 +9750,668 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
         assert expected_json == response.json().get('results')
         assert response.json().get('count') == 1
+
+
+@ddt.ddt
+@mark.django_db
+class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test DefaultEnterpriseEnrollmentIntentionViewSet
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+
+        username = 'test_user_default_enterprise_enrollment_intentions'
+        self.user = self.create_user(username=username, is_staff=False)
+        self.client.login(username=self.user.username, password=TEST_PASSWORD)
+
+    def get_default_enrollment_intention_with_learner_enrollment_state(self, enrollment_intention, **kwargs):
+        """
+        Returns the expected serialized default enrollment intention with learner enrollment state.
+
+        Args:
+            enrollment_intention: The enrollment intention to serialize.
+            **kwargs: Additional parameters to customize the response.
+                - applicable_enterprise_catalog_uuids: List of applicable enterprise catalog UUIDs.
+                - is_course_run_enrollable: Boolean indicating if the course run is enrollable.
+                - has_existing_enrollment: Boolean indicating if there is an existing enrollment.
+                - is_existing_enrollment_active: Boolean indicating if the existing enrollment is
+                  active, or None if no existing enrollment.
+                - is_existing_enrollment_audit: Boolean indicating if the existing enrollment is
+                  audit, or None if no existing enrollment.
+        """
+        return {
+            'uuid': str(enrollment_intention.uuid),
+            'content_key': enrollment_intention.content_key,
+            'enterprise_customer': str(self.enterprise_customer.uuid),
+            'course_key': enrollment_intention.course_key,
+            'course_run_key': enrollment_intention.course_run_key,
+            'is_course_run_enrollable': kwargs.get('is_course_run_enrollable', True),
+            'applicable_enterprise_catalog_uuids': kwargs.get(
+                'applicable_enterprise_catalog_uuids',
+                [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
+            ),
+            'course_run_normalized_metadata': {
+                'start_date': fake_catalog_api.FAKE_COURSE_RUN.get('start'),
+                'end_date': fake_catalog_api.FAKE_COURSE_RUN.get('end'),
+                'enroll_by_date': fake_catalog_api.FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
+                'enroll_start_date': fake_catalog_api.FAKE_COURSE_RUN.get('enrollment_start'),
+                'content_price': fake_catalog_api.FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
+            },
+            'created': enrollment_intention.created.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            'modified': enrollment_intention.modified.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            'has_existing_enrollment': kwargs.get('has_existing_enrollment', False),
+            'is_existing_enrollment_active': kwargs.get('is_existing_enrollment_active', None),
+            'is_existing_enrollment_audit': kwargs.get('is_existing_enrollment_audit', None),
+        }
+
+    def create_mock_default_enterprise_enrollment_intention(
+        self,
+        mock_catalog_api_client,
+        content_metadata=None,
+        contains_content_items=False,
+        catalog_list=None,
+    ):
+        """
+        Create a mock default enterprise enrollment intention.
+        """
+        mock_content_metadata = content_metadata or fake_catalog_api.FAKE_COURSE
+        mock_contains_content_items = contains_content_items
+        mock_catalog_list = (
+            catalog_list
+            if catalog_list is not None
+            else [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
+        )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_content_metadata_content_identifier=mock.Mock(
+                return_value=mock_content_metadata,
+            ),
+            enterprise_contains_content_items=mock.Mock(
+                return_value=fake_catalog_api.get_fake_enterprise_contains_content_items_response(
+                    contains_content_items=mock_contains_content_items,
+                    catalog_list=mock_catalog_list,
+                ),
+            ),
+        )
+        enrollment_intention = factories.DefaultEnterpriseEnrollmentIntentionFactory(
+            enterprise_customer=self.enterprise_customer,
+            content_key=mock_content_metadata.get('key', 'edX+DemoX'),
+        )
+        return enrollment_intention
+
+    def test_default_enterprise_enrollment_intentions_missing_enterprise_uuid(self):
+        """
+        Test expected response when successfully listing existing default enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'detail': 'enterprise_customer_uuid is a required query parameter.'}
+
+    def test_default_enterprise_enrollment_intentions_invalid_enterprise_uuid(self):
+        """
+        Test expected response when successfully listing existing default enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        query_params = 'enterprise_customer_uuid=invalid-uuid'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'detail': 'enterprise_customer_uuid query parameter is not a valid UUID.'}
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_list(self, mock_catalog_api_client):
+        """
+        Test expected response when successfully listing existing default enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['count'] == 1
+        result = response_data['results'][0]
+        assert result['content_key'] == enrollment_intention.content_key
+        assert result['applicable_enterprise_catalog_uuids'] == [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_detail(self, mock_catalog_api_client):
+        """
+        Test expected response when unauthorized user attempts to list default
+        enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        base_url = get_default_enterprise_enrollment_intention_detail_endpoint(str(enrollment_intention.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{base_url}?{query_params}")
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['content_key'] == enrollment_intention.content_key
+        assert response_data['applicable_enterprise_catalog_uuids'] == \
+            [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_list_unauthorized(self, mock_catalog_api_client):
+        """
+        Test expected response when unauthorized user attempts to list default
+        enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(uuid.uuid4())}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['count'] == 0
+        assert response_data['results'] == []
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_detail_403_forbidden(self, mock_catalog_api_client):
+        """
+        Test expected response when unauthorized user attempts to list default
+        enterprise enrollment intentions.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        query_params = f'enterprise_customer_uuid={str(uuid.uuid4())}'
+        base_url = get_default_enterprise_enrollment_intention_detail_endpoint(str(enrollment_intention.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{base_url}?{query_params}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    def test_default_enterprise_enrollment_intentions_not_in_catalog(self, mock_catalog_api_client):
+        """
+        Test expected response when default enterprise enrollment intention is not in catalog.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
+            mock_catalog_api_client,
+            contains_content_items=False,
+            catalog_list=[],
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        base_url = get_default_enterprise_enrollment_intention_detail_endpoint(str(enrollment_intention.uuid))
+        response = self.client.get(f"{settings.TEST_SERVER}{base_url}?{query_params}")
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['content_key'] == enrollment_intention.content_key
+        assert response_data['applicable_enterprise_catalog_uuids'] == []
+
+    def test_default_enterprise_enrollment_intentions_learner_status_not_linked(self):
+        """
+        Test default enterprise enrollment intentions for specific learner not linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response_data = response.json()
+        assert response_data['detail'] == (
+            f'User with lms_user_id {self.user.id} is not associated with '
+            f'the enterprise customer {str(self.enterprise_customer.uuid)}.'
+        )
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    def test_default_enterprise_enrollment_intentions_learner_status_enrollable(
+        self,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+    ):
+        """
+        Test default enterprise enrollment intentions for specific learner linked to enterprise customer, where
+        the course run associated with the default enrollment intention is enrollable.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(enrollment_intention)
+                ],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 1,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    def test_default_enrollment_intentions_learner_status_content_not_enrollable(
+        self,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+    ):
+        """
+        Test default enterprise enrollment intentions (not enrollable) for
+        specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        mock_course_run = fake_catalog_api.FAKE_COURSE_RUN.copy()
+        mock_course_run.update({'is_enrollable': False})
+        mock_course = fake_catalog_api.FAKE_COURSE.copy()
+        mock_course.update({'course_runs': [mock_course_run]})
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
+            mock_catalog_api_client,
+            content_metadata=mock_course,
+        )
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [],
+                'not_enrollable': [
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(
+                        enrollment_intention,
+                        is_course_run_enrollable=False,
+                    )
+                ],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 0,
+                'not_enrollable': 1,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    def test_default_enrollment_intentions_learner_status_content_not_in_catalog(
+        self,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+    ):
+        """
+        Test default enterprise enrollment intentions (not enrollable, no applicable
+        catalog) for specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(
+            mock_catalog_api_client,
+            contains_content_items=False,
+            catalog_list=[],
+        )
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [],
+                'not_enrollable': [
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(
+                        enrollment_intention,
+                        applicable_enterprise_catalog_uuids=[],
+                        is_course_run_enrollable=True,
+                        has_existing_enrollment=False,
+                        is_existing_enrollment_active=None,
+                        is_existing_enrollment_audit=None,
+                    )
+                ],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 0,
+                'not_enrollable': 1,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    @mock.patch.object(EnterpriseCourseEnrollment, 'course_enrollment', new_callable=mock.PropertyMock)
+    def test_default_enrollment_intentions_learner_status_already_enrolled_active(
+        self,
+        mock_course_enrollment,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+    ):
+        """
+        Test default enterprise enrollment intentions (already enrolled, active
+        enrollment) for specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=fake_catalog_api.FAKE_COURSE_RUN.get('key'),
+        )
+        course_enrollment_kwargs = {
+            'is_active': True,
+            'mode': VERIFIED_COURSE_MODE,
+        }
+        mock_course_enrollment.return_value = mock.Mock(**course_enrollment_kwargs)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [
+                self.get_default_enrollment_intention_with_learner_enrollment_state(
+                    enrollment_intention,
+                    has_existing_enrollment=True,
+                    is_existing_enrollment_active=True,
+                    is_existing_enrollment_audit=False,
+                )
+            ],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 0,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 1,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    @mock.patch.object(EnterpriseCourseEnrollment, 'course_enrollment', new_callable=mock.PropertyMock)
+    def test_default_enrollment_intentions_learner_status_already_enrolled_inactive(
+        self,
+        mock_course_enrollment,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+    ):
+        """
+        Test default enterprise enrollment intentions (already enrolled, inactive
+        enrollment) for specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=fake_catalog_api.FAKE_COURSE_RUN.get('key'),
+        )
+        course_enrollment_kwargs = {
+            'is_active': False,
+            'mode': VERIFIED_COURSE_MODE,
+        }
+        mock_course_enrollment.return_value = mock.Mock(**course_enrollment_kwargs)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(
+                        enrollment_intention,
+                        has_existing_enrollment=True,
+                        is_existing_enrollment_active=False,
+                        is_existing_enrollment_audit=False,
+                    )
+                ],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 1,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @ddt.data(
+        {'has_audit_mode_only': True},
+        {'has_audit_mode_only': False},
+    )
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    @mock.patch.object(EnterpriseCourseEnrollment, 'course_enrollment', new_callable=mock.PropertyMock)
+    @ddt.unpack
+    def test_default_enrollment_intentions_learner_status_already_enrolled_active_audit(
+        self,
+        mock_course_enrollment,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+        has_audit_mode_only,
+    ):
+        """
+        Test default enterprise enrollment intentions (already enrolled, active
+        audit enrollment) for specific learner linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+
+        if has_audit_mode_only:
+            mock_get_best_mode_from_course_key.return_value = AUDIT_COURSE_MODE
+        else:
+            mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=fake_catalog_api.FAKE_COURSE_RUN.get('key'),
+        )
+        course_enrollment_kwargs = {
+            'is_active': True,
+            'mode': AUDIT_COURSE_MODE,
+        }
+        mock_course_enrollment.return_value = mock.Mock(**course_enrollment_kwargs)
+        query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+
+        expected_enrollable = []
+        expected_already_enrolled = []
+
+        expected_serialized_intention = self.get_default_enrollment_intention_with_learner_enrollment_state(
+            enrollment_intention,
+            has_existing_enrollment=True,
+            is_existing_enrollment_active=True,
+            is_existing_enrollment_audit=True,
+        )
+
+        if has_audit_mode_only:
+            expected_already_enrolled.append(expected_serialized_intention)
+        else:
+            expected_enrollable.append(expected_serialized_intention)
+
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': expected_enrollable,
+                'not_enrollable': [],
+            },
+            'already_enrolled': expected_already_enrolled,
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': len(expected_enrollable),
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': len(expected_already_enrolled),
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    def test_default_enrollment_intentions_learner_status_staff_lms_user_id_override(
+        self,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client,
+    ):
+        """
+        Test default enterprise enrollment intentions for staff user, requesting a specific user
+        linked to enterprise customer via lms_user_id query parameter.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+
+        # Create and login as a staff user
+        staff_user = self.create_user(username='staff_username', password=TEST_PASSWORD, is_staff=True)
+        self.client.login(username=staff_user.username, password=TEST_PASSWORD)
+
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = (
+            f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+            # Validates staff user can get back data for another user (i.e., request user is `staff_user`)
+            f'&lms_user_id={self.user.id}'
+        )
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(enrollment_intention)
+                ],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 1,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 0,
+        }
+
+    @mock.patch('enterprise.content_metadata.api.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.models.utils.get_best_mode_from_course_key')
+    def test_default_enrollment_intentions_learner_status_nonstaff_lms_user_id_override(
+        self,
+        mock_get_best_mode_from_course_key,
+        mock_catalog_api_client
+    ):
+        """
+        Test default enterprise enrollment intentions for non-staff user linked to enterprise customer.
+        """
+        self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
+        enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
+        mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        query_params = (
+            f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
+            f'&lms_user_id={self.user.id + 1}'  # Validates non-staff user can't get back data for another user
+        )
+        response = self.client.get(
+            f"{settings.TEST_SERVER}{DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT}?{query_params}"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data['lms_user_id'] == self.user.id
+        assert response_data['user_email'] == self.user.email
+        assert response_data['enrollment_statuses'] == {
+            'needs_enrollment': {
+                'enrollable': [
+                    self.get_default_enrollment_intention_with_learner_enrollment_state(enrollment_intention)
+                ],
+                'not_enrollable': [],
+            },
+            'already_enrolled': [],
+        }
+        assert response_data['metadata'] == {
+            'total_default_enterprise_course_enrollments': 1,
+            'total_needs_enrollment': {
+                'enrollable': 1,
+                'not_enrollable': 0,
+            },
+            'total_already_enrolled': 0,
+        }

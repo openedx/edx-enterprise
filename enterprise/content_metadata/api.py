@@ -58,3 +58,41 @@ def get_and_cache_customer_content_metadata(enterprise_customer_uuid, content_ke
     )
     TieredCache.set_all_tiers(cache_key, result, timeout or DEFAULT_CACHE_TIMEOUT)
     return result
+
+
+def get_and_cache_enterprise_contains_content_items(enterprise_customer_uuid, content_keys, timeout=None):
+    """
+    Returns whether the provided content keys are present in the catalogs
+    associated with the provided enterprise customer, in addition to a list
+    of catalog UUIDs containing the content keys.
+
+    The response is cached in a ``TieredCache``.
+
+    Returns: Dict containing `contains_content_items` and `catalog_list` properties.
+    Raises: An HTTPError if there's a problem checking catalog inclusion
+      via the enterprise-catalog service.
+    """
+    cache_key = versioned_cache_key('get_enterprise_contains_content_items', enterprise_customer_uuid, content_keys)
+    cached_response = TieredCache.get_cached_response(cache_key)
+    if cached_response.is_found:
+        logger.info(f'cache hit for enterprise customer {enterprise_customer_uuid} and content keys {content_keys}')
+        return cached_response.value
+
+    try:
+        result = EnterpriseCatalogApiClient().enterprise_contains_content_items(
+            enterprise_uuid=enterprise_customer_uuid,
+            content_ids=content_keys,
+        )
+    except HTTPError as exc:
+        raise exc
+
+    if not result:
+        logger.warning('No content items found for customer %s', enterprise_customer_uuid)
+        return {}
+
+    logger.info(
+        'Fetched content catalog inclusion for enterprise customer %s and content keys %s. Result = %s',
+        enterprise_customer_uuid, content_keys, result,
+    )
+    TieredCache.set_all_tiers(cache_key, result, timeout or DEFAULT_CACHE_TIMEOUT)
+    return result

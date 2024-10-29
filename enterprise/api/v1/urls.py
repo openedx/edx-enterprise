@@ -9,6 +9,7 @@ from django.urls import re_path
 from enterprise.api.v1.views import (
     analytics_summary,
     coupon_codes,
+    default_enterprise_enrollments,
     enterprise_catalog_query,
     enterprise_course_enrollment,
     enterprise_customer,
@@ -81,6 +82,11 @@ router.register(
 )
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
+)
+router.register(
+    "default-enterprise-enrollment-intentions",
+    default_enterprise_enrollments.DefaultEnterpriseEnrollmentIntentionViewSet,
+    'default-enterprise-enrollment-intentions'
 )
 
 
