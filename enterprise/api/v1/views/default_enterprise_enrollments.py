@@ -106,7 +106,7 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
 
         # Validate the user for learner status exists and is associated
         # with the enterprise customer.
-        if not (user_for_learner_status := self.user_for_learner_status):
+        if not self.user_for_learner_status:
             return Response(
                 {'detail': f'User with lms_user_id {self.requested_lms_user_id} not found.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -114,14 +114,14 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
 
         try:
             enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(
-                user_id=user_for_learner_status.id,
+                user_id=self.user_for_learner_status.id,
                 enterprise_customer=enterprise_customer_uuid,
             )
         except models.EnterpriseCustomerUser.DoesNotExist:
             return Response(
                 {
                     'detail': (
-                        f'User with lms_user_id {user_for_learner_status.id} is not associated with '
+                        f'User with lms_user_id {self.user_for_learner_status.id} is not associated with '
                         f'the enterprise customer {enterprise_customer_uuid}.'
                     ),
                 },
@@ -139,8 +139,8 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         )
 
         serializer_data = {
-            'lms_user_id': user_for_learner_status.id,
-            'user_email': user_for_learner_status.email,
+            'lms_user_id': self.user_for_learner_status.id,
+            'user_email': self.user_for_learner_status.email,
             'enterprise_customer_uuid': enterprise_customer_uuid,
         }
         serializer = serializers.DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(
