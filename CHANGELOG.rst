@@ -17,6 +17,16 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.31.1]
+--------
+* fix: serialize best_mode_for_course_run field in DefaultEnterpriseEnrollmentIntentionSerializer.
+
+[4.31.0]
+--------
+* feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.
+* fix: Alter the realized_enrollment field in DefaultEnterpriseEnrollmentRealization to be a OneToOneField.
+* fix: rename metadata field in DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer.
+
 [4.30.0]
 --------
 * feat: REST APIs for default-enterprise-enrollment-intentions

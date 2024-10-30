@@ -111,7 +111,11 @@ from test_utils.factories import (
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
-from .constants import FAKE_SSO_METADATA_XML_WITH_ENTITY_ID
+from .constants import (
+    AUDIT_COURSE_MODE,
+    FAKE_SSO_METADATA_XML_WITH_ENTITY_ID,
+    VERIFIED_COURSE_MODE,
+)
 
 Application = get_application_model()
 fake = Faker()
@@ -173,8 +177,6 @@ DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LIST_ENDPOINT = reverse('default-enterpr
 DEFAULT_ENTERPRISE_ENROLLMENT_INTENTION_LEARNER_STATUS_ENDPOINT = reverse(
     'default-enterprise-enrollment-intentions-learner-status'
 )
-VERIFIED_COURSE_MODE = 'verified'
-AUDIT_COURSE_MODE = 'audit'
 
 
 def get_default_enterprise_enrollment_intention_detail_endpoint(enrollment_intention_uuid=None):
@@ -9776,6 +9778,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
             **kwargs: Additional parameters to customize the response.
                 - applicable_enterprise_catalog_uuids: List of applicable enterprise catalog UUIDs.
                 - is_course_run_enrollable: Boolean indicating if the course run is enrollable.
+                - best_mode_for_course_run: The best mode for the course run (e.g., "verified", "audit").
                 - has_existing_enrollment: Boolean indicating if there is an existing enrollment.
                 - is_existing_enrollment_active: Boolean indicating if the existing enrollment is
                   active, or None if no existing enrollment.
@@ -9789,6 +9792,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
             'course_key': enrollment_intention.course_key,
             'course_run_key': enrollment_intention.course_run_key,
             'is_course_run_enrollable': kwargs.get('is_course_run_enrollable', True),
+            'best_mode_for_course_run': kwargs.get('best_mode_for_course_run', VERIFIED_COURSE_MODE),
             'applicable_enterprise_catalog_uuids': kwargs.get(
                 'applicable_enterprise_catalog_uuids',
                 [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')],
@@ -10258,10 +10262,8 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(self.enterprise_customer.uuid))
         enrollment_intention = self.create_mock_default_enterprise_enrollment_intention(mock_catalog_api_client)
 
-        if has_audit_mode_only:
-            mock_get_best_mode_from_course_key.return_value = AUDIT_COURSE_MODE
-        else:
-            mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
+        best_mode_for_course_run = AUDIT_COURSE_MODE if has_audit_mode_only else VERIFIED_COURSE_MODE
+        mock_get_best_mode_from_course_key.return_value = best_mode_for_course_run
 
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=self.user.id,
@@ -10293,6 +10295,7 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
             has_existing_enrollment=True,
             is_existing_enrollment_active=True,
             is_existing_enrollment_audit=True,
+            best_mode_for_course_run=best_mode_for_course_run,
         )
 
         if has_audit_mode_only:
