@@ -1915,6 +1915,7 @@ class DefaultEnterpriseEnrollmentIntentionSerializer(serializers.ModelSerializer
             'course_key',
             'course_run_key',
             'is_course_run_enrollable',
+            'best_mode_for_course_run',
             'applicable_enterprise_catalog_uuids',
             'course_run_normalized_metadata',
             'created',
@@ -1941,6 +1942,12 @@ class DefaultEnterpriseEnrollmentIntentionSerializer(serializers.ModelSerializer
 
     def get_applicable_enterprise_catalog_uuids(self, obj):
         return obj.applicable_enterprise_catalog_uuids
+
+    def get_best_mode_for_course_run(self, obj):
+        """
+        Get the best course mode for the course run.
+        """
+        return obj.best_mode_for_course_run
 
 
 class DefaultEnterpriseEnrollmentIntentionWithEnrollmentStateSerializer(DefaultEnterpriseEnrollmentIntentionSerializer):

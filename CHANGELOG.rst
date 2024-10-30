@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.30.1]
+--------
+* fix: serialize best_mode_for_course_run field in DefaultEnterpriseEnrollmentIntentionSerializer.
+
 [4.30.0]
 --------
 * feat: REST APIs for default-enterprise-enrollment-intentions

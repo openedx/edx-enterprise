@@ -9,6 +9,7 @@ from functools import reduce
 from unittest import mock
 
 from test_utils import FAKE_UUIDS
+from tests.test_enterprise.api.constants import AUDIT_COURSE_MODE, VERIFIED_COURSE_MODE
 
 FAKE_URL = 'https://fake.url'
 
@@ -26,7 +27,7 @@ FAKE_COURSE_RUN_TO_CREATE = {
     'marketing_url': 'course/demo-course?utm_=test_enterprise&utm_medium=enterprise',
     'seats': [
         {
-            'type': 'audit',
+            'type': AUDIT_COURSE_MODE,
             'price': '0.00',
             'currency': 'USD',
             'upgrade_deadline': None,
@@ -35,7 +36,7 @@ FAKE_COURSE_RUN_TO_CREATE = {
             'sku': '68EFFFF'
         },
         {
-            'type': 'verified',
+            'type': VERIFIED_COURSE_MODE,
             'price': '149.00',
             'currency': 'USD',
             'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
@@ -50,7 +51,7 @@ FAKE_COURSE_RUN_TO_CREATE = {
     'enrollment_end': None,
     'enrollment_url': FAKE_URL,
     'pacing_type': 'instructor_paced',
-    'type': 'verified',
+    'type': VERIFIED_COURSE_MODE,
     'status': 'published',
     'course': 'edX+DemoX',
     'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -110,7 +111,7 @@ FAKE_COURSE_RUN = {
     'marketing_url': 'course/demo-course?utm_=test_enterprise&utm_medium=enterprise',
     'seats': [
         {
-            'type': 'audit',
+            'type': AUDIT_COURSE_MODE,
             'price': 0,
             'currency': 'USD',
             'upgrade_deadline': None,
@@ -119,7 +120,7 @@ FAKE_COURSE_RUN = {
             'sku': '68EFFFF'
         },
         {
-            'type': 'verified',
+            'type': VERIFIED_COURSE_MODE,
             'price': 149,
             'currency': 'USD',
             'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
@@ -135,7 +136,7 @@ FAKE_COURSE_RUN = {
     'enrollment_end': None,
     'enrollment_url': FAKE_URL,
     'pacing_type': 'instructor_paced',
-    'type': 'verified',
+    'type': VERIFIED_COURSE_MODE,
     'status': 'published',
     "is_enrollable": True,
     "is_marketable": True,
@@ -403,7 +404,7 @@ FAKE_PROGRAM_RESPONSE1 = {
     "staff": [],
     "credit_redemption_overview": "This is a test Program.",
     "applicable_seat_types": [
-        "audit"
+        AUDIT_COURSE_MODE
     ],
 }
 
@@ -567,7 +568,7 @@ FAKE_PROGRAM_RESPONSE3 = {
     "min_hours_effort_per_week": 5,
     "max_hours_effort_per_week": 10,
     "applicable_seat_types": [
-        "verified",
+        VERIFIED_COURSE_MODE,
         "professional",
         "credit",
     ],
@@ -598,7 +599,7 @@ FAKE_PROGRAM_TYPE = {
         }
     },
     "applicable_seat_types": [
-        "verified",
+        VERIFIED_COURSE_MODE,
         "professional",
         "credit"
     ],
@@ -623,7 +624,7 @@ FAKE_COURSE_RUNS_RESPONSE = [
                 "credit_hours": None
             },
             {
-                "type": "audit",
+                "type": AUDIT_COURSE_MODE,
                 "price": "0.00",
                 "currency": "USD",
                 "upgrade_deadline": None,
@@ -669,7 +670,7 @@ FAKE_COURSE_RUNS_RESPONSE = [
                 "credit_hours": None
             },
             {
-                "type": "audit",
+                "type": AUDIT_COURSE_MODE,
                 "price": "0.00",
                 "currency": "AED",
                 "upgrade_deadline": None,
@@ -847,14 +848,14 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
                 "enrollment_start": None,
                 "enrollment_end": None,
                 "pacing_type": "instructor_paced",
-                "type": "audit",
+                "type": AUDIT_COURSE_MODE,
                 "course": "edX+DemoX",
                 "full_description": None,
                 "announcement": None,
                 "video": None,
                 "seats": [
                     {
-                        "type": "audit",
+                        "type": AUDIT_COURSE_MODE,
                         "price": "0.00",
                         "currency": "USD",
                         "upgrade_deadline": None,
@@ -1103,8 +1104,8 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "course_runs": [],
     "full_description": None,
     "seat_types": [
-        "audit",
-        "verified"
+        AUDIT_COURSE_MODE,
+        VERIFIED_COURSE_MODE,
     ],
     "mobile_available": False,
     "end": None,
@@ -1122,7 +1123,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "staff_uuids": [],
     "language": None,
     "number": "DemoX",
-    "type": "verified",
+    "type": VERIFIED_COURSE_MODE,
     "key": "course-v1:edX+DemoX+Demo_Course",
     "org": "edX",
     "level_type": None,
@@ -1375,7 +1376,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT_3 = {
     "course_runs": [
         {
             "enrollment_end": None,
-            "enrollment_mode": "verified",
+            "enrollment_mode": VERIFIED_COURSE_MODE,
             "key": "course-v1:edX+DemoX+Demo_Course",
             "enrollment_start": None,
             "pacing_type": "instructor_paced",
@@ -1542,7 +1543,7 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
         "status": status,
         "enrollment_start": enrollment_start,
         "enrollment_end": enrollment_end,
-        "seats": [{"type": "verified", "upgrade_deadline": upgrade_deadline}],
+        "seats": [{"type": VERIFIED_COURSE_MODE, "upgrade_deadline": upgrade_deadline}],
         "availability": availability,
         "weeks_to_complete": weeks_to_complete,
         "uuid": uuid,
