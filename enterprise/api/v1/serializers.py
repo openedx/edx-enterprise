@@ -2064,7 +2064,7 @@ class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Se
         enrolled by the learner.
         """
         return {
-            'total_default_enterprise_course_enrollments': self.total_default_enrollment_intention_count(),
+            'total_default_enterprise_enrollment_intentions': self.total_default_enrollment_intention_count(),
             'total_needs_enrollment': self.needs_enrollment_counts(),
             'total_already_enrolled': self.already_enrolled_count(),
         }

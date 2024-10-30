@@ -2125,6 +2125,17 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         return associated_fulfillment
 
     @property
+    def default_enterprise_enrollment_realization(self):
+        """
+        Returns the default realization for the enterprise enrollment.
+        """
+        try:
+            associated_realization = self.defaultenterpriseenrollmentrealization_realized_enrollment  # pylint: disable=no-member
+        except DefaultEnterpriseEnrollmentRealization.DoesNotExist:
+            associated_realization = None
+        return associated_realization
+
+    @property
     def fulfillments(self):
         """
         Find and return the related EnterpriseFulfillmentSource subclass, or empty list if there are none.
@@ -2708,7 +2719,7 @@ class DefaultEnterpriseEnrollmentRealization(TimeStampedModel):
         DefaultEnterpriseEnrollmentIntention,
         on_delete=models.CASCADE,
     )
-    realized_enrollment = models.ForeignKey(
+    realized_enrollment = models.OneToOneField(
         EnterpriseCourseEnrollment,
         on_delete=models.CASCADE,
     )

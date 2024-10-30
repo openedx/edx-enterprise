@@ -17,6 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.32.0]
+--------
+* feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.
+* fix: Alter the realized_enrollment field in DefaultEnterpriseEnrollmentRealization to be a OneToOneField.
+* fix: rename metadata field in DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer.
+
 [4.31.2]
 --------
 * feat: add test cases for newly added unlink_self endpoint.
