@@ -111,11 +111,7 @@ from test_utils.factories import (
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
-from .constants import (
-    AUDIT_COURSE_MODE,
-    FAKE_SSO_METADATA_XML_WITH_ENTITY_ID,
-    VERIFIED_COURSE_MODE,
-)
+from .constants import AUDIT_COURSE_MODE, FAKE_SSO_METADATA_XML_WITH_ENTITY_ID, VERIFIED_COURSE_MODE
 
 Application = get_application_model()
 fake = Faker()

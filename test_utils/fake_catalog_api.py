@@ -9,10 +9,7 @@ from functools import reduce
 from unittest import mock
 
 from test_utils import FAKE_UUIDS
-from tests.test_enterprise.api.constants import (
-    AUDIT_COURSE_MODE,
-    VERIFIED_COURSE_MODE,
-)
+from tests.test_enterprise.api.constants import AUDIT_COURSE_MODE, VERIFIED_COURSE_MODE
 
 FAKE_URL = 'https://fake.url'
 
