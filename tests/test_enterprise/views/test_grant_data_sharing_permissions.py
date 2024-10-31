@@ -125,7 +125,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             'title': 'Demo Course'
         }
 
-        enterprise_catalog_client_mock.return_value.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_client_mock.return_value.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True
+        }
 
         mock_discovery_catalog_api_client = course_catalog_api_client_mock.return_value
         mock_discovery_catalog_api_client.get_course_id.return_value = course_id
@@ -516,7 +518,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.get_course_id.return_value = course_id
 
         mock_enterprise_catalog_client = enterprise_catalog_client_mock.return_value
-        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = True
+        mock_enterprise_catalog_client.return_value.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True
+        }
 
         course_mode = 'verified'
 
@@ -684,7 +688,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
 
         mock_enterprise_catalog_client = enterprise_catalog_client_mock.return_value
-        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = True
+        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True
+        }
         mock_enrollment_api_client.return_value.get_course_enrollment.return_value = {
             'is_active': True,
             'mode': 'audit'
@@ -782,7 +788,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
 
         mock_enterprise_catalog_client = enterprise_catalog_client_mock.return_value
-        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = True
+        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True
+        }
 
         reverse_mock.return_value = '/dashboard'
         post_data = {
@@ -947,7 +955,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         mock_course_catalog_api_client.return_value.get_course_id.return_value = course_id
 
         enterprise_catalog_client = mock_enterprise_catalog_client.return_value
-        enterprise_catalog_client.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_client.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True
+        }
 
         course_mode = 'verified'
         mock_get_course_mode.return_value = course_mode

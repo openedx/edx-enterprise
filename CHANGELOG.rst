@@ -17,12 +17,60 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.30.1]
+--------
+* fix: serialize best_mode_for_course_run field in DefaultEnterpriseEnrollmentIntentionSerializer.
+
+[4.30.0]
+--------
+* feat: REST APIs for default-enterprise-enrollment-intentions
+
+[4.29.0]
+--------
+* feat: Create django admin for default enrollments
+
+[4.28.4]
+--------
+* feat: updating the character count for group name to 255
+
+[4.28.3]
+--------
+* feat: removing all references of to-be-deleted field
+
+[4.28.2]
+--------
+* fix: added content_title, progress_status in get_learner_data_records for derived classed of learner data exporters.
+
+[4.28.1]
+--------
+* feat: making to-be-deleted model field nullable
+
+[4.28.0]
+--------
+* feat: add default enrollment models
+
+[4.27.3]
+--------
+* fix: Updating the EnterpriseGroup serializer with created variable
+
+[4.27.2]
+--------
+* fix: updates `get_all_learners` to remove `_get_implicit_group_members`
+
+[4.27.1]
+--------
+* chore: remove `replaces` sections from squashing migrations.
+
+[4.27.0]
+--------
+* chore: Add index to the username field in the `Consent` model
+
 [4.26.1]
----------
+--------
 * feat: proxy login now redirects to LMS register page instead of login page
 
 [4.26.0]
----------
+--------
 * feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
 
 [4.25.19]

@@ -61,6 +61,10 @@ from enterprise.constants import (
     FulfillmentTypes,
     json_serialized_course_modes,
 )
+from enterprise.content_metadata.api import (
+    get_and_cache_customer_content_metadata,
+    get_and_cache_enterprise_contains_content_items,
+)
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.event_bus import send_learner_credit_course_enrollment_revoked_event
 from enterprise.logging import getEnterpriseLogger
@@ -71,6 +75,7 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
+    get_advertised_course_run,
     get_configuration_value,
     get_default_invite_key_expiration_date,
     get_ecommerce_worker_user,
@@ -759,10 +764,11 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             bool: Whether the enterprise catalog includes the given course run.
         """
-        if EnterpriseCatalogApiClient().enterprise_contains_content_items(self.uuid, [course_run_id]):
-            return True
-
-        return False
+        contains_content_items_response = EnterpriseCatalogApiClient().enterprise_contains_content_items(
+            self.uuid,
+            [course_run_id],
+        )
+        return contains_content_items_response.get('contains_content_items', False)
 
     def enroll_user_pending_registration_with_status(self, email, course_mode, *course_ids, **kwargs):
         """
@@ -2461,6 +2467,254 @@ class LicensedEnterpriseCourseEnrollment(EnterpriseFulfillmentSource):
     )
 
 
+class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel):
+    """
+    Specific to an enterprise customer, this model defines a course or course run
+    that should be auto-enrolled for any enterprise customer user linked to the customer.
+
+    .. no_pii:
+    """
+    COURSE = 'course'
+    COURSE_RUN = 'course_run'
+    DEFAULT_ENROLLMENT_CONTENT_TYPE_CHOICES = [
+        (COURSE, 'Course'),
+        (COURSE_RUN, 'Course Run'),
+    ]
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False,
+    )
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name="default_enrollment_intentions",
+        on_delete=models.deletion.CASCADE,
+        help_text=_(
+            "The customer for which this default enrollment will be realized.",
+        )
+    )
+    content_type = models.CharField(
+        max_length=127,
+        blank=True,
+        null=True,
+        choices=DEFAULT_ENROLLMENT_CONTENT_TYPE_CHOICES,
+        help_text=_(
+            "The type of content (e.g. a course vs. a course run)."
+        ),
+    )
+    content_key = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text=_(
+            "A course or course run that related users should be automatically enrolled into."
+        ),
+    )
+    realized_enrollments = models.ManyToManyField(
+        EnterpriseCourseEnrollment,
+        through='DefaultEnterpriseEnrollmentRealization',
+        through_fields=("intended_enrollment", "realized_enrollment"),
+    )
+    history = HistoricalRecords()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['enterprise_customer', 'content_key'],
+                name='unique_default_enrollment_intention',
+            )
+        ]
+
+    @property
+    def content_metadata_for_content_key(self):
+        """
+        Retrieves the content metadata for the instance's enterprise customer and content key.
+        """
+        try:
+            return get_and_cache_customer_content_metadata(
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                content_key=self.content_key,
+            )
+        except HTTPError as e:
+            LOGGER.error(
+                f"Error retrieving content metadata for content key {self.content_key} "
+                f"and enterprise customer {self.enterprise_customer}: {e}"
+            )
+            return {}
+
+    @property
+    def course_run(self):
+        """
+        Metadata describing the current course run for this default enrollment intention.
+        """
+        if not (content_metadata := self.content_metadata_for_content_key):
+            return {}
+
+        if self.determine_content_type() == self.COURSE:
+            course_run = get_advertised_course_run(content_metadata)
+            return course_run or {}
+
+        course_runs = content_metadata.get('course_runs', [])
+        return next(
+            (course_run for course_run in course_runs if course_run['key'].lower() == self.content_key.lower()),
+            {}
+        )
+
+    @property
+    def best_mode_for_course_run(self):
+        """
+        Returns the best mode for the course run.
+        """
+        if not self.course_run_key:
+            return None
+        return utils.get_best_mode_from_course_key(self.course_run_key)
+
+    @property
+    def course_run_normalized_metadata(self):
+        """
+        Normalized metadata for the course run.
+        """
+        metadata = self.content_metadata_for_content_key
+        if not metadata:
+            return {}
+
+        course_run_key = self.course_run_key
+        normalized_metadata_by_run = metadata.get('normalized_metadata_by_run', {})
+        return normalized_metadata_by_run.get(course_run_key, {})
+
+    @property
+    def course_key(self):
+        """
+        The resolved course key derived from the content_key.
+        """
+        return self.content_metadata_for_content_key.get('key')
+
+    @property
+    def course_run_key(self):
+        """
+        The resolved course run key derived from the content_key. This property will return the advertised
+        course run key if the configured content_key is a course; otherwise, it will return the key of the
+        course run that matches the content_key (i.e., course_run_key == content_key).
+        """
+        return self.course_run.get('key')
+
+    @property
+    def is_course_run_enrollable(self):  # pragma: no cover
+        """
+        Whether the course run is enrollable.
+        """
+        return self.course_run.get('is_enrollable', False)
+
+    @property
+    def course_run_enroll_by_date(self):  # pragma: no cover
+        """
+        The enrollment deadline for the course run.
+        """
+        return datetime.datetime.min
+
+    @property
+    def applicable_enterprise_catalog_uuids(self):
+        """
+        Returns a list of UUIDs for applicable enterprise catalogs.
+        """
+        contains_content_items_response = get_and_cache_enterprise_contains_content_items(
+            enterprise_customer_uuid=self.enterprise_customer.uuid,
+            content_keys=[self.course_run_key],
+        )
+        return contains_content_items_response.get('catalog_list', [])
+
+    def determine_content_type(self):
+        """
+        Determines the content_type for a given content_key by validating the return value
+        from `content_metadata_for_content_key`. First determines if the configured content_key
+        matches the returned key, then checks if it matches any of the returned course runs.
+
+        Returns either COURSE, COURSE_RUN, or None (if neither can be determined).
+        """
+        if not (content_metadata := self.content_metadata_for_content_key):
+            return None
+
+        # Determine whether the returned key matches the configured content_key and
+        # the returned metadata denotes the content type as a course.
+        content_metadata_key = content_metadata.get('key', '')
+        content_metadata_content_type = content_metadata.get('content_type', '')
+        if content_metadata_key.lower() == self.content_key.lower() and content_metadata_content_type == self.COURSE:
+            return self.COURSE
+
+        # Determine if the content_key matches any of the course runs
+        # in the content metadata.
+        course_runs = content_metadata.get('course_runs', [])
+        course_run = next(
+            (course_run for course_run in course_runs if course_run['key'].lower() == self.content_key.lower()),
+            None
+        )
+        return self.COURSE_RUN if course_run is not None else None
+
+    def clean(self):
+        """
+        Raise ValidationError if no course run or content type exists.
+        """
+        super().clean()
+
+        existing_record = DefaultEnterpriseEnrollmentIntention.all_objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            content_key=self.content_key,
+        ).exclude(uuid=self.uuid).first()
+
+        if existing_record and existing_record.is_removed:
+            existing_record_admin_url = reverse(
+                'admin:enterprise_defaultenterpriseenrollmentintention_change',
+                args=[existing_record.uuid],
+            )
+            message = _(
+                'A default enrollment intention with this enterprise customer and '
+                'content key already exists, but is soft-deleted. Please restore '
+                'it <a href="{existing_record_admin_url}">here</a>.',
+            ).format(existing_record_admin_url=existing_record_admin_url)
+            raise ValidationError({'content_key': mark_safe(message)})
+
+        if not self.course_run:
+            # NOTE: This validation check also acts as an inferred check on the derived content_type
+            # from the content metadata.
+            raise ValidationError({
+                'content_key': _('The content key did not resolve to a valid course run.')
+            })
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure that the content_type is set correctly before saving.
+        """
+        # Ensure the model instance is cleaned before saving
+        self.full_clean()
+
+        # Set content_type field
+        if content_type := self.determine_content_type():
+            self.content_type = content_type
+
+        # Call the superclass save method
+        super().save(*args, **kwargs)
+
+
+class DefaultEnterpriseEnrollmentRealization(TimeStampedModel):
+    """
+    Represents the relationship between a `DefaultEnterpriseEnrollmentIntention`
+    and a realized course enrollment that exists because of that intention record.
+
+    .. no_pii:
+    """
+    intended_enrollment = models.ForeignKey(
+        DefaultEnterpriseEnrollmentIntention,
+        on_delete=models.CASCADE,
+    )
+    realized_enrollment = models.ForeignKey(
+        EnterpriseCourseEnrollment,
+        on_delete=models.CASCADE,
+    )
+    history = HistoricalRecords()
+
+
 class EnterpriseCatalogQuery(TimeStampedModel):
     """
     Stores a re-usable catalog query.
@@ -2540,7 +2794,6 @@ class EnterpriseCatalogQuery(TimeStampedModel):
                 except Exception as exc:
                     raise ValidationError({'content_filter': f'Failed to validate with exception: {exc}'}) from exc
                 if hash_catalog_response:
-                    print(f'hash_catalog_response: {hash_catalog_response}')
                     err_msg = f'Duplicate value, see {hash_catalog_response["uuid"]}({hash_catalog_response["title"]})'
                     raise ValidationError({'content_filter': err_msg})
 
@@ -4387,7 +4640,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
     """
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(
-        max_length=25,
+        max_length=255,
         blank=False,
         help_text=_(
             'Specifies enterprise group name.'
@@ -4399,13 +4652,6 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         null=False,
         related_name='groups',
         on_delete=models.deletion.CASCADE
-    )
-    applies_to_all_contexts = models.BooleanField(
-        verbose_name="Set group membership to the entire org of learners.",
-        default=False,
-        help_text=_(
-            "When enabled, all learners connected to the org will be considered a member."
-        )
     )
     group_type = models.CharField(
         verbose_name="Group Type",
@@ -4444,48 +4690,6 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q))
         return [ecu.id for ecu in ecus]
 
-    def _get_implicit_group_members(self, user_query=None, pending_users_only=False):
-        """
-        Fetches all implicit members of a group, indicated by a (pending) enterprise customer user records.
-        """
-        members = []
-        customer_users = []
-
-        # Regardless of user_query, we will need all pecus related to the group's customer
-        pending_customer_users = PendingEnterpriseCustomerUser.objects.filter(
-            enterprise_customer=self.enterprise_customer,
-        )
-
-        if user_query:
-            # Get all ecus relevant to the user query
-            if not pending_users_only:
-                customer_users = EnterpriseCustomerUser.objects.filter(
-                    id__in=self._get_filtered_ecu_ids(user_query)
-                )
-            # pecu has user_email as a field, so we can filter directly
-            pending_customer_users = pending_customer_users.filter(user_email__icontains=user_query)
-        else:
-            if not pending_users_only:
-                # No filtering query so get all ecus related to the group's customer
-                customer_users = EnterpriseCustomerUser.objects.filter(
-                    enterprise_customer=self.enterprise_customer,
-                    active=True,
-                )
-        # Build an in memory array of all the implicit memberships
-        for ent_user in customer_users:
-            members.append(EnterpriseGroupMembership(
-                uuid=None,
-                enterprise_customer_user=ent_user,
-                group=self,
-            ))
-        for pending_user in pending_customer_users:
-            members.append(EnterpriseGroupMembership(
-                uuid=None,
-                pending_enterprise_customer_user=pending_user,
-                group=self,
-            ))
-        return members
-
     def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=False,):
         """
         Fetch explicitly defined members of a group, indicated by an existing membership record
@@ -4521,10 +4725,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
             are `memberDetails`, `memberStatus`, and `recentAction`. Ordering can be reversed by supplying a `-` at the
             beginning of the sorting value ie `-memberStatus`.
         """
-        if self.applies_to_all_contexts:
-            members = self._get_implicit_group_members(user_query, pending_users_only)
-        else:
-            members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
+        members = self._get_explicit_group_members(user_query, fetch_removed, pending_users_only)
         if sort_by:
             lambda_keys = {
                 'member_details': lambda t: t.member_email,
