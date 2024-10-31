@@ -1483,6 +1483,10 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
         required=False,
         help_text='Enroll even if enrollment deadline is expired.',
     )
+    is_default_auto_enrollment = serializers.BooleanField(
+        required=False,
+        help_text='Auto-enrollment for default enterprise enrollment intention.',
+    )
 
     def create(self, validated_data):
         return validated_data

@@ -5911,7 +5911,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
                 ]
             },
             'fulfillment_source': LicensedEnterpriseCourseEnrollment,
-            'expected_enrollment_realization_count': 0,
+            'expected_enrollment_realization_count': 1,
         },
         # Does NOT create DefaultEnterpriseEnrollmentRealization upon successful
         # subscription enrollment (is_default_auto_enrollment is False)
@@ -6010,11 +6010,11 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         enrollment = enrollments.first()
         assert enrollment.course_id == body['enrollments_info'][0]['course_run_key']
 
-        enrollment_realization = DefaultEnterpriseEnrollmentRealization.objects.filter(
+        enrollment_realizations = DefaultEnterpriseEnrollmentRealization.objects.filter(
             intended_enrollment=enrollment_intention,
             realized_enrollment=enrollment,
         )
-        assert len(enrollment_realization) == expected_enrollment_realization_count
+        assert len(enrollment_realizations) == expected_enrollment_realization_count
 
 
 @ddt.ddt
