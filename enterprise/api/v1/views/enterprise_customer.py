@@ -17,6 +17,7 @@ from rest_framework.status import (
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_409_CONFLICT,
+    HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
 from django.contrib import auth
@@ -460,7 +461,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
         Unlinks users with the given emails from the enterprise.
         """
-
         serializer = serializers.EnterpriseCustomerUnlinkUsersSerializer(
             data=request.data
         )
@@ -485,5 +485,29 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 except Exception as exc:
                     msg = "Could not unlink {} from {}".format(email, enterprise_customer)
                     raise UnlinkUserFromEnterpriseError(msg) from exc
+
+        return Response(status=HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, permission_classes=[permissions.IsAuthenticated])
+    def unlink_self(self, request, pk=None):  # pylint: disable=unused-argument
+        """
+        Unlink request user from the enterprise.
+        """
+        user_email = request.user.email
+        enterprise_customer = self.get_object()
+
+        try:
+            models.EnterpriseCustomerUser.objects.unlink_user(
+                enterprise_customer=enterprise_customer, user_email=user_email, is_relinkable=True
+            )
+        except (models.EnterpriseCustomerUser.DoesNotExist, models.PendingEnterpriseCustomerUser.DoesNotExist):
+            msg = "[UNLINK_SELF] User with email {} does not exist in enterprise {}.".format(
+                user_email, enterprise_customer
+            )
+            LOGGER.warning(msg)
+            return Response(status=HTTP_422_UNPROCESSABLE_ENTITY)
+        except Exception as exc:
+            msg = "[UNLINK_SELF] Could not unlink {} from {}".format(user_email, enterprise_customer)
+            raise UnlinkUserFromEnterpriseError(msg) from exc
 
         return Response(status=HTTP_200_OK)

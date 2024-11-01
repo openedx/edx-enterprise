@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.31.0]
+--------
+* feat: add new endpoint to unlink the logged in user.
+
 [4.30.1]
 --------
 * fix: serialize best_mode_for_course_run field in DefaultEnterpriseEnrollmentIntentionSerializer.
