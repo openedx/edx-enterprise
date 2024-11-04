@@ -632,6 +632,7 @@ class ContentMetadataExporter(Exporter):
                 getattr(self, f'transform_for_action_{edx_data_schema_key}', None)
             )
 
+            # pylint: disable=not-callable
             if transformer:
                 transformed_value = transformer(content_metadata_item)
             elif transformer_for_action:
