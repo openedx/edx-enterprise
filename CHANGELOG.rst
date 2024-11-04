@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.31.1]
+--------
+* fix: fixed query for monthly_impact_report command.
+
 [4.31.0]
 --------
 * feat: add new endpoint to unlink the logged in user.
