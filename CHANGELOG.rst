@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.4]
+--------
+* fix: fixed the migrations to support postgresql
+* chore: added github action to test migrations with postgresql
+
 [5.12.3]
 --------
 * chore: upgrade elliptic to 6.6.1

@@ -1,0 +1,62 @@
+name: Migrations check on postgresql
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  check_migrations:
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: enterprise
+          POSTGRES_PASSWORD: enterprise
+          POSTGRES_DB: enterprise
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    name: check migrations
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ 3.11 ]
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxmlsec1-dev
+      - name: Install Python dependencies
+        run: |
+          pip3 install --upgrade pip
+          pip3 install -r requirements/dev.txt
+          pip3 install psycopg2-binary
+
+      - name: Run migrations
+        env:
+          DB_ENGINE: django.db.backends.postgresql
+          DB_NAME: enterprise
+          DB_USER: enterprise
+          DB_PASSWORD: enterprise
+          DB_HOST: localhost
+          DB_PORT: 5432
+        run: |
+          echo "Running the migrations."
+          python3 manage.py migrate --settings=enterprise.settings.test
+
