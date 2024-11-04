@@ -17,7 +17,26 @@ class Migration(migrations.Migration):
                 index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
             ),
         ]
-    else:
+    elif 'postgresql' in db_engine:
+        operations = [
+            migrations.SeparateDatabaseAndState(
+                state_operations=[
+                    migrations.AlterIndexTogether(
+                        name='degreed2learnerdatatransmissionaudit',
+                        index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
+                    ),
+                ],
+                database_operations=[
+                    migrations.RunSQL(sql="""
+                        CREATE INDEX degreed2_dldta_85936b55_idx
+                        ON degreed2_degreed2learnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
+                    """, reverse_sql="""
+                        DROP INDEX degreed2_dldta_85936b55_idx
+                    """),
+                ]
+            ),
+        ]
+    elif 'mysql' in db_engine:
         operations = [
             migrations.SeparateDatabaseAndState(
                 state_operations=[
@@ -36,5 +55,12 @@ class Migration(migrations.Migration):
                         ON degreed2_degreed2learnerdatatransmissionaudit
                     """),
                 ]
+            ),
+        ]
+    else:
+        operations = [
+            migrations.AlterIndexTogether(
+                name='degreed2learnerdatatransmissionaudit',
+                index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
             ),
         ]
