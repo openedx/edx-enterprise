@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.31.2]
+--------
+* feat: add test cases for newly added unlink_self endpoint.
+
 [4.31.1]
 --------
 * fix: fixed query for monthly_impact_report command.
