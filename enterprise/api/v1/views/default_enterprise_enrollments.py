@@ -66,7 +66,7 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
         For non-list actions, this is what's returned by `get_queryset()`.
         For list actions, some non-strict subset of this is what's returned by `get_queryset()`.
         """
-        return models.DefaultEnterpriseEnrollmentIntention.objects.filter(
+        return models.DefaultEnterpriseEnrollmentIntention.available_objects.filter(
             enterprise_customer=self.requested_enterprise_customer_uuid,
         )
 
@@ -129,8 +129,10 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
             )
 
         # Retrieve configured default enrollment intentions for the enterprise customer
-        default_enrollment_intentions_for_customer = models.DefaultEnterpriseEnrollmentIntention.objects.filter(
-            enterprise_customer=enterprise_customer_uuid,
+        default_enrollment_intentions_for_customer = (
+            models.DefaultEnterpriseEnrollmentIntention.available_objects.filter(
+                enterprise_customer=enterprise_customer_uuid,
+            )
         )
 
         # Retrieve the course enrollments for the learner

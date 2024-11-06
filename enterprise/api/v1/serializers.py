@@ -1483,6 +1483,10 @@ class EnrollmentsInfoSerializer(serializers.Serializer):
         required=False,
         help_text='Enroll even if enrollment deadline is expired.',
     )
+    is_default_auto_enrollment = serializers.BooleanField(
+        required=False,
+        help_text='Auto-enrollment for default enterprise enrollment intention.',
+    )
 
     def create(self, validated_data):
         return validated_data
@@ -2064,7 +2068,7 @@ class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Se
         enrolled by the learner.
         """
         return {
-            'total_default_enterprise_course_enrollments': self.total_default_enrollment_intention_count(),
+            'total_default_enterprise_enrollment_intentions': self.total_default_enrollment_intention_count(),
             'total_needs_enrollment': self.needs_enrollment_counts(),
             'total_already_enrolled': self.already_enrolled_count(),
         }
