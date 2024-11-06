@@ -161,6 +161,7 @@ ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 ENTERPRISE_CUSTOMER_UNLINK_USERS_ENDPOINT = reverse('enterprise-customer-unlink-users', kwargs={'pk': FAKE_UUIDS[0]})
+ENTERPRISE_CUSTOMER_UNLINK_SELF_ENDPOINT = reverse('enterprise-customer-unlink-self', kwargs={'pk': FAKE_UUIDS[0]})
 PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
 PENDING_ENTERPRISE_CUSTOMER_ADMIN_LIST_ENDPOINT = reverse('pending-enterprise-admin-list')
 LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
@@ -2477,6 +2478,64 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             assert enterprise_customer_user_2.linked is False
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
             assert enterprise_customer_user_2.is_relinkable == is_relinkable
+
+    def test_unlink_self(self):
+        """
+        Test that a user can unlink themselves from the enterprise.
+        """
+        email = 'user@test.com'
+
+        # Create a user and set it as the request user
+        user = factories.UserFactory(email=email)
+        self.client.force_authenticate(user=user)
+
+        # Create an enterprise customer and link the user to it
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+            linked=True
+        )
+
+        # Ensure the user is initially linked
+        assert enterprise_customer_user.linked is True
+
+        # Make the unlink request
+        response = self.client.post(ENTERPRISE_CUSTOMER_UNLINK_SELF_ENDPOINT)
+
+        # Verify the response status code
+        assert response.status_code == 200
+
+        # Refresh the object from the database to check if it's unlinked
+        enterprise_customer_user.refresh_from_db()
+        assert enterprise_customer_user.linked is False
+        assert enterprise_customer_user.is_relinkable is True
+
+    def test_unlink_self_not_linked(self):
+        """
+        Test that a user cannot unlink themselves if they are not already linked to the enterprise.
+        """
+        email = 'user@test.com'
+
+        # Create a user and set it as the request user
+        user = factories.UserFactory(email=email)
+        self.client.force_authenticate(user=user)
+
+        # Create an enterprise customer and ensure the user is not linked
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], slug='test-enterprise-slug')
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+            linked=False
+        )
+
+        # Ensure the user is initially not linked
+        assert enterprise_customer_user.linked is False
+        # Make the unlink request
+        response = self.client.post(ENTERPRISE_CUSTOMER_UNLINK_SELF_ENDPOINT)
+
+        # Verify the response status code
+        assert response.status_code == 404
 
 
 @ddt.ddt
