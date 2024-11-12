@@ -6,6 +6,7 @@ from rest_framework import filters
 from rest_framework.exceptions import ValidationError
 
 from django.contrib import auth
+from django.db.models import Q
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
 
@@ -100,6 +101,19 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
 
         return queryset
 
+    def _filter_by_username_or_email(self, request, queryset):
+        """
+        Filter queryset by email or username using the single 'username_or_email' query parameter
+        """
+        username_or_email = request.query_params.get('username_or_email', None)
+
+        if username_or_email:
+            users = User.objects.filter(Q(username__icontains=username_or_email) | Q(email=username_or_email)) \
+                .values_list('id', flat=True)
+            return queryset.filter(user_id__in=users)
+
+        return queryset
+
     def _filter_by_enterprise_attributes(self, request, queryset):
         """
         Filter queryset by enterprise_customer_uuid or enterprise role.
@@ -133,7 +147,7 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
         """
-        Apply incoming filters only if user is staff. If not, only filter by user's ID.
+        Apply incoming filters only if user is staff. If not, only filter by user's ID, email, or username.
         """
         if request.user.is_staff:
             queryset = self._filter_by_user_attributes(request, queryset)
@@ -142,6 +156,7 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
         else:
             queryset = queryset.filter(user_id=request.user.id)
 
+        queryset = self._filter_by_username_or_email(request, queryset)
         return queryset
 
 
