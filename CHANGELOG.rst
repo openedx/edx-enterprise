@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.32.1]
+--------
+* feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
+
 [4.32.0]
 --------
 * feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.

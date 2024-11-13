@@ -8531,6 +8531,7 @@ class TestEnterpriseGroupViewSet(APITest):
                     },
                     'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
                     'status': 'pending',
+                    'enrollments': 0,
                 },
             )
         expected_response = {
@@ -8572,6 +8573,7 @@ class TestEnterpriseGroupViewSet(APITest):
                     },
                     'recent_action': f'Accepted: {datetime.now().strftime("%B %d, %Y")}',
                     'status': 'pending',
+                    'enrollments': 0,
                 }
             ],
         }
