@@ -4698,7 +4698,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
                 inner join auth_user au on ecu.user_id = au.id
                 left join auth_userprofile aup on au.id = aup.user_id
                 where ecu.enterprise_customer_id = %s
-            ) select * from users where email like %s or full_name like %s;
+            ) select id from users where email like %s or full_name like %s;
         """
         # Raw sql is picky about uuid format
         customer_id = str(self.enterprise_customer.pk).replace("-", "")
