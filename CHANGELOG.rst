@@ -17,9 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.32.1]
+[4.32.2]
 --------
 * feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
+* feat: updated learner query to filter by full name
+
+[4.32.1]
+--------
+* feat: enable search filter on learner data transmission audit admin views for all integrated channels.
 
 [4.32.0]
 --------

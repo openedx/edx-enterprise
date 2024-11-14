@@ -124,6 +124,14 @@ class DegreedLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditA
         "api_record",
     )
 
+    search_fields = (
+        "degreed_user_email",
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "content_title",
+        "friendly_status_message"
+    )
+
     list_per_page = 1000
 
     class Meta:
