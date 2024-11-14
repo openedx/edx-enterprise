@@ -173,6 +173,14 @@ class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(
         "api_record",
     )
 
+    search_fields = (
+        "sapsf_user_id",
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "content_title",
+        "friendly_status_message"
+    )
+
     list_per_page = 1000
 
     class Meta:

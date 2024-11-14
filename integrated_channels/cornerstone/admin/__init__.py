@@ -126,6 +126,14 @@ class CornerstoneLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAu
         "api_record",
     )
 
+    search_fields = (
+        "user_email",
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "content_title",
+        "friendly_status_message"
+    )
+
     class Meta:
         model = CornerstoneLearnerDataTransmissionAudit
 

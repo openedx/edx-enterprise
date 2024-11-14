@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.32.1]
+--------
+* feat: enable search filter on learner data transmission audit admin views for all integrated channels.
+
 [4.32.0]
 --------
 * feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.
