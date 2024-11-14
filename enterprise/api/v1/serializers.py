@@ -721,24 +721,11 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         )
 
     user = UserSerializer()
+    enterprise_customer = serializers.SerializerMethodField()
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     role_assignments = serializers.SerializerMethodField()
     enterprise_group = serializers.SerializerMethodField()
-
-    def to_representation(self, instance):
-        """
-        Override to pass the instance of `enterprise_customer` to the nested serializer.
-        """
-        representation = super().to_representation(instance)
-        enterprise_customer_instance = instance.enterprise_customer
-        enterprise_customer_serializer = EnterpriseCustomerSerializer(
-            instance=enterprise_customer_instance,
-            context=self.context
-        )
-        representation['enterprise_customer'] = enterprise_customer_serializer.data
-
-        return representation
 
     def _get_role_assignments_by_ecu_id(self, enterprise_customer_users):
         """
@@ -768,6 +755,15 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
                 instance if isinstance(instance, Iterable) else [instance]
             )
             self.role_assignments_by_ecu_id = role_assignments_by_ecu_id
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return serialization of EnterpriseCustomer associated with the EnterpriseCustomerUser.
+        """
+        return EnterpriseCustomerSerializer(
+            instance=obj.enterprise_customer,
+            context=self.context
+        ).data
 
     def get_data_sharing_consent_records(self, obj):
         """
