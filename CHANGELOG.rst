@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.32.2]
+--------
+* fix: ensure admin_users in EnterpriseCustomerUserViewSet is correct.
+
 [4.32.1]
 --------
 * feat: enable search filter on learner data transmission audit admin views for all integrated channels.
