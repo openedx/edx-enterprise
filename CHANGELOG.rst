@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.32.3]
+--------
+* chore: Update python requirements.
+
 [4.32.2]
 --------
 * fix: ensure admin_users in EnterpriseCustomerUserViewSet is correct.
