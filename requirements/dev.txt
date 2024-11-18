@@ -30,7 +30,7 @@ alabaster==1.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   sphinx
-amqp==5.2.0
+amqp==5.3.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -168,7 +168,7 @@ code-annotations==1.8.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.4
+coverage[toml]==7.6.7
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest-cov
@@ -408,7 +408,7 @@ factory-boy==3.3.1
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-faker==30.8.2
+faker==33.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
@@ -499,7 +499,7 @@ lxml[html-clean,html_clean]==5.3.0
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.3.1
+lxml-html-clean==0.4.1
     # via lxml
 markupsafe==3.0.2
     # via
