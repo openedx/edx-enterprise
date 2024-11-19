@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.33.0]
+--------
+* feat: Updated pagination for reporting configurations.
+
 [4.32.3]
 --------
 * chore: Update python requirements.
