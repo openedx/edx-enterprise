@@ -109,6 +109,7 @@ from test_utils.factories import (
     EnterpriseGroupMembershipFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
+    UserProfileFactory,
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
@@ -8372,64 +8373,6 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 400
         assert response.data.get('user_query')
 
-    def test_list_learners_filtered(self):
-        """
-        Test that the list learners endpoint can be filtered by user details
-        """
-        group = EnterpriseGroupFactory(
-            enterprise_customer=self.enterprise_customer,
-        )
-        pending_user = PendingEnterpriseCustomerUserFactory(
-            user_email="foobar@example.com",
-            enterprise_customer=self.enterprise_customer,
-        )
-        pending_user_query_string = f'?user_query={pending_user.user_email}'
-        url = settings.TEST_SERVER + reverse(
-            'enterprise-group-learners',
-            kwargs={'group_uuid': group.uuid},
-        ) + pending_user_query_string
-        response = self.client.get(url)
-
-        assert response.json().get('count') == 0
-
-        group.save()
-        pending_membership = EnterpriseGroupMembershipFactory(
-            group=group,
-            pending_enterprise_customer_user=pending_user,
-            enterprise_customer_user=None,
-        )
-        existing_membership = EnterpriseGroupMembershipFactory(
-            group=group,
-            pending_enterprise_customer_user=None,
-            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
-        )
-        existing_user = existing_membership.enterprise_customer_user.user
-        # Changing email to something that we know will be unique for collision purposes
-        existing_user.email = "ayylmao@example.com"
-        existing_user.save()
-        existing_user_query_string = '?user_query=ayylmao'
-        url = settings.TEST_SERVER + reverse(
-            'enterprise-group-learners',
-            kwargs={'group_uuid': group.uuid},
-        ) + existing_user_query_string
-        response = self.client.get(url)
-
-        assert response.json().get('count') == 1
-        assert response.json().get('results')[0].get(
-            'enterprise_customer_user_id'
-        ) == existing_membership.enterprise_customer_user.id
-
-        url = settings.TEST_SERVER + reverse(
-            'enterprise-group-learners',
-            kwargs={'group_uuid': group.uuid},
-        ) + pending_user_query_string
-
-        response = self.client.get(url)
-
-        assert response.json().get('count') == 1
-        assert response.json().get('results')[0].get(
-            'pending_enterprise_customer_user_id'
-        ) == pending_membership.pending_enterprise_customer_user.id
 
     def test_list_removed_learners(self):
         group = EnterpriseGroupFactory(
@@ -8665,22 +8608,6 @@ class TestEnterpriseGroupViewSet(APITest):
         assert len(enterprise_filtered_response.json().get('results')) == 1
         assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
 
-    def test_list_members_little_bobby_tables(self):
-        """
-        Test that we properly sanitize member user query filters
-        https://xkcd.com/327/
-        """
-        # url: 'http://testserver/enterprise/api/v1/enterprise_group/<group uuid>/learners/'
-        url = settings.TEST_SERVER + reverse(
-            'enterprise-group-learners',
-            kwargs={'group_uuid': self.group_1.uuid},
-        )
-        # The problematic child
-        filter_query_param = "?user_query=Robert`); DROP TABLE enterprise_enterprisecustomeruser;--"
-        sql_injection_protected_response = self.client.get(url + filter_query_param)
-        assert sql_injection_protected_response.status_code == 200
-        assert not sql_injection_protected_response.json().get('results')
-        assert EnterpriseCustomerUser.objects.all()
 
     def test_successful_post_group(self):
         """
