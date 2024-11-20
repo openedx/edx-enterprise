@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.2.0]
+--------
+* feat: removed custom pagination for reporting configurations.
+
 [5.1.0]
 --------
 * feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count

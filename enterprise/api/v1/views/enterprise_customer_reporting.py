@@ -6,7 +6,6 @@ from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import permissions, status
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
@@ -18,14 +17,6 @@ from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.utils import get_enterprise_customer
 
 
-class ExpandDefaultPageSize(PageNumberPagination):
-    """
-    Expands page size for the API.
-    Used to populate large reporting configurations.
-    """
-    page_size = 100
-
-
 class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer-reporting`` API endpoint.
@@ -35,7 +26,6 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
     serializer_class = serializers.EnterpriseCustomerReportingConfigurationSerializer
     lookup_field = 'uuid'
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = ExpandDefaultPageSize
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
