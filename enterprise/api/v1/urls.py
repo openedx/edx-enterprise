@@ -17,6 +17,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_branding_configuration,
     enterprise_customer_catalog,
     enterprise_customer_invite_key,
+    enterprise_customer_members,
     enterprise_customer_reporting,
     enterprise_customer_sso_configuration,
     enterprise_customer_support,
@@ -210,6 +211,11 @@ urlpatterns = [
             {'get': 'retrieve'}
         ),
         name='enterprise-customer-support'
+    ),
+    re_path(
+        r'^enterprise-customer-members/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_customer_members.EnterpriseCustomerMembersViewSet.as_view({'get': 'get_members'}),
+        name='enterprise-customer-members'
     ),
 ]
 

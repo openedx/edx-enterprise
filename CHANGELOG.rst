@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.33.1]
+--------
+* feat: Creating enterprise customer members endpoint for admin portal
+
 [4.32.0]
 --------
 * feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.

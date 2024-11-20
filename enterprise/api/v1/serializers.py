@@ -1900,6 +1900,47 @@ class EnterpriseUserSerializer(serializers.Serializer):
             return None
 
 
+class EnterpriseMembersSerializer(serializers.Serializer):
+    """
+    Serializer for EnterpriseCustomerUser model with additions.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerUser
+        fields = (
+            'enterprise_customer_user',
+            'enrollments',
+            'full_name',
+        )
+
+    # enterprise_customer_user = UserSerializer(source="user", required=False, default=None)
+    enterprise_customer_user = serializers.SerializerMethodField()
+    enrollments = serializers.SerializerMethodField()
+
+    def get_enrollments(self, obj):
+        """
+        Fetch all of user's enterprise enrollments
+        """
+        if hasattr(obj, 'user_id'):
+            user_id = obj.user_id
+            enrollments = models.EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=user_id,
+            )
+            return len(enrollments)
+        return 0
+
+    def get_enterprise_customer_user(self, obj):
+        """
+        Return either the member's name and email if it's the case that the member is realized, otherwise just email
+        """
+        if user := obj:
+            return {
+                "email": user[0],
+                "joined_org": user[1].strftime("%b %d, %Y"),
+                "name": user[2],
+            }
+        return None
+
+
 class DefaultEnterpriseEnrollmentIntentionSerializer(serializers.ModelSerializer):
     """
     Serializer for the DefaultEnterpriseEnrollmentIntention model.
