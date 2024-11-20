@@ -75,6 +75,7 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
         query = """
             WITH users AS (
                 SELECT
+                    au.id,
                     au.email,
                     au.date_joined,
                     coalesce(NULLIF(aup.name, ''), concat(au.first_name, ' ', au.last_name)) as full_name

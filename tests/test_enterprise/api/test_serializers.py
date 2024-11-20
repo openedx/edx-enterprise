@@ -588,27 +588,41 @@ class TestEnterpriseMembersSerializer(TestCase):
 
     def test_serialize_users(self):
         expected_user = {
-            'enrollments': 2,
             'enterprise_customer_user': {
                 'email': self.user_1.email,
                 'joined_org': self.user_1.date_joined.strftime("%b %d, %Y"),
                 'name': (self.user_1.first_name + ' ' + self.user_1.last_name),
             },
+            'enrollments': 2,
         }
-        serializer = EnterpriseMembersSerializer(self.enterprise_customer_user_1)
+
+        serializer_input_1 = [
+            self.user_1.id,
+            self.user_1.email,
+            self.user_1.date_joined,
+            self.user_1.first_name + ' ' + self.user_1.last_name,
+        ]
+        serializer = EnterpriseMembersSerializer(serializer_input_1)
         serialized_user = serializer.data
 
         self.assertEqual(serialized_user, expected_user)
 
         expected_user_2 = {
-            'enrollments': 1,
             'enterprise_customer_user': {
                 'email': self.user_2.email,
                 'joined_org': self.user_2.date_joined.strftime("%b %d, %Y"),
                 'name': self.user_2.first_name + ' ' + self.user_2.last_name,
             },
+            'enrollments': 1,
         }
 
-        serializer = EnterpriseMembersSerializer(self.enterprise_customer_user_2)
+        serializer_input_2 = [
+            self.user_2.id,
+            self.user_2.email,
+            self.user_2.date_joined,
+            self.user_2.first_name + ' ' + self.user_2.last_name,
+        ]
+
+        serializer = EnterpriseMembersSerializer(serializer_input_2)
         serialized_user = serializer.data
         self.assertEqual(serialized_user, expected_user_2)

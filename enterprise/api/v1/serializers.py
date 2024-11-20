@@ -1918,10 +1918,8 @@ class EnterpriseMembersSerializer(serializers.Serializer):
         fields = (
             'enterprise_customer_user',
             'enrollments',
-            'full_name',
         )
 
-    # enterprise_customer_user = UserSerializer(source="user", required=False, default=None)
     enterprise_customer_user = serializers.SerializerMethodField()
     enrollments = serializers.SerializerMethodField()
 
@@ -1929,8 +1927,8 @@ class EnterpriseMembersSerializer(serializers.Serializer):
         """
         Fetch all of user's enterprise enrollments
         """
-        if hasattr(obj, 'user_id'):
-            user_id = obj.user_id
+        if user := obj:
+            user_id = user[0]
             enrollments = models.EnterpriseCourseEnrollment.objects.filter(
                 enterprise_customer_user=user_id,
             )
@@ -1943,9 +1941,9 @@ class EnterpriseMembersSerializer(serializers.Serializer):
         """
         if user := obj:
             return {
-                "email": user[0],
-                "joined_org": user[1].strftime("%b %d, %Y"),
-                "name": user[2],
+                "email": user[1],
+                "joined_org": user[2].strftime("%b %d, %Y"),
+                "name": user[3],
             }
         return None
 
