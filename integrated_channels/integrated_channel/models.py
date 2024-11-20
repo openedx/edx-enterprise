@@ -457,6 +457,8 @@ class EnterpriseCustomerPluginConfiguration(SoftDeletionModel):
 class GenericEnterpriseCustomerPluginConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     A generic implementation of EnterpriseCustomerPluginConfiguration which can be instantiated
+
+    .. no_pii:
     """
 
     def __str__(self):
@@ -479,7 +481,7 @@ class ApiResponseRecord(TimeStampedModel):
     """
     Api response data for learner and content metadata transmissions
 
-    .. no_pii;
+    .. no_pii:
     """
     status_code = models.PositiveIntegerField(
         help_text='The most recent remote API call response HTTP status code',
@@ -891,6 +893,8 @@ class OrphanedContentTransmissions(TimeStampedModel):
     """
     A model to track content metadata transmissions that were successfully sent to the integrated channel but then
     subsequently were orphaned by a removal of their associated catalog from the customer.
+
+    .. no_pii:
     """
     class Meta:
         index_together = [('integrated_channel_code', 'plugin_configuration_id', 'resolved')]
@@ -909,6 +913,8 @@ class OrphanedContentTransmissions(TimeStampedModel):
 class IntegratedChannelAPIRequestLogs(TimeStampedModel):
     """
     A model to track basic information about every API call we make from the integrated channels.
+
+    .. no_pii:
     """
 
     enterprise_customer = models.ForeignKey(
