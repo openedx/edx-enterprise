@@ -6,58 +6,58 @@
 #
 aiohappyeyeballs==2.4.3
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
 aiohttp==3.10.10
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   openai
 aiosignal==1.3.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   kombu
 aniso8601==9.0.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-tincan-py35
 asgiref==3.8.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django
     #   django-countries
 asn1crypto==1.5.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
 attrs==24.2.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     #   openedx-events
     #   pytest
 bcrypt==4.2.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   paramiko
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
 bleach==6.1.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test-master.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 certifi==2024.8.30
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
 cffi==1.17.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   cryptography
     #   pynacl
     #   snowflake-connector-python
@@ -65,11 +65,11 @@ chardet==5.2.0
     # via diff-cover
 charset-normalizer==2.0.12
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
     #   click-didyoumean
     #   click-plugins
@@ -77,24 +77,24 @@ charset-normalizer==2.0.12
     #   code-annotations
     #   edx-django-utils
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
 click-plugins==1.1.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
 code-annotations==1.8.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.6.4
+coverage[toml]==7.6.7
     # via pytest-cov
 cryptography==43.0.3
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-fernet-fields-v2
     #   jwcrypto
     #   paramiko
@@ -106,13 +106,13 @@ ddt==1.3.1
     # via -r requirements/test.in
 defusedxml==0.7.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   djangorestframework-xml
 diff-cover==9.2.0
     # via -r requirements/test.in
     # via
-    #   -c requirements/common_constraints.txt
-    #   -r requirements/test-master.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-config-models
     #   django-crum
     #   django-fernet-fields-v2
@@ -132,77 +132,77 @@ diff-cover==9.2.0
     #   jsonfield
     #   openedx-events
 django-cache-memoize==0.2.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-config-models==2.7.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-countries==7.6.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-crum==0.7.9
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
     #   edx-rbac
     #   edx-toggles
 django-fernet-fields-v2==0.9
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-filter==24.3
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-ipware==7.0.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-model-utils==5.0.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r requirements/test.in
     #   edx-rbac
 django-multi-email-field==0.7.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-oauth-toolkit==1.7.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-object-actions==4.3.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-simple-history==3.1.1
     # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test-master.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-waffle==4.1.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
 djangorestframework==3.14.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-config-models
     #   drf-jwt
     #   drf-yasg
     #   edx-api-doc-tools
     #   edx-drf-extensions
 djangorestframework-xml==2.0.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 dnspython==2.7.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   pymongo
 drf-jwt==1.19.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-drf-extensions
 drf-yasg==1.21.8
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-api-doc-tools
 edx-api-doc-tools==2.0.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-braze-client==0.2.5
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-ccx-keys==1.3.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   openedx-events
 edx-django-utils==7.0.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -210,174 +210,174 @@ edx-django-utils==7.0.0
     #   openedx-events
 edx-drf-extensions==10.5.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-rbac
 edx-opaque-keys[django]==2.11.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-ccx-keys
     #   edx-drf-extensions
     #   openedx-events
 edx-rbac==1.10.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-rest-api-client==6.0.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-tincan-py35==1.0.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-toggles==5.2.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 factory-boy==3.3.1
     # via
-    #   -c requirements/constraints.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
-faker==30.8.2
+faker==33.0.0
     # via factory-boy
 fastavro==1.9.7
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   openedx-events
 filelock==3.16.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
 freezegun==0.3.14
     # via
-    #   -c requirements/constraints.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
 frozenlist==1.5.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     #   aiosignal
 idna==3.10
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
     #   yarl
 inflection==0.5.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   drf-yasg
 iniconfig==2.0.0
     # via pytest
 jinja2==3.1.4
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   code-annotations
     #   diff-cover
 jsondiff==2.2.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 jsonfield==3.1.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 jwcrypto==1.5.6
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-oauth-toolkit
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
 markupsafe==3.0.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   jinja2
 mock==3.0.5
     # via
-    #   -c requirements/constraints.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
 multidict==6.1.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     #   yarl
 newrelic==10.2.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
 oauthlib==3.2.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-oauth-toolkit
 openai==0.28.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 openedx-events==9.15.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 packaging==24.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   drf-yasg
     #   pytest
     #   snowflake-connector-python
 paramiko==3.5.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 path==16.11.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   path-py
 path-py==12.5.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 pbr==6.1.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   stevedore
 pgpy==0.6.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 pillow==11.0.0
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 platformdirs==4.3.6
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
 pluggy==1.5.0
     # via
     #   diff-cover
     #   pytest
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   click-repl
 propcache==0.2.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   yarl
 psutil==6.1.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
 py==1.11.0
     # via pytest
 pyasn1==0.6.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   pgpy
 pycparser==2.22
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   cffi
 pygments==2.18.0
     # via diff-cover
 pyjwt[crypto]==2.9.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
 pymongo==4.4.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-opaque-keys
 pynacl==1.5.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
     #   paramiko
 pyopenssl==24.2.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
 pytest==6.2.5
     # via
-    #   -c requirements/constraints.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   pytest-cov
     #   pytest-django
 pytest-cov==6.0.0
@@ -386,34 +386,34 @@ pytest-django==4.5.2
     # via -r requirements/test.in
 python-dateutil==2.9.0.post0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
     #   faker
     #   freezegun
 python-ipware==3.0.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-ipware
 python-slugify==8.0.4
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   code-annotations
 pytz==2024.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   djangorestframework
     #   drf-yasg
     #   edx-tincan-py35
     #   snowflake-connector-python
 pyyaml==6.0.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   code-annotations
     #   drf-yasg
     #   jsondiff
 requests==2.32.3
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-oauth-toolkit
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -423,17 +423,17 @@ requests==2.32.3
     #   snowflake-connector-python
 responses==0.10.15
     # via
-    #   -c requirements/constraints.txt
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
 rules==3.5
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 semantic-version==2.10.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-drf-extensions
 six==1.16.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   bleach
     #   edx-ccx-keys
     #   edx-rbac
@@ -442,44 +442,44 @@ six==1.16.0
     #   python-dateutil
     #   responses
 slumber==0.7.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 snowflake-connector-python==3.12.3
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
 sqlparse==0.5.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django
 stevedore==5.3.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
 testfixtures==8.3.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r requirements/test.in
 text-unidecode==1.3
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   python-slugify
 toml==0.10.2
     # via pytest
 tomlkit==0.13.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
 tqdm==4.66.6
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   openai
 typing-extensions==4.12.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-countries
     #   edx-opaque-keys
     #   faker
@@ -487,35 +487,35 @@ typing-extensions==4.12.2
     #   snowflake-connector-python
 tzdata==2024.2
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
     #   kombu
 unicodecsv==0.14.1
-    # via -r requirements/test-master.txt
+    # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 uritemplate==4.1.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   drf-yasg
 urllib3==2.2.3
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   requests
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   amqp
     #   celery
     #   kombu
 wcwidth==0.2.13
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   prompt-toolkit
 webencodings==0.5.1
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   bleach
 yarl==1.17.0
     # via
-    #   -r requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:

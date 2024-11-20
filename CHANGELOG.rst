@@ -21,6 +21,22 @@ Unreleased
 --------
 * feat: Creating enterprise customer members endpoint for admin portal
 
+[4.33.0]
+--------
+* feat: Updated pagination for reporting configurations.
+
+[4.32.3]
+--------
+* chore: Update python requirements.
+
+[4.32.2]
+--------
+* fix: ensure admin_users in EnterpriseCustomerUserViewSet is correct.
+
+[4.32.1]
+--------
+* feat: enable search filter on learner data transmission audit admin views for all integrated channels.
+
 [4.32.0]
 --------
 * feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.

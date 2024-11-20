@@ -721,7 +721,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         )
 
     user = UserSerializer()
-    enterprise_customer = EnterpriseCustomerSerializer()
+    enterprise_customer = serializers.SerializerMethodField()
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     role_assignments = serializers.SerializerMethodField()
@@ -755,6 +755,15 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
                 instance if isinstance(instance, Iterable) else [instance]
             )
             self.role_assignments_by_ecu_id = role_assignments_by_ecu_id
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return serialization of EnterpriseCustomer associated with the EnterpriseCustomerUser.
+        """
+        return EnterpriseCustomerSerializer(
+            instance=obj.enterprise_customer,
+            context=self.context
+        ).data
 
     def get_data_sharing_consent_records(self, obj):
         """
