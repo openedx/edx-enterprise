@@ -19,6 +19,7 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
+    EnterpriseMembersSerializer,
     EnterpriseUserSerializer,
     ImmutableStateSerializer,
 )
@@ -455,7 +456,7 @@ class TestEnterpriseUserSerializer(TestCase):
 
         super().setUp()
 
-        # setup Enteprise Customer
+        # setup Enterprise Customer
         self.user_1 = factories.UserFactory()
         self.user_2 = factories.UserFactory()
         self.enterprise_customer_user_1 = factories.EnterpriseCustomerUserFactory(user_id=self.user_1.id)
@@ -558,3 +559,70 @@ class TestEnterpriseUserSerializer(TestCase):
             serialized_pending_admin_user = serializer.data
 
             self.assertEqual(expected_pending_admin_user, serialized_pending_admin_user)
+
+
+class TestEnterpriseMembersSerializer(TestCase):
+    """
+    Tests for EnterpriseMembersSerializer.
+    """
+    def setUp(self):
+        super().setUp()
+
+        # setup Enterprise Customer
+        self.user_1 = factories.UserFactory()
+        self.user_2 = factories.UserFactory()
+        self.enterprise_customer_user_1 = factories.EnterpriseCustomerUserFactory(user_id=self.user_1.id)
+        self.enterprise_customer_user_2 = factories.EnterpriseCustomerUserFactory(user_id=self.user_2.id)
+        self.enterprise_customer_1 = self.enterprise_customer_user_1.enterprise_customer
+        self.enterprise_customer_2 = self.enterprise_customer_user_2.enterprise_customer
+
+        self.enrollment_1 = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+        )
+        self.enrollment_2 = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user_1,
+        )
+        self.enrollment_3 = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user_2,
+        )
+
+    def test_serialize_users(self):
+        expected_user = {
+            'enterprise_customer_user': {
+                'email': self.user_1.email,
+                'joined_org': self.user_1.date_joined.strftime("%b %d, %Y"),
+                'name': (self.user_1.first_name + ' ' + self.user_1.last_name),
+            },
+            'enrollments': 2,
+        }
+
+        serializer_input_1 = [
+            self.user_1.id,
+            self.user_1.email,
+            self.user_1.date_joined,
+            self.user_1.first_name + ' ' + self.user_1.last_name,
+        ]
+        serializer = EnterpriseMembersSerializer(serializer_input_1)
+        serialized_user = serializer.data
+
+        self.assertEqual(serialized_user, expected_user)
+
+        expected_user_2 = {
+            'enterprise_customer_user': {
+                'email': self.user_2.email,
+                'joined_org': self.user_2.date_joined.strftime("%b %d, %Y"),
+                'name': self.user_2.first_name + ' ' + self.user_2.last_name,
+            },
+            'enrollments': 1,
+        }
+
+        serializer_input_2 = [
+            self.user_2.id,
+            self.user_2.email,
+            self.user_2.date_joined,
+            self.user_2.first_name + ' ' + self.user_2.last_name,
+        ]
+
+        serializer = EnterpriseMembersSerializer(serializer_input_2)
+        serialized_user = serializer.data
+        self.assertEqual(serialized_user, expected_user_2)

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.33.1]
+--------
+* feat: Creating enterprise customer members endpoint for admin portal
+
 [4.33.0]
 --------
 * feat: Updated pagination for reporting configurations.
