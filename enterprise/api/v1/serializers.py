@@ -734,7 +734,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
         )
 
     user = UserSerializer()
-    enterprise_customer = EnterpriseCustomerSerializer()
+    enterprise_customer = serializers.SerializerMethodField()
     data_sharing_consent_records = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
     role_assignments = serializers.SerializerMethodField()
@@ -768,6 +768,15 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
                 instance if isinstance(instance, Iterable) else [instance]
             )
             self.role_assignments_by_ecu_id = role_assignments_by_ecu_id
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return serialization of EnterpriseCustomer associated with the EnterpriseCustomerUser.
+        """
+        return EnterpriseCustomerSerializer(
+            instance=obj.enterprise_customer,
+            context=self.context
+        ).data
 
     def get_data_sharing_consent_records(self, obj):
         """
@@ -1911,6 +1920,45 @@ class EnterpriseUserSerializer(serializers.Serializer):
             return role_assignments_by_ecu_id
         else:
             return None
+
+
+class EnterpriseMembersSerializer(serializers.Serializer):
+    """
+    Serializer for EnterpriseCustomerUser model with additions.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerUser
+        fields = (
+            'enterprise_customer_user',
+            'enrollments',
+        )
+
+    enterprise_customer_user = serializers.SerializerMethodField()
+    enrollments = serializers.SerializerMethodField()
+
+    def get_enrollments(self, obj):
+        """
+        Fetch all of user's enterprise enrollments
+        """
+        if user := obj:
+            user_id = user[0]
+            enrollments = models.EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=user_id,
+            )
+            return len(enrollments)
+        return 0
+
+    def get_enterprise_customer_user(self, obj):
+        """
+        Return either the member's name and email if it's the case that the member is realized, otherwise just email
+        """
+        if user := obj:
+            return {
+                "email": user[1],
+                "joined_org": user[2].strftime("%b %d, %Y"),
+                "name": user[3],
+            }
+        return None
 
 
 class DefaultEnterpriseEnrollmentIntentionSerializer(serializers.ModelSerializer):

@@ -556,6 +556,37 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         response = self.load_json(response.content)
         assert response['enterprise_features'] is not None
 
+    def test_get_enterprise_customer_user_contains_admin_users(self):
+        """
+        Assert whether the paginated response contains `enterprise_customer.admin_users`.
+        """
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        admin_user = factories.UserFactory()
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            role=admin_role(),
+            user=admin_user,
+            enterprise_customer=enterprise_customer
+        )
+        response = self.client.get(
+            '{host}{path}?username={username}'.format(
+                host=settings.TEST_SERVER,
+                path=ENTERPRISE_LEARNER_LIST_ENDPOINT,
+                username=user.username
+            )
+        )
+        response = self.load_json(response.content)
+        assert response['results'][0]['enterprise_customer']['admin_users'] == [
+            {
+                'email': admin_user.email,
+                'lms_user_id': admin_user.id,
+            }
+        ]
+
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])

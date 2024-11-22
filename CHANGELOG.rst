@@ -17,10 +17,26 @@ Unreleased
 ----------
 * nothing unreleased
 
-[4.32.2]
+[4.33.2]
 --------
 * feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
 * feat: updated learner query to filter by full name
+
+[4.33.1]
+--------
+* feat: Creating enterprise customer members endpoint for admin portal
+
+[4.33.0]
+--------
+* feat: Updated pagination for reporting configurations.
+
+[4.32.3]
+--------
+* chore: Update python requirements.
+
+[4.32.2]
+--------
+* fix: ensure admin_users in EnterpriseCustomerUserViewSet is correct.
 
 [4.32.1]
 --------
