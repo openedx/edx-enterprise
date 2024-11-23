@@ -4693,7 +4693,9 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         var_q = f"%{user_query}%"
         sql_string = """
             with users as (
-                select ecu.id, au.email, coalesce(aup.name, concat(au.first_name, ' ', au.last_name)) as full_name
+                select ecu.id,
+                au.email,
+                coalesce(NULLIF(aup.name, ''), (au.first_name || ' ' || au.last_name)) as full_name
                 from enterprise_enterprisecustomeruser ecu
                 inner join auth_user au on ecu.user_id = au.id
                 left join auth_userprofile aup on au.id = aup.user_id

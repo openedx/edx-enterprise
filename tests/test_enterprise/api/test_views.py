@@ -109,7 +109,6 @@ from test_utils.factories import (
     EnterpriseGroupMembershipFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
-    UserProfileFactory,
 )
 from test_utils.fake_enterprise_api import get_default_branding_object
 
@@ -8404,7 +8403,6 @@ class TestEnterpriseGroupViewSet(APITest):
         assert response.status_code == 400
         assert response.data.get('user_query')
 
-
     def test_list_removed_learners(self):
         group = EnterpriseGroupFactory(
             enterprise_customer=self.enterprise_customer,
@@ -8638,7 +8636,6 @@ class TestEnterpriseGroupViewSet(APITest):
         enterprise_filtered_response = self.client.get(url + enterprise_query_param)
         assert len(enterprise_filtered_response.json().get('results')) == 1
         assert learner_filtered_response.json().get('results')[0].get('uuid') == str(new_group.uuid)
-
 
     def test_successful_post_group(self):
         """
