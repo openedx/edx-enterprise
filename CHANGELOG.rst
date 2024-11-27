@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.0.0]
+--------
+* refactor: Removed `plotly_token/` API endpoint and related views from enterprise API.
+
 [4.33.1]
 --------
 * feat: Creating enterprise customer members endpoint for admin portal
