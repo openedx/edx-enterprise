@@ -31,6 +31,7 @@ edx-tincan-py35
 edx-toggles
 jsondiff
 jsonfield
+openedx-events
 paramiko
 path.py
 pillow

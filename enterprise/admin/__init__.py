@@ -43,6 +43,7 @@ from enterprise.admin.views import (
 )
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
+from enterprise.models import DefaultEnterpriseEnrollmentIntention
 from enterprise.utils import (
     discovery_query_url,
     get_all_field_names,
@@ -109,6 +110,34 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
         return formset
 
 
+class EnterpriseCustomerDefaultEnterpriseEnrollmentIntentionInline(admin.TabularInline):
+    """
+    Django admin model for EnterpriseCustomerCatalog.
+    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
+    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
+    """
+
+    model = models.DefaultEnterpriseEnrollmentIntention
+    fields = ('content_key', 'course_key', 'course_run_key_for_enrollment',)
+    readonly_fields = ('course_key', 'course_run_key_for_enrollment',)
+    extra = 0
+    can_delete = True
+
+    @admin.display(description='Course key')
+    def course_key(self, obj):
+        """
+        Returns the course run key.
+        """
+        return obj.course_key
+
+    @admin.display(description='Course run key for enrollment')
+    def course_run_key_for_enrollment(self, obj):
+        """
+        Returns the course run key.
+        """
+        return obj.course_run_key
+
+
 class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
     """
     Django admin inline model for PendingEnterpriseCustomerAdminUser.
@@ -161,10 +190,9 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         'name',
         'slug',
         'customer_type',
-        'site',
         'country',
         'active',
-        'has_logo',
+        'enable_learner_portal',
         'enable_dsc',
         'has_identity_provider',
         'uuid',
@@ -228,6 +256,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         EnterpriseCustomerBrandingConfigurationInline,
         EnterpriseCustomerIdentityProviderInline,
         EnterpriseCustomerCatalogInline,
+        EnterpriseCustomerDefaultEnterpriseEnrollmentIntentionInline,
         PendingEnterpriseCustomerAdminUserInline,
     ]
 
@@ -1222,8 +1251,8 @@ class EnterpriseGroupAdmin(admin.ModelAdmin):
     Django admin for EnterpriseGroup model.
     """
     model = models.EnterpriseGroup
-    list_display = ('uuid', 'enterprise_customer', 'applies_to_all_contexts', )
-    list_filter = ('applies_to_all_contexts',)
+    list_display = ('uuid', 'enterprise_customer', )
+    list_filter = ('group_type',)
     search_fields = (
         'uuid',
         'name',
@@ -1254,7 +1283,8 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
     Django admin for EnterpriseGroupMembership model.
     """
     model = models.EnterpriseGroupMembership
-    list_display = ('group', 'membership_user',)
+    list_display = ('group', 'membership_user', 'is_removed')
+    list_filter = ('is_removed',)
     search_fields = (
         'uuid',
         'group__uuid',
@@ -1268,6 +1298,22 @@ class EnterpriseGroupMembershipAdmin(admin.ModelAdmin):
         'pending_enterprise_customer_user',
     )
 
+    def get_queryset(self, request):
+        """
+        Return a QuerySet of all model instances.
+        """
+        show_soft_deletes = request.GET.get('is_removed__exact', False)
+        if show_soft_deletes:
+            qs = self.model.all_objects.get_queryset()
+        else:
+            qs = self.model.available_objects.get_queryset()
+
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+
+        return qs
+
 
 @admin.register(models.LearnerCreditEnterpriseCourseEnrollment)
 class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
@@ -1278,7 +1324,6 @@ class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'uuid',
         'fulfillment_type',
         'enterprise_course_enrollment',
-        'is_revoked',
         'modified',
     )
 
@@ -1300,3 +1345,69 @@ class LearnerCreditEnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     class Meta:
         fields = '__all__'
         model = models.LearnerCreditEnterpriseCourseEnrollment
+
+
+@admin.register(models.DefaultEnterpriseEnrollmentIntention)
+class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
+    """
+    Django admin model for DefaultEnterpriseEnrollmentIntentions.
+    """
+    list_display = (
+        'uuid',
+        'enterprise_customer',
+        'content_key',
+        'content_type',
+        'is_removed',
+    )
+
+    list_filter = ('is_removed',)
+
+    fields = (
+        'enterprise_customer',
+        'content_key',
+        'uuid',
+        'is_removed',
+        'content_type',
+        'course_key',
+        'course_run_key',
+        'created',
+        'modified',
+    )
+
+    readonly_fields = (
+        'uuid',
+        'content_type',
+        'course_key',
+        'course_run_key',
+        'created',
+        'modified',
+    )
+
+    search_fields = (
+        'uuid',
+        'enterprise_customer__uuid',
+        'content_key',
+    )
+
+    ordering = ('-modified',)
+
+    class Meta:
+        model = models.DefaultEnterpriseEnrollmentIntention
+
+    def get_queryset(self, request):
+        """
+        Return a QuerySet of all model instances.
+        """
+        return self.model.all_objects.get_queryset()
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        """
+        Customize the form field for the `is_removed` field.
+        """
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+
+        if db_field.name == 'is_removed':
+            formfield.help_text = 'Whether this record is soft-deleted. Soft-deleted records ' \
+                'are not used but may be re-enabled if needed.'
+
+        return formfield

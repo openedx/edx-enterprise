@@ -17,6 +17,7 @@ from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.constants import FulfillmentTypes
 from enterprise.models import (
     AdminNotification,
+    DefaultEnterpriseEnrollmentIntention,
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
@@ -1115,7 +1116,6 @@ class EnterpriseGroupFactory(factory.django.DjangoModelFactory):
         model = EnterpriseGroup
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
-    applies_to_all_contexts = False
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     name = factory.LazyAttribute(lambda x: FAKER.company())
 
@@ -1138,3 +1138,23 @@ class EnterpriseGroupMembershipFactory(factory.django.DjangoModelFactory):
     group = factory.SubFactory(EnterpriseGroupFactory)
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
     pending_enterprise_customer_user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)
+
+
+class DefaultEnterpriseEnrollmentIntentionFactory(factory.django.DjangoModelFactory):
+    """
+    DefaultEnterpriseEnrollmentIntention factory.
+
+    Creates an instance of the DefaultEnterpriseEnrollmentIntention
+    """
+
+    class Meta:
+        """
+        Meta for DefaultEnterpriseEnrollmentIntention.
+        """
+
+        model = DefaultEnterpriseEnrollmentIntention
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    content_type = DefaultEnterpriseEnrollmentIntention.COURSE
+    content_key = "edX+DemoX"

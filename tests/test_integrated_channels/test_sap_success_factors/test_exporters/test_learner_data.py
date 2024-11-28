@@ -42,11 +42,11 @@ class TestSAPSuccessFactorLearnerDataExporter(unittest.TestCase):
         )
         self.enterprise_config = SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            key="client_id",
+            decrypted_key="client_id",
             sapsf_base_url="http://test.successfactors.com/",
             sapsf_company_id="company_id",
             sapsf_user_id="user_id",
-            secret="client_secret"
+            decrypted_secret="client_secret"
         )
 
     def test_unique_enrollment_id_course_id_constraint(self):
@@ -120,6 +120,7 @@ class TestSAPSuccessFactorLearnerDataExporter(unittest.TestCase):
         user = UserFactory()
         completed_date = None
         grade = 'Pass'
+        progress_status = 'Passed'
         course_completed = False
         enterprise_enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user
@@ -130,7 +131,8 @@ class TestSAPSuccessFactorLearnerDataExporter(unittest.TestCase):
             enterprise_enrollment,
             completed_date,
             grade,
-            course_completed
+            course_completed,
+            progress_status
         )[0]
         learner_data_records_1.save()
         learner_data_records_2 = exporter.get_learner_data_records(

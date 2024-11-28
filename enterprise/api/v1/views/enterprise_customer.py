@@ -4,6 +4,7 @@ Views for the ``enterprise-customer`` API endpoint.
 
 from urllib.parse import quote_plus, unquote
 
+import crum
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from rest_framework import filters, permissions
@@ -16,6 +17,7 @@ from rest_framework.status import (
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_409_CONFLICT,
+    HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
 from django.contrib import auth
@@ -30,10 +32,13 @@ from enterprise.api.filters import EnterpriseLinkedUserFilterBackend
 from enterprise.api.pagination import PaginationWithFeatureFlags
 from enterprise.api.throttles import HighServiceUserThrottle
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.decorators import has_permission_or_group, require_at_least_one_query_parameter
+from enterprise.api.v1.decorators import has_any_permissions, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
-from enterprise.constants import PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, PROVISIONING_ADMINS_GROUP
+from enterprise.constants import (
+    ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
+)
 from enterprise.errors import LinkUserToEnterpriseError, UnlinkUserFromEnterpriseError
 from enterprise.logging import getEnterpriseLogger
 from enterprise.utils import (
@@ -69,8 +74,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Allow PAs to access all enterprise customers by modifying filter_backends
         """
         queryset = self.queryset
-        if self.action in ('create', 'partial_update', 'update', 'retrieve', 'list') and \
-                self.request.user.groups.filter(name=PROVISIONING_ADMINS_GROUP).exists():
+        crum.set_current_request(self.request)
+        is_provisioning_admin = self.request.user.has_perm(ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
+        if is_provisioning_admin:
             self.filter_backends = (
                 filters.OrderingFilter, DjangoFilterBackend)
             return queryset
@@ -119,27 +125,34 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=unused-argument
     def support_tool(self, request, *arg, **kwargs):
         """
-        Enterprise Customer's detail data for the support tool
+        Enterprise Customer's detail data with pagination for the support tool
 
         Supported query param:
         - uuid: filter the enterprise customer uuid .
+        - user_query: filter the enterprise customer name.
         """
         enterprise_uuid = request.GET.get('uuid')
+        user_query = request.GET.get("user_query", None)
         queryset = self.get_queryset().order_by('name')
+        if user_query:
+            queryset = queryset.filter(Q(slug__icontains=user_query) | Q(name__icontains=user_query))
         if enterprise_uuid:
             queryset = queryset.filter(uuid=enterprise_uuid)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
-    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP))
+    @has_any_permissions('enterprise.can_access_admin_dashboard',
+                         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION)
     def create(self, request, *args, **kwargs):
         """
         POST /enterprise/api/v1/enterprise-customer/
         """
         return super().create(request, *args, **kwargs)
 
-    @method_decorator(has_permission_or_group('enterprise.can_access_admin_dashboard', PROVISIONING_ADMINS_GROUP,
-                                              fn=lambda request, pk: pk))
+    @has_any_permissions('enterprise.can_access_admin_dashboard',
+                         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+                         fn=lambda request, pk: pk)
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
@@ -448,7 +461,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
         Unlinks users with the given emails from the enterprise.
         """
-
         serializer = serializers.EnterpriseCustomerUnlinkUsersSerializer(
             data=request.data
         )
@@ -473,5 +485,29 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 except Exception as exc:
                     msg = "Could not unlink {} from {}".format(email, enterprise_customer)
                     raise UnlinkUserFromEnterpriseError(msg) from exc
+
+        return Response(status=HTTP_200_OK)
+
+    @action(methods=['post'], detail=True, permission_classes=[permissions.IsAuthenticated])
+    def unlink_self(self, request, pk=None):  # pylint: disable=unused-argument
+        """
+        Unlink request user from the enterprise.
+        """
+        user_email = request.user.email
+        enterprise_customer = self.get_object()
+
+        try:
+            models.EnterpriseCustomerUser.objects.unlink_user(
+                enterprise_customer=enterprise_customer, user_email=user_email, is_relinkable=True
+            )
+        except (models.EnterpriseCustomerUser.DoesNotExist, models.PendingEnterpriseCustomerUser.DoesNotExist):
+            msg = "[UNLINK_SELF] User with email {} does not exist in enterprise {}.".format(
+                user_email, enterprise_customer
+            )
+            LOGGER.warning(msg)
+            return Response(status=HTTP_422_UNPROCESSABLE_ENTITY)
+        except Exception as exc:
+            msg = "[UNLINK_SELF] Could not unlink {} from {}".format(user_email, enterprise_customer)
+            raise UnlinkUserFromEnterpriseError(msg) from exc
 
         return Response(status=HTTP_200_OK)

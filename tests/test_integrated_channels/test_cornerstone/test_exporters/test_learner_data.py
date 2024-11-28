@@ -43,6 +43,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self.user_guid = "fake-guid"
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.course_key = 'edX+DemoX'
+        self.progress_status = 'In Progress'
+        self.content_title = 'DemoX'
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
             enable_audit_enrollment=True,
             enable_audit_data_reporting=True,
@@ -89,6 +91,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             callback_url=self.callback_url,
             subdomain=self.subdomain,
             course_id=course_key,
+            progress_status=self.progress_status,
+            content_title=self.content_title,
             user_guid=self.user_guid
         )
         return enterprise_course_enrollment
@@ -103,6 +107,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         learner_data_records = exporter.get_learner_data_records(
             self.enterprise_course_enrollment,
             completed_date=completed_date,
+            progress_status=self.progress_status,
+            content_title=self.content_title,
             course_completed=True,
         )
         assert learner_data_records[0].course_id == self.course_key
@@ -111,6 +117,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         assert learner_data_records[0].subdomain == self.subdomain
         assert learner_data_records[0].callback_url == self.callback_url
         assert learner_data_records[0].session_token == self.session_token
+        assert learner_data_records[0].progress_status == self.progress_status
+        assert learner_data_records[0].content_title == self.content_title
         assert learner_data_records[0].course_completed
         assert learner_data_records[0].enterprise_course_enrollment_id == self.enterprise_course_enrollment.id
         assert learner_data_records[0].completed_timestamp == (
@@ -124,9 +132,15 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         """
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
         exporter = CornerstoneLearnerExporter('fake-user', self.config)
-        learner_data_records_1 = exporter.get_learner_data_records(self.enterprise_course_enrollment)[0]
+        learner_data_records_1 = exporter.get_learner_data_records(
+            self.enterprise_course_enrollment,
+            progress_status='In Progress'
+        )[0]
         learner_data_records_1.save()
-        learner_data_records_2 = exporter.get_learner_data_records(self.enterprise_course_enrollment)[0]
+        learner_data_records_2 = exporter.get_learner_data_records(
+            self.enterprise_course_enrollment,
+            progress_status='In Progress'
+        )[0]
         learner_data_records_2.save()
 
         assert learner_data_records_1.id == learner_data_records_2.id

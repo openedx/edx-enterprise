@@ -9,8 +9,8 @@ from unittest.mock import ANY
 from urllib.parse import urlencode
 
 import ddt
-from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
+from slumber.exceptions import HttpClientError
 
 from django.conf import settings
 from django.contrib import auth
@@ -988,7 +988,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1062,7 +1064,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         enrollment_count = 0
         user = None
@@ -1170,7 +1174,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1221,7 +1227,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1269,7 +1277,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1310,7 +1320,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.get_course_enrollment.return_value = None
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1355,7 +1367,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1405,7 +1419,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1438,7 +1454,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
@@ -1637,7 +1655,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         enrollment_instance = enrollment_client.return_value
         course_catalog_instance = course_catalog_client.return_value
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = course_in_catalog
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': course_in_catalog,
+        }
         create_enrollment_audit_mock.return_value = True
         enroll_users_in_course_mock.return_value = [user], [], []
 
@@ -1680,7 +1700,6 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         bulk_upload_errors = []
         if manage_learners_form:
             bulk_upload_errors = manage_learners_form.errors[ManageLearnersForm.Fields.BULK_UPLOAD]
-            print('bulk_upload_errors', bulk_upload_errors)
 
         if valid_course_id and course_in_catalog:
             # valid input, no errors
@@ -1823,7 +1842,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         self._login()
         user = UserFactory.create()
@@ -1879,7 +1900,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         self._login()
         user = UserFactory.create()
@@ -1928,7 +1951,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
 
         self._login()
         user = UserFactory.create()

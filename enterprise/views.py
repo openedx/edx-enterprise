@@ -13,9 +13,9 @@ import pytz
 import waffle  # pylint: disable=invalid-django-waffle-import
 from dateutil.parser import parse
 from edx_django_utils import monitoring
-from edx_rest_api_client.exceptions import HttpClientError
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
+from slumber.exceptions import HttpClientError
 
 from django.apps import apps
 from django.conf import settings
@@ -110,7 +110,7 @@ LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_PROGRAMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard/programs/{uuid}')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
-LMS_LOGIN_URL = urljoin(settings.LMS_ROOT_URL, '/login')
+LMS_REGISTER_URL = urljoin(settings.LMS_ROOT_URL, '/register')
 ENTERPRISE_GENERAL_ERROR_PAGE = 'enterprise/enterprise_error_page_with_messages.html'
 
 # Constants used for logging errors that occur during
@@ -1023,7 +1023,7 @@ class EnterpriseProxyLoginView(View):
         """
         Redirects a learner through login with their enterprise's third party auth if it uses tpa.
         """
-        redirect_to = LMS_LOGIN_URL
+        redirect_to = LMS_REGISTER_URL
         (scheme, netloc, path, query, fragment) = list(urlsplit(redirect_to))
         query_dict = parse_qs(query)
         query_params = request.GET

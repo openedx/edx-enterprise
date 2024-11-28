@@ -9,6 +9,7 @@ from django.urls import re_path
 from enterprise.api.v1.views import (
     analytics_summary,
     coupon_codes,
+    default_enterprise_enrollments,
     enterprise_catalog_query,
     enterprise_course_enrollment,
     enterprise_customer,
@@ -16,6 +17,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_branding_configuration,
     enterprise_customer_catalog,
     enterprise_customer_invite_key,
+    enterprise_customer_members,
     enterprise_customer_reporting,
     enterprise_customer_sso_configuration,
     enterprise_customer_support,
@@ -81,6 +83,11 @@ router.register(
 )
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
+)
+router.register(
+    "default-enterprise-enrollment-intentions",
+    default_enterprise_enrollments.DefaultEnterpriseEnrollmentIntentionViewSet,
+    'default-enterprise-enrollment-intentions'
 )
 
 
@@ -204,6 +211,11 @@ urlpatterns = [
             {'get': 'retrieve'}
         ),
         name='enterprise-customer-support'
+    ),
+    re_path(
+        r'^enterprise-customer-members/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
+        enterprise_customer_members.EnterpriseCustomerMembersViewSet.as_view({'get': 'get_members'}),
+        name='enterprise-customer-members'
     ),
 ]
 

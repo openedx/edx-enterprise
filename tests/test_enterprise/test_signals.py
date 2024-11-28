@@ -41,6 +41,7 @@ from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     EnterpriseGroupMembershipFactory,
+    LearnerCreditEnterpriseCourseEnrollmentFactory,
     PendingEnrollmentFactory,
     PendingEnterpriseCustomerAdminUserFactory,
     PendingEnterpriseCustomerUserFactory,
@@ -830,6 +831,7 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
 
 
 @mark.django_db
+@ddt.ddt
 class TestCourseEnrollmentSignals(TestCase):
     """
     Tests signals associated with CourseEnrollments (that are found in edx-platform).
@@ -897,16 +899,26 @@ class TestCourseEnrollmentSignals(TestCase):
         create_enterprise_enrollment_receiver(sender, instance, **kwargs)
         mock_task.assert_not_called()
 
-    def test_course_enrollment_changed_receiver(self):
+    @ddt.data(True, False)
+    def test_course_enrollment_changed_receiver(self, create_related_lc_fulfillment):
         """
         Test receiver that is supposed to handle course enrollments being reactivated (re-enrolled).
         """
         # Create an unenrolled EnterpriseCourseEnrollment.
         enterprise_enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
+            saved_for_later=True,
             unenrolled=True,
             unenrolled_at=datetime.now() - timedelta(days=1),
         )
+
+        # Optionally create a revoked LearnerCreditEnterpriseCourseEnrollment.
+        lc_fulfillment = None
+        if create_related_lc_fulfillment:
+            lc_fulfillment = LearnerCreditEnterpriseCourseEnrollmentFactory(
+                enterprise_course_enrollment=enterprise_enrollment,
+                is_revoked=True,
+            )
 
         # Simulate a previously inactive course enrollment being re-activated.
         mock_enrollment_data = mock.Mock()
@@ -921,19 +933,35 @@ class TestCourseEnrollmentSignals(TestCase):
         # Make sure the previously inactive enterprise enrollment has now been re-activated in response to the system
         # enrollment being re-activated.
         enterprise_enrollment.refresh_from_db()
+        assert enterprise_enrollment.saved_for_later is False
         assert enterprise_enrollment.unenrolled is False
         assert enterprise_enrollment.unenrolled_at is None
 
-    def test_enterprise_unenrollment_receiver(self):
+        # Make sure the related LC fulfillment is SILL REVOKED. Fulfillment re-activation is unsupported.
+        if create_related_lc_fulfillment:
+            lc_fulfillment.refresh_from_db()
+            assert lc_fulfillment.is_revoked is True
+
+    @mock.patch('enterprise.models.send_learner_credit_course_enrollment_revoked_event')
+    @ddt.data(True, False)
+    def test_enterprise_unenrollment_receiver(self, create_related_lc_fulfillment, mock_send_revoked_event):
         """
         Test receiver that is supposed to handle course enrollments being deactivated (unenrolled).
         """
         # Create an enrolled EnterpriseCourseEnrollment.
         enterprise_enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
+            saved_for_later=False,
             unenrolled=None,
             unenrolled_at=None,
         )
+
+        # Optionally create an enrolled LearnerCreditEnterpriseCourseEnrollment.
+        lc_fulfillment = None
+        if create_related_lc_fulfillment:
+            lc_fulfillment = LearnerCreditEnterpriseCourseEnrollmentFactory(
+                enterprise_course_enrollment=enterprise_enrollment,
+            )
 
         # Simulate a previously active course enrollment being deactivated.
         mock_enrollment_data = mock.Mock()
@@ -948,8 +976,19 @@ class TestCourseEnrollmentSignals(TestCase):
         # Make sure the previously active enterprise enrollment has now been deactivated in response to the system
         # enrollment being deactivated.
         enterprise_enrollment.refresh_from_db()
+        assert enterprise_enrollment.saved_for_later is True
         assert enterprise_enrollment.unenrolled is True
         assert enterprise_enrollment.unenrolled_at is not None
+
+        # Make sure the related LC fulfillment is also revoked, and a signal sent.
+        if create_related_lc_fulfillment:
+            lc_fulfillment.refresh_from_db()
+            assert lc_fulfillment.is_revoked is True
+            mock_send_revoked_event.assert_called_once()
+            event_fulfillment = mock_send_revoked_event.call_args.args[0]
+            assert event_fulfillment.uuid == lc_fulfillment.uuid
+        else:
+            mock_send_revoked_event.assert_not_called()
 
 
 @mark.django_db

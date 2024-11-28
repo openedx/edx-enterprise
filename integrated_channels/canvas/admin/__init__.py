@@ -19,8 +19,8 @@ class CanvasEnterpriseCustomerConfigurationAdmin(DjangoObjectActions, admin.Mode
     """
     list_display = (
         "enterprise_customer_name",
-        "client_id",
-        "client_secret",
+        "decrypted_client_id",
+        "decrypted_client_secret",
         "canvas_account_id",
         "canvas_base_url",
     )
@@ -114,6 +114,14 @@ class CanvasLearnerDataTransmissionAuditAdmin(BaseLearnerDataTransmissionAuditAd
         "enterprise_customer_name",
         "friendly_status_message",
         "api_record",
+    )
+
+    search_fields = (
+        "canvas_user_email",
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "content_title",
+        "friendly_status_message"
     )
 
     list_per_page = 1000

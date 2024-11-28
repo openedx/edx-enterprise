@@ -48,8 +48,8 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
         "active",
         "sapsf_base_url",
         "sapsf_company_id",
-        "key",
-        "secret",
+        "decrypted_key",
+        "decrypted_secret",
         "sapsf_user_id",
         "user_type",
         "has_access_token",
@@ -109,8 +109,8 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
         try:
             access_token, expires_at = SAPSuccessFactorsAPIClient.get_oauth_access_token(
                 obj.sapsf_base_url,
-                obj.key,
-                obj.secret,
+                obj.decrypted_key,
+                obj.decrypted_secret,
                 obj.sapsf_company_id,
                 obj.sapsf_user_id,
                 obj.user_type,
@@ -171,6 +171,14 @@ class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(
         "enterprise_customer_name",
         "friendly_status_message",
         "api_record",
+    )
+
+    search_fields = (
+        "sapsf_user_id",
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "content_title",
+        "friendly_status_message"
     )
 
     list_per_page = 1000

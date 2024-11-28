@@ -12,4 +12,6 @@ FAKE_SSO_METADATA_XML_WITH_ENTITY_ID = [
     ('<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"><EntityDescriptor entityID="https://example.com"></EntityDescriptor></EntitiesDescriptor>', "https://example.com")  # pylint: disable=line-too-long
 ]
 
-PROVISIONING_ADMINS_GROUP = "provisioning_admins_group"
+# Course Modes
+VERIFIED_COURSE_MODE = 'verified'
+AUDIT_COURSE_MODE = 'audit'

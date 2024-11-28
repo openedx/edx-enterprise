@@ -17,6 +17,253 @@ Unreleased
 ----------
 * nothing unreleased
 
+[4.33.1]
+--------
+* feat: Creating enterprise customer members endpoint for admin portal
+
+[4.33.0]
+--------
+* feat: Updated pagination for reporting configurations.
+
+[4.32.3]
+--------
+* chore: Update python requirements.
+
+[4.32.2]
+--------
+* fix: ensure admin_users in EnterpriseCustomerUserViewSet is correct.
+
+[4.32.1]
+--------
+* feat: enable search filter on learner data transmission audit admin views for all integrated channels.
+
+[4.32.0]
+--------
+* feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.
+* fix: Alter the realized_enrollment field in DefaultEnterpriseEnrollmentRealization to be a OneToOneField.
+* fix: rename metadata field in DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer.
+
+[4.31.2]
+--------
+* feat: add test cases for newly added unlink_self endpoint.
+
+[4.31.1]
+--------
+* fix: fixed query for monthly_impact_report command.
+
+[4.31.0]
+--------
+* feat: add new endpoint to unlink the logged in user.
+
+[4.30.1]
+--------
+* fix: serialize best_mode_for_course_run field in DefaultEnterpriseEnrollmentIntentionSerializer.
+
+[4.30.0]
+--------
+* feat: REST APIs for default-enterprise-enrollment-intentions
+
+[4.29.0]
+--------
+* feat: Create django admin for default enrollments
+
+[4.28.4]
+--------
+* feat: updating the character count for group name to 255
+
+[4.28.3]
+--------
+* feat: removing all references of to-be-deleted field
+
+[4.28.2]
+--------
+* fix: added content_title, progress_status in get_learner_data_records for derived classed of learner data exporters.
+
+[4.28.1]
+--------
+* feat: making to-be-deleted model field nullable
+
+[4.28.0]
+--------
+* feat: add default enrollment models
+
+[4.27.3]
+--------
+* fix: Updating the EnterpriseGroup serializer with created variable
+
+[4.27.2]
+--------
+* fix: updates `get_all_learners` to remove `_get_implicit_group_members`
+
+[4.27.1]
+--------
+* chore: remove `replaces` sections from squashing migrations.
+
+[4.27.0]
+--------
+* chore: Add index to the username field in the `Consent` model
+
+[4.26.1]
+--------
+* feat: proxy login now redirects to LMS register page instead of login page
+
+[4.26.0]
+--------
+* feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
+
+[4.25.19]
+---------
+* feat: remove logging to debug SAP SuccessFactors transmission issues
+
+[4.25.18]
+---------
+* chore: requirement updates
+
+[4.25.17]
+---------
+* feat: add pagination to the support tool customer list
+
+[4.25.16]
+---------
+* feat: add a waffle flag for enterprise groups v2 feature
+
+[4.25.15]
+---------
+* fix: Don't import HttpClientError from edx-rest-api-client
+
+[4.25.14]
+---------
+* This version was incorretly tagged and so wasn't properly released.
+
+[4.25.13]
+----------
+* feat: add logging to debug SAP SuccessFactors transmission issues
+
+[4.25.12]
+----------
+* feat: add username query to enterprise customer user query
+
+[4.25.11]
+----------
+* feat: add username query to enterprise customer user query
+
+[4.25.10]
+----------
+* feat: update Enterprise Braze API key
+
+[4.25.9]
+----------
+* fix: send LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED from the correct place.
+
+[4.25.8]
+----------
+* feat: added migration for removing unencrypted client credentials
+
+[4.25.7]
+----------
+* refactor: removed unencrypted credentials from sap config model
+
+[4.25.6]
+----------
+* refactor: making unencrypted credentials nullable so after removing refs tests can run
+
+[4.25.5]
+----------
+* feat: changing django enterprise customer summary columns
+
+[4.25.4]
+----------
+* feat: replaced references from unencrypted to encrypted columns.
+* feat: added data migration to populate encrypted columns.
+
+[4.25.3]
+----------
+* feat: added encrypted client secret for SAP config
+
+[4.25.2]
+----------
+* feat: added migration file for removing char field decrypted_secret
+
+[4.25.1]
+----------
+* feat: removed char field decrypted_secret references
+
+[4.25.0]
+----------
+* feat: emit learner credit unenrollment event
+
+[4.24.0]
+----------
+* fix: customer sorting error in customer support tool endpoint and added user query param
+
+[4.23.20]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.19]
+----------
+* revert: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.18]
+----------
+* revert: revert "altered decrypted_secret to be encrypted and made credentials nullable" in #2219
+
+[4.23.17]
+----------
+* feat: added migrations to remove client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.16]
+----------
+* feat: remove references to client_id and client_secret from CanvasEnterpriseCustomerConfiguration
+
+[4.23.15]
+----------
+* feat: altered decrypted_secret to be encrypted and made credentials nullable
+
+[4.23.14]
+----------
+* feat: populate encrypted client id and secret for canvas integration and remove references to unencrypted fields
+
+[4.23.13]
+----------
+* feat: added encrypted columns for user credentials for SAP config
+
+[4.23.12]
+----------
+* feat: feat: added encrypted client id and secret for canvas integration
+
+[4.23.11]
+----------
+* feat: implement back-off and retry for SAP SuccessFactors
+
+[4.23.10]
+----------
+* fix: 403 for provisioning-admins due to crum and middleware
+
+[4.23.9]
+----------
+* feat: Add option to show soft deleted group memberships in django admin
+
+[4.23.8]
+----------
+* feat: updating enterprise-customer-support endpoint
+
+[4.23.7]
+---------
+* feat: add migration for model updateroleassignmentswithcustomersconfig
+
+[4.23.6]
+---------
+* feat: replace PAs group based permission with edx-rbac
+
+[4.23.5]
+---------
+* chore: requirement updates
+
+[4.23.4]
+---------
+* refactor: added logs for data dog inspection for permission check in handler function.
+
 [4.23.3]
 ---------
 * fix: add missing migration for content_filter help text
@@ -128,7 +375,7 @@ Unreleased
 
 [4.20.7]
 --------
-* fix: add name from profile to group membership details 
+* fix: add name from profile to group membership details
 
 [4.20.6]
 --------

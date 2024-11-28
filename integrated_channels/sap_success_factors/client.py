@@ -6,12 +6,14 @@ import datetime
 import json
 import logging
 import time
+from http import HTTPStatus
 from urllib.parse import urljoin
 
 import requests
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.apps import apps
+from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -30,7 +32,9 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
      completion status endpoints.
     """
 
-    SESSION_TIMEOUT = 5
+    SESSION_TIMEOUT = getattr(settings, "ENTERPRISE_SAPSF_SESSION_TIMEOUT", 5)
+    MAX_RETRIES = getattr(settings, "ENTERPRISE_SAPSF_MAX_RETRIES", 3)
+    BACKOFF_FACTOR = getattr(settings, "ENTERPRISE_SAPSF_BACKOFF_FACTOR", 1)
 
     GENERIC_COURSE_COMPLETION_PATH = 'learning/odatav4/public/admin/learningevent-service/v1/OCNLearningEvents'
 
@@ -133,8 +137,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                 self.session.close()
 
             oauth_access_token, expires_at = self.get_oauth_access_token(
-                self.enterprise_configuration.key,
-                self.enterprise_configuration.secret,
+                self.enterprise_configuration.decrypted_key,
+                self.enterprise_configuration.decrypted_secret,
                 self.enterprise_configuration.sapsf_company_id,
                 self.enterprise_configuration.sapsf_user_id,
                 self.enterprise_configuration.user_type,
@@ -223,6 +227,18 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         """
         return self._sync_content_metadata(serialized_data)
 
+    def _calculate_backoff(self, attempt_count):
+        """
+        Calculate the seconds to sleep based on attempt_count.
+
+        Args:
+            attempt_count (int): The number of retry attempts that have been made.
+
+        Returns:
+            float: The number of seconds to wait before the next retry attempt.
+        """
+        return (self.BACKOFF_FACTOR * (2 ** (attempt_count - 1)))
+
     def _sync_content_metadata(self, serialized_data):
         """
         Create/update/delete content metadata records using the SuccessFactors OCN Course Import API endpoint.
@@ -234,19 +250,39 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             ClientError: If SuccessFactors API call fails.
         """
         url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.course_api_path
+        attempts = 0
 
-        response_status_code, response_body = self._call_post_with_session(url, serialized_data)
+        while attempts <= self.MAX_RETRIES:
+            attempts += 1
+            response_status_code, response_body = self._call_post_with_session(url, serialized_data)
 
-        if response_status_code >= 400:
-            LOGGER.error(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    f"SAPSuccessFactorsAPIClient request failed with status {response_status_code}: {response_body}"
+            if response_status_code == HTTPStatus.TOO_MANY_REQUESTS.value:
+                sleep_seconds = self._calculate_backoff(attempts)
+                LOGGER.warning(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f'SAPSuccessFactorsAPIClient 429 detected from {url}, backing-off before retrying, '
+                        f'sleeping {sleep_seconds} seconds...'
+                    )
                 )
-            )
+                time.sleep(sleep_seconds)
+            elif response_status_code >= HTTPStatus.BAD_REQUEST.value:
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        f"SAPSuccessFactorsAPIClient request failed with status {response_status_code}: {response_body}"
+                    )
+                )
+                break
+            else:
+                break
+
         return response_status_code, response_body
 
     def _call_post_with_user_override(self, sap_user_id, url, payload):
@@ -265,8 +301,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             'SAPSuccessFactorsEnterpriseCustomerConfiguration'
         )
         oauth_access_token, _ = self.get_oauth_access_token(
-            self.enterprise_configuration.key,
-            self.enterprise_configuration.secret,
+            self.enterprise_configuration.decrypted_key,
+            self.enterprise_configuration.decrypted_secret,
             self.enterprise_configuration.sapsf_company_id,
             sap_user_id,
             SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER,

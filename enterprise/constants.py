@@ -8,7 +8,6 @@ from django.utils.translation import gettext_lazy as _
 # used to ensure that signal receiver is only called once.
 USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
 
-PROVISIONING_ADMINS_GROUP = 'provisioning_admins_group'
 
 # Data sharing consent messages
 CONSENT_REQUEST_PROMPT = _(
@@ -152,6 +151,18 @@ ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 ENTERPRISE_FULFILLMENT_OPERATOR_ROLE = 'fulfillment_operator'
 ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE = 'sso_orchestrator_operator'
 
+# Default enterprise enrollment roles/permissions
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE = 'default_enterprise_enrollment_intentions_learner'
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION = 'enterprise.can_view_default_enterprise_enrollment_intentions'
+
+# Provisioning admins roles:
+PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_enterprise_customer_admin'
+PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_pending_enterprise_customer_users_admin'
+# Provisioning admins permissions:
+ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_enterprise_customer_admin_access'
+PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION = \
+    'provisioning.has_pending_enterprise_customer_admin_access'
+
 # Tracking related
 PATHWAY_CUSTOMER_ADMIN_ENROLLMENT = 'customer-admin-enrollment'
 
@@ -256,6 +267,12 @@ GROUP_MEMBERSHIP_STATUS_CHOICES = (
     (GROUP_MEMBERSHIP_PENDING_STATUS, 'Pending'),
     (GROUP_MEMBERSHIP_INTERNAL_API_ERROR_STATUS, 'Internal API error'),
     (GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS, 'Email error')
+)
+GROUP_TYPE_BUDGET = 'budget'
+GROUP_TYPE_FLEX = 'flex'
+GROUP_TYPE_CHOICES = (
+    (GROUP_TYPE_BUDGET, 'Budget'),
+    (GROUP_TYPE_FLEX, 'Flex')
 )
 
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"

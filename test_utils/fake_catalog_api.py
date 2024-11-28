@@ -9,6 +9,7 @@ from functools import reduce
 from unittest import mock
 
 from test_utils import FAKE_UUIDS
+from tests.test_enterprise.api.constants import AUDIT_COURSE_MODE, VERIFIED_COURSE_MODE
 
 FAKE_URL = 'https://fake.url'
 
@@ -26,7 +27,7 @@ FAKE_COURSE_RUN_TO_CREATE = {
     'marketing_url': 'course/demo-course?utm_=test_enterprise&utm_medium=enterprise',
     'seats': [
         {
-            'type': 'audit',
+            'type': AUDIT_COURSE_MODE,
             'price': '0.00',
             'currency': 'USD',
             'upgrade_deadline': None,
@@ -35,7 +36,7 @@ FAKE_COURSE_RUN_TO_CREATE = {
             'sku': '68EFFFF'
         },
         {
-            'type': 'verified',
+            'type': VERIFIED_COURSE_MODE,
             'price': '149.00',
             'currency': 'USD',
             'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
@@ -50,7 +51,7 @@ FAKE_COURSE_RUN_TO_CREATE = {
     'enrollment_end': None,
     'enrollment_url': FAKE_URL,
     'pacing_type': 'instructor_paced',
-    'type': 'verified',
+    'type': VERIFIED_COURSE_MODE,
     'status': 'published',
     'course': 'edX+DemoX',
     'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
@@ -110,8 +111,8 @@ FAKE_COURSE_RUN = {
     'marketing_url': 'course/demo-course?utm_=test_enterprise&utm_medium=enterprise',
     'seats': [
         {
-            'type': 'audit',
-            'price': '0.00',
+            'type': AUDIT_COURSE_MODE,
+            'price': 0,
             'currency': 'USD',
             'upgrade_deadline': None,
             'credit_provider': None,
@@ -119,8 +120,8 @@ FAKE_COURSE_RUN = {
             'sku': '68EFFFF'
         },
         {
-            'type': 'verified',
-            'price': '149.00',
+            'type': VERIFIED_COURSE_MODE,
+            'price': 149,
             'currency': 'USD',
             'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
             'credit_provider': None,
@@ -128,14 +129,17 @@ FAKE_COURSE_RUN = {
             'sku': '8CF08E5'
         }
     ],
+    'first_enrollable_paid_seat_price': 149,
     'start': '2013-02-05T05:00:00Z',
     'end': '3000-12-31T18:00:00Z',
     'enrollment_start': None,
     'enrollment_end': None,
     'enrollment_url': FAKE_URL,
     'pacing_type': 'instructor_paced',
-    'type': 'verified',
+    'type': VERIFIED_COURSE_MODE,
     'status': 'published',
+    "is_enrollable": True,
+    "is_marketable": True,
     'course': 'edX+DemoX',
     'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
     'announcement': None,
@@ -265,6 +269,7 @@ FAKE_COURSE_TO_CREATE = {
 
 FAKE_COURSE = {
     'key': 'edX+DemoX',
+    'course_type': 'course',
     'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
     'title': 'edX Demonstration Course',
     'course_runs': [FAKE_COURSE_RUN],
@@ -298,7 +303,24 @@ FAKE_COURSE = {
     'content_type': 'course',
     'enrollment_url': FAKE_URL,
     'programs': [],
-    'content_last_modified': '2020-08-18T00:32:33.754662Z'
+    'content_last_modified': '2020-08-18T00:32:33.754662Z',
+    'advertised_course_run_uuid': FAKE_COURSE_RUN.get('uuid'),
+    'normalized_metadata': {
+        'start_date': FAKE_COURSE_RUN.get('start'),
+        'end_date': FAKE_COURSE_RUN.get('end'),
+        'enroll_by_date': FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
+        'enroll_start_date': FAKE_COURSE_RUN.get('enrollment_start'),
+        'content_price': FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
+    },
+    'normalized_metadata_by_run': {
+        FAKE_COURSE_RUN.get('key'): {
+            'start_date': FAKE_COURSE_RUN.get('start'),
+            'end_date': FAKE_COURSE_RUN.get('end'),
+            'enroll_by_date': FAKE_COURSE_RUN.get('seats')[1].get('upgrade_deadline'),
+            'enroll_start_date': FAKE_COURSE_RUN.get('enrollment_start'),
+            'content_price': FAKE_COURSE_RUN.get('first_enrollable_paid_seat_price'),
+        }
+    }
 }
 
 FAKE_PROGRAM_RESPONSE1 = {
@@ -382,7 +404,7 @@ FAKE_PROGRAM_RESPONSE1 = {
     "staff": [],
     "credit_redemption_overview": "This is a test Program.",
     "applicable_seat_types": [
-        "audit"
+        AUDIT_COURSE_MODE
     ],
 }
 
@@ -546,7 +568,7 @@ FAKE_PROGRAM_RESPONSE3 = {
     "min_hours_effort_per_week": 5,
     "max_hours_effort_per_week": 10,
     "applicable_seat_types": [
-        "verified",
+        VERIFIED_COURSE_MODE,
         "professional",
         "credit",
     ],
@@ -577,7 +599,7 @@ FAKE_PROGRAM_TYPE = {
         }
     },
     "applicable_seat_types": [
-        "verified",
+        VERIFIED_COURSE_MODE,
         "professional",
         "credit"
     ],
@@ -602,7 +624,7 @@ FAKE_COURSE_RUNS_RESPONSE = [
                 "credit_hours": None
             },
             {
-                "type": "audit",
+                "type": AUDIT_COURSE_MODE,
                 "price": "0.00",
                 "currency": "USD",
                 "upgrade_deadline": None,
@@ -648,7 +670,7 @@ FAKE_COURSE_RUNS_RESPONSE = [
                 "credit_hours": None
             },
             {
-                "type": "audit",
+                "type": AUDIT_COURSE_MODE,
                 "price": "0.00",
                 "currency": "AED",
                 "upgrade_deadline": None,
@@ -826,14 +848,14 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
                 "enrollment_start": None,
                 "enrollment_end": None,
                 "pacing_type": "instructor_paced",
-                "type": "audit",
+                "type": AUDIT_COURSE_MODE,
                 "course": "edX+DemoX",
                 "full_description": None,
                 "announcement": None,
                 "video": None,
                 "seats": [
                     {
-                        "type": "audit",
+                        "type": AUDIT_COURSE_MODE,
                         "price": "0.00",
                         "currency": "USD",
                         "upgrade_deadline": None,
@@ -1082,8 +1104,8 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "course_runs": [],
     "full_description": None,
     "seat_types": [
-        "audit",
-        "verified"
+        AUDIT_COURSE_MODE,
+        VERIFIED_COURSE_MODE,
     ],
     "mobile_available": False,
     "end": None,
@@ -1101,7 +1123,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "staff_uuids": [],
     "language": None,
     "number": "DemoX",
-    "type": "verified",
+    "type": VERIFIED_COURSE_MODE,
     "key": "course-v1:edX+DemoX+Demo_Course",
     "org": "edX",
     "level_type": None,
@@ -1272,7 +1294,6 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_2 = {
     "is_program_eligible_for_one_click_purchase": True
 }
 
-
 FAKE_SEARCH_ALL_RESULTS = {
     "count": 3,
     "next": None,
@@ -1355,7 +1376,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT_3 = {
     "course_runs": [
         {
             "enrollment_end": None,
-            "enrollment_mode": "verified",
+            "enrollment_mode": VERIFIED_COURSE_MODE,
             "key": "course-v1:edX+DemoX+Demo_Course",
             "enrollment_start": None,
             "pacing_type": "instructor_paced",
@@ -1374,6 +1395,11 @@ FAKE_CATALOG_RESULT = {
     'catalog_query_uuid': None,
     'content_last_modified': '2020-05-13T14:28:54.679517Z',
     'catalog_modified': '2020-07-16T15:11:10.521611Z'
+}
+
+FAKE_ENTERPRISE_CONTAINS_CONTENT_ITEMS_RESPONSE = {
+    'contains_content_items': False,
+    'catalog_list': []
 }
 
 
@@ -1517,7 +1543,7 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
         "status": status,
         "enrollment_start": enrollment_start,
         "enrollment_end": enrollment_end,
-        "seats": [{"type": "verified", "upgrade_deadline": upgrade_deadline}],
+        "seats": [{"type": VERIFIED_COURSE_MODE, "upgrade_deadline": upgrade_deadline}],
         "availability": availability,
         "weeks_to_complete": weeks_to_complete,
         "uuid": uuid,
@@ -1642,6 +1668,18 @@ def get_fake_content_metadata_no_program():
     content_metadata[FAKE_COURSE_RUN['key']] = copy.deepcopy(FAKE_COURSE_RUN)
     content_metadata[FAKE_COURSE['key']] = copy.deepcopy(FAKE_COURSE)
     return list(content_metadata.values())
+
+
+def get_fake_enterprise_contains_content_items_response(contains_content_items=False, catalog_list=None):
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.enterprise_contains_content_items.
+    """
+    mock_response = FAKE_ENTERPRISE_CONTAINS_CONTENT_ITEMS_RESPONSE.copy()
+    if contains_content_items is not None:
+        mock_response['contains_content_items'] = contains_content_items
+    if catalog_list:
+        mock_response['catalog_list'] = catalog_list
+    return mock_response
 
 
 class CourseDiscoveryApiTestMixin:
