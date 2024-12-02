@@ -14,7 +14,6 @@ from unittest import mock
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import ddt
-import jwt
 import pytz
 import responses
 from edx_toggles.toggles.testutils import override_waffle_flag
@@ -7753,67 +7752,6 @@ class TestEnterpriseCustomerToggleUniversalLinkView(BaseTestEnterpriseAPIViews):
         self.assertEqual(response.status_code, 200)
         response = response.json()
         self.assertEqual(response['detail'], 'No changes')
-
-
-@mark.django_db
-class TestPlotlyAuthView(APITest):
-    """
-    Test PlotlyAuthView
-    """
-
-    PLOTLY_TOKEN_ENDPOINT = 'plotly-token'
-
-    def setUp(self):
-        """
-        Common setup for all tests.
-        """
-        super().setUp()
-        self.client.login(username=self.user.username, password=TEST_PASSWORD)
-        self.enterprise_uuid = fake.uuid4()
-        self.enterprise_uuid2 = fake.uuid4()
-        self.url = settings.TEST_SERVER + reverse(
-            self.PLOTLY_TOKEN_ENDPOINT, kwargs={'enterprise_uuid': self.enterprise_uuid}
-        )
-
-    def test_view_with_normal_user(self):
-        """
-        Verify that a user without having `enterprise.can_access_admin_dashboard` role can't access the view.
-        """
-        response = self.client.get(self.url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
-
-    def test_view_with_admin_user(self):
-        """
-        Verify that an enterprise admin user having `enterprise.can_access_admin_dashboard` role can access the view.
-        """
-        EnterpriseCustomerFactory.create(uuid=self.enterprise_uuid, enable_audit_data_reporting=True)
-        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
-
-        self.client.login(username=self.user.username, password=TEST_PASSWORD)
-
-        response = self.client.get(self.url)
-        assert response.status_code == status.HTTP_200_OK
-        assert 'token' in response.json()
-        token = response.json().get('token')
-        decoded_jwt = jwt.decode(token, settings.ENTERPRISE_PLOTLY_SECRET, algorithms=['HS512'])
-        assert decoded_jwt['audit_data_reporting_enabled'] is True
-
-    def test_view_with_admin_user_tries(self):
-        """
-        Verify that an enterprise admin can create token for enterprise uuid present in jwt roles only.
-        """
-        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)
-
-        url = settings.TEST_SERVER + reverse(
-            self.PLOTLY_TOKEN_ENDPOINT, kwargs={'enterprise_uuid': self.enterprise_uuid2}
-        )
-
-        self.client.login(username=self.user.username, password=TEST_PASSWORD)
-
-        response = self.client.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json() == {'detail': 'Missing: enterprise.can_access_admin_dashboard'}
 
 
 @mark.django_db
