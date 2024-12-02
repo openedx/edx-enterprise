@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.1.0]
+--------
+* feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
+* feat: updated learner query to filter by full name
+
 [5.0.0]
 --------
 * refactor: Removed `plotly_token/` API endpoint and related views from enterprise API.
