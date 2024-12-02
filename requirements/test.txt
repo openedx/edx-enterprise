@@ -90,7 +90,7 @@ code-annotations==1.8.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.6.7
+coverage[toml]==7.6.8
     # via pytest-cov
 cryptography==43.0.3
     # via
@@ -230,7 +230,7 @@ factory-boy==3.3.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
-faker==33.0.0
+faker==33.1.0
     # via factory-boy
 fastavro==1.9.7
     # via
