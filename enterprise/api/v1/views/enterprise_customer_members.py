@@ -78,7 +78,7 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                     au.id,
                     au.email,
                     au.date_joined,
-                    coalesce(NULLIF(aup.name, ''), concat(au.first_name, ' ', au.last_name)) as full_name
+                    coalesce(NULLIF(aup.name, ' '), (au.first_name || ' ' || au.last_name)) as full_name
                 FROM enterprise_enterprisecustomeruser ecu
                 INNER JOIN auth_user as au on ecu.user_id = au.id
                 LEFT JOIN auth_userprofile as aup on au.id = aup.user_id
