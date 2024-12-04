@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.3.0]
+--------
+* refactor: Removed unused django setting.
+
 [5.2.0]
 --------
 * feat: removed custom pagination for reporting configurations.
