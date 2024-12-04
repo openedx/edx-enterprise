@@ -664,6 +664,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     member_details = serializers.SerializerMethodField()
     recent_action = serializers.SerializerMethodField()
     status = serializers.CharField(required=False)
+    enrollments = serializers.SerializerMethodField()
 
     class Meta:
         model = models.EnterpriseGroupMembership
@@ -676,6 +677,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
             'recent_action',
             'status',
             'activated_at',
+            'enrollments',
         )
 
     def get_member_details(self, obj):
@@ -697,6 +699,17 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         if obj.enterprise_customer_user and obj.activated_at:
             return f"Accepted: {obj.activated_at.strftime('%B %d, %Y')}"
         return f"Invited: {obj.created.strftime('%B %d, %Y')}"
+
+    def get_enrollments(self, obj):
+        """
+        Fetch all of user's enterprise enrollments
+        """
+        if user := obj.enterprise_customer_user:
+            enrollments = models.EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=user.user_id,
+            )
+            return len(enrollments)
+        return 0
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):

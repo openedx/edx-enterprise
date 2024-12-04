@@ -17,6 +17,23 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.3.0]
+--------
+* refactor: Removed unused django setting.
+
+[5.2.0]
+--------
+* feat: removed custom pagination for reporting configurations.
+
+[5.1.0]
+--------
+* feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
+* feat: updated learner query to filter by full name
+
+[5.0.0]
+--------
+* refactor: Removed `plotly_token/` API endpoint and related views from enterprise API.
+
 [4.33.1]
 --------
 * feat: Creating enterprise customer members endpoint for admin portal
