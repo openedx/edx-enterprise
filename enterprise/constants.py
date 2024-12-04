@@ -59,6 +59,7 @@ class CourseModes:
     VERIFIED = 'verified'
     UNPAID_EXECUTIVE_EDUCATION = 'unpaid-executive-education'
 
+
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = [
     CourseModes.VERIFIED,
