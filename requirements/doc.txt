@@ -248,7 +248,7 @@ factory-boy==3.3.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in
-faker==33.0.0
+faker==33.1.0
     # via factory-boy
 fastavro==1.9.7
     # via
@@ -307,7 +307,7 @@ newrelic==10.2.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
-nh3==0.2.18
+nh3==0.2.19
     # via readme-renderer
 oauthlib==3.2.2
     # via
