@@ -60,13 +60,6 @@ class CourseModes:
     UNPAID_EXECUTIVE_EDUCATION = 'unpaid-executive-education'
 
 
-BEST_MODE_ORDER = [
-    CourseModes.VERIFIED,
-    CourseModes.PROFESSIONAL,
-    CourseModes.NO_ID_PROFESSIONAL,
-    CourseModes.UNPAID_EXECUTIVE_EDUCATION,
-]
-
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = [
     CourseModes.VERIFIED,

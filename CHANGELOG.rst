@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.3.1]
+-------
+* fix: rely on single constant to define course mode priority order (i.e., ensure all enrollable modes are considered; previously missing honor mode in `enroll_learners_in_courses`).
+* fix: prevent fetching catalog list without a resolved course run in the property `applicable_enterprise_catalog_uuids` within `DefaultEnterpriseEnrollmentIntention`.
+
 [5.3.0]
 --------
 * refactor: Removed unused django setting.
