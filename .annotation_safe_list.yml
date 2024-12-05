@@ -8,52 +8,52 @@
 #    ".. choice_annotation:": foo, bar, baz
 
 canvas.HistoricalCanvasEnterpriseCustomerConfiguration:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 consent.HistoricalDataSharingConsent:
-    ".. pii:": "The username field inherited from DataSharingConsent contains PII"
-    ".. pii_types:": username
-    ".. pii_retirement:": consumer_api
+  ".. pii:": "The username field inherited from DataSharingConsent contains PII"
+  ".. pii_types:": username
+  ".. pii_retirement:": consumer_api
 degreed.HistoricalDegreedEnterpriseCustomerConfiguration:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
+enterprise.HistoricalDefaultEnterpriseEnrollmentIntention:
+  ".. no_pii:": ""
+enterprise.HistoricalDefaultEnterpriseEnrollmentRealization:
+  ".. no_pii:": ""
 enterprise.HistoricalEnrollmentNotificationEmailTemplate:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCourseEnrollment:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomer:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomerCatalog:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomerEntitlement:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseAnalyticsUser:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalPendingEnterpriseCustomerUser:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalPendingEnterpriseCustomerAdminUser:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalLicensedEnterpriseCourseEnrollment:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalPendingEnrollment:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 moodle.HistoricalMoodleEnterpriseCustomerConfiguration:
-    ".. no_pii:": ""
-enterprise.EnterpriseCourseEntitlement:
-    ".. no_pii:": ""
-enterprise.EnterpriseCustomerSsoConfiguration:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCourseEntitlement:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomerInviteKey:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomerSsoConfiguration:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomerUser:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseGroup:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalEnterpriseGroupMembership:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalLearnerCreditEnterpriseCourseEnrollment:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
 enterprise.HistoricalSystemWideEnterpriseUserRoleAssignment:
-    ".. no_pii:": ""
+  ".. no_pii:": ""
