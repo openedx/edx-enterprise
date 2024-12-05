@@ -2632,6 +2632,10 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         """
         Returns a list of UUIDs for applicable enterprise catalogs.
         """
+        if not self.course_run_key:
+            # Without a resolved course run key, prevent the enterprise catalog list from being fetched.
+            return []
+
         contains_content_items_response = get_and_cache_enterprise_contains_content_items(
             enterprise_customer_uuid=self.enterprise_customer.uuid,
             content_keys=[self.course_run_key],
