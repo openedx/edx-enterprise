@@ -17,6 +17,28 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.3.1]
+-------
+* fix: rely on single constant to define course mode priority order (i.e., ensure all enrollable modes are considered; previously missing honor mode in `enroll_learners_in_courses`).
+* fix: prevent fetching catalog list without a resolved course run in the property `applicable_enterprise_catalog_uuids` within `DefaultEnterpriseEnrollmentIntention`.
+
+[5.3.0]
+--------
+* refactor: Removed unused django setting.
+
+[5.2.0]
+--------
+* feat: removed custom pagination for reporting configurations.
+
+[5.1.0]
+--------
+* feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
+* feat: updated learner query to filter by full name
+
+[5.0.0]
+--------
+* refactor: Removed `plotly_token/` API endpoint and related views from enterprise API.
+
 [4.33.1]
 --------
 * feat: Creating enterprise customer members endpoint for admin portal

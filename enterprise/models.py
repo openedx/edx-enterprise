@@ -2630,6 +2630,10 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         """
         Returns a list of UUIDs for applicable enterprise catalogs.
         """
+        if not self.course_run_key:
+            # Without a resolved course run key, prevent the enterprise catalog list from being fetched.
+            return []
+
         contains_content_items_response = get_and_cache_enterprise_contains_content_items(
             enterprise_customer_uuid=self.enterprise_customer.uuid,
             content_keys=[self.course_run_key],
@@ -4692,13 +4696,19 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         # https://docs.djangoproject.com/en/5.0/topics/security/
         var_q = f"%{user_query}%"
         sql_string = """
-            select entcu.id from enterprise_enterprisecustomeruser entcu
-            join auth_user au on entcu.user_id = au.id
-            where entcu.enterprise_customer_id = %s and au.email like %s;
+            with users as (
+                select ecu.id,
+                au.email,
+                coalesce(NULLIF(aup.name, ''), (au.first_name || ' ' || au.last_name)) as full_name
+                from enterprise_enterprisecustomeruser ecu
+                inner join auth_user au on ecu.user_id = au.id
+                left join auth_userprofile aup on au.id = aup.user_id
+                where ecu.enterprise_customer_id = %s
+            ) select id from users where email like %s or full_name like %s;
         """
         # Raw sql is picky about uuid format
         customer_id = str(self.enterprise_customer.pk).replace("-", "")
-        ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q))
+        ecus = EnterpriseCustomerUser.objects.raw(sql_string, (customer_id, var_q, var_q))
         return [ecu.id for ecu in ecus]
 
     def _get_explicit_group_members(self, user_query=None, fetch_removed=False, pending_users_only=False,):

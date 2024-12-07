@@ -27,7 +27,6 @@ from enterprise.api.v1.views import (
     notifications,
     pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
-    plotly_auth,
 )
 
 router = DefaultRouter()
@@ -130,11 +129,6 @@ urlpatterns = [
         r'^request_codes$',
         coupon_codes.CouponCodesView.as_view(),
         name='request-codes'
-    ),
-    re_path(
-        r'^plotly_token/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
-        plotly_auth.PlotlyAuthView.as_view(),
-        name='plotly-token'
     ),
     re_path(
         r'^enterprise_report_types/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
