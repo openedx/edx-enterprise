@@ -4,20 +4,19 @@ safelist_path: .annotation_safe_list.yml
 
 # Local models are all fully annotated, but non-local models are not annotated
 # because this repo does not contain an IDA/Django project (which, according to
-# our own PII annotating policy, doesn't require non-local annotations).  75%
+# our own PII annotating policy, doesn't require non-local annotations). 84.7%
 # coverage represents all local models, and is the current theoretical maximum
 # coverage.
-# TODO: PLAT-2422
-coverage_target: 75.0
+coverage_target: 84.7
 
 annotations:
-    ".. no_pii:":
-    "pii_group":
-        - ".. pii:":
-        - ".. pii_types:":
-            choices: [id, name, username, email_address, other]
-        - ".. pii_retirement:":
-            choices: [retained, local_api, consumer_api, third_party]
+  ".. no_pii:":
+  "pii_group":
+    - ".. pii:":
+    - ".. pii_types:":
+        choices: [id, name, username, email_address, other]
+    - ".. pii_retirement:":
+        choices: [retained, local_api, consumer_api, third_party]
 extensions:
-    python:
-        - py
+  python:
+    - py
