@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.4.1]
+--------
+* feat: Added a management command to update the Social Auth UID's for an enterprise.
+
 [5.4.0]
 --------
 * chore: Update python requirements.
