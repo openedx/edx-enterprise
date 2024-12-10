@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.4.0]
+--------
+* chore: Update python requirements.
+
 [5.3.1]
 -------
 * fix: rely on single constant to define course mode priority order (i.e., ensure all enrollable modes are considered; previously missing honor mode in `enroll_learners_in_courses`).
