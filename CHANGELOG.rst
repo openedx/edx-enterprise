@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.4.1]
+--------
+* fix: The default enrollment ``learner_status`` view now considers intended courses
+  from which the requested user has unenrolled as no-longer realizable.
+
 [5.4.0]
 --------
 * chore: Update python requirements.

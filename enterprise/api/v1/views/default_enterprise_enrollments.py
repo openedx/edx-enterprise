@@ -211,6 +211,17 @@ class DefaultEnterpriseEnrollmentIntentionViewSet(
                 already_enrolled.append((intention, non_audit_enrollment))
                 continue
 
+            if non_audit_enrollment and non_audit_enrollment.unenrolled:
+                # Learner has un-enrolled in non-audit mode for this course run,
+                # so don't consider this as an enrollable intention.
+                # Note that that we don't consider the case of an unenrolled *audit* enrollment,
+                # because default enrollments should be "exactly once" per (user, enterprise), if possible.
+                # If only an (unenrolled) audit enrollment exists, it means the user likely
+                # never had a default intention realized for them in the given course,
+                # so we'd still like to consider it as enrollable.
+                needs_enrollment_not_enrollable.append((intention, non_audit_enrollment))
+                continue
+
             if not intention.is_course_run_enrollable:
                 # Course run is not enrollable
                 needs_enrollment_not_enrollable.append((intention, audit_enrollment))
