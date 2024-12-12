@@ -1,5 +1,6 @@
 from django.db import connection, migrations
 
+
 class Migration(migrations.Migration):
     atomic = False
 

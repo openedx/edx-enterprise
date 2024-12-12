@@ -1,7 +1,7 @@
 from django.db import connection, migrations
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
         ('canvas', '0027_move_and_recrete_completed_timestamp'),
     ]
