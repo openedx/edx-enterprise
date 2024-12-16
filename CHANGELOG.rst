@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.4.3]
+--------
+* fix: Fixed the query fetching enterprise customer members
+
 [5.4.2]
 --------
 * feat: Added a management command to update the Social Auth UID's for an enterprise.
