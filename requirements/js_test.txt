@@ -12,7 +12,7 @@ autocommand==2.2.2
     # via jaraco-text
 backports-tarfile==1.2.0
     # via jaraco-context
-certifi==2024.8.30
+certifi==2024.12.14
     # via selenium
 cheroot==10.0.1
     # via cherrypy
