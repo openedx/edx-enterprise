@@ -17,21 +17,25 @@ Unreleased
 ----------
 * nothing unreleased
 
-[5.4.3]
+[5.5.1]
 --------
 * fix: Fixed the query fetching enterprise customer members
+
+[5.5.0]
+-------
+* feat: introduce Waffle flag for enabling the Learner Portal BFF API.
 
 [5.4.2]
 --------
 * feat: Added a management command to update the Social Auth UID's for an enterprise.
 
 [5.4.1]
---------
+-------
 * fix: The default enrollment ``learner_status`` view now considers intended courses
   from which the requested user has unenrolled as no-longer realizable.
 
 [5.4.0]
---------
+-------
 * chore: Update python requirements.
 
 [5.3.1]

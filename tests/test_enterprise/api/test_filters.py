@@ -305,6 +305,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                     'enterprise_groups_v1': False,
                     'enterprise_customer_support_tool': False,
                     'enterprise_groups_v2': False,
+                    'enterprise_learner_bff_enabled': False,
                 }
             }
             assert response == mock_empty_200_success_response
