@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.5.1]
+--------
+* fix: Fixed the query fetching enterprise customer members
+
 [5.5.0]
 -------
 * feat: introduce Waffle flag for enabling the Learner Portal BFF API.
