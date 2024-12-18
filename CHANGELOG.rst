@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.5.2]
+--------
+* feat: Add page_size support to enterprise-customer-members endpoint
+
 [5.5.1]
 --------
 * fix: Fixed the query fetching enterprise customer members
