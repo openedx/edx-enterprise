@@ -22,6 +22,7 @@ class EnterpriseCustomerMembersPaginator(PageNumberPagination):
     """Custom paginator for the enterprise customer members."""
 
     page_size = 10
+    page_size_query_param = 'page_size'
 
     def get_paginated_response(self, data):
         """Return a paginated style `Response` object for the given output data."""
