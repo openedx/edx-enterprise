@@ -192,7 +192,7 @@ defusedxml==0.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.2.0
+diff-cover==9.2.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 dill==0.3.9
     # via pylint
