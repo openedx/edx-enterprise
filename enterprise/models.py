@@ -1874,6 +1874,8 @@ class EnterpriseCourseEntitlementManager(models.Manager):
 class EnterpriseCourseEntitlement(TimeStampedModel):
     """
     Store the information about the entitlement of an enterprise user for a course
+
+    .. no_pii:
     """
 
     objects = EnterpriseCourseEntitlementManager()
@@ -4256,6 +4258,8 @@ class ChatGPTResponse(TimeStampedModel):
 class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
     """
     Stores records of individual customer integrations with the SSO orchestration api.
+
+    .. no_pii:
     """
     all_objects = models.Manager()
 
