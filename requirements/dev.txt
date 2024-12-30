@@ -55,7 +55,7 @@ asn1crypto==1.5.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   snowflake-connector-python
-astroid==3.3.6
+astroid==3.3.8
     # via
     #   pylint
     #   pylint-celery
@@ -127,7 +127,7 @@ charset-normalizer==2.0.12
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   requests
     #   snowflake-connector-python
-click==8.1.7
+click==8.1.8
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -168,7 +168,7 @@ code-annotations==2.0.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.6.9
+coverage[toml]==7.6.10
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest-cov
@@ -192,7 +192,7 @@ defusedxml==0.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.2.0
+diff-cover==9.2.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 dill==0.3.9
     # via pylint
@@ -526,7 +526,7 @@ newrelic==10.3.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   edx-django-utils
-nh3==0.2.19
+nh3==0.2.20
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   readme-renderer
@@ -650,7 +650,7 @@ pycparser==2.22
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   cffi
-pydata-sphinx-theme==0.16.0
+pydata-sphinx-theme==0.16.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   sphinx-book-theme
@@ -675,7 +675,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==3.3.2
+pylint==3.3.3
     # via
     #   edx-lint
     #   pylint-celery

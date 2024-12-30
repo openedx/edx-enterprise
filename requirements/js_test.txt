@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   outcome
     #   trio
@@ -12,7 +12,7 @@ autocommand==2.2.2
     # via jaraco-text
 backports-tarfile==1.2.0
     # via jaraco-context
-certifi==2024.8.30
+certifi==2024.12.14
     # via selenium
 cheroot==10.0.1
     # via cherrypy
@@ -79,7 +79,7 @@ tempora==5.7.0
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.27.0
+trio==0.28.0
     # via
     #   selenium
     #   trio-websocket
@@ -87,7 +87,7 @@ trio-websocket==0.11.1
     # via selenium
 typing-extensions==4.12.2
     # via selenium
-urllib3[socks]==2.2.3
+urllib3[socks]==2.3.0
     # via selenium
 websocket-client==1.8.0
     # via selenium
