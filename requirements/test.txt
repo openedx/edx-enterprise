@@ -90,7 +90,7 @@ code-annotations==2.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.6.9
+coverage[toml]==7.6.10
     # via pytest-cov
 cryptography==44.0.0
     # via
@@ -108,7 +108,7 @@ defusedxml==0.7.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==9.2.0
+diff-cover==9.2.1
     # via -r requirements/test.in
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
@@ -230,7 +230,7 @@ factory-boy==3.3.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
-faker==33.1.0
+faker==33.3.0
     # via factory-boy
 fastavro==1.9.7
     # via
@@ -354,7 +354,7 @@ pycparser==2.22
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   cffi
-pygments==2.18.0
+pygments==2.19.0
     # via diff-cover
 pyjwt[crypto]==2.10.1
     # via

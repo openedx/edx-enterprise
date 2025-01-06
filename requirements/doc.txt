@@ -79,7 +79,7 @@ charset-normalizer==2.0.12
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-click==8.1.7
+click==8.1.8
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
@@ -248,7 +248,7 @@ factory-boy==3.3.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in
-faker==33.1.0
+faker==33.3.0
     # via factory-boy
 fastavro==1.9.7
     # via
@@ -307,7 +307,7 @@ newrelic==10.3.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
-nh3==0.2.19
+nh3==0.2.20
     # via readme-renderer
 oauthlib==3.2.2
     # via
@@ -369,9 +369,9 @@ pycparser==2.22
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   cffi
-pydata-sphinx-theme==0.16.0
+pydata-sphinx-theme==0.16.1
     # via sphinx-book-theme
-pygments==2.18.0
+pygments==2.19.0
     # via
     #   accessible-pygments
     #   doc8
