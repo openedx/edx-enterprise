@@ -589,6 +589,7 @@ class TestEnterpriseMembersSerializer(TestCase):
     def test_serialize_users(self):
         expected_user = {
             'enterprise_customer_user': {
+                'user_id': self.user_1.id,
                 'email': self.user_1.email,
                 'joined_org': self.user_1.date_joined.strftime("%b %d, %Y"),
                 'name': (self.user_1.first_name + ' ' + self.user_1.last_name),
@@ -609,6 +610,7 @@ class TestEnterpriseMembersSerializer(TestCase):
 
         expected_user_2 = {
             'enterprise_customer_user': {
+                'user_id': self.user_2.id,
                 'email': self.user_2.email,
                 'joined_org': self.user_2.date_joined.strftime("%b %d, %Y"),
                 'name': self.user_2.first_name + ' ' + self.user_2.last_name,

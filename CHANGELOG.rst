@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.0]
+--------
+* feat: Adds sorting support to enterprise-customer-members endpoint 
+
 [5.5.2]
 --------
 * feat: Add page_size support to enterprise-customer-members endpoint
