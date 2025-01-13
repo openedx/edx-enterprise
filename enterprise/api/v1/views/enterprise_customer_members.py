@@ -72,9 +72,9 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
         - ``user_query`` (string, optional): Filter the returned members by user name and email with a provided
         sub-string
         - ``sort_by`` (string, optional): Specify how the returned members should be ordered. Supported sorting values
-        are `joined_org`, `name`, and `enrollments`. Ordering can be reversed by supplying a `-` at the
-        beginning of the sorting value ie `-joined_org`.
-        - ``is_reversed`` (bool, optional): Include to reverse the order of returned records.
+        are `joined_org`, `name`, and `enrollments`.
+        - ``is_reversed`` (bool, optional): Include to reverse the records in descending order. By default, the results
+        returned are in ascending order.
         """
         query_params = self.request.query_params
         param_serializers = serializers.EnterpriseCustomerMembersRequestQuerySerializer(
