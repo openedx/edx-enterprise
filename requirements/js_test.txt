@@ -87,8 +87,10 @@ trio-websocket==0.11.1
     # via selenium
 typing-extensions==4.12.2
     # via selenium
-urllib3[socks]==2.3.0
-    # via selenium
+urllib3[socks]==2.2.3
+    # via
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
+    #   selenium
 websocket-client==1.8.0
     # via selenium
 wsproto==1.2.0
