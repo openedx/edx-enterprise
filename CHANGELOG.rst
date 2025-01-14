@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.1]
+--------
+* fix: Log all learner transmission records.
+
 [5.6.0]
 --------
 * feat: Adds sorting support to enterprise-customer-members endpoint 
