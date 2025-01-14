@@ -256,7 +256,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.GET,
             EnterpriseCatalogApiClient.API_BASE_URL
-            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+            + EnterpriseCatalogApiClient.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
                 enterprise_config.enterprise_customer.uuid, "key/"
             ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
@@ -316,7 +316,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.GET,
             EnterpriseCatalogApiClient.API_BASE_URL
-            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+            + EnterpriseCatalogApiClient.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
                 enterprise_config.enterprise_customer.uuid, "key/"
             ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
@@ -422,7 +422,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.GET,
             EnterpriseCatalogApiClient.API_BASE_URL
-            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+            + EnterpriseCatalogApiClient.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
                 enterprise_config.enterprise_customer.uuid, "key/"
             ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
@@ -479,7 +479,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.GET,
             EnterpriseCatalogApiClient.API_BASE_URL
-            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+            + EnterpriseCatalogApiClient.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
                 enterprise_config.enterprise_customer.uuid, "key/"
             ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
@@ -651,7 +651,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.GET,
             EnterpriseCatalogApiClient.API_BASE_URL
-            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+            + EnterpriseCatalogApiClient.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
                 enterprise_config.enterprise_customer.uuid, "key/"
             ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
@@ -730,7 +730,7 @@ class TestDegreed2ApiClient(unittest.TestCase):
         responses.add(
             responses.GET,
             EnterpriseCatalogApiClient.API_BASE_URL
-            + EnterpriseCatalogApiClient.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
+            + EnterpriseCatalogApiClient.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(
                 enterprise_config.enterprise_customer.uuid, "key/"
             ),
             json={"skill_names": ["Supply Chain", "Supply Chain Management"]},
