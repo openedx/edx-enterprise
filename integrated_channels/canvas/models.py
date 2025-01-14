@@ -33,6 +33,8 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     The Enterprise-specific configuration we need for integrating with Canvas.
 
     Based on: https://canvas.instructure.com/doc/api/file.oauth.html#oauth2-flow-3
+
+    .. no_pii:
     """
 
     decrypted_client_id = EncryptedCharField(
