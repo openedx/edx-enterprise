@@ -29,8 +29,9 @@ class EnterpriseCatalogApiClient(UserAPIClient):
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     CATALOG_DIFF_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/generate_diff'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
-    CONTENT_METADATA_IDENTIFIER_ENDPOINT = ENTERPRISE_CUSTOMER_ENDPOINT + \
+    CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT = ENTERPRISE_CUSTOMER_ENDPOINT + \
         "/{}/content-metadata/" + "{}"
+    CONTENT_METADATA_IDENTIFIER_ENDPOINT = "content-metadata/"
     CATALOG_QUERIES_ENDPOINT = 'catalog-queries'
     GET_CONTENT_FILTER_HASH_ENDPOINT = CATALOG_QUERIES_ENDPOINT + '/get_content_filter_hash'
     GET_QUERY_BY_HASH_ENDPOINT = CATALOG_QUERIES_ENDPOINT + '/get_query_by_hash?hash={}'
@@ -386,14 +387,14 @@ class EnterpriseCatalogApiClient(UserAPIClient):
         return response.json()
 
     @UserAPIClient.refresh_token
-    def get_content_metadata_content_identifier(self, enterprise_uuid, content_id):
+    def get_customer_content_metadata_content_identifier(self, enterprise_uuid, content_id):
         """
         Return all content metadata contained in the catalogs associated with the
         given EnterpriseCustomer and content_id.
         """
         try:
             api_url = self.get_api_url(
-                f"{self.CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(enterprise_uuid, content_id)}"
+                f"{self.CUSTOMER_CONTENT_METADATA_IDENTIFIER_ENDPOINT.format(enterprise_uuid, content_id)}"
             )
             response = self.client.get(api_url)
             response.raise_for_status()
@@ -402,6 +403,37 @@ class EnterpriseCatalogApiClient(UserAPIClient):
             LOGGER.exception(
                 "No matching content found in catalog for customer: [%s] or content_id: [%s], Error: %s",
                 enterprise_uuid,
+                content_id,
+                str(exc),
+            )
+            return {}
+        except (RequestException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                (
+                    "Exception raised in "
+                    "EnterpriseCatalogApiClient::get_customer_content_metadata_content_identifier: [%s]"
+                ),
+                str(exc),
+            )
+            return {}
+
+    @UserAPIClient.refresh_token
+    def get_content_metadata_content_identifier(self, content_id):
+        """
+        Return the content metadata for the content_id.
+        """
+        try:
+            api_url = self.get_api_url(self.CONTENT_METADATA_IDENTIFIER_ENDPOINT)
+            query_params = {"content_identifiers": content_id}
+            response = self.client.get(
+                api_url,
+                params=query_params,
+            )
+            response.raise_for_status()
+            return response.json()
+        except NotFound as exc:
+            LOGGER.exception(
+                "No matching content found in catalog for content_id: [%s], Error: %s",
                 content_id,
                 str(exc),
             )
