@@ -200,7 +200,6 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         enrollment_intention = create_mock_default_enterprise_enrollment_intention(
             enterprise_customer=self.enterprise_customer,
             mock_catalog_api_client=mock_catalog_api_client,
-            contains_content_items=False,
             catalog_list=[],
         )
         query_params = f'enterprise_customer_uuid={str(self.enterprise_customer.uuid)}'
@@ -370,7 +369,6 @@ class TestDefaultEnterpriseEnrollmentIntentionViewSet(BaseTestEnterpriseAPIViews
         enrollment_intention = create_mock_default_enterprise_enrollment_intention(
             enterprise_customer=self.enterprise_customer,
             mock_catalog_api_client=mock_catalog_api_client,
-            contains_content_items=False,
             catalog_list=[],
         )
         mock_get_best_mode_from_course_key.return_value = VERIFIED_COURSE_MODE
