@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.2]
+--------
+* fix: Add dry_run_mode_enabled field to SAP admin panel
+
 [5.6.1]
 --------
 * fix: Log all learner transmission records.
