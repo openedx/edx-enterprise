@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.2]
+--------
+* feat: exclude unlinked member records from enterprise-customer-members and enterprise_group endpoints
+
 [5.6.1]
 --------
 * fix: Log all learner transmission records.

@@ -4703,7 +4703,10 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
                 from enterprise_enterprisecustomeruser ecu
                 inner join auth_user au on ecu.user_id = au.id
                 left join auth_userprofile aup on au.id = aup.user_id
-                where ecu.enterprise_customer_id = %s
+                where
+                    ecu.enterprise_customer_id = %s
+                and
+                    ecu.linked = 1
             ) select id from users where email like %s or full_name like %s;
         """
         # Raw sql is picky about uuid format
