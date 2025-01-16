@@ -67,6 +67,18 @@ ENTERPRISE_GROUPS_V2 = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.enterprise_learner_bff_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables the enterprise learner BFF
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2024-12-16
+ENTERPRISE_LEARNER_BFF_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.learner_bff_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -103,6 +115,13 @@ def enterprise_customer_support_tool():
     return ENTERPRISE_CUSTOMER_SUPPORT_TOOL.is_enabled()
 
 
+def enterprise_learner_bff_enabled():
+    """
+    Returns whether the enterprise learner BFF is enabled.
+    """
+    return ENTERPRISE_LEARNER_BFF_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -113,4 +132,5 @@ def enterprise_features():
         'enterprise_groups_v1': enterprise_groups_v1(),
         'enterprise_customer_support_tool': enterprise_customer_support_tool(),
         'enterprise_groups_v2': enterprise_groups_v2(),
+        'enterprise_learner_bff_enabled': enterprise_learner_bff_enabled(),
     }

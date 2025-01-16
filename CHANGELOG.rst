@@ -17,6 +17,39 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.1]
+--------
+* fix: Log all learner transmission records.
+
+[5.6.0]
+--------
+* feat: Adds sorting support to enterprise-customer-members endpoint 
+
+[5.5.2]
+--------
+* feat: Add page_size support to enterprise-customer-members endpoint
+
+[5.5.1]
+--------
+* fix: Fixed the query fetching enterprise customer members
+
+[5.5.0]
+-------
+* feat: introduce Waffle flag for enabling the Learner Portal BFF API.
+
+[5.4.2]
+--------
+* feat: Added a management command to update the Social Auth UID's for an enterprise.
+
+[5.4.1]
+-------
+* fix: The default enrollment ``learner_status`` view now considers intended courses
+  from which the requested user has unenrolled as no-longer realizable.
+
+[5.4.0]
+-------
+* chore: Update python requirements.
+
 [5.3.1]
 -------
 * fix: rely on single constant to define course mode priority order (i.e., ensure all enrollable modes are considered; previously missing honor mode in `enroll_learners_in_courses`).

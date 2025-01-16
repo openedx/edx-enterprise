@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from rest_framework import permissions, response, status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 from django.core.exceptions import ValidationError
 from django.db import connection
@@ -22,6 +23,7 @@ class EnterpriseCustomerMembersPaginator(PageNumberPagination):
     """Custom paginator for the enterprise customer members."""
 
     page_size = 10
+    page_size_query_param = 'page_size'
 
     def get_paginated_response(self, data):
         """Return a paginated style `Response` object for the given output data."""
@@ -62,13 +64,31 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
     def get_members(self, request, *args, **kwargs):
         """
         Get all members associated with that enterprise customer
+
+        Request Arguments:
+        - ``enterprise_uuid`` (URL location, required): The uuid of the enterprise from which learners should be listed.
+
+        Optional query params:
+        - ``user_query`` (string, optional): Filter the returned members by user name and email with a provided
+        sub-string
+        - ``sort_by`` (string, optional): Specify how the returned members should be ordered. Supported sorting values
+        are `joined_org`, `name`, and `enrollments`.
+        - ``is_reversed`` (bool, optional): Include to reverse the records in descending order. By default, the results
+        returned are in ascending order.
         """
+        query_params = self.request.query_params
+        param_serializers = serializers.EnterpriseCustomerMembersRequestQuerySerializer(
+            data=query_params
+        )
+        if not param_serializers.is_valid():
+            return Response(param_serializers.errors, status=400)
         enterprise_uuid = kwargs.get("enterprise_uuid", None)
         # Raw sql is picky about uuid format
         uuid_no_dashes = str(enterprise_uuid).replace("-", "")
         users = []
-        user_query = self.request.query_params.get("user_query", None)
-
+        user_query = param_serializers.validated_data.get('user_query')
+        is_reversed = param_serializers.validated_data.get('is_reversed', False)
+        sort_by = param_serializers.validated_data.get('sort_by')
         # On logistration, the name field of auth_userprofile is populated, but if it's not
         # filled in, we check the auth_user model for it's first/last name fields
         # https://2u-internal.atlassian.net/wiki/spaces/ENGAGE/pages/747143186/Use+of+full+name+in+edX#Data-on-Name-Field
@@ -78,7 +98,7 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                     au.id,
                     au.email,
                     au.date_joined,
-                    coalesce(NULLIF(aup.name, ''), (au.first_name || ' ' || au.last_name)) as full_name
+                    coalesce(NULLIF(aup.name, ''), au.username) as full_name
                 FROM enterprise_enterprisecustomeruser ecu
                 INNER JOIN auth_user as au on ecu.user_id = au.id
                 LEFT JOIN auth_userprofile as aup on au.id = aup.user_id
@@ -107,6 +127,14 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                 {"detail": "Could not find enterprise uuid {}".format(enterprise_uuid)},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        if sort_by:
+            lambda_keys = {
+                # 3 and 2 are indices in the tuple associated to a user row (uuid, email, joined_org, name)
+                'name': lambda t: t[3],
+                'joined_org': lambda t: t[2],
+            }
+            users = sorted(users, key=lambda_keys.get(sort_by), reverse=is_reversed)
 
         # paginate the queryset
         users_page = self.paginator.paginate_queryset(users, request, view=self)

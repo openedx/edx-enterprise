@@ -4,15 +4,15 @@
 #
 #    make upgrade
 #
-aiohappyeyeballs==2.4.3
+aiohappyeyeballs==2.4.4
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   aiohttp
-aiohttp==3.10.10
+aiohttp==3.11.11
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   openai
-aiosignal==1.3.1
+aiosignal==1.3.2
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   aiohttp
@@ -31,18 +31,18 @@ asn1crypto==1.5.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-attrs==24.2.0
+attrs==24.3.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   aiohttp
     #   openedx-events
-bcrypt==4.2.0
+bcrypt==4.2.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   paramiko
 billiard==4.2.1
     # via celery
-bleach==6.1.0
+bleach==6.2.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -50,7 +50,7 @@ celery==5.4.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-certifi==2024.8.30
+certifi==2024.12.14
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   requests
@@ -66,7 +66,7 @@ charset-normalizer==2.0.12
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   requests
     #   snowflake-connector-python
-click==8.1.7
+click==8.1.8
     # via
     #   celery
     #   click-didyoumean
@@ -82,12 +82,12 @@ click-plugins==1.1.1
     #   celery
 click-repl==0.3.0
     # via celery
-code-annotations==1.8.0
+code-annotations==2.1.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
     #   edx-toggles
-cryptography==43.0.3
+cryptography==44.0.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -102,7 +102,7 @@ defusedxml==0.7.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-django==4.2.16
+django==4.2.17
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
@@ -125,7 +125,7 @@ django==4.2.16
     #   edx-toggles
     #   jsonfield
     #   openedx-events
-django-cache-memoize==0.2.0
+django-cache-memoize==0.2.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -177,7 +177,7 @@ django-simple-history==3.1.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-django-waffle==4.1.0
+django-waffle==4.2.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -217,11 +217,11 @@ edx-braze-client==0.2.5
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-edx-ccx-keys==1.3.0
+edx-ccx-keys==2.0.2
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   openedx-events
-edx-django-utils==7.0.0
+edx-django-utils==7.1.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -258,7 +258,7 @@ edx-toggles==5.2.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-fastavro==1.9.7
+fastavro==1.10.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   openedx-events
@@ -281,7 +281,7 @@ inflection==0.5.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   drf-yasg
-jinja2==3.1.4
+jinja2==3.1.5
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   code-annotations
@@ -308,7 +308,7 @@ multidict==6.1.0
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   aiohttp
     #   yarl
-newrelic==10.2.0
+newrelic==10.4.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -324,7 +324,7 @@ openedx-events==9.15.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-packaging==24.1
+packaging==24.2
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   drf-yasg
@@ -349,7 +349,7 @@ pgpy==0.6.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-pillow==11.0.0
+pillow==11.1.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -359,11 +359,12 @@ platformdirs==4.3.6
     #   snowflake-connector-python
 prompt-toolkit==3.0.48
     # via click-repl
-propcache==0.2.0
+propcache==0.2.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
+    #   aiohttp
     #   yarl
-psutil==6.1.0
+psutil==6.1.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -375,7 +376,7 @@ pycparser==2.22
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   cffi
-pyjwt[crypto]==2.9.0
+pyjwt[crypto]==2.10.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   drf-jwt
@@ -391,7 +392,7 @@ pynacl==1.5.0
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-django-utils
     #   paramiko
-pyopenssl==24.2.1
+pyopenssl==24.3.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -440,10 +441,9 @@ semantic-version==2.10.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-six==1.16.0
+six==1.17.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
-    #   bleach
     #   edx-ccx-keys
     #   edx-rbac
     #   python-dateutil
@@ -451,7 +451,7 @@ slumber==0.7.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-snowflake-connector-python==3.12.3
+snowflake-connector-python==3.12.4
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -459,11 +459,11 @@ sortedcontainers==2.4.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-sqlparse==0.5.1
+sqlparse==0.5.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   django
-stevedore==5.3.0
+stevedore==5.4.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -482,7 +482,7 @@ tomlkit==0.13.2
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-tqdm==4.66.6
+tqdm==4.67.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   openai
@@ -508,6 +508,7 @@ uritemplate==4.1.1
     #   drf-yasg
 urllib3==2.2.3
     # via
+    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   requests
 vine==5.1.0
@@ -523,7 +524,7 @@ webencodings==0.5.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   bleach
-yarl==1.17.0
+yarl==1.18.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   aiohttp

@@ -418,19 +418,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             headers = response.headers
         else:
             headers = None
-        if not status_code or not text or not headers:
-            LOGGER.info(
-                'Learner Data Transmission'
-                f'for course={completion_data["courseID"]}  with data '
-                f'source: {module_name}, '
-                f'activityid: {course_module_id}, '
-                f'grades[0][studentid]: {moodle_user_id}, '
-                f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
-                f' with response: {response} '
-                f'Status Code: {status_code}, '
-                f'Text: {text}, '
-                f'Headers: {headers}, '
-            )
+
+        LOGGER.info(
+            'Learner Data Transmission'
+            f'for course={completion_data["courseID"]}  with data '
+            f'source: {module_name}, '
+            f'activityid: {course_module_id}, '
+            f'grades[0][studentid]: {moodle_user_id}, '
+            f'grades[0][grade]: {completion_data["grade"] * self.enterprise_configuration.grade_scale} '
+            f' with response: {response} '
+            f'Status Code: {status_code}, '
+            f'Text: {text}, '
+            f'Headers: {headers}, '
+        )
 
         return response
 

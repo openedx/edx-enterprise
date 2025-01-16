@@ -1922,7 +1922,22 @@ class EnterpriseUserSerializer(serializers.Serializer):
             return None
 
 
-class EnterpriseMembersSerializer(serializers.Serializer):
+class EnterpriseCustomerMembersRequestQuerySerializer(serializers.Serializer):
+    """
+    Serializer for the Enterprise Customer Members endpoint query filter
+    """
+    user_query = serializers.CharField(required=False, max_length=250)
+    sort_by = serializers.ChoiceField(
+        choices=[
+            ('name', 'name'),
+            ('joined_org', 'joined_org'),
+        ],
+        required=False,
+    )
+    is_reversed = serializers.BooleanField(required=False, default=False)
+
+
+class EnterpriseMembersSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model with additions.
     """
@@ -1954,6 +1969,7 @@ class EnterpriseMembersSerializer(serializers.Serializer):
         """
         if user := obj:
             return {
+                "user_id": user[0],
                 "email": user[1],
                 "joined_org": user[2].strftime("%b %d, %Y"),
                 "name": user[3],
