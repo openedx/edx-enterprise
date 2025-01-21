@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.3]
+--------
+* feat: exclude unlinked member records from enterprise-customer-members and enterprise_group endpoints
+
 [5.6.2]
 --------
 * fix: Add dry_run_mode_enabled field to SAP admin panel

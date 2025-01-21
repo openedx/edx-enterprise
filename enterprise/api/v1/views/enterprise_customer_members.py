@@ -102,7 +102,10 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                 FROM enterprise_enterprisecustomeruser ecu
                 INNER JOIN auth_user as au on ecu.user_id = au.id
                 LEFT JOIN auth_userprofile as aup on au.id = aup.user_id
-                WHERE ecu.enterprise_customer_id = %s
+                WHERE
+                    ecu.enterprise_customer_id = %s
+                AND
+                    ecu.linked = 1
             ) SELECT * FROM users {user_query_filter} ORDER BY full_name;
         """
         try:
