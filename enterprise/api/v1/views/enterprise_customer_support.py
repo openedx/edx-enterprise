@@ -73,7 +73,7 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
 
         if user_query:
             if not is_pending_user:
-                queryset = models.EnterpriseCustomerUser.objects.filter(
+                queryset = queryset.filter(
                     user_id__in=User.objects.filter(
                         Q(email__icontains=user_query) | Q(username__icontains=user_query)
                     )

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.4]
+--------
+* fix: enterprise-customer-support should only return learners from given customer
+
 [5.6.3]
 --------
 * feat: exclude unlinked member records from enterprise-customer-members and enterprise_group endpoints
