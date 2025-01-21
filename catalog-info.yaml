@@ -11,7 +11,6 @@ metadata:
     - ent
     - library
 spec:
-  owner: group:openedx-unmaintained
+  owner: group:2u-enterprise
   type: 'library'
   lifecycle: 'production'
-  
