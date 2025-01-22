@@ -2554,6 +2554,7 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         try:
             return get_and_cache_content_metadata(
                 content_key=self.content_key,
+                coerce_to_parent_course=True,
             )
         except HTTPError as e:
             LOGGER.error(

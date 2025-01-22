@@ -7,8 +7,12 @@ from collections import OrderedDict
 from logging import getLogger
 from urllib.parse import urljoin
 
-from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
-from rest_framework.exceptions import NotFound
+from requests.exceptions import (  # pylint: disable=redefined-builtin
+    ConnectionError,
+    HTTPError,
+    RequestException,
+    Timeout,
+)
 
 from django.conf import settings
 
@@ -399,7 +403,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
             response = self.client.get(api_url)
             response.raise_for_status()
             return response.json()
-        except NotFound as exc:
+        except HTTPError as exc:
             LOGGER.exception(
                 "No matching content found in catalog for customer: [%s] or content_id: [%s], Error: %s",
                 enterprise_uuid,
@@ -418,22 +422,24 @@ class EnterpriseCatalogApiClient(UserAPIClient):
             return {}
 
     @UserAPIClient.refresh_token
-    def get_content_metadata_content_identifier(self, content_id):
+    def get_content_metadata_content_identifier(self, content_id, coerce_to_parent_course=False):
         """
         Return the content metadata for the content_id.
         """
         try:
             api_url = self.get_api_url(self.CONTENT_METADATA_IDENTIFIER_ENDPOINT)
-            query_params = {"content_identifiers": content_id}
+            query_params = {}
+            if coerce_to_parent_course:
+                query_params["coerce_to_parent_course"] = True
             response = self.client.get(
-                api_url,
+                api_url + content_id,
                 params=query_params,
             )
             response.raise_for_status()
             return response.json()
-        except NotFound as exc:
+        except HTTPError as exc:
             LOGGER.exception(
-                "No matching content found in catalog for content_id: [%s], Error: %s",
+                "No matching content found for content_id: [%s], Error: %s",
                 content_id,
                 str(exc),
             )

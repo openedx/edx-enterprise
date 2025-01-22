@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CACHE_TIMEOUT = getattr(settings, 'CONTENT_METADATA_CACHE_TIMEOUT', 60 * 5)
 
 
-def get_and_cache_content_metadata(content_key, timeout=None):
+def get_and_cache_content_metadata(content_key, timeout=None, coerce_to_parent_course=False):
     """
     Returns the metadata corresponding to the requested ``content_key``
     REGARDLESS of catalog/customer associations.
@@ -28,15 +28,16 @@ def get_and_cache_content_metadata(content_key, timeout=None):
     Raises: An HTTPError if there's a problem getting the content metadata
       via the enterprise-catalog service.
     """
-    cache_key = versioned_cache_key('get_content_metadata_content_identifier', content_key)
+    cache_key = versioned_cache_key('get_content_metadata_content_identifier', content_key, coerce_to_parent_course)
     cached_response = TieredCache.get_cached_response(cache_key)
     if cached_response.is_found:
-        logger.info(f'cache hit for content_key {content_key}')
+        logger.info(f'cache hit for content_key {content_key} and coerce_to_parent_course={coerce_to_parent_course}')
         return cached_response.value
 
     try:
         result = EnterpriseCatalogApiClient().get_content_metadata_content_identifier(
             content_id=content_key,
+            coerce_to_parent_course=coerce_to_parent_course,
         )
     except HTTPError as exc:
         raise exc
@@ -46,8 +47,9 @@ def get_and_cache_content_metadata(content_key, timeout=None):
         return {}
 
     logger.info(
-        'Fetched catalog for content_key %s. Result = %s',
+        'Fetched catalog for content_key %s and coerce_to_parent_course=%s. Result = %s',
         content_key,
+        coerce_to_parent_course,
         result,
     )
     TieredCache.set_all_tiers(cache_key, result, timeout or DEFAULT_CACHE_TIMEOUT)
