@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 import ddt
 import pytz
 import responses
+from edx_django_utils.cache import TieredCache
 from edx_toggles.toggles.testutils import override_waffle_flag
 from faker import Faker
 from oauth2_provider.models import get_application_model
@@ -177,19 +178,18 @@ def create_mock_default_enterprise_enrollment_intention(
     enterprise_customer,
     mock_catalog_api_client,
     content_metadata=None,
-    contains_content_items=False,
     catalog_list=None,
 ):
     """
     Create a mock default enterprise enrollment intention.
     """
     mock_content_metadata = content_metadata or fake_catalog_api.FAKE_COURSE
-    mock_contains_content_items = contains_content_items
     mock_catalog_list = (
         catalog_list
         if catalog_list is not None
         else [fake_catalog_api.FAKE_CATALOG_RESULT.get('uuid')]
     )
+    mock_contains_content_items = bool(mock_catalog_list)
 
     mock_catalog_api_client.return_value = mock.Mock(
         get_content_metadata_content_identifier=mock.Mock(
@@ -238,6 +238,13 @@ class BaseTestEnterpriseAPIViews(APITest):
     def setUp(self):
         super().setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
+
+    def tearDown(self):
+        """
+        Clears TieredCache so that mock catalog API calls do not bleed across tests.
+        """
+        super().tearDown()
+        TieredCache.dangerous_clear_all_tiers()
 
     @staticmethod
     def create_user(username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):

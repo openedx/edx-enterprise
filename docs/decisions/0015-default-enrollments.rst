@@ -65,7 +65,7 @@ will always primarily be associated with the course run associated with the ``De
 * If the content_key is a specific course run, we'll always try to enroll in the explicitly
   configured course run key (not the advertised course run).
 
-This content_key will be passed to the ``EnterpriseCatalogApiClient().get_content_metadata_content_identifier``
+This content_key will be passed to the ``EnterpriseCatalogApiClient().get_customer_content_metadata_content_identifier``
 method. When passing a course run key to this endpoint, it'll actually return the top-level *course* metadata
 associated with the course run, not just the specified course run's metadata
 (this is primarily due to catalogs containing courses, not course runs, and we generally say that

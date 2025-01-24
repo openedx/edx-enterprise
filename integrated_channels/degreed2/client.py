@@ -349,7 +349,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         # We need to do 2 steps here:
         # 1. Fetch skills from enterprise-catalog
 
-        metadata = self.enterprise_catalog_api_client.get_content_metadata_content_identifier(
+        metadata = self.enterprise_catalog_api_client.get_customer_content_metadata_content_identifier(
             enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
             content_id=external_id)
         LOGGER.info(

@@ -283,7 +283,7 @@ class CourseCatalogApiClient(UserAPIClient):
             course_run_id(string): Course run ID (aka Course Key) in string format.
 
         Returns:
-            dict: Course run data provided by Course Catalog API.
+            dict: Course run data provided by Course Catalog API, or empty dict if not found.
 
         """
         return self._load_data(

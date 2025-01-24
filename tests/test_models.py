@@ -247,11 +247,11 @@ class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
         DefaultEnterpriseEnrollmentIntention.objects.all().delete()
 
     @mock.patch(
-        'enterprise.models.get_and_cache_customer_content_metadata',
+        'enterprise.models.get_and_cache_content_metadata',
         return_value=mock.MagicMock(),
     )
-    def test_retrieve_course_run_advertised_course_run(self, mock_get_and_cache_customer_content_metadata):
-        mock_get_and_cache_customer_content_metadata.return_value = self.mock_course
+    def test_retrieve_course_run_advertised_course_run(self, mock_get_and_cache_content_metadata):
+        mock_get_and_cache_content_metadata.return_value = self.mock_course
         default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
             enterprise_customer=self.test_enterprise_customer_1,
             content_key='edX+DemoX',
@@ -262,11 +262,11 @@ class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
         assert default_enterprise_enrollment_intention.content_type == DefaultEnterpriseEnrollmentIntention.COURSE
 
     @mock.patch(
-        'enterprise.models.get_and_cache_customer_content_metadata',
+        'enterprise.models.get_and_cache_content_metadata',
         return_value=mock.MagicMock(),
     )
-    def test_retrieve_course_run_with_explicit_course_run(self, mock_get_and_cache_customer_content_metadata):
-        mock_get_and_cache_customer_content_metadata.return_value = self.mock_course
+    def test_retrieve_course_run_with_explicit_course_run(self, mock_get_and_cache_content_metadata):
+        mock_get_and_cache_content_metadata.return_value = self.mock_course
         default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
             enterprise_customer=self.test_enterprise_customer_1,
             content_key='course-v1:edX+DemoX+2T2023',
@@ -277,12 +277,12 @@ class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
         assert default_enterprise_enrollment_intention.content_type == DefaultEnterpriseEnrollmentIntention.COURSE_RUN
 
     @mock.patch(
-        'enterprise.models.get_and_cache_customer_content_metadata',
+        'enterprise.models.get_and_cache_content_metadata',
         return_value=mock.MagicMock(),
     )
-    def test_validate_missing_course_run(self, mock_get_and_cache_customer_content_metadata):
+    def test_validate_missing_course_run(self, mock_get_and_cache_content_metadata):
         # Simulate a 404 Not Found by raising an HTTPError exception
-        mock_get_and_cache_customer_content_metadata.side_effect = HTTPError
+        mock_get_and_cache_content_metadata.side_effect = HTTPError
         with self.assertRaises(ValidationError) as exc_info:
             DefaultEnterpriseEnrollmentIntention.objects.create(
                 enterprise_customer=self.test_enterprise_customer_1,
@@ -291,12 +291,12 @@ class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
         self.assertIn('The content key did not resolve to a valid course run.', str(exc_info.exception))
 
     @mock.patch(
-        'enterprise.models.get_and_cache_customer_content_metadata',
+        'enterprise.models.get_and_cache_content_metadata',
         return_value=mock.MagicMock(),
     )
     @override_settings(ROOT_URLCONF="test_utils.admin_urls")
-    def test_validate_existing_soft_deleted_record(self, mock_get_and_cache_customer_content_metadata):
-        mock_get_and_cache_customer_content_metadata.return_value = self.mock_course
+    def test_validate_existing_soft_deleted_record(self, mock_get_and_cache_content_metadata):
+        mock_get_and_cache_content_metadata.return_value = self.mock_course
         existing_record = DefaultEnterpriseEnrollmentIntention.objects.create(
             enterprise_customer=self.test_enterprise_customer_1,
             content_key='edX+DemoX',

@@ -62,7 +62,7 @@ from enterprise.constants import (
     json_serialized_course_modes,
 )
 from enterprise.content_metadata.api import (
-    get_and_cache_customer_content_metadata,
+    get_and_cache_content_metadata,
     get_and_cache_enterprise_contains_content_items,
 )
 from enterprise.errors import LinkUserToEnterpriseError
@@ -2543,12 +2543,18 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
     @property
     def content_metadata_for_content_key(self):
         """
-        Retrieves the content metadata for the instance's enterprise customer and content key.
+        Retrieves the content metadata for the instance's content key.
+
+        NOTE (ENT-9840): Prior versions of this method used `get_and_cache_customer_content_metadata()` instead of
+        `get_and_cache_content_metadata()`. The goal was to ensure that model saves only succeed when the requested
+        content is actually contained in the customer's catalogs.  However, as part of ENT-9840 we are relaxing this
+        requirement because delays in discovery->catalog replication can easily result in default intentions being
+        un-saveable when simultaneously modifying catalog definitions to include the content.
         """
         try:
-            return get_and_cache_customer_content_metadata(
-                enterprise_customer_uuid=self.enterprise_customer.uuid,
+            return get_and_cache_content_metadata(
                 content_key=self.content_key,
+                coerce_to_parent_course=True,
             )
         except HTTPError as e:
             LOGGER.error(
@@ -2640,6 +2646,8 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
             enterprise_customer_uuid=self.enterprise_customer.uuid,
             content_keys=[self.course_run_key],
         )
+        if not contains_content_items_response.get('contains_content_items'):
+            return []
         return contains_content_items_response.get('catalog_list', [])
 
     def determine_content_type(self):
@@ -2695,6 +2703,11 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         if not self.course_run:
             # NOTE: This validation check also acts as an inferred check on the derived content_type
             # from the content metadata.
+            # NOTE 2: This check does NOT assert that the content is actually contained in the
+            # customer's catalogs. ADR 0015, as written, would _like_ for that check to exist in
+            # this clean() method, but that has proven infeasible due to the nature of how data
+            # replication delays from discovery->catalog cause contains_content_items calls to be
+            # temporarily unreliable. Instead this only checks that the content key exists at all.
             raise ValidationError({
                 'content_key': _('The content key did not resolve to a valid course run.')
             })
