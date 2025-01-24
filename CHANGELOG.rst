@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.5]
+--------
+* fix: enrollment intention saves should not be blocked on catalog inclusion
+* fix: use coerce_to_parent_course when fetching content for default enrollment intentions
+
 [5.6.4]
 --------
 * fix: enterprise-customer-support should only return learners from given customer
