@@ -36,7 +36,7 @@ amqp==5.3.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   kombu
-aniso8601==9.0.1
+aniso8601==10.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -161,7 +161,7 @@ click-repl==0.3.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   celery
-code-annotations==2.1.0
+code-annotations==2.2.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -198,7 +198,7 @@ dill==0.3.9
     # via pylint
 distlib==0.3.9
     # via virtualenv
-django==4.2.17
+django==4.2.18
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
@@ -373,7 +373,7 @@ edx-drf-extensions==10.5.0
     #   edx-rbac
 edx-i18n-tools==1.6.3
     # via -r requirements/dev.in
-edx-lint==5.4.1
+edx-lint==5.6.0
     # via -r requirements/dev.in
 edx-opaque-keys[django]==2.11.0
     # via
@@ -393,7 +393,7 @@ edx-rest-api-client==6.0.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-edx-tincan-py35==1.0.0
+edx-tincan-py35==2.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -408,7 +408,7 @@ factory-boy==3.3.1
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-faker==33.3.1
+faker==35.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
@@ -419,7 +419,7 @@ fastavro==1.10.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   openedx-events
-filelock==3.16.1
+filelock==3.17.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -541,7 +541,7 @@ openai==0.28.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-openedx-events==9.15.0
+openedx-events==9.15.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -611,7 +611,7 @@ pluggy==1.5.0
     #   tox
 polib==1.2.0
     # via edx-i18n-tools
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -822,7 +822,7 @@ snowballstemmer==2.2.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydocstyle
     #   sphinx
-snowflake-connector-python==3.12.4
+snowflake-connector-python==3.13.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -931,7 +931,7 @@ typing-extensions==4.12.2
     #   jwcrypto
     #   pydata-sphinx-theme
     #   snowflake-connector-python
-tzdata==2024.2
+tzdata==2025.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -964,7 +964,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.28.1
+virtualenv==20.29.1
     # via tox
 wcwidth==0.2.13
     # via

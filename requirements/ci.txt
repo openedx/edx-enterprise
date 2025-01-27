@@ -6,7 +6,7 @@
 #
 distlib==0.3.9
     # via virtualenv
-filelock==3.16.1
+filelock==3.17.0
     # via
     #   tox
     #   virtualenv
@@ -24,5 +24,5 @@ tox==3.28.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/ci.in
-virtualenv==20.28.1
+virtualenv==20.29.1
     # via tox
