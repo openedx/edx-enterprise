@@ -2726,6 +2726,15 @@ class DefaultEnterpriseEnrollmentIntention(TimeStampedModel, SoftDeletableModel)
         # Call the superclass save method
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            f"<DefaultEnterpriseEnrollmentIntention for customer={self.enterprise_customer.uuid} "
+            f"and content_key={self.content_key}>"
+        )
+
 
 class DefaultEnterpriseEnrollmentRealization(TimeStampedModel):
     """

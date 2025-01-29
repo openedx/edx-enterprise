@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.6]
+--------
+* feat: new mgmt command to validate default enrollment intentions
+
 [5.6.5]
 --------
 * fix: enrollment intention saves should not be blocked on catalog inclusion
