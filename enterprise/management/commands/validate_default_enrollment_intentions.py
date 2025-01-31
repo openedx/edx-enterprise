@@ -52,9 +52,19 @@ class Command(BaseCommand):
             'invalid': None,
         }
 
+        if not intention.catalogs_modified_latest:
+            result['skipped'] = True
+            logger.info(
+                f"handle_intention(): SKIPPING Evaluating enrollment intention {intention} "
+                "for not having any related catalogs."
+            )
+            return result
         if intention.catalogs_modified_latest > self.latest_change_allowed:
             result['skipped'] = True
-            logger.info(f"handle_intention(): SKIPPING Evaluating enrollment intention {intention}.")
+            logger.info(
+                f"handle_intention(): SKIPPING Evaluating enrollment intention {intention} "
+                "for having catalogs which have been too recently updated."
+            )
             return result
         result['skipped'] = False
         logger.info(f"handle_intention(): Evaluating enrollment intention {intention}.")

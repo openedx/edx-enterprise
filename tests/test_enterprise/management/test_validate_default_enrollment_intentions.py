@@ -69,6 +69,11 @@ class ValidateDefaultEnrollmentIntentionsCommandTests(TestCase):
             "customer_content_metadata_api_success": False,
             "expected_logging": "0/2 were evaluated (2/2 skipped)",
         },
+        # Happy-ish case (customer was skipped because no catalogs existed).
+        {
+            "catalog_exists": False,
+            "expected_logging": "for not having any related catalogs",
+        },
         # Sad case (content was not found in customer's catalogs).
         {
             "customer_content_metadata_api_success": False,
@@ -84,6 +89,7 @@ class ValidateDefaultEnrollmentIntentionsCommandTests(TestCase):
         mock_catalog_api_client,
         catalog_query_modified=NOW - timedelta(minutes=31),
         catalog_modified=NOW - timedelta(minutes=31),
+        catalog_exists=True,
         customer_content_metadata_api_success=True,
         expected_logging="1/2 were evaluated (1/2 skipped)",
         expected_command_error=False,
@@ -116,11 +122,22 @@ class ValidateDefaultEnrollmentIntentionsCommandTests(TestCase):
                 } if customer_content_metadata_api_success else {},
             ),
         )
+        if catalog_exists:
+            self.catalog_query.modified = catalog_query_modified
+            # bulk_update() avoids signals.
+            EnterpriseCatalogQuery.objects.bulk_update(
+                [self.catalog_query],
+                ["modified"],
+            )
+            self.catalog.modified = catalog_modified
+            EnterpriseCustomerCatalog.objects.bulk_update(
+                [self.catalog],
+                ["modified"],
+            )
+        else:
+            self.catalog_query.delete()
+            self.catalog.delete()
         # This intention is subject to variable test inputs.
-        self.catalog_query.modified = catalog_query_modified
-        EnterpriseCatalogQuery.objects.bulk_update([self.catalog_query], ["modified"])  # bulk_update() avoids signals.
-        self.catalog.modified = catalog_modified
-        EnterpriseCustomerCatalog.objects.bulk_update([self.catalog], ["modified"])  # bulk_update() avoids signals.
         DefaultEnterpriseEnrollmentIntentionFactory(
             enterprise_customer=self.customer,
             content_key=self.content_key,
