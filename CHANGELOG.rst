@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.7]
+--------
+* fix: gracefully handle case where intention has no related catalogs
+
 [5.6.6]
 --------
 * feat: new mgmt command to validate default enrollment intentions
