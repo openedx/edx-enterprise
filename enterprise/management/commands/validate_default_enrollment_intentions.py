@@ -6,8 +6,8 @@ import logging
 from datetime import timedelta
 
 from django.core.management import BaseCommand, CommandError
-from django.db.models import Max
-from django.db.models.functions import Coalesce, Greatest
+from django.db.models import DateTimeField, Max
+from django.db.models.functions import Cast, Coalesce, Greatest
 from django.utils import timezone
 
 from enterprise.content_metadata.api import get_and_cache_customer_content_metadata
@@ -100,8 +100,9 @@ class Command(BaseCommand):
                 Max("enterprise_customer__enterprise_customer_catalogs__modified"),
                 Coalesce(
                     Max("enterprise_customer__enterprise_customer_catalogs__enterprise_catalog_query__modified"),
-                    # Arbitrarily default to 1 year ago. Greatest() in MySQL relies on all inputs being non-null.
-                    timezone.now() - timedelta(days=360),
+                    # Note 1: Arbitrarily fallback to 1 year ago because Greatest() in MySQL relies on non-null inputs.
+                    # Note 2: Cast python datetime to django field type, or else experience weird errors in prod.
+                    Cast(timezone.now() - timedelta(days=360), DateTimeField())
                 )
             )
         )
