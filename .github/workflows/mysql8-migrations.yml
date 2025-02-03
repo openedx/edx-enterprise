@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-20.04 ]
+        os: [ ubuntu-latest ]
         python-version: [ 3.8 ]
 
     steps:
@@ -39,7 +39,7 @@ jobs:
         echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
     - name: Cache pip dependencies
       id: cache-dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ${{ steps.pip-cache-dir.outputs.dir }}
         key: ${{ runner.os }}-pip-${{ hashFiles('requirements/pip_tools.txt') }}

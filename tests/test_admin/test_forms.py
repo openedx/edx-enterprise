@@ -210,7 +210,9 @@ class TestManageLearnersForm(unittest.TestCase):
         enrollment_instance = enrollment_client.return_value
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_details = fake_enrollment_api.COURSE_DETAILS[course_id]
         course_mode = "audit"
@@ -235,7 +237,9 @@ class TestManageLearnersForm(unittest.TestCase):
         enrollment_instance = enrollment_client.return_value
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         course_id = "course-v1:edX+DemoX+Demo_Course"
         form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode="")
         assert not form.is_valid()
@@ -247,7 +251,9 @@ class TestManageLearnersForm(unittest.TestCase):
         enrollment_instance = enrollment_client.return_value
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_mode = "verified"
         form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode=course_mode)
@@ -352,7 +358,9 @@ class TestManageLearnersForm(unittest.TestCase):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enrollment_instance.get_course_details.return_value = fake_enrollment_api.get_course_details(course_id)
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         form = self._make_bound_form(
             "",
             course=course,
@@ -375,7 +383,9 @@ class TestManageLearnersForm(unittest.TestCase):
         enrollment_instance = enrollment_client.return_value
         enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         enterprise_catalog_instance = enterprise_catalog_client.return_value
-        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         course_id = "course-v1:edX+DemoX+Demo_Course"
         reason = ""
         form = self._make_bound_form("irrelevant@example.com", course=course_id, reason=reason, course_mode="audit")

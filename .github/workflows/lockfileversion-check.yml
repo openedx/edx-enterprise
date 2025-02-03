@@ -1,0 +1,13 @@
+#check package-lock file version
+
+name: Check package-lock file version
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+
+jobs:
+  version-check:
+    uses: openedx/.github/.github/workflows/lockfileversion-check-v3.yml@master

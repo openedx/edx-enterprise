@@ -22,6 +22,8 @@ class MoodleLearnerExporter(LearnerExporter):
             self,
             enterprise_enrollment,
             completed_date=None,
+            content_title=None,
+            progress_status=None,
             course_completed=False,
             **kwargs
     ):  # pylint: disable=arguments-differ
@@ -67,6 +69,8 @@ class MoodleLearnerExporter(LearnerExporter):
                 course_completed=course_completed,
                 grade=percent_grade,
                 completed_timestamp=completed_date,
+                content_title=content_title,
+                progress_status=progress_status,
                 moodle_completed_timestamp=moodle_completed_timestamp,
                 enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
                 plugin_configuration_id=self.enterprise_configuration.id,

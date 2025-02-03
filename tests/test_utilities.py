@@ -182,6 +182,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_one_academy",
                 "show_videos_in_learner_portal_search_results",
                 "groups",
+                "default_enrollment_intentions",
             ]
         ),
         (

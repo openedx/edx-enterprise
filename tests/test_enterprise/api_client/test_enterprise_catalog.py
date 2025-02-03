@@ -9,6 +9,7 @@ import requests
 import responses
 from pytest import mark, raises
 from requests.exceptions import ConnectionError, RequestException, Timeout  # pylint: disable=redefined-builtin
+from testfixtures import LogCapture
 
 from enterprise.api_client import enterprise_catalog
 from enterprise.models import EnterpriseCustomerCatalog
@@ -416,11 +417,11 @@ def test_contains_content_items():
 @responses.activate
 @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
 def test_enterprise_contains_content_items():
-    url = _url("enterprise-customer/{enterprise_uuid}/contains_content_items/?course_run_ids=demoX".format(
-        enterprise_uuid=TEST_ENTERPRISE_ID
-    ))
+    query_params = '?course_run_ids=demoX&get_catalogs_containing_specified_content_ids=True'
+    url = _url(f"enterprise-customer/{TEST_ENTERPRISE_ID}/contains_content_items/{query_params}")
     expected_response = {
         'contains_content_items': True,
+        'catalog_list': [],
     }
     responses.add(
         responses.GET,
@@ -429,7 +430,10 @@ def test_enterprise_contains_content_items():
     )
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.enterprise_contains_content_items(TEST_ENTERPRISE_ID, ['demoX'])
-    assert actual_response == expected_response['contains_content_items']
+    actual_contains_content_items = actual_response['contains_content_items']
+    actual_catalog_list = actual_response['catalog_list']
+    assert actual_contains_content_items == expected_response['contains_content_items']
+    assert actual_catalog_list == expected_response['catalog_list']
 
 
 @responses.activate
@@ -649,3 +653,119 @@ def test_get_content_metadata_without_enterprise_catalogs():
 
     request_url = responses.calls[0][0].url
     assert url == request_url
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+def test_get_customer_content_metadata_content_identifier():
+    responses.reset()
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+
+    # Set up a mock response for requesting a course (via run key).
+    url = _url(f"enterprise-customer/{TEST_ENTERPRISE_ID}/content-metadata/course-v1:org+course+run/")
+    expected_response = {
+        'content_type': 'course',
+        'key': 'org+course',
+        'data': 'foo',
+    }
+    responses.add(responses.GET, url, json=expected_response)
+
+    # Set up a mock response for requesting content that does not exist.
+    url = _url(f"enterprise-customer/{TEST_ENTERPRISE_ID}/content-metadata/course-v1:does+not+exist/")
+    responses.add(responses.GET, url, status=404)
+
+    # Test requesting the course (via run key) directly.
+    results = client.get_customer_content_metadata_content_identifier(TEST_ENTERPRISE_ID, 'course-v1:org+course+run')
+    expected_results = {
+        'content_type': 'course',
+        'key': 'org+course',
+        'data': 'foo',
+    }
+    assert results == expected_results
+
+    # Test requesting non-existing content.
+    with LogCapture(level=logging.INFO) as log_capture:
+        results = client.get_customer_content_metadata_content_identifier(
+            TEST_ENTERPRISE_ID,
+            'course-v1:does+not+exist',
+        )
+    expected_results = {}
+    assert results == expected_results
+    logging_messages = [log_msg.getMessage() for log_msg in log_capture.records]
+    assert any('No matching content found' in message for message in logging_messages)
+
+    # Test making a request, but the connection fails.
+    with LogCapture(level=logging.INFO) as log_capture:
+        results = client.get_customer_content_metadata_content_identifier(
+            TEST_ENTERPRISE_ID,
+            'course-v1:does+not+match',
+        )
+    expected_results = {}
+    assert results == expected_results
+    logging_messages = [log_msg.getMessage() for log_msg in log_capture.records]
+    assert any('Exception raised in' in message for message in logging_messages)
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+def test_get_content_metadata_content_identifier():
+    responses.reset()
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+
+    # Set up a mock response for requesting a run directly.
+    url = _url('content-metadata/course-v1:org+course+run')
+    expected_response = {
+        'content_type': 'courserun',
+        'key': 'course-v1:org+course+run',
+        'data': 'foo',
+    }
+    responses.add(responses.GET, url, json=expected_response)
+
+    # Set up a mock response for requesting a run, but asking it to be coerced to a parent course.
+    url = _url('content-metadata/course-v1:org+course+run/?coerce_to_parent_course=true')
+    expected_response = {
+        'content_type': 'course',
+        'key': 'org+course',
+        'data': 'foo',
+    }
+    responses.add(responses.GET, url, json=expected_response)
+
+    # Set up a mock response for requesting content that does not exist.
+    url = _url('content-metadata/course-v1:does+not+exist')
+    responses.add(responses.GET, url, status=404)
+
+    # Test requesting the run directly.
+    results = client.get_content_metadata_content_identifier('course-v1:org+course+run')
+    expected_results = {
+        'content_type': 'courserun',
+        'key': 'course-v1:org+course+run',
+        'data': 'foo',
+    }
+    assert results == expected_results
+
+    # Test requesting the run, asking it to be coerced to a parent course.
+    results = client.get_content_metadata_content_identifier('course-v1:org+course+run', coerce_to_parent_course=True)
+    expected_results = {
+        'content_type': 'courserun',
+        'key': 'course-v1:org+course+run',
+        'data': 'foo',
+    }
+    assert results == expected_results
+
+    # Test requesting non-existing content.
+    with LogCapture(level=logging.INFO) as log_capture:
+        results = client.get_content_metadata_content_identifier('course-v1:does+not+exist')
+    expected_results = {}
+    assert results == expected_results
+    logging_messages = [log_msg.getMessage() for log_msg in log_capture.records]
+    assert any('No matching content found' in message for message in logging_messages)
+
+    # Test making a request, but the connection fails.
+    with LogCapture(level=logging.INFO) as log_capture:
+        results = client.get_content_metadata_content_identifier('course-v1:does+not+match')
+    expected_results = {}
+    assert results == expected_results
+    logging_messages = [log_msg.getMessage() for log_msg in log_capture.records]
+    assert any('Exception raised in' in message for message in logging_messages)

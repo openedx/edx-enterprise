@@ -60,13 +60,6 @@ class CourseModes:
     UNPAID_EXECUTIVE_EDUCATION = 'unpaid-executive-education'
 
 
-BEST_MODE_ORDER = [
-    CourseModes.VERIFIED,
-    CourseModes.PROFESSIONAL,
-    CourseModes.NO_ID_PROFESSIONAL,
-    CourseModes.UNPAID_EXECUTIVE_EDUCATION,
-]
-
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = [
     CourseModes.VERIFIED,
@@ -150,6 +143,11 @@ ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 ENTERPRISE_FULFILLMENT_OPERATOR_ROLE = 'fulfillment_operator'
 ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE = 'sso_orchestrator_operator'
+
+# Default enterprise enrollment roles/permissions
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE = 'default_enterprise_enrollment_intentions_learner'
+DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_PERMISSION = 'enterprise.can_view_default_enterprise_enrollment_intentions'
+
 # Provisioning admins roles:
 PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_enterprise_customer_admin'
 PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_pending_enterprise_customer_users_admin'
@@ -262,6 +260,12 @@ GROUP_MEMBERSHIP_STATUS_CHOICES = (
     (GROUP_MEMBERSHIP_PENDING_STATUS, 'Pending'),
     (GROUP_MEMBERSHIP_INTERNAL_API_ERROR_STATUS, 'Internal API error'),
     (GROUP_MEMBERSHIP_EMAIL_ERROR_STATUS, 'Email error')
+)
+GROUP_TYPE_BUDGET = 'budget'
+GROUP_TYPE_FLEX = 'flex'
+GROUP_TYPE_CHOICES = (
+    (GROUP_TYPE_BUDGET, 'Budget'),
+    (GROUP_TYPE_FLEX, 'Flex')
 )
 
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"

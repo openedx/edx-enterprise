@@ -15,7 +15,7 @@ import bleach
 import pytz
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
-from edx_rest_api_client.exceptions import HttpClientError
+from slumber.exceptions import HttpClientError
 
 from django.apps import apps
 from django.conf import settings
@@ -37,7 +37,7 @@ from django.utils.translation import ngettext
 
 from enterprise.constants import (
     ALLOWED_TAGS,
-    BEST_MODE_ORDER,
+    COURSE_MODE_SORT_ORDER,
     DEFAULT_CATALOG_CONTENT_FILTER,
     LMS_API_DATETIME_FORMAT,
     LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE,
@@ -740,6 +740,20 @@ def pending_enterprise_customer_admin_user_model():
     Returns the ``PendingEnterpriseCustomerAdminUser`` class.
     """
     return apps.get_model('enterprise', 'PendingEnterpriseCustomerAdminUser')
+
+
+def default_enterprise_enrollment_intention_model():
+    """
+    Returns the ``DefaultEnterpriseEnrollmentIntention`` class.
+    """
+    return apps.get_model('enterprise', 'DefaultEnterpriseEnrollmentIntention')
+
+
+def default_enterprise_enrollment_realization_model():
+    """
+    Returns the ``DefaultEnterpriseEnrollmentRealization`` class.
+    """
+    return apps.get_model('enterprise', 'DefaultEnterpriseEnrollmentRealization')
 
 
 def get_enterprise_customer(uuid):
@@ -1816,14 +1830,15 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
 
 
 def customer_admin_enroll_user_with_status(
-        enterprise_customer,
-        user,
-        course_mode,
-        course_id,
-        enrollment_source=None,
-        license_uuid=None,
-        transaction_id=None,
-        force_enrollment=False,
+    enterprise_customer,
+    user,
+    course_mode,
+    course_id,
+    enrollment_source=None,
+    license_uuid=None,
+    transaction_id=None,
+    force_enrollment=False,
+    is_default_auto_enrollment=False,
 ):
     """
     For use with bulk enrollment, or any use case of admin enrolling a user
@@ -1910,6 +1925,12 @@ def customer_admin_enroll_user_with_status(
                 licensed_enrollment_obj.uuid, license_uuid,
             )
             enterprise_fulfillment_source_uuid = licensed_enrollment_obj.uuid
+
+        if is_default_auto_enrollment:
+            # Check for default enterprise enrollment intentions for enterprise customer associated
+            # with the enrollment, and create a default enterprise enrollment realization if necessary.
+            check_default_enterprise_enrollment_intentions_and_create_realization(enterprise_course_enrollment=obj)
+
         if created:
             # Note: this tracking event only caters to bulk enrollment right now.
             track_enrollment(PATHWAY_CUSTOMER_ADMIN_ENROLLMENT, user.id, course_id)
@@ -1918,6 +1939,50 @@ def customer_admin_enroll_user_with_status(
     # If new_enrollment is None then the enrollment already existed
     created = bool(new_enrollment)
     return succeeded, created, enterprise_fulfillment_source_uuid
+
+
+def check_default_enterprise_enrollment_intentions_and_create_realization(enterprise_course_enrollment):
+    """
+    Check if there are any default enrollment intentions for the given enterprise customer,
+    and create corresponding realizations if they do not exist.
+    """
+    enterprise_customer_uuid = enterprise_course_enrollment.enterprise_customer_user.enterprise_customer.uuid
+    default_enrollment_intentions_for_customer = (
+        default_enterprise_enrollment_intention_model().available_objects.filter(
+            enterprise_customer=enterprise_customer_uuid,
+        )
+    )
+    default_enterprise_enrollment_intention = next(
+        (
+            intention for intention in default_enrollment_intentions_for_customer
+            if intention.course_run_key == enterprise_course_enrollment.course_id
+        ),
+        None
+    )
+
+    if not default_enterprise_enrollment_intention:
+        LOGGER.info(
+            "No default enrollment intention found for enterprise course enrollment %s",
+            enterprise_course_enrollment.id
+        )
+        return None
+
+    default_enterprise_enrollment_realization, created = (
+        default_enterprise_enrollment_realization_model().objects.get_or_create(
+            intended_enrollment=default_enterprise_enrollment_intention,
+            realized_enrollment=enterprise_course_enrollment,
+        )
+    )
+
+    if created:
+        LOGGER.info(
+            "Created default enterprise enrollment realization for default enrollment "
+            "intention %s and enterprise course enrollment %s",
+            default_enterprise_enrollment_intention.uuid,
+            enterprise_course_enrollment.id
+        )
+
+    return default_enterprise_enrollment_intention, default_enterprise_enrollment_realization
 
 
 def customer_admin_enroll_user(enterprise_customer, user, course_mode, course_id, enrollment_source=None):
@@ -2006,10 +2071,12 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
             * 'course_mode': The course mode.
             * 'license_uuid' OR 'transaction_id': ID of either accepted form of subsidy.
             * 'force_enrollment' (bool, optional): Enroll user even enrollment deadline is expired (default False).
+            * 'is_default_auto_enrollment' (bool, optional): If True, a related default enterprise enrollment
+                realization will be created (default False).
 
             Example::
 
-                licensed_users_info: [
+                subsidy_users_info: [
                     {
                         'email': 'newuser@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
@@ -2029,6 +2096,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                         'transaction_id': '3a5312d722564db0a16e3d81f53a3718',
                     },
                 ]
+
         discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
             default to 100
 
@@ -2057,6 +2125,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
         transaction_id = subsidy_user_info.get('transaction_id')
         activation_link = subsidy_user_info.get('activation_link')
         force_enrollment = subsidy_user_info.get('force_enrollment', False)
+        is_default_auto_enrollment = subsidy_user_info.get('is_default_auto_enrollment', False)
 
         if user_id and user_email:
             user = User.objects.filter(id=subsidy_user_info['user_id']).first()
@@ -2088,6 +2157,7 @@ def enroll_subsidy_users_in_courses(enterprise_customer, subsidy_users_info, dis
                     license_uuid,
                     transaction_id,
                     force_enrollment=force_enrollment,
+                    is_default_auto_enrollment=is_default_auto_enrollment,
                 )
                 if succeeded:
                     success_dict = {
@@ -2334,7 +2404,7 @@ def get_best_mode_from_course_key(course_key):
     enterprise learner in.
     """
     course_modes = [mode.slug for mode in CourseMode.objects.filter(course_id=course_key)]
-    if best_mode := [mode for mode in BEST_MODE_ORDER if mode in course_modes]:
+    if best_mode := [mode for mode in COURSE_MODE_SORT_ORDER if mode in course_modes]:
         return best_mode[0]
     return CourseModes.AUDIT
 

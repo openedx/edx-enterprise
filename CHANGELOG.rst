@@ -17,6 +17,208 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.7]
+--------
+* fix: gracefully handle case where intention has no related catalogs
+
+[5.6.6]
+--------
+* feat: new mgmt command to validate default enrollment intentions
+
+[5.6.5]
+--------
+* fix: enrollment intention saves should not be blocked on catalog inclusion
+* fix: use coerce_to_parent_course when fetching content for default enrollment intentions
+
+[5.6.4]
+--------
+* fix: enterprise-customer-support should only return learners from given customer
+
+[5.6.3]
+--------
+* feat: exclude unlinked member records from enterprise-customer-members and enterprise_group endpoints
+
+[5.6.2]
+--------
+* fix: Add dry_run_mode_enabled field to SAP admin panel
+
+[5.6.1]
+--------
+* fix: Log all learner transmission records.
+
+[5.6.0]
+--------
+* feat: Adds sorting support to enterprise-customer-members endpoint 
+
+[5.5.2]
+--------
+* feat: Add page_size support to enterprise-customer-members endpoint
+
+[5.5.1]
+--------
+* fix: Fixed the query fetching enterprise customer members
+
+[5.5.0]
+-------
+* feat: introduce Waffle flag for enabling the Learner Portal BFF API.
+
+[5.4.2]
+--------
+* feat: Added a management command to update the Social Auth UID's for an enterprise.
+
+[5.4.1]
+-------
+* fix: The default enrollment ``learner_status`` view now considers intended courses
+  from which the requested user has unenrolled as no-longer realizable.
+
+[5.4.0]
+-------
+* chore: Update python requirements.
+
+[5.3.1]
+-------
+* fix: rely on single constant to define course mode priority order (i.e., ensure all enrollable modes are considered; previously missing honor mode in `enroll_learners_in_courses`).
+* fix: prevent fetching catalog list without a resolved course run in the property `applicable_enterprise_catalog_uuids` within `DefaultEnterpriseEnrollmentIntention`.
+
+[5.3.0]
+--------
+* refactor: Removed unused django setting.
+
+[5.2.0]
+--------
+* feat: removed custom pagination for reporting configurations.
+
+[5.1.0]
+--------
+* feat: update EnterpriseGroupMembershipSerializer to include learner course enrollment count
+* feat: updated learner query to filter by full name
+
+[5.0.0]
+--------
+* refactor: Removed `plotly_token/` API endpoint and related views from enterprise API.
+
+[4.33.1]
+--------
+* feat: Creating enterprise customer members endpoint for admin portal
+
+[4.33.0]
+--------
+* feat: Updated pagination for reporting configurations.
+
+[4.32.3]
+--------
+* chore: Update python requirements.
+
+[4.32.2]
+--------
+* fix: ensure admin_users in EnterpriseCustomerUserViewSet is correct.
+
+[4.32.1]
+--------
+* feat: enable search filter on learner data transmission audit admin views for all integrated channels.
+
+[4.32.0]
+--------
+* feat: create DefaultEnterpriseEnrollmentRealization objects in bulk enrollment API, when applicable.
+* fix: Alter the realized_enrollment field in DefaultEnterpriseEnrollmentRealization to be a OneToOneField.
+* fix: rename metadata field in DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer.
+
+[4.31.2]
+--------
+* feat: add test cases for newly added unlink_self endpoint.
+
+[4.31.1]
+--------
+* fix: fixed query for monthly_impact_report command.
+
+[4.31.0]
+--------
+* feat: add new endpoint to unlink the logged in user.
+
+[4.30.1]
+--------
+* fix: serialize best_mode_for_course_run field in DefaultEnterpriseEnrollmentIntentionSerializer.
+
+[4.30.0]
+--------
+* feat: REST APIs for default-enterprise-enrollment-intentions
+
+[4.29.0]
+--------
+* feat: Create django admin for default enrollments
+
+[4.28.4]
+--------
+* feat: updating the character count for group name to 255
+
+[4.28.3]
+--------
+* feat: removing all references of to-be-deleted field
+
+[4.28.2]
+--------
+* fix: added content_title, progress_status in get_learner_data_records for derived classed of learner data exporters.
+
+[4.28.1]
+--------
+* feat: making to-be-deleted model field nullable
+
+[4.28.0]
+--------
+* feat: add default enrollment models
+
+[4.27.3]
+--------
+* fix: Updating the EnterpriseGroup serializer with created variable
+
+[4.27.2]
+--------
+* fix: updates `get_all_learners` to remove `_get_implicit_group_members`
+
+[4.27.1]
+--------
+* chore: remove `replaces` sections from squashing migrations.
+
+[4.27.0]
+--------
+* chore: Add index to the username field in the `Consent` model
+
+[4.26.1]
+--------
+* feat: proxy login now redirects to LMS register page instead of login page
+
+[4.26.0]
+--------
+* feat: add new field to EnterpriseGroup model and EnterpriseGroupSerializer
+
+[4.25.19]
+---------
+* feat: remove logging to debug SAP SuccessFactors transmission issues
+
+[4.25.18]
+---------
+* chore: requirement updates
+
+[4.25.17]
+---------
+* feat: add pagination to the support tool customer list
+
+[4.25.16]
+---------
+* feat: add a waffle flag for enterprise groups v2 feature
+
+[4.25.15]
+---------
+* fix: Don't import HttpClientError from edx-rest-api-client
+
+[4.25.14]
+---------
+* This version was incorretly tagged and so wasn't properly released.
+
+[4.25.13]
+----------
+* feat: add logging to debug SAP SuccessFactors transmission issues
+
 [4.25.12]
 ----------
 * feat: add username query to enterprise customer user query
@@ -253,7 +455,7 @@ Unreleased
 
 [4.20.7]
 --------
-* fix: add name from profile to group membership details 
+* fix: add name from profile to group membership details
 
 [4.20.6]
 --------

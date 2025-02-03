@@ -124,6 +124,7 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
         exporter = Degreed2LearnerExporter('fake-user', self.config)
         learner_data_records_1 = exporter.get_learner_data_records(
             enterprise_course_enrollment,
+            progress_status='In Progress'
         )[0]
         learner_data_records_1.save()
         learner_data_records_2 = exporter.get_learner_data_records(

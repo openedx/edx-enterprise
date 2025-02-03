@@ -15,11 +15,12 @@ from uuid import UUID
 
 import ddt
 import responses
-from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
 from freezegun.api import freeze_time
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
+from requests.exceptions import HTTPError
+from slumber.exceptions import HttpClientError
 from testfixtures import LogCapture
 
 from django.conf import settings
@@ -28,6 +29,7 @@ from django.core.files import File
 from django.core.files.storage import Storage
 from django.db.utils import IntegrityError
 from django.http import QueryDict
+from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 from django.urls import reverse
 
@@ -43,6 +45,7 @@ from enterprise.constants import (
 )
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.models import (
+    DefaultEnterpriseEnrollmentIntention,
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
@@ -204,6 +207,120 @@ class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):
 
 
 @mark.django_db
+@ddt.ddt
+class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
+    """
+    Tests for DefaultEnterpriseEnrollmentIntention
+    """
+    def setUp(self):
+        self.test_enterprise_customer_1 = factories.EnterpriseCustomerFactory()
+
+        self.faker = FakerFactory.create()
+        self.advertised_course_run_uuid = self.faker.uuid4()
+        self.course_run_1_uuid = self.faker.uuid4()
+        self.mock_course_run_1 = {
+            'key': 'course-v1:edX+DemoX+2T2023',
+            'title': 'Demo Course',
+            'parent_content_key': 'edX+DemoX',
+            'uuid': self.course_run_1_uuid
+        }
+        self.mock_advertised_course_run = {
+            'key': 'course-v1:edX+DemoX+3T2024',
+            'title': 'Demo Course',
+            'parent_content_key': 'edX+DemoX',
+            'uuid': self.advertised_course_run_uuid
+        }
+        self.mock_course_runs = [
+            self.mock_course_run_1,
+            self.mock_advertised_course_run,
+        ]
+        self.mock_course = {
+            'key': 'edX+DemoX',
+            'content_type': DefaultEnterpriseEnrollmentIntention.COURSE,
+            'course_runs': self.mock_course_runs,
+            'advertised_course_run_uuid': self.advertised_course_run_uuid
+        }
+        super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+        DefaultEnterpriseEnrollmentIntention.objects.all().delete()
+
+    @mock.patch(
+        'enterprise.models.get_and_cache_content_metadata',
+        return_value=mock.MagicMock(),
+    )
+    def test_retrieve_course_run_advertised_course_run(self, mock_get_and_cache_content_metadata):
+        mock_get_and_cache_content_metadata.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='edX+DemoX',
+        )
+        assert default_enterprise_enrollment_intention.course_run == self.mock_advertised_course_run
+        assert default_enterprise_enrollment_intention.course_key == self.mock_course['key']
+        assert default_enterprise_enrollment_intention.course_run_key == self.mock_advertised_course_run['key']
+        assert default_enterprise_enrollment_intention.content_type == DefaultEnterpriseEnrollmentIntention.COURSE
+
+    @mock.patch(
+        'enterprise.models.get_and_cache_content_metadata',
+        return_value=mock.MagicMock(),
+    )
+    def test_retrieve_course_run_with_explicit_course_run(self, mock_get_and_cache_content_metadata):
+        mock_get_and_cache_content_metadata.return_value = self.mock_course
+        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='course-v1:edX+DemoX+2T2023',
+        )
+        assert default_enterprise_enrollment_intention.course_run == self.mock_course_run_1
+        assert default_enterprise_enrollment_intention.course_key == self.mock_course['key']
+        assert default_enterprise_enrollment_intention.course_run_key == self.mock_course_run_1['key']
+        assert default_enterprise_enrollment_intention.content_type == DefaultEnterpriseEnrollmentIntention.COURSE_RUN
+
+    @mock.patch(
+        'enterprise.models.get_and_cache_content_metadata',
+        return_value=mock.MagicMock(),
+    )
+    def test_validate_missing_course_run(self, mock_get_and_cache_content_metadata):
+        # Simulate a 404 Not Found by raising an HTTPError exception
+        mock_get_and_cache_content_metadata.side_effect = HTTPError
+        with self.assertRaises(ValidationError) as exc_info:
+            DefaultEnterpriseEnrollmentIntention.objects.create(
+                enterprise_customer=self.test_enterprise_customer_1,
+                content_key='invalid_content_key',
+            )
+        self.assertIn('The content key did not resolve to a valid course run.', str(exc_info.exception))
+
+    @mock.patch(
+        'enterprise.models.get_and_cache_content_metadata',
+        return_value=mock.MagicMock(),
+    )
+    @override_settings(ROOT_URLCONF="test_utils.admin_urls")
+    def test_validate_existing_soft_deleted_record(self, mock_get_and_cache_content_metadata):
+        mock_get_and_cache_content_metadata.return_value = self.mock_course
+        existing_record = DefaultEnterpriseEnrollmentIntention.objects.create(
+            enterprise_customer=self.test_enterprise_customer_1,
+            content_key='edX+DemoX',
+            is_removed=True,
+        )
+        # Attempt to re-create the above entry
+        with self.assertRaises(ValidationError) as exc_info:
+            DefaultEnterpriseEnrollmentIntention.objects.create(
+                enterprise_customer=self.test_enterprise_customer_1,
+                content_key='edX+DemoX',
+            )
+        existing_record_admin_url = reverse(
+            'admin:enterprise_defaultenterpriseenrollmentintention_change',
+            args=[existing_record.uuid],
+        )
+        message = (
+            f'A default enrollment intention with this enterprise customer and '
+            f'content key already exists, but is soft-deleted. Please restore '
+            f'it <a href="{existing_record_admin_url}">here</a>.'
+        )
+        self.assertIn(message, str(exc_info.exception))
+
+
+@mark.django_db
 class TestEnterpriseCustomerManager(unittest.TestCase):
     """
     Tests for enterprise customer manager.
@@ -319,11 +436,15 @@ class TestEnterpriseCustomer(unittest.TestCase):
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
 
         # Test when content is in the enterprise customer's catalog(s)
-        api_client_mock.return_value.enterprise_contains_content_items.return_value = True
+        api_client_mock.return_value.enterprise_contains_content_items.return_value = {
+            'contains_content_items': True,
+        }
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
 
         # Test when content is NOT in the enterprise customer's catalog(s)
-        api_client_mock.return_value.enterprise_contains_content_items.return_value = False
+        api_client_mock.return_value.enterprise_contains_content_items.return_value = {
+            'contains_content_items': False,
+        }
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
     @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
@@ -1084,7 +1205,6 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
         with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
             path = logo_path(branding_config, branding_config.logo.name)
-            print(path)
             self.assertTrue(re.search(self.BRANDING_PATH_REGEX, path))
 
     def test_logo_path_after_save(self):

@@ -10,3 +10,4 @@ disable+ =
     no-member,
     missing-timeout,
     use-yield-from,
+    too-many-positional-arguments,

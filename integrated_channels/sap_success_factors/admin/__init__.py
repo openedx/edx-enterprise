@@ -55,6 +55,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(DjangoObjectActions,
         "has_access_token",
         "prevent_self_submit_grades",
         "show_course_price",
+        "dry_run_mode_enabled",
         "disable_learner_data_transmissions",
         "transmit_total_hours",
         "transmission_chunk_size",
@@ -171,6 +172,14 @@ class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(
         "enterprise_customer_name",
         "friendly_status_message",
         "api_record",
+    )
+
+    search_fields = (
+        "sapsf_user_id",
+        "enterprise_course_enrollment_id",
+        "course_id",
+        "content_title",
+        "friendly_status_message"
     )
 
     list_per_page = 1000

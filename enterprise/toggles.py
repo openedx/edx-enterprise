@@ -55,6 +55,30 @@ ENTERPRISE_CUSTOMER_SUPPORT_TOOL = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.enterprise_groups_v2
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables enterprise groups feature
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2024-09-24
+ENTERPRISE_GROUPS_V2 = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.enterprise_groups_v2',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
+# .. toggle_name: enterprise.enterprise_learner_bff_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables the enterprise learner BFF
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2024-12-16
+ENTERPRISE_LEARNER_BFF_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.learner_bff_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -77,11 +101,25 @@ def enterprise_groups_v1():
     return ENTERPRISE_GROUPS_V1.is_enabled()
 
 
+def enterprise_groups_v2():
+    """
+    Returns whether the enterprise groups v2 feature flag is enabled.
+    """
+    return ENTERPRISE_GROUPS_V2.is_enabled()
+
+
 def enterprise_customer_support_tool():
     """
     Returns whether the enterprise customer support tool is enabled.
     """
     return ENTERPRISE_CUSTOMER_SUPPORT_TOOL.is_enabled()
+
+
+def enterprise_learner_bff_enabled():
+    """
+    Returns whether the enterprise learner BFF is enabled.
+    """
+    return ENTERPRISE_LEARNER_BFF_ENABLED.is_enabled()
 
 
 def enterprise_features():
@@ -93,4 +131,6 @@ def enterprise_features():
         'feature_prequery_search_suggestions': feature_prequery_search_suggestions(),
         'enterprise_groups_v1': enterprise_groups_v1(),
         'enterprise_customer_support_tool': enterprise_customer_support_tool(),
+        'enterprise_groups_v2': enterprise_groups_v2(),
+        'enterprise_learner_bff_enabled': enterprise_learner_bff_enabled(),
     }
