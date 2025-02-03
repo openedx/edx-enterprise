@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.9]
+--------
+* fix: Do NOT skip validating intentions which have NO related catalog queries
+
 [5.6.8]
 --------
 * chore: Upgrade Python requirements

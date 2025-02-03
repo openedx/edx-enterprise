@@ -52,6 +52,10 @@ class ValidateDefaultEnrollmentIntentionsCommandTests(TestCase):
     @ddt.data(
         # Totally happy case.
         {},
+        # Happy case (customer evaluated despite not having any related catalog queries).
+        {
+            "catalog_query_exists": False,
+        },
         # Happy-ish case (customer was skipped because catalog query was too new).
         {
             "catalog_query_modified": NOW - timedelta(minutes=29),
@@ -90,6 +94,7 @@ class ValidateDefaultEnrollmentIntentionsCommandTests(TestCase):
         catalog_query_modified=NOW - timedelta(minutes=31),
         catalog_modified=NOW - timedelta(minutes=31),
         catalog_exists=True,
+        catalog_query_exists=True,
         customer_content_metadata_api_success=True,
         expected_logging="1/2 were evaluated (1/2 skipped)",
         expected_command_error=False,
@@ -123,12 +128,15 @@ class ValidateDefaultEnrollmentIntentionsCommandTests(TestCase):
             ),
         )
         if catalog_exists:
-            self.catalog_query.modified = catalog_query_modified
-            # bulk_update() avoids signals.
-            EnterpriseCatalogQuery.objects.bulk_update(
-                [self.catalog_query],
-                ["modified"],
-            )
+            if catalog_query_exists:
+                self.catalog_query.modified = catalog_query_modified
+                # bulk_update() avoids signals.
+                EnterpriseCatalogQuery.objects.bulk_update(
+                    [self.catalog_query],
+                    ["modified"],
+                )
+            else:
+                self.catalog_query.delete()
             self.catalog.modified = catalog_modified
             EnterpriseCustomerCatalog.objects.bulk_update(
                 [self.catalog],
