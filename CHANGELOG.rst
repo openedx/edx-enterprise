@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.8]
+--------
+* chore: Upgrade Python requirements
+
 [5.6.7]
 --------
 * fix: gracefully handle case where intention has no related catalogs

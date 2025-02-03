@@ -43,7 +43,7 @@ attrs==25.1.0
     #   aiohttp
     #   openedx-events
     #   pytest
-babel==2.16.0
+babel==2.17.0
     # via
     #   pydata-sphinx-theme
     #   sphinx
@@ -51,7 +51,7 @@ bcrypt==4.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   paramiko
-beautifulsoup4==4.12.3
+beautifulsoup4==4.13.0
     # via pydata-sphinx-theme
 billiard==4.2.1
     # via
@@ -248,7 +248,7 @@ factory-boy==3.3.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in
-faker==35.0.0
+faker==35.2.0
     # via factory-boy
 fastavro==1.10.0
     # via
@@ -515,6 +515,7 @@ tqdm==4.67.1
 typing-extensions==4.12.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   beautifulsoup4
     #   django-countries
     #   edx-opaque-keys
     #   faker

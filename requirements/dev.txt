@@ -67,7 +67,7 @@ attrs==25.1.0
     #   aiohttp
     #   openedx-events
     #   pytest
-babel==2.16.0
+babel==2.17.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydata-sphinx-theme
@@ -78,7 +78,7 @@ bcrypt==4.2.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   paramiko
-beautifulsoup4==4.12.3
+beautifulsoup4==4.13.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydata-sphinx-theme
@@ -192,7 +192,7 @@ defusedxml==0.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.2.1
+diff-cover==9.2.2
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 dill==0.3.9
     # via pylint
@@ -408,7 +408,7 @@ factory-boy==3.3.1
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-faker==35.0.0
+faker==35.2.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
@@ -461,7 +461,7 @@ iniconfig==2.0.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest
-isort==5.13.2
+isort==6.0.0
     # via
     #   -r requirements/dev.in
     #   pylint
@@ -675,7 +675,7 @@ pyjwt[crypto]==2.10.1
     #   edx-drf-extensions
     #   edx-rest-api-client
     #   snowflake-connector-python
-pylint==3.3.3
+pylint==3.3.4
     # via
     #   edx-lint
     #   pylint-celery
@@ -925,6 +925,7 @@ typing-extensions==4.12.2
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   beautifulsoup4
     #   django-countries
     #   edx-opaque-keys
     #   faker
