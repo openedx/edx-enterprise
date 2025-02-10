@@ -51,7 +51,7 @@ bcrypt==4.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   paramiko
-beautifulsoup4==4.13.0
+beautifulsoup4==4.13.3
     # via pydata-sphinx-theme
 billiard==4.2.1
     # via
@@ -244,7 +244,7 @@ edx-tincan-py35==2.0.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-toggles==5.2.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-factory-boy==3.3.1
+factory-boy==3.3.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in

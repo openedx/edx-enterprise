@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.11]
+--------
+* chore: Upgrade Python requirements
+
 [5.6.10]
 --------
 * fix: cast datetime.datetime to DateTimeField as required by Coalesce()
