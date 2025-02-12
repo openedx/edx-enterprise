@@ -920,7 +920,8 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         choices=(
             ('audit', 'audit'),
             ('verified', 'verified'),
-            ('professional', 'professional')
+            ('professional', 'professional'),
+            ('no-id-professional', 'no-id-professional')
         ),
         required=True,
         write_only=True,
