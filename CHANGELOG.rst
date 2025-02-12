@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.11]
+---------
+* feat: add a waffle flag for the learner profile view in admin portal
+
 [5.6.10]
 --------
 * fix: cast datetime.datetime to DateTimeField as required by Coalesce()
