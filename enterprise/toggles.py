@@ -79,6 +79,18 @@ ENTERPRISE_LEARNER_BFF_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.admin_portal_learner_profile_view_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables an admin to view a learner's profile
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2025-02-12
+ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.admin_portal_learner_profile_view_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -122,6 +134,13 @@ def enterprise_learner_bff_enabled():
     return ENTERPRISE_LEARNER_BFF_ENABLED.is_enabled()
 
 
+def admin_portal_learner_profile_view_enabled():
+    """
+    Returns whether the learner profile view in admin portal is enabled.
+    """
+    return ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -133,4 +152,5 @@ def enterprise_features():
         'enterprise_customer_support_tool': enterprise_customer_support_tool(),
         'enterprise_groups_v2': enterprise_groups_v2(),
         'enterprise_learner_bff_enabled': enterprise_learner_bff_enabled(),
+        'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled(),
     }
