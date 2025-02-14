@@ -1050,6 +1050,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     Fields:
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_id (:class:`django.db.models.IntegerField`): user identifier
+        user_fk (ForeignKey[:class:`.User`]): auth_user
 
     .. no_pii:
     """
@@ -1062,6 +1063,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
+    user_fk = models.ForeignKey(
+        User,
+        blank=False,
+        null=True,
+        related_name='enterprise_customer_users',
+        on_delete=models.deletion.CASCADE
+    )
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
     is_relinkable = models.BooleanField(
