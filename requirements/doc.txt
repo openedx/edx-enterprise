@@ -51,7 +51,7 @@ bcrypt==4.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   paramiko
-beautifulsoup4==4.13.0
+beautifulsoup4==4.13.3
     # via pydata-sphinx-theme
 billiard==4.2.1
     # via
@@ -244,11 +244,11 @@ edx-tincan-py35==2.0.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-toggles==5.2.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-factory-boy==3.3.1
+factory-boy==3.3.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in
-faker==35.2.0
+faker==36.1.1
     # via factory-boy
 fastavro==1.10.0
     # via
@@ -315,7 +315,7 @@ oauthlib==3.2.2
     #   django-oauth-toolkit
 openai==0.28.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-openedx-events==9.15.2
+openedx-events==9.18.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 packaging==24.2
     # via
@@ -406,7 +406,6 @@ python-dateutil==2.9.0.post0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
-    #   faker
 python-ipware==3.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -518,7 +517,6 @@ typing-extensions==4.12.2
     #   beautifulsoup4
     #   django-countries
     #   edx-opaque-keys
-    #   faker
     #   jwcrypto
     #   pydata-sphinx-theme
     #   snowflake-connector-python
@@ -526,6 +524,7 @@ tzdata==2025.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   celery
+    #   faker
     #   kombu
 unicodecsv==0.14.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt

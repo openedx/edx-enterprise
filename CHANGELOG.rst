@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.6.12]
+--------
+* chore: Upgrade Python requirements
+
 [5.6.11]
 ---------
 * feat: add a waffle flag for the learner profile view in admin portal
