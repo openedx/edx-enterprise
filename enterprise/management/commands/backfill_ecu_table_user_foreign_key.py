@@ -8,74 +8,23 @@ from time import sleep
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
-from django.db import DatabaseError, transaction
-from django.db.models import Q
 
-from enterprise.models import EnterpriseCustomerUser
-from integrated_channels.utils import batch_by_pk
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE
+from enterprise.models import EnterpriseCustomerUser, SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
+from enterprise.utils import batch
 
 log = logging.getLogger(__name__)
 User = auth.get_user_model()
 
 
-def safe_bulk_update(entries, properties, max_retries, manager):
-    """Performs bulk_update with retry logic."""
-    for attempt in range(1, max_retries + 1):
-        try:
-            with transaction.atomic():
-                manager.bulk_update(
-                    entries, properties
-                )
-            return len(entries)
-        except DatabaseError as e:
-            wait_time = 2 ** attempt
-            log.warning(f"Attempt {attempt}/{max_retries} failed: {e}. Retrying in {wait_time}s.")
-            sleep(wait_time)
-
-    raise Exception(f"Bulk update failed after {max_retries} retries.")
-
-
-def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries, ModelClass):
-    """
-    Fetches and updates records in batches.
-    Only loads and updates a subset of records at a time to avoid memory and performance issues.
-    Note: you cannot use django's queryset.iterator() method
-    as MySQL does not support it and will still load everything into memory.
-    """
-    batch_counter = 1
-    total_processed = 0
-
-    for batch in batch_by_pk(
-        ModelClass,
-        extra_filter=Q(user_fk__isnull=True),
-        batch_size=batch_limit,
-        model_manager=manager,
-    ):
-        log.info(f"Processing batch {batch_counter}...")
-        for ecu in batch:
-            ecu.user_fk = ecu.user_id
-        safe_bulk_update(batch, ['user_fk'], max_retries, manager=manager)
-        total_processed += len(batch)
-        log.info(f'Processed {total_processed} records.')
-        sleep(batch_sleep)
-        batch_counter += 1
-
-    log.info(f"Final batch processed. Total {total_processed} records updated.")
-    return True
-
-
 class Command(BaseCommand):
     """
-    Management command to copy `user_id` values to the foreign key `user_fk` field
-    in the enterprise_customer_user table.
+    Management command to copy `user_id` values to the foreign key `user_fk` field in the enterprise_customer_user table.
 
     Example usage:
         $ ./manage.py backfill_ecu_table_user_foreign_key
     """
-    help = '''
-    Goes through the Enterprise Customer User table in batches
-    and copies the user_id to the user_fk foreign key.
-    '''
+    help = 'Goes through the Enterprise Customer User table in batches and copies the user_id to the user_fk foreign key.'
 
     def add_arguments(self, parser):
         """
@@ -90,52 +39,53 @@ class Command(BaseCommand):
             type=int,
         )
         parser.add_argument(
-            '--max-retries',
-            action='store',
-            dest='max_retries',
-            default=5,
-            help='Max retries for each batch.',
-            type=int,
-        )
-        parser.add_argument(
             '--batch-sleep',
             action='store',
             dest='batch_sleep',
-            default=0.1,
+            default=5,
             help='How long to sleep between batches.',
-            type=float,
+            type=int,
         )
 
     def backfill_ecu_table_user_foreign_key(self, options):
         """
-        Backfills user_fk from user_id in batches with timeout, retries, and progress reporting.
+        Assigns enterprise_learner role to users.
         """
-        batch_limit = options.get('batch_limit', 250)
-        max_retries = options.get('max_retries', 5)
-        batch_sleep = options.get('batch_sleep', 2)
+        batch_limit = options['batch_limit']
+        batch_sleep = options['batch_sleep']
 
-        _fetch_and_update_in_batches(
-            manager=EnterpriseCustomerUser.all_objects,
-            batch_limit=batch_limit,
-            batch_sleep=batch_sleep,
-            max_retries=max_retries,
-            ModelClass=EnterpriseCustomerUser,
-        )
+        role = SystemWideEnterpriseRole.objects.get(name=ENTERPRISE_LEARNER_ROLE)
+        ecus = EnterpriseCustomerUser.objects.select_related('enterprise_customer').filter(linked=True)
 
-        _fetch_and_update_in_batches(
-            manager=EnterpriseCustomerUser.history,
-            batch_limit=batch_limit,
-            batch_sleep=batch_sleep,
-            max_retries=max_retries,
-            ModelClass=EnterpriseCustomerUser,
-        )
+        for ecu_batch in batch(ecus, batch_size=batch_limit):
+            for ecu in ecu_batch:
+                log.info('Processing EnterpriseCustomerUser %s', ecu)
 
-    def handle(self, *_args, **options):
+                user = User.objects.get(id=ecu.user_id)
+                enterprise_customer = ecu.enterprise_customer
+                role_assignment, created = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+                    user=user,
+                    role=role,
+                    enterprise_customer=enterprise_customer
+                )
+                if created:
+                    log.info(
+                        'Created SystemWideEnterpriseUserRoleAssignment %s for enterprise user %s',
+                        role_assignment, ecu
+                    )
+                else:
+                    log.info(
+                        'Did not create role assignment for enterprise user %s', ecu
+                    )
+
+            sleep(batch_sleep)
+
+    def handle(self, *args, **options):
         """
         Entry point for management command execution.
         """
-        log.info('Starting backfilling ECU user_fk field from user_id!')
+        log.info('Starting assigning enterprise_learner roles to users!')
 
         self.backfill_ecu_table_user_foreign_key(options)
 
-        log.info('Successfully finished backfilling ECU user_fk field from user_id!')
+        log.info('Successfully finished assigning enterprise_learner roles to users!')
