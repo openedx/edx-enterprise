@@ -532,6 +532,23 @@ class EnterpriseCustomer(TimeStampedModel):
         ),
     )
 
+    stripe_customer_id = models.CharField(
+        verbose_name="Stripe Customer ID",
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Populated if this customer purchased through Stripe."
+        )
+    )
+
+    salesforce_customer_record_id = models.CharField(
+        verbose_name="SalesForce Customer Record ID",
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
     @property
     def enterprise_customer_identity_provider(self):
         """
