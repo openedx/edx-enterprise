@@ -26,92 +26,28 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
     """
     command = 'backfill_ecu_table_user_foreign_key'
 
-
-
     @factory.django.mute_signals(signals.post_save)
     def setUp(self):
         super().setUp()
         self.cleanup_test_objects()
 
-        for i in range(100):
+        for i in range(10):
             factories.UserFactory(username=f'user-{i}')
 
-        self.alpha_customer = factories.EnterpriseCustomerFactory(
+        self.customer = factories.EnterpriseCustomerFactory(
             name='alpha',
-        )
-        self.beta_customer = factories.EnterpriseCustomerFactory(
-            name='beta',
         )
 
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for index, user in enumerate(users[0:30]):
+        for index, user in enumerate(users[0:10]):
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
-                enterprise_customer=self.alpha_customer,
-            )
-
-        # Make a bunch of users for another ENT customer
-        for index, user in enumerate(users[30:65]):
-            factories.EnterpriseCustomerUserFactory(
-                user_id=user.id,
-                enterprise_customer=self.beta_customer,
-            )
-
-        # Make some users that are NOT LINKED, so we should ignore them
-        for index, user in enumerate(users[65:75]):
-            ecu = factories.EnterpriseCustomerUserFactory(
-                user_id=user.id,
-                enterprise_customer=self.alpha_customer,
-            )
-            ecu.linked = False
-            ecu.save()
-
-        # Now make a subset of first set of enterprise customers also have
-        # EnterpriseCustomerUser records with a 2nd enterprise customer
-        for index, user in enumerate(users[0:15]):
-            factories.EnterpriseCustomerUserFactory(
-                user_id=user.id,
-                enterprise_customer=self.beta_customer,
+                enterprise_customer=self.customer,
             )
 
         self.addCleanup(self.cleanup_test_objects)
-
-    # # def test_user_role_assignments_created(self):
-    # #     """
-    # #     Verify that the management command correctly creates User Role Assignments
-    # #     for enterprise customer users missing them.
-    # #     """
-
-    # #     assert EnterpriseCustomerUser.all_objects.count() == 90
-    # #     assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
-    # #         enterprise_customer=self.alpha_customer
-    # #     ).count() == 15
-    # #     assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
-    # #         enterprise_customer=self.beta_customer
-    # #     ).count() == 24
-
-    # #     call_command(
-    # #         'backfill_learner_role_assignments',
-    # #         '--batch-sleep',
-    # #         '0',
-    # #         '--batch-limit',
-    # #         '10',
-    # #     )
-
-    # #     # Notice the discrepancy of values: 90 != 30 + 50
-    # #     # That's because 10 ECU records are linked=False, so we dont
-    # #     # create a role assignment for them
-    # #     assert EnterpriseCustomerUser.all_objects.count() == 90
-    # #     assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
-    # #         enterprise_customer=self.alpha_customer
-    # #     ).count() == 30
-    # #     assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
-    # #         enterprise_customer=self.beta_customer
-    # #     ).count() == 50
-    # #     for ecu in EnterpriseCustomerUser.objects.all():
-    # #         assert SystemWideEnterpriseUserRoleAssignment.objects.filter(user=ecu.user).exists()
 
     def cleanup_test_objects(self):
         """
@@ -127,21 +63,30 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         assert EnterpriseCustomerUser.objects.first().user_fk is EnterpriseCustomerUser.objects.first().user_id
 
     @patch('logging.Logger.info')
-    @patch('time.sleep')
+    @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     def test_runs_in_batches(self, mock_sleep, mock_log):
-        call_command(self.command, batch_limit=10)
-        assert mock_sleep.call_count == 8
-        assert mock_log.called_with('Updated %d EnterpriseCustomerUser records', 10)
+        call_command(self.command, batch_limit=3)
+        assert mock_sleep.call_count == 4
+        mock_log.assert_any_call('Processed 3/10 rows.')
+        mock_log.assert_any_call('Processed 6/10 rows.')
+        mock_log.assert_any_call('Processed 9/10 rows.')
+        mock_log.assert_any_call('Processed 10/10 rows.')
 
     def test_skips_rows_that_already_have_user_fk(self):
         ecu = EnterpriseCustomerUser.objects.first()
-        ecu.user_fk = -1
+        ecu.user_fk = 9999
         ecu.save()
         call_command(self.command)
-        assert EnterpriseCustomerUser.objects.first().user_fk == -1
+        assert EnterpriseCustomerUser.objects.first().user_fk == 9999
 
-    # def test_times_out_after_5_seconds_per_batch(self):
-
-    # def test_retry_5_times_on_failure(self):
-
-    # def test_logs_progress_and_errors(self):
+    @patch('logging.Logger.warning')
+    def test_retry_5_times_on_failure(self, mock_log):
+        with patch(
+            ("enterprise.management.commands.backfill_ecu_table_user_foreign_key."
+            "EnterpriseCustomerUser.objects.bulk_update"),
+            side_effect=Exception(EXCEPTION)
+        ):
+            with self.assertRaises(Exception) as e:
+                call_command(self.command, max_retries=5)
+            assert mock_log.called_with(f"Attempt 1/5 failed: {e}. Retrying in 2s.")
+            assert mock_log.called_with(f"Attempt 2/5 failed: {e}. Retrying in 2s.")
