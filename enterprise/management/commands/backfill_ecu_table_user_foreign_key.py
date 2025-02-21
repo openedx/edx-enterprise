@@ -54,29 +54,23 @@ class Command(BaseCommand):
         batch_limit = options['batch_limit']
         batch_sleep = options['batch_sleep']
 
-        role = SystemWideEnterpriseRole.objects.get(name=ENTERPRISE_LEARNER_ROLE)
-        ecus = EnterpriseCustomerUser.objects.select_related('enterprise_customer').filter(linked=True)
+        ecus = EnterpriseCustomerUser.objects.all().filter(user_fk__isnull=True)
 
         for ecu_batch in batch(ecus, batch_size=batch_limit):
+            user_fk_updates = []
             for ecu in ecu_batch:
                 log.info('Processing EnterpriseCustomerUser %s', ecu)
 
-                user = User.objects.get(id=ecu.user_id)
-                enterprise_customer = ecu.enterprise_customer
-                role_assignment, created = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-                    user=user,
-                    role=role,
-                    enterprise_customer=enterprise_customer
+                ecu.user_fk = ecu.user_id
+                user_fk_updates.append(ecu)
+
+            if user_fk_updates:
+                EnterpriseCustomerUser.objects.bulk_update(
+                    user_fk_updates,
+                    ['user_fk'],
+                    batch_size=batch_limit # setting batch_size for extra safety
                 )
-                if created:
-                    log.info(
-                        'Created SystemWideEnterpriseUserRoleAssignment %s for enterprise user %s',
-                        role_assignment, ecu
-                    )
-                else:
-                    log.info(
-                        'Did not create role assignment for enterprise user %s', ecu
-                    )
+                log.info('Updated %d EnterpriseCustomerUser records', len(user_fk_updates))
 
             sleep(batch_sleep)
 
@@ -84,8 +78,8 @@ class Command(BaseCommand):
         """
         Entry point for management command execution.
         """
-        log.info('Starting assigning enterprise_learner roles to users!')
+        log.info('Starting backfilling ECU user_fk field from user_id!')
 
         self.backfill_ecu_table_user_foreign_key(options)
 
-        log.info('Successfully finished assigning enterprise_learner roles to users!')
+        log.info('Successfully finished backfilling ECU user_fk field from user_id!')
