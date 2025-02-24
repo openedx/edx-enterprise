@@ -13,11 +13,13 @@ from django.core.management import call_command
 from django.db.models import signals
 from django.test import TestCase
 
-from enterprise.models import EnterpriseCustomerUser, EnterpriseCustomer
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 from test_utils import factories
+
 EXCEPTION = "DUMMY_TRACE_BACK"
 
 User = auth.get_user_model()
+
 
 @mark.django_db
 @ddt.ddt
@@ -83,8 +85,8 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
     @patch('logging.Logger.warning')
     def test_retry_5_times_on_failure(self, mock_log):
         with patch(
-            ("enterprise.management.commands.backfill_ecu_table_user_foreign_key."
-            "EnterpriseCustomerUser.objects.bulk_update"),
+            ("enterprise.management.commands.backfill_ecu_table_user_foreign_key." +
+                "EnterpriseCustomerUser.objects.bulk_update"),
             side_effect=Exception(EXCEPTION)
         ):
             with self.assertRaises(Exception) as e:
