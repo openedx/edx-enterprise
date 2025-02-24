@@ -11,7 +11,6 @@ from django.core.management.base import BaseCommand
 from django.db import transaction, DatabaseError
 
 from enterprise.models import EnterpriseCustomerUser
-from enterprise.utils import batch
 
 
 log = logging.getLogger(__name__)
@@ -20,12 +19,16 @@ User = auth.get_user_model()
 
 class Command(BaseCommand):
     """
-    Management command to copy `user_id` values to the foreign key `user_fk` field in the enterprise_customer_user table.
+    Management command to copy `user_id` values to the foreign key `user_fk` field
+    in the enterprise_customer_user table.
 
     Example usage:
         $ ./manage.py backfill_ecu_table_user_foreign_key
     """
-    help = 'Goes through the Enterprise Customer User table in batches and copies the user_id to the user_fk foreign key.'
+    help = '''
+    Goes through the Enterprise Customer User table in batches
+    and copies the user_id to the user_fk foreign key.
+    '''
 
     def add_arguments(self, parser):
         """
@@ -56,7 +59,7 @@ class Command(BaseCommand):
             type=int,
         )
 
-    def safe_bulk_update(self, entries, max_retries, batch_limit):
+    def safe_bulk_update(self, entries, max_retries):
         """Performs bulk_update with retry logic."""
         count = entries.count()
         for attempt in range(1, max_retries + 1):
@@ -94,7 +97,7 @@ class Command(BaseCommand):
                 log.info(f"Processing EnterpriseCustomerUser {ecu.id}")
                 ecu.user_fk = ecu.user_id
 
-            count = self.safe_bulk_update(ecu_batch, max_retries, batch_limit)
+            count = self.safe_bulk_update(ecu_batch, max_retries)
             total_processed += count
             log.info(f"Processed {total_processed}/{total_rows} rows.")
             sleep(batch_sleep)
@@ -102,7 +105,7 @@ class Command(BaseCommand):
         log.info(f"Backfill complete! Processed {total_processed}/{total_rows} records.")
 
 
-    def handle(self, **options):
+    def handle(self, *args, **options): # pylint: disable=unused-argument
         """
         Entry point for management command execution.
         """
