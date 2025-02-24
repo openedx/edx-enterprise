@@ -321,6 +321,7 @@ packaging==24.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   drf-yasg
+    #   pydata-sphinx-theme
     #   pytest
     #   snowflake-connector-python
     #   sphinx
@@ -369,7 +370,7 @@ pycparser==2.22
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   cffi
-pydata-sphinx-theme==0.16.1
+pydata-sphinx-theme==0.15.4
     # via sphinx-book-theme
 pygments==2.19.1
     # via
@@ -441,6 +442,8 @@ requests==2.32.3
     #   sphinx
 restructuredtext-lint==1.4.0
     # via doc8
+roman-numerals-py==3.1.0
+    # via sphinx
 rules==3.5
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 semantic-version==2.10.0
@@ -465,12 +468,12 @@ sortedcontainers==2.4.0
     #   snowflake-connector-python
 soupsieve==2.6
     # via beautifulsoup4
-sphinx==8.1.3
+sphinx==8.2.1
     # via
     #   -r requirements/doc.in
     #   pydata-sphinx-theme
     #   sphinx-book-theme
-sphinx-book-theme==1.1.3
+sphinx-book-theme==1.1.4
     # via -r requirements/doc.in
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
