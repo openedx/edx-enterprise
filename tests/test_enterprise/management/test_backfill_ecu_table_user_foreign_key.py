@@ -2,15 +2,16 @@
 Tests for the Django management command `backfill_ecu_table_user_foreign_key`.
 """
 
+from unittest.mock import patch
+
 import ddt
 import factory
 from pytest import mark
-from unittest.mock import patch
 
-from django.core.management import call_command
-from django.test import TestCase
 from django.contrib import auth
+from django.core.management import call_command
 from django.db.models import signals
+from django.test import TestCase
 
 from enterprise.models import EnterpriseCustomerUser, EnterpriseCustomer
 from test_utils import factories
@@ -41,7 +42,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for index, user in enumerate(users[0:10]):
+        for _index, user in enumerate(users[0:10]):
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.customer,
