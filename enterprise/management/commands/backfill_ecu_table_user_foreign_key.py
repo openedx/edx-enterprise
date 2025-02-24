@@ -8,10 +8,9 @@ from time import sleep
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
-from django.db import transaction, DatabaseError
+from django.db import DatabaseError, transaction
 
 from enterprise.models import EnterpriseCustomerUser
-
 
 log = logging.getLogger(__name__)
 User = auth.get_user_model()
@@ -104,8 +103,7 @@ class Command(BaseCommand):
 
         log.info(f"Backfill complete! Processed {total_processed}/{total_rows} records.")
 
-
-    def handle(self, *args, **options): # pylint: disable=unused-argument
+    def handle(self, *_args, **options):
         """
         Entry point for management command execution.
         """
