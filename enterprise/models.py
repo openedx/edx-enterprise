@@ -1063,7 +1063,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
-    user_fk = models.PositiveIntegerField(
+    user_fk = models.IntegerField(
         null=True,
         blank=False,
         db_index=False,
