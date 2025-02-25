@@ -58,7 +58,9 @@ more-itertools==10.6.0
 ordereddict==1.1
     # via jasmine-core
 outcome==1.3.0.post0
-    # via trio
+    # via
+    #   trio
+    #   trio-websocket
 portend==3.2.0
     # via cherrypy
 pysocks==1.7.1
@@ -67,7 +69,7 @@ python-dateutil==2.9.0.post0
     # via tempora
 pyyaml==6.0.2
     # via jasmine
-selenium==4.28.1
+selenium==4.29.0
     # via jasmine
 six==1.17.0
     # via python-dateutil
@@ -83,7 +85,7 @@ trio==0.29.0
     # via
     #   selenium
     #   trio-websocket
-trio-websocket==0.12.0
+trio-websocket==0.12.1
     # via selenium
 typing-extensions==4.12.2
     # via selenium
