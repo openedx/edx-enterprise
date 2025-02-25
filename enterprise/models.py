@@ -1066,7 +1066,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     user_fk = models.IntegerField(
         null=True,
         blank=False,
-        db_index=False,
+        db_index=True,
     )
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
