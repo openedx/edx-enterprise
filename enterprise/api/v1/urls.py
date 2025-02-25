@@ -22,6 +22,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_sso_configuration,
     enterprise_customer_support,
     enterprise_customer_user,
+    enterprise_group_membership,
     enterprise_group,
     enterprise_subsidy_fulfillment,
     notifications,
@@ -82,6 +83,11 @@ router.register(
 )
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
+)
+router.register(
+    "enterprise-group-membership",
+    enterprise_group_membership.EnterpriseGroupMembershipViewSet,
+    'enterprise-group-membership'
 )
 router.register(
     "default-enterprise-enrollment-intentions",
@@ -188,6 +194,13 @@ urlpatterns = [
             {'get': 'get_learners', 'patch': 'update_pending_learner_status'}
         ),
         name='enterprise-group-learners'
+    ),
+    re_path(
+        r'^enterprise-group-membership/?$',
+        enterprise_group_membership.EnterpriseGroupMembershipViewSet.as_view(
+            {'get': 'get_memberships'}
+        ),
+        name='enterprise-group-membership'
     ),
     re_path(
         r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/assign_learners/?$',
