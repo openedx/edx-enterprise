@@ -192,7 +192,7 @@ defusedxml==0.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.2.2
+diff-cover==9.2.3
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 dill==0.3.9
     # via pylint
@@ -553,6 +553,7 @@ packaging==24.2
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   build
     #   drf-yasg
+    #   pydata-sphinx-theme
     #   pytest
     #   snowflake-connector-python
     #   sphinx
@@ -592,7 +593,7 @@ pillow==11.1.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 pip-tools==7.4.1
     # via -r requirements/dev.in
-pkginfo==1.12.0
+pkginfo==1.12.1.2
     # via twine
 platformdirs==4.3.6
     # via
@@ -650,7 +651,7 @@ pycparser==2.22
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   cffi
-pydata-sphinx-theme==0.16.1
+pydata-sphinx-theme==0.15.4
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   sphinx-book-theme
@@ -787,6 +788,10 @@ restructuredtext-lint==1.4.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   doc8
+roman-numerals-py==3.1.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
+    #   sphinx
 rules==3.5
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
@@ -836,12 +841,12 @@ soupsieve==2.6
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   beautifulsoup4
-sphinx==8.1.3
+sphinx==8.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydata-sphinx-theme
     #   sphinx-book-theme
-sphinx-book-theme==1.1.3
+sphinx-book-theme==1.1.4
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
 sphinxcontrib-applehelp==2.0.0
     # via
