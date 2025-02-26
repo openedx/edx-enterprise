@@ -9882,3 +9882,56 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
         assert expected_json == response.json().get('results')
         assert response.json().get('count') == 1
+
+
+class EnterpriseGroupMembershipViewSetTests(BaseTestEnterpriseAPIViews):
+    """Unit tests for EnterpriseGroupMembershipViewSet."""
+
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id, enterprise_customer=self.enterprise_customer
+        )
+        self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer, group_type='flex')
+        self.group_2 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer, group_type='budget')
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id="123", enterprise_customer__uuid=FAKE_UUIDS[0])
+        self.membership1 = EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            group=self.group_1,
+        )
+        self.membership2 = EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            group=self.group_2,
+        )
+
+        self.url = reverse("enterprise-group-membership")
+
+    def test_missing_required_params(self):
+        """Ensure API returns 400 Bad Request if required parameters are missing."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.json())
+
+    def test_filter_by_lms_user_id_and_enterprise_uuid(self):
+        """Ensure filtering by lms_user_id and enterprise_uuid returns correct results."""
+        response = self.client.get(self.url, {"lms_user_id": "123", "enterprise_uuid": FAKE_UUIDS[0]})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 1)
+
+    def test_no_matching_results(self):
+        """Ensure API returns empty results if no matching records exist."""
+        response = self.client.get(self.url, {"lms_user_id": "999", "enterprise_uuid": FAKE_UUIDS[0]})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()["results"]), 0)
+
+    def test_pagination_applied(self):
+        """Ensure pagination applies correctly if multiple records exist."""
+        EnterpriseGroupMembershipFactory.create_batch(15, enterprise_customer_user=self.enterprise_customer_user)
+        response = self.client.get(self.url, {"lms_user_id": "123", "enterprise_uuid": FAKE_UUIDS[0]})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("count", response.json())
+        self.assertIn("next", response.json())
+        self.assertIn("results", response.json())

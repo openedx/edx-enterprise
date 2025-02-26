@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.7.0]
+--------
+* feat: adds endpoint to list group memberships for a learner
+
 [5.6.12]
 --------
 * chore: Upgrade Python requirements
