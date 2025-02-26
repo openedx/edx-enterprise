@@ -22,8 +22,8 @@ from enterprise.api.v1.views import (
     enterprise_customer_sso_configuration,
     enterprise_customer_support,
     enterprise_customer_user,
-    enterprise_group_membership,
     enterprise_group,
+    enterprise_group_membership,
     enterprise_subsidy_fulfillment,
     notifications,
     pending_enterprise_customer_admin_user,
@@ -198,7 +198,7 @@ urlpatterns = [
     re_path(
         r'^enterprise-group-membership/?$',
         enterprise_group_membership.EnterpriseGroupMembershipViewSet.as_view(
-            {'get': 'get_memberships'}
+            {'get': 'get_flex_group_memberships'}
         ),
         name='enterprise-group-membership'
     ),

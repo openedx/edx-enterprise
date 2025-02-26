@@ -660,7 +660,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
     )
     enterprise_group_membership_uuid = serializers.UUIDField(source='uuid', allow_null=True, read_only=True)
     activated_at = serializers.DateTimeField(required=False)
-    name = serializers.CharField(source='group.name')
+    group_name = serializers.CharField(source='group.name')
     member_details = serializers.SerializerMethodField()
     recent_action = serializers.SerializerMethodField()
     status = serializers.CharField(required=False)
@@ -678,7 +678,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
             'status',
             'activated_at',
             'enrollments',
-            'name',
+            'group_name',
         )
 
     def get_member_details(self, obj):

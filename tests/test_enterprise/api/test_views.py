@@ -9894,10 +9894,18 @@ class EnterpriseGroupMembershipViewSetTests(BaseTestEnterpriseAPIViews):
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id, enterprise_customer=self.enterprise_customer
         )
+        self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer, group_type='flex')
+        self.group_2 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer, group_type='budget')
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id="123", enterprise_customer__uuid=FAKE_UUIDS[0])
-        self.membership1 = EnterpriseGroupMembershipFactory(enterprise_customer_user=self.enterprise_customer_user)
-        self.membership2 = EnterpriseGroupMembershipFactory()
+        self.membership1 = EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            group=self.group_1,
+        )
+        self.membership2 = EnterpriseGroupMembershipFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            group=self.group_2,
+        )
 
         self.url = reverse("enterprise-group-membership")
 

@@ -13,6 +13,7 @@ from django.contrib import auth
 from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
+from enterprise.constants import GROUP_TYPE_FLEX
 from enterprise.logging import getEnterpriseLogger
 
 LOGGER = getEnterpriseLogger(__name__)
@@ -30,9 +31,9 @@ class EnterpriseGroupMembershipViewSet(EnterpriseReadWriteModelViewSet):
     serializer_class = serializers.EnterpriseGroupMembershipSerializer
 
     @action(detail=False, methods=['get'])
-    def get_memberships(self, request):
+    def get_flex_group_memberships(self, request):
         """
-        Endpoint that filters by `lms_user_id` and `enterprise_uuid`.
+        Endpoint that filters flex group memberships by `lms_user_id` and `enterprise_uuid`.
 
         Parameters:
         - `lms_user_id` (str): Filter results by the LMS user ID.
@@ -53,11 +54,11 @@ class EnterpriseGroupMembershipViewSet(EnterpriseReadWriteModelViewSet):
                 status=HTTP_400_BAD_REQUEST
             )
 
-        if lms_user_id:
-            queryset = queryset.filter(enterprise_customer_user__user_id=lms_user_id)
-        if enterprise_uuid:
-            queryset = queryset.filter(enterprise_customer_user__enterprise_customer__uuid=enterprise_uuid)
-
+        queryset = self.queryset.filter(
+            enterprise_customer_user__user_id=lms_user_id,
+            enterprise_customer_user__enterprise_customer__uuid=enterprise_uuid,
+            group__group_type=GROUP_TYPE_FLEX
+        )
         page = self.paginate_queryset(queryset)
 
         serializer = self.get_serializer(page, many=True)
