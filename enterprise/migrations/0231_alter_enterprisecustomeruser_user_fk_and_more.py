@@ -61,7 +61,6 @@ class Migration(migrations.Migration):
                             on_delete=django.db.models.deletion.CASCADE,
                             related_name='+',  # Historical tables often use '+' for no backward relation
                             to=settings.AUTH_USER_MODEL,
-                            db_constraint=True,  # Explicitly state FK exists at DB level
                         ),
                     ),
                 ],
