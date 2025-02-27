@@ -1151,7 +1151,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 enterprise_customer=self.enterprise_customer,
             )
 
-        self.user_fk = self.user_id
+        self.user_fk = self.user
 
         return super().save(*args, **kwargs)
 
