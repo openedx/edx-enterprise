@@ -1069,7 +1069,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         blank=False,
         related_name='enterprise_customer_users',
         db_index=True,
-        on_delete=models.deletion.CASCADE
+        on_delete=models.deletion.CASCADE,
+        db_column='user_fk'
     )
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
