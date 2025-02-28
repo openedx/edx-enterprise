@@ -61,8 +61,22 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
 
+
+    # def test_on_create_should_set_user_fk_to_user(self):
+    #     """Test that user_fk is set to user_id when creating a record."""
+    #     user = factories.UserFactory(email='email@example.com')
+    #     enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
+
+    #     assert enterprise_customer_user.user_fk == user, (
+    #         f"Expected user_fk to be User with id {user.id}, but got {enterprise_customer_user.user_fk}"
+    #     )
+    #     ecu = EnterpriseCustomerUser.objects.first()
+    #     ecu.user_fk = None
+
+
     def test_copies_user_id_to_user_fk(self):
-        ecu = EnterpriseCustomerUser.objects.first()
+        user = factories.UserFactory(email='email@example.com')
+        ecu = factories.EnterpriseCustomerUserFactory(user_id=user.id)
         ecu.user_fk = None
 
         # use bulk_update to prevent save() method from setting user_fk to user_id
@@ -71,7 +85,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         assert ecu.user_fk is None
         call_command(self.command)
         ecu.refresh_from_db()
-        assert ecu.user_fk == ecu.user_id
+        assert ecu.user_fk == user
 
     @patch('logging.Logger.info')
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
@@ -89,12 +103,13 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         mock_log.assert_any_call('Processed 12 records.')
 
     def test_skips_rows_that_already_have_user_fk(self):
+        user = factories.UserFactory(email='email@example.com')
         ecu = EnterpriseCustomerUser.objects.first()
-        ecu.user_fk = 9999
+        ecu.user_fk = user
         # use bulk_update to prevent save() method from setting user_fk to user_id
         EnterpriseCustomerUser.objects.all().bulk_update([ecu], ['user_fk'])
         call_command(self.command)
-        assert EnterpriseCustomerUser.objects.first().user_fk == 9999
+        assert EnterpriseCustomerUser.objects.first().user_fk == user
 
     @patch('logging.Logger.warning')
     def test_retry_5_times_on_failure(self, mock_log):
