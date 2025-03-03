@@ -61,19 +61,6 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
 
-
-    # def test_on_create_should_set_user_fk_to_user(self):
-    #     """Test that user_fk is set to user_id when creating a record."""
-    #     user = factories.UserFactory(email='email@example.com')
-    #     enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
-
-    #     assert enterprise_customer_user.user_fk == user, (
-    #         f"Expected user_fk to be User with id {user.id}, but got {enterprise_customer_user.user_fk}"
-    #     )
-    #     ecu = EnterpriseCustomerUser.objects.first()
-    #     ecu.user_fk = None
-
-
     def test_copies_user_id_to_user_fk(self):
         user = factories.UserFactory(email='email@example.com')
         ecu = factories.EnterpriseCustomerUserFactory(user_id=user.id)
