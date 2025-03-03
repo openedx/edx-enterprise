@@ -10,6 +10,7 @@ from pytest import mark
 
 from django.contrib import auth
 from django.core.management import call_command
+from django.db import DatabaseError
 from django.db.models import signals
 from django.test import TestCase
 
@@ -104,12 +105,13 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         with patch(
             ("enterprise.management.commands.backfill_ecu_table_user_foreign_key." +
                 "EnterpriseCustomerUser.objects.bulk_update"),
-            side_effect=Exception(EXCEPTION)
+            side_effect=DatabaseError(EXCEPTION)
         ):
             with self.assertRaises(Exception) as e:
                 call_command(self.command, max_retries=5)
-            assert mock_log.called_with(f"Attempt 1/5 failed: {e}. Retrying in 2s.")
-            assert mock_log.called_with(f"Attempt 2/5 failed: {e}. Retrying in 2s.")
+            mock_log.assert_any_call('Attempt 1/2 failed: DUMMY_TRACE_BACK. Retrying in 2s.')
+            mock_log.assert_any_call('Attempt 2/2 failed: DUMMY_TRACE_BACK. Retrying in 4s.')
+            mock_log.assert_any_call('No.')
 
     @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key._fetch_and_update_in_batches")
     def test_doesnt_load_all_rows_into_memory(self, mock_fetch_and_update):
