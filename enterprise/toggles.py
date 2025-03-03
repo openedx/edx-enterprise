@@ -91,6 +91,18 @@ ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.catalog_query_search_filters_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables filtering search results by catalog queries vs. enterprise-specific attributes.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2025-03-02
+CATALOG_QUERY_SEARCH_FILTERS_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.catalog_query_search_filters_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -141,6 +153,13 @@ def admin_portal_learner_profile_view_enabled():
     return ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED.is_enabled()
 
 
+def catalog_query_search_filters_enabled():
+    """
+    Returns whether the catalog query search filters feature flag is enabled.
+    """
+    return CATALOG_QUERY_SEARCH_FILTERS_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -153,4 +172,5 @@ def enterprise_features():
         'enterprise_groups_v2': enterprise_groups_v2(),
         'enterprise_learner_bff_enabled': enterprise_learner_bff_enabled(),
         'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled(),
+        'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled(),
     }
