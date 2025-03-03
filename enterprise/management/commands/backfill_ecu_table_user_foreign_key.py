@@ -93,7 +93,7 @@ class Command(BaseCommand):
 
             for ecu in ecu_batch:
                 log.info(f"Processing EnterpriseCustomerUser {ecu.id}")
-                ecu.user_fk = ecu.user_id
+                ecu.user_fk = ecu.user
 
             count = self.safe_bulk_update(ecu_batch, max_retries)
             total_processed += count
