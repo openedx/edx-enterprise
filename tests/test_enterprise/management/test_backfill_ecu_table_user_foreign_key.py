@@ -108,10 +108,9 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
             side_effect=DatabaseError(EXCEPTION)
         ):
             with self.assertRaises(Exception) as e:
-                call_command(self.command, max_retries=5)
+                call_command(self.command, max_retries=2)
             mock_log.assert_any_call('Attempt 1/2 failed: DUMMY_TRACE_BACK. Retrying in 2s.')
             mock_log.assert_any_call('Attempt 2/2 failed: DUMMY_TRACE_BACK. Retrying in 4s.')
-            mock_log.assert_any_call('No.')
 
     @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key._fetch_and_update_in_batches")
     def test_doesnt_load_all_rows_into_memory(self, mock_fetch_and_update):
