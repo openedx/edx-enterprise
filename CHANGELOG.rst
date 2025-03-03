@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.8.0]
+--------
+* feat: exposes Waffle flag for MFEs' incremental migration to querying Algolia with non-enterprise-specific data
+
 [5.7.0]
 --------
 * feat: adds endpoint to list group memberships for a learner
