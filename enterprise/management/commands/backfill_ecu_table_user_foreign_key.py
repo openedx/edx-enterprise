@@ -29,6 +29,7 @@ def safe_bulk_update(entries, properties, max_retries):
             wait_time = 2 ** attempt
             log.warning(f"Attempt {attempt}/{max_retries} failed: {e}. Retrying in {wait_time}s.")
             sleep(wait_time)
+
     raise Exception(f"Bulk update failed after {max_retries} retries.")
 
 
