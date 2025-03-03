@@ -34,7 +34,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         super().setUp()
         self.cleanup_test_objects()
 
-        for i in range(10):
+        for i in range(12):
             factories.UserFactory(username=f'user-{i}')
 
         self.customer = factories.EnterpriseCustomerFactory(
@@ -44,7 +44,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for _index, user in enumerate(users[0:10]):
+        for _index, user in enumerate(users[0:12]):
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.customer,
@@ -81,10 +81,10 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
 
         call_command(self.command, batch_limit=3)
         assert mock_sleep.call_count == 4
-        mock_log.assert_any_call('Processed 3/10 rows.')
-        mock_log.assert_any_call('Processed 6/10 rows.')
-        mock_log.assert_any_call('Processed 9/10 rows.')
-        mock_log.assert_any_call('Processed 10/10 rows.')
+        mock_log.assert_any_call('Processed 3 records.')
+        mock_log.assert_any_call('Processed 6 records.')
+        mock_log.assert_any_call('Processed 9 records.')
+        mock_log.assert_any_call('Processed 12 records.')
 
     def test_skips_rows_that_already_have_user_fk(self):
         ecu = EnterpriseCustomerUser.objects.first()
@@ -111,16 +111,18 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
             assert mock_log.called_with(f"Attempt 1/5 failed: {e}. Retrying in 2s.")
             assert mock_log.called_with(f"Attempt 2/5 failed: {e}. Retrying in 2s.")
 
-    @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep")
-    @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key.EnterpriseCustomerUser.objects.filter")
-    def test_fetches_data_in_batches(self, mock_filter, mock_sleep):
+    @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key._fetch_and_update_in_batches")
+    def test_doesnt_load_all_rows_into_memory(self, mock_fetch_and_update):
         """
-        Ensures that the queryset is filtered in batches instead of loading all rows into memory.
+        As long as the queryset is not evaluated, database rows won't be fetched into memory.
+        Since the `iterator` method is used in the `_fetch_and_update_in_batches` function, the rows
+        are fetched in chunks.
+        This test ensures that the QuerySet is not evaluated before being passed to `_fetch_and_update_in_batches`.
         """
-        # mock_filter return value: just an empty queryset
-        mock_filter.return_value = EnterpriseCustomerUser.objects.none()
         call_command(self.command, batch_limit=3)
 
-        # Ensure filter() is called multiple times
-        assert mock_filter.call_count > 1, "Expected filter() to be called multiple times, but it was called only once."
-        mock_sleep.assert_called()
+        _, kwargs = mock_fetch_and_update.call_args
+        queryset = kwargs.get("queryset")
+
+        # Check that QuerySet was NOT evaluated before `_fetch_and_update_in_batches`
+        assert queryset._result_cache is None, "QuerySet was evaluated too early!" # pylint: disable=protected-access
