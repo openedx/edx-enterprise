@@ -125,4 +125,4 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         queryset = kwargs.get("queryset")
 
         # Check that QuerySet was NOT evaluated before `_fetch_and_update_in_batches`
-        assert queryset._result_cache is None, "QuerySet was evaluated too early!" # pylint: disable=protected-access
+        assert queryset._result_cache is None, "QuerySet was evaluated too early!"  # pylint: disable=protected-access
