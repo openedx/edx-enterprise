@@ -85,7 +85,7 @@ trio==0.29.0
     # via
     #   selenium
     #   trio-websocket
-trio-websocket==0.12.1
+trio-websocket==0.12.2
     # via selenium
 typing-extensions==4.12.2
     # via selenium

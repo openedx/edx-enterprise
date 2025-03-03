@@ -307,7 +307,7 @@ newrelic==10.4.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-django-utils
-nh3==0.2.20
+nh3==0.2.21
     # via readme-renderer
 oauthlib==3.2.2
     # via
@@ -468,7 +468,7 @@ sortedcontainers==2.4.0
     #   snowflake-connector-python
 soupsieve==2.6
     # via beautifulsoup4
-sphinx==8.2.1
+sphinx==8.2.3
     # via
     #   -r requirements/doc.in
     #   pydata-sphinx-theme
