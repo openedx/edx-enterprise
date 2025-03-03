@@ -461,7 +461,7 @@ iniconfig==2.0.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest
-isort==6.0.0
+isort==6.0.1
     # via
     #   -r requirements/dev.in
     #   pylint
@@ -526,7 +526,7 @@ newrelic==10.4.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   edx-django-utils
-nh3==0.2.20
+nh3==0.2.21
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   readme-renderer
@@ -841,7 +841,7 @@ soupsieve==2.6
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   beautifulsoup4
-sphinx==8.2.1
+sphinx==8.2.3
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydata-sphinx-theme
