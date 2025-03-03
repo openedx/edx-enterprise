@@ -16,6 +16,50 @@ log = logging.getLogger(__name__)
 User = auth.get_user_model()
 
 
+def safe_bulk_update(entries, properties, max_retries):
+    """Performs bulk_update with retry logic."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            with transaction.atomic():
+                EnterpriseCustomerUser.objects.bulk_update(
+                    entries, properties
+                )
+            return len(entries)
+        except DatabaseError as e:
+            wait_time = 2 ** attempt
+            log.warning(f"Attempt {attempt}/{max_retries} failed: {e}. Retrying in {wait_time}s.")
+            sleep(wait_time)
+    raise Exception(f"Bulk update failed after {max_retries} retries.")
+
+
+def _fetch_and_update_in_batches(queryset, batch_limit, batch_sleep, max_retries):
+    """
+    Fetches and updates records in batches.
+    Only loads and updates a subset of records at a time to avoid memory and performance issues.
+    """
+    total_processed = 0
+    batch = []
+    for ecu in queryset.iterator(chunk_size=batch_limit):
+        ecu.user_fk = ecu.user_id
+        batch.append(ecu)
+
+        if len(batch) >= batch_limit:
+            safe_bulk_update(batch, ['user_fk'], max_retries)
+
+            total_processed += len(batch)
+            log.info(f"Processed {total_processed} records.")
+
+            batch = []  # Reset batch
+            sleep(batch_sleep)  # Avoid DB overload
+
+    # Process any remaining rows (last batch)
+    if batch:
+        count = safe_bulk_update(batch, ['user_fk'], max_retries)
+        total_processed += count
+        log.info(f"Final batch processed. Total {total_processed} records updated.")
+    return True
+
+
 class Command(BaseCommand):
     """
     Management command to copy `user_id` values to the foreign key `user_fk` field
@@ -58,49 +102,21 @@ class Command(BaseCommand):
             type=int,
         )
 
-    def safe_bulk_update(self, entries, max_retries):
-        """Performs bulk_update with retry logic."""
-        count = entries.count()
-        for attempt in range(1, max_retries + 1):
-            try:
-                with transaction.atomic():
-                    EnterpriseCustomerUser.objects.bulk_update(
-                        entries, ['user_fk']
-                    )
-                return count
-            except DatabaseError as e:
-                wait_time = 2 ** attempt
-                log.warning(f"Attempt {attempt}/{max_retries} failed: {e}. Retrying in {wait_time}s.")
-                sleep(wait_time)
-        raise Exception(f"Bulk update failed after {max_retries} retries.")
-
     def backfill_ecu_table_user_foreign_key(self, options):
         """
         Backfills user_fk from user_id in batches with timeout, retries, and progress reporting.
         """
         batch_limit = options.get('batch_limit', 250)
-        batch_sleep = options.get('batch_sleep', 2)
         max_retries = options.get('max_retries', 5)
-
+        batch_sleep = options.get('batch_sleep', 2)
         queryset = EnterpriseCustomerUser.objects.filter(user_fk__isnull=True)
-        total_rows = queryset.count()
 
-        total_processed = 0
-        print('queryset: ', queryset)
-
-        while queryset.exists():
-            ecu_batch = queryset[:batch_limit]
-
-            for ecu in ecu_batch:
-                log.info(f"Processing EnterpriseCustomerUser {ecu.id}")
-                ecu.user_fk = ecu.user_id
-
-            count = self.safe_bulk_update(ecu_batch, max_retries)
-            total_processed += count
-            log.info(f"Processed {total_processed}/{total_rows} rows.")
-            sleep(batch_sleep)
-
-        log.info(f"Backfill complete! Processed {total_processed}/{total_rows} records.")
+        _fetch_and_update_in_batches(
+            queryset=queryset,
+            batch_limit=batch_limit,
+            batch_sleep=batch_sleep,
+            max_retries=max_retries,
+        )
 
     def handle(self, *_args, **options):
         """
