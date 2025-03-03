@@ -82,10 +82,9 @@ class Command(BaseCommand):
         batch_sleep = options.get('batch_sleep', 2)
         max_retries = options.get('max_retries', 5)
 
-        total_rows = EnterpriseCustomerUser.objects.filter(user_fk__isnull=True).count()
-        log.info(f"Starting backfill of {total_rows} rows in batches of {batch_limit}...")
-
         queryset = EnterpriseCustomerUser.objects.filter(user_fk__isnull=True)
+        total_rows = queryset.count()
+
         total_processed = 0
         print('queryset: ', queryset)
 
