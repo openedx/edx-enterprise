@@ -110,3 +110,17 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
                 call_command(self.command, max_retries=5)
             assert mock_log.called_with(f"Attempt 1/5 failed: {e}. Retrying in 2s.")
             assert mock_log.called_with(f"Attempt 2/5 failed: {e}. Retrying in 2s.")
+
+    @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep")
+    @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key.EnterpriseCustomerUser.objects.filter")
+    def test_fetches_data_in_batches(self, mock_filter, mock_sleep):
+        """
+        Ensures that the queryset is filtered in batches instead of loading all rows into memory.
+        """
+        # mock_filter return value: just an empty queryset
+        mock_filter.return_value = EnterpriseCustomerUser.objects.none()
+        call_command(self.command, batch_limit=3)
+
+        # Ensure filter() is called multiple times
+        assert mock_filter.call_count > 1, "Expected filter() to be called multiple times, but it was called only once."
+        mock_sleep.assert_called()
