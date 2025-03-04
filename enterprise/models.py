@@ -1100,6 +1100,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
+        indexes = [models.Index(fields=['user_fk'], name='idx_enterprise_user_fk')]
 
     def save(self, *args, **kwargs):
         """
