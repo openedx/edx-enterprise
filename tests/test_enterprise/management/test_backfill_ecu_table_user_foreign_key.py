@@ -107,7 +107,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
                 "EnterpriseCustomerUser.objects.bulk_update"),
             side_effect=DatabaseError(EXCEPTION)
         ):
-            with self.assertRaises(Exception) as e:
+            with self.assertRaises(Exception):
                 call_command(self.command, max_retries=2)
             mock_log.assert_any_call('Attempt 1/2 failed: DUMMY_TRACE_BACK. Retrying in 2s.')
             mock_log.assert_any_call('Attempt 2/2 failed: DUMMY_TRACE_BACK. Retrying in 4s.')
