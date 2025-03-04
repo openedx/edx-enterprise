@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.8.1]
+--------
+* feat: add field `user_fk` to `EnterpriseCustomerUser` model. Part 1 of adding auth_user as a foreign key.
+
 [5.8.0]
 --------
 * feat: exposes Waffle flag for MFEs' incremental migration to querying Algolia with non-enterprise-specific data
