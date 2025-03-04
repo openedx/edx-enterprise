@@ -814,6 +814,29 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=42)
         assert enterprise_customer_user.user_email is None
 
+    def test_on_create_should_set_user_fk_to_user_id(self):
+        """Test that user_fk is set to user_id when creating a record."""
+        user_id = 123
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_id)
+        enterprise_customer_user.refresh_from_db()
+
+        assert enterprise_customer_user.user_fk == user_id, (
+            f"Expected user_fk to be {user_id}, but got {enterprise_customer_user.user_fk}"
+        )
+
+    def test_on_update_should_set_user_fk_to_user_id(self):
+        """Test that user_fk updates when user_id is modified and saved."""
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=100)
+
+        new_user_id = 200
+        enterprise_customer_user.user_id = new_user_id
+        enterprise_customer_user.save()
+        enterprise_customer_user.refresh_from_db()
+
+        assert enterprise_customer_user.user_fk == new_user_id, (
+            f"Expected user_fk to update to {new_user_id}, but got {enterprise_customer_user.user_fk}"
+        )
+
     @ddt.data("alberteinstein", "richardfeynman", "leosusskind")
     def test_username_property_user_exists(self, username):
         user_instance = factories.UserFactory(username=username)
