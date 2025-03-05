@@ -227,6 +227,9 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         ('Email and language ', {
             'fields': ('contact_email', 'reply_to', 'sender_alias', 'default_language', 'hide_labor_market_data')
         }),
+        ('Billing Records', {
+            'fields': ('stripe_customer_id', 'salesforce_customer_record_id',)
+        }),
         ('Reporting', {
             'fields': ('enable_portal_reporting_config_screen',)
         }),
