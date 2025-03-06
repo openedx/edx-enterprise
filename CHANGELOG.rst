@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.8.3]
+--------
+* chore: migrate Xpert API to v2 for analytics_summary endpoint.
+
 [5.8.2]
 --------
 * feat: add index to `user_fk` in `EnterpriseCustomerUser` model. Part 2 of adding auth_user as a foreign key.
