@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.8.2]
+--------
+* feat: add index to `user_fk` in `EnterpriseCustomerUser` model. Part 2 of adding auth_user as a foreign key.
+
 [5.8.1]
 --------
 * feat: add field `user_fk` to `EnterpriseCustomerUser` model. Part 1 of adding auth_user as a foreign key.
