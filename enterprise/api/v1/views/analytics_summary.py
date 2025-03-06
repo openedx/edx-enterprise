@@ -20,7 +20,7 @@ from enterprise.models import ChatGPTResponse, EnterpriseCustomer
 
 class AnalyticsSummaryView(generics.GenericAPIView):
     """
-    API to generate a signed token for an enterprise admin to use Plotly analytics.
+    API to retrieve analytics summary using Xpert AI
     """
     authentication_classes = [JwtAuthentication, SessionAuthentication]
     permission_classes = (IsAuthenticated,)
@@ -33,9 +33,9 @@ class AnalyticsSummaryView(generics.GenericAPIView):
     )
     def post(self, request, enterprise_uuid):
         """
-        Generate auth token for plotly.
+        Perform analysis on given data and return result from Xpert AI.
         """
-        role = 'system'
+        role = 'user'
         enterprise_customer = get_object_or_404(EnterpriseCustomer, uuid=enterprise_uuid)
 
         # Validate payload data
