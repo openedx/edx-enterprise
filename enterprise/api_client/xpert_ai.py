@@ -25,13 +25,16 @@ def chat_completion(prompt, role):
     """
     headers = {
         'Content-Type': 'application/json',
-        'x-api-key': settings.CHAT_COMPLETION_API_KEY
     }
 
-    body = {'message_list': [{'role': role, 'content': prompt},]}
+    body = {
+        'messages': [{'role': role, 'content': prompt},],
+        'client_id': settings.ENTERPRISE_ANALYSIS_CLIENT_ID,
+        'system_message': settings.ENTERPRISE_ANALYSIS_SYSTEM_PROMPT
+    }
 
     response = requests.post(
-        settings.CHAT_COMPLETION_API,
+        settings.CHAT_COMPLETION_API_V2,
         headers=headers,
         data=json.dumps(body),
         timeout=(CONNECT_TIMOUET_SECONDS, READ_TIMEOUT_SECONDS)

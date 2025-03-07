@@ -366,8 +366,9 @@ EXEC_ED_LANDING_PAGE = 'https://www.edx-external.com/account'
 # disable indexing on history_date. Otherwise it will add new alter migrations.
 SIMPLE_HISTORY_DATE_INDEX = False
 
-CHAT_COMPLETION_API = 'https://example.com/chat/completion'
-CHAT_COMPLETION_API_KEY = 'i am a key'
+CHAT_COMPLETION_API_V2 = 'https://example.com/chat/completion'
+ENTERPRISE_ANALYSIS_CLIENT_ID = 'test_client_id'
+ENTERPRISE_ANALYSIS_SYSTEM_PROMPT = 'This is a test prompt'
 
 LEARNER_ENGAGEMENT_PROMPT_FOR_ACTIVE_CONTRACT = 'Create learner engagement report for active contracts.'
 LEARNER_ENGAGEMENT_PROMPT_FOR_NON_ACTIVE_CONTRACT = 'Create learner engagement report for non active contracts.'
