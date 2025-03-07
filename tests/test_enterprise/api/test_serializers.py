@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` serializer module.
 
 import json
 from collections import OrderedDict
+from unittest.mock import patch
 
 import ddt
 from oauth2_provider.models import get_application_model
@@ -12,9 +13,11 @@ from rest_framework.reverse import reverse
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
+from django.http import HttpRequest
 from django.test import TestCase
 
 from enterprise.api.v1.serializers import (
+    EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
@@ -628,3 +631,74 @@ class TestEnterpriseMembersSerializer(TestCase):
         serializer = EnterpriseMembersSerializer(serializer_input_2)
         serialized_user = serializer.data
         self.assertEqual(serialized_user, expected_user_2)
+
+
+@mark.django_db
+class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
+    """ Unit tests for EnterpriseCourseEnrollmentAdminViewSerializer. """
+
+    def setUp(self):
+        """ Set up test data. """
+        super().setUp()
+        self.user = factories.UserFactory.create(is_staff=True, is_active=True)
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+        )
+        self.enterprise_customer = self.enterprise_customer_user.enterprise_customer
+
+    @patch.object(HttpRequest, 'get_host', return_value='example.edx.org')
+    @patch('enterprise.models.CourseEnrollment')
+    @patch('enterprise.api.v1.serializers.get_certificate_for_user')
+    def test_serialization_basic(
+        self,
+        mock_get_certificate,
+        mock_course_enrollment_class,
+        _,
+    ):
+        """ Test basic serialization with required fields. """
+        course_run_id = 'course-v1:edX+DemoX+2024'
+        enrollment = factories.EnterpriseCourseEnrollmentFactory.create(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=course_run_id,
+        )
+
+        course_overviews = [{
+            'id': course_run_id,
+            'start': '2024-01-01T00:00:00Z',
+            'end': '2024-06-01T00:00:00Z',
+            'display_name_with_default': 'Demo Course',
+            'display_org_with_default': 'edX',
+            'pacing': 'self-paced',
+            'has_ended': True,
+        }]
+        mock_get_certificate.return_value = {
+            'download_url': 'example.com',
+            'is_passing': True,
+            'created': '2024-01-01T00:00:00Z',
+        }
+        request = HttpRequest()
+        serializer_context = {
+            'request': request,
+            'enterprise_customer_user': self.enterprise_customer_user,
+            'course_overviews': course_overviews
+        }
+        mock_course_enrollment_class.objects.get.return_value.is_active = True
+        mock_course_enrollment_class.objects.get.return_value.mode = 'verified'
+        mock_course_enrollment_class.objects.get.return_value.created = '2024-01-01T00:00:00Z'
+        serializer = EnterpriseCourseEnrollmentAdminViewSerializer(
+            [enrollment],
+            many=True,
+            context=serializer_context
+        )
+        serialized_data = serializer.data[0]
+
+        assert serialized_data['course_run_id'] == course_run_id
+        assert serialized_data['created'] == enrollment.created.isoformat()
+        assert serialized_data['start_date'] == '2024-01-01T00:00:00Z'
+        assert serialized_data['end_date'] == '2024-06-01T00:00:00Z'
+        assert serialized_data['display_name'] == 'Demo Course'
+        assert serialized_data['org_name'] == 'edX'
+        assert serialized_data['pacing'] == 'self-paced'
+        assert serialized_data['is_revoked'] is False
+        assert serialized_data['is_enrollment_active'] is True
+        assert serialized_data['mode'] == 'verified'

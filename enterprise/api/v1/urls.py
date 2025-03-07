@@ -224,6 +224,13 @@ urlpatterns = [
         enterprise_customer_members.EnterpriseCustomerMembersViewSet.as_view({'get': 'get_members'}),
         name='enterprise-customer-members'
     ),
+    re_path(
+        r'^enterprise-course-enrollment-admin/?$',
+        enterprise_course_enrollment.EnterpriseCourseEnrollmentAdminViewSet.as_view(
+            {'get': 'get_enterprise_course_enrollment'}
+        ),
+        name='enterprise-course-enrollment-admin'
+    ),
 ]
 
 urlpatterns += router.urls
