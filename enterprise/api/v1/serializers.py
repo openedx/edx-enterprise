@@ -21,12 +21,15 @@ from django.db import IntegrityError, transaction
 from django.utils.translation import gettext_lazy as _
 
 from enterprise import models, utils  # pylint: disable=cyclic-import
+from enterprise.api.utils import CourseRunProgressStatuses  # pylint: disable=cyclic-import
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_PERMISSION_GROUPS,
+    EXEC_ED_COURSE_TYPE,
     GROUP_MEMBERSHIP_ACCEPTED_STATUS,
+    PRODUCT_SOURCE_2U,
     DefaultColors,
 )
 from enterprise.logging import getEnterpriseLogger
@@ -50,6 +53,18 @@ from enterprise.utils import (
     track_enrollment,
 )
 from enterprise.validators import validate_pgp_key
+
+try:
+    from federated_content_connector.models import CourseDetails
+except ImportError:
+    CourseDetails = None
+
+try:
+    from lms.djangoapps.certificates.api import get_certificate_for_user
+except ImportError:
+    get_certificate_for_user = None
+    get_course_run_url = None
+    get_emails_enabled = None
 
 LOGGER = getEnterpriseLogger(__name__)
 User = auth.get_user_model()
@@ -428,6 +443,144 @@ class EnterpriseCourseEnrollmentWithAdditionalFieldsReadOnlySerializer(Enterpris
     user_email = serializers.EmailField()
     course_start = serializers.DateTimeField()
     course_end = serializers.DateTimeField()
+
+
+class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCourseEnrollment model.
+    """
+    class Meta:
+        model = models.EnterpriseCourseEnrollment
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        """
+        Convert the `EnterpriseCourseEnrollment` instance into a dictionary representation.
+
+        Args:
+            instance (EnterpriseCourseEnrollment): The enrollment instance being serialized.
+
+        Returns:
+            dict: A dictionary representation of the enrollment data.
+        """
+        representation = super().to_representation(instance)
+        course_run_id = instance.course_id
+        user = self.context['enterprise_customer_user']
+        course_overview = self._get_course_overview(course_run_id)
+
+        certificate_info = get_certificate_for_user(user.username, course_run_id) or {}
+
+        representation['course_run_id'] = course_run_id
+        representation['course_run_status'] = self._get_course_run_status(
+            course_overview,
+            certificate_info,
+            instance
+        )
+        representation['created'] = instance.created.isoformat()
+        representation['start_date'] = course_overview['start']
+        representation['end_date'] = course_overview['end']
+        representation['display_name'] = course_overview['display_name_with_default']
+        representation['org_name'] = course_overview['display_org_with_default']
+        representation['pacing'] = course_overview['pacing']
+        representation['is_revoked'] = instance.license.is_revoked if instance.license else False
+        representation['is_enrollment_active'] = instance.is_active
+        representation['mode'] = instance.mode
+
+        if CourseDetails:
+            course_details = CourseDetails.objects.filter(id=course_run_id).first()
+            if course_details:
+                representation['course_key'] = course_details.course_key
+                representation['course_type'] = course_details.course_type
+                representation['product_source'] = course_details.product_source
+                representation['start_date'] = course_details.start_date or representation['start_date']
+                representation['end_date'] = course_details.end_date or representation['end_date']
+                representation['enroll_by'] = course_details.enroll_by
+
+                if (course_details.product_source == PRODUCT_SOURCE_2U and
+                        course_details.course_type == EXEC_ED_COURSE_TYPE):
+                    representation['course_run_status'] = self._get_exec_ed_course_run_status(
+                        course_details,
+                        certificate_info,
+                        instance
+                    )
+        return representation
+
+    def _get_course_overview(self, course_run_id):
+        """
+        Get the appropriate course overview from the context.
+        """
+        for overview in self.context['course_overviews']:
+            if overview['id'] == course_run_id:
+                return overview
+
+        return None
+
+    def _get_exec_ed_course_run_status(self, course_details, certificate_info, enterprise_enrollment):
+        """
+        Get the status of a exec ed course run, given the state of a user's certificate in the course.
+
+        A run is considered "complete" when either the course run has ended OR the user has earned a
+        passing certificate.
+
+        Arguments:
+            course_details : the details for the exececutive education course run
+            certificate_info: A dict containing the following key:
+                ``is_passing``: whether the  user has a passing certificate in the course run
+
+        Returns:
+            status: one of (
+                CourseRunProgressStatuses.SAVED_FOR_LATER,
+                CourseRunProgressStatuses.COMPLETE,
+                CourseRunProgressStatuses.IN_PROGRESS,
+                CourseRunProgressStatuses.UPCOMING,
+            )
+        """
+        if enterprise_enrollment and enterprise_enrollment.saved_for_later:
+            return CourseRunProgressStatuses.SAVED_FOR_LATER
+
+        is_certificate_passing = certificate_info.get('is_passing', False)
+        start_date = course_details.start_date
+        end_date = course_details.end_date
+
+        has_started = datetime.now(pytz.utc) > start_date if start_date is not None else True
+        has_ended = datetime.now(pytz.utc) > end_date if end_date is not None else False
+
+        if has_ended or is_certificate_passing:
+            return CourseRunProgressStatuses.COMPLETED
+        if has_started:
+            return CourseRunProgressStatuses.IN_PROGRESS
+        return CourseRunProgressStatuses.UPCOMING
+
+    def _get_course_run_status(self, course_overview, certificate_info, enterprise_enrollment):
+        """
+        Get the status of a course run, given the state of a user's certificate in the course.
+
+        A run is considered "complete" when either the course run has ended OR the user has earned a
+        passing certificate.
+
+        Arguments:
+            course_overview (CourseOverview): the overview for the course run
+            certificate_info: A dict containing the following key:
+                ``is_passing``: whether the  user has a passing certificate in the course run
+
+        Returns:
+            status: one of (
+                CourseRunProgressStatuses.SAVED_FOR_LATER,
+                CourseRunProgressStatuses.COMPLETE,
+                CourseRunProgressStatuses.IN_PROGRESS,
+                CourseRunProgressStatuses.UPCOMING,
+            )
+        """
+        if enterprise_enrollment and enterprise_enrollment.saved_for_later:
+            return CourseRunProgressStatuses.SAVED_FOR_LATER
+
+        is_certificate_passing = certificate_info.get('is_passing', False)
+
+        if course_overview['has_ended'] or is_certificate_passing:
+            return CourseRunProgressStatuses.COMPLETED
+        if course_overview['has_started']:
+            return CourseRunProgressStatuses.IN_PROGRESS
+        return CourseRunProgressStatuses.UPCOMING
 
 
 class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):

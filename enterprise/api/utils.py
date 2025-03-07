@@ -1,7 +1,6 @@
 """
 Utility functions for the Enterprise API.
 """
-
 from django.conf import settings
 from django.contrib import auth
 from django.utils.translation import gettext as _
@@ -27,6 +26,17 @@ SERVICE_USERNAMES = (
     'ECOMMERCE_SERVICE_WORKER_USERNAME',
     'ENTERPRISE_SERVICE_WORKER_USERNAME'
 )
+
+
+class CourseRunProgressStatuses:
+    """
+    Class to group statuses that a course run can be in with respect to user progress.
+    """
+
+    IN_PROGRESS = 'in_progress'
+    UPCOMING = 'upcoming'
+    COMPLETED = 'completed'
+    SAVED_FOR_LATER = 'saved_for_later'
 
 
 def get_service_usernames():

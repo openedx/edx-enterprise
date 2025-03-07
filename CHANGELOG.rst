@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.9.0]
+--------
+* feat: creates an endpoint for admin to view a learner's course enrollments.
+
 [5.8.2]
 --------
 * feat: add index to `user_fk` in `EnterpriseCustomerUser` model. Part 2 of adding auth_user as a foreign key.
