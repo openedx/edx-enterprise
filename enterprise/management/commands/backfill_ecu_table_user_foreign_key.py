@@ -38,7 +38,8 @@ def _fetch_and_update_in_batches(queryset, batch_limit, batch_sleep, max_retries
     """
     Fetches and updates records in batches.
     Only loads and updates a subset of records at a time to avoid memory and performance issues.
-    Note: you cannot use django's queryset.iterator() method as MySQL does not support it and will still load everything into memory.
+    Note: you cannot use django's queryset.iterator() method
+    as MySQL does not support it and will still load everything into memory.
     """
     batch_counter = 1
     total_processed = 0
