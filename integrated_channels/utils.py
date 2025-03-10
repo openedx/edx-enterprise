@@ -18,11 +18,10 @@ import requests
 
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime
+from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime, batch_by_pk as enterprise_batch_by_pk
 from integrated_channels.catalog_service_utils import get_course_run_for_enrollment
 
 UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
@@ -417,27 +416,8 @@ def is_valid_url(url):
         return False
 
 
-def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000):
-    """
-    yield per batch efficiently
-    using limit/offset does a lot of table scanning to reach higher offsets
-    this scanning can be slow on very large tables
-    if you order by pk, you can use the pk as a pivot rather than offset
-    this utilizes the index, which is faster than scanning to reach offset
-    Example usage:
-    csod_only_filter = Q(integrated_channel_code='CSOD')
-    for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=csod_only_filter):
-        for item in items_batch:
-            ...
-    """
-    qs = ModelClass.objects.filter(extra_filter).order_by('pk')[:batch_size]
-    while qs.exists():
-        yield qs
-        # qs.last() doesn't work here because we've already sliced
-        # loop through so we eventually grab the last one
-        for item in qs:
-            start_pk = item.pk
-        qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
+def batch_by_pk(*args, **kwargs):
+    return enterprise_batch_by_pk(*args, **kwargs)
 
 
 def truncate_item_dicts(items_to_create, items_to_update, items_to_delete, combined_maximum_size):

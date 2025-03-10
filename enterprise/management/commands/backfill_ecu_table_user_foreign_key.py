@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand
 from django.db import DatabaseError, transaction
 
 from enterprise.models import EnterpriseCustomerUser
+from enterprise.utils import batch_by_pk
 
 log = logging.getLogger(__name__)
 User = auth.get_user_model()
@@ -37,27 +38,21 @@ def _fetch_and_update_in_batches(queryset, batch_limit, batch_sleep, max_retries
     """
     Fetches and updates records in batches.
     Only loads and updates a subset of records at a time to avoid memory and performance issues.
+    Note: you cannot use django's queryset.iterator() method as MySQL does not support it and will still load everything into memory.
     """
+    batch_counter = 1
     total_processed = 0
-    batch = []
-    for ecu in queryset.iterator(chunk_size=batch_limit):
-        ecu.user_fk = ecu.user_id
-        batch.append(ecu)
+    for batch in batch_by_pk(EnterpriseCustomerUser, extra_filter=queryset.query.where, batch_size=batch_limit):
+        log.info(f"Processing batch {batch_counter}...")
+        for ecu in batch:
+            ecu.user_fk = ecu.user_id
+        safe_bulk_update(batch, ['user_fk'], max_retries)
+        total_processed += len(batch)
+        log.info(f'Processed {total_processed} records.')
+        sleep(batch_sleep)
+        batch_counter += 1
 
-        if len(batch) >= batch_limit:
-            safe_bulk_update(batch, ['user_fk'], max_retries)
-
-            total_processed += len(batch)
-            log.info(f"Processed {total_processed} records.")
-
-            batch = []  # Reset batch
-            sleep(batch_sleep)  # Avoid DB overload
-
-    # Process any remaining rows (last batch)
-    if batch:
-        count = safe_bulk_update(batch, ['user_fk'], max_retries)
-        total_processed += count
-        log.info(f"Final batch processed. Total {total_processed} records updated.")
+    log.info(f"Final batch processed. Total {total_processed} records updated.")
     return True
 
 
