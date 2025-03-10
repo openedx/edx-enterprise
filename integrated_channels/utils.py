@@ -417,6 +417,18 @@ def is_valid_url(url):
 
 
 def batch_by_pk(*args, **kwargs):
+    """
+    yield per batch efficiently
+    using limit/offset does a lot of table scanning to reach higher offsets
+    this scanning can be slow on very large tables
+    if you order by pk, you can use the pk as a pivot rather than offset
+    this utilizes the index, which is faster than scanning to reach offset
+    Example usage:
+    csod_only_filter = Q(integrated_channel_code='CSOD')
+    for items_batch in batch_by_pk(ContentMetadataItemTransmission, extra_filter=csod_only_filter):
+        for item in items_batch:
+            ...
+    """
     return enterprise_batch_by_pk(*args, **kwargs)
 
 
