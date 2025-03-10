@@ -18,11 +18,10 @@ import requests
 
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime
+from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime, batch_by_pk as enterprise_batch_by_pk
 from integrated_channels.catalog_service_utils import get_course_run_for_enrollment
 
 UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
