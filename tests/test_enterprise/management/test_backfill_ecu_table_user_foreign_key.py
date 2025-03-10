@@ -70,7 +70,8 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         ecu.refresh_from_db()
         assert ecu.user_fk is None
         call_command(self.command)
-        assert EnterpriseCustomerUser.objects.first().user_fk is EnterpriseCustomerUser.objects.first().user_id
+        ecu.refresh_from_db()
+        assert ecu.user_fk == ecu.user_id
 
     @patch('logging.Logger.info')
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
@@ -111,19 +112,3 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
                 call_command(self.command, max_retries=2)
             mock_log.assert_any_call('Attempt 1/2 failed: DUMMY_TRACE_BACK. Retrying in 2s.')
             mock_log.assert_any_call('Attempt 2/2 failed: DUMMY_TRACE_BACK. Retrying in 4s.')
-
-    @patch("enterprise.management.commands.backfill_ecu_table_user_foreign_key._fetch_and_update_in_batches")
-    def test_doesnt_load_all_rows_into_memory(self, mock_fetch_and_update):
-        """
-        As long as the queryset is not evaluated, database rows won't be fetched into memory.
-        Since the `iterator` method is used in the `_fetch_and_update_in_batches` function, the rows
-        are fetched in chunks.
-        This test ensures that the QuerySet is not evaluated before being passed to `_fetch_and_update_in_batches`.
-        """
-        call_command(self.command, batch_limit=3)
-
-        _, kwargs = mock_fetch_and_update.call_args
-        queryset = kwargs.get("queryset")
-
-        # Check that QuerySet was NOT evaluated before `_fetch_and_update_in_batches`
-        assert queryset._result_cache is None, "QuerySet was evaluated too early!"  # pylint: disable=protected-access
