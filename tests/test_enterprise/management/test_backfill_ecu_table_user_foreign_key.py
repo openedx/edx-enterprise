@@ -45,11 +45,18 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         users = User.objects.all()
 
         # Make a bunch of users for an ENT customer
-        for _index, user in enumerate(users[0:12]):
+        for _index, user in enumerate(users[0:11]):
             factories.EnterpriseCustomerUserFactory(
                 user_id=user.id,
                 enterprise_customer=self.customer,
             )
+
+        # Make a user that is not linked
+        factories.EnterpriseCustomerUserFactory(
+            user_id=users[11].id,
+            enterprise_customer=self.customer,
+            linked=False,
+        )
 
         self.addCleanup(self.cleanup_test_objects)
 
@@ -61,7 +68,8 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
 
-    def test_copies_user_id_to_user_fk(self):
+    @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
+    def test_copies_user_id_to_user_fk(self, _):
         ecu = EnterpriseCustomerUser.objects.first()
         ecu.user_fk = None
 
@@ -88,7 +96,8 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         mock_log.assert_any_call('Processed 9 records.')
         mock_log.assert_any_call('Processed 12 records.')
 
-    def test_skips_rows_that_already_have_user_fk(self):
+    @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
+    def test_skips_rows_that_already_have_user_fk(self, _):
         ecu = EnterpriseCustomerUser.objects.first()
         ecu.user_fk = 9999
         # use bulk_update to prevent save() method from setting user_fk to user_id
@@ -96,8 +105,9 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         call_command(self.command)
         assert EnterpriseCustomerUser.objects.first().user_fk == 9999
 
+    @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     @patch('logging.Logger.warning')
-    def test_retry_5_times_on_failure(self, mock_log):
+    def test_retry_5_times_on_failure(self, mock_log, _):
         ecus = EnterpriseCustomerUser.objects.all()
         for ecu in ecus:
             ecu.user_fk = None
@@ -112,3 +122,14 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
                 call_command(self.command, max_retries=2)
             mock_log.assert_any_call('Attempt 1/2 failed: DUMMY_TRACE_BACK. Retrying in 2s.')
             mock_log.assert_any_call('Attempt 2/2 failed: DUMMY_TRACE_BACK. Retrying in 4s.')
+
+    @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
+    def test_include_unlinked_users(self, _):
+        ecus = EnterpriseCustomerUser.all_objects
+        for ecu in ecus:
+            ecu.user_fk = None
+        EnterpriseCustomerUser.all_objects.bulk_update(ecus, ['user_fk'])
+        unlinked_ecu = EnterpriseCustomerUser.all_objects.filter(linked=False)[0]
+        assert unlinked_ecu.user_fk is None
+        call_command(self.command)
+        assert unlinked_ecu.user_fk == unlinked_ecu.user_id
