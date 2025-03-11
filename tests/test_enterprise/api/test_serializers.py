@@ -649,13 +649,16 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
     @patch.object(HttpRequest, 'get_host', return_value='example.edx.org')
     @patch('enterprise.models.CourseEnrollment')
     @patch('enterprise.api.v1.serializers.get_certificate_for_user')
-    def test_serialization_basic(
+    def test_enterprise_course_enrollment_serialization(
         self,
         mock_get_certificate,
         mock_course_enrollment_class,
         _,
     ):
-        """ Test basic serialization with required fields. """
+        """
+        EnterpriseCourseEnrollmentAdminViewSerializer should create proper representation
+        based on the instance data it receives (an enterprise course enrollment)
+        """
         course_run_id = 'course-v1:edX+DemoX+2024'
         enrollment = factories.EnterpriseCourseEnrollmentFactory.create(
             enterprise_customer_user=self.enterprise_customer_user,

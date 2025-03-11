@@ -114,7 +114,7 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
 
     queryset = models.EnterpriseCourseEnrollment.with_additional_fields.all()
     serializer_class = serializers.EnterpriseCourseEnrollmentAdminViewSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
     pagination_class = EnterpriseCourseEnrollmentAdminPagination
 
     @action(detail=False, methods=['get'])
