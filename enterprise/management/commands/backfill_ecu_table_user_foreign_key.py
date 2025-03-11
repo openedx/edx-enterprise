@@ -9,9 +9,10 @@ from time import sleep
 from django.contrib import auth
 from django.core.management.base import BaseCommand
 from django.db import DatabaseError, transaction
+from django.db.models import Q
 
 from enterprise.models import EnterpriseCustomerUser
-from enterprise.utils import batch_by_pk
+from integrated_channels.utils import batch_by_pk
 
 log = logging.getLogger(__name__)
 User = auth.get_user_model()
@@ -34,7 +35,7 @@ def safe_bulk_update(entries, properties, max_retries):
     raise Exception(f"Bulk update failed after {max_retries} retries.")
 
 
-def _fetch_and_update_in_batches(queryset, batch_limit, batch_sleep, max_retries):
+def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries):
     """
     Fetches and updates records in batches.
     Only loads and updates a subset of records at a time to avoid memory and performance issues.
@@ -43,7 +44,13 @@ def _fetch_and_update_in_batches(queryset, batch_limit, batch_sleep, max_retries
     """
     batch_counter = 1
     total_processed = 0
-    for batch in batch_by_pk(EnterpriseCustomerUser, extra_filter=queryset.query.where, batch_size=batch_limit):
+
+    for batch in batch_by_pk(
+        EnterpriseCustomerUser,
+        extra_filter=Q(user_fk__isnull=True),
+        batch_size=batch_limit,
+        model_manager=manager,
+    ):
         log.info(f"Processing batch {batch_counter}...")
         for ecu in batch:
             ecu.user_fk = ecu.user_id
@@ -106,10 +113,9 @@ class Command(BaseCommand):
         batch_limit = options.get('batch_limit', 250)
         max_retries = options.get('max_retries', 5)
         batch_sleep = options.get('batch_sleep', 2)
-        queryset = EnterpriseCustomerUser.objects.filter(user_fk__isnull=True)
 
         _fetch_and_update_in_batches(
-            queryset=queryset,
+            manager=EnterpriseCustomerUser.all_objects,
             batch_limit=batch_limit,
             batch_sleep=batch_sleep,
             max_retries=max_retries,

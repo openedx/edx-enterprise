@@ -18,10 +18,10 @@ import requests
 
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from enterprise.utils import batch_by_pk as enterprise_batch_by_pk
 from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime
 from integrated_channels.catalog_service_utils import get_course_run_for_enrollment
 
@@ -417,7 +417,7 @@ def is_valid_url(url):
         return False
 
 
-def batch_by_pk(*args, **kwargs):
+def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000, model_manager=None):
     """
     yield per batch efficiently
     using limit/offset does a lot of table scanning to reach higher offsets
@@ -430,7 +430,15 @@ def batch_by_pk(*args, **kwargs):
         for item in items_batch:
             ...
     """
-    return enterprise_batch_by_pk(*args, **kwargs)
+    model_manager = model_manager or ModelClass.objects
+    qs = model_manager.filter(extra_filter).order_by('pk')[:batch_size]
+    while qs.exists():
+        yield qs
+        # qs.last() doesn't work here because we've already sliced
+        # loop through so we eventually grab the last one
+        for item in qs:
+            start_pk = item.pk
+        qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
 
 
 def truncate_item_dicts(items_to_create, items_to_update, items_to_delete, combined_maximum_size):
