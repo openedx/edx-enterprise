@@ -118,7 +118,7 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
     pagination_class = EnterpriseCourseEnrollmentAdminPagination
 
     @action(detail=False, methods=['get'])
-    def get_enterprise_course_enrollment(self, request):
+    def get_enterprise_course_enrollments(self, request):
         """
         Endpoint to get enrollments for a learner by `lms_user_id` and `enterprise_uuid` viewed
         by an admin of that enterprise.
@@ -154,12 +154,8 @@ class EnterpriseCourseEnrollmentAdminViewSet(EnterpriseReadWriteModelViewSet):
             }
         ).data
         page = self.paginate_queryset(serialized_data)
-        if page is not None:
-            grouped_data = self._group_course_enrollments_by_status(page)
-            return self.get_paginated_response(grouped_data)
-
-        grouped_data = self._group_course_enrollments_by_status(serialized_data)
-        return Response(grouped_data)
+        grouped_data = self._group_course_enrollments_by_status(page)
+        return self.get_paginated_response(grouped_data)
 
     def _group_course_enrollments_by_status(self, course_enrollments):
         """

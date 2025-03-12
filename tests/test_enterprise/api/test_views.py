@@ -34,6 +34,7 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from enterprise.api.v1 import serializers
+from enterprise.api.v1.views.enterprise_course_enrollment import EnterpriseCourseEnrollmentAdminViewSet
 from enterprise.api.v1.views.enterprise_customer_sso_configuration import fetch_entity_id_from_metadata_xml
 from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
@@ -10037,18 +10038,19 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
 
     @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
     @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
-    def test_view_unlinked_user_returns_404_not_found(self, mock_get_course_overviews, mock_serializer):
+    def test_view_unlinked_user_returns_401_not_found(self, mock_get_course_overviews, mock_serializer, _,):
         """
-        Ensure 404 is returned if the user does not belong to the enterprise.
+        Ensure 401 is returned if the user does not belong to the enterprise.
         """
         mock_get_course_overviews.return_value = {'overview_info': 'this would be a larger dict'}
         mock_serializer.return_value = self.MockSerializer()
         user = UserFactory(is_staff=True, is_active=True)
         user.save()
+        self.client.login(username=user.username, password="123")
         response = self.client.get(self.url,
                                    {'lms_user_id': user.id,
                                     'enterprise_uuid': self.enterprise_customer.uuid})
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 401)
 
     @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
     @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
@@ -10078,6 +10080,10 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
         """
         Ensure an error is returned if required parameters are missing.
         """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
         response = self.client.get(self.url, {"lms_user_id": "test_user"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)

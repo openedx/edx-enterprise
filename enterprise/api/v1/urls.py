@@ -227,7 +227,7 @@ urlpatterns = [
     re_path(
         r'^enterprise-course-enrollment-admin/?$',
         enterprise_course_enrollment.EnterpriseCourseEnrollmentAdminViewSet.as_view(
-            {'get': 'get_enterprise_course_enrollment'}
+            {'get': 'get_enterprise_course_enrollments'}
         ),
         name='enterprise-course-enrollment-admin'
     ),
