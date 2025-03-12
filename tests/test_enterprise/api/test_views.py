@@ -29,7 +29,8 @@ from testfixtures import LogCapture
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.core.cache import cache
-from django.test import override_settings
+from django.http import HttpRequest
+from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from enterprise.api.v1 import serializers
@@ -105,6 +106,7 @@ from test_utils import (
 )
 from test_utils.factories import (
     FAKER,
+    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerSsoConfigurationFactory,
     EnterpriseCustomerUserFactory,
@@ -174,6 +176,26 @@ LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
 EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
+SERIALIZED_MOCK_IN_PROGRESS_ENROLLMENT = {
+    'course_id': 'in-progress-course',
+    'is_enrollment_active': True,
+    'course_run_status': 'in_progress',
+}
+SERIALIZED_MOCK_UPCOMING_ENROLLMENT = {
+    'course_id': 'upcoming-course',
+    'is_enrollment_active': True,
+    'course_run_status': 'upcoming',
+}
+SERIALIZED_MOCK_COMPLETED_ENROLLMENT = {
+    'course_id': 'completed-course',
+    'is_enrollment_active': True,
+    'course_run_status': 'completed',
+}
+SERIALIZED_MOCK_SAVED_ENROLLMENT = {
+    'course_id': 'saved-for-later',
+    'is_enrollment_active': True,
+    'course_run_status': 'saved_for_later',
+}
 
 
 def create_mock_default_enterprise_enrollment_intention(
@@ -9944,3 +9966,123 @@ class EnterpriseGroupMembershipViewSetTests(BaseTestEnterpriseAPIViews):
         self.assertIn("count", response.json())
         self.assertIn("next", response.json())
         self.assertIn("results", response.json())
+
+
+class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
+    """Unit tests for EnterpriseCourseEnrollmentAdminViewSet."""
+    class MockSerializer:
+        """ Returns obj with data property. """
+        @property
+        def data(self):
+            """ Return fake serialized data. """
+            return [
+                SERIALIZED_MOCK_IN_PROGRESS_ENROLLMENT,
+                SERIALIZED_MOCK_UPCOMING_ENROLLMENT,
+                SERIALIZED_MOCK_COMPLETED_ENROLLMENT,
+                SERIALIZED_MOCK_SAVED_ENROLLMENT,
+            ]
+
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.enrolled_ent_customer_user = EnterpriseCustomerUserFactory.create(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.enterprise_enrollment = EnterpriseCourseEnrollmentFactory.create(
+            enterprise_customer_user=self.enrolled_ent_customer_user,
+            course_id=self.course_run_id,
+        )
+        self.url = reverse("enterprise-course-enrollment-admin")
+        self.client = Client()
+
+    @mock.patch.object(HttpRequest, 'get_host', return_value='example.edx.org')
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    def test_returns_correct_enterprise_course_enrollments(self, mock_get_course_overviews, mock_serializer, _,):
+        """
+        Ensure the API correctly fetches enterprise course enrollments.
+        """
+        mock_get_course_overviews.return_value = {'overview_info': 'this would be a larger dict'}
+        mock_serializer.return_value = self.MockSerializer()
+        response = self.client.get(self.url,
+                                   {'lms_user_id': self.user.id,
+                                    'enterprise_uuid': self.enterprise_customer.uuid})
+        # Returns 401 if user is not an admin
+        self.assertEqual(response.status_code, 401)
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+        response = self.client.get(self.url,
+                                   {'lms_user_id': self.user.id,
+                                    'enterprise_uuid': self.enterprise_customer.uuid})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'count': 4,
+            'next': None,
+            'previous': None,
+            'results': {
+                'in_progress': [SERIALIZED_MOCK_IN_PROGRESS_ENROLLMENT],
+                'upcoming': [SERIALIZED_MOCK_UPCOMING_ENROLLMENT],
+                'completed': [SERIALIZED_MOCK_COMPLETED_ENROLLMENT],
+                'saved_for_later': [SERIALIZED_MOCK_SAVED_ENROLLMENT],
+            }
+        })
+
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    def test_view_unlinked_user_returns_401_not_found(self, mock_get_course_overviews, mock_serializer):
+        """
+        Ensure 401 is returned if the user does not belong to the enterprise.
+        """
+        mock_get_course_overviews.return_value = {'overview_info': 'this would be a larger dict'}
+        mock_serializer.return_value = self.MockSerializer()
+        user = UserFactory(is_staff=True, is_active=True)
+        user.save()
+        self.client.login(username=user.username, password="123")
+        response = self.client.get(self.url,
+                                   {'lms_user_id': user.id,
+                                    'enterprise_uuid': self.enterprise_customer.uuid})
+        self.assertEqual(response.status_code, 401)
+
+    @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
+    @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
+    def test_view_returns_empty_results(self, mock_get_course_overviews, mock_serializer):
+        """
+        Ensure empty results are returned if no courses are found for a user.
+        """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        mock_get_course_overviews.return_value = {}
+        mock_serializer.return_value.data = [{}]
+        no_enrollments_user = UserFactory.create(is_active=True)
+        no_enrollments_user.save()
+        EnterpriseCustomerUserFactory.create(
+            user_id=no_enrollments_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.client.login(username=admin_user.username, password="123")
+        response = self.client.get(self.url,
+                                   {'lms_user_id': no_enrollments_user.id,
+                                    'enterprise_uuid': self.enterprise_customer.uuid})
+        self.assertEqual(response.json()['results'],
+                         {'in_progress': [], 'upcoming': [], 'completed': [], 'saved_for_later': []})
+
+    def test_missing_parameters_cause_400(self):
+        """
+        Ensure an error is returned if required parameters are missing.
+        """
+        admin_user = UserFactory.create(is_active=True, is_staff=True)
+        admin_user.set_password("123")
+        admin_user.save()
+        self.client.login(username=admin_user.username, password="123")
+        response = self.client.get(self.url, {"lms_user_id": "test_user"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)

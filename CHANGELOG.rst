@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.9.0]
+--------
+* feat: creates an endpoint for admin to view a learner's course enrollments.
+
 [5.8.5]
 --------
 * feat: add management command to backfill `user_fk` values in `EnterpriseCustomerUser` model. Part 3 of adding auth_user as a foreign key.
