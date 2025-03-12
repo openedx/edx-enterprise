@@ -64,17 +64,17 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         """
         Helper to delete all instances of role assignments, ECUs, Enterprise customers, and Users.
         """
-        EnterpriseCustomerUser.objects.all().delete()
+        EnterpriseCustomerUser.all_objects.all().delete()
         EnterpriseCustomer.objects.all().delete()
         User.objects.all().delete()
 
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     def test_copies_user_id_to_user_fk(self, _):
-        ecu = EnterpriseCustomerUser.objects.first()
+        ecu = EnterpriseCustomerUser.all_objects.first()
         ecu.user_fk = None
 
         # use bulk_update to prevent save() method from setting user_fk to user_id
-        EnterpriseCustomerUser.objects.all().bulk_update([ecu], ['user_fk'])
+        EnterpriseCustomerUser.all_objects.all().bulk_update([ecu], ['user_fk'])
         ecu.refresh_from_db()
         assert ecu.user_fk is None
         call_command(self.command)
@@ -84,10 +84,10 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
     @patch('logging.Logger.info')
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     def test_runs_in_batches(self, mock_sleep, mock_log):
-        ecus = EnterpriseCustomerUser.objects.all()
+        ecus = EnterpriseCustomerUser.all_objects.all()
         for ecu in ecus:
             ecu.user_fk = None
-        EnterpriseCustomerUser.objects.all().bulk_update(ecus, ['user_fk'])
+        EnterpriseCustomerUser.all_objects.all().bulk_update(ecus, ['user_fk'])
 
         call_command(self.command, batch_limit=3)
         assert mock_sleep.call_count == 4
@@ -98,24 +98,24 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
 
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     def test_skips_rows_that_already_have_user_fk(self, _):
-        ecu = EnterpriseCustomerUser.objects.first()
+        ecu = EnterpriseCustomerUser.all_objects.first()
         ecu.user_fk = 9999
         # use bulk_update to prevent save() method from setting user_fk to user_id
-        EnterpriseCustomerUser.objects.all().bulk_update([ecu], ['user_fk'])
+        EnterpriseCustomerUser.all_objects.all().bulk_update([ecu], ['user_fk'])
         call_command(self.command)
-        assert EnterpriseCustomerUser.objects.first().user_fk == 9999
+        assert EnterpriseCustomerUser.all_objects.first().user_fk == 9999
 
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     @patch('logging.Logger.warning')
     def test_retry_5_times_on_failure(self, mock_log, _):
-        ecus = EnterpriseCustomerUser.objects.all()
+        ecus = EnterpriseCustomerUser.all_objects.all()
         for ecu in ecus:
             ecu.user_fk = None
-        EnterpriseCustomerUser.objects.all().bulk_update(ecus, ['user_fk'])
+        EnterpriseCustomerUser.all_objects.all().bulk_update(ecus, ['user_fk'])
 
         with patch(
             ("enterprise.management.commands.backfill_ecu_table_user_foreign_key." +
-                "EnterpriseCustomerUser.objects.bulk_update"),
+                "EnterpriseCustomerUser.all_objects.bulk_update"),
             side_effect=DatabaseError(EXCEPTION)
         ):
             with self.assertRaises(Exception):
@@ -125,11 +125,12 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
 
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     def test_include_unlinked_users(self, _):
-        ecus = EnterpriseCustomerUser.all_objects
+        ecus = EnterpriseCustomerUser.all_objects.all()
         for ecu in ecus:
             ecu.user_fk = None
         EnterpriseCustomerUser.all_objects.bulk_update(ecus, ['user_fk'])
         unlinked_ecu = EnterpriseCustomerUser.all_objects.filter(linked=False)[0]
         assert unlinked_ecu.user_fk is None
         call_command(self.command)
+        unlinked_ecu.refresh_from_db()
         assert unlinked_ecu.user_fk == unlinked_ecu.user_id

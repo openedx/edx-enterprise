@@ -23,7 +23,7 @@ def safe_bulk_update(entries, properties, max_retries):
     for attempt in range(1, max_retries + 1):
         try:
             with transaction.atomic():
-                EnterpriseCustomerUser.objects.bulk_update(
+                EnterpriseCustomerUser.all_objects.bulk_update(
                     entries, properties
                 )
             return len(entries)

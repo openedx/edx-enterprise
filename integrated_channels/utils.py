@@ -438,7 +438,7 @@ def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000, model_manager=No
         # loop through so we eventually grab the last one
         for item in qs:
             start_pk = item.pk
-        qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
+        qs = model_manager.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
 
 
 def truncate_item_dicts(items_to_create, items_to_update, items_to_delete, combined_maximum_size):
