@@ -21,6 +21,10 @@ Unreleased
 --------
 * feat: creates an endpoint for admin to view a learner's course enrollments.
 
+[5.8.4]
+--------
+* chore: upgrade python requirements.
+
 [5.8.3]
 --------
 * chore: migrate Xpert API to v2 for analytics_summary endpoint.
