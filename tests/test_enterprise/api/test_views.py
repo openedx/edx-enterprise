@@ -34,7 +34,6 @@ from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from enterprise.api.v1 import serializers
-from enterprise.api.v1.views.enterprise_course_enrollment import EnterpriseCourseEnrollmentAdminViewSet
 from enterprise.api.v1.views.enterprise_customer_sso_configuration import fetch_entity_id_from_metadata_xml
 from enterprise.api.v1.views.enterprise_subsidy_fulfillment import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
@@ -10038,7 +10037,7 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
 
     @mock.patch('enterprise.api.v1.serializers.EnterpriseCourseEnrollmentAdminViewSerializer')
     @mock.patch('enterprise.api.v1.views.enterprise_course_enrollment.get_course_overviews')
-    def test_view_unlinked_user_returns_401_not_found(self, mock_get_course_overviews, mock_serializer, _,):
+    def test_view_unlinked_user_returns_401_not_found(self, mock_get_course_overviews, mock_serializer):
         """
         Ensure 401 is returned if the user does not belong to the enterprise.
         """
