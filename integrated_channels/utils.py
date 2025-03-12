@@ -417,7 +417,7 @@ def is_valid_url(url):
         return False
 
 
-def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000):
+def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000, model_manager=None):
     """
     yield per batch efficiently
     using limit/offset does a lot of table scanning to reach higher offsets
@@ -430,14 +430,15 @@ def batch_by_pk(ModelClass, extra_filter=Q(), batch_size=10000):
         for item in items_batch:
             ...
     """
-    qs = ModelClass.objects.filter(extra_filter).order_by('pk')[:batch_size]
+    model_manager = model_manager or ModelClass.objects
+    qs = model_manager.filter(extra_filter).order_by('pk')[:batch_size]
     while qs.exists():
         yield qs
         # qs.last() doesn't work here because we've already sliced
         # loop through so we eventually grab the last one
         for item in qs:
             start_pk = item.pk
-        qs = ModelClass.objects.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
+        qs = model_manager.filter(pk__gt=start_pk).filter(extra_filter).order_by('pk')[:batch_size]
 
 
 def truncate_item_dicts(items_to_create, items_to_update, items_to_delete, combined_maximum_size):

@@ -1,14 +1,11 @@
 """
 Tests for the `edx-enterprise` serializer module.
 """
-
-import datetime
 import json
 from collections import OrderedDict
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import ddt
-from freezegun import freeze_time
 from oauth2_provider.models import get_application_model
 from pytest import mark
 from rest_framework.reverse import reverse
@@ -33,7 +30,7 @@ from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUser
 from test_utils import FAKE_UUIDS, TEST_PGP_KEY, TEST_USERNAME, APITest, factories
 
 Application = get_application_model()
-NOW = datetime.datetime(2017, 1, 2, 3, 4, 5)
+
 
 @mark.django_db
 class TestImmutableStateSerializer(APITest):
@@ -647,12 +644,6 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
             user_id=self.user.id,
         )
         self.enterprise_customer = self.enterprise_customer_user.enterprise_customer
-        # datetime_patcher = patch.object(
-        #     datetime, 'now',
-        #     Mock(wraps=datetime)
-        # )
-        # mocked_datetime = datetime_patcher.start()
-        # mocked_datetime.return_value = datetime.datetime(2024, 1, 1, 12, 0, 0)
 
     @patch.object(HttpRequest, 'get_host', return_value='example.edx.org')
     @patch('enterprise.api.v1.serializers.CourseDetails')
