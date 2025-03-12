@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.8.5]
+--------
+* feat: add management command to backfill `user_fk` values in `EnterpriseCustomerUser` model. Part 3 of adding auth_user as a foreign key.
+
 [5.8.4]
 --------
 * chore: upgrade python requirements.
