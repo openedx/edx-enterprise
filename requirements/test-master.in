@@ -7,3 +7,4 @@
 -r base.in
 
 edx-api-doc-tools  # for installing an api-docs page for enterprise
+edx-braze-client

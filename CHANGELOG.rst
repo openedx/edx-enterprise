@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.10.0]
+--------
+* build: remove edx-braze-client from ``base.in`` dependencies.
+
 [5.9.2]
 --------
 * fix: sleep time argument in ecu backfill management command
