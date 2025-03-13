@@ -10,3 +10,4 @@ Sphinx                    # Documentation builder
 docutils
 factory-boy
 pytest
+edx-braze-client

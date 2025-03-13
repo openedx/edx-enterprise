@@ -106,6 +106,9 @@ setup(
     include_package_data=True,
     install_requires=REQUIREMENTS,
     dependency_links=DEPENDENCY_LINKS,
+    extras_require={
+        "braze": ["edx-braze-client"],
+    },
     license="AGPL 3.0",
     zip_safe=False,
     keywords="Django edx",
