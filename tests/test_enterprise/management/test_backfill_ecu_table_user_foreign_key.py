@@ -58,6 +58,15 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
             linked=False,
         )
 
+        historical_ecu = factories.EnterpriseCustomerUserFactory.create()
+        historical_record = historical_ecu.history.create(
+            id=historical_ecu.id,
+            history_date='2023-01-01 00:00:00',
+            history_type='+',
+            user_id=historical_ecu.user_id,
+            enterprise_customer=historical_ecu.enterprise_customer,
+        )
+
         self.addCleanup(self.cleanup_test_objects)
 
     def cleanup_test_objects(self):
@@ -90,7 +99,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         EnterpriseCustomerUser.all_objects.all().bulk_update(ecus, ['user_fk'])
 
         call_command(self.command, batch_limit=3)
-        assert mock_sleep.call_count == 4
+        assert mock_sleep.call_count == 6
         mock_log.assert_any_call('Processed 3 records.')
         mock_log.assert_any_call('Processed 6 records.')
         mock_log.assert_any_call('Processed 9 records.')
@@ -134,3 +143,15 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         call_command(self.command)
         unlinked_ecu.refresh_from_db()
         assert unlinked_ecu.user_fk == unlinked_ecu.user_id
+
+    # test that historical table is also updated
+    @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
+    def test_historical_table_is_updated(self, _):
+        ecus = EnterpriseCustomerUser.history.all()
+        for ecu in ecus:
+            ecu.user_fk = None
+        EnterpriseCustomerUser.history.bulk_update(ecus, ['user_fk'])
+        call_command(self.command)
+        ecu = EnterpriseCustomerUser.history.first()
+        ecu.refresh_from_db()
+        assert ecu.user_fk == ecu.user_id
