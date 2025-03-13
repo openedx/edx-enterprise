@@ -58,8 +58,9 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
             linked=False,
         )
 
+        # Make a user in the historical table
         historical_ecu = factories.EnterpriseCustomerUserFactory.create()
-        historical_record = historical_ecu.history.create(
+        historical_ecu.history.create(
             id=historical_ecu.id,
             history_date='2023-01-01 00:00:00',
             history_type='+',
