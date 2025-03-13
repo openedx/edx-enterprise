@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.9.1]
+--------
+* fix: adjust management command added in release 5.8.5 so it also backfills historical table
+
 [5.9.0]
 --------
 * feat: creates an endpoint for admin to view a learner's course enrollments.
