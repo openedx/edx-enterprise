@@ -18,12 +18,12 @@ log = logging.getLogger(__name__)
 User = auth.get_user_model()
 
 
-def safe_bulk_update(entries, properties, max_retries):
+def safe_bulk_update(entries, properties, max_retries, manager):
     """Performs bulk_update with retry logic."""
     for attempt in range(1, max_retries + 1):
         try:
             with transaction.atomic():
-                EnterpriseCustomerUser.all_objects.bulk_update(
+                manager.bulk_update(
                     entries, properties
                 )
             return len(entries)
@@ -35,7 +35,7 @@ def safe_bulk_update(entries, properties, max_retries):
     raise Exception(f"Bulk update failed after {max_retries} retries.")
 
 
-def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries):
+def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries, ModelClass):
     """
     Fetches and updates records in batches.
     Only loads and updates a subset of records at a time to avoid memory and performance issues.
@@ -46,7 +46,7 @@ def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries)
     total_processed = 0
 
     for batch in batch_by_pk(
-        EnterpriseCustomerUser,
+        ModelClass,
         extra_filter=Q(user_fk__isnull=True),
         batch_size=batch_limit,
         model_manager=manager,
@@ -54,7 +54,7 @@ def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries)
         log.info(f"Processing batch {batch_counter}...")
         for ecu in batch:
             ecu.user_fk = ecu.user_id
-        safe_bulk_update(batch, ['user_fk'], max_retries)
+        safe_bulk_update(batch, ['user_fk'], max_retries, manager=manager)
         total_processed += len(batch)
         log.info(f'Processed {total_processed} records.')
         sleep(batch_sleep)
@@ -119,6 +119,15 @@ class Command(BaseCommand):
             batch_limit=batch_limit,
             batch_sleep=batch_sleep,
             max_retries=max_retries,
+            ModelClass=EnterpriseCustomerUser,
+        )
+
+        _fetch_and_update_in_batches(
+            manager=EnterpriseCustomerUser.history,
+            batch_limit=batch_limit,
+            batch_sleep=batch_sleep,
+            max_retries=max_retries,
+            ModelClass=EnterpriseCustomerUser,
         )
 
     def handle(self, *_args, **options):
