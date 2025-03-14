@@ -121,7 +121,7 @@ To integrate an ``EnterpriseCustomer`` with SAP SuccessFactors:
   Ensure that the record is marked ``Active`` to allow the management commands below to send data via this channel.
 
 .. _SAP SuccessFactors: https://www.successfactors.com
-.. _TPA SAML Integration: http://edx.readthedocs.io/projects/edx-installing-configuring-and-running/en/latest/configuration/tpa/tpa_SAML_SP.html
+.. _TPA SAML Integration: https://docs.openedx.org/en/latest/site_ops/install_configure_run_guide/configuration/tpa/tpa_SAML_SP.html
 
 Management Commands
 ^^^^^^^^^^^^^^^^^^^
