@@ -75,7 +75,8 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
         are `joined_org`, `name`, and `enrollments`.
         - ``is_reversed`` (bool, optional): Include to reverse the records in descending order. By default, the results
         returned are in ascending order.
-        - ``user_id`` (string, optional): Specify a user_id in order to fetch a single enteprise customer member
+        - ``user_id`` (string, optional): Specify a user_id in order to fetch a single enterprise customer member, cannot
+        be passed in conjuction with a user_query
         """
         query_params = self.request.query_params
         param_serializers = serializers.EnterpriseCustomerMembersRequestQuerySerializer(
