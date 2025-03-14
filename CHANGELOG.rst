@@ -549,7 +549,7 @@ for *any* enterprise.
 
 [4.20.1]
 --------
-* feat: Updating autocomplete field for Enteprise Group creation form
+* feat: Updating autocomplete field for Enterprise Group creation form
 
 [4.20.0]
 --------
@@ -698,7 +698,7 @@ for *any* enterprise.
 
 [4.16.4]
 --------
-* revert: fix: set default langauge for all learners linked with an enteprise customer
+* revert: fix: set default langauge for all learners linked with an enterprise customer
 
 [4.16.3]
 --------
@@ -726,7 +726,7 @@ for *any* enterprise.
 
 [4.15.10]
 ---------
-* fix: set default langauge for all learners linked with an enteprise customer
+* fix: set default langauge for all learners linked with an enterprise customer
 
 [4.15.9]
 --------

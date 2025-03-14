@@ -2089,6 +2089,7 @@ class EnterpriseCustomerMembersRequestQuerySerializer(serializers.Serializer):
         required=False,
     )
     is_reversed = serializers.BooleanField(required=False, default=False)
+    user_id = serializers.IntegerField(required=False)
 
 
 class EnterpriseMembersSerializer(serializers.ModelSerializer):
