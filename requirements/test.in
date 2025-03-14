@@ -13,3 +13,4 @@ pytest-cov                # pytest extension for code coverage statistics
 pytest-django             # pytest extension for better Django support
 responses                 # utility library for mocking out the requests library
 testfixtures              # Mock objects for unit tests and doc tests
+edx-braze-client

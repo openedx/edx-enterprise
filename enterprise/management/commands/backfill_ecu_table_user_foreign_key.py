@@ -101,9 +101,9 @@ class Command(BaseCommand):
             '--batch-sleep',
             action='store',
             dest='batch_sleep',
-            default=2,
+            default=0.1,
             help='How long to sleep between batches.',
-            type=int,
+            type=float,
         )
 
     def backfill_ecu_table_user_foreign_key(self, options):
