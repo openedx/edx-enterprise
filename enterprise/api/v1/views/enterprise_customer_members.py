@@ -75,6 +75,7 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
         are `joined_org`, `name`, and `enrollments`.
         - ``is_reversed`` (bool, optional): Include to reverse the records in descending order. By default, the results
         returned are in ascending order.
+        - ``user_id`` (string, optional): Specify a user_id in order to fetch a single enteprise customer member
         """
         query_params = self.request.query_params
         param_serializers = serializers.EnterpriseCustomerMembersRequestQuerySerializer(
@@ -89,6 +90,7 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
         user_query = param_serializers.validated_data.get('user_query')
         is_reversed = param_serializers.validated_data.get('is_reversed', False)
         sort_by = param_serializers.validated_data.get('sort_by')
+        user_id = param_serializers.validated_data.get('user_id')
         # On logistration, the name field of auth_userprofile is populated, but if it's not
         # filled in, we check the auth_user model for it's first/last name fields
         # https://2u-internal.atlassian.net/wiki/spaces/ENGAGE/pages/747143186/Use+of+full+name+in+edX#Data-on-Name-Field
@@ -119,6 +121,12 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                         sql_to_execute,
                         [uuid_no_dashes, like_user_query, like_user_query],
                     )
+                elif user_id:
+                    user_id_query = f"{user_id}"
+                    sql_to_execute = query.format(
+                        user_query_filter="WHERE id = %s"
+                    )
+                    cursor.execute(sql_to_execute, [uuid_no_dashes, user_id_query])
                 else:
                     sql_to_execute = query.format(user_query_filter="")
                     cursor.execute(sql_to_execute, [uuid_no_dashes])
