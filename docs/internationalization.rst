@@ -8,7 +8,7 @@ this choice.
 
 Follow the `internationalization coding guidelines`_ in the edX Developer's Guide when developing new features.
 
-.. _internationalization coding guidelines: http://edx.readthedocs.org/projects/edx-developer-guide/en/latest/internationalization/i18n.html
+.. _internationalization coding guidelines: https://docs.openedx.org/en/latest/developers/references/developer_guide/internationalization/i18n.html
 
 Updating Translations
 ~~~~~~~~~~~~~~~~~~~~~
