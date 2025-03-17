@@ -97,6 +97,13 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                         certificate_info,
                         instance
                     )
+                    olc_course_id = course_details.external_identifier
+                    representation['external_identifier'] = olc_course_id
+                    representation['course_run_url'] = self._get_course_run_url(
+                        request,
+                        course_run_id,
+                        olc_course_id
+                    )
 
         return representation
 
@@ -110,7 +117,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
 
         return None
 
-    def _get_course_run_url(self, request, course_run_id):
+    def _get_course_run_url(self, request, course_run_id, olc_course_id=None):
         """
         Get the appropriate course url while incorporating Executive Education content.
         """
@@ -120,6 +127,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
             active_enterprise_customer = EnterpriseCustomerUser.get_active_enterprise_users(request.user.id).first()
             if active_enterprise_customer and active_enterprise_customer.enterprise_customer.auth_org_id:
                 params = {'org_id': active_enterprise_customer.enterprise_customer.auth_org_id}
+                if olc_course_id:
+                    params['course_id'] = olc_course_id
                 course_run_url = '{}?{}'.format(exec_ed_base_url, urlencode(params))
 
         return course_run_url
