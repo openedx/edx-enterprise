@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.10.1]
+--------
+* fix: defensively import edx-braze-client so that tests in the edx-platform CI context won't raise ``ImportErrors``.
+
 [5.10.0]
 --------
 * build: remove edx-braze-client from ``base.in`` dependencies.
