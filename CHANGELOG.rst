@@ -25,6 +25,9 @@ Unreleased
 --------
 * feat: Add foreign key to field `user_fk` of `EnterpriseCustomerUser` model. Part 5 of adding auth_user as a foreign key.
 * Important: If you want to avoid downtime for a large EnterpriseCustomerUser table, you must ensure that no entries in that table are NULL (but the field remains nullable). To do this, deploy https://github.com/openedx/edx-enterprise/pull/2341 first and run the management command as defined there.
+[5.11.0]
+--------
+* feat. updated the _get_course_run_url to pass external_identifier as a parameter
 
 [5.10.3]
 --------
