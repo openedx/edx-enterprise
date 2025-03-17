@@ -34,7 +34,7 @@ Here is a diagram showing a simplified view of the calls to these apis. The yell
 Decisions
 =========
 
-In order to address these performance issues and to more effectively scale and build new features related to enterprise catalogs in the future, we will create a new IDA (Independently Deployable Application) to replace the existing enteprise catalog functionality.
+In order to address these performance issues and to more effectively scale and build new features related to enterprise catalogs in the future, we will create a new IDA (Independently Deployable Application) to replace the existing enterprise catalog functionality.
 This IDA will support the existing API contracts established in the edx-enterprise API, but will be a new implementation separate from what we do today.
 
 The microservice will be supported by the following relational data model:
