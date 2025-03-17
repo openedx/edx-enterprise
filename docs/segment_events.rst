@@ -10,8 +10,8 @@ Emitted when a new ``EnterpriseCourseEnrollment`` record gets created.
 
 The event contains these properties:
 
-- **pathway**: A string identifying the mechanism through which the ``EntepriseCourseEnrollment`` was created. See below
-  for possible values.
+- **pathway**: A string identifying the mechanism through which the ``EnterpriseCourseEnrollment`` was created.
+  See below for possible values.
 - **course_run_id**: EdX course ID associated with the enrollment.
 - **url_path**: The url path the user was visiting when the enterprise course enrollment got created. Can be null when
   the enrollment is created outside of a learner's request (for example admin or REST API enrollments).
