@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.10.3]
+--------
+* fix: add group_uuid to group membership endpoint payload
+
 [5.10.2]
 --------
 * feat: add user_id filter ability to customer members endpoint 
