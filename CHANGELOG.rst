@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.10.3]
+--------
+* fix: add group_uuid to group membership endpoint payload
+
+[5.10.2]
+--------
+* feat: add user_id filter ability to customer members endpoint 
+
+[5.10.1]
+--------
+* fix: defensively import edx-braze-client so that tests in the edx-platform CI context won't raise ``ImportErrors``.
+
 [5.10.0]
 --------
 * build: remove edx-braze-client from ``base.in`` dependencies.
@@ -549,7 +561,7 @@ for *any* enterprise.
 
 [4.20.1]
 --------
-* feat: Updating autocomplete field for Enteprise Group creation form
+* feat: Updating autocomplete field for Enterprise Group creation form
 
 [4.20.0]
 --------
@@ -698,7 +710,7 @@ for *any* enterprise.
 
 [4.16.4]
 --------
-* revert: fix: set default langauge for all learners linked with an enteprise customer
+* revert: fix: set default langauge for all learners linked with an enterprise customer
 
 [4.16.3]
 --------
@@ -726,7 +738,7 @@ for *any* enterprise.
 
 [4.15.10]
 ---------
-* fix: set default langauge for all learners linked with an enteprise customer
+* fix: set default langauge for all learners linked with an enterprise customer
 
 [4.15.9]
 --------
