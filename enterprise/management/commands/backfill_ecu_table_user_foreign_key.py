@@ -8,8 +8,7 @@ from time import sleep
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
-from django.db import DatabaseError, transaction
-from django.db.models import Q
+from django.db import DatabaseError, transaction, models
 
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.utils import batch_by_pk
@@ -47,13 +46,16 @@ def _fetch_and_update_in_batches(manager, batch_limit, batch_sleep, max_retries)
 
     for batch in batch_by_pk(
         EnterpriseCustomerUser,
-        extra_filter=Q(user_fk__isnull=True),
+        extra_filter=models.Q(user_fk__isnull=True),
         batch_size=batch_limit,
         model_manager=manager,
     ):
         log.info(f"Processing batch {batch_counter}...")
         for ecu in batch:
-            ecu.user_fk = ecu.user_id
+            if isinstance(EnterpriseCustomerUser._meta.get_field('user_fk'), models.ForeignKey):
+                ecu.user_fk_id = ecu.user_id
+            else:
+                ecu.user_fk = ecu.user_id
         safe_bulk_update(batch, ['user_fk'], max_retries)
         total_processed += len(batch)
         log.info(f'Processed {total_processed} records.')
