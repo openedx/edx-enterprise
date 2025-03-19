@@ -832,6 +832,8 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         assert enterprise_customer_user.user_fk == user, (
             f"Expected user_fk to be User with id {user.id}, but got {enterprise_customer_user.user_fk}"
         )
+        assert EnterpriseCustomerUser.objects.filter(user_fk=user).count() == 1
+        assert user.enterprise_customer_users.all().count() == 1
 
         enterprise_customer_user.user_id = second_user.id
         enterprise_customer_user.save()
