@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.10.4]
+--------
+* feat: Add foreign key to field `user_fk` of `EnterpriseCustomerUser` model. Part 5 of adding auth_user as a foreign key.
+
 [5.10.3]
 --------
 * fix: add group_uuid to group membership endpoint payload
