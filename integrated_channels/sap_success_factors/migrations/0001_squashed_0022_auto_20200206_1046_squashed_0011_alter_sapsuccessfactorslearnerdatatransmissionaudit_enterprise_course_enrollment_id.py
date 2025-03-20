@@ -76,5 +76,8 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('credit_hours', models.FloatField(blank=True, null=True)),
             ],
+            options={
+                'db_table': 'sap_success_factors_sapsuccessfactorslearnerdatatransmission3ce5',
+            }
         ),
     ]
