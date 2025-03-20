@@ -18,6 +18,7 @@ from django.test import TestCase
 from enterprise.api.v1.serializers import (
     EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
+    EnterpriseCustomerBrandingConfigurationSerializer,
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
@@ -26,7 +27,11 @@ from enterprise.api.v1.serializers import (
     ImmutableStateSerializer,
 )
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
-from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
+from enterprise.models import (
+    EnterpriseCustomerBrandingConfiguration,
+    SystemWideEnterpriseRole,
+    SystemWideEnterpriseUserRoleAssignment,
+)
 from test_utils import FAKE_UUIDS, TEST_PGP_KEY, TEST_USERNAME, APITest, factories
 
 Application = get_application_model()
@@ -630,6 +635,35 @@ class TestEnterpriseMembersSerializer(TestCase):
         serializer = EnterpriseMembersSerializer(serializer_input_2)
         serialized_user = serializer.data
         self.assertEqual(serialized_user, expected_user_2)
+
+
+class TestEnterpriseCustomerBrandingConfigurationSerializer(TestCase):
+    """
+    Tests for EnterpriseCustomerBrandingConfigurationSerializer.
+    """
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+
+    def test_branding_configuration(self):
+        branding_config = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=self.enterprise_customer)
+
+        branding_config.logo = 'https://example.com/logo.png'
+        branding_config.primary_color = '#000000'
+        branding_config.secondary_color = '#FFFFFF'
+        branding_config.tertiary_color = '#0000FF'
+        branding_config.save()
+
+        saved_config = EnterpriseCustomerBrandingConfiguration.objects.get(
+            enterprise_customer=self.enterprise_customer)
+
+        serializer = EnterpriseCustomerBrandingConfigurationSerializer(saved_config)
+        data = serializer.data
+        self.assertEqual(data['primary_color'], branding_config.primary_color)
+        self.assertEqual(data['secondary_color'], branding_config.secondary_color)
+        self.assertEqual(data['tertiary_color'], branding_config.tertiary_color)
+        self.assertEqual(data['logo'], branding_config.logo)
 
 
 @mark.django_db

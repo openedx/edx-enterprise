@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.11.0]
+--------
+* feat. updated the _get_course_run_url to pass external_identifier as a parameter
+
 [5.10.3]
 --------
 * fix: add group_uuid to group membership endpoint payload
