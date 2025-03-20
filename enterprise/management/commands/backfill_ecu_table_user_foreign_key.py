@@ -8,7 +8,7 @@ from time import sleep
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
-from django.db import DatabaseError, transaction, models
+from django.db import DatabaseError, models, transaction
 
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.utils import batch_by_pk
