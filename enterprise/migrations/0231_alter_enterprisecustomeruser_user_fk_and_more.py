@@ -14,7 +14,6 @@ class Migration(migrations.Migration):
         operations = []
     else:
         operations = [
-            # ✅ SINGLE source of truth: RunSQL handles FK with DDL options
             migrations.RunSQL(
                 sql="""
                     SET FOREIGN_KEY_CHECKS = 0;
