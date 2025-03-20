@@ -814,27 +814,33 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=42)
         assert enterprise_customer_user.user_email is None
 
-    def test_on_create_should_set_user_fk_to_user_id(self):
+    def test_on_create_should_set_user_fk_to_user(self):
         """Test that user_fk is set to user_id when creating a record."""
-        user_id = 123
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_id)
-        enterprise_customer_user.refresh_from_db()
+        user = factories.UserFactory(email='email@example.com')
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
 
-        assert enterprise_customer_user.user_fk == user_id, (
-            f"Expected user_fk to be {user_id}, but got {enterprise_customer_user.user_fk}"
+        assert enterprise_customer_user.user_fk == user, (
+            f"Expected user_fk to be User with id {user.id}, but got {enterprise_customer_user.user_fk}"
         )
 
-    def test_on_update_should_set_user_fk_to_user_id(self):
+    def test_on_update_should_set_user_fk_to_user(self):
         """Test that user_fk updates when user_id is modified and saved."""
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=100)
+        user = factories.UserFactory(email='email@example.com')
+        second_user = factories.UserFactory(email='email2@example.com')
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
 
-        new_user_id = 200
-        enterprise_customer_user.user_id = new_user_id
+        assert enterprise_customer_user.user_fk == user, (
+            f"Expected user_fk to be User with id {user.id}, but got {enterprise_customer_user.user_fk}"
+        )
+        assert EnterpriseCustomerUser.objects.filter(user_fk=user).count() == 1
+        assert user.enterprise_customer_users.all().count() == 1
+
+        enterprise_customer_user.user_id = second_user.id
         enterprise_customer_user.save()
         enterprise_customer_user.refresh_from_db()
 
-        assert enterprise_customer_user.user_fk == new_user_id, (
-            f"Expected user_fk to update to {new_user_id}, but got {enterprise_customer_user.user_fk}"
+        assert enterprise_customer_user.user_fk == second_user, (
+            f"Expected user_fk to update to User with id {second_user.id}, but got {enterprise_customer_user.user_fk}"
         )
 
     @ddt.data("alberteinstein", "richardfeynman", "leosusskind")

@@ -1063,10 +1063,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
-    user_fk = models.IntegerField(
+    user_fk = models.ForeignKey(
+        User,
         null=True,
         blank=False,
+        related_name='enterprise_customer_users',
         db_index=True,
+        on_delete=models.deletion.CASCADE,
+        db_column='user_fk'
     )
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
@@ -1148,7 +1152,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 enterprise_customer=self.enterprise_customer,
             )
 
-        self.user_fk = self.user_id
+        self.user_fk = self.user
 
         return super().save(*args, **kwargs)
 

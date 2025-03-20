@@ -89,7 +89,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         assert ecu.user_fk is None
         call_command(self.command)
         ecu.refresh_from_db()
-        assert ecu.user_fk == ecu.user_id
+        assert ecu.user_fk_id == ecu.user_id
 
     @patch('logging.Logger.info')
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
@@ -109,11 +109,11 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     def test_skips_rows_that_already_have_user_fk(self, _):
         ecu = EnterpriseCustomerUser.all_objects.first()
-        ecu.user_fk = 9999
+        ecu.user_fk_id = 9999
         # use bulk_update to prevent save() method from setting user_fk to user_id
         EnterpriseCustomerUser.all_objects.all().bulk_update([ecu], ['user_fk'])
         call_command(self.command)
-        assert EnterpriseCustomerUser.all_objects.first().user_fk == 9999
+        assert EnterpriseCustomerUser.all_objects.first().user_fk_id == 9999
 
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
     @patch('logging.Logger.warning')
@@ -143,7 +143,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         assert unlinked_ecu.user_fk is None
         call_command(self.command)
         unlinked_ecu.refresh_from_db()
-        assert unlinked_ecu.user_fk == unlinked_ecu.user_id
+        assert unlinked_ecu.user_fk_id == unlinked_ecu.user_id
 
     # test that historical table is also updated
     @patch('enterprise.management.commands.backfill_ecu_table_user_foreign_key.sleep')
@@ -155,4 +155,4 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         call_command(self.command)
         ecu = EnterpriseCustomerUser.history.first()
         ecu.refresh_from_db()
-        assert ecu.user_fk == ecu.user_id
+        assert ecu.user_fk_id == ecu.user_id
