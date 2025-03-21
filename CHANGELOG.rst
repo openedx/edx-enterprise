@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.11.1]
+--------
+* fix: move BrazeClient import warning to ``BrazeAPIClient.__init__()``.
+
 [5.11.0]
 --------
 * feat: Add foreign key to field `user_fk` of `EnterpriseCustomerUser` model. Part 5 of adding auth_user as a foreign key.

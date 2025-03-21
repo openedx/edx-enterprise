@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 try:
     from braze.client import BrazeClient
 except ImportError:
-    logger.warning('Cannot import BrazeClient, calls to Braze will not work')
     BrazeClient = None
 
 ENTERPRISE_BRAZE_ALIAS_LABEL = 'Enterprise'  # Do Not change this, this is consistent with other uses across edX repos.
@@ -38,6 +37,8 @@ class BrazeAPIClient(BrazeClient or object):
                 api_url=braze_api_url,
                 app_id='',
             )
+        else:
+            logger.warning('BrazeClient could not be imported, calls to Braze will not work')
 
     def generate_mailto_link(self, emails):
         """
