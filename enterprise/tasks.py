@@ -4,7 +4,6 @@ Django tasks.
 
 from logging import getLogger
 
-from braze.exceptions import BrazeClientError
 from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
@@ -20,6 +19,11 @@ from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import batch_dict, get_enterprise_customer, localized_utcnow, send_email_notification_message
 
 LOGGER = getLogger(__name__)
+
+try:
+    from braze.exceptions import BrazeClientError
+except ImportError:
+    BrazeClientError = Exception
 
 
 @shared_task
