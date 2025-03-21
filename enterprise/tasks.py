@@ -23,7 +23,6 @@ LOGGER = getLogger(__name__)
 try:
     from braze.exceptions import BrazeClientError
 except ImportError:
-    LOGGER.warning('Cannot import BrazeClientError')
     BrazeClientError = Exception
 
 
