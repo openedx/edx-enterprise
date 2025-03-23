@@ -10,14 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     db_engine = connection.settings_dict['ENGINE']
-    if 'sqlite3' in db_engine:
-        operations = [
-            migrations.AlterIndexTogether(
-                name='degreed2learnerdatatransmissionaudit',
-                index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
-            ),
-        ]
-    elif 'postgresql' in db_engine:
+    if 'postgresql' in db_engine:
         operations = [
             migrations.SeparateDatabaseAndState(
                 state_operations=[
@@ -58,6 +51,7 @@ class Migration(migrations.Migration):
             ),
         ]
     else:
+        # For SQLite or other non-sqlite, non-mysql and non-postgresql backends
         operations = [
             migrations.AlterIndexTogether(
                 name='degreed2learnerdatatransmissionaudit',

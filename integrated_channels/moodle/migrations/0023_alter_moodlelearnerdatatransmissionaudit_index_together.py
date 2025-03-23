@@ -5,25 +5,24 @@ from django.db import connection, migrations
 
 def generate_index_sql(db_engine):
     if 'mysql' in db_engine:
-        return """
-            CREATE INDEX moodle_mldta_85936b55_idx
+        statement = """CREATE INDEX moodle_mldta_85936b55_idx
             ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
-            ALGORITHM=INPLACE LOCK=NONE
-        """
+            ALGORITHM = INPLACE LOCK = NONE"""
+        return statement
     elif 'postgresql' in db_engine:
-        return """
-            CREATE INDEX moodle_mldta_85936b55_idx
-            ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
-        """
+        statement = """CREATE INDEX moodle_mldta_85936b55_idx
+            ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)"""
+        return statement
     else:
-        raise ValueError("Unsupported database engine")
+        # Handle other database engines (e.g., SQLite)
+        statement = """CREATE INDEX moodle_mldta_85936b55_idx
+            ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)"""
+        return statement
 
 
 def drop_index_sql(db_engine):
-    return """
-        DROP INDEX moodle_mldta_85936b55_idx
-        ON moodle_moodlelearnerdatatransmissionaudit
-    """
+    return """DROP INDEX moodle_mldta_85936b55_idx
+        ON moodle_moodlelearnerdatatransmissionaudit"""
 
 
 class Migration(migrations.Migration):
