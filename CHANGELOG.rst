@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.0]
+--------
+* feat. updated the _get_course_run_url to pass external_identifier as a parameter
+
 [5.11.1]
 --------
 * fix: move BrazeClient import warning to ``BrazeAPIClient.__init__()``.
