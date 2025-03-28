@@ -18,7 +18,7 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
 from enterprise.tasks import send_group_membership_invitation_notification, send_group_membership_removal_notification
-from enterprise.utils import localized_utcnow
+from enterprise.utils import get_idiff_list, localized_utcnow
 
 LOGGER = getEnterpriseLogger(__name__)
 
@@ -345,7 +345,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
             # Extend the list of emails that don't have User objects associated and need to be turned into
             # new PendingEnterpriseCustomerUser objects
-            user_emails_to_create.extend(set(user_email_batch).difference(set(ecu_by_email.keys())))
+            user_emails_to_create.extend(get_idiff_list(user_email_batch, ecu_by_email.keys()))
 
             # Extend the list of memberships that need to be created associated with existing Users
             # All existing users will have the status automatically set to accepted
