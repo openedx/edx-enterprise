@@ -8817,8 +8817,8 @@ class TestEnterpriseGroupViewSet(APITest):
     #     new_group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
     #     user_1 = UserFactory(email='testuser1@example.com')
     #     user_2 = UserFactory(email='TestUser2@example.com')
-    #     ecu_1 = EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user_1.id)
-    #     ecu_2 = EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user_2.id)
+    #     EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user_1.id)
+    #     EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user_2.id)
 
     #     assign_url = settings.TEST_SERVER + reverse(
     #         'enterprise-group-assign-learners',
@@ -8830,9 +8830,15 @@ class TestEnterpriseGroupViewSet(APITest):
     #     self.client.post(assign_url, data=request_data)
 
     #     # Verify both group memberships in place
-    #     assert len(EnterpriseGroupMembership.objects.filter(group=new_group, pending_enterprise_customer_user__isnull=True)) == 2
+    #     assert len(EnterpriseGroupMembership.objects.filter(
+    #         group=new_group,
+    #         pending_enterprise_customer_user__isnull=True)
+    #         ) == 2
     #     # Verify no pending group memberships
-    #     assert len(EnterpriseGroupMembership.objects.filter(group=new_group, pending_enterprise_customer_user__isnull=False)) == 0
+    #     assert len(EnterpriseGroupMembership.objects.filter(
+    #         group=new_group,
+    #         pending_enterprise_customer_user__isnull=False)
+    #         ) == 0
 
     @mock.patch('enterprise.tasks.send_group_membership_invitation_notification.delay', return_value=mock.MagicMock())
     def test_successful_assign_learners_to_group(self, mock_send_group_membership_invitation_notification):
