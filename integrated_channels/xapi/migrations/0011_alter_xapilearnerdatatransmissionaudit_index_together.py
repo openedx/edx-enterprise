@@ -3,8 +3,21 @@
 from django.db import connection, migrations
 
 
-class Migration(migrations.Migration):
+def generate_index_sql(db_engine):
+    if 'mysql' in db_engine:
+        return """CREATE INDEX xapi_xldta_85936b55_idx
+            ON xapi_xapilearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
+            ALGORITHM = INPLACE LOCK = NONE"""
+    elif 'postgresql' in db_engine:
+        return """CREATE INDEX xapi_xldta_85936b55_idx
+            ON xapi_xapilearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)"""
+    else:
+        # Handle other database engines (e.g., SQLite)
+        return """CREATE INDEX xapi_xldta_85936b55_idx
+            ON xapi_xapilearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)"""
 
+
+class Migration(migrations.Migration):
     dependencies = [
         ('xapi', '0010_auto_20221021_0159'),
     ]
@@ -27,14 +40,10 @@ class Migration(migrations.Migration):
                     ),
                 ],
                 database_operations=[
-                    migrations.RunSQL(sql="""
-                        CREATE INDEX xapi_xldta_85936b55_idx
-                        ON xapi_xapilearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
-                        ALGORITHM=INPLACE LOCK=NONE
-                    """, reverse_sql="""
-                        DROP INDEX xapi_xldta_85936b55_idx
-                        ON xapi_xapilearnerdatatransmissionaudit
-                    """),
+                    migrations.RunSQL(sql=generate_index_sql(db_engine), reverse_sql="""
+                                                                                     DROP INDEX xapi_xldta_85936b55_idx
+                                                                                         ON xapi_xapilearnerdatatransmissionaudit
+                                                                                     """),
                 ]
             ),
         ]
