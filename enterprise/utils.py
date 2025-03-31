@@ -2629,7 +2629,7 @@ def filter_in_case_insensitive(fieldname, values):
         fieldname (str): Name of the field to query
         values (list): Values to filter by
     Returns:
-        list: a list of integrations.
+        dict: queryset filter parameters
     """
     # MySQL IN query is case insensitive by default
     case_insensitive_filter = dict([(f"{fieldname}__in", values)])
