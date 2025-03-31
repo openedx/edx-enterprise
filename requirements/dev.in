@@ -16,3 +16,4 @@ testfixtures              # Mock objects for unit tests and doc tests
 tox                       # virtualenv management for tests
 twine==1.11.0             # Utility for PyPI package uploads
 wheel                     # For generation of wheels for PyPI
+edx-braze-client

@@ -1050,6 +1050,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     Fields:
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_id (:class:`django.db.models.IntegerField`): user identifier
+        user_fk (ForeignKey[:class:`.User`]): auth_user
 
     .. no_pii:
     """
@@ -1062,6 +1063,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
+    user_fk = models.ForeignKey(
+        User,
+        null=True,
+        blank=False,
+        related_name='enterprise_customer_users',
+        db_index=True,
+        on_delete=models.deletion.CASCADE,
+        db_column='user_fk'
+    )
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
     is_relinkable = models.BooleanField(
@@ -1094,6 +1104,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
+        indexes = [models.Index(fields=['user_fk'], name='idx_enterprise_user_fk')]
 
     def save(self, *args, **kwargs):
         """
@@ -1140,6 +1151,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 user_id=self.user_id,
                 enterprise_customer=self.enterprise_customer,
             )
+
+        self.user_fk = self.user
 
         return super().save(*args, **kwargs)
 

@@ -17,6 +17,79 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.0]
+--------
+* feat. updated the _get_course_run_url to pass external_identifier as a parameter
+
+[5.11.1]
+--------
+* fix: move BrazeClient import warning to ``BrazeAPIClient.__init__()``.
+
+[5.11.0]
+--------
+* feat: Add foreign key to field `user_fk` of `EnterpriseCustomerUser` model. Part 5 of adding auth_user as a foreign key.
+* Important: If you want to avoid downtime for a large EnterpriseCustomerUser table, you must ensure that no entries in that table are NULL (but the field remains nullable). To do this, deploy https://github.com/openedx/edx-enterprise/pull/2341 first and run the management command as defined there.
+
+[5.10.3]
+--------
+* fix: add group_uuid to group membership endpoint payload
+
+[5.10.2]
+--------
+* feat: add user_id filter ability to customer members endpoint 
+
+[5.10.1]
+--------
+* fix: defensively import edx-braze-client so that tests in the edx-platform CI context won't raise ``ImportErrors``.
+
+[5.10.0]
+--------
+* build: remove edx-braze-client from ``base.in`` dependencies.
+
+[5.9.2]
+--------
+* fix: sleep time argument in ecu backfill management command
+
+[5.9.1]
+--------
+* fix: adjust management command added in release 5.8.5 so it also backfills historical table
+
+[5.9.0]
+--------
+* feat: creates an endpoint for admin to view a learner's course enrollments.
+
+[5.8.5]
+--------
+* feat: add management command to backfill `user_fk` values in `EnterpriseCustomerUser` model. Part 3 of adding auth_user as a foreign key.
+
+[5.8.4]
+--------
+* chore: upgrade python requirements.
+
+[5.8.3]
+--------
+* chore: migrate Xpert API to v2 for analytics_summary endpoint.
+
+[5.8.2]
+--------
+* feat: add index to `user_fk` in `EnterpriseCustomerUser` model. Part 2 of adding auth_user as a foreign key.
+
+[5.8.1]
+--------
+* feat: add field `user_fk` to `EnterpriseCustomerUser` model. Part 1 of adding auth_user as a foreign key.
+
+[5.8.0]
+--------
+* feat: exposes Waffle flag for MFEs' incremental migration to querying Algolia with non-enterprise-specific data
+
+[5.7.0]
+--------
+* feat: adds endpoint to list group memberships for a learner
+
+[5.6.12]
+--------
+* chore: Upgrade Python requirements
+
 [5.6.11]
 ---------
 * feat: add a waffle flag for the learner profile view in admin portal
@@ -501,7 +574,7 @@ for *any* enterprise.
 
 [4.20.1]
 --------
-* feat: Updating autocomplete field for Enteprise Group creation form
+* feat: Updating autocomplete field for Enterprise Group creation form
 
 [4.20.0]
 --------
@@ -650,7 +723,7 @@ for *any* enterprise.
 
 [4.16.4]
 --------
-* revert: fix: set default langauge for all learners linked with an enteprise customer
+* revert: fix: set default langauge for all learners linked with an enterprise customer
 
 [4.16.3]
 --------
@@ -678,7 +751,7 @@ for *any* enterprise.
 
 [4.15.10]
 ---------
-* fix: set default langauge for all learners linked with an enteprise customer
+* fix: set default langauge for all learners linked with an enterprise customer
 
 [4.15.9]
 --------

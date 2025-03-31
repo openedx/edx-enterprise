@@ -23,6 +23,7 @@ from enterprise.api.v1.views import (
     enterprise_customer_support,
     enterprise_customer_user,
     enterprise_group,
+    enterprise_group_membership,
     enterprise_subsidy_fulfillment,
     notifications,
     pending_enterprise_customer_admin_user,
@@ -82,6 +83,11 @@ router.register(
 )
 router.register(
     "enterprise_group", enterprise_group.EnterpriseGroupViewSet, 'enterprise-group'
+)
+router.register(
+    "enterprise-group-membership",
+    enterprise_group_membership.EnterpriseGroupMembershipViewSet,
+    'enterprise-group-membership'
 )
 router.register(
     "default-enterprise-enrollment-intentions",
@@ -190,6 +196,13 @@ urlpatterns = [
         name='enterprise-group-learners'
     ),
     re_path(
+        r'^enterprise-group-membership/?$',
+        enterprise_group_membership.EnterpriseGroupMembershipViewSet.as_view(
+            {'get': 'get_flex_group_memberships'}
+        ),
+        name='enterprise-group-membership'
+    ),
+    re_path(
         r'^enterprise_group/(?P<group_uuid>[A-Za-z0-9-]+)/assign_learners/?$',
         enterprise_group.EnterpriseGroupViewSet.as_view({'post': 'assign_learners'}),
         name='enterprise-group-assign-learners'
@@ -210,6 +223,13 @@ urlpatterns = [
         r'^enterprise-customer-members/(?P<enterprise_uuid>[A-Za-z0-9-]+)$',
         enterprise_customer_members.EnterpriseCustomerMembersViewSet.as_view({'get': 'get_members'}),
         name='enterprise-customer-members'
+    ),
+    re_path(
+        r'^enterprise-course-enrollment-admin/?$',
+        enterprise_course_enrollment.EnterpriseCourseEnrollmentAdminViewSet.as_view(
+            {'get': 'get_enterprise_course_enrollments'}
+        ),
+        name='enterprise-course-enrollment-admin'
     ),
 ]
 

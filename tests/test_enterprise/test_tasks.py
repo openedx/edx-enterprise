@@ -8,7 +8,6 @@ import uuid
 from datetime import datetime
 from unittest import mock
 
-from braze.exceptions import BrazeClientError
 from pytest import mark, raises
 
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL
@@ -31,6 +30,11 @@ from test_utils.factories import (
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
+
+try:
+    from braze.exceptions import BrazeClientError
+except ImportError:
+    BrazeClientError = Exception
 
 
 @mark.django_db
