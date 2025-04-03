@@ -18,7 +18,7 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseReadWriteModelViewSet
 from enterprise.logging import getEnterpriseLogger
 from enterprise.tasks import send_group_membership_invitation_notification, send_group_membership_removal_notification
-from enterprise.utils import localized_utcnow
+from enterprise.utils import filter_in_case_insensitive, get_idiff_list, localized_utcnow
 
 LOGGER = getEnterpriseLogger(__name__)
 
@@ -310,7 +310,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         memberships_to_create = []
         for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
             # Gather all existing User objects associated with the email batch
-            existing_users = User.objects.filter(email__in=user_email_batch)
+            existing_users = User.objects.filter(filter_in_case_insensitive('email', user_email_batch))
 
             # Revive any previously deleted membership records connected to ECUs containing related emails
             previously_removed_ecu_learners = models.EnterpriseGroupMembership.all_objects.filter(
@@ -345,7 +345,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
 
             # Extend the list of emails that don't have User objects associated and need to be turned into
             # new PendingEnterpriseCustomerUser objects
-            user_emails_to_create.extend(set(user_email_batch).difference(set(ecu_by_email.keys())))
+            user_emails_to_create.extend(get_idiff_list(user_email_batch, ecu_by_email.keys()))
 
             # Extend the list of memberships that need to be created associated with existing Users
             # All existing users will have the status automatically set to accepted
