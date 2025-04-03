@@ -16,6 +16,7 @@ from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIC
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
+    SAPSuccessFactorsUserInfoRetrievalAudit,
     SapSuccessFactorsLearnerDataTransmissionAudit,
 )
 
@@ -186,3 +187,60 @@ class SapSuccessFactorsLearnerDataTransmissionAuditAdmin(
 
     class Meta:
         model = SapSuccessFactorsLearnerDataTransmissionAudit
+
+
+@admin.register(SAPSuccessFactorsUserInfoRetrievalAudit)
+class SAPSuccessFactorsUserInfoRetrievalAuditAdmin(admin.ModelAdmin):
+    """
+    Django admin model for SAPSuccessFactorsUserInfoRetrievalAudit.
+    """
+    list_display = (
+        'uuid', 
+        'enterprise_customer', 
+        'sapsf_user_id', 
+        'created', 
+        'retrieval_completed'
+    )
+    list_filter = ('retrieval_completed', 'created')
+    search_fields = ('sapsf_user_id', 'enterprise_customer__name')
+    readonly_fields = (
+        'uuid', 
+        'enterprise_customer', 
+        'sapsf_user_id',
+        'saml_request_time',
+        'saml_request_status',
+        'saml_request_success',
+        'saml_request_error',
+        'token_request_time',
+        'token_request_status',
+        'token_request_success',
+        'token_request_error',
+        'user_data_request_time',
+        'user_data_request_status',
+        'user_data_request_success',
+        'user_data_request_error',
+        'retrieval_completed',
+        'transformed_user_data',
+        'created',
+        'modified',
+    )
+    fieldsets = (
+        (None, {
+            'fields': ('uuid', 'enterprise_customer', 'sapsf_user_id', 'retrieval_completed')
+        }),
+        ('SAML Assertion Request', {
+            'fields': ('saml_request_time', 'saml_request_status', 'saml_request_success', 'saml_request_error')
+        }),
+        ('Token Request', {
+            'fields': ('token_request_time', 'token_request_status', 'token_request_success', 'token_request_error')
+        }),
+        ('User Data Request', {
+            'fields': ('user_data_request_time', 'user_data_request_status', 'user_data_request_success', 'user_data_request_error')
+        }),
+        ('Results', {
+            'fields': ('transformed_user_data',)
+        }),
+        ('Timestamps', {
+            'fields': ('created', 'modified')
+        }),
+    )
