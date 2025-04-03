@@ -7,7 +7,7 @@ from xml.etree.ElementTree import fromstring
 
 import requests
 from edx_rbac.decorators import permission_required
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.status import (
@@ -16,6 +16,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
 from django.contrib import auth
@@ -31,6 +32,8 @@ from enterprise.logging import getEnterpriseLogger
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerSsoConfiguration, EnterpriseCustomerUser
 from enterprise.tasks import send_sso_configured_email
 from enterprise.utils import localized_utcnow
+from enterprise.api.v1.serializers import SAPUserInfoRequestSerializer
+from enterprise.api_client.sap_success_factors import ClientError, SAPSuccessFactorsClient
 
 User = auth.get_user_model()
 
@@ -369,3 +372,68 @@ class EnterpriseCustomerSsoConfigurationViewSet(viewsets.ModelViewSet):
             return Response(status=HTTP_403_FORBIDDEN)
         sso_configuration_record.update(is_removed=True)
         return Response(status=HTTP_200_OK)
+
+    @permission_required(
+        'enterprise.can_access_admin_dashboard',
+    )
+    @action(methods=['get'], detail=False)
+    def user_details(self, request):
+        """
+        Retrieve user details from SAP SuccessFactors.
+        
+        GET params:
+            org_id: Organization ID in SAP
+            loggedinuserid: ID of the logged-in user
+        
+        Returns:
+            User details retrieved from SAP SuccessFactors.
+        """
+        serializer = SAPUserInfoRequestSerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        org_id = serializer.validated_data['org_id']
+        logged_in_user_id = serializer.validated_data['logged_in_user_id']
+        
+        try:
+            # Find the enterprise customer for this organization
+            enterprise_customer = models.EnterpriseCustomer.objects.filter(
+                auth_org_id=org_id,
+                active=True
+            ).first()
+            
+            if not enterprise_customer:
+                LOGGER.error(f"No active enterprise customer found for organization ID: {org_id}")
+                return Response(
+                    {"error": f"No active enterprise customer found for organization ID: {org_id}"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Initialize client with enterprise customer
+            client = SAPSuccessFactorsClient(enterprise_customer)
+            
+            # Retrieve user details
+            user_data = client.fetch_user_details_odata(logged_in_user_id)
+            
+            # Return formatted data to match Auth0's expected structure
+            response_data = {
+                "email": user_data.get('d', {}).get('email'),
+                "given_name": user_data.get('d', {}).get('firstName'),
+                "surname": user_data.get('d', {}).get('lastName'),
+                "full_data": user_data.get('d', {})
+            }
+            
+            return Response(response_data)
+            
+        except models.EnterpriseCustomer.DoesNotExist:
+            LOGGER.error(f"No active enterprise customer found for organization ID: {org_id}")
+            return Response(
+                {"error": f"No active enterprise customer found for organization ID: {org_id}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ClientError as e:
+            LOGGER.exception(f"Error retrieving user data from SAP: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

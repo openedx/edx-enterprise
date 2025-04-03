@@ -2306,3 +2306,11 @@ class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Se
             'total_needs_enrollment': self.needs_enrollment_counts(),
             'total_already_enrolled': self.already_enrolled_count(),
         }
+
+
+class SAPUserInfoRequestSerializer(serializers.Serializer):
+    """
+    Serializer for SAP user info request parameters.
+    """
+    org_id = serializers.CharField(required=True)
+    logged_in_user_id = serializers.CharField(required=True)

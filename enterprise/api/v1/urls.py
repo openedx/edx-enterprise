@@ -189,6 +189,13 @@ urlpatterns = [
         name='enterprise-customer-sso-configuration-base'
     ),
     re_path(
+        r'^enterprise_customer_sso_configuration/user_details/?$',
+        enterprise_customer_sso_configuration.EnterpriseCustomerSsoConfigurationViewSet.as_view(
+            {'get': 'user_details'}
+        ),
+        name='enterprise-customer-sso-configuration-user-details'
+    ),
+    re_path(
         r'^enterprise-group/(?P<group_uuid>[A-Za-z0-9-]+)/learners/?$',
         enterprise_group.EnterpriseGroupViewSet.as_view(
             {'get': 'get_learners', 'patch': 'update_pending_learner_status'}
