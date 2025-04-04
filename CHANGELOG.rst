@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.2]
+--------
+* fix: assign_learners unpack args dictionary before using in query filter
+
 [5.12.1]
 --------
 * fix: assign_learners use case insensitive lookup with received email addresses

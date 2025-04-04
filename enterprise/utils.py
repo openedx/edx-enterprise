@@ -2632,7 +2632,7 @@ def filter_in_case_insensitive(fieldname, values):
         dict: queryset filter parameters
     """
     # MySQL IN query is case insensitive by default
-    case_insensitive_filter = dict([(f"{fieldname}__in", values)])
+    case_insensitive_filter = Q(**dict([(f"{fieldname}__in", values)]))
     if is_sqlite():
         # SQLite IN query is not case insensitive, so we need to use a less efficient way
         q_list = map(lambda n: Q(**{fieldname + '__iexact': n}), values)
