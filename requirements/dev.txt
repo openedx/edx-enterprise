@@ -168,7 +168,7 @@ code-annotations==2.2.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   edx-lint
     #   edx-toggles
-coverage[toml]==7.7.1
+coverage[toml]==7.8.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest-cov
@@ -345,7 +345,7 @@ edx-api-doc-tools==2.0.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-edx-braze-client==1.0.0
+edx-braze-client==1.0.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -378,7 +378,7 @@ edx-i18n-tools==1.7.0
     # via -r requirements/dev.in
 edx-lint==5.6.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.11.0
+edx-opaque-keys[django]==2.12.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -411,7 +411,7 @@ factory-boy==3.3.3
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-faker==37.0.2
+faker==37.1.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
@@ -492,7 +492,7 @@ jwcrypto==1.5.6
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   django-oauth-toolkit
-kombu==5.5.0
+kombu==5.5.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -646,7 +646,7 @@ pyasn1==0.6.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pgpy
-pycodestyle==2.12.1
+pycodestyle==2.13.0
     # via -r requirements/dev.in
 pycparser==2.22
     # via

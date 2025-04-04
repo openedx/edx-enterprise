@@ -214,7 +214,7 @@ edx-api-doc-tools==2.0.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r requirements/test-master.in
-edx-braze-client==1.0.0
+edx-braze-client==1.0.2
     # via -r requirements/test-master.in
 edx-ccx-keys==2.0.2
     # via
@@ -235,7 +235,7 @@ edx-drf-extensions==10.5.0
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.11.0
+edx-opaque-keys[django]==2.12.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
@@ -297,7 +297,7 @@ jwcrypto==1.5.6
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   django-oauth-toolkit
-kombu==5.5.0
+kombu==5.5.1
     # via celery
 markupsafe==3.0.2
     # via
