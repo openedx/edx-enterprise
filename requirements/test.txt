@@ -90,7 +90,7 @@ code-annotations==2.2.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.7.1
+coverage[toml]==7.8.0
     # via pytest-cov
 cryptography==44.0.2
     # via
@@ -195,7 +195,7 @@ drf-yasg==1.21.10
     #   edx-api-doc-tools
 edx-api-doc-tools==2.0.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-edx-braze-client==1.0.0
+edx-braze-client==1.0.2
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-ccx-keys==2.0.2
     # via
@@ -214,7 +214,7 @@ edx-drf-extensions==10.5.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.11.0
+edx-opaque-keys[django]==2.12.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-ccx-keys
@@ -232,7 +232,7 @@ factory-boy==3.3.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
-faker==37.0.2
+faker==37.1.0
     # via factory-boy
 fastavro==1.10.0
     # via
@@ -383,7 +383,7 @@ pytest==6.2.5
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.0.0
+pytest-cov==6.1.1
     # via -r requirements/test.in
 pytest-django==4.5.2
     # via -r requirements/test.in

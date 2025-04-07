@@ -69,7 +69,7 @@ python-dateutil==2.9.0.post0
     # via tempora
 pyyaml==6.0.2
     # via jasmine
-selenium==4.30.0
+selenium==4.31.0
     # via jasmine
 six==1.17.0
     # via python-dateutil
@@ -87,7 +87,7 @@ trio==0.29.0
     #   trio-websocket
 trio-websocket==0.12.2
     # via selenium
-typing-extensions==4.12.2
+typing-extensions==4.13.1
     # via selenium
 urllib3[socks]==2.2.3
     # via
