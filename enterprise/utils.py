@@ -7,6 +7,7 @@ import json
 import os
 import re
 from collections import OrderedDict
+from functools import reduce
 from itertools import islice
 from urllib.parse import parse_qs, quote, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from uuid import UUID, uuid4
@@ -24,6 +25,7 @@ from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
 from django.db import utils
+from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.forms.models import model_to_dict
 from django.http import Http404
@@ -2611,3 +2613,29 @@ def get_pending_enterprise_customer_users(user_email, enterprise_customer_uuid):
         'is_pending_learner': True,
         'user_email': user_email,
     }
+
+
+def is_sqlite():
+    """
+    Helper method to determine if the current default database is SQLite
+    """
+    return 'sqlite' in settings.DATABASES['default']['ENGINE']
+
+
+def filter_in_case_insensitive(fieldname, values):
+    """
+    Helper method to generate a case insensitive IN query, accounting for different database engines
+    Arguments:
+        fieldname (str): Name of the field to query
+        values (list): Values to filter by
+    Returns:
+        dict: queryset filter parameters
+    """
+    # MySQL IN query is case insensitive by default
+    case_insensitive_filter = Q(**dict([(f"{fieldname}__in", values)]))
+    if is_sqlite():
+        # SQLite IN query is not case insensitive, so we need to use a less efficient way
+        q_list = map(lambda n: Q(**{fieldname + '__iexact': n}), values)
+        case_insensitive_filter = reduce(lambda a, b: a | b, q_list)
+
+    return case_insensitive_filter

@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.2]
+--------
+* fix: assign_learners unpack args dictionary before using in query filter
+
+[5.12.1]
+--------
+* fix: assign_learners use case insensitive lookup with received email addresses
+
 [5.12.0]
 --------
 * feat. updated the _get_course_run_url to pass external_identifier as a parameter
