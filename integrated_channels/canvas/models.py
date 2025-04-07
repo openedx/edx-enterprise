@@ -340,6 +340,9 @@ class CanvasLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
             )
         ]
         index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
+        indexes = [
+            models.Index(fields=['error_message', 'enterprise_course_enrollment_id'], name='canvas_course_error_idx'),
+        ]
 
     def __str__(self):
         return (
