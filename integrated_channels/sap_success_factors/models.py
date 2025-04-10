@@ -355,6 +355,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
             )
         ]
         index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
+        db_table = 'sap_success_factors_sapsuccessfactorslearnerdatatransmission3ce5'
 
     def __str__(self):
         """

@@ -17,6 +17,15 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.4]
+--------
+* fix: fixed the migrations to support postgresql
+* chore: added github action to test migrations with postgresql
+
+[5.12.3]
+--------
+* chore: upgrade elliptic to 6.6.1
+
 [5.12.2]
 --------
 * fix: assign_learners unpack args dictionary before using in query filter
@@ -44,7 +53,7 @@ Unreleased
 
 [5.10.2]
 --------
-* feat: add user_id filter ability to customer members endpoint 
+* feat: add user_id filter ability to customer members endpoint
 
 [5.10.1]
 --------
@@ -145,7 +154,7 @@ Unreleased
 
 [5.6.0]
 --------
-* feat: Adds sorting support to enterprise-customer-members endpoint 
+* feat: Adds sorting support to enterprise-customer-members endpoint
 
 [5.5.2]
 --------

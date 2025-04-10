@@ -28,7 +28,11 @@ class Migration(migrations.Migration):
             name='status_code',
             field=models.PositiveIntegerField(blank=True, help_text='API call response HTTP status code', null=True),
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='integratedchannelapirequestlogs',
+            name='time_taken',
+        ),
+        migrations.AddField(
             model_name='integratedchannelapirequestlogs',
             name='time_taken',
             field=models.FloatField(),
