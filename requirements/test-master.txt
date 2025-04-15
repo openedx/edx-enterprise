@@ -320,7 +320,7 @@ openai==0.28.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
-openedx-events==9.20.0
+openedx-events==10.0.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in

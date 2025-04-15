@@ -502,7 +502,7 @@ lxml[html-clean,html_clean]==5.3.2
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
-lxml-html-clean==0.4.1
+lxml-html-clean==0.4.2
     # via lxml
 markupsafe==3.0.2
     # via
@@ -544,7 +544,7 @@ openai==0.28.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-openedx-events==9.20.0
+openedx-events==10.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt

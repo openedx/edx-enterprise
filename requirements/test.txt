@@ -302,7 +302,7 @@ oauthlib==3.2.2
     #   django-oauth-toolkit
 openai==0.28.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-openedx-events==9.20.0
+openedx-events==10.0.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 packaging==24.2
     # via
