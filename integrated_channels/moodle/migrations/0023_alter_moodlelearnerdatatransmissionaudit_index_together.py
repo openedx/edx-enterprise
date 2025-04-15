@@ -3,22 +3,47 @@
 from django.db import connection, migrations
 
 
-class Migration(migrations.Migration):
+def generate_index_sql(db_engine):
+    if 'mysql' in db_engine:
+        statement = """CREATE INDEX moodle_mldta_85936b55_idx
+            ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
+            ALGORITHM = INPLACE LOCK = NONE"""
+        return statement
+    elif 'postgresql' in db_engine:
+        statement = """CREATE INDEX moodle_mldta_85936b55_idx
+            ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)"""
+        return statement
+    else:
+        # Handle other database engines (e.g., SQLite)
+        statement = """CREATE INDEX moodle_mldta_85936b55_idx
+            ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)"""
+        return statement
 
+
+def drop_index_sql(db_engine):
+    return """DROP INDEX moodle_mldta_85936b55_idx
+        ON moodle_moodlelearnerdatatransmissionaudit"""
+
+
+class Migration(migrations.Migration):
     dependencies = [
         ('moodle', '0022_auto_20221220_1527'),
     ]
 
+    # Determine the database engine
     db_engine = connection.settings_dict['ENGINE']
+
+    operations = []
+
     if 'sqlite3' in db_engine:
-        operations = [
+        operations.append(
             migrations.AlterIndexTogether(
                 name='moodlelearnerdatatransmissionaudit',
                 index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
-            ),
-        ]
+            )
+        )
     else:
-        operations = [
+        operations.append(
             migrations.SeparateDatabaseAndState(
                 state_operations=[
                     migrations.AlterIndexTogether(
@@ -27,14 +52,11 @@ class Migration(migrations.Migration):
                     ),
                 ],
                 database_operations=[
-                    migrations.RunSQL(sql="""
-                        CREATE INDEX moodle_mldta_85936b55_idx
-                        ON moodle_moodlelearnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
-                        ALGORITHM=INPLACE LOCK=NONE
-                    """, reverse_sql="""
-                        DROP INDEX moodle_mldta_85936b55_idx
-                        ON moodle_moodlelearnerdatatransmissionaudit
-                    """),
+                    # Adjust SQL for MySQL and PostgreSQL
+                    migrations.RunSQL(
+                        sql=generate_index_sql(db_engine),
+                        reverse_sql=drop_index_sql(db_engine),
+                    ),
                 ]
-            ),
-        ]
+            )
+        )

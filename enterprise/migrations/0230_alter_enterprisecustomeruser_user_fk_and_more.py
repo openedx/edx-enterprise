@@ -9,26 +9,42 @@ class Migration(migrations.Migration):
     ]
 
     db_engine = connection.settings_dict['ENGINE']
-    if 'sqlite3' in db_engine:
-        operations = []
-    else:
+    if 'mysql' in db_engine:
         operations = [
             # Custom SQL to add indexes with zero-downtime options
             migrations.RunSQL(
                 sql="""
                     ALTER TABLE enterprise_enterprisecustomeruser
-                    ADD INDEX idx_enterprise_user_fk (user_fk),
-                    ALGORITHM=INPLACE,
-                    LOCK=NONE;
+                        ADD INDEX idx_enterprise_user_fk (user_fk),
+                        ALGORITHM = INPLACE,
+                        LOCK = NONE;
 
                     ALTER TABLE enterprise_historicalenterprisecustomeruser
-                    ADD INDEX idx_historical_enterprise_user_fk (user_fk),
-                    ALGORITHM=INPLACE,
-                    LOCK=NONE;
-                """,
+                        ADD INDEX idx_historical_enterprise_user_fk (user_fk),
+                        ALGORITHM = INPLACE,
+                        LOCK = NONE;
+                    """,
                 reverse_sql="""
-                    ALTER TABLE enterprise_enterprisecustomeruser DROP INDEX idx_enterprise_user_fk;
-                    ALTER TABLE enterprise_historicalenterprisecustomeruser DROP INDEX idx_historical_enterprise_user_fk;
-                """
+                            ALTER TABLE enterprise_enterprisecustomeruser
+                                DROP INDEX idx_enterprise_user_fk;
+                            ALTER TABLE enterprise_historicalenterprisecustomeruser
+                                DROP INDEX idx_historical_enterprise_user_fk;
+                            """
             ),
         ]
+    if 'postgres' in db_engine:
+        operations = [
+            # Custom SQL to add indexes with zero-downtime options
+            migrations.RunSQL(
+                sql="""
+                    CREATE INDEX idx_enterprise_user_fk ON enterprise_enterprisecustomeruser (user_fk);
+                    CREATE INDEX idx_historical_enterprise_user_fk ON enterprise_historicalenterprisecustomeruser (user_fk);
+                    """,
+                reverse_sql="""
+                            DROP INDEX idx_enterprise_user_fk;
+                            DROP INDEX idx_historical_enterprise_user_fk;
+                            """
+            ),
+        ]
+    else:
+        operations = []
