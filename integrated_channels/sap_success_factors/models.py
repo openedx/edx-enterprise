@@ -4,14 +4,17 @@ Database models for Enterprise Integrated Channel SAP SuccessFactors.
 
 import json
 from logging import getLogger
+from uuid import uuid4
 
 from config_models.models import ConfigurationModel
 from fernet_fields import EncryptedCharField
+from model_utils.models import TimeStampedModel
 
 from django.db import models
 from django.utils.encoding import force_bytes, force_str
 from django.utils.translation import gettext_lazy as _
 
+from enterprise.models import EnterpriseCustomer
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.models import (
     EnterpriseCustomerPluginConfiguration,
@@ -409,3 +412,109 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
             'totalHours': self.total_hours,
             'creditHours': self.credit_hours,
         }
+
+
+class SAPSuccessFactorsUserInfoRetrievalAudit(TimeStampedModel):
+    """
+    Records for tracking SAP SuccessFactors user info retrieval API calls.
+    
+    This model stores information about requests to retrieve user data
+    from SAP SuccessFactors, including the three API calls made as part
+    of the process.
+    
+    .. no_pii:
+    """
+    
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='sap_user_retrieval_audits',
+        on_delete=models.CASCADE,
+        help_text=_('The enterprise customer associated with this retrieval.')
+    )
+    sapsf_user_id = models.CharField(
+        max_length=255, 
+        help_text=_('The SAP SuccessFactors user ID being queried.')
+    )
+    
+    # First API call - Get SAML Assertion
+    saml_request_time = models.DateTimeField(null=True, blank=True)
+    saml_request_status = models.PositiveSmallIntegerField(
+        null=True, 
+        blank=True,
+        help_text=_('HTTP status code of the SAML assertion request.')
+    )
+    saml_request_success = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text=_('Whether the SAML assertion request was successful.')
+    )
+    saml_request_error = models.TextField(
+        null=True, 
+        blank=True,
+        help_text=_('Error message if the SAML assertion request failed.')
+    )
+    
+    # Second API call - Get Access Token
+    token_request_time = models.DateTimeField(null=True, blank=True)
+    token_request_status = models.PositiveSmallIntegerField(
+        null=True, 
+        blank=True,
+        help_text=_('HTTP status code of the token request.')
+    )
+    token_request_success = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text=_('Whether the token request was successful.')
+    )
+    token_request_error = models.TextField(
+        null=True, 
+        blank=True,
+        help_text=_('Error message if the token request failed.')
+    )
+    
+    # Third API call - Get User Data
+    user_data_request_time = models.DateTimeField(null=True, blank=True)
+    user_data_request_status = models.PositiveSmallIntegerField(
+        null=True, 
+        blank=True,
+        help_text=_('HTTP status code of the user data request.')
+    )
+    user_data_request_success = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text=_('Whether the user data request was successful.')
+    )
+    user_data_request_error = models.TextField(
+        null=True, 
+        blank=True,
+        help_text=_('Error message if the user data request failed.')
+    )
+    
+    # Overall results
+    retrieval_completed = models.BooleanField(
+        default=False,
+        help_text=_('Whether the entire retrieval process completed successfully.')
+    )
+    transformed_user_data = models.JSONField(
+        null=True, 
+        blank=True,
+        help_text=_('The transformed user data that was returned to the caller (sensitive fields obfuscated).')
+    )
+    
+    class Meta:
+        app_label = 'sap_success_factors'
+        verbose_name = _('SAP User Info Retrieval Audit')
+        verbose_name_plural = _('SAP User Info Retrieval Audits')
+        indexes = [
+            models.Index(fields=['enterprise_customer', 'created']),
+            models.Index(fields=['sapsf_user_id', 'created']),
+        ]
+    
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return f"SAP User Retrieval for {self.sapsf_user_id} at {self.created}"

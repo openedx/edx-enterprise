@@ -26,3 +26,11 @@ class SAPSuccessFactorsConfigSerializer(EnterpriseCustomerPluginConfigSerializer
 
     encrypted_key = serializers.CharField(required=False, allow_blank=False, read_only=False)
     encrypted_secret = serializers.CharField(required=False, allow_blank=False, read_only=False)
+
+
+class SAPUserInfoRequestSerializer(serializers.Serializer):
+    """
+    Serializer for SAP user info request parameters.
+    """
+    org_id = serializers.CharField(required=True)
+    loggedinuserid = serializers.CharField(required=True)

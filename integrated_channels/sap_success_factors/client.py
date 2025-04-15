@@ -373,6 +373,228 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             )
         return response.status_code, response.text
 
+    def get_user_details(self, logged_in_user_id):
+        """
+        Retrieve user details from SAP SuccessFactors using a 3-step OAuth process.
+        
+        Makes three API calls to SAP:
+        1. Get SAML Assertion using IDP endpoint
+        2. Exchange for Access Token
+        3. Call OData User endpoint
+        
+        Args:
+            logged_in_user_id (str): The SAP user ID of the logged-in user
+            
+        Returns:
+            dict: User data from SAP including email, name, etc.
+        """
+        # Create a transaction log entry
+        from integrated_channels.sap_success_factors.models import SAPSuccessFactorsUserInfoRetrievalAudit
+        from django.utils import timezone
+        
+        transaction_log = SAPSuccessFactorsUserInfoRetrievalAudit.objects.create(
+            enterprise_customer=self.enterprise_configuration.enterprise_customer,
+            sapsf_user_id=logged_in_user_id
+        )
+        
+        try:
+            # STEP 1: Get SAML Assertion
+            idp_url = urljoin(self.enterprise_configuration.sapsf_base_url, "oauth/idp")
+            token_url = urljoin(self.enterprise_configuration.sapsf_base_url, "oauth/token")
+            
+            idp_payload = {
+                'client_id': self.enterprise_configuration.decrypted_key,
+                'user_id': logged_in_user_id,
+                'token_url': token_url,
+                'private_key': self.enterprise_configuration.decrypted_secret
+            }
+            
+            # For logging, create a safe copy without the private key
+            safe_idp_payload = idp_payload.copy()
+            safe_idp_payload['private_key'] = '********'  # Obfuscated for logging
+            
+            transaction_log.saml_request_time = timezone.now()
+            
+            start_time = time.time()
+            response = requests.post(
+                idp_url, 
+                data=idp_payload,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
+            duration_seconds = time.time() - start_time
+            
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=idp_url,
+                data=safe_idp_payload,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
+            
+            # Log the result
+            transaction_log.saml_request_status = response.status_code
+            transaction_log.saml_request_success = response.status_code < 400
+            
+            if response.status_code >= 400:
+                error_message = f"Error retrieving SAML assertion: status={response.status_code}, response={response.text}"
+                transaction_log.saml_request_error = error_message
+                transaction_log.save()
+                
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        error_message
+                    )
+                )
+                raise ClientError(error_message)
+            
+            saml_assertion = response.text.strip('"')
+            
+            # STEP 2: Exchange for Access Token
+            token_payload = {
+                'grant_type': 'urn:ietf:params:oauth:grant-type:saml2-bearer',
+                'assertion': saml_assertion,
+                'client_id': self.enterprise_configuration.decrypted_key,
+                'company_id': self.enterprise_configuration.sapsf_company_id,
+                'api_key': self.enterprise_configuration.decrypted_key
+            }
+            
+            # For logging, create a safe copy without the assertion
+            safe_token_payload = token_payload.copy()
+            safe_token_payload['assertion'] = '********'  # Obfuscated for logging
+            
+            transaction_log.token_request_time = timezone.now()
+            
+            start_time = time.time()
+            response = requests.post(
+                token_url, 
+                data=token_payload,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
+            duration_seconds = time.time() - start_time
+            
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=token_url,
+                data=safe_token_payload,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
+            
+            # Log the result
+            transaction_log.token_request_status = response.status_code
+            transaction_log.token_request_success = response.status_code < 400
+            
+            if response.status_code >= 400:
+                error_message = f"Error exchanging SAML for token: status={response.status_code}, response={response.text}"
+                transaction_log.token_request_error = error_message
+                transaction_log.save()
+                
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        error_message
+                    )
+                )
+                raise ClientError(error_message)
+            
+            token_data = response.json()
+            access_token = token_data.get('access_token', '').strip('"')
+            
+            # STEP 3: Call OData User endpoint
+            user_url = urljoin(
+                self.enterprise_configuration.sapsf_base_url,
+                f"odata/v2/User(userId='{logged_in_user_id}')?$select=userId,username,firstName,lastName,defaultFullName,email,country,city"
+            )
+            
+            transaction_log.user_data_request_time = timezone.now()
+            
+            # For logging, create headers without the token
+            safe_headers = {
+                'Authorization': 'Bearer ********',  # Obfuscated for logging
+                'Accept': 'application/json'
+            }
+            
+            # Actual headers for the request
+            actual_headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Accept': 'application/json'
+            }
+            
+            start_time = time.time()
+            response = requests.get(user_url, headers=actual_headers)
+            duration_seconds = time.time() - start_time
+            
+            stringify_and_store_api_record(
+                enterprise_customer=self.enterprise_configuration.enterprise_customer,
+                enterprise_customer_configuration_id=self.enterprise_configuration.id,
+                endpoint=user_url,
+                data=safe_headers,
+                time_taken=duration_seconds,
+                status_code=response.status_code,
+                response_body=response.text,
+                channel_name=self.enterprise_configuration.channel_code()
+            )
+            
+            # Log the result
+            transaction_log.user_data_request_status = response.status_code
+            transaction_log.user_data_request_success = response.status_code < 400
+            
+            if response.status_code >= 400:
+                error_message = f"Error retrieving user data: status={response.status_code}, response={response.text}"
+                transaction_log.user_data_request_error = error_message
+                transaction_log.save()
+                
+                LOGGER.error(
+                    generate_formatted_log(
+                        self.enterprise_configuration.channel_code(),
+                        self.enterprise_configuration.enterprise_customer.uuid,
+                        None,
+                        None,
+                        error_message
+                    )
+                )
+                raise ClientError(error_message)
+            
+            user_data = response.json()
+            
+            # Mark transaction as completed
+            transaction_log.retrieval_completed = True
+            
+            # Store transformed user data with any sensitive fields obfuscated
+            transformed_data = {
+                'email': user_data.get('d', {}).get('email'),
+                'firstName': user_data.get('d', {}).get('firstName'),
+                'lastName': user_data.get('d', {}).get('lastName'),
+                'userId': user_data.get('d', {}).get('userId'),
+                'country': user_data.get('d', {}).get('country'),
+                'city': user_data.get('d', {}).get('city'),
+            }
+            transaction_log.transformed_user_data = transformed_data
+            transaction_log.save()
+            
+            return user_data
+            
+        except Exception as e:
+            # If any unexpected error occurs, make sure we save the log
+            transaction_log.retrieval_completed = False
+            if not transaction_log.saml_request_error and not transaction_log.token_request_error and not transaction_log.user_data_request_error:
+                transaction_log.user_data_request_error = str(e)
+            transaction_log.save()
+            raise
+
     def get_inactive_sap_learners(self):
         """
         Make a GET request using the session object to a SuccessFactors endpoint for inactive learners.
