@@ -4986,3 +4986,38 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
 
     def __str__(self):
         return f"<EnterpriseCustomerAdmin {self.uuid}>"
+
+
+class EnterpriseCustomerSupportUsersView(models.Model):
+    """
+    Model for view that unions EnterpriseCustomerUser and PendingEnterpriseCustomerUser records together to
+    facilitate querying both simultaneously
+
+    Fields:
+        enterprise_customer_id (:class:`django.db.models.UUIDField`): enterprise customer id (both ecu, pecu)
+        user_email (:class:`django.db.models.EmailField`): user email (both ecu, pecu)
+        is_pending (:class:`django.db.models.BooleanField`): True if pecu, False if ecu
+        user_id (:class:`django.db.models.PositiveIntegerField`): user id (ecu only)
+        username (:class:`django.db.models.CharField`): user name (ecu only)
+        first_name (:class:`django.db.models.CharField`): first name (ecu only)
+        last_name (:class:`django.db.models.CharField`): last name (ecu only)
+        is_staff (:class:`django.db.models.BooleanField`): If user is Staff (ecu only)
+        is_active (:class:`django.db.models.BooleanField`): If user is active (ecu only)
+        date_joined (:class:`django.db.models.DateTimeField`): When user joined (ecu only)
+        is_admin (:class:`django.db.models.BooleanField`): If user has admin role (both, always False for pecu)
+    """
+    enterprise_customer_id = models.UUIDField(primary_key=False)
+    user_email = models.EmailField(primary_key=True, null=False, blank=False)
+    is_pending = models.BooleanField(default=False)
+    user_id = models.PositiveIntegerField(null=False, blank=False)
+    username = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(null=True)
+    is_admin = models.BooleanField(default=False)
+
+    class Meta:
+        managed = False
+        db_table = 'view_enterprise_customer_support_users'

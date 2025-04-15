@@ -3,7 +3,6 @@ Tests for the `edx-enterprise` serializer module.
 """
 import datetime
 import json
-from collections import OrderedDict
 from unittest.mock import Mock, patch
 
 import ddt
@@ -32,6 +31,7 @@ from enterprise.api.v1.serializers import (
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerSupportUsersView,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -526,24 +526,24 @@ class TestEnterpriseUserSerializer(TestCase):
             # test non-admin user
             (self.enterprise_customer_user_2, False, [ENTERPRISE_LEARNER_ROLE]),
         ]:
-            user = customer_user.user
+            user = EnterpriseCustomerSupportUsersView.objects.filter(user_email=customer_user.user.email).first()
             expected_admin_user = {
-                'enterprise_customer_user': OrderedDict([
-                    ('id', user.id),
-                    ('username', user.username),
-                    ('first_name', user.first_name),
-                    ('last_name', user.last_name),
-                    ('email', user.email),
-                    ('is_staff', user.is_staff),
-                    ('is_active', user.is_active),
-                    ('date_joined', user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"))
-                ]),
+                'enterprise_customer_user': {
+                    'id': user.user_id,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.user_email,
+                    'is_staff': user.is_staff,
+                    'is_active': user.is_active,
+                    'date_joined': user.date_joined
+                },
                 'pending_enterprise_customer_user': None,
                 'role_assignments': role_assignments,
                 'is_admin': is_admin
             }
 
-            serializer = EnterpriseUserSerializer(customer_user)
+            serializer = EnterpriseUserSerializer(user)
             serialized_admin_user = serializer.data
 
             self.assertEqual(expected_admin_user, serialized_admin_user)
@@ -555,6 +555,8 @@ class TestEnterpriseUserSerializer(TestCase):
             # test pending non-admin user
             (self.pending_customer_user_two, False),
         ]:
+            pecu = EnterpriseCustomerSupportUsersView.objects \
+                .filter(user_email=pending_customer_user.user_email).first()
             expected_pending_admin_user = {
                 'enterprise_customer_user': None,
                 'pending_enterprise_customer_user': {
@@ -565,7 +567,7 @@ class TestEnterpriseUserSerializer(TestCase):
                 'role_assignments': None,
                 'is_admin': False
             }
-            serializer = EnterpriseUserSerializer(pending_customer_user)
+            serializer = EnterpriseUserSerializer(pecu)
             serialized_pending_admin_user = serializer.data
 
             self.assertEqual(expected_pending_admin_user, serialized_pending_admin_user)
