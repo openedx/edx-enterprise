@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.5]
+--------
+* fix: enterprise-customer-support sorting/pagination using view
+
 [5.12.4]
 --------
 * fix: fixed the migrations to support postgresql
