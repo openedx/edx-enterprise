@@ -18,6 +18,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
     EnterpriseGroupMembership,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
@@ -40,6 +41,7 @@ from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupFactory,
     EnterpriseGroupMembershipFactory,
     LearnerCreditEnterpriseCourseEnrollmentFactory,
     PendingEnrollmentFactory,
@@ -1168,3 +1170,37 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+
+@mark.django_db
+class TestEnterpriseGroupSignals(unittest.TestCase):
+    """
+    Test signals associated with EnterpriseGroups.
+    """
+
+    def setUp(self):
+        """
+        Setup for `TestEnterpriseGroupSignals` test.
+        """
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_group = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        super().setUp()
+
+    @mock.patch('enterprise.signals.EnterpriseAccessApiClient')
+    def test_delete_enterprise_group_signal(self, api_client_mock):
+        """
+        Test that when `EnterpriseCustomerUser` record is deleted, the associated
+        enterprise admin user role assignment is also deleted.
+        """
+        # verify that a new admin role assignment was created.
+        enterprise_group = EnterpriseGroup.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.assertTrue(enterprise_group.exists())
+
+        # delete EnterpriseGroup record and verify that the api request to enterprise-access is called 
+        EnterpriseGroup.objects.filter(enterprise_customer=self.enterprise_customer).delete()
+ 
+        self.assertFalse(enterprise_group.exists())
+        api_client_mock.return_value.delete_policy_group_association.assert_called()

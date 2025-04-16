@@ -447,6 +447,7 @@ def delete_associations_with_removed_group(sender, instance, **kwargs):     # py
     """
     Delete the associated enterprise admin role assignment record when deleting an EnterpriseCustomerUser record.
     """
+    print(['hello here????'])
     enterprise_uuid = instance.enterprise_customer.uuid
     group_uuid = instance.uuid
     try:
