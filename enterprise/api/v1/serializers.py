@@ -2113,9 +2113,9 @@ class EnterpriseMembersSerializer(serializers.ModelSerializer):
         Fetch all of user's enterprise enrollments
         """
         if user := obj:
-            user_id = user[0]
+            enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(user_id=user[0])
             enrollments = models.EnterpriseCourseEnrollment.objects.filter(
-                enterprise_customer_user=user_id,
+                enterprise_customer_user=enterprise_customer_user,
             )
             return len(enrollments)
         return 0
