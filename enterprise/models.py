@@ -5005,6 +5005,10 @@ class EnterpriseCustomerSupportUsersView(models.Model):
         is_active (:class:`django.db.models.BooleanField`): If user is active (ecu only)
         date_joined (:class:`django.db.models.DateTimeField`): When user joined (ecu only)
         is_admin (:class:`django.db.models.BooleanField`): If user has admin role (both, always False for pecu)
+
+    .. no_pii: This model surfaces PII (email, name, username), but being a View it does not itself store or
+            replicate that data.  Refer to the models that the PII is pulled from (PendingEnterpriseCustomerUser,
+            User) for retirement info.
     """
     enterprise_customer_id = models.UUIDField(primary_key=False)
     user_email = models.EmailField(primary_key=True, null=False, blank=False)
