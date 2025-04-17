@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
                 CREATE VIEW view_enterprise_customer_support_users AS
                     SELECT ecu.enterprise_customer_id,
                     au.email AS user_email,
-                    0 AS is_pending,
+                    FALSE AS is_pending,
                     ecu.user_id,
                     au.username,
                     au.first_name,
@@ -35,13 +35,13 @@ class Migration(migrations.Migration):
                 
                     SELECT pecu.enterprise_customer_id,
                     pecu.user_email,
-                    1 AS is_pending,
-                    0 AS user_id,
+                    TRUE AS is_pending,
+                    FALSE AS user_id,
                     '' AS username,
                     '' AS first_name,
                     '' AS last_name,
-                    0 AS is_staff,
-                    0 AS is_active,
+                    FALSE AS is_staff,
+                    FALSE AS is_active,
                     NULL AS date_joined,
                     EXISTS(
                         SELECT * FROM enterprise_pendingenterprisecustomeradminuser AS pecau
