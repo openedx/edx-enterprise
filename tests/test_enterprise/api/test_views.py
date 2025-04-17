@@ -68,6 +68,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.roles_api import admin_role
@@ -9943,6 +9944,75 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
         assert expected_json == response.json().get('results')
         assert response.json().get('count') == 1
+
+    def test_sort_users(self):
+        """
+        Test that the list support tool users endpoint can be sorted by supported schemes
+        """
+        def extract_ecu_pecu_email(user):
+            if ecu := user.get('enterprise_customer_user', None):
+                return ecu['email']
+            elif pecu := user.get('pending_enterprise_customer_user', None):
+                return pecu['user_email']
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        
+        ecu_admin_eml = 'ecu_admin@example.com'
+        ecu_learner_eml = 'ecu_learner@example.com'
+        pecu_admin_eml = 'pecu_admin@example.com'
+        pecu_learner_eml = 'pecu_learner@example.com'
+        user_ecu_admin = factories.UserFactory(email=ecu_admin_eml, username='ecu_admin')
+        user_ecu_learner = factories.UserFactory(email=ecu_learner_eml, username='ecu_learner')
+        enterprise_admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name=ENTERPRISE_ADMIN_ROLE,
+        )
+
+        # Clear all current assignments
+        SystemWideEnterpriseUserRoleAssignment.objects.all().delete()
+
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=enterprise_admin_role,
+            user=user_ecu_admin,
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_ecu_admin.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user_ecu_learner.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.PendingEnterpriseCustomerUserFactory(
+            user_email=pecu_admin_eml
+        )
+        factories.PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_email=pecu_learner_eml,
+        )
+        factories.PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_email=pecu_admin_eml
+        )
+
+        for ordering_scenario, expected_ordering in [
+            ('administrator', [ecu_learner_eml, pecu_learner_eml, ecu_admin_eml, pecu_admin_eml]),
+            ('-administrator', [ecu_admin_eml, pecu_admin_eml, ecu_learner_eml, pecu_learner_eml]),
+            ('learner', [ecu_learner_eml, pecu_learner_eml, ecu_admin_eml, pecu_admin_eml]),
+            ('-learner', [ecu_admin_eml, pecu_admin_eml, ecu_learner_eml, pecu_learner_eml]),
+            ('details', [ecu_admin_eml, ecu_learner_eml, pecu_admin_eml, pecu_learner_eml]),
+            ('-details', [pecu_learner_eml, pecu_admin_eml, ecu_learner_eml, ecu_admin_eml]),
+            ('', [ecu_admin_eml, pecu_admin_eml, ecu_learner_eml, pecu_learner_eml])
+        ]:
+            print(f'sorting: {ordering_scenario}')
+            # sort by scenario
+            ordering_arg = f'?ordering={ordering_scenario}' if ordering_scenario else ''
+            url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + ordering_arg
+            response = self.client.get(settings.TEST_SERVER + url)
+
+            json_results = response.json().get('results')
+            email_ordering = list(map(extract_ecu_pecu_email, json_results))
+            assert email_ordering == expected_ordering
 
 
 class EnterpriseGroupMembershipViewSetTests(BaseTestEnterpriseAPIViews):
