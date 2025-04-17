@@ -9954,9 +9954,10 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
                 return ecu['email']
             elif pecu := user.get('pending_enterprise_customer_user', None):
                 return pecu['user_email']
+            return None
 
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
-        
+
         ecu_admin_eml = 'ecu_admin@example.com'
         ecu_learner_eml = 'ecu_learner@example.com'
         pecu_admin_eml = 'pecu_admin@example.com'
