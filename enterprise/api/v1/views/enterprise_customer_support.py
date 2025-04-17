@@ -10,7 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from django.contrib import auth
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Case, CharField, F, Q, When
 
 from enterprise import models
 from enterprise.api.v1 import serializers
@@ -65,22 +65,14 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
 
     ordering_fields = ["is_admin", "username", "pending_enterprise_customer"]
 
-    def filter_queryset_by_user_query(self, queryset, is_pending_user=False):
+    def filter_queryset_by_user_query(self, queryset):
         """
         Filter queryset based on user provided query
         """
         user_query = self.request.query_params.get("user_query", None)
 
         if user_query:
-            if not is_pending_user:
-                queryset = queryset.filter(
-                    user_id__in=User.objects.filter(
-                        Q(email__icontains=user_query) | Q(username__icontains=user_query)
-                    )
-                )
-            else:
-                queryset = queryset.filter(user_email=user_query)
-
+            queryset = queryset.filter(Q(user_email__icontains=user_query) | Q(username__icontains=user_query))
         return queryset
 
     def retrieve(self, request, *args, **kwargs):
@@ -88,27 +80,12 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
         Filter down the queryset of groups available to the requesting uuid.
         """
         enterprise_uuid = kwargs.get("enterprise_uuid", None)
-        users = []
+        ecs_queryset = models.EnterpriseCustomerSupportUsersView.objects.all()
 
         try:
-            enterprise_customer_queryset = models.EnterpriseCustomerUser.objects.filter(
-                enterprise_customer__uuid=enterprise_uuid,
+            ecs_queryset = self.filter_queryset_by_user_query(
+                ecs_queryset.filter(enterprise_customer_id=enterprise_uuid)
             )
-            enterprise_customer_queryset = self.filter_queryset_by_user_query(
-                enterprise_customer_queryset
-            )
-            users.extend(enterprise_customer_queryset)
-
-            pending_enterprise_customer_queryset = (
-                models.PendingEnterpriseCustomerUser.objects.filter(
-                    enterprise_customer__uuid=enterprise_uuid
-                ).order_by("user_email")
-            )
-            pending_enterprise_customer_queryset = self.filter_queryset_by_user_query(
-                pending_enterprise_customer_queryset, is_pending_user=True
-            )
-            users.extend(pending_enterprise_customer_queryset)
-
         except ValidationError:
             # did not find UUID match in either EnterpriseCustomerUser or PendingEnterpriseCustomerUser
             return response.Response(
@@ -118,59 +95,34 @@ class EnterpriseCustomerSupportViewSet(EnterpriseReadOnlyModelViewSet):
 
         # default sort criteria
         is_reversed = False
-
         ordering_criteria = self.request.query_params.get("ordering", None)
         if ordering_criteria:
-            is_reversed = '-' in ordering_criteria
+            is_reversed = ordering_criteria.startswith('-')
+            if is_reversed:
+                ordering_criteria = ordering_criteria[1:]
 
-        # paginate the queryset
-        users_page = self.paginator.paginate_queryset(users, request, view=self)
+        order_by_admin = f"{('-' if is_reversed else '')}is_admin"
+        order_by_username_or_email = Case(
+            When(is_pending=True, then=F('user_email')),
+            default=F('username'),
+            output_field=CharField()
+        )
+        if ordering_criteria in ("administrator", "learner"):
+            # Sort by admin status
+            ecs_queryset = ecs_queryset.order_by(order_by_admin)
+        elif ordering_criteria == "details":
+            # If pending user, sort by email, otherwise sort by username
+            if is_reversed:
+                ecs_queryset = ecs_queryset.order_by(order_by_username_or_email.desc())
+            else:
+                ecs_queryset = ecs_queryset.order_by(order_by_username_or_email.asc())
+        elif not ordering_criteria:
+            # Apply default ordering criteria (first by is_admin,
+            # then username) only if user does not specify ordering criteria;
+            ecs_queryset = ecs_queryset.order_by('-is_admin', order_by_username_or_email.asc())
+        users_page = self.paginator.paginate_queryset(ecs_queryset, request, view=self)
 
-        # serialize the paged dataset
         serializer = serializers.EnterpriseUserSerializer(users_page, many=True)
         serializer_data = serializer.data
-        # apply pre-serialization ordering by user criteria before the users
-        # get divvied up by pagination
-        if ordering_criteria in ("administrator", "learner"):
-            serializer_data = sorted(
-                serializer_data,
-                key=lambda k: (
-                    (k["is_admin"])
-                ),
-                reverse=is_reversed
-            )
-        if ordering_criteria == "details":
-            serializer_data = sorted(
-                serializer_data,
-                key=lambda k: (
-                    (
-                        (
-                            k["enterprise_customer_user"]["username"]
-                            if k["enterprise_customer_user"] is not None
-                            else k["pending_enterprise_customer_user"]["user_email"]
-                        ),
-                    )
-                ),
-                reverse=is_reversed,
-            )
-        # Apply post-serialization default ordering criteria (first by is_admin,
-        # then first name) only if user does not specify ordering criteria;
-        # Process this after the data has been serialized since the is_admin
-        # field is computed/available only after serialization step
-        if not ordering_criteria:
-            serializer_data = sorted(
-                serializer_data,
-                key=lambda k: (
-                    # sort by is_admin = True first (i.e. -1),
-                    # then sort by first_name lexicographically
-                    (
-                        -k["is_admin"],
-                        (
-                            k["enterprise_customer_user"]["username"]
-                            if k["enterprise_customer_user"] is not None
-                            else k["pending_enterprise_customer_user"]["user_email"]
-                        ),
-                    )
-                ),
-            )
+
         return self.paginator.get_paginated_response(serializer_data)
