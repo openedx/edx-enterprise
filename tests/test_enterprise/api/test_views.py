@@ -10005,7 +10005,6 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
             ('-details', [pecu_learner_eml, pecu_admin_eml, ecu_learner_eml, ecu_admin_eml]),
             ('', [ecu_admin_eml, pecu_admin_eml, ecu_learner_eml, pecu_learner_eml])
         ]:
-            print(f'sorting: {ordering_scenario}')
             # sort by scenario
             ordering_arg = f'?ordering={ordering_scenario}' if ordering_scenario else ''
             url = reverse(self.ECS_ENDPOINT, kwargs={self.ECS_KWARG: enterprise_customer.uuid}) + ordering_arg
