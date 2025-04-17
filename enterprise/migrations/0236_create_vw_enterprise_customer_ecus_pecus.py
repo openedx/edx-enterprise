@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                     SELECT pecu.enterprise_customer_id,
                     pecu.user_email,
                     TRUE AS is_pending,
-                    FALSE AS user_id,
+                    0 AS user_id,
                     '' AS username,
                     '' AS first_name,
                     '' AS last_name,
