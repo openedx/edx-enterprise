@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.5]
+--------
+* chore: added logs for debuging
+
 [5.12.4]
 --------
 * fix: fixed the migrations to support postgresql
