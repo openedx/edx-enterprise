@@ -11,7 +11,6 @@ from django.dispatch import receiver
 
 from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
-from enterprise.api_client.enterprise_access import EnterpriseAccessApiClient, EnterpriseAccessClientError
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
 from enterprise.tasks import create_enterprise_enrollment
@@ -440,24 +439,6 @@ def generate_default_orchestration_record_display_name(sender, instance, **kwarg
                 enterprise_customer=instance.enterprise_customer,
             ).count()
             instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
-
-
-@receiver(post_delete, sender=models.EnterpriseGroup)
-def delete_associations_with_removed_group(sender, instance, **kwargs):     # pylint: disable=unused-argument
-    """
-    Delete the associated enterprise admin role assignment record when deleting an EnterpriseCustomerUser record.
-    """
-    print(['hello here????'])
-    enterprise_uuid = instance.enterprise_customer.uuid
-    group_uuid = instance.uuid
-    try:
-        access_client = EnterpriseAccessApiClient()
-        access_client.delete_policy_group_association(enterprise_uuid, group_uuid)
-    except EnterpriseAccessClientError as exc:
-        logger.exception(
-            'Unable to delete PolicyGroupAssociations with group uuid {}'.format(str(group_uuid)),
-            exc_info=exc
-        )
 
 
 # Don't connect this receiver if we dont have access to CourseEnrollment model

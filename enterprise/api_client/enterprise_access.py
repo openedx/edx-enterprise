@@ -38,7 +38,6 @@ class EnterpriseAccessApiClient(UserAPIClient):
         Endpoint to connect to enterprise-access so we can delete any PolicyGroupAssocations after the
         deletion of an EnterpriseGroup
         """
-        print('whoohoo!')
         api_url = self.API_BASE_URL + self.DELETE_ASSOCIATION_ENDPOINT.format(enterprise_uuid, group_uuid)
         try:
             response = self.client.delete(api_url)

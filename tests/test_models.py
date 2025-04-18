@@ -2863,17 +2863,25 @@ class TestEnterpriseGroup(unittest.TestCase):
         with raises(Exception):
             factories.EnterpriseGroupFactory(name="foobar", enterprise_customer=group_1.enterprise_customer)
 
-    def test_enterprise_group_soft_delete(self):
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.enterprise_access.EnterpriseAccessApiClient.delete_policy_group_association')
+    def test_enterprise_group_soft_delete(self, api_delete_mock):
         """
         Test ``EnterpriseGroup`` soft deletion property.
         """
-        group = factories.EnterpriseGroupFactory()
+        api_delete_mock.return_value = True
+
+        customer = factories.EnterpriseCustomerFactory()
+        group = factories.EnterpriseGroupFactory(enterprise_customer=customer)
 
         assert EnterpriseGroup.all_objects.count() == 1
         assert EnterpriseGroup.available_objects.count() == 1
         group.delete()
+
         assert EnterpriseGroup.all_objects.count() == 1
         assert EnterpriseGroup.available_objects.count() == 0
+
+        api_delete_mock.assert_called_with(customer.uuid, group.uuid)
 
 
 @mark.django_db
