@@ -144,6 +144,7 @@ LMS_INTERNAL_ROOT_URL = "http://localhost:8000"
 LMS_ENROLLMENT_API_PATH = "/api/enrollment/v1/"
 ECOMMERCE_PUBLIC_URL_ROOT = "http://localhost:18130"
 ENTERPRISE_CATALOG_INTERNAL_ROOT_URL = "http://localhost:18160"
+ENTERPRISE_ACCESS_INTERNAL_ROOT_URL = "http://localhost:18270"
 
 ENTERPRISE_ENROLLMENT_API_URL = LMS_INTERNAL_ROOT_URL + LMS_ENROLLMENT_API_PATH
 
@@ -194,6 +195,7 @@ ENTERPRISE_ALL_SERVICE_USERNAMES = [
     'license_manager_worker',
     'enterprise_catalog_worker',
     'enterprise_subsidy_worker',
+    'enterprise_access_worker',
 ]
 
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
