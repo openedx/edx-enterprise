@@ -92,6 +92,17 @@ class ContentMetadataExporter(Exporter):
             )
         )
 
+    def _log_debug(self, msg, course_or_course_run_key=None):
+        LOGGER.debug(
+            generate_formatted_log(
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                course_or_course_run_key=course_or_course_run_key,
+                plugin_configuration_id=self.enterprise_configuration.id,
+                message=f"[ENT-10198] - {msg}"
+            )
+        )
+
     def _log_exception(self, msg, course_or_course_run_key=None):
         LOGGER.exception(
             generate_formatted_log(
@@ -217,11 +228,34 @@ class ContentMetadataExporter(Exporter):
                     get_marked_for = Q(marked_for='update')
                     get_marked_for.add(last_changed_query, Q.OR)
                     content_query.add(get_marked_for, Q.AND)
+
+                    self._log_debug(
+                        f"Content {content_id} update criteria: content_last_changed < {content_last_changed} "
+                        f"OR content_last_changed is NULL OR marked_for='update'",
+                        course_or_course_run_key=content_id
+                    )
+                else:
+                    self._log_debug(
+                        f"Content {content_id} force_retrieve_all_catalogs=True, skipping last_changed check",
+                        course_or_course_run_key=content_id
+                    )
+
                 items_to_update_query = ContentMetadataItemTransmission.objects.filter(content_query)
                 item = items_to_update_query.first()
                 if item:
                     item.mark_for_update()
                     items_to_update[content_id] = item
+                    self._log_debug(
+                        f"Content {content_id} marked for update with content_last_changed={content_last_changed}, "
+                        f"previous content_last_changed={item.content_last_changed}",
+                        course_or_course_run_key=content_id
+                    )
+                else:
+                    self._log_debug(
+                        f"Content {content_id} SKIPPED for update - does not meet update criteria: "
+                        f"item_content_last_changed < {content_last_changed}",
+                        course_or_course_run_key=content_id
+                    )
         return items_to_update
 
     def _check_matched_content_to_create(
@@ -250,6 +284,13 @@ class ContentMetadataExporter(Exporter):
         for matched_item in matched_items:
             content_id = matched_item.get('content_key')
             content_last_changed = matched_item.get('date_updated')
+
+            self._log_debug(
+                f"Checking if content {content_id} needs to be created with "
+                f"content_last_changed={content_last_changed}",
+                course_or_course_run_key=content_id
+            )
+
             past_deleted_transmission = ContentMetadataItemTransmission.deleted_transmissions(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 plugin_configuration_id=self.enterprise_configuration.id,
@@ -264,6 +305,10 @@ class ContentMetadataExporter(Exporter):
                 )
                 past_deleted_transmission.prepare_to_recreate(content_last_changed, enterprise_customer_catalog.uuid)
                 items_to_create[content_id] = past_deleted_transmission
+                self._log_debug(
+                    f"Content {content_id} marked for creation - found previously deleted transmission",
+                    course_or_course_run_key=content_id
+                )
             else:
                 incomplete_transmission = ContentMetadataItemTransmission.incomplete_create_transmissions(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
@@ -274,6 +319,10 @@ class ContentMetadataExporter(Exporter):
                 if incomplete_transmission:
                     incomplete_transmission.mark_for_create()
                     items_to_create[content_id] = incomplete_transmission
+                    self._log_debug(
+                        f"Content {content_id} marked for creation - found incomplete create transmission",
+                        course_or_course_run_key=content_id
+                    )
                 else:
                     new_transmission = ContentMetadataItemTransmission(
                         enterprise_customer=self.enterprise_configuration.enterprise_customer,
@@ -287,6 +336,10 @@ class ContentMetadataExporter(Exporter):
                     )
                     new_transmission.save()
                     items_to_create[content_id] = new_transmission
+                    self._log_debug(
+                        f"Content {content_id} marked for creation - created new transmission record",
+                        course_or_course_run_key=content_id
+                    )
         return items_to_create
 
     def _get_catalog_diff(
@@ -304,6 +357,10 @@ class ContentMetadataExporter(Exporter):
             enterprise_catalog,
             content_keys
         )
+
+        self._log_debug(f"Items to be created: {items_to_create}")
+        self._log_debug(f"Items to be deleted: {items_to_delete}")
+        self._log_debug(f"Items to be updated: {matched_items}")
 
         # Fetch all existing, non-deleted transmission audit content keys for the customer/configuration
         existing_content_keys = set(self._get_catalog_content_keys())
@@ -350,6 +407,15 @@ class ContentMetadataExporter(Exporter):
             # if the item to create doesn't exist as an orphaned piece of content, do all the normal checks
             elif content_key not in existing_content_keys:
                 unique_new_items_to_create.append(item)
+                self._log_debug(
+                    f"Content {content_key} eligible for creation - not found in existing content keys",
+                    course_or_course_run_key=content_key
+                )
+            else:
+                self._log_debug(
+                    f"Content {content_key} SKIPPED for creation - already exists in existing content keys",
+                    course_or_course_run_key=content_key
+                )
 
         content_to_create = self._check_matched_content_to_create(
             enterprise_catalog,
@@ -389,6 +455,11 @@ class ContentMetadataExporter(Exporter):
         for item in items:
             content_id = item.get('content_key')
 
+            self._log_debug(
+                f"Checking if content {content_id} needs to be deleted",
+                course_or_course_run_key=content_id
+            )
+
             incomplete_transmission = ContentMetadataItemTransmission.incomplete_delete_transmissions(
                 enterprise_customer=self.enterprise_configuration.enterprise_customer,
                 plugin_configuration_id=self.enterprise_configuration.id,
@@ -404,6 +475,10 @@ class ContentMetadataExporter(Exporter):
                 )
                 incomplete_transmission.mark_for_delete()
                 items_to_delete[content_id] = incomplete_transmission
+                self._log_debug(
+                    f"Content {content_id} marked for deletion - found incomplete delete transmission",
+                    course_or_course_run_key=content_id
+                )
             else:
                 past_content_query = Q(
                     enterprise_customer=self.enterprise_configuration.enterprise_customer,
@@ -421,10 +496,18 @@ class ContentMetadataExporter(Exporter):
                 if past_content:
                     past_content.mark_for_delete()
                     items_to_delete[content_id] = past_content
+                    self._log_debug(
+                        f"Content {content_id} marked for deletion - found existing transmission record",
+                        course_or_course_run_key=content_id
+                    )
                 else:
                     self._log_info(
                         'Could not find a content record while deleting record. '
                         'Skipping record.',
+                        course_or_course_run_key=content_id
+                    )
+                    self._log_debug(
+                        f"Content {content_id} SKIPPED for deletion - no matching transmission record found",
                         course_or_course_run_key=content_id
                     )
         return items_to_delete
@@ -462,7 +545,7 @@ class ContentMetadataExporter(Exporter):
         item.content_last_changed = metadata.get('content_last_modified')
         item.save()
 
-    def export(self, **kwargs):
+    def export(self, **kwargs):  # pylint: disable=too-many-statements
         """
         Export transformed content metadata if there has been an update to the consumer's catalogs
         """
@@ -517,6 +600,25 @@ class ContentMetadataExporter(Exporter):
                 }
             for key, item in items_to_create.items():
                 try:
+                    try:
+                        if key not in key_to_content_metadata_mapping:
+                            self._log_debug(
+                                f"Content {key} SKIPPED for creation - metadata not found in catalog API response",
+                                course_or_course_run_key=key
+                            )
+                            continue
+
+                        self._log_debug(
+                            f"Sanitizing and setting metadata for content {key} for creation",
+                            course_or_course_run_key=key
+                        )
+                    except KeyError:
+                        self._log_debug(
+                            f"Content {key} SKIPPED for creation - key error when accessing metadata",
+                            course_or_course_run_key=key
+                        )
+                        continue
+
                     self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_CREATE_ACTION)
                 except Exception as exc:
                     self._log_exception(
@@ -530,9 +632,32 @@ class ContentMetadataExporter(Exporter):
                 item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
                 item.save()
 
+                self._log_debug(
+                    f"Content {key} ADDED to create payload",
+                    course_or_course_run_key=key
+                )
                 create_payload[key] = item
             for key, item in items_to_update.items():
                 try:
+                    try:
+                        if key not in key_to_content_metadata_mapping:
+                            self._log_debug(
+                                f"Content {key} SKIPPED for update - metadata not found in catalog API response",
+                                course_or_course_run_key=key
+                            )
+                            continue
+
+                        self._log_debug(
+                            f"Sanitizing and setting metadata for content {key} for update",
+                            course_or_course_run_key=key
+                        )
+                    except KeyError:
+                        self._log_debug(
+                            f"Content {key} SKIPPED for update - key error when accessing metadata",
+                            course_or_course_run_key=key
+                        )
+                        continue
+
                     self._sanitize_and_set_item_metadata(item, key_to_content_metadata_mapping[key], IC_UPDATE_ACTION)
                 except Exception as exc:
                     self._log_exception(
@@ -546,11 +671,24 @@ class ContentMetadataExporter(Exporter):
                 item.enterprise_customer_catalog_uuid = enterprise_customer_catalog.uuid
                 item.save()
 
+                self._log_debug(
+                    f"Content {key} ADDED to update payload",
+                    course_or_course_run_key=key
+                )
                 update_payload[key] = item
+
             for key, item in items_to_delete.items():
+                self._log_debug(
+                    f"Applying delete transformation for content {key}",
+                    course_or_course_run_key=key
+                )
                 metadata = self._apply_delete_transformation(item.channel_metadata)
                 item.channel_metadata = metadata
                 item.save()
+                self._log_debug(
+                    f"Content {key} ADDED to delete payload",
+                    course_or_course_run_key=key
+                )
                 delete_payload[key] = item
 
         # If we're not at the max payload count, we can check for orphaned content and shove it in the delete payload
@@ -580,8 +718,23 @@ class ContentMetadataExporter(Exporter):
                     f'config {self.enterprise_configuration.channel_code}-{self.enterprise_configuration} with '
                     f'content_id: {orphaned_item.content_id}'
                 )
+                self._log_debug(
+                    f"Found orphaned content {orphaned_item.content_id} to delete",
+                    course_or_course_run_key=orphaned_item.content_id
+                )
                 if getattr(settings, "ALLOW_ORPHANED_CONTENT_REMOVAL", False):
                     delete_payload[orphaned_item.content_id] = orphaned_item.transmission
+                    self._log_debug(
+                        f"Orphaned content {orphaned_item.content_id} ADDED to delete payload - "
+                        f"ALLOW_ORPHANED_CONTENT_REMOVAL=True",
+                        course_or_course_run_key=orphaned_item.content_id
+                    )
+                else:
+                    self._log_debug(
+                        f"Orphaned content {orphaned_item.content_id} NOT added to delete payload - "
+                        f"ALLOW_ORPHANED_CONTENT_REMOVAL=False",
+                        course_or_course_run_key=orphaned_item.content_id
+                    )
 
         self._log_info(
             f'Exporter finished for customer: {self.enterprise_customer.uuid} with payloads- create_payload: '
