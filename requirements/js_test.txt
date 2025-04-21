@@ -81,7 +81,7 @@ tempora==5.8.0
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.29.0
+trio==0.30.0
     # via
     #   selenium
     #   trio-websocket

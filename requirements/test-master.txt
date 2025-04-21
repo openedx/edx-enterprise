@@ -357,7 +357,7 @@ platformdirs==4.3.7
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via click-repl
 propcache==0.3.0
     # via
