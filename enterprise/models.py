@@ -4729,8 +4729,7 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         A psuedo-post delete signal since this is a SoftDeletableModal that removes any
         PolicyGroupAssocations from enterprise-access assocated with the deleted group
         """
-        self.is_removed = True
-        self.save(update_fields=['is_removed'])
+        super().delete(*args, **kwargs)
         enterprise_uuid = self.enterprise_customer.uuid
         group_uuid = self.uuid
         try:
