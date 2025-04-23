@@ -4918,3 +4918,26 @@ class EnterpriseGroupMembership(TimeStampedModel, SoftDeletableModel):
         Return human-readable string representation.
         """
         return f"member: {self.membership_user} in group: {self.uuid}"
+
+
+class OnboardingFlow(TimeStampedModel):
+    """
+    A model for the different flows for the admin onboarding tour in admin-portal
+
+    .. no_pii:
+    """
+
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    title = models.CharField(
+        max_length=255,
+        blank=False,
+        help_text=_(
+            'Title summarizing the onboarding flow.'
+        )
+    )
+    active = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether this flow is active and shown to admin users in the onboarding tour."
+        )
+    )
