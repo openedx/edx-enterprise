@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[5.12.6]
+[5.12.7]
 --------
 * feat: adding OnboardingFlow model
+
+[5.12.6]
+--------
+* chore: remove debug logs
 
 [5.12.5]
 --------
