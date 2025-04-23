@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.6]
+--------
+* chore: remove debug logs
+
 [5.12.5]
 --------
 * chore: added logs for debuging
