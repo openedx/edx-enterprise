@@ -862,7 +862,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         """
         if user := obj.enterprise_customer_user:
             enrollments = models.EnterpriseCourseEnrollment.objects.filter(
-                enterprise_customer_user=user.user_id,
+                enterprise_customer_user=user,
             )
             return len(enrollments)
         return 0
