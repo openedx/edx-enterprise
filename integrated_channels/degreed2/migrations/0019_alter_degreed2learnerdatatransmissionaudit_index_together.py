@@ -10,14 +10,26 @@ class Migration(migrations.Migration):
     ]
 
     db_engine = connection.settings_dict['ENGINE']
-    if 'sqlite3' in db_engine:
+    if 'postgresql' in db_engine:
         operations = [
-            migrations.AlterIndexTogether(
-                name='degreed2learnerdatatransmissionaudit',
-                index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
+            migrations.SeparateDatabaseAndState(
+                state_operations=[
+                    migrations.AlterIndexTogether(
+                        name='degreed2learnerdatatransmissionaudit',
+                        index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
+                    ),
+                ],
+                database_operations=[
+                    migrations.RunSQL(sql="""
+                        CREATE INDEX degreed2_dldta_85936b55_idx
+                        ON degreed2_degreed2learnerdatatransmissionaudit (enterprise_customer_uuid, plugin_configuration_id)
+                    """, reverse_sql="""
+                        DROP INDEX degreed2_dldta_85936b55_idx
+                    """),
+                ]
             ),
         ]
-    else:
+    elif 'mysql' in db_engine:
         operations = [
             migrations.SeparateDatabaseAndState(
                 state_operations=[
@@ -36,5 +48,13 @@ class Migration(migrations.Migration):
                         ON degreed2_degreed2learnerdatatransmissionaudit
                     """),
                 ]
+            ),
+        ]
+    else:
+        # For SQLite or other non-sqlite, non-mysql and non-postgresql backends
+        operations = [
+            migrations.AlterIndexTogether(
+                name='degreed2learnerdatatransmissionaudit',
+                index_together={('enterprise_customer_uuid', 'plugin_configuration_id')},
             ),
         ]
