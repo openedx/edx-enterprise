@@ -45,7 +45,7 @@ class EnterpriseAccessApiClient(UserAPIClient):
             return 204 == response.status_code
         except (RequestException, Timeout) as exc:
             LOGGER.exception(
-                'Failed to fetch any PolicyGroupAssoication from group %s due to [%s]',
+                'Failed to fetch any PolicyGroupAssociation from group %s due to [%s]',
                 group_uuid, str(exc)
             )
             return {}
