@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.0]
+--------
+* feat: adds EnterpriseCustomerAdmin model
+
 [5.12.7]
 --------
 * feat: adding OnboardingFlow model
