@@ -14,7 +14,7 @@ aiohappyeyeballs==2.6.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   aiohttp
-aiohttp==3.11.14
+aiohttp==3.11.18
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -36,7 +36,7 @@ amqp==5.3.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   kombu
-aniso8601==10.0.0
+aniso8601==10.0.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -78,7 +78,7 @@ bcrypt==4.3.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   paramiko
-beautifulsoup4==4.13.3
+beautifulsoup4==4.13.4
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydata-sphinx-theme
@@ -93,9 +93,23 @@ bleach==6.2.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+boto3==1.37.38
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   snowflake-connector-python
+botocore==1.37.38
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   boto3
+    #   s3transfer
+    #   snowflake-connector-python
 build==1.2.2.post1
     # via pip-tools
-celery==5.4.0
+celery==5.5.2
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
@@ -161,7 +175,7 @@ click-repl==0.3.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   celery
-code-annotations==2.2.0
+code-annotations==2.3.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -194,7 +208,7 @@ defusedxml==0.7.1
     #   djangorestframework-xml
 diff-cover==9.2.4
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-dill==0.3.9
+dill==0.4.0
     # via pylint
 distlib==0.3.9
     # via virtualenv
@@ -229,7 +243,7 @@ django-cache-memoize==0.2.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-django-config-models==2.8.0
+django-config-models==2.9.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -278,7 +292,7 @@ django-oauth-toolkit==1.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-django-object-actions==4.3.0
+django-object-actions==5.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -357,7 +371,7 @@ edx-ccx-keys==2.0.2
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   openedx-events
-edx-django-utils==7.2.0
+edx-django-utils==7.4.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -368,17 +382,17 @@ edx-django-utils==7.2.0
     #   edx-rest-api-client
     #   edx-toggles
     #   openedx-events
-edx-drf-extensions==10.5.0
+edx-drf-extensions==10.6.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   edx-rbac
-edx-i18n-tools==1.7.0
+edx-i18n-tools==1.8.0
     # via -r requirements/dev.in
 edx-lint==5.6.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.12.0
+edx-opaque-keys[django]==3.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -391,7 +405,7 @@ edx-rbac==1.10.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-edx-rest-api-client==6.1.0
+edx-rest-api-client==6.2.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -434,7 +448,7 @@ freezegun==0.3.14
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-frozenlist==1.5.0
+frozenlist==1.6.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -476,6 +490,13 @@ jinja2==3.1.6
     #   code-annotations
     #   diff-cover
     #   sphinx
+jmespath==1.0.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   boto3
+    #   botocore
 jsondiff==2.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
@@ -492,13 +513,13 @@ jwcrypto==1.5.6
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   django-oauth-toolkit
-kombu==5.5.1
+kombu==5.5.3
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   celery
-lxml[html-clean,html_clean]==5.3.2
+lxml[html-clean,html_clean]==5.4.0
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
@@ -516,14 +537,14 @@ mock==3.0.5
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-multidict==6.2.0
+multidict==6.4.3
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   aiohttp
     #   yarl
-newrelic==10.7.0
+newrelic==10.9.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -549,7 +570,7 @@ openedx-events==10.0.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-packaging==24.2
+packaging==25.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -589,7 +610,7 @@ pgpy==0.6.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-pillow==11.1.0
+pillow==11.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -615,13 +636,13 @@ pluggy==1.5.0
     #   tox
 polib==1.2.0
     # via edx-i18n-tools
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   click-repl
-propcache==0.3.0
+propcache==0.3.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -732,6 +753,7 @@ python-dateutil==2.9.0.post0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   botocore
     #   celery
     #   freezegun
 python-ipware==3.0.0
@@ -746,7 +768,7 @@ python-slugify==8.0.4
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   code-annotations
-pytz==2025.1
+pytz==2025.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -801,6 +823,12 @@ rules==3.5
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+s3transfer==0.11.5
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   boto3
 semantic-version==2.10.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
@@ -830,7 +858,7 @@ snowballstemmer==2.2.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   pydocstyle
     #   sphinx
-snowflake-connector-python==3.14.0
+snowflake-connector-python==3.14.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -841,7 +869,7 @@ sortedcontainers==2.4.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   snowflake-connector-python
-soupsieve==2.6
+soupsieve==2.7
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   beautifulsoup4
@@ -928,7 +956,7 @@ tqdm==4.67.1
     #   twine
 twine==1.11.0
     # via -r requirements/dev.in
-typing-extensions==4.12.2
+typing-extensions==4.13.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -940,12 +968,11 @@ typing-extensions==4.12.2
     #   pydata-sphinx-theme
     #   pyopenssl
     #   snowflake-connector-python
-tzdata==2025.1
+tzdata==2025.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-    #   celery
     #   faker
     #   kombu
 unicodecsv==0.14.1
@@ -965,6 +992,7 @@ urllib3==2.2.3
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
+    #   botocore
     #   requests
 vine==5.1.0
     # via
@@ -992,7 +1020,7 @@ wheel==0.45.1
     # via
     #   -r requirements/dev.in
     #   pip-tools
-yarl==1.18.3
+yarl==1.20.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
