@@ -21,6 +21,14 @@ Unreleased
 --------
 * feat: adds EnterpriseCustomerAdmin model
 
+[5.12.9]
+--------
+* fix: sync ecu table user_fk changes with django
+
+[5.12.8]
+--------
+* fix: fixing enrollments bug in members endpoint
+
 [5.12.7]
 --------
 * feat: adding OnboardingFlow model
