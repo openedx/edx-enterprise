@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.12.8]
+--------
+* fix: fixing enrollments bug in members endpoint
+
 [5.12.7]
 --------
 * feat: adding OnboardingFlow model
