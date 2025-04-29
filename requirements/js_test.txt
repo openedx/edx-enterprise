@@ -91,7 +91,7 @@ typing-extensions==4.13.2
     # via selenium
 urllib3[socks]==2.2.3
     # via
-    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
+    #   -c requirements/common_constraints.txt
     #   selenium
 websocket-client==1.8.0
     # via selenium
