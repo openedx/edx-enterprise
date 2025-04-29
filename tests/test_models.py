@@ -3042,6 +3042,7 @@ class TestEnterpriseCustomerAdmin(unittest.TestCase):
     Tests for the EnterpriseCustomerAdmin model.
     """
     def setUp(self):
+        """Set up test data."""
         self.user = factories.UserFactory()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
@@ -3086,3 +3087,17 @@ class TestEnterpriseCustomerAdmin(unittest.TestCase):
         self.admin.onboarding_tour_completed = True
         self.admin.save()
         assert self.admin.onboarding_tour_completed is True
+
+    def test_enterprise_customer_user_relationship(self):
+        """Test the relationship between EnterpriseCustomerAdmin and EnterpriseCustomerUser."""
+        assert self.admin.enterprise_customer_user == self.enterprise_customer_user
+        assert self.enterprise_customer_user.admin_record == self.admin
+
+    def test_model_creation(self):
+        """Test basic model creation and field values."""
+        assert self.admin.uuid is not None
+        assert self.admin.enterprise_customer_user == self.enterprise_customer_user
+        assert self.admin.last_login is not None
+        assert self.admin.onboarding_tour_dismissed is False
+        assert self.admin.onboarding_tour_completed is False
+        assert self.admin.completed_tour_flows.count() == 0

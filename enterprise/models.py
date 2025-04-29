@@ -4951,11 +4951,11 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
     """
 
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    enterprise_customer_user = models.ForeignKey(
+    enterprise_customer_user = models.OneToOneField(
         EnterpriseCustomerUser,
         blank=False,
         null=False,
-        related_name='admin_records',
+        related_name='admin_record',
         on_delete=models.deletion.CASCADE,
         help_text=_("The enterprise customer user who is an admin.")
     )

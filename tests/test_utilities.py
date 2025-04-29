@@ -190,7 +190,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             [
                 'enterprise_entitlements',
                 'adminnotificationread',
-                'admin_records',
+                'admin_record',
                 "enterprise_enrollments",
                 "id",
                 "created",
