@@ -33,9 +33,9 @@ MAINTAINER sre@edx.org
 RUN apt-get update && apt-get -qy install --no-install-recommends \
  language-pack-en \
  locales \
- python3.8 \
+ python3.12 \
  python3-pip \
- python3.8-venv \
+ python3.12-venv \
  pkg-config \
  libmysqlclient-dev \
  libssl-dev \
