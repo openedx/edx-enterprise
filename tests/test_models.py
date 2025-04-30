@@ -3033,3 +3033,71 @@ class TestEnterpriseCustomerSsoConfiguration(unittest.TestCase):
             identity_provider='SAP',
         )
         assert different_customer_sso_configuration.display_name == 'SSO-config-SAP-1'
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerAdmin(unittest.TestCase):
+    """
+    Tests for the EnterpriseCustomerAdmin model.
+    """
+    def setUp(self):
+        """Set up test data."""
+        self.user = factories.UserFactory()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer
+        )
+        self.admin = factories.EnterpriseCustomerAdminFactory(
+            enterprise_customer_user=self.enterprise_customer_user
+        )
+        super().setUp()
+
+    def test_last_login_updates(self):
+        """
+        Test that last_login field updates correctly.
+        """
+        initial_login = self.admin.last_login
+        self.admin.last_login = localized_utcnow()
+        self.admin.save()
+        assert self.admin.last_login != initial_login
+
+    def test_completed_tour_flows(self):
+        """
+        Test completed_tour_flows field.
+        """
+        flow = factories.OnboardingFlowFactory()
+        self.admin.completed_tour_flows.set([flow])
+        self.admin.save()
+        assert flow in self.admin.completed_tour_flows.all()
+
+    def test_onboarding_tour_dismissed(self):
+        """
+        Test onboarding_tour_dismissed field.
+        """
+        self.admin.onboarding_tour_dismissed = True
+        self.admin.save()
+        assert self.admin.onboarding_tour_dismissed is True
+
+    def test_onboarding_tour_completed(self):
+        """
+        Test onboarding_tour_completed field.
+        """
+        self.admin.onboarding_tour_completed = True
+        self.admin.save()
+        assert self.admin.onboarding_tour_completed is True
+
+    def test_enterprise_customer_user_relationship(self):
+        """Test the relationship between EnterpriseCustomerAdmin and EnterpriseCustomerUser."""
+        assert self.admin.enterprise_customer_user == self.enterprise_customer_user
+        assert self.enterprise_customer_user.admin_record == self.admin
+
+    def test_model_creation(self):
+        """Test basic model creation and field values."""
+        assert self.admin.uuid is not None
+        assert self.admin.enterprise_customer_user == self.enterprise_customer_user
+        assert self.admin.last_login is not None
+        assert self.admin.onboarding_tour_dismissed is False
+        assert self.admin.onboarding_tour_completed is False
+        assert self.admin.completed_tour_flows.count() == 0

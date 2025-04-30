@@ -22,6 +22,7 @@ from enterprise.models import (
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
@@ -35,6 +36,7 @@ from enterprise.models import (
     EnterpriseGroupMembership,
     LearnerCreditEnterpriseCourseEnrollment,
     LicensedEnterpriseCourseEnrollment,
+    OnboardingFlow,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
@@ -1158,3 +1160,33 @@ class DefaultEnterpriseEnrollmentIntentionFactory(factory.django.DjangoModelFact
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     content_type = DefaultEnterpriseEnrollmentIntention.COURSE
     content_key = "edX+DemoX"
+
+
+class OnboardingFlowFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for OnboardingFlow model.
+    """
+    class Meta:
+        model = OnboardingFlow
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    title = factory.LazyAttribute(lambda x: FAKER.sentence())
+    active = True
+
+
+class EnterpriseCustomerAdminFactory(factory.django.DjangoModelFactory):
+    """
+    Factory for EnterpriseCustomerAdmin model.
+    """
+    class Meta:
+        model = EnterpriseCustomerAdmin
+
+    enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
+    last_login = factory.Faker('date_time_this_year')
+    completed_tour_flows = factory.RelatedFactoryList(
+        'enterprise.test_utils.factories.OnboardingFlowFactory',
+        factory_related_name='enterprise_customer_admins',
+        size=0
+    )
+    onboarding_tour_dismissed = False
+    onboarding_tour_completed = False
