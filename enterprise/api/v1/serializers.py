@@ -523,7 +523,7 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
         passing certificate.
 
         Arguments:
-            course_details : the details for the exececutive education course run
+            course_details : the details for the executive education course run
             certificate_info: A dict containing the following key:
                 ``is_passing``: whether the  user has a passing certificate in the course run
 
@@ -542,8 +542,8 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
         start_date = course_details.start_date
         end_date = course_details.end_date
 
-        has_started = datetime.now(pytz.utc) > start_date if start_date is not None else True
-        has_ended = datetime.now(pytz.utc) > end_date if end_date is not None else False
+        has_started = datetime.datetime.now(pytz.utc) > start_date if start_date is not None else True
+        has_ended = datetime.datetime.now(pytz.utc) > end_date if end_date is not None else False
 
         if has_ended or is_certificate_passing:
             return CourseRunProgressStatuses.COMPLETED
