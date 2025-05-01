@@ -11,6 +11,12 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="""
                 CREATE VIEW view_enterprise_customer_support_users AS
+                    with admins as (
+                        SELECT era.id, era.enterprise_customer_id, era.user_id
+                        FROM enterprise_systemwideenterpriseuserroleassignment AS era
+                        INNER JOIN enterprise_systemwideenterpriserole AS ra ON era.role_id = ra.id
+                        WHERE ra.name = 'enterprise_admin'
+                    )
                     SELECT ecu.enterprise_customer_id,
                     au.email AS user_email,
                     FALSE AS is_pending,
@@ -21,15 +27,10 @@ class Migration(migrations.Migration):
                     au.is_staff,
                     au.is_active,
                     au.date_joined,
-                    EXISTS(
-                        SELECT * FROM enterprise_systemwideenterpriseuserroleassignment AS era
-                        INNER JOIN enterprise_systemwideenterpriserole AS ra ON era.role_id = ra.id
-                        WHERE era.enterprise_customer_id = ecu.enterprise_customer_id
-                        AND era.user_id = au.id
-                        AND ra.name = 'enterprise_admin'
-                    ) AS is_admin
+                    CASE WHEN ad.id IS NULL THEN false ELSE true END AS is_admin
                     FROM enterprise_enterprisecustomeruser AS ecu
                     INNER JOIN auth_user AS au ON au.id = ecu.user_fk
+                    LEFT JOIN admins AS ad ON ad.enterprise_customer_id = ecu.enterprise_customer_id AND ad.user_id = au.id
                 
                     UNION
                 
@@ -43,11 +44,9 @@ class Migration(migrations.Migration):
                     FALSE AS is_staff,
                     FALSE AS is_active,
                     NULL AS date_joined,
-                    EXISTS(
-                        SELECT * FROM enterprise_pendingenterprisecustomeradminuser AS pecau
-                        WHERE pecau.user_email = pecu.user_email
-                    ) AS is_admin
+                    CASE WHEN pecau.id IS NULL THEN false ELSE true END AS is_admin
                     FROM enterprise_pendingenterprisecustomeruser AS pecu
+                    LEFT JOIN enterprise_pendingenterprisecustomeradminuser AS pecau on pecu.user_email = pecau.user_email
             """,
             reverse_sql="""
                 DROP VIEW view_enterprise_customer_support_users

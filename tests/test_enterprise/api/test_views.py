@@ -10012,7 +10012,7 @@ class TestEnterpriseUser(BaseTestEnterpriseAPIViews):
 
             json_results = response.json().get('results')
             email_ordering = list(map(extract_ecu_pecu_email, json_results))
-            assert email_ordering == expected_ordering
+            assert email_ordering == expected_ordering, f'Scenario: {ordering_scenario}'
 
 
 class EnterpriseGroupMembershipViewSetTests(BaseTestEnterpriseAPIViews):
