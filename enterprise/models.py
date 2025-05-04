@@ -4941,3 +4941,48 @@ class OnboardingFlow(TimeStampedModel):
             "Specifies whether this flow is active and shown to admin users in the onboarding tour."
         )
     )
+
+
+class EnterpriseCustomerAdmin(TimeStampedModel):
+    """
+    Model for tracking enterprise customer admin users and their onboarding status.
+
+    .. no_pii:
+    """
+
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    enterprise_customer_user = models.OneToOneField(
+        EnterpriseCustomerUser,
+        blank=False,
+        null=False,
+        related_name='admin_record',
+        on_delete=models.deletion.CASCADE,
+        help_text=_("The enterprise customer user who is an admin.")
+    )
+    last_login = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("The last time the admin logged into the admin portal.")
+    )
+    completed_tour_flows = models.ManyToManyField(
+        OnboardingFlow,
+        blank=True,
+        help_text=_("The onboarding flows that this admin has completed.")
+    )
+    onboarding_tour_dismissed = models.BooleanField(
+        default=False,
+        help_text=_("Whether the admin has dismissed the onboarding tour.")
+    )
+    onboarding_tour_completed = models.BooleanField(
+        default=False,
+        help_text=_("Whether the admin has completed the onboarding tour.")
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _("Enterprise Customer Admin")
+        verbose_name_plural = _("Enterprise Customer Admins")
+        ordering = ['-modified']
+
+    def __str__(self):
+        return f"<EnterpriseCustomerAdmin {self.uuid}>"
