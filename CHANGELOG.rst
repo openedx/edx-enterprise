@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.2]
+---------
+* feat: adds EnterpriseCustomerAdminViewSet
+
 [5.13.1]
 --------
-* feat: adds EnterpriseCustomerAdminViewSet
+* fix: enterprise-customer-support sorting/pagination using view
 
 [5.13.0]
 --------

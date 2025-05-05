@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError
 
 from enterprise import models
 from enterprise.api.v1.serializers import EnterpriseCustomerAdminSerializer
@@ -40,13 +39,12 @@ class EnterpriseCustomerAdminViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=['post'])
-    def complete_tour_flow(self, request, pk=None):
+    def complete_tour_flow(self, request):
         """
         Add a completed tour flow to the admin's completed_tour_flows.
 
         Args:
             request: The request object containing the flow_uuid
-            pk: The primary key of the EnterpriseCustomerAdmin instance
 
         Returns:
             Response: A response indicating success or failure
