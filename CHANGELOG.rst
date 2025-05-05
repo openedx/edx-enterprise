@@ -17,10 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.2]
+--------
+* fix: create migration for unmanage django model that points at DB view.
+
 [5.13.1]
 --------
 * fix: enterprise-customer-support sorting/pagination using view
-
 
 [5.13.0]
 --------
