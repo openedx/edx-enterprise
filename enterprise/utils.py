@@ -2590,31 +2590,6 @@ def get_active_sso_configurations_for_customer(customer_uuid):
     return active_configurations
 
 
-def get_pending_enterprise_customer_users(user_email, enterprise_customer_uuid):
-    """
-    Helper method to check if a pending customer user is also a pending admin.
-    All pending admins are pending users, but not all pending users are pending admins.
-    """
-    pendingEnterpriseCustomerAdminUser = pending_enterprise_customer_admin_user_model()
-    pending_enterprise_customer_admin_user = pendingEnterpriseCustomerAdminUser.objects.filter(
-        enterprise_customer__uuid=enterprise_customer_uuid,
-        user_email=user_email
-    )
-
-    if pending_enterprise_customer_admin_user:
-        return {
-            'is_pending_admin': True,
-            'is_pending_learner': True,
-            'user_email': user_email,
-        }
-
-    return {
-        'is_pending_admin': False,
-        'is_pending_learner': True,
-        'user_email': user_email,
-    }
-
-
 def is_sqlite():
     """
     Helper method to determine if the current default database is SQLite
