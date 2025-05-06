@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.3]
+--------
+* fix: fixed chat_completion endpoint to handle Xpert AI v2 response correctly.
+
 [5.13.2]
 --------
 * fix: create migration for unmanage django model that points at DB view.
