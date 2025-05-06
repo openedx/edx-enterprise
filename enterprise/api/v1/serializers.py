@@ -36,13 +36,13 @@ from enterprise.logging import getEnterpriseLogger
 from enterprise.models import (
     AdminNotification,
     AdminNotificationRead,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    OnboardingFlow,
     PendingEnterpriseCustomerAdminUser,
     SystemWideEnterpriseUserRoleAssignment,
-    EnterpriseCustomerAdmin,
-    OnboardingFlow,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,

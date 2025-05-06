@@ -7885,7 +7885,7 @@ class TestAnalyticsSummaryView(APITest):
         """
         xpert_response = 'Response from Xpert AI'
         mock_response = mock.Mock()
-        mock_response.json.return_value = {'content': xpert_response}
+        mock_response.json.return_value = [{'content': xpert_response}]
         mock_post.return_value = mock_response
 
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, self.enterprise_uuid)

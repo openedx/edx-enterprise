@@ -1,11 +1,12 @@
 """
-Views for EnterpriseCustomerAdmin model.
+Views for `EnterpriseCustomerAdmin` model.
 """
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from django.shortcuts import get_object_or_404
 
 from enterprise import models
@@ -23,7 +24,7 @@ class EnterpriseCustomerAdminPagination(PageNumberPagination):
 
 class EnterpriseCustomerAdminViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for EnterpriseCustomerAdmin model.
+    API views for the ``enterprise-customer-admin`` API endpoint.
     """
     queryset = models.EnterpriseCustomerAdmin.objects.all()
     serializer_class = EnterpriseCustomerAdminSerializer
@@ -32,28 +33,22 @@ class EnterpriseCustomerAdminViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """
-        Filter queryset to only show records for the user's enterprise customer.
+        Filter queryset to only show records for the admin user.
         """
         return models.EnterpriseCustomerAdmin.objects.filter(
             enterprise_customer_user__user_fk=self.request.user
         )
 
     @action(detail=True, methods=['post'])
-    def complete_tour_flow(self, request):
+    def complete_tour_flow(self, request, pk=None):  # pylint: disable=unused-argument
         """
         Add a completed tour flow to the admin's completed_tour_flows.
+        POST /api/v1/enterprise-customer-admin/{pk}/complete_tour_flow/
 
-        Args:
-            request: The request object containing the flow_uuid
+        Request Arguments:
+        - ``flow_uuid``: The request object containing the flow_uuid
 
-        Returns:
-            Response: A response indicating success or failure
-
-        Example request:
-            POST /api/v1/enterprise-customer-admin/{pk}/complete_tour_flow/
-            {
-                "flow_uuid": "uuid-of-onboarding-flow"
-            }
+        Returns: A response indicating success or failure
         """
         admin = self.get_object()
         flow_uuid = request.data.get('flow_uuid')
