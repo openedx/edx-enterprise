@@ -48,7 +48,6 @@ from enterprise.utils import (
     get_active_sso_configurations_for_customer,
     get_integrations_for_customers,
     get_last_course_run_end_date,
-    get_pending_enterprise_customer_users,
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
@@ -523,7 +522,7 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
         passing certificate.
 
         Arguments:
-            course_details : the details for the exececutive education course run
+            course_details : the details for the executive education course run
             certificate_info: A dict containing the following key:
                 ``is_passing``: whether the  user has a passing certificate in the course run
 
@@ -542,8 +541,8 @@ class EnterpriseCourseEnrollmentAdminViewSerializer(serializers.ModelSerializer)
         start_date = course_details.start_date
         end_date = course_details.end_date
 
-        has_started = datetime.now(pytz.utc) > start_date if start_date is not None else True
-        has_ended = datetime.now(pytz.utc) > end_date if end_date is not None else False
+        has_started = datetime.datetime.now(pytz.utc) > start_date if start_date is not None else True
+        has_ended = datetime.datetime.now(pytz.utc) > end_date if end_date is not None else False
 
         if has_ended or is_certificate_passing:
             return CourseRunProgressStatuses.COMPLETED
@@ -862,7 +861,7 @@ class EnterpriseGroupMembershipSerializer(serializers.ModelSerializer):
         """
         if user := obj.enterprise_customer_user:
             enrollments = models.EnterpriseCourseEnrollment.objects.filter(
-                enterprise_customer_user=user.user_id,
+                enterprise_customer_user=user,
             )
             return len(enrollments)
         return 0
@@ -2021,7 +2020,7 @@ class EnterpriseUserSerializer(serializers.Serializer):
     Serializer for EnterpriseCustomerUser model with additions.
     """
     class Meta:
-        model = models.EnterpriseCustomerUser
+        model = models.EnterpriseCustomerSupportUsersView
         fields = (
             'enterprise_customer_user'
             'pending_enterprise_customer_user',
@@ -2029,41 +2028,54 @@ class EnterpriseUserSerializer(serializers.Serializer):
             'is_admin'
         )
 
-    enterprise_customer_user = UserSerializer(source="user", required=False, default=None)
+    enterprise_customer_user = serializers.SerializerMethodField(required=False, default=None)
     pending_enterprise_customer_user = serializers.SerializerMethodField(required=False, default=None)
     role_assignments = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
+
+    def is_enterprise_customer_user(self, obj):
+        return hasattr(obj, 'user_id') and obj.user_id > 0
+
+    def get_enterprise_customer_user(self, obj):
+        """
+        Return enterprise customer user info
+        """
+        if self.is_enterprise_customer_user(obj):
+            return {
+                'id': obj.user_id,
+                'username': obj.username,
+                'first_name': getattr(obj, 'first_name', ''),
+                'last_name': getattr(obj, 'last_name', ''),
+                'email': obj.user_email,
+                'is_staff': obj.is_staff,
+                'is_active': obj.is_active,
+                'date_joined': obj.date_joined
+            }
+        return None
 
     def get_pending_enterprise_customer_user(self, obj):
         """
         Return either the pending user info
         """
-        enterprise_customer_uuid = obj.enterprise_customer.uuid
         # if the obj has a user id, this means that it is a realized user, not pending
-        if hasattr(obj, 'user_id'):
-            return None
-        return get_pending_enterprise_customer_users(obj.user_email, enterprise_customer_uuid)
+        if not self.is_enterprise_customer_user(obj):
+            return {
+                'is_pending_admin': obj.is_admin,
+                'is_pending_learner': True,
+                'user_email': obj.user_email,
+            }
+        return None
 
     def get_is_admin(self, obj):
-        """
-        Make admin determination based on Enterprise role in SystemWideEnterpriseUserRoleAssignment
-        """
-        enterprise_customer_uuid = obj.enterprise_customer.uuid
-        user_email = obj.user_email
-        admin_instance = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-            role__name=ENTERPRISE_ADMIN_ROLE,
-            enterprise_customer_id=enterprise_customer_uuid,
-            user__email=user_email
-        )
-        return admin_instance.exists()
+        return self.is_enterprise_customer_user(obj) and obj.is_admin
 
     def get_role_assignments(self, obj):
         """
         Fetch user's role assignments
         """
-        if hasattr(obj, 'user_id'):
+        if self.is_enterprise_customer_user(obj):
             user_id = obj.user_id
-            enterprise_customer_uuid = obj.enterprise_customer.uuid
+            enterprise_customer_uuid = obj.enterprise_customer_id
 
             role_assignments = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
                 user_id=user_id
@@ -2113,9 +2125,9 @@ class EnterpriseMembersSerializer(serializers.ModelSerializer):
         Fetch all of user's enterprise enrollments
         """
         if user := obj:
-            user_id = user[0]
+            enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(user_id=user[0])
             enrollments = models.EnterpriseCourseEnrollment.objects.filter(
-                enterprise_customer_user=user_id,
+                enterprise_customer_user=enterprise_customer_user,
             )
             return len(enrollments)
         return 0

@@ -1,11 +1,12 @@
 """
 Tests for the `edx-enterprise` serializer module.
 """
+import datetime
 import json
-from collections import OrderedDict
 from unittest.mock import Mock, patch
 
 import ddt
+import pytz
 from oauth2_provider.models import get_application_model
 from pytest import mark
 from rest_framework.reverse import reverse
@@ -15,6 +16,7 @@ from django.contrib.auth.models import Permission
 from django.http import HttpRequest
 from django.test import TestCase
 
+from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
     EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
@@ -29,6 +31,7 @@ from enterprise.api.v1.serializers import (
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerSupportUsersView,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -523,24 +526,24 @@ class TestEnterpriseUserSerializer(TestCase):
             # test non-admin user
             (self.enterprise_customer_user_2, False, [ENTERPRISE_LEARNER_ROLE]),
         ]:
-            user = customer_user.user
+            user = EnterpriseCustomerSupportUsersView.objects.filter(user_email=customer_user.user.email).first()
             expected_admin_user = {
-                'enterprise_customer_user': OrderedDict([
-                    ('id', user.id),
-                    ('username', user.username),
-                    ('first_name', user.first_name),
-                    ('last_name', user.last_name),
-                    ('email', user.email),
-                    ('is_staff', user.is_staff),
-                    ('is_active', user.is_active),
-                    ('date_joined', user.date_joined.strftime("%Y-%m-%dT%H:%M:%SZ"))
-                ]),
+                'enterprise_customer_user': {
+                    'id': user.user_id,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.user_email,
+                    'is_staff': user.is_staff,
+                    'is_active': user.is_active,
+                    'date_joined': user.date_joined
+                },
                 'pending_enterprise_customer_user': None,
                 'role_assignments': role_assignments,
                 'is_admin': is_admin
             }
 
-            serializer = EnterpriseUserSerializer(customer_user)
+            serializer = EnterpriseUserSerializer(user)
             serialized_admin_user = serializer.data
 
             self.assertEqual(expected_admin_user, serialized_admin_user)
@@ -552,6 +555,8 @@ class TestEnterpriseUserSerializer(TestCase):
             # test pending non-admin user
             (self.pending_customer_user_two, False),
         ]:
+            pecu = EnterpriseCustomerSupportUsersView.objects \
+                .filter(user_email=pending_customer_user.user_email).first()
             expected_pending_admin_user = {
                 'enterprise_customer_user': None,
                 'pending_enterprise_customer_user': {
@@ -562,7 +567,7 @@ class TestEnterpriseUserSerializer(TestCase):
                 'role_assignments': None,
                 'is_admin': False
             }
-            serializer = EnterpriseUserSerializer(pending_customer_user)
+            serializer = EnterpriseUserSerializer(pecu)
             serialized_pending_admin_user = serializer.data
 
             self.assertEqual(expected_pending_admin_user, serialized_pending_admin_user)
@@ -744,8 +749,8 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
 
         assert serialized_data['course_run_id'] == course_run_id
         assert serialized_data['created'] == enrollment.created.isoformat()
-        assert serialized_data['start_date'] == '2023-01-01T00:00:00Z'
-        assert serialized_data['end_date'] == '2025-01-01T00:00:00Z'
+        assert serialized_data['start_date'] == mock_course_details.start_date
+        assert serialized_data['end_date'] == mock_course_details.end_date
         assert serialized_data['display_name'] == 'Demo Course'
         assert serialized_data['org_name'] == 'edX'
         assert serialized_data['pacing'] == 'self-paced'
@@ -861,9 +866,9 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
             course_key='DemoX',
             course_type='executive-education-2u',
             product_source='2u',
-            start_date='2023-01-01T00:00:00Z',
-            end_date='2025-01-01T00:00:00Z',
-            enroll_by='2024-10-01T00:00:00Z',
+            start_date=datetime.datetime(2023, 1, 1, tzinfo=pytz.UTC),
+            end_date=datetime.datetime(2025, 1, 1, tzinfo=pytz.UTC),
+            enroll_by=datetime.datetime(2024, 10, 1, tzinfo=pytz.UTC),
         )
 
         mock_get_certificate.return_value = {
@@ -871,7 +876,7 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
             'is_passing': True,
             'created': '2024-01-01T00:00:00Z',
         }
-        mock_datetime.now.return_value = '2023-01-01T00:00:00Z'
+        mock_datetime.datetime.now.return_value = datetime.datetime(2023, 1, 1, tzinfo=pytz.UTC)
         request = HttpRequest()
         serializer_context = {
             'request': request,
@@ -891,8 +896,8 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
 
         assert serialized_data['course_run_id'] == course_run_id
         assert serialized_data['created'] == enrollment.created.isoformat()
-        assert serialized_data['start_date'] == '2023-01-01T00:00:00Z'
-        assert serialized_data['end_date'] == '2025-01-01T00:00:00Z'
+        assert serialized_data['start_date'] == mock_course_details.start_date
+        assert serialized_data['end_date'] == mock_course_details.end_date
         assert serialized_data['display_name'] == 'Demo Course'
         assert serialized_data['org_name'] == 'edX'
         assert serialized_data['pacing'] == 'self-paced'
@@ -902,5 +907,82 @@ class TestEnterpriseCourseEnrollmentAdminViewSerializer(TestCase):
         assert serialized_data['course_key'] == 'DemoX'
         assert serialized_data['course_type'] == 'executive-education-2u'
         assert serialized_data['product_source'] == '2u'
-        assert serialized_data['enroll_by'] == '2024-10-01T00:00:00Z'
+        assert serialized_data['enroll_by'] == mock_course_details.enroll_by
         assert serialized_data['course_run_status'] == 'completed'
+
+
+@mark.django_db
+class TestGetExecEdCourseRunStatus(TestCase):
+    """Unit tests for _get_exec_ed_course_run_status function."""
+
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.serializer = EnterpriseCourseEnrollmentAdminViewSerializer()
+        self.now = datetime.datetime.now(pytz.utc)
+        self.course_details = Mock(
+            start_date=self.now,
+            end_date=self.now + datetime.timedelta(days=30)
+        )
+        self.enterprise_enrollment = Mock(saved_for_later=False)
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_saved_for_later(self, mock_datetime):
+        """Test that a course marked as saved for later returns SAVED_FOR_LATER status."""
+        mock_datetime.datetime.now.return_value = self.now
+        self.enterprise_enrollment.saved_for_later = True
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': False},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.SAVED_FOR_LATER
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_completed_with_certificate(self, mock_datetime):
+        """Test that a course with a passing certificate returns COMPLETED status."""
+        mock_datetime.datetime.now.return_value = self.now
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': True},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.COMPLETED
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_completed_with_ended_course(self, mock_datetime):
+        """Test that a course that has ended returns COMPLETED status."""
+        mock_datetime.datetime.now.return_value = self.course_details.end_date + datetime.timedelta(days=1)
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': False},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.COMPLETED
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_in_progress(self, mock_datetime):
+        """Test that a course that has started but not ended returns IN_PROGRESS status."""
+        mock_datetime.datetime.now.return_value = self.course_details.start_date + datetime.timedelta(days=1)
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': False},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.IN_PROGRESS
+
+    @patch('enterprise.api.v1.serializers.datetime')
+    def test_upcoming(self, mock_datetime):
+        """Test that a course that hasn't started yet returns UPCOMING status."""
+        mock_datetime.datetime.now.return_value = self.course_details.start_date - datetime.timedelta(days=1)
+        # pylint: disable=protected-access
+        status = self.serializer._get_exec_ed_course_run_status(
+            self.course_details,
+            {'is_passing': False},
+            self.enterprise_enrollment
+        )
+        assert status == CourseRunProgressStatuses.UPCOMING

@@ -4959,3 +4959,87 @@ class OnboardingFlow(TimeStampedModel):
             "Specifies whether this flow is active and shown to admin users in the onboarding tour."
         )
     )
+
+
+class EnterpriseCustomerAdmin(TimeStampedModel):
+    """
+    Model for tracking enterprise customer admin users and their onboarding status.
+
+    .. no_pii:
+    """
+
+    uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    enterprise_customer_user = models.OneToOneField(
+        EnterpriseCustomerUser,
+        blank=False,
+        null=False,
+        related_name='admin_record',
+        on_delete=models.deletion.CASCADE,
+        help_text=_("The enterprise customer user who is an admin.")
+    )
+    last_login = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("The last time the admin logged into the admin portal.")
+    )
+    completed_tour_flows = models.ManyToManyField(
+        OnboardingFlow,
+        blank=True,
+        help_text=_("The onboarding flows that this admin has completed.")
+    )
+    onboarding_tour_dismissed = models.BooleanField(
+        default=False,
+        help_text=_("Whether the admin has dismissed the onboarding tour.")
+    )
+    onboarding_tour_completed = models.BooleanField(
+        default=False,
+        help_text=_("Whether the admin has completed the onboarding tour.")
+    )
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _("Enterprise Customer Admin")
+        verbose_name_plural = _("Enterprise Customer Admins")
+        ordering = ['-modified']
+
+    def __str__(self):
+        return f"<EnterpriseCustomerAdmin {self.uuid}>"
+
+
+class EnterpriseCustomerSupportUsersView(models.Model):
+    """
+    Model for view that unions EnterpriseCustomerUser and PendingEnterpriseCustomerUser records together to
+    facilitate querying both simultaneously
+
+    Fields:
+        enterprise_customer_id (:class:`django.db.models.UUIDField`): enterprise customer id (both ecu, pecu)
+        user_email (:class:`django.db.models.EmailField`): user email (both ecu, pecu)
+        is_pending (:class:`django.db.models.BooleanField`): True if pecu, False if ecu
+        user_id (:class:`django.db.models.PositiveIntegerField`): user id (ecu only)
+        username (:class:`django.db.models.CharField`): user name (ecu only)
+        first_name (:class:`django.db.models.CharField`): first name (ecu only)
+        last_name (:class:`django.db.models.CharField`): last name (ecu only)
+        is_staff (:class:`django.db.models.BooleanField`): If user is Staff (ecu only)
+        is_active (:class:`django.db.models.BooleanField`): If user is active (ecu only)
+        date_joined (:class:`django.db.models.DateTimeField`): When user joined (ecu only)
+        is_admin (:class:`django.db.models.BooleanField`): If user has admin role (both, always False for pecu)
+
+    .. no_pii: This model surfaces PII (email, name, username), but being a View it does not itself store or
+            replicate that data.  Refer to the models that the PII is pulled from (PendingEnterpriseCustomerUser,
+            User) for retirement info.
+    """
+    enterprise_customer_id = models.UUIDField(primary_key=False)
+    user_email = models.EmailField(primary_key=True, null=False, blank=False)
+    is_pending = models.BooleanField(default=False)
+    user_id = models.PositiveIntegerField(null=False, blank=False)
+    username = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(null=True)
+    is_admin = models.BooleanField(default=False)
+
+    class Meta:
+        managed = False
+        db_table = 'view_enterprise_customer_support_users'

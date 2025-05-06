@@ -40,4 +40,4 @@ def chat_completion(prompt, role):
         timeout=(CONNECT_TIMOUET_SECONDS, READ_TIMEOUT_SECONDS)
     )
 
-    return response.json().get('content')
+    return response.json()[0].get('content')
