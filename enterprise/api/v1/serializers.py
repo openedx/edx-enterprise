@@ -36,9 +36,11 @@ from enterprise.logging import getEnterpriseLogger
 from enterprise.models import (
     AdminNotification,
     AdminNotificationRead,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    OnboardingFlow,
     PendingEnterpriseCustomerAdminUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -2318,3 +2320,39 @@ class DefaultEnterpriseEnrollmentIntentionLearnerStatusSerializer(serializers.Se
             'total_needs_enrollment': self.needs_enrollment_counts(),
             'total_already_enrolled': self.already_enrolled_count(),
         }
+
+
+class EnterpriseCustomerAdminSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCustomerAdmin model.
+    """
+    enterprise_customer_user = serializers.PrimaryKeyRelatedField(
+        queryset=EnterpriseCustomerUser.objects.all(),
+        required=True
+    )
+    completed_tour_flows = serializers.PrimaryKeyRelatedField(
+        queryset=OnboardingFlow.objects.all(),
+        many=True,
+        required=False
+    )
+
+    class Meta:
+        model = EnterpriseCustomerAdmin
+        fields = [
+            'uuid',
+            'enterprise_customer_user',
+            'last_login',
+            'completed_tour_flows',
+            'onboarding_tour_dismissed',
+            'onboarding_tour_completed',
+        ]
+        read_only_fields = ['uuid']
+
+    def to_representation(self, instance):
+        """
+        Convert the instance to a dictionary representation.
+        """
+        representation = super().to_representation(instance)
+        if 'completed_tour_flows' in representation:
+            representation['completed_tour_flows'] = [str(uuid) for uuid in representation['completed_tour_flows']]
+        return representation

@@ -29,6 +29,7 @@ from enterprise.api.v1.views import (
     pending_enterprise_customer_admin_user,
     pending_enterprise_customer_user,
 )
+from enterprise.api.v1.views.enterprise_customer_admin import EnterpriseCustomerAdminViewSet
 
 router = DefaultRouter()
 router.register(
@@ -93,6 +94,11 @@ router.register(
     "default-enterprise-enrollment-intentions",
     default_enterprise_enrollments.DefaultEnterpriseEnrollmentIntentionViewSet,
     'default-enterprise-enrollment-intentions'
+)
+router.register(
+    r'enterprise-customer-admin',
+    EnterpriseCustomerAdminViewSet,
+    basename='enterprise-customer-admin'
 )
 
 
