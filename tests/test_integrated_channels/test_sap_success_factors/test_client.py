@@ -178,6 +178,151 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         sap_client._call_post_with_user_override.assert_called()  # pylint: disable=protected-access
 
     @responses.activate
+    def test_get_user_details_success(self):
+        """Test the get_user_details method retrieves user data successfully."""
+        # Mock the SAML Assertion response
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/idp"),
+            body='"saml_assertion_value"',
+            status=200
+        )
+        
+        # Mock the token exchange response
+        token_response = {
+            "access_token": "user_access_token",
+            "expires_in": 3600
+        }
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/token"),
+            json=token_response,
+            status=200
+        )
+        
+        # Mock the user data response
+        user_data = {
+            "d": {
+                "userId": "test123",
+                "firstName": "Test",
+                "lastName": "User",
+                "email": "test@example.com",
+                "country": "US",
+                "city": "TestCity"
+            }
+        }
+        responses.add(
+            responses.GET,
+            urljoin(
+                self.url_base,
+                "odata/v2/User(userId='test123')?$select=userId,username,firstName,lastName,defaultFullName,email,country,city"
+            ),
+            json=user_data,
+            status=200
+        )
+        
+        # Call the method
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        result = sap_client.get_user_details("test123")
+        
+        # Verify the result
+        self.assertEqual(result, user_data)
+        self.assertEqual(len(responses.calls), 3)
+        
+        # Verify all API calls were made with the correct URLs
+        self.assertEqual(responses.calls[0].request.url, urljoin(self.url_base, "oauth/idp"))
+        self.assertEqual(responses.calls[1].request.url, urljoin(self.url_base, "oauth/token"))
+        self.assertTrue(responses.calls[2].request.url.startswith(urljoin(self.url_base, "odata/v2/User")))
+    
+    @responses.activate
+    def test_get_user_details_saml_error(self):
+        """Test get_user_details handles SAML assertion errors properly."""
+        # Mock failed SAML Assertion response
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/idp"),
+            json={"error": "Invalid credentials"},
+            status=401
+        )
+        
+        # Call the method and expect a ClientError
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        with self.assertRaises(ClientError):
+            sap_client.get_user_details("test123")
+        
+        # Verify only the first call was made
+        self.assertEqual(len(responses.calls), 1)
+    
+    @responses.activate
+    def test_get_user_details_token_error(self):
+        """Test get_user_details handles token exchange errors properly."""
+        # Mock successful SAML Assertion response
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/idp"),
+            body='"saml_assertion_value"',
+            status=200
+        )
+        
+        # Mock failed token exchange response
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/token"),
+            json={"error": "invalid_grant"},
+            status=400
+        )
+        
+        # Call the method and expect a ClientError
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        with self.assertRaises(ClientError):
+            sap_client.get_user_details("test123")
+        
+        # Verify only the first two calls were made
+        self.assertEqual(len(responses.calls), 2)
+    
+    @responses.activate
+    def test_get_user_details_api_error(self):
+        """Test get_user_details handles user API errors properly."""
+        # Mock successful SAML Assertion response
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/idp"),
+            body='"saml_assertion_value"',
+            status=200
+        )
+        
+        # Mock successful token exchange response
+        token_response = {
+            "access_token": "user_access_token",
+            "expires_in": 3600
+        }
+        responses.add(
+            responses.POST,
+            urljoin(self.url_base, "oauth/token"),
+            json=token_response,
+            status=200
+        )
+        
+        # Mock failed user data response
+        responses.add(
+            responses.GET,
+            urljoin(
+                self.url_base,
+                "odata/v2/User(userId='test123')?$select=userId,username,firstName,lastName,defaultFullName,email,country,city"
+            ),
+            json={"error": {"message": "User not found"}},
+            status=404
+        )
+        
+        # Call the method and expect a ClientError
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        with self.assertRaises(ClientError):
+            sap_client.get_user_details("test123")
+        
+        # Verify all three calls were made
+        self.assertEqual(len(responses.calls), 3)
+
+    @responses.activate
     def test_failed_completion_reporting_exception_handling(self):
         responses.add(
             responses.POST,

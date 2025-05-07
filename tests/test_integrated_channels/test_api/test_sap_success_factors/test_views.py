@@ -10,6 +10,7 @@ from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.utils import localized_utcnow
+from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.utils import populate_decrypted_fields_sap_success_factors
 from test_utils import APITest, factories
