@@ -43,6 +43,7 @@ from model_utils.models import SoftDeletableModel, TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.enterprise_access import EnterpriseAccessApiClient, EnterpriseAccessClientError
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient
 from enterprise.api_client.sso_orchestrator import EnterpriseSSOOrchestratorApiClient
@@ -4722,6 +4723,23 @@ class EnterpriseGroup(TimeStampedModel, SoftDeletableModel):
         verbose_name_plural = _("Enterprise Groups")
         unique_together = (("name", "enterprise_customer"),)
         ordering = ['-modified']
+
+    def delete(self, *args, **kwargs):
+        """
+        A psuedo-post delete signal since this is a SoftDeletableModal that removes any
+        PolicyGroupAssocations from enterprise-access assocated with the deleted group
+        """
+        super().delete(*args, **kwargs)
+        enterprise_uuid = self.enterprise_customer.uuid
+        group_uuid = self.uuid
+        try:
+            access_client = EnterpriseAccessApiClient()
+            access_client.delete_policy_group_association(enterprise_uuid, group_uuid)
+        except EnterpriseAccessClientError as exc:
+            LOGGER.exception(
+                'Unable to delete PolicyGroupAssociations with group uuid {}'.format(str(group_uuid)),
+                exc_info=exc
+            )
 
     def _get_filtered_ecu_ids(self, user_query):
         """
