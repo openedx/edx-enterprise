@@ -26,7 +26,7 @@ class EnterpriseAccessApiClient(UserAPIClient):
     """
 
     API_BASE_URL = urljoin(f"{settings.ENTERPRISE_ACCESS_INTERNAL_ROOT_URL}/", "api/v1/")
-    DELETE_ASSOCIATION_ENDPOINT = '{}/delete-group-association/{}/'
+    DELETE_ASSOCIATION_ENDPOINT = '{}/delete-group-association/{}'
 
     def __init__(self, user=None):
         user = user if user else utils.get_enterprise_worker_user()
