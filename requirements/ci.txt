@@ -10,9 +10,9 @@ filelock==3.18.0
     # via
     #   tox
     #   virtualenv
-packaging==24.2
+packaging==25.0
     # via tox
-platformdirs==4.3.7
+platformdirs==4.3.8
     # via virtualenv
 pluggy==1.5.0
     # via tox
@@ -24,5 +24,5 @@ tox==3.28.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/ci.in
-virtualenv==20.30.0
+virtualenv==20.31.2
     # via tox
