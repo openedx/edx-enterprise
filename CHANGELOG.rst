@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[5.13.5]
+[5.13.6]
 ---------
 * feat: adds ENTERPRISE_ADMIN_ONBOARDING toggle, removes obsolete groups toggles
+
+[5.13.5]
+---------
+* chore: upgrades python requirements
 
 [5.13.4]
 ---------
