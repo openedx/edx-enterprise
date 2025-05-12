@@ -302,12 +302,11 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                 'enterprise_features': {
                     'top_down_assignment_real_time_lcm': False,
                     'feature_prequery_search_suggestions': False,
-                    'enterprise_groups_v1': False,
                     'enterprise_customer_support_tool': False,
-                    'enterprise_groups_v2': False,
                     'enterprise_learner_bff_enabled': False,
                     'admin_portal_learner_profile_view_enabled': False,
                     'catalog_query_search_filters_enabled': False,
+                    'enterprise_admin_onboarding_enabled': False,
                 }
             }
             assert response == mock_empty_200_success_response

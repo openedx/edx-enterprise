@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.5]
+---------
+* feat: adds ENTERPRISE_ADMIN_ONBOARDING toggle, removes obsolete groups toggles
+
 [5.13.4]
 ---------
 * feat: adds EnterpriseCustomerAdminViewSet
