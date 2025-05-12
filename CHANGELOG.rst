@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.5]
+---------
+* chore: upgrades python requirements
+
 [5.13.4]
 ---------
 * feat: adds EnterpriseCustomerAdminViewSet
