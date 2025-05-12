@@ -92,6 +92,7 @@ ENTERPRISE_ADMIN_ONBOARDING = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+
 def top_down_assignment_real_time_lcm():
     """
     Returns whether top-down assignment and real time LCM feature flag is enabled.
