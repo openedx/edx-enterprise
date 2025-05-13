@@ -47,6 +47,8 @@ from enterprise.constants import (
     GROUP_MEMBERSHIP_ACCEPTED_STATUS,
     GROUP_MEMBERSHIP_PENDING_STATUS,
     GROUP_MEMBERSHIP_REMOVED_STATUS,
+    GROUP_TYPE_BUDGET,
+    GROUP_TYPE_FLEX,
     PATHWAY_CUSTOMER_ADMIN_ENROLLMENT,
     SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
@@ -8256,7 +8258,14 @@ class TestEnterpriseGroupViewSet(APITest):
         self.client.login(username=self.user.username, password=TEST_PASSWORD)
 
         self.group_1 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
-        self.group_2 = EnterpriseGroupFactory(enterprise_customer=self.enterprise_customer)
+        self.group_2 = EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            group_type=GROUP_TYPE_BUDGET
+        )
+        self.flex_group = EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            group_type=GROUP_TYPE_FLEX
+        )
         self.set_multiple_enterprise_roles_to_jwt([
             (ENTERPRISE_ADMIN_ROLE, self.enterprise_customer.pk),
             (ENTERPRISE_ADMIN_ROLE, self.group_2.enterprise_customer.pk)
@@ -8292,8 +8301,10 @@ class TestEnterpriseGroupViewSet(APITest):
             'enterprise-group-list',
         )
         response = self.client.get(url)
-        assert response.json().get('count') == 2
+        assert response.json().get('count') == 3
         assert response.json().get('results')[0].get('group_type') == 'flex'
+        assert response.json().get('results')[1].get('group_type') == 'budget'
+        assert response.json().get('results')[2].get('group_type') == 'flex'
         serializer = serializers.EnterpriseGroupSerializer(self.group_1)
         assert serializer.data['accepted_members_count'] == 11
 
@@ -8723,7 +8734,12 @@ class TestEnterpriseGroupViewSet(APITest):
         request_data = {'learner_emails': existing_email}
         response = self.client.post(url, data=request_data)
         assert response.status_code == 201
-        assert response.json() == {'records_processed': 1, 'new_learners': 1, 'existing_learners': 0}
+        assert response.json() == {
+            'records_processed': 1,
+            'new_learners': 1,
+            'existing_learners': 0,
+            'non_org_rejected': 0
+        }
 
     def test_assign_learners_to_group_with_multiple_enterprises(self):
         """
@@ -8832,7 +8848,7 @@ class TestEnterpriseGroupViewSet(APITest):
     @mock.patch('enterprise.tasks.send_group_membership_invitation_notification.delay', return_value=mock.MagicMock())
     def test_successful_assign_learners_to_group(self, mock_send_group_membership_invitation_notification):
         """
-        Test that both existing and new learners assigned to groups properly creates membership records
+        Test that both existing and new learners assigned to groups properly creates membership records for budget group
         """
         url = settings.TEST_SERVER + reverse(
             'enterprise-group-assign-learners',
@@ -8849,7 +8865,12 @@ class TestEnterpriseGroupViewSet(APITest):
         }
         response = self.client.post(url, data=request_data)
         assert response.status_code == 201
-        assert response.data == {'records_processed': 800, 'new_learners': 400, 'existing_learners': 400}
+        assert response.data == {
+            'records_processed': 800,
+            'new_learners': 400,
+            'existing_learners': 400,
+            'non_org_rejected': 0,
+        }
 
         pending_memberships = EnterpriseGroupMembership.objects.filter(
             group=self.group_2,
@@ -8882,6 +8903,44 @@ class TestEnterpriseGroupViewSet(APITest):
                 )],
                 any_order=True,
             )
+
+    def test_add_no_non_member_learners_to_flex_group(self):
+        """
+        Test that existing org members are added and non-org members are not to flex group
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-assign-learners',
+            kwargs={'group_uuid': self.flex_group.uuid},
+        )
+        existing_emails = [UserFactory(email=f"ayylmao{x}@example.com").email for x in range(400)]
+        new_emails = [f"email_{x}@example.com" for x in range(400)]
+        act_by_date = datetime.now(pytz.UTC)
+        catalog_uuid = uuid.uuid4()
+        request_data = {
+            'learner_emails': existing_emails + new_emails,
+            'act_by_date': act_by_date,
+            'catalog_uuid': catalog_uuid,
+        }
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 201
+        assert response.data == {
+            'records_processed': 400,
+            'new_learners': 0,
+            'existing_learners': 400,
+            'non_org_rejected': 400,
+        }
+
+        pending_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.flex_group,
+            enterprise_customer_user__isnull=True
+        )
+        existing_memberships = EnterpriseGroupMembership.objects.filter(
+            group=self.flex_group,
+            pending_enterprise_customer_user__isnull=True
+        )
+        assert len(pending_memberships) == 0
+        assert len(existing_memberships) == 400
+        assert existing_memberships.first().status == GROUP_MEMBERSHIP_ACCEPTED_STATUS
 
     def test_specifying_group_members(self):
         """
