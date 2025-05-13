@@ -284,12 +284,15 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         - ``records_processed``: Total number of group membership records processed.
         - ``new_learners``: Total number of group membership records associated with new pending enterprise learners
         that were processed.
+        - ``non_org_rejected``: (flex group only) Total number of learner emails rejected because they are not part of
+        the enterprise customer org
         - ``existing_learners``: Total number of group membership records associated with existing enterprise learners
         that were processed.
 
         """
         try:
             group = self.get_queryset().get(uuid=group_uuid)
+            is_flex_group = group.group_type == constants.GROUP_TYPE_FLEX
             customer = group.enterprise_customer
         except models.EnterpriseGroup.DoesNotExist as exc:
             raise Http404 from exc
@@ -306,6 +309,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
         total_records_processed = 0
         total_existing_users_processed = 0
         total_new_users_processed = 0
+        total_non_org_rejected = 0
         user_emails_to_create = []
         memberships_to_create = []
         for user_email_batch in utils.batch(learner_emails[: 1000], batch_size=200):
@@ -375,27 +379,31 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
                 is_removed=False,
             )
 
-            # Create the PendingEnterpriseCustomerUser objects
-            pecu_records = [
-                models.PendingEnterpriseCustomerUser(
-                    enterprise_customer=customer, user_email=user_email
-                ) for user_email in emails_to_create_batch
-            ]
-            # According to Django docs, bulk created objects can't be used in future bulk creates as the in memory
-            # objects returned by bulk_create won't have PK's assigned.
-            models.PendingEnterpriseCustomerUser.objects.bulk_create(pecu_records, ignore_conflicts=True)
-            pecus = models.PendingEnterpriseCustomerUser.objects.filter(
-                user_email__in=emails_to_create_batch,
-                enterprise_customer=customer,
-            ).exclude(pk__in=previously_removed_pecu_learners.values_list("pk", flat=True))
-            total_new_users_processed += len(pecus)
-            # Extend the list of memberships that need to be created associated with the new pending users
-            memberships_to_create.extend([
-                models.EnterpriseGroupMembership(
-                    pending_enterprise_customer_user=pecu,
-                    group=group
-                ) for pecu in pecus
-            ])
+            if is_flex_group:
+                # For flex groups, don't invite members who aren't already part of the enterprise customer roster
+                total_non_org_rejected += len(emails_to_create_batch) - previously_removed_pecu_learners.count()
+            else:
+                # Create the PendingEnterpriseCustomerUser objects for budget group
+                pecu_records = [
+                    models.PendingEnterpriseCustomerUser(
+                        enterprise_customer=customer, user_email=user_email
+                    ) for user_email in emails_to_create_batch
+                ]
+                # According to Django docs, bulk created objects can't be used in future bulk creates as the in memory
+                # objects returned by bulk_create won't have PK's assigned.
+                models.PendingEnterpriseCustomerUser.objects.bulk_create(pecu_records, ignore_conflicts=True)
+                pecus = models.PendingEnterpriseCustomerUser.objects.filter(
+                    user_email__in=emails_to_create_batch,
+                    enterprise_customer=customer,
+                ).exclude(pk__in=previously_removed_pecu_learners.values_list("pk", flat=True))
+                total_new_users_processed += len(pecus)
+                # Extend the list of memberships that need to be created associated with the new pending users
+                memberships_to_create.extend([
+                    models.EnterpriseGroupMembership(
+                        pending_enterprise_customer_user=pecu,
+                        group=group
+                    ) for pecu in pecus
+                ])
 
         # Create all our memberships, bulk_create will batch for us.
         memberships = models.EnterpriseGroupMembership.objects.bulk_create(
@@ -406,6 +414,7 @@ class EnterpriseGroupViewSet(EnterpriseReadWriteModelViewSet):
             'records_processed': total_records_processed,
             'new_learners': total_new_users_processed,
             'existing_learners': total_existing_users_processed,
+            'non_org_rejected': total_non_org_rejected,
         }
         membership_uuids = [membership.uuid for membership in memberships]
         if act_by_date and catalog_uuid:

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.6]
+---------
+* fix: flex groups reject enrollments from outside the org
+
 [5.13.5]
 ---------
 * chore: upgrades python requirements
