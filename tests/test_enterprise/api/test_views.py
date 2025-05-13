@@ -77,9 +77,8 @@ from enterprise.roles_api import admin_role
 from enterprise.toggles import (
     ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED,
     CATALOG_QUERY_SEARCH_FILTERS_ENABLED,
+    ENTERPRISE_ADMIN_ONBOARDING,
     ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
-    ENTERPRISE_GROUPS_V1,
-    ENTERPRISE_GROUPS_V2,
     ENTERPRISE_LEARNER_BFF_ENABLED,
     FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
     TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
@@ -2053,65 +2052,64 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
     @ddt.data(
         # Request missing required permissions query param.
         (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'},
-         False, False, False, False, False, False, False, False),
+         False, False, False, False, False, False, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False, False, False, False, False, False),
+         True, None, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, None, False, False, False, False, False, False, False, False),
+         False, None, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False, False, False, False, False, False),
+         True, None, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
-         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None, False,
+         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None,
          False, False, False, False, False, False, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         None, False, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
-         None, False, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         None, False, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
-         None, False, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, False, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         None, False, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on slug with results, with
         # top down assignment & real-time LCM feature enabled,
-        # prequery search results enabled and
-        # enterprise groups v1 feature enabled
-        # enterprise groups v2 feature enabled
+        # prequery search results enabled
         # enterprise customer support tool enabled
         # enterprise learner bff enabled,
         # admin portal learner profile view enabled
+        # enterprise admin onboarding enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, True, True, True, True, True, True, True, True),
+         None, True, True, True, True, True, True, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -2125,12 +2123,11 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             expected_error,
             is_top_down_assignment_real_time_lcm_enabled,
             feature_prequery_search_suggestions_enabled,
-            enterprise_groups_v1_enabled,
-            enterprise_groups_v2_enabled,
             enterprise_customer_support_tool_enabled,
             enterprise_learner_bff_enabled,
             admin_portal_learner_profile_view_enabled,
             catalog_query_search_filters_enabled,
+            enterprise_admin_onboarding_enabled,
             mock_get_logo_url,
     ):
         """
@@ -2191,20 +2188,6 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
         with override_waffle_flag(
-            ENTERPRISE_GROUPS_V1,
-            active=enterprise_groups_v1_enabled
-        ):
-            response = client.get(
-                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
-            )
-        with override_waffle_flag(
-            ENTERPRISE_GROUPS_V2,
-            active=enterprise_groups_v2_enabled
-        ):
-            response = client.get(
-                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
-            )
-        with override_waffle_flag(
             ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
             active=enterprise_customer_support_tool_enabled
         ):
@@ -2228,6 +2211,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         with override_waffle_flag(
             CATALOG_QUERY_SEARCH_FILTERS_ENABLED,
             active=catalog_query_search_filters_enabled
+        ):
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
+        with override_waffle_flag(
+            ENTERPRISE_ADMIN_ONBOARDING,
+            active=enterprise_admin_onboarding_enabled
         ):
             response = client.get(
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
@@ -2299,12 +2289,11 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enterprise_features': {
                     'top_down_assignment_real_time_lcm': is_top_down_assignment_real_time_lcm_enabled,
                     'feature_prequery_search_suggestions': feature_prequery_search_suggestions_enabled,
-                    'enterprise_groups_v1': enterprise_groups_v1_enabled,
                     'enterprise_customer_support_tool': enterprise_customer_support_tool_enabled,
-                    'enterprise_groups_v2': enterprise_groups_v2_enabled,
                     'enterprise_learner_bff_enabled': enterprise_learner_bff_enabled,
                     'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled,
                     'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled,
+                    'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)

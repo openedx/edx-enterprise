@@ -31,17 +31,6 @@ FEATURE_PREQUERY_SEARCH_SUGGESTIONS = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
-# .. toggle_name: enterprise.enterprise_groups_v1
-# .. toggle_implementation: WaffleFlag
-# .. toggle_default: False
-# .. toggle_description: Enables enterprise groups feature
-# .. toggle_use_cases: open_edx
-# .. toggle_creation_date: 2024-02-29
-ENTERPRISE_GROUPS_V1 = WaffleFlag(
-    f'{ENTERPRISE_NAMESPACE}.enterprise_groups_v1',
-    __name__,
-    ENTERPRISE_LOG_PREFIX,
-)
 
 # .. toggle_name: enterprise.enterprise_customer_support_tool
 # .. toggle_implementation: WaffleFlag
@@ -51,18 +40,6 @@ ENTERPRISE_GROUPS_V1 = WaffleFlag(
 # .. toggle_creation_date: 2024-07-17
 ENTERPRISE_CUSTOMER_SUPPORT_TOOL = WaffleFlag(
     f'{ENTERPRISE_NAMESPACE}.enterprise_customer_support_tool',
-    __name__,
-    ENTERPRISE_LOG_PREFIX,
-)
-
-# .. toggle_name: enterprise.enterprise_groups_v2
-# .. toggle_implementation: WaffleFlag
-# .. toggle_default: False
-# .. toggle_description: Enables enterprise groups feature
-# .. toggle_use_cases: open_edx
-# .. toggle_creation_date: 2024-09-24
-ENTERPRISE_GROUPS_V2 = WaffleFlag(
-    f'{ENTERPRISE_NAMESPACE}.enterprise_groups_v2',
     __name__,
     ENTERPRISE_LOG_PREFIX,
 )
@@ -103,6 +80,18 @@ CATALOG_QUERY_SEARCH_FILTERS_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.enterprise_admin_onboarding
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables the admin onboarding tour on the admin-portal.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2025-05-12
+ENTERPRISE_ADMIN_ONBOARDING = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.enterprise_admin_onboarding',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -116,20 +105,6 @@ def feature_prequery_search_suggestions():
     Returns whether the prequery search suggestion feature flag is enabled.
     """
     return FEATURE_PREQUERY_SEARCH_SUGGESTIONS.is_enabled()
-
-
-def enterprise_groups_v1():
-    """
-    Returns whether the enterprise groups feature flag is enabled.
-    """
-    return ENTERPRISE_GROUPS_V1.is_enabled()
-
-
-def enterprise_groups_v2():
-    """
-    Returns whether the enterprise groups v2 feature flag is enabled.
-    """
-    return ENTERPRISE_GROUPS_V2.is_enabled()
 
 
 def enterprise_customer_support_tool():
@@ -160,6 +135,13 @@ def catalog_query_search_filters_enabled():
     return CATALOG_QUERY_SEARCH_FILTERS_ENABLED.is_enabled()
 
 
+def enterprise_admin_onboarding_enabled():
+    """
+    Returns whether the admin onboarding feature flag is enabled.
+    """
+    return ENTERPRISE_ADMIN_ONBOARDING.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -167,10 +149,9 @@ def enterprise_features():
     return {
         'top_down_assignment_real_time_lcm': top_down_assignment_real_time_lcm(),
         'feature_prequery_search_suggestions': feature_prequery_search_suggestions(),
-        'enterprise_groups_v1': enterprise_groups_v1(),
         'enterprise_customer_support_tool': enterprise_customer_support_tool(),
-        'enterprise_groups_v2': enterprise_groups_v2(),
         'enterprise_learner_bff_enabled': enterprise_learner_bff_enabled(),
         'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled(),
         'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled(),
+        'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
     }

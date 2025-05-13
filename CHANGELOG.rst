@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[5.13.7]
+---------
+* feat: adds ENTERPRISE_ADMIN_ONBOARDING toggle, removes obsolete groups toggles
+
 [5.13.6]
 ---------
 * fix: flex groups reject enrollments from outside the org
