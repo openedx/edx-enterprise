@@ -292,12 +292,12 @@ class Command(BaseCommand):
             ),
             # Make all of the service workers enterprise_openedx_operators for all enterprises
             self._create_enterprise_user(
-                username='license_manager_worker',
+                username='license-manager_worker',
                 role=ENTERPRISE_OPERATOR_ROLE,
                 applies_to_all_contexts=True,
             ),
             self._create_enterprise_user(
-                username='enterprise_catalog_worker',
+                username='enterprise-catalog_worker',
                 role=ENTERPRISE_OPERATOR_ROLE,
                 applies_to_all_contexts=True,
             ),

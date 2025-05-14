@@ -191,9 +191,9 @@ MEDIA_URL = "/"
 ENTERPRISE_ALL_SERVICE_USERNAMES = [
     'ecommerce_worker',
     'enterprise_worker',
-    'license_manager_worker',
-    'enterprise_catalog_worker',
-    'enterprise_subsidy_worker',
+    'license-manager_worker',
+    'enterprise-catalog_worker',
+    'enterprise-subsidy_worker',
 ]
 
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
