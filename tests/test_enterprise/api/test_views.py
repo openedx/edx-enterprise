@@ -8589,6 +8589,7 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
         assert response.status_code == 404
 
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_successful_list_with_filters(self):
         """
         Test that the list endpoint can be filtered down via query params
@@ -8680,6 +8681,7 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.patch(url, data=request_data)
         assert response.json().get('name') == str(new_name)
 
+    @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
     def test_successful_delete_group(self):
         """
         Test deleting a group record

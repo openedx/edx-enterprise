@@ -311,6 +311,11 @@ class Command(BaseCommand):
                 role=ENTERPRISE_OPERATOR_ROLE,
                 applies_to_all_contexts=True,
             ),
+            self._create_enterprise_user(
+                username='enterprise_access_worker',
+                role=ENTERPRISE_OPERATOR_ROLE,
+                applies_to_all_contexts=True,
+            ),
         ]
         # Add a couple more learners!
         for i in range(2):
