@@ -102,6 +102,11 @@ except ImportError:
     CourseEnrollment = None
 
 try:
+    from common.djangoapps.third_party_auth.models import SAMLProviderConfig
+except ImportError:
+    SAMLProviderConfig = None
+
+try:
     from common.djangoapps.entitlements.models import CourseEntitlement
 except ImportError:
     CourseEntitlement = None
@@ -371,7 +376,7 @@ class EnterpriseCustomer(TimeStampedModel):
         verbose_name="Enable learner credit in the learner portal",
         default=False,
         help_text=_("Specifies whether enterprise offers will be made known to learners in the learner portal. "
-                    "This only applies to customers with “offers”, the old version of learner credit.")
+                   "This only applies to customers with “offers”, the old version of learner credit.")
     )
 
     enable_portal_learner_credit_management_screen = models.BooleanField(

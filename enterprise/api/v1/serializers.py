@@ -2356,3 +2356,11 @@ class EnterpriseCustomerAdminSerializer(serializers.ModelSerializer):
         if 'completed_tour_flows' in representation:
             representation['completed_tour_flows'] = [str(uuid) for uuid in representation['completed_tour_flows']]
         return representation
+
+
+class EnterpriseSapSfUserInfoRequestSerializer(serializers.Serializer):
+    """
+    Serializer for SAP user info request parameters.
+    """
+    org_id = serializers.CharField(required=True)
+    logged_in_user_id = serializers.CharField(required=True)

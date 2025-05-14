@@ -30,6 +30,7 @@ from enterprise.api.v1.views import (
     pending_enterprise_customer_user,
 )
 from enterprise.api.v1.views.enterprise_customer_admin import EnterpriseCustomerAdminViewSet
+from enterprise.api.v1.views.sap_success_factors import SAPSuccessFactorsViewSet
 
 router = DefaultRouter()
 router.register(
@@ -99,6 +100,11 @@ router.register(
     r'enterprise-customer-admin',
     EnterpriseCustomerAdminViewSet,
     basename='enterprise-customer-admin'
+)
+router.register(
+    r'sap-success-factors',
+    SAPSuccessFactorsViewSet,
+    basename='sap-success-factors'
 )
 
 
