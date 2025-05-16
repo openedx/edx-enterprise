@@ -235,7 +235,7 @@ class Command(BaseCommand):
 
         Uses ``parse_known_args`` instead of ``parse_args`` to not throw an error when encountering unknown arguments
 
-        https://docs.python.org/3.12/library/argparse.html#argparse.ArgumentParser.parse_known_args
+        https://docs.python.org/3.11/library/argparse.html#argparse.ArgumentParser.parse_known_args
         """
         self._called_from_command_line = True
         parser = self.create_parser(argv[0], argv[1])

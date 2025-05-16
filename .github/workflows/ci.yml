@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ['3.11']
         toxenv: [quality, docs, django42-celery53, pii_check]
     env:
       RUNJSHINT: true
@@ -35,7 +35,7 @@ jobs:
         TOXENV: ${{ matrix.toxenv }}
       run: tox
     - name: Run code coverage
-      if: matrix.python-version == '3.12' && matrix.toxenv == 'django42-celery53'
+      if: matrix.python-version == '3.11' && matrix.toxenv == 'django42-celery53'
       uses: codecov/codecov-action@v4
       with:
         flags: unittests
