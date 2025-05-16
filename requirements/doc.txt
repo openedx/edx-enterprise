@@ -173,7 +173,7 @@ django-model-utils==5.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-django-multi-email-field==0.7.0
+django-multi-email-field==0.8.0
     # via -r requirements/test-master.txt
 django-oauth-toolkit==1.7.1
     # via -r requirements/test-master.txt
