@@ -7,7 +7,7 @@ import random
 import unittest
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest import mock, skip
 
 import ddt
@@ -26,7 +26,6 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import signals
 from django.test.utils import override_settings
-from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from enterprise import roles_api
