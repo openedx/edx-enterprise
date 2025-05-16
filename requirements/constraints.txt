@@ -11,16 +11,9 @@
 # Common constraints for edx repos
 -c common_constraints.txt
 
-
-# mock has dropped support for python 3.5 after 3.0.5
-mock==3.0.5
- 
 # freezegun>0.3.14 requires python-dateutil>2.8.1 to pass the tests which is a dependency of edx-platform
 # and edx-drf-extensions.
 freezegun==0.3.14
-
-# version 0.10.16 is having version conflict in make upgrade
-responses<0.10.16
 
 factory-boy<4.0
 

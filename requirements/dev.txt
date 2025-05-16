@@ -538,10 +538,8 @@ markupsafe==3.0.2
     #   jinja2
 mccabe==0.7.0
     # via pylint
-mock==3.0.5
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.txt
+mock==5.2.0
+    # via -r requirements/test.txt
 multidict==6.4.3
     # via
     #   -r requirements/doc.txt
@@ -794,6 +792,7 @@ pyyaml==6.0.2
     #   drf-yasg
     #   edx-i18n-tools
     #   jsondiff
+    #   responses
 readme-renderer==44.0
     # via -r requirements/doc.txt
 requests==2.32.3
@@ -814,10 +813,8 @@ requests==2.32.3
     #   twine
 requests-toolbelt==1.0.0
     # via twine
-responses==0.10.15
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.txt
+responses==0.25.7
+    # via -r requirements/test.txt
 restructuredtext-lint==1.4.0
     # via
     #   -r requirements/doc.txt
@@ -852,9 +849,7 @@ six==1.17.0
     #   edx-lint
     #   edx-rbac
     #   freezegun
-    #   mock
     #   python-dateutil
-    #   responses
 slumber==0.7.1
     # via
     #   -r requirements/doc.txt
@@ -999,6 +994,7 @@ urllib3==2.2.3
     #   -r requirements/test.txt
     #   botocore
     #   requests
+    #   responses
 vine==5.1.0
     # via
     #   -r requirements/doc.txt
