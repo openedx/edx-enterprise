@@ -30,11 +30,5 @@ pytest<7.0
 # pinning it to latest release.
 celery>=5.2.2,<6.0.0
 
-# tox>=4.4.11 require filelock>=3.10.7, which is not yet compatible.
-tox<4
-
 # upgrading django-simple-history
 django-simple-history<=3.1.1
-
-# Temporary to Support the python 3.11 Upgrade
-backports.zoneinfo;python_version<"3.9"  # Newer versions have zoneinfo available in the standard library

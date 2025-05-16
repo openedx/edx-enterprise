@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.0.0]
+--------
+* chore: add python 3.12 support and drop python 3.8 support
+
 [5.13.7]
 ---------
 * feat: adds ENTERPRISE_ADMIN_ONBOARDING toggle, removes obsolete groups toggles

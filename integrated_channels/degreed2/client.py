@@ -198,7 +198,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             LOGGER.info(self.make_log_msg(external_id, f'Found cached course id: {cached_course_id.value}'))
             return cached_course_id.value
         # QueryDict converts + to space
-        params = QueryDict(f"filter[external_id]={external_id.replace('+','%2B')}")
+        params = QueryDict(f"filter[external_id]={external_id.replace('+', '%2B')}")
         course_search_url = f'{self.get_courses_url()}?{params.urlencode(safe="[]")}'
         LOGGER.info(self.make_log_msg(external_id, f'Attempting find course via url: {course_search_url}'))
         status_code, response_body = self._get(
