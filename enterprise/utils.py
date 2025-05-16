@@ -2614,3 +2614,41 @@ def filter_in_case_insensitive(fieldname, values):
         case_insensitive_filter = reduce(lambda a, b: a | b, q_list)
 
     return case_insensitive_filter
+
+
+def get_user_details(enterprise_customer, user_id):
+    """
+    Get user details from the identity provider associated with the enterprise customer.
+
+    Args:
+        enterprise_customer (EnterpriseCustomer): The enterprise customer to get the identity provider from
+        user_id (str): The user ID to get details for
+        attributes (dict): Attributes to pass to the identity provider
+
+    Returns:
+        dict: The user details from the identity provider, or None if not available
+    """
+    # Get IDP - either default or the only one if there's just one
+    saml_provider_config = None
+
+    if enterprise_customer.has_single_idp:
+        saml_provider_config = (
+            enterprise_customer.default_provider_idp or
+            enterprise_customer.enterprise_customer_identity_providers.first()
+        ).identity_provider
+    
+    if not saml_provider_config:
+        return None
+    
+    idp_config = saml_provider_config.get_config()
+    
+    key = idp_config.conf.get('attr_username', 'urn:oid:0.9.2342.19200300.100.1.1')
+    
+    if not key:
+        return None
+    
+    attributes = {
+        key: [user_id]
+    }
+    
+    return idp_config.get_user_details(attributes)
