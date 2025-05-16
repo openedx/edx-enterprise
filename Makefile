@@ -116,7 +116,7 @@ upgrade: requirements check_pins ## update the requirements/*.txt files with the
 	# This section removes django from test.txt to
 	# let tox control the Django version for tests
 	grep -e "^django==" requirements/test.txt > requirements/django.txt
-	grep -e "^amqp==\|^anyjson==\|^billiard==\|^celery==\|^kombu==\|^click-didyoumean==\|^click-repl==\|^click==\|^prompt-toolkit==\|^vine==" requirements/dev.txt > requirements/celery53.txt
+	grep -e "^amqp==\|^anyjson==\|^billiard==\|^celery==\|^kombu==\|^click-didyoumean==\|^click-repl==\|^click==\|^prompt-toolkit==\|^vine==" requirements/dev.txt > requirements/celery55.txt
 	sed -i.tmp '/^[d|D]jango==/d' requirements/test.txt
 	sed -i.tmp '/^amqp==/d' requirements/test.txt
 	sed -i.tmp '/^anyjson==/d' requirements/test.txt
