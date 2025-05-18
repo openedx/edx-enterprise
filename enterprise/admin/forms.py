@@ -422,6 +422,8 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "default_language",
             "sender_alias",
             "reply_to",
+            "stripe_customer_id",
+            "salesforce_customer_record_id",
         )
 
 

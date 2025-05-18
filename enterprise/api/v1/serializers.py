@@ -250,7 +250,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_learner_portal_sidebar_message', 'learner_portal_sidebar_content',
             'enable_pathways', 'enable_programs', 'enable_demo_data_for_analytics_and_lpr', 'enable_academies',
             'enable_one_academy', 'active_integrations', 'show_videos_in_learner_portal_search_results',
-            'default_language', 'country', 'enable_slug_login',
+            'default_language', 'country', 'enable_slug_login', 'stripe_customer_id', 'salesforce_customer_record_id',
         )
 
     identity_providers = EnterpriseCustomerIdentityProviderSerializer(many=True, read_only=True)
