@@ -213,7 +213,9 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
         assert admin_role_assignment.exists()
 
         enterprise_customer_user = EnterpriseCustomerUser.objects.filter(user_id=user.id)
-        assert EnterpriseCustomerAdmin.objects.filter(enterprise_customer_user=enterprise_customer_user.get()).count() == 1
+        assert EnterpriseCustomerAdmin.objects.filter(
+            enterprise_customer_user=enterprise_customer_user.get()
+        ).count() == 1
 
         assert PendingEnterpriseCustomerAdminUser.objects.filter(user_email=email).count() == 0, \
             "Final check: pending admin user no longer exists"
