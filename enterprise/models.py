@@ -1774,6 +1774,12 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
             'storages.backends.s3boto.S3BotoStorage',
             'storages.backends.s3boto3.S3Boto3Storage',
         ]
+        # Check for Django 5.2+ STORAGES dict setting first
+        if hasattr(settings, 'STORAGES'):
+            default_storage = settings.STORAGES.get('default', {}).get('BACKEND')
+            return default_storage in allowed_default_file_storages
+
+        # Fall back to older DEFAULT_FILE_STORAGE setting for backwards compatibility
         return settings.DEFAULT_FILE_STORAGE in allowed_default_file_storages
 
     @property
