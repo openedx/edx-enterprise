@@ -295,7 +295,7 @@ django-mptt==0.17.0
     # via
     #   -r requirements/edx/kernel.in
     #   openedx-django-wiki
-django-multi-email-field==0.7.0
+django-multi-email-field==0.8.0
 django-mysql==4.16.0
     # via -r requirements/edx/kernel.in
 django-oauth-toolkit==1.7.1
