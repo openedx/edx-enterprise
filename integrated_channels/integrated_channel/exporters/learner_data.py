@@ -6,7 +6,7 @@ grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
@@ -14,7 +14,6 @@ from requests.exceptions import HTTPError
 
 from django.apps import apps
 from django.contrib import auth
-from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from integrated_channels.integrated_channel.channel_settings import ChannelSettingsMixin
@@ -308,7 +307,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                     channel_name, enterprise_customer_uuid, lms_user_id, course_id,
                     'Setting completed_date to now() for audit course with all non-gated content done.'
                 ))
-                completed_date_from_api = timezone.now()
+                completed_date_from_api = datetime.now(timezone.utc)
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_certificate_data(enterprise_enrollment, channel_name)
@@ -686,10 +685,10 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             LOGGER.info(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,
                 'get_course_certificate misisng created/created_date, '
-                'no passed_timestamp so defaulting to timezone.now(), '
+                'no passed_timestamp so defaulting to datetime.now(timezone.utc), '
                 f'certificate={certificate}'
             ))
-            completed_date = timezone.now()
+            completed_date = datetime.now(timezone.utc)
 
         # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
         is_passing = certificate.get('is_passing')
@@ -789,7 +788,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
         # Prepare to process the course end date and pass/fail grade
         course_end_date = course_details.end
-        now = timezone.now()
+        now = datetime.now(timezone.utc)
         is_passing = grades_data.passed
 
         # We can consider a course complete if:

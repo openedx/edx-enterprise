@@ -2,17 +2,16 @@
 Tests for the base content metadata exporter.
 """
 
-import datetime
 import logging
 import unittest
 from collections import OrderedDict
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from pytest import mark
 from testfixtures import LogCapture
 
 from django.test.utils import override_settings
-from django.utils import timezone
 
 from enterprise.constants import EXEC_ED_COURSE_TYPE
 from enterprise.utils import get_content_metadata_item_id
@@ -166,22 +165,22 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             plugin_configuration_id=sap_config.id,
             integrated_channel_code=sap_config.channel_code(),
             channel_metadata=self.channel_metadata,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             remote_errored_at=None,
         )
         # explicitly set modified timestamp to a value older than remote_errored_at
-        self.config.enterprise_customer.modified = timezone.now() - timezone.timedelta(hours=40)
+        self.config.enterprise_customer.modified = datetime.now(timezone.utc) - timedelta(hours=40)
         transmission_audit_to_skip = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_to_skip,
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=sap_config.id,
             integrated_channel_code=sap_config.channel_code(),
             channel_metadata=self.channel_metadata,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             # failed within last 24hrs
-            remote_errored_at=timezone.now() - timezone.timedelta(hours=23),
+            remote_errored_at=datetime.now(timezone.utc) - timedelta(hours=23),
         )
 
         # Mock the catalog service to return the metadata of the content to be deleted
@@ -226,18 +225,18 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         # explicitly set modified timestamp to a value greater than remote_errored_at
         # to make sure that we're force transmitting failed transmissions if customer
         # configs are changed before 24hrs are passed
-        self.config.enterprise_customer.modified = timezone.now() - \
-            timezone.timedelta(hours=20)
+        self.config.enterprise_customer.modified = datetime.now(timezone.utc) - \
+            timedelta(hours=20)
         transmission_audit_to_skip = factories.ContentMetadataItemTransmissionFactory(
             content_id=content_id_to_not_skip,
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=sap_config.id,
             integrated_channel_code=sap_config.channel_code(),
             channel_metadata=self.channel_metadata,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             # failed within last 24hrs
-            remote_errored_at=timezone.now() - timezone.timedelta(hours=23),
+            remote_errored_at=datetime.now(timezone.utc) - timedelta(hours=23),
         )
 
         # Mock the catalog service to return the metadata of the content to be deleted
@@ -267,7 +266,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
         )
         orphaned_content = factories.OrphanedContentTransmissionsFactory(
@@ -300,18 +299,18 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         Test the exporter considers audits that failed to update as existing content.
         """
-        self.enterprise_customer_catalog.enterprise_customer.modified = timezone.now() - timezone.timedelta(hours=40)
+        self.enterprise_customer_catalog.enterprise_customer.modified = datetime.now(timezone.utc) - timedelta(hours=40)
         test_failed_updated_content = ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             integrated_channel_code=self.config.channel_code(),
             plugin_configuration_id=self.config.id,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
             content_last_changed=None,
             api_response_status_code=500,
             # didn't failed within last 24hrs
-            remote_errored_at=timezone.now() - timezone.timedelta(hours=25),
+            remote_errored_at=datetime.now(timezone.utc) - timedelta(hours=25),
         )
         mock_metadata = get_fake_content_metadata()[:1]
         mock_metadata[0]['key'] = test_failed_updated_content.content_id
@@ -335,7 +334,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
 
         # Mock out a response from the catalog service (correctly) indicating that the content needs to be updated
         mock_get_catalog_diff.return_value = (
-            [], [], [{'content_key': test_failed_updated_content.content_id, 'date_updated': datetime.datetime.now()}]
+            [], [], [{'content_key': test_failed_updated_content.content_id, 'date_updated': datetime.now()}]
         )
         _, update_payload, __ = exporter.export()
 
@@ -351,16 +350,16 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer_catalog_uuid=self.enterprise_customer_catalog.uuid,
             integrated_channel_code=self.config.channel_code(),
             plugin_configuration_id=self.config.id,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
             content_last_changed=None,
             api_response_status_code=500,
             # failed within last 24hrs
-            remote_errored_at=timezone.now() - timezone.timedelta(hours=23),
+            remote_errored_at=datetime.now(timezone.utc) - timedelta(hours=23),
         )
         mock_get_catalog_diff.return_value = (
             [], [], [{'content_key': test_failed_updated_content_to_skip.content_id,
-                      'date_updated': datetime.datetime.now()}]
+                      'date_updated': datetime.now()}]
         )
         _, update_payload, __ = exporter.export()
         assert not update_payload
@@ -436,7 +435,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
             integrated_channel_code=self.config.channel_code(),
             plugin_configuration_id=self.config.id,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
 
         mock_get_content_metadata.return_value = get_fake_content_metadata()
@@ -464,9 +463,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
-            content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
+            content_last_changed=datetime.now() - timedelta(hours=1),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         past_transmission.save()
         mock_create_items = []
@@ -493,7 +492,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
-            content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
+            content_last_changed=datetime.now() - timedelta(hours=1),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
             remote_created_at=None,
             remote_updated_at=None,
@@ -531,9 +530,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
-            content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
+            content_last_changed=datetime.now() - timedelta(hours=1),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         past_transmission_to_update.save()
 
@@ -543,7 +542,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_api_client.return_value.get_content_metadata.return_value = list(mock_content_metadata_response.values())
         mock_create_items = []
         mock_delete_items = []
-        mock_matched_items = [{'content_key': FAKE_COURSE_RUN['key'], 'date_updated': datetime.datetime.now()}]
+        mock_matched_items = [{'content_key': FAKE_COURSE_RUN['key'], 'date_updated': datetime.now()}]
         mock_api_client.return_value.get_catalog_diff.return_value = mock_create_items, mock_delete_items, \
             mock_matched_items
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -561,7 +560,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_api_client.return_value.get_catalog_diff.reset_mock()
         mock_api_client.return_value.get_content_metadata.reset_mock()
 
-        past_transmission_to_update.content_last_changed = datetime.datetime.now()
+        past_transmission_to_update.content_last_changed = datetime.now()
         past_transmission_to_update.save()
 
         past_transmission_to_delete = ContentMetadataItemTransmission(
@@ -570,9 +569,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN2['key'],
             channel_metadata={},
-            content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
+            content_last_changed=datetime.now() - timedelta(hours=1),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         past_transmission_to_delete.save()
 
@@ -609,9 +608,9 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_id=FAKE_COURSE_RUN['key'],
             channel_metadata={},
-            content_last_changed=datetime.datetime.now() - datetime.timedelta(hours=1),
+            content_last_changed=datetime.now() - timedelta(hours=1),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         past_transmission.save()
 
@@ -620,7 +619,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         mock_api_client.return_value.get_content_metadata.return_value = list(mock_content_metadata_response.values())
         mock_create_items = []
         mock_delete_items = []
-        mock_matched_items = [{'content_key': FAKE_COURSE_RUN['key'], 'date_updated': datetime.datetime.now()}]
+        mock_matched_items = [{'content_key': FAKE_COURSE_RUN['key'], 'date_updated': datetime.now()}]
         mock_api_client.return_value.get_catalog_diff.return_value = mock_create_items, mock_delete_items, \
             mock_matched_items
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -635,7 +634,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             [FAKE_COURSE_RUN['key']]
         )
 
-        past_transmission.content_last_changed = datetime.datetime.now()
+        past_transmission.content_last_changed = datetime.now()
         past_transmission.save()
 
         create_payload, update_payload, delete_payload = exporter.export()
@@ -708,10 +707,10 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         past_transmission_updated_at_before_mock = factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
@@ -719,17 +718,17 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_last_changed='2020-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         past_transmission_updated_at_marked_for = factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
             marked_for='update',
         )
         mock_matched_items = [
@@ -757,10 +756,10 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
@@ -768,18 +767,18 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_last_changed='2020-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
-            remote_deleted_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
+            remote_deleted_at=datetime.utcnow(),
             api_response_status_code=200,
         )
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -797,10 +796,10 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
@@ -808,18 +807,18 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_last_changed='2020-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
-            remote_deleted_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
+            remote_deleted_at=datetime.utcnow(),
             api_response_status_code=500,
         )
         exporter = ContentMetadataExporter('fake-user', self.config)
@@ -838,10 +837,10 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         # Successfully created and updated audit, updated a while ago
         factories.ContentMetadataItemTransmissionFactory(
@@ -850,17 +849,17 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=self.config.channel_code(),
             content_last_changed='2020-07-16T15:11:10.521611Z',
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
-            remote_updated_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
+            remote_updated_at=datetime.utcnow(),
         )
         # Failed to create audit, updated now(). No updated_at or deleted_at
         factories.ContentMetadataItemTransmissionFactory(
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            content_last_changed=datetime.datetime.now(),
+            content_last_changed=datetime.now(),
             enterprise_customer_catalog_uuid=self.config.enterprise_customer.enterprise_customer_catalogs.first().uuid,
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
             api_response_status_code=500,
             remote_updated_at=None,
             remote_deleted_at=None,
@@ -880,7 +879,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         orphaned_content = factories.OrphanedContentTransmissionsFactory(
             integrated_channel_code=self.config.channel_code(),
@@ -906,7 +905,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code='foobar',
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         factories.OrphanedContentTransmissionsFactory(
             integrated_channel_code='foobar',
@@ -933,7 +932,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         orphaned_content = factories.OrphanedContentTransmissionsFactory(
             integrated_channel_code=self.config.channel_code(),
@@ -961,7 +960,7 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             enterprise_customer=self.config.enterprise_customer,
             plugin_configuration_id=self.config.id,
             integrated_channel_code=self.config.channel_code(),
-            remote_created_at=datetime.datetime.utcnow(),
+            remote_created_at=datetime.utcnow(),
         )
         factories.OrphanedContentTransmissionsFactory(
             integrated_channel_code=self.config.channel_code(),

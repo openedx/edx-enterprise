@@ -7,12 +7,12 @@ enterprise customer.
 """
 
 import sys
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 from django.apps import apps
 from django.conf import settings
 from django.db.models import Q
-from django.utils import timezone
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import (
@@ -72,7 +72,7 @@ class ContentMetadataExporter(Exporter):
     # TODO: Move this to the EnterpriseCustomerPluginConfiguration model as a JSONField.
     DATA_TRANSFORM_MAPPING = {}
     SKIP_KEY_IF_NONE = False
-    LAST_24_HRS = timezone.now() - timezone.timedelta(hours=24)
+    LAST_24_HRS = datetime.now(timezone.utc) - timedelta(hours=24)
 
     def __init__(self, user, enterprise_configuration):
         """

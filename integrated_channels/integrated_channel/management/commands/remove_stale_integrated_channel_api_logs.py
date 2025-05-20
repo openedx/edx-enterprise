@@ -1,12 +1,11 @@
 """
 Deletes records from the IntegratedChannelAPIRequestLogs model that are older than one month..
 """
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 
 from django.contrib import auth
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from integrated_channels.utils import integrated_channel_request_log_model
@@ -35,7 +34,7 @@ class Command(BaseCommand):
         Remove the duplicated transmission audit records for integration channels.
         """
         time_duration = options['time_duration']
-        time_threshold = timezone.now() - timedelta(days=time_duration)
+        time_threshold = datetime.now(timezone.utc) - timedelta(days=time_duration)
         deleted_count, _ = integrated_channel_request_log_model().objects.filter(created__lt=time_threshold).delete()
 
         LOGGER.info(f"Deleting records from IntegratedChannelAPIRequestLogs. Total records to delete: {deleted_count}")

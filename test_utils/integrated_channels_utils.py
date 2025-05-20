@@ -3,8 +3,7 @@ Miscellaneous utils for tests.
 """
 import copy
 from collections import namedtuple
-
-from django.utils import timezone
+from datetime import datetime, timezone
 
 
 def merge_dicts(dict1, dict2):
@@ -23,7 +22,7 @@ def merge_dicts(dict1, dict2):
     return merged_dict
 
 
-def mock_course_overview(display_name='Course Title', pacing='instructor', end=timezone.now()):
+def mock_course_overview(display_name='Course Title', pacing='instructor', end=datetime.now(timezone.utc)):
     """Generate an object approximating the CourseOverview model from edx-platform"""
     dictionary = {
         'end': end,

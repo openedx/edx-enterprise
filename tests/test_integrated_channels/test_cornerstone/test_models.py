@@ -3,13 +3,13 @@ Tests for the `integrated_channels.cornerstone.models` models module.
 """
 
 import unittest
+from datetime import datetime, timezone
 from unittest import mock
 
 from freezegun import freeze_time
 from pytest import mark, raises
 
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
@@ -21,7 +21,7 @@ from test_utils.factories import (
     UserFactory,
 )
 
-NOW = timezone.now()
+NOW = datetime.now(timezone.utc)
 
 
 @mark.django_db

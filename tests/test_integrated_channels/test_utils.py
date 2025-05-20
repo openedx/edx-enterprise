@@ -5,7 +5,7 @@ Tests for the utilities used by integration channels.
 import json
 import unittest
 from collections import namedtuple
-from datetime import timedelta
+from datetime import timedelta, timezone
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock
 
@@ -43,9 +43,9 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
         ('2018-01-01T00:00:00', '2020-01-01T00:00:00', False),
     )
     @ddt.unpack
-    @mock.patch('integrated_channels.utils.timezone')
-    def test_current_time_in_interval(self, start, end, expected, fake_timezone):
-        fake_timezone.now.return_value = parse_lms_api_datetime('2016-01-01T00:00:00Z')
+    @mock.patch('integrated_channels.utils.datetime')
+    def test_current_time_in_interval(self, start, end, expected, fake_datetime):
+        fake_datetime.now.return_value = parse_lms_api_datetime('2016-01-01T00:00:00Z')
         assert utils.current_time_is_in_interval(start, end) is expected
 
     @ddt.data(

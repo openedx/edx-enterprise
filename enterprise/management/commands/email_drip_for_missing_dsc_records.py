@@ -1,15 +1,13 @@
 """
 Django management command for sending an email to learners with missing DataSharingConsent records.
 """
-import datetime
 import logging
-from datetime import timedelta
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.urls import reverse
-from django.utils import timezone
 
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise import utils
@@ -69,7 +67,7 @@ class Command(BaseCommand):
                 enterprise_customer.uuid,
             )
 
-        if course_start and course_start < datetime.datetime.now(course_start.tzinfo):
+        if course_start and course_start < datetime.now(course_start.tzinfo):
             lms_course_url = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/course')
             next_url = lms_course_url.format(course_id=course_id)
 
@@ -88,7 +86,7 @@ class Command(BaseCommand):
                 enterprise_customer_user__enterprise_customer__enable_data_sharing_consent=True
             )
         else:
-            past_date = timezone.now().date() - timedelta(days=past_num_days)
+            past_date = datetime.now(timezone.utc).date() - timedelta(days=past_num_days)
             enrollments_with_dsc_enabled = EnterpriseCourseEnrollment.objects.select_related(
                 'enterprise_customer_user').filter(
                 created__date=past_date,
@@ -140,7 +138,7 @@ class Command(BaseCommand):
             action='store',
             dest='enrollment_before',
             default=None,
-            type=datetime.date.fromisoformat,
+            type=date.fromisoformat,
             help='Specifies the date (format YYYY-MM-DD). Enrollments created before this date will receive DSC emails.'
         )
         parser.add_argument(

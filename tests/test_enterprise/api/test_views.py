@@ -7,7 +7,7 @@ import json
 import logging
 import uuid
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from operator import itemgetter
 from smtplib import SMTPException
 from unittest import mock
@@ -31,7 +31,6 @@ from django.contrib.auth.models import Permission
 from django.core.cache import cache
 from django.http import HttpRequest
 from django.test import Client, TestCase, override_settings
-from django.utils import timezone
 
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.enterprise_customer_sso_configuration import fetch_entity_id_from_metadata_xml
@@ -258,7 +257,7 @@ class BaseTestEnterpriseAPIViews(APITest):
     Shared setup and methods for enterprise api views.
     """
     # Get current datetime, so that all tests can use same datetime.
-    now = timezone.now()
+    now = datetime.now(timezone.utc)
     maxDiff = None
 
     def setUp(self):

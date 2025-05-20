@@ -2,7 +2,7 @@
 Tests for the django management command `email_drip_for_missing_dsc_records`.
 """
 import random
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from pytest import mark
@@ -10,7 +10,6 @@ from testfixtures import LogCapture
 
 from django.core.management import call_command
 from django.test import TestCase
-from django.utils import timezone
 
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from test_utils.factories import (
@@ -75,7 +74,7 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
 
     def setUp(self):
         super().setUp()
-        now = timezone.now()
+        now = datetime.now(timezone.utc)
         # creating enrollments for yesterday.
         self.create_enrollments(num_learners=3, enrollment_time=now - timedelta(days=1))
         # creating enrollments for 10 days before.
@@ -131,7 +130,7 @@ class EmailDripForMissingDscRecordsCommandTests(TestCase):
         mock_event_track.reset_mock()
 
         # test with --enrollment-before param
-        enrollment_before_date = (timezone.now().date() - timedelta(days=5)).isoformat()
+        enrollment_before_date = (datetime.now(timezone.utc).date() - timedelta(days=5)).isoformat()
         with LogCapture(LOGGER_NAME) as log:
             call_command(self.command, '--enrollment-before', enrollment_before_date)
             self.assertEqual(mock_event_track.call_count, 5)

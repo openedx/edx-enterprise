@@ -1,17 +1,15 @@
 """
 Tests for the `edx-enterprise` learner_data export classes.
 """
-import datetime
 import unittest
 from unittest import mock
 from unittest.mock import MagicMock
 
 import ddt
+from datetime import datetime, timedelta, timezone
 from freezegun import freeze_time
 from pytest import mark
 from requests.exceptions import HTTPError
-
-from django.utils import timezone
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.models import GenericLearnerDataTransmissionAudit
@@ -44,10 +42,10 @@ class TestLearnerExporter(unittest.TestCase):
     """
 
     # Use these tz-aware datetimes in tests
-    NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
+    NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
     NOW_TIMESTAMP = 1483326245000
-    TOMORROW = NOW + datetime.timedelta(days=1)
-    YESTERDAY = NOW + datetime.timedelta(days=-1)
+    TOMORROW = NOW + timedelta(days=1)
+    YESTERDAY = NOW + timedelta(days=-1)
     YESTERDAY_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
 
     def setUp(self):
@@ -1009,12 +1007,12 @@ class TestLearnerExporter(unittest.TestCase):
             enterprise_course_enrollment_id=enterprise_course_enrollment.id,
             course_id=self.course_id,
             course_completed=True,
-            completed_timestamp=datetime.datetime.fromtimestamp(1568877047),
+            completed_timestamp=datetime.fromtimestamp(1568877047),
             grade=1.0,
             status='200',
             error_message='',
-            created=datetime.datetime.fromtimestamp(1568877047),
-            modified=datetime.datetime.fromtimestamp(1568877047),
+            created=datetime.fromtimestamp(1568877047),
+            modified=datetime.fromtimestamp(1568877047),
             is_transmitted=True
         )
         transmission_audit.save()
@@ -1093,7 +1091,7 @@ class TestLearnerExporter(unittest.TestCase):
         enterprise_enrollment = create_ent_enrollment_mock()
         incomplete_count = 0
 
-        a_date = timezone.now()
+        a_date = datetime.now(timezone.utc)
         exporter.collect_grades_data = MagicMock(return_value=(a_date, None, None, None, None))
         completed_date_from_api, _, _, _, _ = exporter.get_grades_summary(
             course_details,
@@ -1110,7 +1108,7 @@ class TestLearnerExporter(unittest.TestCase):
         Else use grades data if available
         '''
         exporter = LearnerExporter('fake-user', self.config)
-        a_date = timezone.now()
+        a_date = datetime.now(timezone.utc)
         course_details = mock_course_overview()
         enterprise_enrollment_audit_track = create_ent_enrollment_mock()
         incomplete_count = 0
@@ -1137,7 +1135,7 @@ class TestLearnerExporter(unittest.TestCase):
         Else use grades data if available
         '''
         exporter = LearnerExporter('fake-user', self.config)
-        a_date = timezone.now()
+        a_date = datetime.now(timezone.utc)
         course_details = mock_course_overview()
         enterprise_enrollment_verified_track = create_ent_enrollment_mock(False)
         incomplete_count = 0

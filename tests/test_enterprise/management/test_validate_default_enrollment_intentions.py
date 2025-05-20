@@ -4,7 +4,7 @@ Tests for the Django management command `validate_default_enrollment_intentions`
 
 import logging
 from contextlib import nullcontext
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import ddt
@@ -17,12 +17,11 @@ from testfixtures import LogCapture
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
-from django.utils import timezone
 
 from enterprise.models import EnterpriseCatalogQuery, EnterpriseCustomerCatalog
 from test_utils.factories import DefaultEnterpriseEnrollmentIntentionFactory, EnterpriseCustomerCatalogFactory
 
-NOW = timezone.now()
+NOW = datetime.now(timezone.utc)
 
 
 @mark.django_db

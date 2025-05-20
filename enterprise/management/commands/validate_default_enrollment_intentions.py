@@ -3,12 +3,11 @@ Django management command to validate that DefaultEnterpriseEnrollmentIntention
 objects have enrollable content.
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.core.management import BaseCommand, CommandError
 from django.db.models import DateTimeField, Max
 from django.db.models.functions import Cast, Coalesce, Greatest
-from django.utils import timezone
 
 from enterprise.content_metadata.api import get_and_cache_customer_content_metadata
 from enterprise.models import DefaultEnterpriseEnrollmentIntention
@@ -37,7 +36,7 @@ class Command(BaseCommand):
 
     @property
     def latest_change_allowed(self):
-        return timezone.now() - timedelta(minutes=self.delay_minutes)
+        return datetime.now(timezone.utc) - timedelta(minutes=self.delay_minutes)
 
     def handle_intention(self, intention):
         """
@@ -102,7 +101,7 @@ class Command(BaseCommand):
                     Max("enterprise_customer__enterprise_customer_catalogs__enterprise_catalog_query__modified"),
                     # Note 1: Arbitrarily fallback to 1 year ago because Greatest() in MySQL relies on non-null inputs.
                     # Note 2: Cast python datetime to django field type, or else experience weird errors in prod.
-                    Cast(timezone.now() - timedelta(days=360), DateTimeField())
+                    Cast(datetime.now(timezone.utc) - timedelta(days=360), DateTimeField())
                 )
             )
         )

@@ -6,9 +6,11 @@ import collections
 import datetime
 import itertools
 import json
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from urllib.parse import urljoin
 from uuid import UUID, uuid4
+
 
 from config_models.models import ConfigurationModel
 from django_countries.fields import CountryField
@@ -31,7 +33,6 @@ from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.template import Context, Template
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.functional import cached_property, lazy
 from django.utils.safestring import mark_safe
@@ -4047,8 +4048,8 @@ class AdminNotification(TimeStampedModel):
     )
 
     is_active = models.BooleanField(default=True)
-    start_date = models.DateField(default=timezone.now)
-    expiration_date = models.DateField(default=timezone.now)
+    start_date = models.DateField(default=datetime.now(timezone.utc))
+    expiration_date = models.DateField(default=datetime.now(timezone.utc))
 
     class Meta:
         app_label = 'enterprise'
@@ -4624,7 +4625,7 @@ class EnterpriseCustomerSsoConfiguration(TimeStampedModel, SoftDeletableModel):
             # hours then it can be considered unblocked.
             sso_config_timeout_hours = getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_TIMEOUT_HOURS", 1)
             sso_config_timeout_minutes = getattr(settings, "ENTERPRISE_SSO_ORCHESTRATOR_TIMEOUT_MINUTES", 0)
-            timeout_timedelta = datetime.timedelta(hours=sso_config_timeout_hours, minutes=sso_config_timeout_minutes)
+            timeout_timedelta = timedelta(hours=sso_config_timeout_hours, minutes=sso_config_timeout_minutes)
             if (self.submitted_at + timeout_timedelta) > localized_utcnow():
                 # if we have received an error from the orchestrator after submitting the configuration, it is
                 # unblocked
