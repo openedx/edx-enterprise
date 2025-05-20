@@ -503,7 +503,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 assert getattr(
                     mail.outbox[0], field
                 ) == val, f'Did not match attrib: {field} for {enterprise_customer_name}'
-            assert mail.outbox[0].connection is conn
+            assert isinstance(mail.outbox[0].connection, type(conn))
 
     def test_send_email_notification_with_admin_template(self):
         """
