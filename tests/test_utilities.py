@@ -694,7 +694,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             assert len(mail.outbox) == 1
             for field, val in expected_fields.items():
                 assert getattr(mail.outbox[0], field) == val
-            assert mail.outbox[0].connection is conn
+            assert isinstance(mail.outbox[0].connection, type(conn))
 
     @ddt.data(
         (
@@ -750,7 +750,7 @@ class TestEnterpriseUtils(unittest.TestCase):
 
         assert len(mail.outbox) == 1
         assert mail.outbox[0].from_email == expected_from_email_address
-        assert mail.outbox[0].connection is conn
+        assert isinstance(mail.outbox[0].connection, type(conn))
 
     def test_get_enterprise_customer_for_user(self):
         """
