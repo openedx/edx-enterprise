@@ -3,11 +3,11 @@ Celery tasks for integrated channel management commands.
 """
 
 import time
+from datetime import datetime, timezone
 from functools import wraps
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from datetime import datetime, timezone
 from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.conf import settings

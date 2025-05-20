@@ -11,7 +11,6 @@ from decimal import Decimal
 from urllib.parse import urljoin
 from uuid import UUID, uuid4
 
-
 from config_models.models import ConfigurationModel
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment

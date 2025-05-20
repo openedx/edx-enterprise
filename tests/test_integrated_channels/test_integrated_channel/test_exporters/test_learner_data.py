@@ -2,11 +2,11 @@
 Tests for the `edx-enterprise` learner_data export classes.
 """
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from unittest.mock import MagicMock
 
 import ddt
-from datetime import datetime, timedelta, timezone
 from freezegun import freeze_time
 from pytest import mark
 from requests.exceptions import HTTPError

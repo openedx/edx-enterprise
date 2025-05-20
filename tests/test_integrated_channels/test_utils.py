@@ -5,7 +5,7 @@ Tests for the utilities used by integration channels.
 import json
 import unittest
 from collections import namedtuple
-from datetime import timedelta, timezone
+from datetime import timedelta
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock
 

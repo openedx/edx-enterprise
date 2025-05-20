@@ -4,8 +4,8 @@ Database models for Enterprise Integrated Channel.
 
 import json
 import logging
-
 from datetime import datetime, timedelta, timezone
+
 from jsonfield.fields import JSONField
 
 from django.contrib import auth
