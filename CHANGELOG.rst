@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.0.1]
+--------
+* feat: add `enterprise-sso-user-info/` API endpoint
+
 [6.0.0]
 --------
 * chore: add python 3.12 support and drop python 3.8 support
