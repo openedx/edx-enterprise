@@ -2,12 +2,14 @@
 
 from django.db import migrations, connection
 
+
 def noop_for_sqlite(apps, schema_editor):
     """
     No-op function for SQLite to avoid running the RenameIndex operation.
     This is a placeholder function that does nothing.
     """
     pass
+
 
 class Migration(migrations.Migration):
 
@@ -20,9 +22,9 @@ class Migration(migrations.Migration):
     if connection.vendor != 'sqlite':
         operations.append(
             migrations.RenameIndex(
-            model_name='xapilearnerdatatransmissionaudit',
-            new_name='xapi_customer_plugin_idx',
-            old_fields=('enterprise_customer_uuid', 'plugin_configuration_id'),
+                model_name='xapilearnerdatatransmissionaudit',
+                new_name='xapi_customer_plugin_idx',
+                old_fields=('enterprise_customer_uuid', 'plugin_configuration_id'),
             ),
         )
     else:
