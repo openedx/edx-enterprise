@@ -74,7 +74,8 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
 
     4. Using the newly created EnterpriseCustomerUser (or an existing record if one
        existed), check if there is a PendingEnterpriseCustomerAdminUser. If so,
-       ensure the user has the "enterprise_admin" role.
+       create an EnterpriseCustomerAdmin record and ensure the user has the
+       "enterprise_admin" role.
     """
     created = kwargs.get("created", False)
     user_instance = kwargs.get("instance", None)

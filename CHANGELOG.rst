@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.0.1]
+[6.0.2]
 --------
 * feat: adds enable_learner_credit_modal field to EnterpriseCustomer model
+
+[6.0.1]
+--------
+* feat: adding EnterpriseCustomerAdmin creation to post save signal
 
 [6.0.0]
 --------
