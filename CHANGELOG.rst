@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.0.1]
+--------
+* feat: adds enable_learner_credit_modal field to EnterpriseCustomer model
+
 [6.0.0]
 --------
 * chore: add python 3.12 support and drop python 3.8 support

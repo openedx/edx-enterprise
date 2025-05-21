@@ -379,6 +379,12 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
+    enable_learner_credit_modal = models.BooleanField(
+        verbose_name="Display learner credit modal in learner portal",
+        default=True,
+        help_text=_("Specifies whether to display the Learner Credit modal in the learner portal.")
+    )
+
     hide_labor_market_data = models.BooleanField(
         verbose_name="Hide labor market data on skill features",
         default=False,

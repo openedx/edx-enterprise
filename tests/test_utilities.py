@@ -154,6 +154,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_portal_subscription_management_screen",
                 "enable_portal_saml_configuration_screen",
                 "enable_portal_lms_configurations_screen",
+                "enable_learner_credit_modal",
                 "enable_universal_link",
                 "enable_browse_and_request",
                 "enable_learner_portal",
