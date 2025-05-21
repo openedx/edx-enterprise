@@ -6,7 +6,8 @@ grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 
-from datetime import datetime, timezone as datetimezone
+from datetime import datetime
+from datetime import timezone as datetimezone
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
