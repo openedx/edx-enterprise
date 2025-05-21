@@ -1772,7 +1772,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         if hasattr(settings, 'STORAGES'):
             default_storage = settings.STORAGES.get('default', {}).get('BACKEND')
             return default_storage in allowed_default_file_storages
-        
+
         # Fall back to older DEFAULT_FILE_STORAGE setting for backwards compatibility
         return settings.DEFAULT_FILE_STORAGE in allowed_default_file_storages
 

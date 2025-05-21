@@ -2,11 +2,11 @@
 Factoryboy factories.
 """
 
+from datetime import timezone
 from random import randint
 from uuid import UUID
 
 import factory
-from datetime import timezone
 from faker import Factory as FakerFactory
 from oauth2_provider.models import get_application_model
 
