@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.0.2]
+--------
+* feat: adds enable_learner_credit_message_box field to EnterpriseCustomer model
+
 [6.0.1]
 --------
 * feat: adding EnterpriseCustomerAdmin creation to post save signal
