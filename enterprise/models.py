@@ -261,7 +261,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     enable_data_sharing_consent = models.BooleanField(
         verbose_name="Activate data sharing consent prompt",
-        default=False,
+        default=True,
         help_text=_(
             "Enables data sharing consent prompt for learners each time they enroll in a course. "
             "If left unchecked, the prompt will not appear and relevant data will not be shared."
