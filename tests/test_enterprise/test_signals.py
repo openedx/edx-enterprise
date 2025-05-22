@@ -16,6 +16,7 @@ from django.test import TestCase, override_settings
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     EnterpriseGroupMembership,
@@ -210,6 +211,11 @@ class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
             role=enterprise_admin_role,
         )
         assert admin_role_assignment.exists()
+
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(user_id=user.id)
+        assert EnterpriseCustomerAdmin.objects.filter(
+            enterprise_customer_user=enterprise_customer_user.get()
+        ).count() == 1
 
         assert PendingEnterpriseCustomerAdminUser.objects.filter(user_email=email).count() == 0, \
             "Final check: pending admin user no longer exists"
