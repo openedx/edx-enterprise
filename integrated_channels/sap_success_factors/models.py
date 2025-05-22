@@ -354,7 +354,12 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(LearnerDataTransmissionAudit
                 name='sap_unique_enrollment_course_id'
             )
         ]
-        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
+        indexes = [
+            models.Index(
+                fields=['enterprise_customer_uuid', 'plugin_configuration_id'],
+                name="success_customer_plugin_idx"
+            ),
+        ]
         db_table = 'sap_success_factors_sapsuccessfactorslearnerdatatransmission3ce5'
 
     def __str__(self):

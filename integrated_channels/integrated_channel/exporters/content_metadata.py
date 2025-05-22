@@ -462,7 +462,7 @@ class ContentMetadataExporter(Exporter):
         item.content_last_changed = metadata.get('content_last_modified')
         item.save()
 
-    def export(self, **kwargs):  # pylint: disable=too-many-statements
+    def export(self, **kwargs):
         """
         Export transformed content metadata if there has been an update to the consumer's catalogs
         """

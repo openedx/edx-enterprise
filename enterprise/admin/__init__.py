@@ -1025,7 +1025,6 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
         )
 
     test_sftp_server.short_description = 'Test SFTP Server'
-    test_sftp_server.allow_tags = True
 
     def get_urls(self):
         """

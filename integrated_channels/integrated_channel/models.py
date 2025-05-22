@@ -648,7 +648,12 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     .. no_pii:
     """
     class Meta:
-        index_together = [('enterprise_customer', 'integrated_channel_code', 'plugin_configuration_id', 'content_id')]
+        indexes = [
+            models.Index(
+                fields=['enterprise_customer', 'integrated_channel_code', 'plugin_configuration_id', 'content_id'],
+                name="customer_code_plugin_id_idx"
+            ),
+        ]
         unique_together = (('integrated_channel_code', 'plugin_configuration_id', 'content_id'),)
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
@@ -897,7 +902,12 @@ class OrphanedContentTransmissions(TimeStampedModel):
     .. no_pii:
     """
     class Meta:
-        index_together = [('integrated_channel_code', 'plugin_configuration_id', 'resolved')]
+        indexes = [
+            models.Index(
+                fields=['integrated_channel_code', 'plugin_configuration_id', 'resolved'],
+                name="channel_plugin_resolved_idx"
+            ),
+        ]
 
     integrated_channel_code = models.CharField(max_length=30)
     plugin_configuration_id = models.PositiveIntegerField(blank=False, null=False)
