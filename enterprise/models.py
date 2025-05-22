@@ -379,10 +379,10 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
     )
 
-    enable_learner_credit_modal = models.BooleanField(
-        verbose_name="Display learner credit modal in learner portal",
+    enable_learner_credit_message_box = models.BooleanField(
+        verbose_name="Display learner credit message box in learner portal",
         default=True,
-        help_text=_("Specifies whether to display the Learner Credit modal in the learner portal.")
+        help_text=_("Specifies whether to display the Learner Credit message box in the learner portal.")
     )
 
     hide_labor_market_data = models.BooleanField(

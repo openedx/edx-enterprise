@@ -19,7 +19,7 @@ Unreleased
 
 [6.0.2]
 --------
-* feat: adds enable_learner_credit_modal field to EnterpriseCustomer model
+* feat: adds enable_learner_credit_message_box field to EnterpriseCustomer model
 
 [6.0.1]
 --------

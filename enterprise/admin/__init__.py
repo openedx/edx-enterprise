@@ -245,7 +245,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                        'enable_learner_portal_sidebar_message',
                        'learner_portal_sidebar_content', 'enable_pathways', 'enable_programs',
                        'enable_demo_data_for_analytics_and_lpr', 'enable_academies', 'enable_one_academy',
-                       'enable_learner_credit_modal'),
+                       'enable_learner_credit_message_box'),
             'description': ('The following default settings should be the same for '
                             'the majority of enterprise customers, '
                             'and are either rarely used, unlikely to be sold, '
