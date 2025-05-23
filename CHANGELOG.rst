@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.0.3]
+--------
+* fix: prevents group removal email notifications when catalog_uuid is missing
+
 [6.0.2]
 --------
 * feat: adds enable_learner_credit_message_box field to EnterpriseCustomer model

@@ -8433,6 +8433,37 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.get(url)
         assert response.json().get('count') == 0
 
+    @mock.patch('enterprise.tasks.send_group_membership_removal_notification.delay', return_value=mock.MagicMock())
+    def test_remove_learners_without_catalog_uuid(self, mock_send_group_membership_removal_notification):
+        """
+        Test that removal notification is not sent when catalog_uuid is not provided
+        """
+        url = settings.TEST_SERVER + reverse(
+            'enterprise-group-remove-learners',
+            kwargs={'group_uuid': self.group_2.uuid},
+        )
+        existing_emails = []
+        memberships_to_delete = []
+        for _ in range(10):
+            membership = EnterpriseGroupMembershipFactory(group=self.group_2)
+            memberships_to_delete.append(membership)
+            existing_emails.append(membership.enterprise_customer_user.user.email)
+
+        request_data = {'learner_emails': existing_emails}
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 200
+        assert response.data == {'records_deleted': 10}
+
+        # Verify that the notification was not sent
+        mock_send_group_membership_removal_notification.assert_not_called()
+
+        # Verify that memberships were still removed
+        for membership in memberships_to_delete:
+            assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).status == 'removed'
+            assert EnterpriseGroupMembership.all_objects.get(pk=membership.pk).removed_at
+            with self.assertRaises(EnterpriseGroupMembership.DoesNotExist):
+                EnterpriseGroupMembership.objects.get(pk=membership.pk)
+
     def test_list_learners_sort_by(self):
         """
         Test that the list learners endpoint can be sorted by 'recentAction', 'status', 'memberDetails'
