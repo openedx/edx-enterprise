@@ -76,7 +76,7 @@ from test_utils.fake_catalog_api import (
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 User = auth.get_user_model()
-NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
 NOW_TIMESTAMP = 1483326245000
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 DAY_DELTA = timedelta(days=1)
