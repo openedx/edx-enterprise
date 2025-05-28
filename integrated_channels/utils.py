@@ -7,7 +7,7 @@ import itertools
 import json
 import math
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from itertools import islice
 from logging import getLogger
 from string import Formatter
@@ -19,13 +19,12 @@ import requests
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.utils import timezone
 from django.utils.html import strip_tags
 
 from enterprise.utils import parse_datetime_handle_invalid, parse_lms_api_datetime
 from integrated_channels.catalog_service_utils import get_course_run_for_enrollment
 
-UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 
@@ -95,7 +94,7 @@ def current_time_is_in_interval(start, end):
     """
     interval_start = parse_lms_api_datetime(start or UNIX_MIN_DATE_STRING)
     interval_end = parse_lms_api_datetime(end or UNIX_MAX_DATE_STRING)
-    return interval_start <= timezone.now() <= interval_end
+    return interval_start <= datetime.now(tz=timezone.utc) <= interval_end
 
 
 def chunks(dictionary, chunk_size):

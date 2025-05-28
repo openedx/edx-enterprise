@@ -7,7 +7,7 @@ import random
 import unittest
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest import mock, skip
 
 import ddt
@@ -26,7 +26,6 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import signals
 from django.test.utils import override_settings
-from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from enterprise import roles_api
@@ -76,7 +75,7 @@ from test_utils.fake_catalog_api import (
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 User = auth.get_user_model()
-NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=datetime.timezone.utc)
+NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP = 1483326245000
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 DAY_DELTA = timedelta(days=1)
@@ -2038,7 +2037,7 @@ class TestUpdateConfigLastErroredAt(unittest.TestCase, EnterpriseMockMixin):
             integrated_channel_code=csod_config.channel_code(),
             api_response_status_code=400,
             # this one is not in the time frame and should not be counted
-            remote_created_at=timezone.now().date() - timedelta(days=5)
+            remote_created_at=datetime.now(tz=timezone.utc).date() - timedelta(days=5)
         )
         call_command(
             'update_config_last_errored_at',
@@ -2131,7 +2130,7 @@ class TestRemoveStaleIntegratedChannelAPILogsCommand(unittest.TestCase, Enterpri
         Test the remove stale integrated channel api logs command.
         """
         time_duration_value = random.randint(15, 60)
-        time_threshold = timezone.now() - timedelta(days=time_duration_value)
+        time_threshold = datetime.now(tz=timezone.utc) - timedelta(days=time_duration_value)
 
         data = {
             'enterprise_customer': self.enterprise_customer,
@@ -2153,7 +2152,7 @@ class TestRemoveStaleIntegratedChannelAPILogsCommand(unittest.TestCase, Enterpri
             instances.append(IntegratedChannelAPIRequestLogs(**data))
 
         IntegratedChannelAPIRequestLogs.objects.bulk_create(instances)
-        data["created"] = data["modified"] = timezone.now()
+        data["created"] = data["modified"] = datetime.now(tz=timezone.utc)
         IntegratedChannelAPIRequestLogs.objects.create(**data)
 
         assert IntegratedChannelAPIRequestLogs.objects.all().count() == num_records + 1
