@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.0]
+--------
+* feat: Added Support for Django 5.2
+
 [6.0.3]
 --------
 * fix: prevents group removal email notifications when catalog_uuid is missing
