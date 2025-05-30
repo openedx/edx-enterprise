@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.0.4]
+--------
+* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
 [6.0.3]
 --------
 * fix: prevents group removal email notifications when catalog_uuid is missing
