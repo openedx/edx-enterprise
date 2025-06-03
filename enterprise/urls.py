@@ -19,8 +19,8 @@ from enterprise.views import (
 
 ENTERPRISE_ROUTER = RouterView.as_view()
 
-enterprise_rest_api_urls = re_path(
-    r'^enterprise/api/',
+enterprise_rest_api_urls = path(
+    'enterprise/api/',
     include('enterprise.api.urls'),
     name='enterprise_api'
 )
@@ -55,8 +55,8 @@ urlpatterns = [
         ENTERPRISE_ROUTER,
         name='enterprise_course_run_enrollment_page'
     ),
-    re_path(
-        r'^enterprise/(?P<enterprise_uuid>[^/]+)/program/(?P<program_uuid>[^/]+)/enroll/$',
+    path(
+        'enterprise/<uuid:enterprise_uuid>/program/<uuid:program_uuid>/enroll/',
         ENTERPRISE_ROUTER,
         name='enterprise_program_enrollment_page'
     ),
@@ -69,33 +69,33 @@ urlpatterns = [
 
 # Because ROOT_URLCONF points here, we are including the urls from the other apps here for now.
 urlpatterns += [
-    re_path(
+    path(
         '',
         include('consent.urls'),
         name='consent'
     ),
-    re_path(
-        r'^cornerstone/',
+    path(
+        'cornerstone/',
         include('integrated_channels.cornerstone.urls'),
         name='cornerstone'
     ),
-    re_path(
-        r'^canvas/',
+    path(
+        'canvas/',
         include('integrated_channels.canvas.urls'),
         name='canvas',
     ),
-    re_path(
-        r'^blackboard/',
+    path(
+        'blackboard/',
         include('integrated_channels.blackboard.urls'),
         name='blackboard',
     ),
-    re_path(
-        r'^enterprise_learner_portal/',
+    path(
+        'enterprise_learner_portal/',
         include('enterprise_learner_portal.urls'),
         name='enterprise_learner_portal_api'
     ),
-    re_path(
-        r'^integrated_channels/api/',
+    path(
+        'integrated_channels/api/',
         include('integrated_channels.api.urls')
     ),
 ]
