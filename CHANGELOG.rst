@@ -17,9 +17,17 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.0.4]
+[6.1.1]
 --------
 * refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
+[6.1.0]
+--------
+* feat: Added Support for Django 5.2
+
+[6.0.4]
+--------
+* feat: add `enterprise-sso-user-info/` API endpoint
 
 [6.0.3]
 --------

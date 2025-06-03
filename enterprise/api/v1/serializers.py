@@ -2357,3 +2357,11 @@ class EnterpriseCustomerAdminSerializer(serializers.ModelSerializer):
         if 'completed_tour_flows' in representation:
             representation['completed_tour_flows'] = [str(uuid) for uuid in representation['completed_tour_flows']]
         return representation
+
+
+class EnterpriseSSOUserInfoRequestSerializer(serializers.Serializer):
+    """
+    Serializer for Enterprise SSO user details request parameters.
+    """
+    org_id = serializers.CharField(required=True)
+    external_user_id = serializers.CharField(required=True)

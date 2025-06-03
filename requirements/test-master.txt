@@ -172,7 +172,7 @@ django-model-utils==5.0.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-django-multi-email-field==0.7.0
+django-multi-email-field==0.8.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
