@@ -11,6 +11,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core import mail
 from django.db import IntegrityError
+from django.core.management import call_command
 
 from enterprise import constants
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, MAX_NUM_IDENTIFY_USERS_ALIASES, BrazeAPIClient
@@ -436,3 +437,16 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
             errored_at=localized_utcnow())
         LOGGER.exception(message)
         raise exc
+
+
+@shared_task
+@set_code_owner_attribute
+def create_enterprise_customer_admins_task(batch_size=500, dry_run=False):
+    """
+    Celery task to create EnterpriseCustomerAdmin records for users with the enterprise_admin role.
+    
+    Args:
+        batch_size (int): Number of role assignments to process in each batch
+        dry_run (bool): If True, only show what would be done without making changes
+    """
+    call_command('create_enterprise_customer_admins', batch_size=batch_size, dry_run=dry_run)
