@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.3]
+--------
+* feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
+
 [6.1.1]
 --------
 * chore: upgrades python requirements
