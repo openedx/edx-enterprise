@@ -17,9 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.2]
+* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
 [6.1.1]
 --------
-* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+* chore: upgrades python requirements
 
 [6.1.0]
 --------
