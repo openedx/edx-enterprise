@@ -103,3 +103,24 @@ class TestEnterpriseCustomerAdminViewSet(APITestCase):
         data = {'flow_uuid': str(self.flow2.uuid)}
         response = self.client.post(self.complete_tour_flow_url, data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_method_not_allowed(self):
+        """
+        Test that POST to endpoint is not allowed.
+        """
+        data = {
+            'enterprise_customer_user': self.enterprise_customer_user.id,
+            'onboarding_tour_dismissed': False,
+            'onboarding_tour_completed': False
+        }
+        response = self.client.post(self.list_url, data)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.data['detail'], 'Method "POST" not allowed.')
+
+    def test_delete_method_not_allowed(self):
+        """
+        Test that DELETE to endpoint is not allowed.
+        """
+        response = self.client.delete(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.data['detail'], 'Method "DELETE" not allowed.')
