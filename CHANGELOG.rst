@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.1]
+--------
+* chore: upgrades python requirements
+
 [6.1.0]
 --------
 * feat: Added Support for Django 5.2
