@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.0]
+--------
+* feat: Added default as True for data sharing consent in the EnterpriseCustomer model.
+
 [6.1.1]
 --------
 * chore: upgrades python requirements
