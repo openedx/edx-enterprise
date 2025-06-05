@@ -385,3 +385,12 @@ ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
 EDX_BRAZE_API_SERVER = 'test-api-server'
 BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID = 'test-invitation-campaign-id'
 BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID = 'test-removal-campaign-id'
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
