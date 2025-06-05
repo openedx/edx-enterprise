@@ -1,16 +1,5 @@
 """
 Management command to create EnterpriseCustomerAdmin records for users with the enterprise_admin role.
-
-This command will:
-1. Find all users with the enterprise_admin role
-2. For each user:
-   - If they are an internal staff user (has a SystemWideEnterpriseUserRoleAssignment with applies_to_all_contexts=True):
-     - Get all active enterprises
-     - Create EnterpriseCustomerUser records for each enterprise if they don't exist
-     - Create EnterpriseCustomerAdmin records for each enterprise
-   - Otherwise:
-     - Create a single EnterpriseCustomerAdmin record for their specific enterprise
-3. Skip any users that already have EnterpriseCustomerAdmin records
 """
 
 import logging
@@ -18,7 +7,6 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from enterprise.models import (
-    EnterpriseCustomer,
     EnterpriseCustomerAdmin,
     EnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
@@ -52,16 +40,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         batch_size = options['batch_size']
-        
-        if dry_run:
-            self.stdout.write('DRY RUN - No changes will be made')
 
-        # Get all users with the enterprise_admin role
+        if dry_run:
+            logger.info('DRY RUN - No changes will be made')
+
         admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role__name='enterprise_admin'
         ).select_related('user', 'enterprise_customer')
 
-        # Process assignments in batches
         for role_assignments_batch in batch(admin_role_assignments, batch_size=batch_size):
             for role_assignment in role_assignments_batch:
                 user = role_assignment.user
@@ -78,7 +64,7 @@ class Command(BaseCommand):
         """
         if not EnterpriseCustomerAdmin.objects.filter(enterprise_customer_user=enterprise_user).exists():
             if dry_run:
-                self.stdout.write(
+                logger.info(
                     f'Would create EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
                     f'and enterprise {enterprise_user.enterprise_customer.name}'
                 )
@@ -88,13 +74,11 @@ class Command(BaseCommand):
                         EnterpriseCustomerAdmin.objects.create(
                             enterprise_customer_user=enterprise_user
                         )
-                    self.stdout.write(
-                        self.style.SUCCESS(
-                            f'Created EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
-                            f'and enterprise {enterprise_user.enterprise_customer.name}'
-                        )
+                    logger.info(
+                        f'Created EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
+                        f'and enterprise {enterprise_user.enterprise_customer.name}'
                     )
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     logger.error(
                         f'Error creating EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
                         f'and enterprise {enterprise_user.enterprise_customer.name}: {str(e)}'

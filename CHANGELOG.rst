@@ -17,6 +17,18 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.3]
+--------
+* feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
+
+[6.1.1]
+--------
+* chore: upgrades python requirements
+
+[6.1.0]
+--------
+* feat: Added Support for Django 5.2
+
 [6.0.4]
 --------
 * feat: add `enterprise-sso-user-info/` API endpoint

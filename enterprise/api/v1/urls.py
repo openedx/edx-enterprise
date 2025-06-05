@@ -4,7 +4,7 @@ URL definitions for enterprise api version 1 endpoint.
 
 from rest_framework.routers import DefaultRouter
 
-from django.urls import re_path
+from django.urls import path, re_path
 
 from enterprise.api.v1.views import (
     analytics_summary,
@@ -131,8 +131,8 @@ urlpatterns = [
         enterprise_subsidy_fulfillment.EnterpriseSubsidyFulfillmentViewSet.as_view({'get': 'unenrolled'}),
         name='enterprise-subsidy-fulfillment-unenrolled'
     ),
-    re_path(
-        r'^read_notification$',
+    path(
+        'read_notification',
         notifications.NotificationReadView.as_view(),
         name='read-notification'
     ),
@@ -143,8 +143,8 @@ urlpatterns = [
         ),
         name='link-pending-enterprise-learner'
     ),
-    re_path(
-        r'^request_codes$',
+    path(
+        'request_codes',
         coupon_codes.CouponCodesView.as_view(),
         name='request-codes'
     ),
