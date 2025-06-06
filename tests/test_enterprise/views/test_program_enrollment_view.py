@@ -5,6 +5,7 @@ Tests for the ``ProgramEnrollmentView`` view of the Enterprise app.
 import copy
 from unittest import mock
 from urllib.parse import urlencode
+from uuid import uuid4
 
 import ddt
 from faker import Factory as FakerFactory
@@ -749,7 +750,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         """
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
-            args=['some-fake-enterprise-customer-uuid', self.dummy_program_uuid],
+            args=[uuid4(), self.dummy_program_uuid],
         )
 
         self._login()

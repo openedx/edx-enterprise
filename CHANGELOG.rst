@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.2]
+--------
+* fix: fix unit tests that broke due to ``path()`` returning UUID objects
+
 [6.1.1]
 --------
 * chore: upgrades python requirements
