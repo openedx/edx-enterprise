@@ -17,6 +17,9 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.1]
+* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
 [6.2.0]
 --------
 * feat: Added default as True for data sharing consent in the EnterpriseCustomer model.
