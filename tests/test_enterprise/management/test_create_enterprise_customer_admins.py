@@ -4,7 +4,6 @@ Tests for the Django management command `create_enterprise_customer_admins`.
 
 import logging
 
-import ddt
 from pytest import mark
 from testfixtures import LogCapture
 
@@ -24,7 +23,6 @@ from test_utils.factories import (
 
 
 @mark.django_db
-@ddt.ddt
 class CreateEnterpriseCustomerAdminsCommandTests(TestCase):
     """
     Test command `create_enterprise_customer_admins`.

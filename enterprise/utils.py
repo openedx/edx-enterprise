@@ -926,8 +926,11 @@ def get_enterprise_customer_or_404(enterprise_uuid):
     """
     EnterpriseCustomer = enterprise_customer_model()
     try:
-        enterprise_uuid = UUID(enterprise_uuid)
-        return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
+        if isinstance(enterprise_uuid, str):
+            enterprise_uuid_obj = UUID(enterprise_uuid)
+        else:
+            enterprise_uuid_obj = enterprise_uuid
+        return EnterpriseCustomer.objects.get(uuid=enterprise_uuid_obj)
     except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist) as no_customer_error:
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
         raise Http404 from no_customer_error

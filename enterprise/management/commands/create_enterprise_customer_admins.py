@@ -6,11 +6,7 @@ import logging
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from enterprise.models import (
-    EnterpriseCustomerAdmin,
-    EnterpriseCustomerUser,
-    SystemWideEnterpriseUserRoleAssignment,
-)
+from enterprise.models import EnterpriseCustomerAdmin, EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
 from enterprise.utils import batch
 
 logger = logging.getLogger(__name__)

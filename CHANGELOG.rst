@@ -17,9 +17,20 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.1.3]
+[6.2.2]
 --------
 * feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
+
+[6.2.1]
+* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
+[6.2.0]
+--------
+* feat: Added default as True for data sharing consent in the EnterpriseCustomer model.
+
+[6.1.2]
+--------
+* fix: fix unit tests that broke due to ``path()`` returning UUID objects
 
 [6.1.1]
 --------
