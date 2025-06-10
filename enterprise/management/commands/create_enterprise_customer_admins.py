@@ -3,6 +3,7 @@ Management command to create EnterpriseCustomerAdmin records for users with the 
 """
 
 import logging
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -45,37 +46,64 @@ class Command(BaseCommand):
         ).select_related('user', 'enterprise_customer')
 
         for role_assignments_batch in batch(admin_role_assignments, batch_size=batch_size):
-            for role_assignment in role_assignments_batch:
-                user = role_assignment.user
-                enterprise_user = EnterpriseCustomerUser.objects.filter(
-                    user_id=user.id,
-                    enterprise_customer=role_assignment.enterprise_customer
-                ).first()
-                if enterprise_user:
-                    self._create_admin_record(enterprise_user, dry_run)
+            # Get all user IDs and enterprise customer IDs from this batch
+            user_ids = [ra.user.id for ra in role_assignments_batch]
+            enterprise_customer_uuids = [
+                ra.enterprise_customer.uuid
+                for ra in role_assignments_batch
+                if ra.enterprise_customer is not None
+            ]
+            if not enterprise_customer_uuids:
+                continue
 
-    def _create_admin_record(self, enterprise_user, dry_run):
-        """
-        Create an EnterpriseCustomerAdmin record for the given EnterpriseCustomerUser if one doesn't exist.
-        """
-        if not EnterpriseCustomerAdmin.objects.filter(enterprise_customer_user=enterprise_user).exists():
-            if dry_run:
-                logger.info(
-                    f'Would create EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
-                    f'and enterprise {enterprise_user.enterprise_customer.name}'
+            enterprise_users = EnterpriseCustomerUser.objects.filter(
+                user_id__in=user_ids,
+                enterprise_customer__uuid__in=enterprise_customer_uuids
+            ).select_related('enterprise_customer')
+
+            enterprise_user_map = {
+                (eu.user_id, eu.enterprise_customer.uuid): eu
+                for eu in enterprise_users
+            }
+
+            existing_admin_enterprise_user_ids = set(
+                EnterpriseCustomerAdmin.objects.filter(
+                    enterprise_customer_user__in=enterprise_users
+                ).values_list('enterprise_customer_user_id', flat=True)
+            )
+
+            enterprise_users_to_create = []
+            for role_assignment in role_assignments_batch:
+                if role_assignment.enterprise_customer is None:
+                    continue
+                enterprise_user = enterprise_user_map.get(
+                    (role_assignment.user.id, role_assignment.enterprise_customer.uuid)
                 )
-            else:
-                try:
-                    with transaction.atomic():
-                        EnterpriseCustomerAdmin.objects.create(
-                            enterprise_customer_user=enterprise_user
+                if enterprise_user and enterprise_user.id not in existing_admin_enterprise_user_ids:
+                    enterprise_users_to_create.append(enterprise_user)
+
+            if enterprise_users_to_create:
+                if dry_run:
+                    for enterprise_user in enterprise_users_to_create:
+                        logger.info(
+                            f'Would create EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
+                            f'and enterprise {enterprise_user.enterprise_customer.name}'
                         )
-                    logger.info(
-                        f'Created EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
-                        f'and enterprise {enterprise_user.enterprise_customer.name}'
-                    )
-                except Exception as e:  # pylint: disable=broad-except
-                    logger.error(
-                        f'Error creating EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
-                        f'and enterprise {enterprise_user.enterprise_customer.name}: {str(e)}'
-                    )
+                else:
+                    try:
+                        with transaction.atomic():
+                            admin_records = [
+                                EnterpriseCustomerAdmin(enterprise_customer_user=eu)
+                                for eu in enterprise_users_to_create
+                            ]
+                            EnterpriseCustomerAdmin.objects.bulk_create(admin_records)
+
+                            for enterprise_user in enterprise_users_to_create:
+                                logger.info(
+                                    f'Created EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
+                                    f'and enterprise {enterprise_user.enterprise_customer.name}'
+                                )
+                    except Exception as e:  # pylint: disable=broad-except
+                        logger.error(
+                            f'Error creating EnterpriseCustomerAdmin records: {str(e)}'
+                        )
