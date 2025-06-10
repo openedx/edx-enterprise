@@ -100,8 +100,7 @@ class Command(BaseCommand):
 
                             for enterprise_user in enterprise_users_to_create:
                                 logger.info(
-                                    f'Created EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
-                                    f'and enterprise {enterprise_user.enterprise_customer.name}'
+                                    f'Created EnterpriseCustomerAdmin for user {enterprise_user}'
                                 )
                     except Exception as e:  # pylint: disable=broad-except
                         logger.error(

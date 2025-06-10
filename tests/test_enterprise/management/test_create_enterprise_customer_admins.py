@@ -10,16 +10,9 @@ from testfixtures import LogCapture
 from django.core.management import call_command
 from django.test import TestCase
 
-from enterprise.models import (
-    EnterpriseCustomerAdmin,
-    SystemWideEnterpriseUserRoleAssignment,
-)
 from enterprise import roles_api
-from test_utils.factories import (
-    EnterpriseCustomerFactory,
-    EnterpriseCustomerUserFactory,
-    UserFactory,
-)
+from enterprise.models import EnterpriseCustomerAdmin, SystemWideEnterpriseUserRoleAssignment
+from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
 @mark.django_db
@@ -72,7 +65,5 @@ class CreateEnterpriseCustomerAdminsCommandTests(TestCase):
             admin_record = EnterpriseCustomerAdmin.objects.first()
             assert admin_record.enterprise_customer_user == self.enterprise_customer_user
 
-            expected_msg = (
-                f'Created EnterpriseCustomerAdmin for user {self.user.email} '
-                f'and enterprise {self.enterprise_customer.name}')
+            expected_msg = f'Created EnterpriseCustomerAdmin for user {self.enterprise_customer_user}'
             assert any(expected_msg in record.getMessage() for record in log_capture.records)
