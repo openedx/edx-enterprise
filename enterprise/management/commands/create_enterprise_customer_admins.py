@@ -86,8 +86,7 @@ class Command(BaseCommand):
                 if dry_run:
                     for enterprise_user in enterprise_users_to_create:
                         logger.info(
-                            f'Would create EnterpriseCustomerAdmin for user {enterprise_user.user_email} '
-                            f'and enterprise {enterprise_user.enterprise_customer.name}'
+                            f'Would create EnterpriseCustomerAdmin for user {enterprise_user}'
                         )
                 else:
                     try:

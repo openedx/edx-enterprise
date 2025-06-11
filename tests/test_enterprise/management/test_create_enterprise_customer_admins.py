@@ -49,8 +49,7 @@ class CreateEnterpriseCustomerAdminsCommandTests(TestCase):
             assert EnterpriseCustomerAdmin.objects.count() == 0
 
             expected_msg = (
-                f'Would create EnterpriseCustomerAdmin for user {self.user.email} '
-                f'and enterprise {self.enterprise_customer.name}'
+                f'Would create EnterpriseCustomerAdmin for user {self.enterprise_customer_user}'
             )
             assert any(expected_msg in record.getMessage() for record in log_capture.records)
 
