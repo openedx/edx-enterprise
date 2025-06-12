@@ -1411,3 +1411,31 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
                 'are not used but may be re-enabled if needed.'
 
         return formfield
+
+
+@admin.register(models.EnterpriseWaffleFlagPercentage)
+class EnterpriseWaffleFlagPercentageAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseWaffleFlagPercentage.
+    """
+    list_display = (
+        'flag',
+        'enterprise_customer',
+        'percent',
+        'created',
+        'modified',
+    )
+
+    list_filter = ('enterprise_customer',)
+
+    search_fields = (
+        'flag__name',
+        'enterprise_customer__uuid',
+        'enterprise_customer__slug',
+        'enterprise_customer__name',
+    )
+
+    ordering = ('-modified',)
+
+    class Meta:
+        model = models.EnterpriseWaffleFlagPercentage

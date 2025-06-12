@@ -2,10 +2,68 @@
 Waffle toggles for enterprise features within the LMS.
 """
 
+import crum
+
+from waffle import flag_is_active
+from waffle.models import Flag
+
 from edx_toggles.toggles import WaffleFlag
+from enterprise.models import EnterpriseCustomerUser, EnterpriseWaffleFlagPercentage
 
 ENTERPRISE_NAMESPACE = 'enterprise'
 ENTERPRISE_LOG_PREFIX = 'Enterprise: '
+
+
+class EnterpriseWaffleFlag(WaffleFlag):
+    """
+    Waffle flag that can be enabled for a percentage of users
+    within a specific enterprise customer.
+
+    If a percentage override is found for the given enterprise, it will be
+    used. Otherwise, it falls back to the standard waffle flag behavior.
+    """
+
+    def is_enabled(self, enterprise_customer_uuid=None):
+        """
+        Returns whether the feature flag is enabled for the given request and enterprise customer.
+        """
+        request = crum.get_current_request()
+        user = request.user
+        # 1. We must have a request, user, and enterprise context to proceed.
+        if not all([request, (user and user.is_authenticated), enterprise_customer_uuid]):
+            return False
+
+        # 2. The user must be an active, linked member of the enterprise.
+        if not EnterpriseCustomerUser.objects.filter(
+            user_id=user.id,
+            enterprise_customer__uuid=enterprise_customer_uuid,
+            linked=True,
+            active=True,
+        ).exists():
+            return False
+
+        # 3. Get the waffle flag from the database.
+        try:
+            flag = Flag.objects.get(name=self.name)
+        except Flag.DoesNotExist:
+            return False
+
+        # 4. Check for an enterprise-specific percentage override.
+        flag_override = EnterpriseWaffleFlagPercentage.objects.filter(
+            flag=flag, enterprise_customer__uuid=enterprise_customer_uuid
+        ).first()
+
+        if flag_override:
+            # An override exists. We use its percentage but still honor all
+            # other flag settings (e.g., 'staff', 'superuser', 'testing').
+            # We do this by temporarily setting the percentage on the flag
+            # object in memory and running the standard `is_active` check.
+            flag.percent = flag_override.percent
+            return flag.is_active(request)
+        else:
+            # No override found. Fall back to the default global behavior.
+            return flag_is_active(request, self.waffle_name)
+
 
 # .. toggle_name: enterprise.TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
 # .. toggle_implementation: WaffleFlag
@@ -92,6 +150,18 @@ ENTERPRISE_ADMIN_ONBOARDING = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.enterprise_learner_bff_concurrent_requests
+# .. toggle_implementation: EnterpriseWaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables concurrent requests for the enterprise learner BFF.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2025-06-12
+ENTERPRISE_LEARNER_BFF_CONCURRENT_REQUESTS = EnterpriseWaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.enterprise_learner_bff_concurrent_requests',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -142,6 +212,35 @@ def enterprise_admin_onboarding_enabled():
     return ENTERPRISE_ADMIN_ONBOARDING.is_enabled()
 
 
+def get_enterprise_flags_for_user(flag):
+    """
+    Returns a dictionary of flag statuses for the given user and their linked enterprise customers.
+    
+    Args:
+        flag: The WaffleFlag instance to check
+        user: The user to check flag status for
+    
+    Returns:
+        dict: Mapping of enterprise UUID to flag status (bool)
+    """
+    request = crum.get_current_request()
+    user = request.user
+    if not user or not user.is_authenticated:
+        return {}
+
+    enterprise_customer_uuids = EnterpriseCustomerUser.objects.filter(
+        user_id=user.id,
+        linked=True,
+        active=True,
+        enterprise_customer__active=True,
+    ).values_list('enterprise_customer__uuid', flat=True)
+
+    return {
+        str(uuid): flag.is_enabled(enterprise_customer_uuid=uuid)
+        for uuid in enterprise_customer_uuids
+    }
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -155,3 +254,54 @@ def enterprise_features():
         'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled(),
         'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
     }
+
+
+def get_enterprise_flag_mapping(flags):
+    """
+    Returns a mapping of enterprise UUIDs to their flag statuses.
+    
+    Args:
+        flags: A dictionary of flag names to flag instances
+              Example: {
+                  'enterprise_learner_bff_concurrent_requests': ENTERPRISE_LEARNER_BFF_CONCURRENT_REQUESTS,
+              }
+    
+    Returns:
+        dict: {
+            '<uuid>': {
+                'flag_name1': bool,
+                'flag_name2': bool,
+                ...
+            },
+            ...
+        }
+    """
+    request = crum.get_current_request()
+    user = getattr(request, 'user', None)
+
+    if not user or not user.is_authenticated:
+        return {}
+
+    enterprise_customer_uuids = EnterpriseCustomerUser.objects.filter(
+        user_id=user.id,
+        linked=True,
+        active=True,
+        enterprise_customer__active=True,
+    ).values_list('enterprise_customer__uuid', flat=True)
+
+    return {
+        str(uuid): {
+            flag_name: flag.is_enabled(enterprise_customer_uuid=uuid)
+            for flag_name, flag in flags.items()
+        }
+        for uuid in enterprise_customer_uuids
+    }
+
+
+def enterprise_features_by_customer():
+    """
+    Returns a dict of enterprise Waffle-based feature flags.
+    """
+    return get_enterprise_flag_mapping({
+        'enterprise_learner_bff_concurrent_requests': ENTERPRISE_LEARNER_BFF_CONCURRENT_REQUESTS,
+    })

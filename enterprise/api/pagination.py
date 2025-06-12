@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from edx_rest_framework_extensions.paginators import DefaultPagination
 from rest_framework.response import Response
 
-from enterprise.toggles import enterprise_features
+from enterprise.toggles import enterprise_features, enterprise_features_by_customer
 
 
 class PaginationWithFeatureFlags(DefaultPagination):
@@ -35,6 +35,7 @@ class PaginationWithFeatureFlags(DefaultPagination):
         paginated_response = super().get_paginated_response(data)
         paginated_response.data.update({
             'enterprise_features': enterprise_features(),
+            'enterprise_features_by_customer': enterprise_features_by_customer(),
         })
         return paginated_response
 
