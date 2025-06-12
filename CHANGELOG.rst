@@ -17,9 +17,17 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.2.2]
+[6.2.4]
 --------
 * feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
+
+[6.2.3]
+--------
+* chore: upgrades python requirements
+
+[6.2.2]
+* fix: fix RenameIndex migrations to also handle Django Model level analysis
+* Context: This fixes the issue where `makemigrations` was regenerating RenameIndex migrations after Django 5.2 support was added in release 6.1.0
 
 [6.2.1]
 * refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
