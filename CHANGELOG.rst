@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.3.0]
+* feat: add support for percentage-based Waffle flags across linked EnterpriseCustomerUsers for a given enterprise customer.
+* feat: add waffle flag for concurrent requests support for the enterprise learner BFF.
+
 [6.2.2]
 * fix: fix RenameIndex migrations to also handle Django Model level analysis
 * Context: This fixes the issue where `makemigrations` was regenerating RenameIndex migrations after Django 5.2 support was added in release 6.1.0

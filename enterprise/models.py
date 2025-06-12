@@ -5037,3 +5037,39 @@ class EnterpriseCustomerSupportUsersView(models.Model):
     class Meta:
         managed = False
         db_table = 'view_enterprise_customer_support_users'
+
+
+class EnterpriseWaffleFlagPercentage(TimeStampedModel):
+    """
+    Links a Waffle Flag to an Enterprise Customer with a specific
+    rollout percentage.
+    """
+
+    flag = models.ForeignKey(
+        "waffle.Flag",
+        on_delete=models.CASCADE,
+        related_name="enterprise_percentages",
+    )
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        on_delete=models.CASCADE,
+        related_name="waffle_flag_percentages",
+    )
+    percent = models.DecimalField(
+        "Percentage",
+        max_digits=4,
+        decimal_places=1,
+        default="0.0",
+        help_text=(
+            "Activate this flag for this percentage of users "
+            "within this enterprise. Overrides the global flag percentage."
+        ),
+    )
+
+    class Meta:
+        unique_together = ("flag", "enterprise_customer")
+        verbose_name = "Enterprise Waffle Flag Percentage"
+        verbose_name_plural = "Enterprise Waffle Flag Percentages"
+
+    def __str__(self):
+        return f"{self.enterprise_customer.name}: {self.percent}% for {self.flag.name}"
