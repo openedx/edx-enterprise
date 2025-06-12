@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.2]
+* fix: fix RenameIndex migrations to also handle Django Model level analysis
+* Context: This fixes the issue where `makemigrations` was regenerating RenameIndex migrations after Django 5.2 support was added in release 6.1.0
+
 [6.2.1]
 * refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
 
