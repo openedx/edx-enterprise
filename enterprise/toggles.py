@@ -212,35 +212,6 @@ def enterprise_admin_onboarding_enabled():
     return ENTERPRISE_ADMIN_ONBOARDING.is_enabled()
 
 
-def get_enterprise_flags_for_user(flag):
-    """
-    Returns a dictionary of flag statuses for the given user and their linked enterprise customers.
-    
-    Args:
-        flag: The WaffleFlag instance to check
-        user: The user to check flag status for
-    
-    Returns:
-        dict: Mapping of enterprise UUID to flag status (bool)
-    """
-    request = crum.get_current_request()
-    user = request.user
-    if not user or not user.is_authenticated:
-        return {}
-
-    enterprise_customer_uuids = EnterpriseCustomerUser.objects.filter(
-        user_id=user.id,
-        linked=True,
-        active=True,
-        enterprise_customer__active=True,
-    ).values_list('enterprise_customer__uuid', flat=True)
-
-    return {
-        str(uuid): flag.is_enabled(enterprise_customer_uuid=uuid)
-        for uuid in enterprise_customer_uuids
-    }
-
-
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -256,7 +227,7 @@ def enterprise_features():
     }
 
 
-def get_enterprise_flag_mapping(flags):
+def get_features_by_enterprise_customer(flags):
     """
     Returns a mapping of enterprise UUIDs to their flag statuses.
     
@@ -302,6 +273,6 @@ def enterprise_features_by_customer():
     """
     Returns a dict of enterprise Waffle-based feature flags.
     """
-    return get_enterprise_flag_mapping({
+    return get_features_by_enterprise_customer({
         'enterprise_learner_bff_concurrent_requests': ENTERPRISE_LEARNER_BFF_CONCURRENT_REQUESTS,
     })
