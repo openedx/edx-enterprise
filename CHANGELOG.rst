@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.5]
+--------
+* feat: adds OnboardingFlow model to django
+
+
 [6.2.4]
 --------
 * feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
