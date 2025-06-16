@@ -203,7 +203,7 @@ dnspython==2.7.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   pymongo
-doc8==1.1.2
+doc8==2.0.0
     # via -r requirements/doc.in
 docutils==0.21.2
     # via
@@ -262,7 +262,7 @@ factory-boy==3.3.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in
-faker==37.3.0
+faker==37.4.0
     # via factory-boy
 fastavro==1.11.1
     # via
