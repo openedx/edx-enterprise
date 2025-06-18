@@ -6,6 +6,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from enterprise.models import EnterpriseCustomerAdmin, EnterpriseCustomerUser, SystemWideEnterpriseUserRoleAssignment
 from enterprise.utils import batch
@@ -40,6 +41,21 @@ class Command(BaseCommand):
 
         if dry_run:
             logger.info('DRY RUN - No changes will be made')
+
+        # First, update all records with null last_login
+        try:
+            null_login_admins = EnterpriseCustomerAdmin.objects.filter(last_login__isnull=True)
+            count = null_login_admins.count()
+            if count > 0:
+                if dry_run:
+                    logger.info(f'Would update last_login for {count} existing admin records')
+                else:
+                    with transaction.atomic():
+                        current_time = timezone.now()
+                        null_login_admins.update(last_login=current_time)
+                        logger.info(f'Updated last_login for {count} existing admin records')
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f'Error updating last_login for existing records: {str(e)}')
 
         admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role__name='enterprise_admin'
@@ -92,7 +108,10 @@ class Command(BaseCommand):
                     try:
                         with transaction.atomic():
                             admin_records = [
-                                EnterpriseCustomerAdmin(enterprise_customer_user=eu)
+                                EnterpriseCustomerAdmin(
+                                    enterprise_customer_user=eu,
+                                    last_login=timezone.now()
+                                )
                                 for eu in enterprise_users_to_create
                             ]
                             EnterpriseCustomerAdmin.objects.bulk_create(admin_records)
