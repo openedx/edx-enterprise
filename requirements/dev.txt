@@ -187,7 +187,7 @@ code-annotations==2.3.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-coverage[toml]==7.8.2
+coverage[toml]==7.9.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest-cov
@@ -337,7 +337,7 @@ dnspython==2.7.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pymongo
-doc8==1.1.2
+doc8==2.0.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
 docutils==0.21.2
     # via
@@ -430,7 +430,7 @@ factory-boy==3.3.3
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-faker==37.3.0
+faker==37.4.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
@@ -635,6 +635,7 @@ pluggy==1.6.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   diff-cover
     #   pytest
+    #   pytest-cov
     #   tox
 polib==1.2.0
     # via edx-i18n-tools
@@ -747,7 +748,7 @@ pytest==6.2.5
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.1.1
+pytest-cov==6.2.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 pytest-django==4.5.2
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
