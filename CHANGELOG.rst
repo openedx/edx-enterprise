@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.6]
+--------
+* feat: adds last login to EnterpriseCustomerAdmin records
+
 [6.2.5]
 --------
 * feat: adds OnboardingFlow model to django
