@@ -1411,3 +1411,16 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
                 'are not used but may be re-enabled if needed.'
 
         return formfield
+
+
+@admin.register(models.OnboardingFlow)
+class OnboardingFlowAdmin(admin.ModelAdmin):
+    """
+    Django admin model for OnboardingFlow.
+    """
+
+    list_display = ('uuid', 'title', 'active')
+
+    class Meta:
+        fields = '__all__'
+        model = models.OnboardingFlow
