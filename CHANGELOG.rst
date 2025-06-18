@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.2.6]
+[6.2.7]
 --------
 * feat: adds last login to EnterpriseCustomerAdmin records
+
+[6.2.6]
+--------
+* chore: upgrades python requirements
 
 [6.2.5]
 --------
