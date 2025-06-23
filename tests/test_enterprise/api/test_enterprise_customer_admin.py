@@ -46,6 +46,7 @@ class TestEnterpriseCustomerAdminViewSet(APITestCase):
             'enterprise-customer-admin-complete-tour-flow',
             kwargs={'pk': self.admin.uuid}
         )
+        self.dismiss_tour_url = reverse('enterprise-customer-admin-dismiss-tour')
 
     def test_get_list(self):
         """
@@ -86,6 +87,79 @@ class TestEnterpriseCustomerAdminViewSet(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], 'flow_uuid is required')
 
+    def test_dismiss_tour_success_default(self):
+        """
+        Test successful dismissal of tour with default value (True).
+        """
+        response = self.client.patch(self.dismiss_tour_url, {})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'success')
+        self.assertEqual(response.data['onboarding_tour_dismissed'], True)
+        self.assertIn('Successfully updated onboarding_tour_dismissed to True', response.data['message'])
+
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.onboarding_tour_dismissed, True)
+
+    def test_dismiss_tour_success_explicit_true(self):
+        """
+        Test successful dismissal of tour with explicit True value.
+        """
+        data = {'dismissed': True}
+        response = self.client.patch(self.dismiss_tour_url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'success')
+        self.assertEqual(response.data['onboarding_tour_dismissed'], True)
+        self.assertIn('Successfully updated onboarding_tour_dismissed to True', response.data['message'])
+
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.onboarding_tour_dismissed, True)
+
+    def test_dismiss_tour_success_false(self):
+        """
+        Test successful un-dismissal of tour with False value.
+        """
+        self.admin.onboarding_tour_dismissed = True
+        self.admin.save()
+
+        data = {'dismissed': False}
+        response = self.client.patch(self.dismiss_tour_url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'success')
+        self.assertEqual(response.data['onboarding_tour_dismissed'], False)
+        self.assertIn('Successfully updated onboarding_tour_dismissed to False', response.data['message'])
+
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.onboarding_tour_dismissed, False)
+
+    def test_dismiss_tour_invalid_boolean(self):
+        """
+        Test dismissal of tour with invalid boolean value.
+        """
+        data = {'dismissed': 'not_a_boolean'}
+        response = self.client.patch(self.dismiss_tour_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'dismissed must be a boolean value')
+
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.onboarding_tour_dismissed, False)
+
+    def test_dismiss_tour_invalid_type(self):
+        """
+        Test dismissal of tour with invalid type (integer instead of boolean).
+        """
+        data = {'dismissed': 1}
+        response = self.client.patch(self.dismiss_tour_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'dismissed must be a boolean value')
+
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.onboarding_tour_dismissed, False)
+
     def test_unauthorized_access(self):
         """
         Test unauthorized access to endpoints.
@@ -102,6 +176,10 @@ class TestEnterpriseCustomerAdminViewSet(APITestCase):
 
         data = {'flow_uuid': str(self.flow2.uuid)}
         response = self.client.post(self.complete_tour_flow_url, data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        data = {'dismissed': True}
+        response = self.client.patch(self.dismiss_tour_url, data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_method_not_allowed(self):

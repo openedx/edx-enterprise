@@ -79,3 +79,38 @@ class EnterpriseCustomerAdminViewSet(
                 {'error': f'OnboardingFlow with uuid {flow_uuid} does not exist'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    @action(detail=False, methods=['patch'])
+    def dismiss_tour(self, request):
+        """
+        Update the onboarding_tour_dismissed field for the current admin.
+        PATCH /api/v1/enterprise-customer-admin/dismiss_tour/
+
+        Request Arguments:
+        - ``dismissed``: Boolean indicating whether the tour should be dismissed (optional, defaults to True)
+
+        Returns: A response indicating success or failure
+        """
+        admin = self.get_queryset().first()
+        if not admin:
+            return Response(
+                {'error': 'No admin record found for current user'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        dismissed = request.data.get('dismissed', True)
+
+        if not isinstance(dismissed, bool):
+            return Response(
+                {'error': 'dismissed must be a boolean value'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        admin.onboarding_tour_dismissed = dismissed
+        admin.save()
+
+        return Response({
+            'status': 'success',
+            'message': f'Successfully updated onboarding_tour_dismissed to {dismissed}',
+            'onboarding_tour_dismissed': dismissed
+        })

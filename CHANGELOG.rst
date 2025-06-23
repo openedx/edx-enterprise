@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.8]
+--------
+* feat: adds endpoint to dismiss onboarding confirmation modal
+
 [6.2.7]
 --------
 * feat: adds last login to EnterpriseCustomerAdmin records
