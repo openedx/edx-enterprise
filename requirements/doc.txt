@@ -41,6 +41,7 @@ attrs==25.3.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
+    #   edx-ace
     #   openedx-events
     #   pytest
 babel==2.17.0
@@ -69,6 +70,14 @@ botocore==1.38.29
     #   boto3
     #   s3transfer
     #   snowflake-connector-python
+cachecontrol==0.14.3
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   firebase-admin
+cachetools==5.5.2
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-auth
 celery==5.5.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
@@ -139,10 +148,12 @@ django==4.2.22
     #   django-model-utils
     #   django-multi-email-field
     #   django-oauth-toolkit
+    #   django-push-notifications
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
     #   drf-yasg
+    #   edx-ace
     #   edx-api-doc-tools
     #   edx-braze-client
     #   edx-django-utils
@@ -179,6 +190,10 @@ django-oauth-toolkit==1.7.1
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-object-actions==5.0.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+django-push-notifications==3.2.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   edx-ace
 django-simple-history==3.1.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
@@ -221,9 +236,13 @@ drf-yasg==1.21.10
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-api-doc-tools
+edx-ace==1.14.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   edx-braze-client
 edx-api-doc-tools==2.1.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-edx-braze-client==1.0.2
+edx-braze-client==1.1.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r requirements/doc.in
@@ -235,6 +254,7 @@ edx-django-utils==8.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   django-config-models
+    #   edx-ace
     #   edx-braze-client
     #   edx-drf-extensions
     #   edx-rest-api-client
@@ -272,11 +292,81 @@ filelock==3.18.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
+firebase-admin==6.8.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   edx-ace
 frozenlist==1.6.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     #   aiosignal
+google-api-core[grpc]==2.25.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   firebase-admin
+    #   google-api-python-client
+    #   google-cloud-core
+    #   google-cloud-firestore
+    #   google-cloud-storage
+google-api-python-client==2.171.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   firebase-admin
+google-auth==2.40.2
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-core
+    #   google-api-python-client
+    #   google-auth-httplib2
+    #   google-cloud-core
+    #   google-cloud-firestore
+    #   google-cloud-storage
+google-auth-httplib2==0.2.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-python-client
+google-cloud-core==2.4.3
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-cloud-firestore
+    #   google-cloud-storage
+google-cloud-firestore==2.21.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   firebase-admin
+google-cloud-storage==3.1.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   firebase-admin
+google-crc32c==1.7.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-cloud-storage
+    #   google-resumable-media
+google-resumable-media==2.7.2
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-cloud-storage
+googleapis-common-protos==1.70.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-core
+    #   grpcio-status
+grpcio==1.72.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-core
+    #   grpcio-status
+grpcio-status==1.72.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-core
+httplib2==0.22.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-python-client
+    #   google-auth-httplib2
 idna==3.10
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -317,6 +407,10 @@ markupsafe==3.0.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   jinja2
+msgpack==1.1.0
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   cachecontrol
 multidict==6.4.4
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -372,6 +466,19 @@ propcache==0.3.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     #   yarl
+proto-plus==1.26.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-core
+    #   google-cloud-firestore
+protobuf==6.31.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-api-core
+    #   google-cloud-firestore
+    #   googleapis-common-protos
+    #   grpcio-status
+    #   proto-plus
 psutil==7.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -382,13 +489,19 @@ pyasn1==0.6.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   pgpy
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.4.2
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-auth
 pycparser==2.22
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   cffi
 pydata-sphinx-theme==0.15.4
     # via sphinx-book-theme
-pygments==2.19.1
+pygments==2.19.2
     # via
     #   accessible-pygments
     #   doc8
@@ -401,6 +514,7 @@ pyjwt[crypto]==2.10.1
     #   drf-jwt
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   firebase-admin
     #   snowflake-connector-python
 pymongo==4.4.0
     # via
@@ -415,6 +529,10 @@ pyopenssl==25.1.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   snowflake-connector-python
+pyparsing==3.2.3
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   httplib2
 pytest==6.2.5
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
@@ -424,6 +542,7 @@ python-dateutil==2.9.0.post0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   botocore
     #   celery
+    #   edx-ace
 python-ipware==3.0.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
@@ -450,11 +569,15 @@ readme-renderer==44.0
 requests==2.32.3
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   cachecontrol
     #   django-oauth-toolkit
     #   edx-braze-client
     #   edx-drf-extensions
     #   edx-rest-api-client
+    #   google-api-core
+    #   google-cloud-storage
     #   openai
+    #   sailthru-client
     #   slumber
     #   snowflake-connector-python
     #   sphinx
@@ -462,19 +585,32 @@ restructuredtext-lint==1.4.0
     # via doc8
 roman-numerals-py==3.1.0
     # via sphinx
+rsa==4.9.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   google-auth
 rules==3.5
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 s3transfer==0.13.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   boto3
+sailthru-client==2.2.3
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   edx-ace
 semantic-version==2.10.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-drf-extensions
+simplejson==3.20.1
+    # via
+    #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   sailthru-client
 six==1.17.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
+    #   edx-ace
     #   edx-ccx-keys
     #   edx-rbac
     #   python-dateutil
@@ -518,6 +654,7 @@ stevedore==5.4.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   code-annotations
     #   doc8
+    #   edx-ace
     #   edx-django-utils
     #   edx-opaque-keys
 testfixtures==8.3.0
@@ -557,6 +694,7 @@ uritemplate==4.2.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   drf-yasg
+    #   google-api-python-client
 urllib3==2.2.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
