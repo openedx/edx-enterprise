@@ -13,6 +13,7 @@ from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
+from enterprise.event_bus import send_enterprise_group_deleted_event
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -451,3 +452,12 @@ if COURSE_UNENROLLMENT_COMPLETED is not None:
 
 if COURSE_ENROLLMENT_CHANGED is not None:
     COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
+
+
+@receiver(post_delete, sender=models.EnterpriseGroup)
+def post_delete_enterprise_group(_sender, instance, **_kwargs):
+    """
+    Handle the deletion of an EnterpriseGroup by sending an event to the event bus.
+    """
+    # Send the ENTERPRISE_GROUP_DELETED event
+    send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
