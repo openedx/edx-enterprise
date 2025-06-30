@@ -19,6 +19,7 @@ from enterprise.models import (
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
     EnterpriseGroupMembership,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
@@ -41,6 +42,7 @@ from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupFactory,
     EnterpriseGroupMembershipFactory,
     LearnerCreditEnterpriseCourseEnrollmentFactory,
     PendingEnrollmentFactory,
@@ -1174,3 +1176,22 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+class TestEnterpriseGroupSignals(TestCase):
+    """
+    Tests the EnterpriseGroup signals.
+    """
+
+    # Mock enterprise/signals.py: from enterprise.event_bus import send_enterprise_group_deleted_event
+    @mock.patch('enterprise.event_bus.send_enterprise_group_deleted_event')
+    def test_delete_enterprise_group(self, mock_send_enterprise_group_deleted_event):
+        """
+        Tests that when an EnterpriseGroup is deleted, the API client is called to delete the group.
+        """
+        enterprise_group = EnterpriseGroupFactory()
+        enterprise_group.delete()
+
+        # Verify the event was sent to the event bus
+        mock_send_enterprise_group_deleted_event.assert_called_once_with(enterprise_group.uuid)
+        self.assertFalse(EnterpriseGroup.objects.exists())
