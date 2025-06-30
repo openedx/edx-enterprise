@@ -460,4 +460,6 @@ def post_delete_enterprise_group(_sender, instance, **_kwargs):
     Handle the deletion of an EnterpriseGroup by sending an event to the event bus.
     """
     # Send the ENTERPRISE_GROUP_DELETED event
+    print('Sending ENTERPRISE_GROUP_DELETED event for group:', instance.uuid)
+    logger.info('Sending ENTERPRISE_GROUP_DELETED event for group: %s', instance.uuid)
     send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
