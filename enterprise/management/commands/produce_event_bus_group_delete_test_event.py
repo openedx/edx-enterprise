@@ -4,14 +4,10 @@ Produce a single event for enterprise-specific testing or health checks.
 Implements required ``APP.management.commands.*.Command`` structure.
 """
 import logging
-import uuid
+from uuid import uuid4
 
-import attr
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from edx_event_bus_kafka.internal.producer import create_producer
-from openedx_events.data import EventsMetadata
-from openedx_events.tooling import OpenEdxPublicSignal
 from enterprise.event_bus import send_enterprise_group_deleted_event
 
 logger = logging.getLogger(__name__)
@@ -39,6 +35,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            send_enterprise_group_deleted_event()
+            send_enterprise_group_deleted_event(group_uuid=str(uuid4()))
         except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("Error producing Kafka event")
