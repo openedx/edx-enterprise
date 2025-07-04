@@ -454,12 +454,30 @@ if COURSE_ENROLLMENT_CHANGED is not None:
     COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
 
 
+# Redundancy in case the model is changed from SoftDeleteModel to hard delete in the future.
+# Currently this method will not be invoked.
 @receiver(post_delete, sender=models.EnterpriseGroup)
-def post_delete_enterprise_group(_sender, instance, **_kwargs):
+def post_delete_enterprise_group(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     Handle the deletion of an EnterpriseGroup by sending an event to the event bus.
     """
-    # Send the ENTERPRISE_GROUP_DELETED event
-    print('Sending ENTERPRISE_GROUP_DELETED event for group:', instance.uuid)
-    logger.info('Sending ENTERPRISE_GROUP_DELETED event for group: %s', instance.uuid)
     send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
+
+
+# Pre-soft-delete signal handler for EnterpriseGroup
+@receiver(pre_save, sender=models.EnterpriseGroup)
+def handle_enterprise_group_soft_delete(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Handle soft deletion of EnterpriseGroup models.
+    """
+    # Skip this check for new objects
+    if instance.pk and not instance._state.adding:  # pylint: disable=protected-access
+        try:
+            # Get the current state in the database
+            old_instance = models.EnterpriseGroup.all_objects.get(pk=instance.pk)
+            
+            # If it's being marked as deleted
+            if not old_instance.is_removed and instance.is_removed:
+                send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
+        except models.EnterpriseGroup.DoesNotExist:
+            pass
