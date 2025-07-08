@@ -235,7 +235,7 @@ drf-yasg==1.21.10
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-api-doc-tools
-edx-ace==1.14.0
+edx-ace==1.15.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-braze-client

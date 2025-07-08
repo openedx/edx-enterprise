@@ -236,7 +236,7 @@ drf-yasg==1.21.10
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-api-doc-tools
-edx-ace==1.14.0
+edx-ace==1.15.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-braze-client
