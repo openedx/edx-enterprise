@@ -45,7 +45,7 @@ def send_enterprise_email_notification(
               - 1: { 'first_name': name, 'username': user_name, 'email': email } (similar to a User object)
               - 2: { 'user_email' : user_email } (similar to a PendingEnterpriseCustomerUser object)
         *   enrolled_in (dict): name and optionally other keys needed by templates
-        *   dashboard_url (str)
+        *   dashboard_url (str) test
     """
     with mail.get_connection() as email_conn:
         for item in email_items:
