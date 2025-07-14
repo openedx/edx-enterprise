@@ -243,7 +243,7 @@ edx-api-doc-tools==2.1.0
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   -r requirements/test-master.in
-edx-braze-client==1.1.1
+edx-braze-client==1.1.2
     # via -r requirements/test-master.in
 edx-ccx-keys==2.0.2
     # via
