@@ -1192,22 +1192,19 @@ class TestEnterpriseGroupSignals(TestCase):
         # Create the group
         enterprise_group = EnterpriseGroupFactory()
         group_uuid = str(enterprise_group.uuid)
-        
+
         # Use mocks to verify the signal handler is called
         with mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
-            with mock.patch('enterprise.signals.test_method') as mock_test_method:
-                # Use a transaction to ensure signals are processed
-                with transaction.atomic():
-                    # Delete the object to trigger the signal - USING HARD DELETE if available
-                    group = EnterpriseGroup.objects.filter(uuid=enterprise_group.uuid).first()
-                    print('group: ', group)
-                    self.assertTrue(group is not None)
-                    
-                    print('Not using hard delete')
-                    #     # Use model._meta.base_manager to bypass the custom manager that might filter soft-deleted records
-                    group.delete()
-                    # type(group)._meta.base_manager.filter(pk=group.pk).delete()
-                
-                # Verify the methods were called with the expected arguments
-                mock_test_method.assert_called_once()
-                mock_send_event.assert_called_once_with(group_uuid=group_uuid)
+            # Use a transaction to ensure signals are processed
+            with transaction.atomic():
+                # Delete the object to trigger the signal - USING HARD DELETE if available
+                group = EnterpriseGroup.objects.filter(uuid=enterprise_group.uuid).first()
+                self.assertIsNotNone(group)
+
+                print('Not using hard delete')
+                #     # Use model._meta.base_manager to bypass the custom manager that might filter soft-deleted records
+                group.delete()
+                # type(group)._meta.base_manager.filter(pk=group.pk).delete()
+
+            # Verify the methods were called with the expected arguments
+            mock_send_event.assert_called_once_with(group_uuid=group_uuid)
