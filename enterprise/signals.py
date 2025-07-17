@@ -470,14 +470,21 @@ def handle_enterprise_group_soft_delete(sender, instance, **kwargs):  # pylint: 
     """
     Handle soft deletion of EnterpriseGroup models.
     """
+    logger.info(
+        'Pre-save signal triggered for EnterpriseGroup with UUID: %s', instance.uuid
+    )
     # Skip this check for new objects
     if instance.pk and not instance._state.adding:  # pylint: disable=protected-access
         try:
             # Get the current state in the database
             old_instance = models.EnterpriseGroup.all_objects.get(pk=instance.pk)
-            
+
             # If it's being marked as deleted
             if not old_instance.is_removed and instance.is_removed:
+                logger.info(
+                    'EnterpriseGroup with UUID %s is being soft deleted. Sending event to event bus.',
+                    instance.uuid
+                )
                 send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
         except models.EnterpriseGroup.DoesNotExist:
             pass
