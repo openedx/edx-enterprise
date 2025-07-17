@@ -13,12 +13,15 @@ from pytest import mark
 from django.db import transaction
 from django.test import TestCase, override_settings
 
+import enterprise.signals
+
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
     EnterpriseGroupMembership,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
@@ -41,6 +44,7 @@ from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupFactory,
     EnterpriseGroupMembershipFactory,
     LearnerCreditEnterpriseCourseEnrollmentFactory,
     PendingEnrollmentFactory,
@@ -1174,3 +1178,33 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+class TestEnterpriseGroupSignals(TestCase):
+    """
+    Tests the EnterpriseGroup signals.
+    """
+
+    def test_delete_enterprise_group_with_transaction(self):
+        """
+        Tests that when an EnterpriseGroup is deleted in a transaction, the signal handler is called.
+        """
+        # Create the group
+        enterprise_group = EnterpriseGroupFactory()
+        group_uuid = str(enterprise_group.uuid)
+
+        # Use mocks to verify the signal handler is called
+        with mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+            # Use a transaction to ensure signals are processed
+            with transaction.atomic():
+                # Delete the object to trigger the signal - USING HARD DELETE if available
+                group = EnterpriseGroup.objects.filter(uuid=enterprise_group.uuid).first()
+                self.assertIsNotNone(group)
+
+                print('Not using hard delete')
+                #     # Use model._meta.base_manager to bypass the custom manager that might filter soft-deleted records
+                group.delete()
+                # type(group)._meta.base_manager.filter(pk=group.pk).delete()
+
+            # Verify the methods were called with the expected arguments
+            mock_send_event.assert_called_once_with(group_uuid=group_uuid)
