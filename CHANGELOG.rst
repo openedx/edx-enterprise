@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.11]
+--------
+* chore: upgrades python requirements
+
 [6.2.10]
 --------
 * fix: update pbkdf2 to address security vulnerability
