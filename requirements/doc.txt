@@ -242,7 +242,7 @@ edx-ace==1.15.0
     #   edx-braze-client
 edx-api-doc-tools==2.1.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-edx-braze-client==1.1.1
+edx-braze-client==1.1.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r requirements/doc.in

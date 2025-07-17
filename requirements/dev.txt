@@ -55,7 +55,7 @@ asn1crypto==1.5.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   snowflake-connector-python
-astroid==3.3.10
+astroid==3.3.11
     # via
     #   pylint
     #   pylint-celery
@@ -223,7 +223,7 @@ defusedxml==0.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.4.1
+diff-cover==9.5.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 dill==0.4.0
     # via pylint
@@ -390,7 +390,7 @@ edx-api-doc-tools==2.1.0
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-edx-braze-client==1.1.1
+edx-braze-client==1.1.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt

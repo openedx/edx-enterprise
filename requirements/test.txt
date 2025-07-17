@@ -127,7 +127,7 @@ defusedxml==0.7.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==9.4.1
+diff-cover==9.5.0
     # via -r requirements/test.in
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
@@ -224,7 +224,7 @@ edx-ace==1.15.0
     #   edx-braze-client
 edx-api-doc-tools==2.1.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
-edx-braze-client==1.1.1
+edx-braze-client==1.1.2
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 edx-ccx-keys==2.0.2
     # via
