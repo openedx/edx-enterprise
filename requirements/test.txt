@@ -127,7 +127,7 @@ defusedxml==0.7.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==9.5.0
+diff-cover==9.6.0
     # via -r requirements/test.in
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/common_constraints.txt
@@ -262,7 +262,7 @@ factory-boy==3.3.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/test.in
-faker==37.4.0
+faker==37.4.2
     # via factory-boy
 fastavro==1.11.1
     # via

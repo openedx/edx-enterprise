@@ -282,7 +282,7 @@ factory-boy==3.3.3
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r requirements/doc.in
-faker==37.4.0
+faker==37.4.2
     # via factory-boy
 fastavro==1.11.1
     # via
@@ -416,7 +416,7 @@ multidict==6.4.4
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   aiohttp
     #   yarl
-nh3==0.2.21
+nh3==0.3.0
     # via readme-renderer
 oauthlib==3.2.2
     # via
