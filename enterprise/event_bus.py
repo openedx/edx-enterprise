@@ -80,8 +80,8 @@ def send_enterprise_group_deleted_event(group_uuid):
     """
 
     # Inline import are temporarily necessary until the openedx_events package has been updated
-    from openedx_events.enterprise.data import EnterpriseGroup  # pylint: disable=import-outside-toplevel
-    from openedx_events.enterprise.signals import ENTERPRISE_GROUP_DELETED  # pylint: disable=import-outside-toplevel
+    from openedx_events.enterprise.data import EnterpriseGroup  # pylint: disable=import-outside-toplevel, no-name-in-module
+    from openedx_events.enterprise.signals import ENTERPRISE_GROUP_DELETED  # pylint: disable=import-outside-toplevel, no-name-in-module
 
     data = EnterpriseGroup(uuid=group_uuid)
     ENTERPRISE_GROUP_DELETED.send_event(

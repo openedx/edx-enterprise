@@ -13,8 +13,6 @@ from pytest import mark
 from django.db import transaction
 from django.test import TestCase, override_settings
 
-import enterprise.signals
-
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
