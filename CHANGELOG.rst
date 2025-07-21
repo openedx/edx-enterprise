@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.13]
+--------
+* feat: adds EDIT_HIGHLIGHTS_ENABLED toggle
+
 [6.2.12]
 --------
 * chore: upgrades python requirements

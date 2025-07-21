@@ -307,6 +307,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                     'admin_portal_learner_profile_view_enabled': False,
                     'catalog_query_search_filters_enabled': False,
                     'enterprise_admin_onboarding_enabled': False,
+                    'enterprise_edit_highlights_enabled': False,
                 }
             }
             assert response == mock_empty_200_success_response
