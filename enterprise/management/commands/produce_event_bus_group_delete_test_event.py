@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # First define the topic that our consumer will subscribe to.
 ENTERPRISE_CORE_TOPIC = getattr(settings, 'EVENT_BUS_ENTERPRISE_CORE_TOPIC', 'enterprise-core')
 
+
 class Command(BaseCommand):
     """
     Management command to produce a test event to the event bus.
