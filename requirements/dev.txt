@@ -223,11 +223,11 @@ defusedxml==0.7.1
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.5.0
+diff-cover==9.6.0
     # via -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
 dill==0.4.0
     # via pylint
-distlib==0.3.9
+distlib==0.4.0
     # via virtualenv
 django==4.2.22
     # via
@@ -457,7 +457,7 @@ factory-boy==3.3.3
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
-faker==37.4.0
+faker==37.4.2
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
@@ -680,7 +680,7 @@ multidict==6.4.4
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   aiohttp
     #   yarl
-nh3==0.2.21
+nh3==0.3.0
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/doc.txt
     #   readme-renderer
