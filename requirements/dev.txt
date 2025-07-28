@@ -199,7 +199,7 @@ code-annotations==2.3.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-coverage[toml]==7.9.2
+coverage[toml]==7.10.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test.txt
     #   pytest-cov
@@ -1192,7 +1192,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.31.2
+virtualenv==20.32.0
     # via tox
 wcwidth==0.2.13
     # via
