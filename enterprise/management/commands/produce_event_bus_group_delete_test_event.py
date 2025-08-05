@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
 from enterprise.event_bus import send_enterprise_group_deleted_event
 
 logger = logging.getLogger(__name__)
