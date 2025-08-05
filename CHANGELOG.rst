@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.15]
+--------
+* chore: upgrades python requirements
+
 [6.2.14]
 --------
 * chore: upgrades python requirements
