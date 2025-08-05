@@ -10,3 +10,5 @@ coverage:
         target: 100%
 
 comment: false
+ignore:
+  - "enterprise/management/commands/produce_event_bus_group_delete_test_event.py"
