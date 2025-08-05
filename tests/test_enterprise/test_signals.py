@@ -1230,3 +1230,24 @@ class TestEnterpriseGroupSignals(TestCase):
 
             # Verify that the event wasn't sent
             mock_send_event.assert_not_called()
+
+    def test_post_delete_enterprise_group(self):
+        """
+        Tests that when an EnterpriseGroup is hard-deleted, the post_delete signal handler
+        sends the appropriate event to the event bus.
+
+        This test is for the redundancy handler that will be used if the model is changed
+        from SoftDeleteModel to hard delete in the future.
+        """
+        # Create the group
+        enterprise_group = EnterpriseGroupFactory()
+        group_uuid = str(enterprise_group.uuid)
+
+        # Use mocks to verify the signal handler is called
+        with mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+            # Perform a hard delete (bypassing the soft delete mechanism)
+            # Using the base manager to ensure we're doing a real database delete
+            EnterpriseGroup._meta.base_manager.filter(pk=enterprise_group.pk).delete()
+
+            # Verify the event was sent with the expected arguments
+            mock_send_event.assert_called_once_with(group_uuid=group_uuid)
