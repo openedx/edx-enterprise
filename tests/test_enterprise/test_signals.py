@@ -1,5 +1,5 @@
 """
-Tests for the `edx-enterprise` models module.
+Tests for the `edx-enterprise` signals module.
 """
 
 import unittest
@@ -1206,3 +1206,27 @@ class TestEnterpriseGroupSignals(TestCase):
 
             # Verify the methods were called with the expected arguments
             mock_send_event.assert_called_once_with(group_uuid=group_uuid)
+
+    def test_handle_enterprise_group_soft_delete_does_not_exist(self):
+        """
+        Tests that the pre-save signal handler for EnterpriseGroup gracefully handles
+        the case where the group doesn't exist in all_objects when trying to check if it's being deleted.
+        """
+        # Create the group
+        enterprise_group = EnterpriseGroupFactory()
+        
+        # Use mocks to verify the signal handler behavior
+        with mock.patch('enterprise.models.EnterpriseGroup.all_objects.get') as mock_get, \
+            mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+            mock_get.side_effect = EnterpriseGroup.DoesNotExist
+
+            # Now try to save the group which should trigger the pre_save signal
+            enterprise_group.name = "New name"
+            # This should not raise any exceptions
+            enterprise_group.save()
+
+            # Verify the mock was called with the expected arguments
+            mock_get.assert_called_once_with(pk=enterprise_group.pk)
+
+            # Verify that the event wasn't sent
+            mock_send_event.assert_not_called()
