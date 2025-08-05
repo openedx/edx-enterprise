@@ -29,6 +29,7 @@ from testfixtures import LogCapture
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
@@ -77,6 +78,7 @@ from enterprise.roles_api import admin_role
 from enterprise.toggles import (
     ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED,
     CATALOG_QUERY_SEARCH_FILTERS_ENABLED,
+    EDIT_HIGHLIGHTS_ENABLED,
     ENTERPRISE_ADMIN_ONBOARDING,
     ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
     ENTERPRISE_LEARNER_BFF_ENABLED,
@@ -2058,54 +2060,54 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
     @ddt.data(
         # Request missing required permissions query param.
         (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'},
-         False, False, False, False, False, False, False),
+         False, False, False, False, False, False, False, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False, False, False, False, False),
+         True, None, False, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, None, False, False, False, False, False, False, False),
+         False, None, False, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False, False, False, False, False),
+         True, None, False, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None,
-         False, False, False, False, False, False, False),
+         False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on slug with results, with
         # top down assignment & real-time LCM feature enabled,
         # prequery search results enabled
@@ -2115,7 +2117,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         # enterprise admin onboarding enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, True, True, True, True, True, True, True),
+         None, True, True, True, True, True, True, True, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -2134,6 +2136,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             admin_portal_learner_profile_view_enabled,
             catalog_query_search_filters_enabled,
             enterprise_admin_onboarding_enabled,
+            enterprise_edit_highlights_enabled,
             mock_get_logo_url,
     ):
         """
@@ -2229,6 +2232,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             response = client.get(
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
+        with override_waffle_flag(
+            EDIT_HIGHLIGHTS_ENABLED,
+            active=enterprise_edit_highlights_enabled
+        ):
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
         response = self.load_json(response.content)
         if has_access_to_enterprise:
             assert response['results'][0] == {
@@ -2302,6 +2312,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled,
                     'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled,
                     'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled,
+                    'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
@@ -10273,3 +10284,176 @@ class EnterpriseCourseEnrollmentAdminViewSetTest(TestCase):
         response = self.client.get(self.url, {"lms_user_id": "test_user"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
+
+
+@ddt.ddt
+class TestEnterpriseSSOUserViewSet(APITest):
+    """
+    Test EnterpriseSSOUserViewSet
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.user = UserFactory(is_active=True, is_staff=True)
+        self.client.force_authenticate(user=self.user)
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            auth_org_id='test-org-id'
+        )
+        self.endpoint_url = reverse('enterprise-sso-user-info-user-details')
+
+    def test_unauthenticated_request(self):
+        """
+        Test that unauthenticated requests are rejected.
+        """
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.endpoint_url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @ddt.data(
+        # Missing both parameters
+        {},
+        # Missing org_id
+        {'external_user_id': 'test-user-id'},
+        # Missing external_user_id
+        {'org_id': 'test-org-id'},
+        # Empty values
+        {'org_id': '', 'external_user_id': 'test-user-id'},
+        {'org_id': 'test-org-id', 'external_user_id': ''},
+    )
+    def test_invalid_serializer_data(self, query_params):
+        """
+        Test that invalid query parameters return 400 error.
+        """
+        response = self.client.get(self.endpoint_url, query_params)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_enterprise_customer_not_found(self):
+        """
+        Test that non-existent enterprise customer returns 404 error.
+        """
+        query_params = {
+            'org_id': 'non-existent-org-id',
+            'external_user_id': 'test-user-id'
+        }
+        response = self.client.get(self.endpoint_url, query_params)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert 'Enterprise customer not found for org_id: non-existent-org-id' in response.data['error']
+
+    @mock.patch('enterprise.api.v1.views.enterprise_sso_users.get_user_details')
+    def test_user_details_not_found(self, mock_get_user_details):
+        """
+        Test that when user details are not found, returns 404 error.
+        """
+        mock_get_user_details.return_value = None
+
+        query_params = {
+            'org_id': self.enterprise_customer.auth_org_id,
+            'external_user_id': 'test-user-id'
+        }
+        response = self.client.get(self.endpoint_url, query_params)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data['error'] == 'Enterprise SSO user details not found'
+        mock_get_user_details.assert_called_once_with(mock.ANY, 'test-user-id')
+
+    @mock.patch('enterprise.api.v1.views.enterprise_sso_users.get_user_details')
+    def test_validation_error_handling(self, mock_get_user_details):
+        """
+        Test that ValidationError is properly handled and returns 400 error.
+        """
+        mock_get_user_details.side_effect = ValidationError('Test validation error')
+
+        query_params = {
+            'org_id': self.enterprise_customer.auth_org_id,
+            'external_user_id': 'test-user-id'
+        }
+        response = self.client.get(self.endpoint_url, query_params)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data['error'] == "['Test validation error']"
+        mock_get_user_details.assert_called_once_with(mock.ANY, 'test-user-id')
+
+    @mock.patch('enterprise.api.v1.views.enterprise_sso_users.get_user_details')
+    def test_successful_user_details_retrieval(self, mock_get_user_details):
+        """
+        Test successful retrieval of user details.
+        """
+        expected_user_details = {
+            'user_id': 'test-user-id',
+            'email': 'test@example.com',
+            'first_name': 'Test',
+            'last_name': 'User',
+            'username': 'testuser'
+        }
+        mock_get_user_details.return_value = expected_user_details
+
+        query_params = {
+            'org_id': self.enterprise_customer.auth_org_id,
+            'external_user_id': 'test-user-id'
+        }
+        response = self.client.get(self.endpoint_url, query_params)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == expected_user_details
+        mock_get_user_details.assert_called_once_with(mock.ANY, 'test-user-id')
+
+    @mock.patch('enterprise.api.v1.views.enterprise_sso_users.get_user_details')
+    def test_empty_user_details_response(self, mock_get_user_details):
+        """
+        Test when get_user_details returns empty dict.
+        """
+        mock_get_user_details.return_value = {}
+
+        query_params = {
+            'org_id': self.enterprise_customer.auth_org_id,
+            'external_user_id': 'test-user-id'
+        }
+        response = self.client.get(self.endpoint_url, query_params)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.data['error'] == 'Enterprise SSO user details not found'
+        mock_get_user_details.assert_called_once_with(mock.ANY, 'test-user-id')
+
+    def test_inactive_enterprise_customer(self):
+        """
+        Test that inactive enterprise customers are not found.
+        """
+        # Create an inactive enterprise customer
+        inactive_customer = EnterpriseCustomerFactory(
+            auth_org_id='inactive-org-id',
+            active=False
+        )
+
+        query_params = {
+            'org_id': inactive_customer.auth_org_id,
+            'external_user_id': 'test-user-id'
+        }
+        response = self.client.get(self.endpoint_url, query_params)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert f'Enterprise customer not found for org_id: {inactive_customer.auth_org_id}' in response.data['error']
+
+    @ddt.data(
+        'GET',
+        'POST',
+        'PUT',
+        'PATCH',
+        'DELETE'
+    )
+    def test_only_get_method_allowed(self, method):
+        """
+        Test that only GET method is allowed on user_details action.
+        """
+        query_params = {
+            'org_id': self.enterprise_customer.auth_org_id,
+            'external_user_id': 'test-user-id'
+        }
+
+        response = getattr(self.client, method.lower())(self.endpoint_url, query_params)
+
+        if method == 'GET':
+            # GET should work (may return 404 but not 405)
+            assert response.status_code != status.HTTP_405_METHOD_NOT_ALLOWED
+        else:
+            # Other methods should return 405
+            assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED

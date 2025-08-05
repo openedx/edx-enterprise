@@ -17,6 +17,86 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.15]
+--------
+* chore: upgrades python requirements
+
+[6.2.14]
+--------
+* chore: upgrades python requirements
+
+[6.2.13]
+--------
+* feat: adds EDIT_HIGHLIGHTS_ENABLED toggle
+
+[6.2.12]
+--------
+* chore: upgrades python requirements
+
+[6.2.11]
+--------
+* chore: upgrades python requirements
+
+[6.2.10]
+--------
+* fix: update pbkdf2 to address security vulnerability
+
+[6.2.9]
+--------
+* chore: upgrades python requirements
+
+[6.2.8]
+--------
+* chore: upgrades python requirements
+
+[6.2.7]
+--------
+* feat: adds last login to EnterpriseCustomerAdmin records
+
+[6.2.6]
+--------
+* chore: upgrades python requirements
+
+[6.2.5]
+--------
+* feat: adds OnboardingFlow model to django
+
+
+[6.2.4]
+--------
+* feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
+
+[6.2.3]
+--------
+* chore: upgrades python requirements
+
+[6.2.2]
+* fix: fix RenameIndex migrations to also handle Django Model level analysis
+* Context: This fixes the issue where `makemigrations` was regenerating RenameIndex migrations after Django 5.2 support was added in release 6.1.0
+
+[6.2.1]
+* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
+[6.2.0]
+--------
+* feat: Added default as True for data sharing consent in the EnterpriseCustomer model.
+
+[6.1.2]
+--------
+* fix: fix unit tests that broke due to ``path()`` returning UUID objects
+
+[6.1.1]
+--------
+* chore: upgrades python requirements
+
+[6.1.0]
+--------
+* feat: Added Support for Django 5.2
+
+[6.0.4]
+--------
+* feat: add `enterprise-sso-user-info/` API endpoint
+
 [6.0.3]
 --------
 * fix: prevents group removal email notifications when catalog_uuid is missing

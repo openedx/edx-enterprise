@@ -25,6 +25,7 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
     EnterpriseMembersSerializer,
+    EnterpriseSSOUserInfoRequestSerializer,
     EnterpriseUserSerializer,
     ImmutableStateSerializer,
 )
@@ -986,3 +987,97 @@ class TestGetExecEdCourseRunStatus(TestCase):
             self.enterprise_enrollment
         )
         assert status == CourseRunProgressStatuses.UPCOMING
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseSSOUserInfoRequestSerializer(TestCase):
+    """
+    Tests for EnterpriseSSOUserInfoRequestSerializer.
+    """
+
+    def test_valid_serializer(self):
+        """
+        Test serializer with valid data.
+        """
+        data = {
+            'org_id': 'test-org-123',
+            'external_user_id': 'user-456'
+        }
+        serializer = EnterpriseSSOUserInfoRequestSerializer(data=data)
+
+        assert serializer.is_valid()
+        assert serializer.validated_data['org_id'] == 'test-org-123'
+        assert serializer.validated_data['external_user_id'] == 'user-456'
+
+    def test_missing_org_id(self):
+        """
+        Test serializer with missing org_id field.
+        """
+        data = {
+            'external_user_id': 'user-456'
+        }
+        serializer = EnterpriseSSOUserInfoRequestSerializer(data=data)
+
+        assert not serializer.is_valid()
+        assert 'org_id' in serializer.errors
+        assert serializer.errors['org_id'][0].code == 'required'
+
+    def test_missing_external_user_id(self):
+        """
+        Test serializer with missing external_user_id field.
+        """
+        data = {
+            'org_id': 'test-org-123'
+        }
+        serializer = EnterpriseSSOUserInfoRequestSerializer(data=data)
+
+        assert not serializer.is_valid()
+        assert 'external_user_id' in serializer.errors
+        assert serializer.errors['external_user_id'][0].code == 'required'
+
+    def test_missing_both_fields(self):
+        """
+        Test serializer with missing both required fields.
+        """
+        data = {}
+        serializer = EnterpriseSSOUserInfoRequestSerializer(data=data)
+
+        assert not serializer.is_valid()
+        assert 'org_id' in serializer.errors
+        assert 'external_user_id' in serializer.errors
+        assert serializer.errors['org_id'][0].code == 'required'
+        assert serializer.errors['external_user_id'][0].code == 'required'
+
+    @ddt.data(
+        {'org_id': '', 'external_user_id': 'user-456'},
+        {'org_id': 'test-org-123', 'external_user_id': ''},
+        {'org_id': '', 'external_user_id': ''},
+    )
+    def test_empty_field_values(self, data):
+        """
+        Test serializer with empty field values.
+        """
+        serializer = EnterpriseSSOUserInfoRequestSerializer(data=data)
+
+        assert not serializer.is_valid()
+        for field_name, field_value in data.items():
+            if field_value == '':
+                assert field_name in serializer.errors
+                assert serializer.errors[field_name][0].code == 'blank'
+
+    def test_extra_fields_ignored(self):
+        """
+        Test serializer ignores extra fields not defined in schema.
+        """
+        data = {
+            'org_id': 'test-org-123',
+            'external_user_id': 'user-456',
+            'extra_field': 'should_be_ignored'
+        }
+        serializer = EnterpriseSSOUserInfoRequestSerializer(data=data)
+
+        assert serializer.is_valid()
+        assert serializer.validated_data['org_id'] == 'test-org-123'
+        assert serializer.validated_data['external_user_id'] == 'user-456'
+        assert 'extra_field' not in serializer.validated_data

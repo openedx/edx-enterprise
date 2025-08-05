@@ -243,7 +243,12 @@ class CornerstoneLearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
         app_label = 'cornerstone'
         # XXX non-standard
         unique_together = ("user", "course_id")
-        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
+        indexes = [
+            models.Index(
+                fields=['enterprise_customer_uuid', 'plugin_configuration_id'],
+                name="corner_customer_plugin_idx"
+            ),
+        ]
 
     def __str__(self):
         """
