@@ -1214,10 +1214,10 @@ class TestEnterpriseGroupSignals(TestCase):
         """
         # Create the group
         enterprise_group = EnterpriseGroupFactory()
-        
+
         # Use mocks to verify the signal handler behavior
         with mock.patch('enterprise.models.EnterpriseGroup.all_objects.get') as mock_get, \
-            mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+                mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
             mock_get.side_effect = EnterpriseGroup.DoesNotExist
 
             # Now try to save the group which should trigger the pre_save signal
