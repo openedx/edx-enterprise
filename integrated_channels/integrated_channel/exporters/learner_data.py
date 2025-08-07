@@ -7,7 +7,6 @@ enterprise customer.
 """
 
 from datetime import datetime
-from datetime import timezone as datetimezone
 from logging import getLogger
 
 from opaque_keys import InvalidKeyError
@@ -682,7 +681,7 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 'get_course_certificate misisng created/created_date, '
                 'but there is a passed_timestamp so using that'
             ))
-            completed_date = datetime.fromtimestamp((passed_timestamp / 1000), tz=datetimezone.utc)
+            completed_date = datetime.fromtimestamp((passed_timestamp / 1000), tz=timezone.utc)
         elif not completed_date and not passed_timestamp:
             LOGGER.info(generate_formatted_log(
                 channel_name, enterprise_customer_uuid, lms_user_id, course_id,

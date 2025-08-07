@@ -2,8 +2,8 @@
 URL definitions for enterprise API endpoint.
 """
 
-from django.urls import include, path
+from django.urls import include, re_path
 
 urlpatterns = [
-    path('v1/', include('enterprise.api.v1.urls'), name='api')
+    re_path(r'^v1/', include('enterprise.api.v1.urls'), name='api')
 ]

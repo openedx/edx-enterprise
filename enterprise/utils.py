@@ -41,7 +41,6 @@ from enterprise.constants import (
     ALLOWED_TAGS,
     COURSE_MODE_SORT_ORDER,
     DEFAULT_CATALOG_CONTENT_FILTER,
-    DEFAULT_USERNAME_ATTR,
     LMS_API_DATETIME_FORMAT,
     LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE,
     MAX_ALLOWED_TEXT_LENGTH,
@@ -926,11 +925,8 @@ def get_enterprise_customer_or_404(enterprise_uuid):
     """
     EnterpriseCustomer = enterprise_customer_model()
     try:
-        if isinstance(enterprise_uuid, str):
-            enterprise_uuid_obj = UUID(enterprise_uuid)
-        else:
-            enterprise_uuid_obj = enterprise_uuid
-        return EnterpriseCustomer.objects.get(uuid=enterprise_uuid_obj)
+        enterprise_uuid = UUID(enterprise_uuid)
+        return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
     except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist) as no_customer_error:
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
         raise Http404 from no_customer_error
@@ -2618,34 +2614,3 @@ def filter_in_case_insensitive(fieldname, values):
         case_insensitive_filter = reduce(lambda a, b: a | b, q_list)
 
     return case_insensitive_filter
-
-
-def get_user_details(enterprise_customer, user_id):
-    """
-    Get user details from the identity provider associated with the enterprise customer.
-
-    Args:
-        enterprise_customer (EnterpriseCustomer): The enterprise customer to get the identity provider from
-        user_id (str): The user ID to get details for
-
-    Returns:
-        dict: The user details from the identity provider, or None if not available
-    """
-    # Get the identity provider configuration
-    identity_provider = None
-    if enterprise_customer.has_single_idp:
-        identity_provider = (
-            enterprise_customer.default_provider_idp or
-            enterprise_customer.enterprise_customer_identity_providers.first()
-        ).identity_provider
-    if not identity_provider:
-        LOGGER.info(
-            "No identity provider found for enterprise customer %s",
-            enterprise_customer.uuid
-        )
-        return None
-    idp_config = identity_provider.get_config()
-    username_attr_key = idp_config.conf.get('attr_username', DEFAULT_USERNAME_ATTR)
-    attributes = {username_attr_key: [user_id]}
-
-    return idp_config.get_user_details(attributes)

@@ -1025,6 +1025,7 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
         )
 
     test_sftp_server.short_description = 'Test SFTP Server'
+    test_sftp_server.allow_tags = True
 
     def get_urls(self):
         """
@@ -1411,16 +1412,3 @@ class DefaultEnterpriseEnrollmentIntentionAdmin(admin.ModelAdmin):
                 'are not used but may be re-enabled if needed.'
 
         return formfield
-
-
-@admin.register(models.OnboardingFlow)
-class OnboardingFlowAdmin(admin.ModelAdmin):
-    """
-    Django admin model for OnboardingFlow.
-    """
-
-    list_display = ('uuid', 'title', 'active')
-
-    class Meta:
-        fields = '__all__'
-        model = models.OnboardingFlow

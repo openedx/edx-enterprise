@@ -33,8 +33,6 @@ ENTERPRISE_WELCOME_TEXT = _(
 
 COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
 
-DEFAULT_USERNAME_ATTR = 'urn:oid:0.9.2342.19200300.100.1.1'
-
 MAX_INVITE_KEYS = 100
 
 

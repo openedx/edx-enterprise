@@ -87,12 +87,7 @@ class XAPILearnerDataTransmissionAudit(LearnerDataTransmissionAudit):
     class Meta:
         app_label = 'xapi'
         unique_together = ("user", "course_id")
-        indexes = [
-            models.Index(
-                fields=['enterprise_customer_uuid', 'plugin_configuration_id'],
-                name="xapi_customer_plugin_idx"
-            ),
-        ]
+        index_together = ['enterprise_customer_uuid', 'plugin_configuration_id']
 
     def __str__(self):
         """

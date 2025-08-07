@@ -1,7 +1,7 @@
 """
 Views for `EnterpriseCustomerAdmin` model.
 """
-from rest_framework import mixins, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -22,15 +22,9 @@ class EnterpriseCustomerAdminPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class EnterpriseCustomerAdminViewSet(
-    mixins.ListModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet,
-):
+class EnterpriseCustomerAdminViewSet(viewsets.ModelViewSet):
     """
     API views for the ``enterprise-customer-admin`` API endpoint.
-    Only allows GET, and PATCH requests.
     """
     queryset = models.EnterpriseCustomerAdmin.objects.all()
     serializer_class = EnterpriseCustomerAdminSerializer
