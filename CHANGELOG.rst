@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.15]
+--------
+* fix: Added more logs to debug the XAPI transmission issues.
+
 [6.2.14]
 --------
 * chore: upgrades python requirements
