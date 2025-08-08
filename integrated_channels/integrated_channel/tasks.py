@@ -7,6 +7,7 @@ from functools import wraps
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from crum import get_current_request, set_current_request
 from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.contrib import auth
@@ -89,6 +90,44 @@ def _log_batch_task_finish(task_name, channel_code, job_user_id,
         ))
 
 
+def set_enterprise_customer_site_to_request(integrated_channel):
+    """
+    Set the site of the current request to the site of the integrated channel's enterprise customer.
+
+    This is necessary since during the transmission of learner data, the request's site is used to determine
+    the domain for LMS API calls. This ensures that the correct site configuartions are used when making requests 
+    to the LMS.
+    """
+    request = get_current_request()
+    if request:
+        LOGGER.info(generate_formatted_log(
+            integrated_channel.channel_code(),
+            integrated_channel.enterprise_customer.uuid if integrated_channel.enterprise_customer else None,
+            None,
+            None,
+            f'Setting site to {integrated_channel.enterprise_customer.site.domain}'
+        ))
+        enterprise_customer = getattr(integrated_channel, 'enterprise_customer', None)
+        if not enterprise_customer:
+            LOGGER.warning(
+                'No enterprise customer found for integrated channel %s',
+                integrated_channel.channel_code()
+            )
+            return
+        site = getattr(enterprise_customer, 'site', None)
+
+        if not site:
+            LOGGER.warning(
+                'No site found for enterprise customer %s in integrated channel %s',
+                enterprise_customer.uuid if enterprise_customer else 'None',
+                integrated_channel.channel_code()
+            )
+            return
+
+        request.site = site
+        set_current_request(request)
+
+
 @shared_task
 @set_code_owner_attribute
 @locked(expiry_seconds=TASK_LOCK_EXPIRY_SECONDS, lock_name_kwargs=['channel_code', 'channel_pk'])
@@ -139,6 +178,8 @@ def transmit_learner_data(username, channel_code, channel_pk):
     api_user = User.objects.get(username=username)
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
     _log_batch_task_start('transmit_learner_data', channel_code, api_user.id, integrated_channel)
+
+    set_enterprise_customer_site_to_request(integrated_channel)
 
     # Note: learner data transmission code paths don't raise any uncaught exception,
     # so we don't need a broad try-except block here.
@@ -236,6 +277,8 @@ def transmit_single_learner_data(username, course_run_id):
                 'transmit_single_learner_data started.'
             ))
 
+            set_enterprise_customer_site_to_request(integrated_channel)
+
             integrated_channel.transmit_single_learner_data(
                 learner_to_transmit=user,
                 course_run_id=course_run_id,
@@ -298,6 +341,8 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
                 subsection_id=subsection_id
             )
 
+            set_enterprise_customer_site_to_request(integrated_channel)
+
             duration = time.time() - start
             LOGGER.info(generate_formatted_log(
                 None,
@@ -328,6 +373,8 @@ def transmit_subsection_learner_data(job_username, channel_code, channel_pk):
     api_user = User.objects.get(username=job_username)
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
     _log_batch_task_start('transmit_subsection_learner_data', channel_code, api_user.id, integrated_channel)
+
+    set_enterprise_customer_site_to_request(integrated_channel)
 
     # Exceptions during transmission are caught and saved within the audit so no need to try/catch here
     integrated_channel.transmit_subsection_learner_data(api_user)
