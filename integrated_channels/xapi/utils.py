@@ -28,21 +28,65 @@ def _send_statement(statement, object_type, event_type, lrs_configuration,
         )
     )
 
+    LOGGER.info(
+        '[Integrated Channel][xAPI] Statement details: Type=%s, Event=%s, LRS=%s, Customer=%s',
+        object_type,
+        event_type,
+        lrs_configuration.endpoint,
+        customer_name
+    )
+
     lrs_client = EnterpriseXAPIClient(lrs_configuration)
 
     try:
+        LOGGER.debug(
+            '[Integrated Channel][xAPI] Preparing to send statement to LRS. Statement JSON: %s',
+            statement.to_json() if hasattr(statement, 'to_json') else 'No JSON representation available'
+        )
+
         lrs_response = lrs_client.save_statement(statement)
+
+        LOGGER.info(
+            '[Integrated Channel][xAPI] Raw LRS response received: status=%s, data_type=%s',
+            getattr(lrs_response.response, 'status', 'Unknown'),
+            type(lrs_response.data).__name__ if hasattr(lrs_response, 'data') else 'None'
+        )
+
+        LOGGER.info(
+            '[Integrated Channel][xAPI] Response data: %s',
+            str(lrs_response.data) if hasattr(lrs_response, 'data') else 'No data'
+        )
+
+        if hasattr(lrs_response, 'response'):
+            LOGGER.info(
+                '[Integrated Channel][xAPI] Response headers: %s',
+                str(getattr(lrs_response.response, 'headers', 'No headers'))
+            )
+            LOGGER.info(
+                '[Integrated Channel][xAPI] Response content: %s',
+                str(getattr(lrs_response.response, 'content', 'No content'))
+            )
+
         response_fields.update({
             'status': lrs_response.response.status,
             'error_message': lrs_response.data
         })
 
-    except ClientError:
-        error_message = 'EnterpriseXAPIClient request failed.'
+    except ClientError as exc:
+        error_message = f'EnterpriseXAPIClient request failed: {str(exc)}'
+        LOGGER.exception(
+            '[Integrated Channel][xAPI] %s Exception details: %s',
+            error_message,
+            logging.traceback.format_exc()
+        )
+        LOGGER.error(
+            '[Integrated Channel][xAPI] Exception type: %s, Message: %s',
+            type(exc).__name__,
+            str(exc)
+        )
         response_fields.update({
             'error_message': error_message
         })
-        LOGGER.exception(error_message)
 
     status_string = 'Error transmitting'
     if response_fields['status'] == 200:
