@@ -1199,7 +1199,6 @@ class TestEnterpriseGroupSignals(TestCase):
                 group = EnterpriseGroup.objects.filter(uuid=enterprise_group.uuid).first()
                 self.assertIsNotNone(group)
 
-                print('Not using hard delete')
                 #     # Use model._meta.base_manager to bypass the custom manager that might filter soft-deleted records
                 group.delete()
                 # type(group)._meta.base_manager.filter(pk=group.pk).delete()
