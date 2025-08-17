@@ -63,7 +63,7 @@ class EnterpriseXAPIClient:
                 bool(response),
                 getattr(response.response, 'status', 'Unknown')
             )
-            LOGGER.info("[Integrated Channel][xAPI] LRS Full Response: %r", response)
+            LOGGER.info("[Integrated Channel][xAPI] LRS Full Response: %s", response)
 
             if hasattr(response, 'response'):
                 LOGGER.info(
