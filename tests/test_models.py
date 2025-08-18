@@ -873,7 +873,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         actual_value = enterprise_customer_user.get_remote_id()
         assert actual_value == expected_value
         if remote_id_called:
-            mock_third_party_api.return_value.get_remote_id.assert_called_once_with(provider_id, "hi")
+            mock_third_party_api.return_value.get_remote_id.assert_called_once_with(provider_id, "hi", None)
         else:
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
@@ -898,7 +898,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         mock_third_party_api.return_value.get_remote_id.return_value = 'saml-user-id'
         mock_social_auth_from_idp.return_value = True
         _ = enterprise_customer_user.get_remote_id()
-        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(default_idp, "hello")
+        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(default_idp, "hello", None)
 
     @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
     def test_get_remote_id_specific_idp(self, mock_third_party_api):
@@ -925,7 +925,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         remote_id = enterprise_customer_user.get_remote_id(idp_id=non_default_idp_id)
 
         assert remote_id == 'specified-user-id'
-        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(non_default_idp_id, "hello")
+        mock_third_party_api.return_value.get_remote_id.assert_called_once_with(non_default_idp_id, "hello", None)
 
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
