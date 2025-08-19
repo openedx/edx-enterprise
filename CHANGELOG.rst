@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.2.19]
+--------
+* chore: Upgrade django-simple-history to 3.10.1
+
 [6.2.18]
 --------
 * fix: Logged response received from XAPI in logs to debug the XAPI transmission issues.

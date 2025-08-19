@@ -185,6 +185,7 @@ django==4.2.23
     #   django-push-notifications
     #   django-sekizai
     #   django-ses
+    #   django-simple-history
     #   django-statici18n
     #   django-storages
     #   django-user-tasks
