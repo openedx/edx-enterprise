@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.3.0]
+--------
+* fix: Remove django-simple-history package constraint.
+
 [6.2.18]
 --------
 * fix: Logged response received from XAPI in logs to debug the XAPI transmission issues.

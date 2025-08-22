@@ -192,9 +192,8 @@ django-push-notifications==3.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-ace
-django-simple-history==3.1.1
+django-simple-history==3.10.1
     # via
-    #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
 django-waffle==5.0.0
     # via
