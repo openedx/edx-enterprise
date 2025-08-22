@@ -31,4 +31,4 @@ pytest<7.0
 celery>=5.2.2,<6.0.0
 
 # upgrading django-simple-history
-django-simple-history<=3.1.1
+django-simple-history<=3.10.1

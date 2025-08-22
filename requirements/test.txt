@@ -146,6 +146,7 @@ diff-cover==9.6.0
     #   django-multi-email-field
     #   django-oauth-toolkit
     #   django-push-notifications
+    #   django-simple-history
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
@@ -192,7 +193,7 @@ django-push-notifications==3.2.1
     # via
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt
     #   edx-ace
-django-simple-history==3.1.1
+django-simple-history==3.10.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/test-master.txt

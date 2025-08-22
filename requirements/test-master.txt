@@ -140,6 +140,7 @@ django==4.2.23
     #   django-multi-email-field
     #   django-oauth-toolkit
     #   django-push-notifications
+    #   django-simple-history
     #   django-waffle
     #   djangorestframework
     #   drf-jwt
@@ -205,7 +206,7 @@ django-push-notifications==3.2.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/edx-platform-constraints.txt
     #   edx-ace
-django-simple-history==3.1.1
+django-simple-history==3.10.1
     # via
     #   -c /home/runner/work/edx-enterprise/edx-enterprise/requirements/constraints.txt
     #   -r /home/runner/work/edx-enterprise/edx-enterprise/requirements/base.in
