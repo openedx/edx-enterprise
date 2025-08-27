@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.3.1]
+--------
+* feat: Add django admin interface for EnterpriseCustomerAdmin
+
 [6.3.0]
 --------
 * fix: Remove django-simple-history package constraint.
