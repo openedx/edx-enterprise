@@ -2876,7 +2876,7 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         {
             'is_staff': False,
             'is_linked_to_enterprise': False,
-            'expected_result': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
         },
         {
             'is_staff': False,
@@ -3324,50 +3324,92 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         assert response == expected_result
 
     @ddt.data(
-        (False, False, False, False, {}, {'detail': 'Not found.'}),
-        (False, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (False, True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (
-            False,
-            True,
-            True,
-            True,
-            fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
-            update_program_with_enterprise_context(
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': False,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'Not found.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': True,
+            'mocked_program': fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
+            'expected_result': update_program_with_enterprise_context(
                 fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
                 add_utm_info=True,
                 enterprise_catalog_uuid=FAKE_UUIDS[1]
             ),
-        ),
-        (True, False, False, False, {}, {'detail': 'Not found.'}),
-        (True, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (True, True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (
-            True,
-            True,
-            True,
-            True,
-            fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
-            update_program_with_enterprise_context(
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': False,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'Not found.'},
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': True,
+            'mocked_program': fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
+            'expected_result': update_program_with_enterprise_context(
                 fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
                 add_utm_info=True,
                 enterprise_catalog_uuid=FAKE_UUIDS[1]
             ),
-        ),
+        },
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_program_detail(
             self,
+            mock_catalog_api_client,
+            mock_ent_catalog_api_client,
             is_staff,
             is_linked_to_enterprise,
             has_existing_catalog,
             is_program_in_catalog,
             mocked_program,
             expected_result,
-            mock_catalog_api_client,
-            mock_ent_catalog_api_client
     ):
         """
         The ``programs`` detail endpoint should return correct results from course discovery,

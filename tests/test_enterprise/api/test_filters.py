@@ -54,7 +54,7 @@ class TestUserFilterBackend(APITest):
         assert len(data['results']) == expected_data_length
 
     @ddt.data(
-        (False, False, {'detail': 'Not found.'}),
+        (False, False, {'detail': 'No EnterpriseCustomer matches the given query.'}),
         (False, True, {'uuid': FAKE_UUIDS[0], 'active': True}),
         (True, False, {'uuid': FAKE_UUIDS[0], 'active': True}),
         (True, True, {'uuid': FAKE_UUIDS[0], 'active': True}),
