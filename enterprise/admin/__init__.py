@@ -1424,3 +1424,16 @@ class OnboardingFlowAdmin(admin.ModelAdmin):
     class Meta:
         fields = '__all__'
         model = models.OnboardingFlow
+
+
+@admin.register(models.EnterpriseCustomerAdmin)
+class EnterpriseCustomerAdminAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerAdmin.
+    """
+
+    list_display = ('uuid', 'enterprise_customer_user')
+
+    class Meta:
+        fields = '__all__'
+        model = models.EnterpriseCustomerAdmin
