@@ -48,7 +48,7 @@ jinja2==2.11.3
     # via jasmine
 markupsafe==3.0.2
     # via jinja2
-more-itertools==10.7.0
+more-itertools==10.8.0
     # via
     #   cheroot
     #   cherrypy

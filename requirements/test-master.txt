@@ -51,11 +51,11 @@ bleach==6.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.40.20
+boto3==1.40.21
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-botocore==1.40.20
+botocore==1.40.21
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -112,7 +112,7 @@ code-annotations==2.3.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-toggles
-cryptography==45.0.6
+cryptography==45.0.7
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -248,7 +248,7 @@ edx-api-doc-tools==2.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/test-master.in
-edx-braze-client==1.1.2
+edx-braze-client==1.1.3
     # via -r requirements/test-master.in
 edx-ccx-keys==2.0.2
     # via
@@ -333,7 +333,7 @@ google-cloud-firestore==2.21.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
-google-cloud-storage==3.3.0
+google-cloud-storage==3.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin

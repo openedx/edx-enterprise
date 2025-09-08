@@ -64,11 +64,11 @@ billiard==4.2.1
     #   celery
 bleach==6.2.0
     # via -r requirements/test-master.txt
-boto3==1.40.20
+boto3==1.40.21
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.40.20
+botocore==1.40.21
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -129,7 +129,7 @@ code-annotations==2.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
-cryptography==45.0.6
+cryptography==45.0.7
     # via
     #   -r requirements/test-master.txt
     #   django-fernet-fields-v2
@@ -247,7 +247,7 @@ edx-ace==1.15.0
     #   edx-braze-client
 edx-api-doc-tools==2.1.0
     # via -r requirements/test-master.txt
-edx-braze-client==1.1.2
+edx-braze-client==1.1.3
     # via
     #   -r requirements/doc.in
     #   -r requirements/test-master.txt
@@ -329,7 +329,7 @@ google-cloud-firestore==2.21.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.3.0
+google-cloud-storage==3.3.1
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
