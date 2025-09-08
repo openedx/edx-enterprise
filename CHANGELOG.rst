@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.3.3]
+--------
+* fix: Moodle configuration updates were not being saved correctly
+
 [6.3.2]
 --------
 * fix: upgrade djangorestframework and skip automatic validators
