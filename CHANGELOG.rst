@@ -17,6 +17,16 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.4.0]
+-------
+* feat: decouple ecommerce dependencies with graceful fallback
+
+  * Add error handling for ecommerce API calls in admin enrollment flow
+  * Disable ecommerce heartbeat checks in service monitoring
+  * Make order creation optional with warning logs instead of failures
+  * Redirect program enrollment to dashboard instead of basket page
+  * Update tests to reflect ecommerce service decoupling changes
+
 [6.3.4]
 --------
 * fix: add migration for Django 5.2 support in edx-platform

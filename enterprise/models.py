@@ -1415,38 +1415,54 @@ class EnterpriseCustomerUser(TimeStampedModel):
     def create_order_for_enrollment(self, course_run_id, discount_percentage, mode, sales_force_id):
         """
         Create an order on the Ecommerce side for tracking the course enrollment of a enterprise customer user.
+
+        Note: Ecommerce service is being decoupled - order creation is now optional and will gracefully fail.
         """
-        LOGGER.info("Creating order for enterprise learner with id [%s] for enrollment in course with id: [%s], "
-                    "[percentage discount] [%s] and [sales_force_id] [%s]",
-                    self.user_id,
-                    course_run_id,
-                    discount_percentage,
-                    sales_force_id)
-        # get instance of the EcommerceApiClient and attempt to create order
-        ecommerce_service_worker = get_ecommerce_worker_user()
-        failure_log_msg = 'Could not create order for enterprise learner with id [%s] for enrollment in course with ' \
-                          'id [%s]. Reason: [%s]'
-        if ecommerce_service_worker is not None:
-            try:
-                ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
-            except NotConnectedToOpenEdX as exc:
-                LOGGER.exception(failure_log_msg, self.user_id, course_run_id, str(exc))
+        LOGGER.info(
+            "Attempting to create order for enterprise learner with id [%s] for enrollment in course with id: [%s], "
+            "[percentage discount] [%s] and [sales_force_id] [%s]",
+            self.user_id,
+            course_run_id,
+            discount_percentage,
+            sales_force_id,
+        )
+
+        try:
+            # get instance of the EcommerceApiClient and attempt to create order
+            ecommerce_service_worker = get_ecommerce_worker_user()
+            failure_log_msg = (
+                'Could not create order for enterprise learner with id [%s] for enrollment in course with '
+                'id [%s]. Reason: [%s]'
+            )
+            if ecommerce_service_worker is not None:
+                try:
+                    ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+                    # pull data needed for creating the order
+                    course_enrollments = [{
+                        'lms_user_id': self.user_id,
+                        'username': self.username,
+                        'email': self.user_email,
+                        'course_run_key': course_run_id,
+                        'mode': mode,
+                        "enterprise_customer_name": self.enterprise_customer.name,
+                        "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
+                        "discount_percentage": float(discount_percentage),
+                        "sales_force_id": sales_force_id,
+                    }]
+                    ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
+                    LOGGER.info("Successfully created ecommerce order for learner %s", self.user_id)
+                except NotConnectedToOpenEdX as exc:
+                    LOGGER.warning(failure_log_msg, self.user_id, course_run_id, str(exc))
             else:
-                # pull data needed for creating the order
-                course_enrollments = [{
-                    'lms_user_id': self.user_id,
-                    'username': self.username,
-                    'email': self.user_email,
-                    'course_run_key': course_run_id,
-                    'mode': mode,
-                    "enterprise_customer_name": self.enterprise_customer.name,
-                    "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
-                    "discount_percentage": float(discount_percentage),
-                    "sales_force_id": sales_force_id,
-                }]
-                ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
-        else:
-            LOGGER.warning(failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.')
+                LOGGER.warning(
+                    failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.',
+                )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # Catch any other ecommerce-related errors and continue gracefully
+            LOGGER.warning(
+                'Ecommerce order creation failed for learner %s in course %s: %s. Continuing enrollment without order.',
+                self.user_id, course_run_id, str(exc),
+            )
 
     @classmethod
     def inactivate_other_customers(cls, user_id, enterprise_customer):

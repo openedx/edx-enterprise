@@ -10,7 +10,7 @@ CHECKS = (
     checks.check_lms,
     checks.check_enterprise_catalog,
     checks.check_discovery,
-    checks.check_ecommerce
+    # checks.check_ecommerce  # Disabled due to ecommerce service decoupling
 )
 
 
