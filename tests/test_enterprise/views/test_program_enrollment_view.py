@@ -891,7 +891,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://lms.example.com/dashboard/programs/52ad909b-c57d-4ff1-bab3-999813a2479b',
+            f"{settings.LMS_ROOT_URL}/dashboard/programs/{FAKE_PROGRAM_RESPONSE3['uuid']}",
             fetch_redirect_response=False
         )
 
@@ -925,8 +925,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             '/enterprise/grant_data_sharing_permissions?{}'.format(
                 urlencode(
                     {
-                        'next': 'http://localhost:18130/basket/add/?sku=sku1&sku=sku2'
-                                '&bundle=52ad909b-c57d-4ff1-bab3-999813a2479b',
+                        'next': f"{settings.LMS_ROOT_URL}/dashboard/programs/{FAKE_PROGRAM_RESPONSE3['uuid']}",
                         'failure_url': program_enrollment_page_url,
                         'enterprise_customer_uuid': enterprise_customer.uuid,
                         'program_uuid': self.dummy_program_uuid,
@@ -939,7 +938,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
-    def test_post_program_enrollment_view_redirect_to_basket(
+    def test_post_program_enrollment_view_redirect_to_program_dashboard_no_cert(
             self,
             program_data_extender_mock,
             course_catalog_api_client_mock,
@@ -947,7 +946,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             *args
     ):
         """
-        The user is redirected to the basket page when something needs to be bought.
+        The user is redirected to the program dashboard page (ecommerce service decoupled).
         """
         self._setup_program_data_extender(program_data_extender_mock)
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock)
@@ -963,7 +962,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://localhost:18130/basket/add/?sku=sku1&sku=sku2&bundle=52ad909b-c57d-4ff1-bab3-999813a2479b',
+            f"{settings.LMS_ROOT_URL}/dashboard/programs/{FAKE_PROGRAM_RESPONSE3['uuid']}",
             fetch_redirect_response=False
         )
 

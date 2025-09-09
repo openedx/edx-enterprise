@@ -95,3 +95,7 @@ venv/
 
 # TODO: When we move to be a service, ignore this too.
 #enterprise/static/enterprise/bundles/
+
+# LLM tools
+CLAUDE.md
+.claude/

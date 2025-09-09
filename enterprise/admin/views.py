@@ -742,18 +742,25 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
 
         if mode in paid_modes:
             # Create an order to track the manual enrollments of non-pending accounts
-            enrollments = [{
-                "lms_user_id": success.id,
-                "email": success.email,
-                "username": success.username,
-                "course_run_key": course_id,
-                "discount_percentage": float(discount),
-                "enterprise_customer_name": enterprise_customer.name,
-                "enterprise_customer_uuid": str(enterprise_customer.uuid),
-                "mode": mode,
-                "sales_force_id": sales_force_id,
-            } for success in succeeded]
-            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
+            # Note: Ecommerce service is being decoupled - order creation is now optional
+            try:
+                enrollments = [{
+                    "lms_user_id": success.id,
+                    "email": success.email,
+                    "username": success.username,
+                    "course_run_key": course_id,
+                    "discount_percentage": float(discount),
+                    "enterprise_customer_name": enterprise_customer.name,
+                    "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                    "mode": mode,
+                    "sales_force_id": sales_force_id,
+                } for success in succeeded]
+                EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                # Log the failure but continue with enrollment process
+                LOG.warning(
+                    'Failed to create ecommerce orders for bulk enrollment: %s. Continuing without orders.', str(exc),
+                )
         cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
