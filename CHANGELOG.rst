@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.3.3]
+--------
+* chore: upgrades python requirements
+
 [6.3.2]
 --------
 * fix: upgrade djangorestframework and skip automatic validators
