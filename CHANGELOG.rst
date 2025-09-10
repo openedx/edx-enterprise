@@ -16,6 +16,7 @@ Change Log
 Unreleased
 ----------
 * nothing unreleased
+
 [6.3.4]
 --------
 * fix: add migration for Django 5.2 support in edx-platform
