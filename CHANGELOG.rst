@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.4.1]
+--------
+* fix: Moodle configuration updates were not being saved correctly
+
 [6.4.0]
 -------
 * feat: decouple ecommerce dependencies with graceful fallback
