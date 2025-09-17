@@ -1,9 +1,14 @@
+"""
+Logger setup for integrated channels with support for JSON and string formatting.
+"""
 import json
 import logging
 import sys
 from datetime import datetime
+
 from django.conf import settings
-from utils import generate_formatted_log
+
+from integrated_channels.utils import generate_formatted_log
 
 USE_JSON_LOGGING = getattr(settings, 'INTEGRATED_CHANNELS_JSON_LOGGING', False)
 
@@ -25,20 +30,21 @@ class IntegratedChannelsFormatter(logging.Formatter):
                 'logger': record.name,
                 'message': record.getMessage(),
                 'module': record.module,
-                'function': record.funcName,
-                'line': record.lineno
             }
 
             log_entry['service'] = 'integrated_channels'
 
             if record.exc_info:
-                log_entry['error.kind'] = record.exc_info[0].__name__
+                log_entry['error.type'] = record.exc_info[0].__name__
                 log_entry['error.message'] = str(record.exc_info[1])
                 log_entry['error.stack'] = self.formatException(record.exc_info)
+                log_entry['error.function'] = record.funcName
+                log_entry['error.file'] = record.pathname
+                log_entry['error.line'] = record.lineno
 
             # Add any extra attributes related to integrated channels
-            if hasattr(record, 'channel_code'):
-                log_entry['integrated_channel.code'] = record.channel_code
+            if hasattr(record, 'channel_name'):
+                log_entry['integrated_channel.code'] = record.channel_name
             if hasattr(record, 'enterprise_customer_uuid'):
                 log_entry['integrated_channel.customer_uuid'] = record.enterprise_customer_uuid
             if hasattr(record, 'plugin_configuration_id'):
@@ -51,7 +57,8 @@ class IntegratedChannelsFormatter(logging.Formatter):
                 log_entry['integrated_channel.transmission_type'] = record.transmission_type
             if hasattr(record, 'enterprise_enrollment_id'):
                 log_entry['integrated_channel.enrollment_id'] = record.enterprise_enrollment_id
-
+            if hasattr(record, 'status_code'):
+                log_entry['http.status_code'] = record.status_code
 
             for key, value in record.__dict__.items():
                 if key.startswith('dd'):
@@ -82,7 +89,7 @@ def get_integrated_channels_logger(name=None):
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
 
     # Set formatter
     formatter = IntegratedChannelsFormatter()
@@ -90,21 +97,20 @@ def get_integrated_channels_logger(name=None):
 
     # Configure logger
     logger.addHandler(console_handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.propagate = False  # Prevent duplicate logs
 
     return logger
 
 
-
-def log_with_context(logger_instance: logging.Logger, level: str, message: str, exc_info=False, **context: dict) -> None:
+def log_with_context(logger_instance, level, message, exc_info=False, **context):
     """
     Log a message with additional context.
-    
+
     Args:
         logger_instance: Logger to use
         level (str): Log level (INFO, ERROR, etc.)
-        message: Log message
+        message (str): Log message
         **context: Additional context fields
     """
     # Handle exception level specially
@@ -125,4 +131,4 @@ def log_with_context(logger_instance: logging.Logger, level: str, message: str, 
             message=message,
             plugin_configuration_id=context.get("plugin_configuration_id", None)
         )
-        context_logger(formatted_message)
+        context_logger(formatted_message, exc_info=exc_info)
