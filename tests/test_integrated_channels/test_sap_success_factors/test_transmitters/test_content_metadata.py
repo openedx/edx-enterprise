@@ -343,7 +343,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         assert json.loads(filtered_response) == {"ocnCourses": [{"courseID": "course:DemoX"}]}
         assert logger_mock.exception.call_count == 0
 
-    @mock.patch('integrated_channels.utils.LOGGER')
+    @mock.patch('integrated_channels.logger.log_with_context')
     def test_filter_api_response_exception(self, logger_mock):
         """
         Test that the api response is not filtered if an exception occurs
@@ -356,4 +356,4 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         filtered_response = transmitter._filter_api_response(response, content_id)
 
         assert filtered_response == response
-        logger_mock.exception.assert_called_once()
+        logger_mock.assert_called_once()

@@ -26,7 +26,7 @@ class IntegratedChannelsFormatter(logging.Formatter):
         if self.use_json:
             log_entry = {
                 'timestamp': datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S,%f')[:-3],
-                'level': record.levelname,
+                'level': record.levelname.upper(),
                 'logger': record.name,
                 'message': record.getMessage(),
                 'module': record.module,
@@ -75,7 +75,6 @@ def get_integrated_channels_logger(name=None):
 
     Args:
         name (str): Logger name, defaults to 'integrated_channels'
-        use_json (bool): Whether to use JSON formatting
 
     Returns:
         logging.Logger: Configured logger instance
@@ -111,6 +110,7 @@ def log_with_context(logger_instance, level, message, exc_info=False, **context)
         logger_instance: Logger to use
         level (str): Log level (INFO, ERROR, etc.)
         message (str): Log message
+        exc_info (bool): Whether to include exception information
         **context: Additional context fields
     """
     # Handle exception level specially

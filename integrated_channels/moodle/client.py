@@ -3,7 +3,6 @@ Client for connecting to Moodle.
 """
 
 import json
-import logging
 import time
 from http import HTTPStatus
 from urllib.parse import urlencode, urljoin
@@ -14,9 +13,10 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
+from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.utils import stringify_and_store_api_record
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class MoodleClientError(ClientError):
@@ -487,15 +487,13 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         response = self._get_courses(serialized_data['courses[0][idnumber]'])
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
-            LOGGER.info(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    'No course found while attempting to delete edX course: '
-                    f'{serialized_data["courses[0][idnumber]"]} from moodle.'
-                )
+            log_with_context(
+                LOGGER,
+                'INFO',
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                message='No course found while attempting to delete edX course: '
+                f'{serialized_data["courses[0][idnumber]"]} from moodle.'
             )
             # Hacky way of getting around the request wrapper validation
             rsp = requests.Response()
@@ -516,14 +514,12 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Moodle integrated channel does not yet support assignment deduplication."
-            )
+        log_with_context(
+            LOGGER,
+            'ERROR',
+            channel_name=self.enterprise_configuration.channel_code(),
+            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            message="Moodle integrated channel does not yet support assignment deduplication."
         )
 
     def create_course_completion(self, user_id, payload):
@@ -532,14 +528,15 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         # but we need to wrap the requests
         resp = self._wrapped_create_course_completion(user_id, payload)
         completion_data = json.loads(payload)
-        LOGGER.info(
-            generate_formatted_log(
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                course_or_course_run_key=completion_data['courseID'],
-                plugin_configuration_id=self.enterprise_configuration.id,
-                message=f'Response for Moodle Create Course Completion Request response: {resp} '
-            )
+        log_with_context(
+            LOGGER,
+            'INFO',
+            channel_name=self.enterprise_configuration.channel_code(),
+            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            course_or_course_run_key=completion_data['courseID'],
+            plugin_configuration_id=self.enterprise_configuration.id,
+            message=f'Response for Moodle Create Course Completion Request response: {resp} ',
+            status_code=resp.status_code
         )
         return resp.status_code, resp.text
 
