@@ -100,13 +100,13 @@ bleach==6.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-boto3==1.40.21
+boto3==1.40.26
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-botocore==1.40.21
+botocore==1.40.26
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -237,7 +237,7 @@ dill==0.4.0
     # via pylint
 distlib==0.4.0
     # via virtualenv
-django==4.2.23
+django==4.2.24
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/doc.txt
@@ -359,7 +359,7 @@ djangorestframework-xml==2.0.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-dnspython==2.7.0
+dnspython==2.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1071,7 +1071,7 @@ snowballstemmer==3.0.1
     #   -r requirements/doc.txt
     #   pydocstyle
     #   sphinx
-snowflake-connector-python==3.17.2
+snowflake-connector-python==3.17.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt

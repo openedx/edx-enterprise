@@ -52,11 +52,11 @@ bcrypt==4.3.0
     #   celery
 bleach==6.2.0
     # via -r requirements/test-master.txt
-boto3==1.40.21
+boto3==1.40.26
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.40.21
+botocore==1.40.26
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -211,7 +211,7 @@ djangorestframework==3.16.1
     #   edx-drf-extensions
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
-dnspython==2.7.0
+dnspython==2.8.0
     # via
     #   -r requirements/test-master.txt
     #   pymongo
@@ -613,7 +613,7 @@ sniffio==1.3.1
     # via
     #   -r requirements/test-master.txt
     #   anyio
-snowflake-connector-python==3.17.2
+snowflake-connector-python==3.17.3
     # via -r requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
