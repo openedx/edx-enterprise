@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.4.3]
+--------
+* feat: feat: Add JSON logging capability to integrated_channels 
+
 [6.4.2]
 --------
 * chore: upgrades python requirements
