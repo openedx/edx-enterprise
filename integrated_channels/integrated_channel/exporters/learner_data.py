@@ -8,7 +8,6 @@ enterprise customer.
 
 from datetime import datetime
 from datetime import timezone as datetimezone
-from logging import getLogger
 
 from opaque_keys import InvalidKeyError
 from requests.exceptions import HTTPError
@@ -36,14 +35,10 @@ from integrated_channels.lms_utils import (
     get_persistent_grade,
     get_single_user_grade,
 )
-from integrated_channels.utils import (
-    generate_formatted_log,
-    is_already_transmitted,
-    is_course_completed,
-    parse_datetime_to_epoch_millis,
-)
+from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.utils import is_already_transmitted, is_course_completed, parse_datetime_to_epoch_millis
 
-LOGGER = getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 User = auth.get_user_model()
 
 
@@ -174,14 +169,16 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         enterprise_enrollment = enrollment_queryset.first()
 
         if not enterprise_enrollment:
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                lms_user_for_filter,
-                course_run_id,
-                'Either qualifying enrollments not found for learner, or, '
+            log_with_context(
+                LOGGER,
+                'INFO',
+                channel_name=self.enterprise_configuration.channel_code(),
+                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+                lms_user_id=lms_user_for_filter,
+                course_or_course_run_key=course_run_id,
+                message='Either qualifying enrollments not found for learner, or, '
                 'enterprise_customer_user record is inactive. Skipping transmit assessment grades.'
-            ))
+            )
             return
 
         already_transmitted = is_already_transmitted(
@@ -305,10 +302,15 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
                 self.collect_grades_data(enterprise_enrollment, course_details, channel_name)
             if incomplete_count == 0 and completed_date_from_api is None:
-                LOGGER.info(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    'Setting completed_date to now() for audit course with all non-gated content done.'
-                ))
+                log_with_context(
+                    LOGGER,
+                    'INFO',
+                    channel_name=channel_name,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    lms_user_id=lms_user_id,
+                    course_id=course_id,
+                    message='Setting completed_date to now() for audit course with all non-gated content done.'
+                )
                 completed_date_from_api = timezone.now()
         else:
             completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp = \
@@ -329,10 +331,16 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             if grade_percent is not None:
                 grade_percent = float(grade_percent)
         except ValueError as exc:
-            LOGGER.error(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'Grade percent is not a valid float: {grade_percent}. Failed with exc: {exc}'
-            ))
+            log_with_context(
+                LOGGER,
+                'ERROR',
+                channel_name=channel_name,
+                enterprise_customer_uuid=enterprise_customer_uuid,
+                lms_user_id=lms_user_id,
+                course_id=course_id,
+                message=f'Grade percent is not a valid float: {grade_percent}. Failed with exc: {exc}',
+                exc_info=exc
+            )
             grade_percent = None
 
         return completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent, passed_timestamp
@@ -408,11 +416,18 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
 
             if course_details is None:
                 # Course not found, so we have nothing to report.
-                LOGGER.error(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    f'get_course_details returned None for EnterpriseCourseEnrollment {enterprise_enrollment.pk}'
+                log_with_context(
+                    LOGGER,
+                    'ERROR',
+                    channel_name=channel_name,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    lms_user_id=lms_user_id,
+                    course_id=course_id,
+                    enterprise_enrollment_id=enterprise_enrollment.pk,
+                    message=f'get_course_details returned None for '
+                    f'EnterpriseCourseEnrollment {enterprise_enrollment.pk}'
                     f', error_message: {error_message}'
-                ))
+                )
                 continue
 
             # For audit courses, check if 100% completed
@@ -499,12 +514,17 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                         detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
                     ):
                 # We've already sent a completion status for this enrollment
-                LOGGER.info(generate_formatted_log(
-                    channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                    'Skipping export of previously sent enterprise enrollment. '
+                log_with_context(
+                    LOGGER,
+                    'INFO',
+                    channel_name=channel_name,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    lms_user_id=lms_user_id,
+                    course_or_course_run_key=course_id,
+                    message='Skipping export of previously sent enterprise enrollment. '
                     'EnterpriseCourseEnrollment: {enterprise_enrollment_id}'.format(
                         enterprise_enrollment_id=enterprise_enrollment.id
-                    )))
+                    ))
                 continue
             included_enrollments.add(enterprise_enrollment)
         return included_enrollments
@@ -529,9 +549,15 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
                 course_id=course_run_id,
                 enterprise_customer_user__user_id=lms_user_for_filter.id,
             )
-            LOGGER.info(generate_formatted_log(
-                channel_name, self.enterprise_customer.uuid, lms_user_for_filter, course_run_id,
-                'get_enrollments_to_process run for single learner and course.'))
+            log_with_context(
+                LOGGER,
+                'INFO',
+                channel_name=channel_name,
+                enterprise_customer_uuid=self.enterprise_customer.uuid,
+                lms_user_id=lms_user_for_filter.id,
+                course_or_course_run_key=course_run_id,
+                message='get_enrollments_to_process run for single learner and course.'
+            )
         enrollment_queryset = enrollment_queryset.order_by('course_id')
         # return resolved list instead of queryset
         return list(enrollment_queryset)
@@ -648,19 +674,30 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
             certificate = get_course_certificate(course_id, user)
         except InvalidKeyError:
             certificate = None
-            LOGGER.error(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
-                f' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.'
-            ))
+            log_with_context(
+                LOGGER,
+                'ERROR',
+                channel_name=channel_name,
+                enterprise_customer_uuid=enterprise_customer_uuid,
+                lms_user_id=lms_user_id,
+                course_or_course_run_key=course_id,
+                message='get_course_certificate failed. Certificate fetch failed due to invalid course_id for'
+                f' EnterpriseCourseEnrollment: {enterprise_enrollment}. Data export will continue without grade.',
+                exc_info=True
+            )
 
         if not certificate:
             return completed_date, grade, is_passing, percent_grade, passed_timestamp
 
-        LOGGER.info(generate_formatted_log(
-            channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-            f'get_course_certificate certificate={certificate}'
-        ))
+        log_with_context(
+            LOGGER,
+            'INFO',
+            channel_name=channel_name,
+            enterprise_customer_uuid=enterprise_customer_uuid,
+            lms_user_id=lms_user_id,
+            course_or_course_run_key=course_id,
+            message=f'get_course_certificate certificate={certificate}'
+        )
 
         # get_certificate_for_user has an optional formatting argument which defaults to True
         # edx-platform/blob/6b9eb122dd5b018cfeffc120a70e503b2c159c0b/lms/djangoapps/certificates/api.py#L128
@@ -677,19 +714,29 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         passed_timestamp = persistent_grade.passed_timestamp if persistent_grade is not None else None
 
         if (not completed_date) and passed_timestamp:
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'get_course_certificate misisng created/created_date, '
+            log_with_context(
+                LOGGER,
+                'INFO',
+                channel_name=channel_name,
+                enterprise_customer_uuid=enterprise_customer_uuid,
+                lms_user_id=lms_user_id,
+                course_or_course_run_key=course_id,
+                message='get_course_certificate misisng created/created_date, '
                 'but there is a passed_timestamp so using that'
-            ))
+            )
             completed_date = datetime.fromtimestamp((passed_timestamp / 1000), tz=datetimezone.utc)
         elif not completed_date and not passed_timestamp:
-            LOGGER.info(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                'get_course_certificate misisng created/created_date, '
+            log_with_context(
+                LOGGER,
+                'INFO',
+                channel_name=channel_name,
+                enterprise_customer_uuid=enterprise_customer_uuid,
+                lms_user_id=lms_user_id,
+                course_or_course_run_key=course_id,
+                message='get_course_certificate misisng created/created_date, '
                 'no passed_timestamp so defaulting to timezone.now(), '
                 f'certificate={certificate}'
-            ))
+            )
             completed_date = timezone.now()
 
         # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
@@ -776,11 +823,17 @@ class LearnerExporter(ChannelSettingsMixin, Exporter):
         grades_data = get_single_user_grade(course_id, user)
 
         if grades_data is None:
-            LOGGER.warning(generate_formatted_log(
-                channel_name, enterprise_customer_uuid, lms_user_id, course_id,
-                f'No grade found for '
+            log_with_context(
+                LOGGER,
+                'WARNING',
+                channel_name=channel_name,
+                enterprise_customer_uuid=enterprise_customer_uuid,
+                lms_user_id=lms_user_id,
+                course_or_course_run_key=course_id,
+                enterprise_enrollment_id=enterprise_enrollment.id,
+                message=f'No grade found for '
                 f'EnterpriseCourseEnrollment: {enterprise_enrollment}.'
-            ))
+            )
             # if enrollment found, but no grades, we can safely mark as incomplete/in progress
             return None, LearnerExporter.GRADE_INCOMPLETE, None, None, None
 

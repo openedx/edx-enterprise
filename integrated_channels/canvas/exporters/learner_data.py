@@ -3,15 +3,14 @@ Learner data exporter for Enterprise Integrated Channel Canvas.
 """
 
 from datetime import datetime
-from logging import getLogger
 
 from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.logger import get_integrated_channels_logger, log_with_context
 
-LOGGER = getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class CanvasLearnerExporter(LearnerExporter):
@@ -35,15 +34,19 @@ class CanvasLearnerExporter(LearnerExporter):
         """
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
-            LOGGER.debug(generate_formatted_log(
-                'canvas',
-                enterprise_customer_user.enterprise_customer.uuid,
-                enterprise_customer_user.user_id,
-                None,
-                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
-                 'Canvas User ID not found for [{name}]'.format(
-                     name=enterprise_customer_user.enterprise_customer.name
-                 ))))
+            log_with_context(
+                LOGGER,
+                'DEBUG',
+                channel_name='canvas',
+                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
+                lms_user_id=enterprise_customer_user.user_id,
+                message=(
+                    'get_learner_data_records finished. No learner data was sent for this LMS User Id because '
+                    'Canvas User ID not found for [{name}]'.format(
+                        name=enterprise_customer_user.enterprise_customer.name
+                    )
+                )
+            )
             return None
         percent_grade = kwargs.get('grade_percent', None)
         canvas_completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
@@ -99,15 +102,21 @@ class CanvasLearnerExporter(LearnerExporter):
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
             # We need an email to find the user on Canvas.
-            LOGGER.debug(generate_formatted_log(
-                'canvas',
-                enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-                enterprise_enrollment.enterprise_customer_user.user_id,
-                enterprise_enrollment.course_id,
-                ('get_learner_assessment_data_records finished. No learner data was sent for this LMS User Id because '
-                 'Canvas User ID not found for [{name}]'.format(
-                     name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-                 ))))
+            log_with_context(
+                LOGGER,
+                'DEBUG',
+                channel_name='canvas',
+                enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+                lms_user_id=enterprise_enrollment.enterprise_customer_user.user_id,
+                course_or_course_run_key=enterprise_enrollment.course_id,
+                message=(
+                    'get_learner_assessment_data_records finished. '
+                    'No learner data was sent for this LMS User Id because '
+                    'Canvas User ID not found for [{name}]'.format(
+                        name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
+                    )
+                )
+            )
             return None
 
         CanvasLearnerAssessmentDataTransmissionAudit = apps.get_model(

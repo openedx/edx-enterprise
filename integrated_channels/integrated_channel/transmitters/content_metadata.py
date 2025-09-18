@@ -4,7 +4,6 @@ Generic content metadata transmitter for integrated channels.
 
 import functools
 import json
-import logging
 from itertools import islice
 
 import requests
@@ -16,9 +15,10 @@ from enterprise.utils import localized_utcnow, truncate_string
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
-from integrated_channels.utils import chunks, encode_binary_data_for_logging, generate_formatted_log
+from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.utils import chunks, encode_binary_data_for_logging
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class ContentMetadataTransmitter(Transmitter):
@@ -54,25 +54,25 @@ class ContentMetadataTransmitter(Transmitter):
         )
 
     def _log_info(self, msg, course_or_course_run_key=None):
-        LOGGER.info(
-            generate_formatted_log(
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                course_or_course_run_key=course_or_course_run_key,
-                plugin_configuration_id=self.enterprise_configuration.id,
-                message=msg
-            )
+        log_with_context(
+            LOGGER,
+            'INFO',
+            channel_name=self.enterprise_configuration.channel_code(),
+            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            course_or_course_run_key=course_or_course_run_key,
+            plugin_configuration_id=self.enterprise_configuration.id,
+            message=msg
         )
 
     def _log_error(self, msg, course_or_course_run_key=None):
-        LOGGER.error(
-            generate_formatted_log(
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                course_or_course_run_key=course_or_course_run_key,
-                plugin_configuration_id=self.enterprise_configuration.id,
-                message=msg
-            )
+        log_with_context(
+            LOGGER,
+            'ERROR',
+            channel_name=self.enterprise_configuration.channel_code(),
+            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
+            course_or_course_run_key=course_or_course_run_key,
+            plugin_configuration_id=self.enterprise_configuration.id,
+            message=msg
         )
 
     def _log_info_for_each_item_map(self, item_map, msg):
@@ -149,21 +149,16 @@ class ContentMetadataTransmitter(Transmitter):
             json_payloads = [item.channel_metadata for item in list(chunk.values())]
             serialized_chunk = self._serialize_items(json_payloads)
             if self.enterprise_configuration.dry_run_mode_enabled:
-                enterprise_customer_uuid = self.enterprise_configuration.enterprise_customer.uuid
-                channel_code = self.enterprise_configuration.channel_code()
                 for key, item in chunk.items():
                     payload = item.channel_metadata
                     serialized_payload = self._serialize_items([payload])
                     encoded_serialized_payload = encode_binary_data_for_logging(serialized_payload)
-                    LOGGER.info(generate_formatted_log(
-                        channel_code,
-                        enterprise_customer_uuid,
-                        None,
-                        key,
+                    self._log_info(
                         f'dry-run mode content metadata '
                         f'skipping "{action_name}" action for content metadata transmission '
-                        f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
-                    ))
+                        f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}',
+                        key,
+                    )
                 continue
 
             response_status_code = None

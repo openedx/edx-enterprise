@@ -2,15 +2,14 @@
 Learner data exporter for Enterprise Integrated Channel Moodle.
 """
 
-from logging import getLogger
-
 from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import generate_formatted_log, parse_datetime_to_epoch_millis
+from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.utils import parse_datetime_to_epoch_millis
 
-LOGGER = getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class MoodleLearnerExporter(LearnerExporter):
@@ -37,15 +36,19 @@ class MoodleLearnerExporter(LearnerExporter):
             moodle_completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
         if enterprise_customer_user.user_email is None:
-            LOGGER.debug(generate_formatted_log(
-                'moodle',
-                enterprise_customer_user.enterprise_customer.uuid,
-                enterprise_customer_user.user_id,
-                None,
-                ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
-                 'Moodle User ID not found for [{name}]'.format(
-                     name=enterprise_customer_user.enterprise_customer.name
-                 ))))
+            log_with_context(
+                LOGGER,
+                'DEBUG',
+                channel_name='moodle',
+                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
+                lms_user_id=enterprise_customer_user.user_id,
+                message=(
+                    'get_learner_data_records finished. No learner data was sent for this LMS User Id because '
+                    'Moodle User ID not found for [{name}]'.format(
+                        name=enterprise_customer_user.enterprise_customer.name
+                    )
+                )
+            )
             return None
 
         MoodleLearnerDataTransmissionAudit = apps.get_model(

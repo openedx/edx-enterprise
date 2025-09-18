@@ -7,7 +7,7 @@ import django.utils.timezone
 import model_utils.fields
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.utils import batch_by_pk, generate_formatted_log
+from integrated_channels.utils import batch_by_pk
 
 LOGGER = logging.getLogger(__name__)
 

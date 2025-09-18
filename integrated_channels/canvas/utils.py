@@ -1,5 +1,4 @@
 '''Collection of static util methods for various Canvas operations'''
-import logging
 import time
 from http import HTTPStatus
 from urllib.parse import urljoin
@@ -7,9 +6,10 @@ from urllib.parse import urljoin
 from requests.utils import quote
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.utils import generate_formatted_log, integrated_channel_request_log_model
+from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.utils import integrated_channel_request_log_model
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class CanvasUtil:
@@ -187,13 +187,14 @@ class CanvasUtil:
                     edx_course_id,
                 )
                 if course:
-                    LOGGER.info(generate_formatted_log(
-                        'canvas',
-                        enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        edx_course_id,
-                        'Found course under root Canvas account'
-                    ))
+                    log_with_context(
+                        LOGGER,
+                        'INFO',
+                        channel_name='canvas',
+                        enterprise_customer_uuid=enterprise_configuration.enterprise_customer.uuid,
+                        course_or_course_run_key=edx_course_id,
+                        message='Found course under root Canvas account'
+                    )
         return course
 
     @staticmethod
