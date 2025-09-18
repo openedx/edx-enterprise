@@ -86,18 +86,21 @@ def get_integrated_channels_logger(name=None):
     if logger.handlers:
         return logger
 
-    # Create console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
+    # Only add our JSON console handler when JSON logging is enabled; otherwise rely on parent/root handlers.
+    if USE_JSON_LOGGING:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG)
 
-    # Set formatter
-    formatter = IntegratedChannelsFormatter()
-    console_handler.setFormatter(formatter)
+        # Set formatter
+        formatter = IntegratedChannelsFormatter()
+        console_handler.setFormatter(formatter)
+
+        # Configure handler on logger
+        logger.addHandler(console_handler)
 
     # Configure logger
-    logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG)
-    logger.propagate = False  # Prevent duplicate logs
+    logger.propagate = True
 
     return logger
 
