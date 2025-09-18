@@ -1432,8 +1432,8 @@ class EnterpriseCustomerAdminAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCustomerAdmin.
     """
 
-    list_display = ('uuid')
-    raw_id_fields = ('enterprise_customer_user')
+    list_display = ('uuid',)
+    raw_id_fields = ('enterprise_customer_user',)
 
     class Meta:
         fields = '__all__'
