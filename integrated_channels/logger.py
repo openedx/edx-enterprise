@@ -44,7 +44,7 @@ class IntegratedChannelsFormatter(logging.Formatter):
 
             # Add any extra attributes related to integrated channels
             if hasattr(record, 'channel_name'):
-                log_entry['integrated_channel.code'] = record.channel_name
+                log_entry['integrated_channel.code'] = record.channel_name.upper()
             if hasattr(record, 'enterprise_customer_uuid'):
                 log_entry['integrated_channel.customer_uuid'] = record.enterprise_customer_uuid
             if hasattr(record, 'plugin_configuration_id'):
@@ -120,6 +120,7 @@ def log_with_context(logger_instance, level, message, exc_info=False, **context)
     if level.upper() == 'EXCEPTION':
         context_logger = logger_instance.exception
         exc_info = True
+        level = 'ERROR'  # Log as ERROR level
     else:
         context_logger = getattr(logger_instance, level.lower())
 
