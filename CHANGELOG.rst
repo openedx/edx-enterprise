@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.4.2]
+--------
+* chore: upgrades python requirements
+
 [6.4.1]
 --------
 * fix: Moodle configuration updates were not being saved correctly
