@@ -45,17 +45,17 @@ bcrypt==4.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   paramiko
-billiard==4.2.1
+billiard==4.2.2
     # via celery
 bleach==6.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.40.26
+boto3==1.40.31
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-botocore==1.40.26
+botocore==1.40.31
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -91,7 +91,7 @@ charset-normalizer==3.4.3
     #   -c requirements/edx-platform-constraints.txt
     #   requests
     #   snowflake-connector-python
-click==8.2.1
+click==8.3.0
     # via
     #   celery
     #   click-didyoumean
@@ -333,7 +333,7 @@ google-cloud-firestore==2.21.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
-google-cloud-storage==3.3.1
+google-cloud-storage==3.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
@@ -490,7 +490,7 @@ proto-plus==1.26.1
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.32.0
+protobuf==6.32.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -512,7 +512,7 @@ pyasn1-modules==0.4.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-auth
-pycparser==2.22
+pycparser==2.23
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cffi
@@ -528,12 +528,12 @@ pymongo==4.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-opaque-keys
-pynacl==1.5.0
+pynacl==1.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
     #   paramiko
-pyopenssl==25.1.0
+pyopenssl==25.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -588,7 +588,7 @@ rules==3.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-s3transfer==0.13.1
+s3transfer==0.14.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
