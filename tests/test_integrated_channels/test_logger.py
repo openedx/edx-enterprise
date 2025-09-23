@@ -11,6 +11,7 @@ from testfixtures import LogCapture
 
 from django.test import TestCase, override_settings
 
+import integrated_channels.logger as logger_module
 from integrated_channels.logger import IntegratedChannelsFormatter, get_integrated_channels_logger, log_with_context
 
 
@@ -21,19 +22,26 @@ class TestIntegratedChannelsFormatter(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
+        # Store original state
+        self.original_use_json_logging = logger_module.USE_JSON_LOGGING
         self.formatter = IntegratedChannelsFormatter()
+
+    def tearDown(self):
+        """Clean up after each test."""
+        # Restore original state
+        logger_module.USE_JSON_LOGGING = self.original_use_json_logging
 
     @override_settings(INTEGRATED_CHANNELS_JSON_LOGGING=False)
     def test_formatter_init_string_format(self):
         """Test formatter initialization with string format."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', False):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', False):
             formatter = IntegratedChannelsFormatter()
             self.assertFalse(formatter.use_json)
 
     @override_settings(INTEGRATED_CHANNELS_JSON_LOGGING=True)
     def test_formatter_init_json_format(self):
         """Test formatter initialization with JSON format."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             formatter = IntegratedChannelsFormatter()
             self.assertTrue(formatter.use_json)
 
@@ -214,8 +222,25 @@ class TestGetIntegratedChannelsLogger(TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        # Clear any existing loggers to avoid state pollution
+        # Store original logging state
+        self.original_loggers = dict(logging.Logger.manager.loggerDict)
+        self.original_use_json_logging = logger_module.USE_JSON_LOGGING
+
+    def tearDown(self):
+        """Clean up test fixtures."""
+        # Restore original logging state
         logging.Logger.manager.loggerDict.clear()
+        logging.Logger.manager.loggerDict.update(self.original_loggers)
+
+        # Clean up any handlers we may have added
+        for logger_name in list(logging.Logger.manager.loggerDict.keys()):
+            if logger_name.startswith('integrated_channels') or logger_name in ['test_logger', 'custom_logger']:
+                logger = logging.getLogger(logger_name)
+                for handler in logger.handlers[:]:
+                    logger.removeHandler(handler)
+
+        # Restore original setting
+        logger_module.USE_JSON_LOGGING = self.original_use_json_logging
 
     def test_get_logger_default_name(self):
         """Test getting logger with default name."""
@@ -232,8 +257,8 @@ class TestGetIntegratedChannelsLogger(TestCase):
     @override_settings(INTEGRATED_CHANNELS_JSON_LOGGING=False)
     def test_get_logger_string_format_no_handler(self):
         """Test logger configuration when JSON logging is disabled."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', False):
-            logger = get_integrated_channels_logger('test_logger')
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', False):
+            logger = get_integrated_channels_logger('test_logger_string')
             # Should not add custom handler when JSON logging is disabled
             self.assertEqual(len(logger.handlers), 0)
             self.assertTrue(logger.propagate)
@@ -241,8 +266,8 @@ class TestGetIntegratedChannelsLogger(TestCase):
     @override_settings(INTEGRATED_CHANNELS_JSON_LOGGING=True)
     def test_get_logger_json_format_with_handler(self):
         """Test logger configuration when JSON logging is enabled."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
-            logger = get_integrated_channels_logger('test_logger')
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
+            logger = get_integrated_channels_logger('test_logger_json')
             # Should add custom handler when JSON logging is enabled
             self.assertEqual(len(logger.handlers), 1)
             handler = logger.handlers[0]
@@ -251,9 +276,9 @@ class TestGetIntegratedChannelsLogger(TestCase):
 
     def test_get_logger_avoids_duplicate_handlers(self):
         """Test that calling get_integrated_channels_logger multiple times doesn't add duplicate handlers."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
-            logger1 = get_integrated_channels_logger('test_logger')
-            logger2 = get_integrated_channels_logger('test_logger')
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
+            logger1 = get_integrated_channels_logger('test_logger_duplicate')
+            logger2 = get_integrated_channels_logger('test_logger_duplicate')
 
             # Should be the same logger instance
             self.assertIs(logger1, logger2)
@@ -269,10 +294,15 @@ class TestLogWithContext(TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_logger = mock.MagicMock()
+        self.original_use_json_logging = logger_module.USE_JSON_LOGGING
+
+    def tearDown(self):
+        """Clean up test fixtures."""
+        logger_module.USE_JSON_LOGGING = self.original_use_json_logging
 
     def test_log_with_context_info_level(self):
         """Test logging with INFO level."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             log_with_context(
                 self.mock_logger,
                 'INFO',
@@ -292,7 +322,7 @@ class TestLogWithContext(TestCase):
 
     def test_log_with_context_error_level(self):
         """Test logging with ERROR level."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             log_with_context(
                 self.mock_logger,
                 'ERROR',
@@ -312,7 +342,7 @@ class TestLogWithContext(TestCase):
 
     def test_log_with_context_exception_level(self):
         """Test logging with EXCEPTION level."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             log_with_context(
                 self.mock_logger,
                 'EXCEPTION',
@@ -332,7 +362,7 @@ class TestLogWithContext(TestCase):
 
     def test_log_with_context_string_format(self):
         """Test logging with string format (non-JSON)."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', False):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', False):
             with mock.patch('integrated_channels.logger.generate_formatted_log') as mock_generate:
                 mock_generate.return_value = 'formatted message'
 
@@ -365,7 +395,7 @@ class TestLogWithContext(TestCase):
 
     def test_log_with_context_with_exc_info(self):
         """Test logging with explicit exc_info parameter."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             log_with_context(
                 self.mock_logger,
                 'ERROR',
@@ -382,7 +412,7 @@ class TestLogWithContext(TestCase):
 
     def test_log_with_context_case_insensitive_level(self):
         """Test that log level is case insensitive."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             # Test lowercase
             log_with_context(self.mock_logger, 'info', 'Test message')
             self.mock_logger.info.assert_called()
@@ -405,12 +435,29 @@ class TestLoggerIntegration(TestCase):
     Integration tests for the complete logging system.
     """
 
+    def setUp(self):
+        """Set up test fixtures."""
+        self.original_use_json_logging = logger_module.USE_JSON_LOGGING
+        self.original_loggers = dict(logging.Logger.manager.loggerDict)
+
+    def tearDown(self):
+        """Clean up test fixtures."""
+        # Restore original state
+        logger_module.USE_JSON_LOGGING = self.original_use_json_logging
+
+        # Clean up any handlers we may have added
+        for logger_name in list(logging.Logger.manager.loggerDict.keys()):
+            if logger_name.startswith('integration_test'):
+                logger = logging.getLogger(logger_name)
+                for handler in logger.handlers[:]:
+                    logger.removeHandler(handler)
+
     @override_settings(INTEGRATED_CHANNELS_JSON_LOGGING=True)
     def test_end_to_end_json_logging(self):
         """Test complete JSON logging flow."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', True):
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', True):
             # Get a logger
-            logger = get_integrated_channels_logger('integration_test')
+            logger = get_integrated_channels_logger('integration_test_json')
 
             # Capture logs
             with LogCapture(level=logging.INFO) as log_capture:
@@ -443,8 +490,9 @@ class TestLoggerIntegration(TestCase):
     @override_settings(INTEGRATED_CHANNELS_JSON_LOGGING=False)
     def test_end_to_end_string_logging(self):
         """Test complete string logging flow."""
-        with mock.patch('integrated_channels.logger.USE_JSON_LOGGING', False):
-            logger = get_integrated_channels_logger('integration_test')
+        with mock.patch.object(logger_module, 'USE_JSON_LOGGING', False):
+            # Get a logger
+            logger = get_integrated_channels_logger('integration_test_string')
 
             with LogCapture(level=logging.INFO) as log_capture:
                 log_with_context(
