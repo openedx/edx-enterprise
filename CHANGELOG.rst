@@ -19,7 +19,7 @@ Unreleased
 
 [6.4.3]
 --------
-* feat: feat: Add JSON logging capability to integrated_channels 
+* fix: changes enterprise customer user dropdown to raw id to not break admin page
 
 [6.4.2]
 --------
