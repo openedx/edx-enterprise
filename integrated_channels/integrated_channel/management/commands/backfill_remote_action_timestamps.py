@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import batch_by_pk
 
 User = auth.get_user_model()
@@ -39,23 +39,19 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                     item.remote_created_at = item.created
                     item.remote_updated_at = item.modified
                     item.save()
-                    LOGGER.info(log_with_context(
-                        LOGGER,
-                        'INFO',
-                        channel_name=item.integrated_channel_code,
-                        enterprise_customer_uuid=item.enterprise_customer.uuid,
-                        course_or_course_run_key=item.content_id,
-                        message=f'ContentMetadataItemTransmission <{item.id}> '
-                        f'remote_created_at={item.remote_created_at}, '
+                    message = f'ContentMetadataItemTransmission <{item.id}> ' \
+                        f'remote_created_at={item.remote_created_at}, ' \
                         f'remote_updated_at={item.remote_updated_at}'
-                    ))
+                    LOGGER.info(msg=message, extra={
+                        'channel_name': item.integrated_channel_code,
+                        'enterprise_customer_uuid': item.enterprise_customer.uuid,
+                        'course_or_course_run_key': item.content_id,
+                    })
                 except Exception:  # pylint: disable=broad-except
-                    log_with_context(
-                        LOGGER,
-                        'EXCEPTION',
-                        channel_name=item.integrated_channel_code,
-                        enterprise_customer_uuid=item.enterprise_customer.uuid,
-                        course_or_course_run_key=item.content_id,
-                        message=f'ContentMetadataItemTransmission <{item.id}> '
-                        'error backfilling remote_created_at & remote_updated_at'
-                    )
+                    message = f'ContentMetadataItemTransmission <{item.id}> ' \
+                        f'error backfilling remote_created_at & remote_updated_at'
+                    LOGGER.exception(msg=message, extra={
+                        'channel_name': item.integrated_channel_code,
+                        'enterprise_customer_uuid': item.enterprise_customer.uuid,
+                        'course_or_course_run_key': item.content_id,
+                    })

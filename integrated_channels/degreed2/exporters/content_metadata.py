@@ -9,7 +9,7 @@ from enterprise.utils import (
     is_course_run_active,
 )
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import get_courserun_duration_in_hours, get_image_url, strip_html_tags
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -57,24 +57,24 @@ class Degreed2ContentMetadataExporter(ContentMetadataExporter):
                 if course_run:
                     return get_courserun_duration_in_hours(course_run)
                 else:
-                    log_with_context(
-                        LOGGER,
-                        'WARNING',
-                        channel_name=self.enterprise_configuration.channel_code(),
-                        enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                        message='Cannot find a courserun, so duration being returned 0. '
-                        f'Course item was {content_metadata_item} '
-                    )
+                    message = f'Cannot find a courserun, so duration being returned 0. ' \
+                        f'Course item was {content_metadata_item}'
+                    LOGGER.warning(message, extra={
+                        'channel_name': self.enterprise_configuration.channel_code(),
+                        'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                        'course_or_course_run_key': content_metadata_item.get('key'),
+                        'plugin_configuration_id': self.enterprise_configuration.id,
+                    })
                     return 0
             else:
-                log_with_context(
-                    LOGGER,
-                    'WARNING',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message='Cannot find even a single courserun, so duration being returned 0. '
-                    f'Course item was {content_metadata_item} '
-                )
+                message = f'Cannot find even a single courserun, so duration being returned 0. ' \
+                    f'Course item was {content_metadata_item}'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'course_or_course_run_key': content_metadata_item.get('key'),
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                })
                 return 0
         else:
             return 0

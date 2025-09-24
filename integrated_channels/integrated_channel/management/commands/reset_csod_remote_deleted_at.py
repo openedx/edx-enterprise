@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import batch_by_pk
 
 User = auth.get_user_model()
@@ -42,22 +42,18 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 try:
                     item.remote_deleted_at = None
                     item.save()
-                    log_with_context(
-                        LOGGER,
-                        'INFO',
-                        channel_name=item.integrated_channel_code,
-                        enterprise_customer_uuid=item.enterprise_customer.uuid,
-                        course_or_course_run_key=item.content_id,
-                        message=f'integrated_channel_content_transmission_id={item.id}, '
+                    message = f'integrated_channel_content_transmission_id={item.id}, ' \
                         'setting remote_deleted_at to None'
-                    )
+                    LOGGER.info(message, extra={
+                        'channel_name': item.integrated_channel_code,
+                        'enterprise_customer_uuid': item.enterprise_customer.uuid,
+                        'course_or_course_run_key': item.content_id,
+                    })
                 except Exception:  # pylint: disable=broad-except
-                    log_with_context(
-                        LOGGER,
-                        'EXCEPTION',
-                        channel_name=item.integrated_channel_code,
-                        enterprise_customer_uuid=item.enterprise_customer.uuid,
-                        course_or_course_run_key=item.content_id,
-                        message=f'integrated_channel_content_transmission_id={item.id}, '
+                    message = f'integrated_channel_content_transmission_id={item.id}, ' \
                         'error setting remote_deleted_at to None'
-                    )
+                    LOGGER.exception(msg=message, extra={
+                        'channel_name': item.integrated_channel_code,
+                        'enterprise_customer_uuid': item.enterprise_customer.uuid,
+                        'course_or_course_run_key': item.content_id,
+                    })

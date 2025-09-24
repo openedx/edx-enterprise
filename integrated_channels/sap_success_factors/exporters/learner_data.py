@@ -11,7 +11,7 @@ from enterprise.tpa_pipeline import get_user_from_social_auth
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.utils import parse_datetime_to_epoch_millis
 
@@ -83,17 +83,16 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     plugin_configuration_id=self.enterprise_configuration.id
                 )
             return [learner_transmission_record]
-        log_with_context(
-            LOGGER,
-            'INFO',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            lms_user_id=enterprise_enrollment.enterprise_customer_user.user_id,
-            course_or_course_run_key=enterprise_enrollment.course_id,
-            message='[Integrated Channel] No learner data was sent for user '
-            f'{enterprise_enrollment.enterprise_customer_user.username} because an SAP SuccessFactors user ID '
-            ' could not be found.'
-        )
+        message = f'get_learner_data_records finished. No learner data was sent for this LMS User Id ' \
+                  f'because SAP SuccessFactors User ID not found for ' \
+                  f'[{enterprise_enrollment.enterprise_customer_user.enterprise_customer.name}]'
+        LOGGER.info(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+            'lms_user_id': enterprise_enrollment.enterprise_customer_user.user_id,
+            'course_or_course_run_key': enterprise_enrollment.course_id,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
         return None
 
 
@@ -131,13 +130,10 @@ class SapSuccessFactorsLearnerManger:
         enterprise_customer = self.enterprise_configuration.enterprise_customer
         providers = enterprise_customer.identity_providers
         if not enterprise_customer.has_identity_providers:
-            log_with_context(
-                LOGGER,
-                'INFO',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                message=f'Enterprise customer {enterprise_customer.name} has no associated identity provider'
-            )
+            LOGGER.info(f'Enterprise customer {enterprise_customer.name} has no associated identity provider', extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            })
             return None
         return providers
 
@@ -153,14 +149,13 @@ class SapSuccessFactorsLearnerManger:
 
         total_sap_inactive_learners = len(sap_inactive_learners) if sap_inactive_learners else 0
         enterprise_customer = self.enterprise_configuration.enterprise_customer
-        log_with_context(
-            LOGGER,
-            'INFO',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            message=f'Found {total_sap_inactive_learners} SAP inactive learners for '
-            f'enterprise customer {enterprise_customer.name}'
-        )
+        message = f'Found {total_sap_inactive_learners} SAP inactive learners for ' \
+                  f'enterprise customer {enterprise_customer.name}'
+        LOGGER.info(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
         if not sap_inactive_learners:
             return None
 
@@ -181,12 +176,10 @@ class SapSuccessFactorsLearnerManger:
                     user_email=social_auth_user.email,
                 )
             except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
-                log_with_context(
-                    LOGGER,
-                    'INFO',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message=f'Learner with email {social_auth_user.email} and SAP student id {sap_student_id} '
-                    f'is not linked with enterprise {enterprise_customer.name}'
-                )
+                message = f'Learner with email {social_auth_user.email} and SAP student id {sap_student_id} '\
+                          f'is not linked with enterprise {enterprise_customer.name}'
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer.uuid,
+                })
         return None

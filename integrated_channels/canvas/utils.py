@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 from requests.utils import quote
 
 from integrated_channels.exceptions import ClientError
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import integrated_channel_request_log_model
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -187,14 +187,11 @@ class CanvasUtil:
                     edx_course_id,
                 )
                 if course:
-                    log_with_context(
-                        LOGGER,
-                        'INFO',
-                        channel_name='canvas',
-                        enterprise_customer_uuid=enterprise_configuration.enterprise_customer.uuid,
-                        course_or_course_run_key=edx_course_id,
-                        message='Found course under root Canvas account'
-                    )
+                    LOGGER.info('Found course under root Canvas account', extra={
+                        'channel_name': 'canvas',
+                        'enterprise_customer_uuid': enterprise_configuration.enterprise_customer.uuid,
+                        'course_or_course_run_key': edx_course_id,
+                    })
         return course
 
     @staticmethod

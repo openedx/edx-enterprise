@@ -15,7 +15,7 @@ from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.canvas.utils import CanvasUtil  # pylint: disable=cyclic-import
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient, IntegratedChannelHealthStatus
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context  # pylint: disable=cyclic-import
+from integrated_channels.logger import get_integrated_channels_logger  # pylint: disable=cyclic-import
 from integrated_channels.utils import (  # pylint: disable=cyclic-import
     refresh_session_if_expired,
     stringify_and_store_api_record,
@@ -109,36 +109,26 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         else:
             workflow_state = located_course['workflow_state']
             if workflow_state.lower() == 'deleted':
-                log_with_context(
-                    LOGGER,
-                    'ERROR',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    course_or_course_run_key=edx_course_id,
-                    message='Course with integration_id = {edx_course_id} found in deleted state, '
-                    'not attempting to create/update'.format(
-                        edx_course_id=edx_course_id,
-                    ),
-                    status_code=HTTPStatus.OK.value,
-                )
+                message = f'Course with integration_id = {edx_course_id} found in deleted state, ' \
+                    f'not attempting to create/update'
+                LOGGER.error(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'course_or_course_run_key': edx_course_id,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                })
                 return 200, MESSAGE_WHEN_COURSE_WAS_DELETED
             # If the course is found, update it instead of creating one
             else:
                 # 'unpublished', 'completed' or 'available' cases
-                log_with_context(
-                    LOGGER,
-                    'WARNING',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    course_or_course_run_key=edx_course_id,
-                    message='Course with canvas_id = {course_id},'
-                    'integration_id = {edx_course_id} found in workflow_state={workflow_state},'
-                    ' attempting to update instead of creating it'.format(
-                        course_id=located_course["id"],
-                        edx_course_id=edx_course_id,
-                        workflow_state=workflow_state,
-                    ),
-                )
+                message = f'Course with canvas_id = {located_course["id"]}, integration_id = {edx_course_id} ' \
+                    f'found in workflow_state={workflow_state}, attempting to update instead of creating it'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'course_or_course_run_key': edx_course_id,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                })
                 return self._update_course_details(
                     located_course['id'],
                     course_details,
@@ -156,32 +146,27 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         # If no course was found, we should create the content.
         if not canvas_course:
-            log_with_context(
-                LOGGER,
-                'INFO',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                course_or_course_run_key=integration_id,
-                message=f'Requested course:{integration_id} for update was not found in customers instance.'
-                f' Requesting a create instead',
-            )
+            message = f'Requested course:{integration_id} for update was not found in customers instance. ' \
+                      f'Requesting a create instead'
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                'course_or_course_run_key': integration_id,
+                'plugin_configuration_id': self.enterprise_configuration.id,
+            })
             return self.create_content_metadata(serialized_data)
         else:
             workflow_state = canvas_course.get('workflow_state', '')
             # If the course was deleted, don't update
             if workflow_state.lower() == 'deleted':
-                log_with_context(
-                    LOGGER,
-                    'ERROR',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    course_or_course_run_key=integration_id,
-                    message='Course with integration_id = {integration_id} found in deleted state, '
-                    'not attempting to create/update'.format(
-                        integration_id=integration_id,
-                    ),
-                    status_code=HTTPStatus.OK.value,
-                )
+                message = f'Course with integration_id = {integration_id} found in deleted state, ' \
+                    f'not attempting to create/update'
+                LOGGER.error(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'course_or_course_run_key': integration_id,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                })
                 return 200, MESSAGE_WHEN_COURSE_WAS_DELETED
             # Update the course
             else:
@@ -327,19 +312,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 )
 
                 if resp.status_code >= 400:
-                    log_with_context(
-                        LOGGER,
-                        'ERROR',
-                        channel_name=self.enterprise_configuration.channel_code(),
-                        enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                        course_or_course_run_key=edx_course,
-                        message='Failed to retrieve assignments for Canvas course: {} while running deduplication, '
-                        'associated edx course: {}'.format(
-                            canvas_course['id'],
-                            edx_course
-                        ),
-                        status_code=resp.status_code,
-                    )
+                    message = f'Failed to retrieve assignments for Canvas course: {canvas_course["id"]} ' \
+                              f'while running deduplication, associated edx course: {edx_course},'
+                    LOGGER.error(message, extra={
+                        'channel_name': self.enterprise_configuration.channel_code(),
+                        'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                        'course_or_course_run_key': edx_course,
+                        'plugin_configuration_id': self.enterprise_configuration.id,
+                        'status_code': resp.status_code,
+                    })
                     more_pages_present = False
                 else:
                     # Result of paginated response from the Canvas course assignments API
@@ -412,14 +393,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 )
                 self._put(url, json.dumps(update_payload).encode('utf-8'))
             except ClientError:
-                log_with_context(
-                    LOGGER,
-                    'INFO',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    course_or_course_run_key=integration_id,
-                    message=f'Skipped course with id {integration_id}, not found in Canvas',
-                )
+                LOGGER.info(f'Skipped course with id {integration_id}, not found in Canvas', extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'course_or_course_run_key': integration_id,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                })
 
     # Private Methods
     def _bulk_remove_course_assignments(self, course_id, assignments_to_remove):
@@ -519,20 +498,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             # we do not want course image update to cause failures
             edx_course_id = course_details["integration_id"]
             exc_string = str(course_exc)
-            log_with_context(
-                LOGGER,
-                'ERROR',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                course_or_course_run_key=edx_course_id,
-                message='Failed to update details for course, '
-                'canvas_course_id={canvas_course_id}. '
-                'Details: {details}'.format(
-                    canvas_course_id=course_id,
-                    details=exc_string,
-                )
-            )
-
+            message = f'Failed to update details for course, canvas_course_id={course_id}. Details: {exc_string}'
+            LOGGER.exception(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                'course_or_course_run_key': edx_course_id,
+                'plugin_configuration_id': self.enterprise_configuration.id,
+                'status_code': HTTPStatus.INTERNAL_SERVER_ERROR.value,
+            })
         return response_code, response_text
 
     def _post(self, url, data):
@@ -637,15 +610,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         try:
             integration_id = decoded_json['course']['integration_id']
         except KeyError as error:
-            log_with_context(
-                LOGGER,
-                'EXCEPTION',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                message=f'KeyError processing decoded json. decoded payload was: {decoded_payload}',
-                exc_info=error,
-                status_code=HTTPStatus.BAD_REQUEST.value,
-            )
+            LOGGER.exception(f"KeyError processing decoded json. decoded payload was: {decoded_payload}", extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                'plugin_configuration_id': self.enterprise_configuration.id,
+                'status_code': HTTPStatus.BAD_REQUEST.value,
+            })
             raise ClientError(
                 "Could not transmit data, no integration ID present.", HTTPStatus.NOT_FOUND.value
             ) from error
@@ -702,15 +672,13 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     ),
                     HTTPStatus.NOT_FOUND.value,
                 ) from error
-            except Exception as e:  # pylint: disable=broad-except
-                log_with_context(
-                    LOGGER,
-                    'ERROR',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message=f"Error occurred while unlinking a Canvas learner: {user_email}. "
-                            f"Error: {e}",
-                )
+            except Exception:  # pylint: disable=broad-except
+                LOGGER.exception(f"Error occurred while unlinking a Canvas learner: {user_email}", extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': HTTPStatus.INTERNAL_SERVER_ERROR.value,
+                })
 
     def _get_canvas_user_courses_by_id(self, user_id):
         """Helper method to retrieve all courses that a Canvas user is enrolled in."""

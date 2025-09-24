@@ -12,7 +12,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 
 LOGGER = get_integrated_channels_logger(__name__)
 
@@ -46,25 +46,19 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        log_with_context(
-            LOGGER,
-            'ERROR',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            message="Degreed integrated channel does not yet support assessment reporting."
-        )
+        LOGGER.error("Degreed integrated channel does not yet support assessment reporting.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def cleanup_duplicate_assignment_records(self, courses):
         """
         Not implemented yet.
         """
-        log_with_context(
-            LOGGER,
-            'ERROR',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            message="Degreed integrated channel does not yet support assignment deduplication."
-        )
+        LOGGER.error("Degreed integrated channel does not yet support assignment deduplication.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def create_course_completion(self, user_id, payload):
         """

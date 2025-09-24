@@ -5,7 +5,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import parse_datetime_to_epoch_millis
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -31,19 +31,13 @@ class BlackboardLearnerExporter(LearnerExporter):
         """
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
         if enterprise_customer_user.user_email is None:
-            log_with_context(
-                LOGGER,
-                'DEBUG',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=enterprise_customer_user.enterprise_customer.uuid,
-                lms_user_id=enterprise_customer_user.user_id,
-                message=(
-                    'get_learner_data_records finished. No learner data was sent for this LMS User Id because '
-                    'Blackboard User ID not found for [{name}]'.format(
-                        name=enterprise_customer_user.enterprise_customer.name
-                    )
-                )
-            )
+            message = f'get_learner_data_records finished. No learner data was sent for this LMS User Id because ' \
+                      f'Blackboard User ID not found for [{enterprise_customer_user.enterprise_customer.name}]'
+            LOGGER.debug(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_user.enterprise_customer.uuid,
+                'lms_user_id': enterprise_customer_user.user_id,
+            })
             return None
         percent_grade = kwargs.get('grade_percent', None)
         blackboard_completed_timestamp = None
@@ -96,22 +90,16 @@ class BlackboardLearnerExporter(LearnerExporter):
             assessment_grade_data (Dict): learner data retrieved from platform's gradebook api.
         """
         if enterprise_enrollment.enterprise_customer_user.user_email is None:
+            enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
             # We need an email to find the user on blackboard.
-            log_with_context(
-                LOGGER,
-                'DEBUG',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-                lms_user_id=enterprise_enrollment.enterprise_customer_user.user_id,
-                course_or_course_run_key=enterprise_enrollment.course_id,
-                message=(
-                    'get_learner_assessment_data_records finished. '
-                    'No learner data was sent for this LMS User Id because'
-                    ' Blackboard User ID not found for [{name}]'.format(
-                        name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-                    )
-                )
-            )
+            message = 'get_learner_assessment_data_records finished. No learner data was sent for this ' \
+                      f'LMS User Id because Blackboard User ID not found for [{enterprise_customer.name}]'
+            LOGGER.debug(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer.uuid,
+                'lms_user_id': enterprise_enrollment.enterprise_customer_user.user_id,
+                'course_or_course_run_key': enterprise_enrollment.course_id,
+            })
             return None
 
         BlackboardLearnerAssessmentDataTransmissionAudit = apps.get_model(

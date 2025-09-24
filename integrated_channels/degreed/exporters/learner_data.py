@@ -8,7 +8,7 @@ from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 
 LOGGER = get_integrated_channels_logger(__name__)
 
@@ -30,6 +30,7 @@ class DegreedLearnerExporter(LearnerExporter):
 
         If no remote ID can be found, return None.
         """
+        enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
         # Degreed expects completion dates of the form 'yyyy-mm-dd'.
         degreed_completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
         if enterprise_enrollment.enterprise_customer_user.get_remote_id(
@@ -50,22 +51,17 @@ class DegreedLearnerExporter(LearnerExporter):
                     course_completed=course_completed,
                     completed_timestamp=completed_date,
                     degreed_completed_timestamp=degreed_completed_timestamp,
-                    enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+                    enterprise_customer_uuid=enterprise_customer.uuid,
                     plugin_configuration_id=self.enterprise_configuration.id,
                 ),
             ]
-        log_with_context(
-            LOGGER,
-            'INFO',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-            lms_user_id=enterprise_enrollment.enterprise_customer_user.user_id,
-            course_or_course_run_key=enterprise_enrollment.course_id,
-            message=(
-                'get_learner_data_records finished. No learner data was sent for this LMS User Id because '
-                'Degreed User ID not found for [{name}]'.format(
-                    name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-                )
-            )
-        )
+        message = f'get_learner_data_records finished. No learner data was sent for this LMS User Id ' \
+                  f'because Degreed User ID not found for [{enterprise_customer.name}]'
+        LOGGER.info(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'lms_user_id': enterprise_enrollment.enterprise_customer_user.user_id,
+            'course_or_course_run_key': enterprise_enrollment.course_id,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
         return None

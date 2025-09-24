@@ -15,7 +15,7 @@ from enterprise.utils import localized_utcnow, truncate_string
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import chunks, encode_binary_data_for_logging
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -54,26 +54,21 @@ class ContentMetadataTransmitter(Transmitter):
         )
 
     def _log_info(self, msg, course_or_course_run_key=None):
-        log_with_context(
-            LOGGER,
-            'INFO',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            course_or_course_run_key=course_or_course_run_key,
-            plugin_configuration_id=self.enterprise_configuration.id,
-            message=msg
-        )
+        """ Log an info message with context information """
+        LOGGER.info(msg, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'course_or_course_run_key': course_or_course_run_key,
+            'plugin_configuration_id': self.enterprise_configuration.id
+        })
 
-    def _log_error(self, msg, course_or_course_run_key=None):
-        log_with_context(
-            LOGGER,
-            'ERROR',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            course_or_course_run_key=course_or_course_run_key,
-            plugin_configuration_id=self.enterprise_configuration.id,
-            message=msg
-        )
+    def _log_exception(self, msg, course_or_course_run_key=None):
+        LOGGER.exception(msg, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'course_or_course_run_key': course_or_course_run_key,
+            'plugin_configuration_id': self.enterprise_configuration.id
+        })
 
     def _log_info_for_each_item_map(self, item_map, msg):
         for content_id, transmission in item_map.items():
@@ -169,7 +164,7 @@ class ContentMetadataTransmitter(Transmitter):
                 LOGGER.exception(exc)
                 response_status_code = exc.status_code
                 response_body = str(exc)
-                self._log_error(
+                self._log_exception(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "
@@ -183,7 +178,7 @@ class ContentMetadataTransmitter(Transmitter):
                 else:
                     response_status_code = self.UNKNOWN_ERROR_HTTP_STATUS_CODE
                     response_body = str(exc)
-                self._log_error(
+                self._log_exception(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "
@@ -193,7 +188,7 @@ class ContentMetadataTransmitter(Transmitter):
                 LOGGER.exception(exc)
                 response_status_code = self.UNKNOWN_ERROR_HTTP_STATUS_CODE
                 response_body = str(exc)
-                self._log_error(
+                self._log_exception(
                     f"Failed to {action_name} [{len(chunk)}] content metadata items for integrated channel "
                     f"[{self.enterprise_configuration.enterprise_customer.name}] "
                     f"[{self.enterprise_configuration.channel_code()}]. "

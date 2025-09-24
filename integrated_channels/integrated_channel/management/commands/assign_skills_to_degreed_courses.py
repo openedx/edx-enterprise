@@ -10,7 +10,7 @@ from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from integrated_channels.degreed2.client import Degreed2APIClient
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 
 User = auth.get_user_model()
 LOGGER = get_integrated_channels_logger(__name__)
@@ -78,12 +78,12 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 continue
 
             degreed_client = Degreed2APIClient(degreed_channel_config)
-            log_with_context(
-                LOGGER,
-                'INFO',
-                channel_name=degreed_channel_config.channel_code(),
-                enterprise_customer_uuid=enterprise_customer.uuid,
-                message=f'[Degreed Skills] Attempting to assign skills for customer {enterprise_customer.slug}'
+            LOGGER.info(
+                f'[Degreed Skills] Attempting to assign skills for customer {enterprise_customer.slug}',
+                extra={
+                    'channel_name': degreed_channel_config.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer.uuid,
+                }
             )
 
             for content_item in content_metadata_in_catalogs:
@@ -100,21 +100,21 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                 try:
                     degreed_client.assign_course_skills(course_id, json_payload)
                 except ClientError as error:
-                    log_with_context(
-                        LOGGER,
-                        'ERROR',
-                        channel_name=degreed_channel_config.channel_code(),
-                        enterprise_customer_uuid=enterprise_customer.uuid,
-                        message=f'Degreed2APIClient assign_course_skills failed for course {course_id} '
-                        f'with message: {error.message}'
-                    )
+                    message = f'Degreed2APIClient assign_course_skills failed for course {course_id} ' \
+                              f'with message: {error.message}'
+                    LOGGER.exception(message, extra={
+                        'channel_name': degreed_channel_config.channel_code(),
+                        'enterprise_customer_uuid': enterprise_customer.uuid,
+                        'course_or_course_run_key': course_id,
+                    })
                     continue
                 except RequestException as error:
-                    log_with_context(
-                        LOGGER,
-                        'ERROR',
-                        channel_name=degreed_channel_config.channel_code(),
-                        enterprise_customer_uuid=enterprise_customer.uuid,
-                        message=f'Degreed2APIClient request to assign skills failed with message: {error.message}'
+                    LOGGER.exception(
+                        f'Degreed2APIClient request to assign skills failed with message: {error.message}',
+                        extra={
+                            'channel_name': degreed_channel_config.channel_code(),
+                            'enterprise_customer_uuid': enterprise_customer.uuid,
+                            'course_or_course_run_key': course_id,
+                        }
                     )
                     continue

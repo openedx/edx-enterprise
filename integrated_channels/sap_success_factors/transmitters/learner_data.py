@@ -4,7 +4,7 @@ Class for transmitting learner data to SuccessFactors.
 
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -52,13 +52,13 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
             if sys_msg and 'user account is inactive' in sys_msg:
                 ecu.active = False
                 ecu.save()
-                log_with_context(
-                    LOGGER,
-                    'WARNING',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=ecu.enterprise_customer.uuid,
-                    lms_user_id=ecu.user_id,
-                    message=f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '
+                LOGGER.warning(
+                    f'User with LMS ID {ecu.user_id}, ECU ID {ecu.id} is a '
                     f'former employee of {ecu.enterprise_customer} '
-                    'and has been marked inactive in SAPSF. Now marking inactive internally.'
+                    'and has been marked inactive in SAPSF. Now marking inactive internally.',
+                    extra={
+                        'channel_name': self.enterprise_configuration.channel_code(),
+                        'enterprise_customer_uuid': ecu.enterprise_customer.uuid,
+                        'lms_user_id': ecu.user_id,
+                    }
                 )

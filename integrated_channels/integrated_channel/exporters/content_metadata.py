@@ -23,7 +23,7 @@ from enterprise.constants import (
 )
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import truncate_item_dicts
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -82,26 +82,22 @@ class ContentMetadataExporter(Exporter):
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
     def _log_info(self, msg, course_or_course_run_key=None):
-        log_with_context(
-            LOGGER,
-            'INFO',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            course_or_course_run_key=course_or_course_run_key,
-            plugin_configuration_id=self.enterprise_configuration.id,
-            message=msg
-        )
+        """ Log an info message with context information """
+        LOGGER.info(msg, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'course_or_course_run_key': course_or_course_run_key,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
 
     def _log_exception(self, msg, course_or_course_run_key=None):
-        log_with_context(
-            LOGGER,
-            'EXCEPTION',
-            channel_name=self.enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            course_or_course_run_key=course_or_course_run_key,
-            plugin_configuration_id=self.enterprise_configuration.id,
-            message=msg
-        )
+        """ Log an exception with context information """
+        LOGGER.exception(msg, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'course_or_course_run_key': course_or_course_run_key,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
 
     def _get_catalog_content_keys(self, enterprise_customer_catalog=None):
         """

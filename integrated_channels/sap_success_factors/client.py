@@ -16,7 +16,7 @@ from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.logger import get_integrated_channels_logger, log_with_context
+from integrated_channels.logger import get_integrated_channels_logger
 from integrated_channels.utils import stringify_and_store_api_record
 
 LOGGER = get_integrated_channels_logger(__name__)
@@ -113,15 +113,13 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             data = response.json()
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
         except (KeyError, TypeError, ValueError) as error:
-            log_with_context(
-                LOGGER,
-                'ERROR',
-                channel_name='SAP',
-                enterprise_customer_uuid=customer_uuid,
-                message=f"SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, "
-                f"Company: {str(company_id)}, Error: {str(error)}, Response: {str(response)}",
-                exc_info=True
-            )
+            message = f'SAP SF OAuth2 POST response is of invalid format. User: {str(user_id)}, ' \
+                f'Company: {str(company_id)}, Error: {str(error)}, Response: {str(response)}'
+            LOGGER.exception(message, extra={
+                'channel_name': 'SAP',
+                'enterprise_customer_uuid': customer_uuid,
+                'status_code': response.status_code,
+            })
             raise ClientError(response, response.status_code) from error
 
     def _create_session(self):
@@ -256,26 +254,22 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
             if response_status_code == HTTPStatus.TOO_MANY_REQUESTS.value:
                 sleep_seconds = self._calculate_backoff(attempts)
-                log_with_context(
-                    LOGGER,
-                    'WARNING',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message=f'SAPSuccessFactorsAPIClient 429 detected from {url}, backing-off before retrying, '
-                    f'sleeping {sleep_seconds} seconds...',
-                    status_code=response_status_code
-                )
+                message = f'SAPSuccessFactorsAPIClient 429 detected from {url}, backing-off before retrying, ' \
+                    f'sleeping {sleep_seconds} seconds...'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response_status_code,
+                })
                 time.sleep(sleep_seconds)
             elif response_status_code >= HTTPStatus.BAD_REQUEST.value:
-                log_with_context(
-                    LOGGER,
-                    'ERROR',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message=f"SAPSuccessFactorsAPIClient request failed"
-                    f" with status {response_status_code}: {response_body}",
-                    status_code=response_status_code
-                )
+                LOGGER.error(f"SAPSuccessFactorsAPIClient request failed: {response_body}", extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response_status_code,
+                })
                 break
             else:
                 break
@@ -358,15 +352,14 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             channel_name=self.enterprise_configuration.channel_code()
         )
         if response.status_code >= 400:
-            log_with_context(
-                LOGGER,
-                'ERROR',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                message=f"Error status_code {response.status_code} and response: {response.text} "
-                f"while posting to URL {url} with payload {payload}",
-                status_code=response.status_code
-            )
+            message = f'Error status_code {response.status_code} and response: {response.text} ' \
+                      f'while posting to URL {url} with payload {payload}'
+            LOGGER.error(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                'plugin_configuration_id': self.enterprise_configuration.id,
+                'status_code': response.status_code,
+            })
         return response.status_code, response.text
 
     def get_inactive_sap_learners(self):
@@ -442,43 +435,38 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         except ValueError as error:
             raise ClientError(response, response.status_code) from error
         except (ConnectionError, Timeout) as exc:
-            log_with_context(
-                LOGGER,
-                'ERROR',
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                message=f'Unable to fetch inactive learners from SAP searchStudent API with url '
-                f'{search_student_paginated_url}. {str(exc)}',
-                exc_info=True
-            )
+            message = f'Unable to fetch inactive learners from SAP searchStudent API with url ' \
+                      f'{search_student_paginated_url}. {str(exc)}'
+            LOGGER.error(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                'plugin_configuration_id': self.enterprise_configuration.id,
+            })
             return None
 
         if 'error' in sap_inactive_learners:
             try:
-                log_with_context(
-                    LOGGER,
-                    'ERROR',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message="SAP searchStudent API for customer "
-                    f"{self.enterprise_configuration.enterprise_customer.name} "
-                    f"and base url {self.enterprise_configuration.sapsf_base_url} "
-                    f"returned response with {sap_inactive_learners['error'].get('message')} ",
-                    status_code=sap_inactive_learners['error'].get('code')
-                )
+                message = f"SAP searchStudent API for customer " \
+                          f"{self.enterprise_configuration.enterprise_customer.name} " \
+                          f"and base url {self.enterprise_configuration.sapsf_base_url} " \
+                          f"returned response with {sap_inactive_learners['error'].get('message')} "
+                LOGGER.error(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': sap_inactive_learners['error'].get('code'),
+                })
             except AttributeError:
-                log_with_context(
-                    LOGGER,
-                    'ERROR',
-                    channel_name=self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                    message="SAP searchStudent API for customer "
-                    f"{self.enterprise_configuration.enterprise_customer.name} "
-                    f"and base url {self.enterprise_configuration.sapsf_base_url} returned response with "
-                    f"{sap_inactive_learners['error']} {response.status_code}",
-                    status_code=sap_inactive_learners['error'].get('code'),
-                    exc_info=True
-                )
+                message = f"SAP searchStudent API for customer " \
+                          f"{self.enterprise_configuration.enterprise_customer.name} " \
+                          f"and base url {self.enterprise_configuration.sapsf_base_url} " \
+                          f"returned response with {sap_inactive_learners['error']}"
+                LOGGER.error(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response.status_code,
+                })
             return None
 
         new_page_start_at = page_size + start_at
