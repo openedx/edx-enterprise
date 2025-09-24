@@ -13,63 +13,92 @@ from integrated_channels.utils import generate_formatted_log
 USE_JSON_LOGGING = getattr(settings, 'INTEGRATED_CHANNELS_JSON_LOGGING', False)
 
 
-class IntegratedChannelsFormatter(logging.Formatter):
+class IntegratedChannelsBasicFormatter(logging.Formatter):
     """
-    Custom formatter for integrated channels that supports both JSON and string formats.
+    Basic formatter for integrated channels that outputs plain string logs.
     """
 
-    def __init__(self):
-        self.use_json = USE_JSON_LOGGING
-        super().__init__()
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format extra data stored on the log record as string.
 
-    def format(self, record):
-        if self.use_json:
-            log_entry = {
-                'timestamp': datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S,%f')[:-3],
-                'level': record.levelname.upper(),
-                'logger': record.name,
-                'message': record.getMessage(),
-                'module': record.module,
-            }
+        The extra data on the log record comes from the `extra` kwarg of the logger call.
+        Only specific keys related to integrated channels are supported.
+        """
+        formatted_message = generate_formatted_log(
+            channel_name=getattr(record, 'channel_name', None),
+            enterprise_customer_uuid=getattr(record, 'enterprise_customer_uuid', None),
+            lms_user_id=getattr(record, 'lms_user_id', None),
+            course_or_course_run_key=getattr(record, 'course_or_course_run_key', None),
+            message=record.getMessage(),
+            plugin_configuration_id=getattr(record, 'plugin_configuration_id', None)
+        )
 
-            log_entry['service'] = 'integrated_channels'
+        # Replace the message and clear args to prevent double formatting
+        record.msg = formatted_message
+        record.args = ()
 
-            if record.exc_info:
-                log_entry['error.type'] = record.exc_info[0].__name__
-                log_entry['error.message'] = str(record.exc_info[1])
-                log_entry['error.stack'] = self.formatException(record.exc_info)
-                log_entry['error.function'] = record.funcName
-                log_entry['error.file'] = record.pathname
-                log_entry['error.line'] = record.lineno
-
-            # Add any extra attributes related to integrated channels
-            if hasattr(record, 'channel_name'):
-                log_entry['integrated_channel.code'] = record.channel_name.upper()
-            if hasattr(record, 'enterprise_customer_uuid'):
-                log_entry['integrated_channel.customer_uuid'] = record.enterprise_customer_uuid
-            if hasattr(record, 'plugin_configuration_id'):
-                log_entry['integrated_channel.configuration_id'] = record.plugin_configuration_id
-            if hasattr(record, 'lms_user_id'):
-                log_entry['integrated_channel.user_id'] = record.lms_user_id
-            if hasattr(record, 'course_or_course_run_key'):
-                log_entry['integrated_channel.course_or_course_run_key'] = record.course_or_course_run_key
-            if hasattr(record, 'transmission_type'):
-                log_entry['integrated_channel.transmission_type'] = record.transmission_type
-            if hasattr(record, 'enterprise_enrollment_id'):
-                log_entry['integrated_channel.enrollment_id'] = record.enterprise_enrollment_id
-            if hasattr(record, 'status_code'):
-                log_entry['http.status_code'] = record.status_code
-
-            for key, value in record.__dict__.items():
-                if key.startswith('dd'):
-                    log_entry[key] = value
-
-            return json.dumps(log_entry, separators=(',', ':'))
-        else:
-            return super().format(record)
+        return super().format(record)
 
 
-def get_integrated_channels_logger(name=None):
+class IntegratedChannelsJSONFormatter(logging.Formatter):
+    """
+    JSON formatter for integrated channels that outputs structured JSON logs.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format extra data stored on the log record as JSON.
+
+        The extra data on the log record comes from the `extra` kwarg of the logger call.
+        Only specific keys related to integrated channels are supported.
+        """
+        log_entry = {
+            'timestamp': datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S,%f')[:-3],
+            'level': record.levelname.upper(),
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'service': 'integrated_channels'
+        }
+
+        if record.exc_info:
+            log_entry['error.type'] = record.exc_info[0].__name__
+            log_entry['error.message'] = str(record.exc_info[1])
+            log_entry['error.stack'] = self.formatException(record.exc_info)
+            log_entry['error.function'] = record.funcName
+            log_entry['error.file'] = record.pathname
+            log_entry['error.line'] = record.lineno
+
+        # Add any extra attributes related to integrated channels
+        if hasattr(record, 'channel_name'):
+            log_entry['integrated_channel.code'] = record.channel_name.upper()
+        if hasattr(record, 'enterprise_customer_uuid'):
+            log_entry['integrated_channel.customer_uuid'] = record.enterprise_customer_uuid
+        if hasattr(record, 'plugin_configuration_id'):
+            log_entry['integrated_channel.configuration_id'] = record.plugin_configuration_id
+        if hasattr(record, 'lms_user_id'):
+            log_entry['integrated_channel.user_id'] = record.lms_user_id
+        if hasattr(record, 'course_or_course_run_key'):
+            log_entry['integrated_channel.course_or_course_run_key'] = record.course_or_course_run_key
+        if hasattr(record, 'transmission_type'):
+            log_entry['integrated_channel.transmission_type'] = record.transmission_type
+        if hasattr(record, 'enterprise_enrollment_id'):
+            log_entry['integrated_channel.enrollment_id'] = record.enterprise_enrollment_id
+        if hasattr(record, 'status_code'):
+            log_entry['http.status_code'] = record.status_code
+
+        # Add any Datadog-specific attributes
+        for key, value in record.__dict__.items():
+            if key.startswith('dd'):
+                log_entry[key] = value
+
+        # Use compact separators to minimize log size (no spaces after , and :)
+        # This reduces storage costs and improves log processing performance
+        return json.dumps(log_entry, separators=(',', ':'))
+
+
+def get_integrated_channels_logger(name: str = None) -> logging.Logger:
     """
     Get a configured logger for integrated channels.
 
@@ -86,53 +115,18 @@ def get_integrated_channels_logger(name=None):
     if logger.handlers:
         return logger
 
-    # Only add our JSON console handler when JSON logging is enabled; otherwise rely on parent/root handlers.
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG)
+
     if USE_JSON_LOGGING:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.DEBUG)
+        formatter = IntegratedChannelsJSONFormatter()
+    else:
+        formatter = IntegratedChannelsBasicFormatter()
 
-        # Set formatter
-        formatter = IntegratedChannelsFormatter()
-        console_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
-        # Configure handler on logger
-        logger.addHandler(console_handler)
-
-    # Configure logger
     logger.setLevel(logging.DEBUG)
     logger.propagate = True
 
     return logger
-
-
-def log_with_context(logger_instance, level, message, exc_info=False, **context):
-    """
-    Log a message with additional context.
-
-    Args:
-        logger_instance: Logger to use
-        level (str): Log level (INFO, ERROR, etc.)
-        message (str): Log message
-        exc_info (bool): Whether to include exception information
-        **context: Additional context fields
-    """
-    # Handle exception level specially
-    if level.upper() == 'EXCEPTION':
-        context_logger = logger_instance.exception
-        exc_info = True
-        level = 'ERROR'  # Log as ERROR level
-    else:
-        context_logger = getattr(logger_instance, level.lower())
-
-    if USE_JSON_LOGGING:
-        context_logger(message, extra=context, exc_info=exc_info)
-    else:
-        formatted_message = generate_formatted_log(
-            channel_name=context.get("channel_name", None),
-            enterprise_customer_uuid=context.get("enterprise_customer_uuid", None),
-            lms_user_id=context.get("lms_user_id", None),
-            course_or_course_run_key=context.get("course_or_course_run_key", None),
-            message=message,
-            plugin_configuration_id=context.get("plugin_configuration_id", None)
-        )
-        context_logger(formatted_message, exc_info=exc_info)
