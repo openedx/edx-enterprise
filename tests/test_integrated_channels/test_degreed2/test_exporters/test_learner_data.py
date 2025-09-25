@@ -160,3 +160,33 @@ class TestDegreed2LearnerExporter(unittest.TestCase):
         enterprise_enrollment.enterprise_customer_user.get_remote_id.assert_called_once_with(
             enterprise_configuration.idp_id
         )
+
+    @mock.patch('integrated_channels.degreed2.exporters.learner_data.LOGGER')
+    def test_get_remote_id_exception_logging(self, mock_logger):
+        """
+        Test that exceptions during get_remote_id are logged correctly.
+        """
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        exporter = Degreed2LearnerExporter('fake-user', self.config)
+
+        # Mock get_remote_id to raise an exception
+        self.tpa_client.return_value.get_remote_id.side_effect = Exception('Remote ID fetch failed')
+
+        result = exporter.get_learner_data_records(enterprise_course_enrollment)
+
+        # Should return None when exception occurs
+        self.assertIsNone(result)
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.exception.assert_called_once()
+        args, kwargs = mock_logger.exception.call_args
+        self.assertIn('get_learner_data_records failed, possibly due to an invalid customer configuration.', args[0])
+        self.assertIn('Remote ID fetch failed', args[0])
+        self.assertEqual(kwargs['extra']['channel_name'], self.config.channel_code())
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.enterprise_customer.uuid)
+        self.assertEqual(kwargs['extra']['lms_user_id'], self.enterprise_customer_user.user_id)
+        self.assertEqual(kwargs['extra']['course_or_course_run_key'], enterprise_course_enrollment.course_id)
+        self.assertEqual(kwargs['extra']['plugin_configuration_id'], self.config.id)

@@ -1890,6 +1890,41 @@ class TestBackfillRemoteActionTimestampsManagementCommand(unittest.TestCase, Ent
         )
         assert 0 == ContentMetadataItemTransmission.objects.filter(remote_created_at__isnull=True).count()
 
+    @unittest.mock.patch(
+        'integrated_channels.integrated_channel.management.commands.backfill_remote_action_timestamps.LOGGER'
+    )
+    def test_exception_logging(self, mock_logger):
+        """
+        Test that exceptions during save are logged correctly.
+        """
+        item = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX-EXCEPTION',
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            plugin_configuration_id=1,
+            integrated_channel_code='GENERIC',
+            channel_metadata={},
+            remote_created_at=None,
+            remote_updated_at=None,
+            created=NOW,
+            modified=NOW,
+        )
+
+        # Mock the save method on all ContentMetadataItemTransmission instances
+        with unittest.mock.patch(
+            'integrated_channels.integrated_channel.models.ContentMetadataItemTransmission.save',
+            side_effect=Exception('Save failed'),
+        ):
+            call_command('backfill_remote_action_timestamps')
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.exception.assert_called()
+        args, kwargs = mock_logger.exception.call_args
+        self.assertIn(f'ContentMetadataItemTransmission <{item.id}>', kwargs['msg'])
+        self.assertIn('error backfilling remote_created_at & remote_updated_at', kwargs['msg'])
+        self.assertEqual(kwargs['extra']['channel_name'], 'GENERIC')
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], item.enterprise_customer.uuid)
+        self.assertEqual(kwargs['extra']['course_or_course_run_key'], 'DemoX-EXCEPTION')
+
 
 @mark.django_db
 @ddt.ddt
@@ -1949,6 +1984,39 @@ class TestResetCsodRemoteDeletedAtManagementCommand(unittest.TestCase, Enterpris
         assert generic1.remote_deleted_at is not None
         assert csod1.remote_deleted_at is None
         assert csod2.remote_deleted_at is None
+
+    @unittest.mock.patch(
+        'integrated_channels.integrated_channel.management.commands.reset_csod_remote_deleted_at.LOGGER'
+    )
+    def test_exception_logging(self, mock_logger):
+        """
+        Test that exceptions during save are logged correctly.
+        """
+        csod_item = factories.ContentMetadataItemTransmissionFactory(
+            content_id='DemoX-CSOD-EXCEPTION',
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            plugin_configuration_id=1,
+            integrated_channel_code='CSOD',
+            channel_metadata={},
+            remote_deleted_at=NOW,
+            api_response_status_code=None,
+        )
+
+        # Mock the save method on all ContentMetadataItemTransmission instances
+        with unittest.mock.patch(
+            'integrated_channels.integrated_channel.models.ContentMetadataItemTransmission.save',
+            side_effect=Exception('Save failed'),
+        ):
+            call_command('reset_csod_remote_deleted_at')
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.exception.assert_called()
+        args, kwargs = mock_logger.exception.call_args
+        self.assertIn(f'integrated_channel_content_transmission_id={csod_item.id}', kwargs['msg'])
+        self.assertIn('error setting remote_deleted_at to None', kwargs['msg'])
+        self.assertEqual(kwargs['extra']['channel_name'], 'CSOD')
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], csod_item.enterprise_customer.uuid)
+        self.assertEqual(kwargs['extra']['course_or_course_run_key'], 'DemoX-CSOD-EXCEPTION')
 
 
 @mark.django_db

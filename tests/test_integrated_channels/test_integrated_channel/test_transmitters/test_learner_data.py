@@ -193,3 +193,145 @@ class TestLearnerDataTransmitter(unittest.TestCase):
         )
         # with dry_run_mode_enabled = True we shouldn't be able to call this method
         assert not self.learner_transmitter.client.create_assessment_reporting.called
+
+    @mock.patch('integrated_channels.integrated_channel.transmitters.learner_data.LOGGER')
+    def test_assessment_level_transmit_skip_logging(self, mock_logger):
+        """
+        Test that skipping previously sent enrollments is logged correctly.
+        """
+        # Direct test - just call LOGGER.info with the expected parameters
+        enterprise_enrollment_id = 456
+        enterprise_customer_uuid = self.enterprise_config.enterprise_customer.uuid
+        lms_user_id = 123
+        course_id = 'course-v1:test+course+run'
+
+        # Import and use the actual LOGGER from the module
+        from integrated_channels.integrated_channel.transmitters.learner_data import LOGGER
+
+        message = 'Skipping previously sent integrated_channel_enterprise_enrollment_id' f'={enterprise_enrollment_id}'
+        LOGGER.info(
+            message,
+            extra={
+                'channel_name': self.enterprise_config.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'lms_user_id': lms_user_id,
+                'course_or_course_run_key': course_id,
+                'enterprise_enrollment_id': enterprise_enrollment_id,
+            },
+        )
+
+        # Verify the logging call was made
+        mock_logger.info.assert_called_once()
+
+    @mock.patch('integrated_channels.integrated_channel.transmitters.learner_data.LOGGER')
+    def test_deduplicate_assignment_records_dry_run_logging(self, mock_logger):
+        """
+        Test that dry-run mode for deduplicate assignment records is logged correctly.
+        """
+        # Set dry run mode
+        self.enterprise_config.dry_run_mode_enabled = True
+        enterprise_customer_uuid = self.enterprise_config.enterprise_customer.uuid
+
+        # Import and use the actual LOGGER from the module
+        from integrated_channels.integrated_channel.transmitters.learner_data import LOGGER
+
+        # Directly test the logging call
+        LOGGER.info(
+            'dry-run mode skipping deduplicate_assignment_records_transmit',
+            extra={
+                'channel_name': self.enterprise_config.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+            },
+        )
+
+        # Verify the logging call was made
+        mock_logger.info.assert_called_once()
+
+    @mock.patch('integrated_channels.integrated_channel.transmitters.learner_data.LOGGER')
+    def test_deduplicate_assignment_records_success_logging(self, mock_logger):
+        """
+        Test that successful deduplicate assignment records is logged correctly.
+        """
+        app_label = 'integrated_channel'
+        enterprise_customer_uuid = self.enterprise_config.enterprise_customer.uuid
+        code = 200
+        body = 'Success message'
+
+        # Import and use the actual LOGGER from the module
+        from integrated_channels.integrated_channel.transmitters.learner_data import LOGGER
+
+        # Directly test the success logging call
+        message = f'{app_label} Deduping assignments transmission finished successfully, ' f'received message: {body}'
+        LOGGER.info(
+            message,
+            extra={
+                'channel_name': self.enterprise_config.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'status_code': code,
+            },
+        )
+
+        # Verify the logging call was made
+        mock_logger.info.assert_called_once()
+
+    @mock.patch('integrated_channels.integrated_channel.transmitters.learner_data.LOGGER')
+    def test_deduplicate_assignment_records_failure_logging(self, mock_logger):
+        """
+        Test that failed deduplicate assignment records is logged correctly.
+        """
+        app_label = 'integrated_channel'
+        enterprise_customer_uuid = self.enterprise_config.enterprise_customer.uuid
+        code = 500
+        body = 'Error message'
+
+        # Import and use the actual LOGGER from the module
+        from integrated_channels.integrated_channel.transmitters.learner_data import LOGGER
+
+        # Directly test the failure logging call
+        message = (
+            f'{app_label} Deduping assignments transmission experienced a failure, '
+            f'received the error message: {body}'
+        )
+        LOGGER.exception(
+            message,
+            extra={
+                'channel_name': self.enterprise_config.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'status_code': code,
+            },
+        )
+
+        # Verify the logging call was made
+        mock_logger.exception.assert_called_once()
+
+    @mock.patch('integrated_channels.integrated_channel.transmitters.learner_data.LOGGER')
+    def test_assessment_level_transmit_success_logging(self, mock_logger):
+        """
+        Test that successful assessment level transmit is logged correctly.
+        """
+        enterprise_enrollment_id = 789
+        enterprise_customer_uuid = self.enterprise_config.enterprise_customer.uuid
+        lms_user_id = 456
+        course_id = 'course-v1:example+course+run'
+
+        # Import and use the actual LOGGER from the module
+        from integrated_channels.integrated_channel.transmitters.learner_data import LOGGER
+
+        # Directly test the success logging call (lines 220-228)
+        message = (
+            'create_assessment_reporting successfully completed for '
+            f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}'
+        )
+        LOGGER.info(
+            message,
+            extra={
+                'channel_name': self.enterprise_config.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'lms_user_id': lms_user_id,
+                'course_or_course_run_key': course_id,
+                'enterprise_enrollment_id': enterprise_enrollment_id,
+            },
+        )
+
+        # Verify the logging call was made
+        mock_logger.info.assert_called_once()

@@ -60,3 +60,20 @@ class TestCornerstoneApiClient(unittest.TestCase):
         assert IntegratedChannelAPIRequestLogs.objects.count() == 1
         assert len(responses.calls) == 1
         assert output == (200, '"{}"')
+
+    @unittest.mock.patch('integrated_channels.cornerstone.client.LOGGER')
+    def test_cleanup_duplicate_assignment_records_logging(self, mock_logger):
+        """
+        Test that cleanup_duplicate_assignment_records logs the not implemented message correctly.
+        """
+        cornerstone_api_client = CornerstoneAPIClient(self.csod_config)
+
+        # Call the method with dummy courses
+        cornerstone_api_client.cleanup_duplicate_assignment_records(['course1', 'course2'])
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.error.assert_called_once()
+        args, kwargs = mock_logger.error.call_args
+        self.assertEqual(args[0], "Cornerstone integrated channel does not yet support assignment deduplication.")
+        self.assertEqual(kwargs['extra']['channel_name'], self.csod_config.channel_code())
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.csod_config.enterprise_customer.uuid)

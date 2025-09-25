@@ -176,3 +176,40 @@ class TestCanvasUtils(unittest.TestCase):
                 mock_session,
                 'nonMatchingedXCourseId',
             )
+
+    @mock.patch('integrated_channels.canvas.utils.CanvasUtil.find_course_in_account')
+    @mock.patch('integrated_channels.canvas.utils.CanvasUtil.find_root_canvas_account')
+    @mock.patch('integrated_channels.canvas.utils.LOGGER')
+    def test_find_course_under_root_account_with_logging(
+        self, mock_logger, mock_find_root_canvas_account, mock_find_course_in_account
+    ):
+        """Test that logging occurs when course is found under root account."""
+        # Mock the course object
+        mock_course = {'id': 123, 'integration_id': 'test-course-id', 'name': 'Test Course'}
+
+        # Mock the root account
+        mock_root_account = {'id': 1, 'parent_account_id': None}
+
+        # Setup the mock calls:
+        # First call returns None (not found in enterprise account)
+        # Second call returns the course (found in root account)
+        mock_find_course_in_account.side_effect = [None, mock_course]
+        mock_find_root_canvas_account.return_value = mock_root_account
+
+        mock_session, _ = refresh_session_if_expired(self.get_oauth_access_token)
+
+        # Call the method
+        result = CanvasUtil.find_course_by_course_id(self.enterprise_config, mock_session, 'test-course-id')
+
+        # Verify the result
+        assert result == mock_course
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.info.assert_called_once_with(
+            'Found course under root Canvas account',
+            extra={
+                'channel_name': 'canvas',
+                'enterprise_customer_uuid': self.enterprise_config.enterprise_customer.uuid,
+                'course_or_course_run_key': 'test-course-id',
+            },
+        )
