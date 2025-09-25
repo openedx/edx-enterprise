@@ -314,18 +314,6 @@ def generate_formatted_log(
         f'integrated_channel_plugin_configuration_id={plugin_configuration_id}, {message}'
 
 
-def log_exception(enterprise_configuration, msg, course_or_course_run_key=None):
-    LOGGER.exception(
-        generate_formatted_log(
-            channel_name=enterprise_configuration.channel_code(),
-            enterprise_customer_uuid=enterprise_configuration.enterprise_customer.uuid,
-            course_or_course_run_key=course_or_course_run_key,
-            plugin_configuration_id=enterprise_configuration.id,
-            message=msg
-        )
-    )
-
-
 def refresh_session_if_expired(
     oauth_access_token_function,
     session=None,

@@ -3,7 +3,6 @@ Client for connecting to Moodle.
 """
 
 import json
-import logging
 import time
 from http import HTTPStatus
 from urllib.parse import urlencode, urljoin
@@ -14,9 +13,10 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
+from integrated_channels.logger import get_integrated_channels_logger
+from integrated_channels.utils import stringify_and_store_api_record
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class MoodleClientError(ClientError):
@@ -487,16 +487,14 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         response = self._get_courses(serialized_data['courses[0][idnumber]'])
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
-            LOGGER.info(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    'No course found while attempting to delete edX course: '
-                    f'{serialized_data["courses[0][idnumber]"]} from moodle.'
-                )
-            )
+            message = f'No course found while attempting to delete edX course: ' \
+                      f'{serialized_data["courses[0][idnumber]"]} from moodle.'
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                'course_or_course_run_key': serialized_data["courses[0][idnumber]"],
+                'plugin_configuration_id': self.enterprise_configuration.id,
+            })
             # Hacky way of getting around the request wrapper validation
             rsp = requests.Response()
             rsp._content = bytearray('{"result": "Course not found."}', 'utf-8')  # pylint: disable=protected-access
@@ -516,15 +514,10 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Moodle integrated channel does not yet support assignment deduplication."
-            )
-        )
+        LOGGER.error("Moodle integrated channel does not yet support assignment deduplication.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def create_course_completion(self, user_id, payload):
         """Send course completion data to Moodle"""
@@ -532,15 +525,14 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         # but we need to wrap the requests
         resp = self._wrapped_create_course_completion(user_id, payload)
         completion_data = json.loads(payload)
-        LOGGER.info(
-            generate_formatted_log(
-                channel_name=self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-                course_or_course_run_key=completion_data['courseID'],
-                plugin_configuration_id=self.enterprise_configuration.id,
-                message=f'Response for Moodle Create Course Completion Request response: {resp} '
-            )
-        )
+        LOGGER.info(f'Response for Moodle Create Course Completion Request response: {resp} ', extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'course_or_course_run_key': completion_data['courseID'],
+            'plugin_configuration_id': self.enterprise_configuration.id,
+            'status_code': resp.status_code,
+            'lms_user_id': user_id,
+        })
         return resp.status_code, resp.text
 
     @moodle_request_wrapper

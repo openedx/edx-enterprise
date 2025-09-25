@@ -4,7 +4,6 @@ Client for connecting to Degreed2.
 """
 
 import json
-import logging
 import time
 from http import HTTPStatus
 
@@ -20,9 +19,10 @@ from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log, refresh_session_if_expired, stringify_and_store_api_record
+from integrated_channels.logger import get_integrated_channels_logger
+from integrated_channels.utils import refresh_session_if_expired, stringify_and_store_api_record
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class Degreed2APIClient(IntegratedChannelApiClient):
@@ -55,18 +55,30 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         self.courses_api_path = app_config.courses_api_path
         self.completions_api_path = app_config.completions_api_path
         self.skill_api_path = app_config.skill_api_path
-        # to log without having to pass channel_name, ent_customer_uuid each time
-        self.make_log_msg = lambda course_key, message, lms_user_id=None: generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            self.enterprise_configuration.enterprise_customer.uuid,
-            lms_user_id,
-            course_key,
-            message,
-        )
         self.enterprise_catalog_api_client = EnterpriseCatalogApiClient()
         self.IntegratedChannelAPIRequestLogs = apps.get_model(
             "integrated_channel", "IntegratedChannelAPIRequestLogs"
         )
+
+    def _log_info(self, course_key, message, lms_user_id=None):
+        """Log info message with integrated channels context."""
+        LOGGER.info(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+            'course_or_course_run_key': course_key,
+            'lms_user_id': lms_user_id,
+        })
+
+    def _log_warning(self, course_key, message, lms_user_id=None):
+        """Log warning message with integrated channels context."""
+        LOGGER.warning(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+            'course_or_course_run_key': course_key,
+            'lms_user_id': lms_user_id,
+        })
 
     def get_oauth_url(self):
         config = self.enterprise_configuration
@@ -89,29 +101,19 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Degreed2 integrated channel does not yet support assessment reporting."
-            )
-        )
+        LOGGER.error("Degreed2 integrated channel does not yet support assessment reporting.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def cleanup_duplicate_assignment_records(self, courses):
         """
         Not implemented yet.
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Degreed2 integrated channel does not yet support assignment deduplication."
-            )
-        )
+        LOGGER.error("Degreed2 integrated channel does not yet support assignment deduplication.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def create_course_completion(self, user_id, payload):
         """
@@ -140,32 +142,28 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 if 'detail' in error and 'Invalid user identifier' in error['detail']:
                     try:
                         enterprise_customer = self.enterprise_configuration.enterprise_customer
-                        LOGGER.info(
-                            generate_formatted_log(
-                                self.enterprise_configuration.channel_code(),
-                                self.enterprise_configuration.enterprise_customer.uuid,
-                                None,
-                                None,
-                                f'User {user_id} was deleted on degreed side,'
-                                f"so marking it as inactive and unlinking from enterprise"
-                            )
-                        )
+                        message = f"User {user_id} was not found on degreed side, so marking it as " \
+                            f"inactive and unlinking from enterprise"
+                        LOGGER.info(message, extra={
+                            'channel_name': self.enterprise_configuration.channel_code(),
+                            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                            'plugin_configuration_id': self.enterprise_configuration.id,
+                            'lms_user_id': user_id,
+                            'status_code': HTTPStatus.BAD_REQUEST.value,
+                        })
                         # Unlink user from related Enterprise Customer
                         EnterpriseCustomerUser.objects.unlink_user(
                             enterprise_customer=enterprise_customer,
                             user_email=json_payload.get('data').get('attributes').get('user-id'),
                         )
                     except Exception as e:  # pylint: disable=broad-except
-                        LOGGER.error(
-                            generate_formatted_log(
-                                self.enterprise_configuration.channel_code(),
-                                self.enterprise_configuration.enterprise_customer.uuid,
-                                None,
-                                None,
-                                f'Error occurred while unlinking a degreed2 learner: {user_id}. '
-                                f'Payload: {json_payload}, Error: {e}'
-                            )
-                        )
+                        LOGGER.exception(f"Error occurred while unlinking a degreed2 learner. {e}", extra={
+                            'channel_name': self.enterprise_configuration.channel_code(),
+                            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                            'plugin_configuration_id': self.enterprise_configuration.id,
+                            'lms_user_id': user_id,
+                            'status_code': HTTPStatus.INTERNAL_SERVER_ERROR.value,
+                        })
         return code, body
 
     def delete_course_completion(self, user_id, payload):
@@ -174,15 +172,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         So we may need to store id on our side to be able to do this.
         https://api.degreed.com/docs/#delete-a-specific-completion
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Degreed2 integrated channel does not yet support deleting course completions."
-            )
-        )
+        LOGGER.error("Degreed2 integrated channel does not yet support deleting course completions.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
 
     def fetch_degreed_course_id(self, external_id):
         """
@@ -195,12 +189,12 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         )
         cached_course_id = TieredCache.get_cached_response(cache_key)
         if cached_course_id.is_found:
-            LOGGER.info(self.make_log_msg(external_id, f'Found cached course id: {cached_course_id.value}'))
+            self._log_info(external_id, f'Found cached course id: {cached_course_id.value}')
             return cached_course_id.value
         # QueryDict converts + to space
         params = QueryDict(f"filter[external_id]={external_id.replace('+', '%2B')}")
         course_search_url = f'{self.get_courses_url()}?{params.urlencode(safe="[]")}'
-        LOGGER.info(self.make_log_msg(external_id, f'Attempting find course via url: {course_search_url}'))
+        self._log_info(external_id, f'Attempting find course via url: {course_search_url}')
         status_code, response_body = self._get(
             course_search_url,
             self.ALL_DESIRED_SCOPES
@@ -241,14 +235,13 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             raise ClientError(f'Degreed2: Cannot find course via external-id {course_id}')
 
         course_skills_url = self.get_course_skills_url(degreed_course_id)
-        LOGGER.info(self.make_log_msg(course_id, f'Attempting to assign course skills {course_skills_url}'))
+        self._log_info(course_id, f'Attempting to assign course skills {course_skills_url}')
         try:
             status_code, response_body = self._patch(course_skills_url, serialized_data, self.CONTENT_WRITE_SCOPE)
             if status_code == 201:
-                LOGGER.info(
-                    self.make_log_msg(
-                        course_id,
-                        f'Succesfully assigned skills to course {course_id}')
+                self._log_info(
+                    course_id,
+                    f'Successfully assigned skills to course {course_id}'
                 )
                 return status_code, response_body
             elif status_code >= 400:
@@ -282,11 +275,9 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         if status_code == 409:
             # course already exists, don't raise failure, but try to mark it as active on Degreed side
             # if succeeds, we'll treat this as a success
-            LOGGER.warning(
-                self.make_log_msg(
-                    external_id,
-                    f'Course with integration_id = {external_id} already exists, marking it as active'
-                )
+            self._log_warning(
+                external_id,
+                f'Course with integration_id = {external_id} already exists, marking it as active'
             )
             try:
                 channel_metadata_item['courses'][0]['obsolete'] = False
@@ -326,7 +317,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
 
         patch_url = f'{self.get_courses_url()}/{course_id}'
-        LOGGER.info(self.make_log_msg(external_id, f'Attempting course update via {patch_url}'))
+        self._log_info(external_id, f'Attempting course update via {patch_url}')
         patch_status_code, patch_response_body = self._sync_content_metadata(
             course_item,
             'patch',
@@ -352,15 +343,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
         metadata = self.enterprise_catalog_api_client.get_customer_content_metadata_content_identifier(
             enterprise_uuid=self.enterprise_configuration.enterprise_customer.uuid,
             content_id=external_id)
-        LOGGER.info(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                f"[Degreed2Client] metadata: {metadata}",
-            )
-        )
+        LOGGER.info(f"[Degreed2Client] metadata: {metadata}", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
 
         # 2. Transmit to degreed
         skills = metadata.get("skill_names", [])
@@ -368,13 +355,11 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             try:
                 self.assign_course_skills(external_id, skills)
             except ClientError as err:
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    self.enterprise_configuration.enterprise_customer.uuid,
-                    None,
-                    None,
-                    f"[Degreed2Client]: {err.message}",
-                )
+                LOGGER.exception(f"[Degreed2Client]: {err.message}", extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                })
 
     def delete_content_metadata(self, serialized_data):
         """
@@ -399,7 +384,7 @@ class Degreed2APIClient(IntegratedChannelApiClient):
                 raise ClientError(f'Degreed2: Cannot find course via external-id {external_id}')
 
             del_url = f'{self.get_courses_url()}/{course_id}'
-            LOGGER.info(self.make_log_msg(external_id, f'Attempting course delete via {del_url}'))
+            self._log_info(external_id, f'Attempting course delete via {del_url}')
             del_status_code, del_response_body = self._delete(
                 del_url,
                 None,
@@ -500,16 +485,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
-                LOGGER.warning(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        f'[Degreed2Client]._get 429 detected from {url}, backing-off before retrying, '
-                        f'sleeping {sleep_seconds} seconds...'
-                    )
-                )
+                message = f'[Degreed2Client]._get 429 detected from {url}, backing-off before retrying, ' \
+                    f'sleeping {sleep_seconds} seconds...'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response.status_code,
+                })
                 time.sleep(sleep_seconds)
             else:
                 break
@@ -545,16 +528,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
-                LOGGER.warning(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        f'[Degreed2Client]._post 429 detected from {url}, backing-off before retrying, '
-                        f'sleeping {sleep_seconds} seconds...'
-                    )
-                )
+                message = f'[Degreed2Client]._post 429 detected from {url}, backing-off before retrying, ' \
+                    f'sleeping {sleep_seconds} seconds...'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response.status_code,
+                })
                 time.sleep(sleep_seconds)
             else:
                 break
@@ -590,16 +571,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
-                LOGGER.warning(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        f'429 detected from {url}, backing-off before retrying, '
-                        f'sleeping {sleep_seconds} seconds...'
-                    )
-                )
+                message = f'[Degreed2Client]._patch 429 detected from {url}, backing-off before retrying, ' \
+                    f'sleeping {sleep_seconds} seconds...'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response.status_code,
+                })
                 time.sleep(sleep_seconds)
             else:
                 break
@@ -635,16 +614,14 @@ class Degreed2APIClient(IntegratedChannelApiClient):
             )
             if attempts <= self.MAX_RETRIES and response.status_code == 429:
                 sleep_seconds = self._calculate_backoff(attempts)
-                LOGGER.warning(
-                    generate_formatted_log(
-                        self.enterprise_configuration.channel_code(),
-                        self.enterprise_configuration.enterprise_customer.uuid,
-                        None,
-                        None,
-                        f'429 detected from {url}, backing-off before retrying, '
-                        f'sleeping {sleep_seconds} seconds...'
-                    )
-                )
+                message = f'[Degreed2Client]._delete 429 detected from {url}, backing-off before retrying, ' \
+                    f'sleeping {sleep_seconds} seconds...'
+                LOGGER.warning(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+                    'plugin_configuration_id': self.enterprise_configuration.id,
+                    'status_code': response.status_code,
+                })
                 time.sleep(sleep_seconds)
             else:
                 break

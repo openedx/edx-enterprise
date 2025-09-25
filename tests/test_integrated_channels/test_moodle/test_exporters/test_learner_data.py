@@ -85,3 +85,36 @@ class TestMoodleLearnerDataExporter(unittest.TestCase):
         learner_data_records_2.save()
 
         assert learner_data_records_1.id == learner_data_records_2.id
+
+    @mock.patch('integrated_channels.moodle.exporters.learner_data.LOGGER')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_no_user_email_logging(self, mock_course_catalog_api, mock_logger):
+        """
+        Test that when user_email is None, the appropriate debug message is logged.
+        """
+        # Create an EnterpriseCustomerUser with no linked user (user_id that doesn't exist)
+        enterprise_customer_user_no_email = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=99999,  # Non-existent user ID
+        )
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            course_id=self.course_id,
+            enterprise_customer_user=enterprise_customer_user_no_email,
+        )
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        exporter = MoodleLearnerExporter('fake-user', self.config)
+
+        result = exporter.get_learner_data_records(enterprise_course_enrollment)
+
+        # Should return None when user_email is None
+        self.assertIsNone(result)
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.debug.assert_called_once()
+        args, kwargs = mock_logger.debug.call_args
+        self.assertIn('get_learner_data_records finished. No learner data was sent for this LMS User Id', args[0])
+        self.assertIn(f'because Moodle User ID not found for [{self.enterprise_customer.name}]', args[0])
+        self.assertEqual(kwargs['extra']['channel_name'], 'moodle')
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.enterprise_customer.uuid)
+        self.assertEqual(kwargs['extra']['lms_user_id'], enterprise_customer_user_no_email.user_id)
+        self.assertEqual(kwargs['extra']['plugin_configuration_id'], self.config.id)

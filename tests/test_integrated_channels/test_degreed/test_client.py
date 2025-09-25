@@ -411,3 +411,37 @@ class TestDegreedApiClient(unittest.TestCase):
         degreed_api_client = DegreedAPIClient(self.enterprise_config)
         with pytest.raises(ClientError):
             degreed_api_client.delete_content_metadata({})
+
+    @unittest.mock.patch('integrated_channels.degreed.client.LOGGER')
+    def test_create_assessment_reporting_logging(self, mock_logger):
+        """
+        Test that create_assessment_reporting logs the not implemented message correctly.
+        """
+        degreed_api_client = DegreedAPIClient(self.enterprise_config)
+
+        # Call the method with dummy parameters
+        degreed_api_client.create_assessment_reporting('user123', 'payload')
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.error.assert_called_once()
+        args, kwargs = mock_logger.error.call_args
+        self.assertEqual(args[0], "Degreed integrated channel does not yet support assessment reporting.")
+        self.assertEqual(kwargs['extra']['channel_name'], self.enterprise_config.channel_code())
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.enterprise_config.enterprise_customer.uuid)
+
+    @unittest.mock.patch('integrated_channels.degreed.client.LOGGER')
+    def test_cleanup_duplicate_assignment_records_logging(self, mock_logger):
+        """
+        Test that cleanup_duplicate_assignment_records logs the not implemented message correctly.
+        """
+        degreed_api_client = DegreedAPIClient(self.enterprise_config)
+
+        # Call the method with dummy courses
+        degreed_api_client.cleanup_duplicate_assignment_records(['course1', 'course2'])
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.error.assert_called_once()
+        args, kwargs = mock_logger.error.call_args
+        self.assertEqual(args[0], "Degreed integrated channel does not yet support assignment deduplication.")
+        self.assertEqual(kwargs['extra']['channel_name'], self.enterprise_config.channel_code())
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.enterprise_config.enterprise_customer.uuid)

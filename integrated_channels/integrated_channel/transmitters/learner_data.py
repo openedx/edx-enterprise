@@ -1,8 +1,6 @@
 """
 Generic learner data transmitter for integrated channels.
 """
-
-import logging
 from http import HTTPStatus
 
 from django.apps import apps
@@ -13,9 +11,10 @@ from integrated_channels.integrated_channel.channel_settings import ChannelSetti
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporterUtility
 from integrated_channels.integrated_channel.transmitters import Transmitter
-from integrated_channels.utils import encode_data_for_logging, generate_formatted_log, is_already_transmitted
+from integrated_channels.logger import get_integrated_channels_logger
+from integrated_channels.utils import encode_data_for_logging, is_already_transmitted
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
@@ -64,43 +63,42 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         kwargs.update(channel_name=app_label)
 
         if self.enterprise_configuration.disable_learner_data_transmissions:
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                lms_user_id,
-                None,
-                "Single learner data assessment level transmission skipped as customer's configuration has marked "
-                "learner data reporting as disabled."
-            ))
+            message = "Single learner data assessment level transmission skipped " \
+                      "as customer's configuration has marked learner data reporting as disabled."
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'lms_user_id': lms_user_id,
+            })
             return
 
         # Even though we're transmitting a learner, they can have records per assessment (multiple per course).
         for learner_data in exporter.single_assessment_level_export(**kwargs):
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                lms_user_id,
-                learner_data.course_id,
-                'create_assessment_reporting started for '
-                f'integrated_channel_enterprise_enrollment_id={learner_data.enterprise_course_enrollment_id}'
-            ))
+            message = 'create_assessment_reporting started for integrated_channel_enterprise_enrollment_id' \
+                f'={learner_data.enterprise_course_enrollment_id}'
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'lms_user_id': lms_user_id,
+                'course_or_course_run_key': learner_data.course_id,
+                'enterprise_enrollment_id': learner_data.enterprise_course_enrollment_id,
+            })
 
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
 
             if self.enterprise_configuration.dry_run_mode_enabled:
                 remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
                 encoded_serialized_payload = encode_data_for_logging(serialized_payload)
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'dry-run mode '
-                    'skipping create_assessment_reporting for enrollment '
-                    f'integrated_channel_enterprise_enrollment_id={learner_data.enterprise_course_enrollment_id}, '
-                    f'integrated_channel_remote_user_id={remote_id}, '
-                    f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
-                ))
+                message = 'dry-run mode skipping create_assessment_reporting for enrollment ' \
+                          f'integrated_channel_remote_user_id={remote_id}, ' \
+                          f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer_uuid,
+                    'lms_user_id': lms_user_id,
+                    'course_or_course_run_key': learner_data.course_id,
+                    'enterprise_enrollment_id': learner_data.enterprise_course_enrollment_id,
+                })
                 continue
 
             try:
@@ -160,14 +158,12 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         )
 
         if self.enterprise_configuration.disable_learner_data_transmissions:
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                None,
-                None,
-                "Bulk learner data assessment level transmission skipped as customer's configuration has marked "
-                "learner data reporting as disabled."
-            ))
+            message = "Bulk learner data assessment level transmission skipped " \
+                      "as customer's configuration has marked learner data reporting as disabled."
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+            })
             return
 
         # Retrieve learner data for each existing enterprise enrollment under the enterprise customer
@@ -190,30 +186,31 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 detect_grade_updated=self.INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK,
             ):
                 # We've already sent a completion status for this enrollment
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'Skipping previously sent '
-                    f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}'
-                ))
+                message = 'Skipping previously sent integrated_channel_enterprise_enrollment_id' \
+                    f'={enterprise_enrollment_id}'
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer_uuid,
+                    'lms_user_id': lms_user_id,
+                    'course_or_course_run_key': learner_data.course_id,
+                    'enterprise_enrollment_id': enterprise_enrollment_id,
+                })
                 continue
 
             if self.enterprise_configuration.dry_run_mode_enabled:
                 remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
                 encoded_serialized_payload = encode_data_for_logging(serialized_payload)
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'dry-run mode '
-                    'skipping create_assessment_reporting for enrollment '
-                    f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}, '
-                    f'integrated_channel_remote_user_id={remote_id}, '
-                    f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
-                ))
+                message = 'dry-run mode skipping create_assessment_reporting for enrollment ' \
+                          f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}, ' \
+                          f'integrated_channel_remote_user_id={remote_id}, ' \
+                          f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer_uuid,
+                    'lms_user_id': lms_user_id,
+                    'course_or_course_run_key': learner_data.course_id,
+                    'enterprise_enrollment_id': enterprise_enrollment_id,
+                })
                 continue
 
             try:
@@ -221,14 +218,15 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                     getattr(learner_data, kwargs.get('remote_user_id')),
                     serialized_payload
                 )
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'create_assessment_reporting successfully completed for '
+                message = 'create_assessment_reporting successfully completed for ' \
                     f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}'
-                ))
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer_uuid,
+                    'lms_user_id': lms_user_id,
+                    'course_or_course_run_key': learner_data.course_id,
+                    'enterprise_enrollment_id': enterprise_enrollment_id,
+                })
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
@@ -279,14 +277,12 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         )
 
         if self.enterprise_configuration.disable_learner_data_transmissions:
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                None,
-                None,
-                "Completion level learner data transmission skipped as customer's configuration has marked learner data"
-                " reporting as disabled."
-            ))
+            message = "Completion level learner data transmission skipped " \
+                "as customer's configuration has marked learner data reporting as disabled."
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+            })
             return
 
         # Since we have started sending courses to integrated channels instead of course runs,
@@ -327,16 +323,17 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
             if self.enterprise_configuration.dry_run_mode_enabled:
                 remote_id = getattr(learner_data, kwargs.get('remote_user_id'))
                 encoded_serialized_payload = encode_data_for_logging(serialized_payload)
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'dry-run mode '
-                    f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}, '
-                    f'integrated_channel_remote_user_id={remote_id}, '
-                    f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
-                ))
+                message = 'dry-run mode skipping create_course_completion for enrollment ' \
+                          f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}, ' \
+                          f'integrated_channel_remote_user_id={remote_id}, ' \
+                          f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}'
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer_uuid,
+                    'lms_user_id': lms_user_id,
+                    'course_or_course_run_key': learner_data.course_id,
+                    'enterprise_enrollment_id': enterprise_enrollment_id,
+                })
                 continue
 
             try:
@@ -347,14 +344,16 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
                 if code >= HTTPStatus.BAD_REQUEST.value:
                     raise ClientError(f'Client create_course_completion failed: {body}', code)
 
-                LOGGER.info(generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    lms_user_id,
-                    learner_data.course_id,
-                    'Successfully sent completion status call for enterprise enrollment '
+                message = 'create_course_completion successfully completed for ' \
                     f'integrated_channel_enterprise_enrollment_id={enterprise_enrollment_id}'
-                ))
+                LOGGER.info(message, extra={
+                    'channel_name': self.enterprise_configuration.channel_code(),
+                    'enterprise_customer_uuid': enterprise_customer_uuid,
+                    'lms_user_id': lms_user_id,
+                    'course_or_course_run_key': learner_data.course_id,
+                    'enterprise_enrollment_id': enterprise_enrollment_id,
+                    'status_code': code,
+                })
             except ClientError as client_error:
                 code = client_error.status_code
                 body = client_error.message
@@ -402,53 +401,43 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         courses = exporter.export_unique_courses()
 
         if self.enterprise_configuration.dry_run_mode_enabled:
-            LOGGER.info(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_customer_uuid,
-                None,
-                None,
-                'dry-run mode '
-                'skipping deduplicate_assignment_records_transmit'
-            ))
+            LOGGER.info('dry-run mode skipping deduplicate_assignment_records_transmit', extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+            })
             return
 
         code, body = self.client.cleanup_duplicate_assignment_records(courses)
 
         if code >= 400:
-            LOGGER.exception(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    None,
-                    None,
-                    f'{app_label} Deduping assignments transmission experienced a failure, '
-                    f'received the error message: {body}'
-                )
-            )
+            message = f'{app_label} Deduping assignments transmission experienced a failure, ' \
+                f'received the error message: {body}'
+            LOGGER.exception(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'status_code': code,
+            })
         else:
-            LOGGER.info(
-                generate_formatted_log(
-                    self.enterprise_configuration.channel_code(),
-                    enterprise_customer_uuid,
-                    None,
-                    None,
-                    f'{app_label} Deduping assignments transmission finished successfully, '
-                    f'received message: {body}'
-                )
-            )
+            message = f'{app_label} Deduping assignments transmission finished successfully, ' \
+                f'received message: {body}'
+            LOGGER.info(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_customer_uuid,
+                'status_code': code,
+            })
 
     def _log_exception_supplemental_data(self, learner_data, operation_name,
                                          integrated_channel_name, enterprise_customer_uuid, learner_id, course_id):
         """ Logs extra payload and parameter data to help debug which learner data caused an exception. """
-        LOGGER.exception(generate_formatted_log(
-            self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
-            '{operation_name} {integrated_channel_name} failed with Exception for '
-            'enterprise enrollment {enrollment_id} with payload {payload}'.format(
-                operation_name=operation_name,
-                integrated_channel_name=integrated_channel_name,
-                enrollment_id=learner_data.enterprise_course_enrollment_id,
-                payload=learner_data
-            )), exc_info=True)
+        message = f'{operation_name} {integrated_channel_name} failed with Exception for ' \
+                  f'enterprise enrollment {learner_data.enterprise_course_enrollment_id} with payload {learner_data}'
+        LOGGER.exception(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': enterprise_customer_uuid,
+            'lms_user_id': learner_id,
+            'course_or_course_run_key': course_id,
+            'enterprise_enrollment_id': learner_data.enterprise_course_enrollment_id,
+        })
 
     def handle_transmission_error(self, learner_data, client_exception):
         """
@@ -476,13 +465,16 @@ class LearnerTransmitter(Transmitter, ChannelSettingsMixin):
         )
         serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
         encoded_serialized_payload = encode_data_for_logging(serialized_payload)
-        LOGGER.exception(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(), enterprise_customer_uuid, learner_id, course_id,
-                f'Failed to send completion status call for {integrated_channel_name} '
-                f'integrated_channel_enterprise_enrollment_id={learner_data.enterprise_course_enrollment_id}, '
-                f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}, '
-                f'Error message: {client_exception.message} '
-                f'Error status code: {client_exception.status_code}'
-            )
-        )
+        message = f'Failed to send completion status call for {integrated_channel_name} ' \
+                  f'integrated_channel_enterprise_enrollment_id={learner_data.enterprise_course_enrollment_id}, ' \
+                  f'integrated_channel_serialized_payload_base64={encoded_serialized_payload}, ' \
+                  f'Error message: {client_exception.message} ' \
+                  f'Error status code: {client_exception.status_code}'
+        LOGGER.exception(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': enterprise_customer_uuid,
+            'lms_user_id': learner_id,
+            'course_or_course_run_key': course_id,
+            'enterprise_enrollment_id': learner_data.enterprise_course_enrollment_id,
+            'status_code': client_exception.status_code,
+        })

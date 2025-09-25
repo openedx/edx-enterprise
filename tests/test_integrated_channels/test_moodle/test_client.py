@@ -460,3 +460,20 @@ class TestMoodleApiClient(unittest.TestCase):
         client.create_content_metadata(SERIALIZED_DATA)
         assert IntegratedChannelAPIRequestLogs.objects.count() == 2
         assert len(responses.calls) == 2
+
+    @unittest.mock.patch('integrated_channels.moodle.client.LOGGER')
+    def test_cleanup_duplicate_assignment_records_logging(self, mock_logger):
+        """Test that cleanup_duplicate_assignment_records logs the expected message."""
+        client = MoodleAPIClient(self.enterprise_config)
+
+        # Call the method
+        client.cleanup_duplicate_assignment_records([])
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.error.assert_called_once_with(
+            "Moodle integrated channel does not yet support assignment deduplication.",
+            extra={
+                'channel_name': self.enterprise_config.channel_code(),
+                'enterprise_customer_uuid': self.enterprise_config.enterprise_customer.uuid,
+            },
+        )

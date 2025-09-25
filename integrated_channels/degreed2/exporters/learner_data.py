@@ -4,15 +4,14 @@ Learner data exporter for Enterprise Integrated Channel Degreed.
 """
 
 from datetime import datetime
-from logging import getLogger
 
 from django.apps import apps
 
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.logger import get_integrated_channels_logger
 
-LOGGER = getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class Degreed2LearnerExporter(LearnerExporter):
@@ -44,14 +43,14 @@ class Degreed2LearnerExporter(LearnerExporter):
                 self.enterprise_configuration.idp_id
             )
         except Exception as e:  # pylint: disable=broad-except
-            LOGGER.error(generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-                enterprise_enrollment.enterprise_customer_user.user_id,
-                enterprise_enrollment.course_id,
-                '[Degreed2Client] get_learner_data_records failed, possibly due to an invalid customer configuration. '
-                f'Error: {e}'
-            ))
+            message = f'get_learner_data_records failed, possibly due to an invalid customer configuration. {e}'
+            LOGGER.exception(message, extra={
+                'channel_name': self.enterprise_configuration.channel_code(),
+                'enterprise_customer_uuid': enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
+                'lms_user_id': enterprise_enrollment.enterprise_customer_user.user_id,
+                'course_or_course_run_key': enterprise_enrollment.course_id,
+                'plugin_configuration_id': self.enterprise_configuration.id,
+            })
             return None
 
         if remote_id is not None:
@@ -82,13 +81,14 @@ class Degreed2LearnerExporter(LearnerExporter):
                 )
             # We return one record here, with the course key, that was sent to the integrated channel.
             return [learner_transmission_record]
-        LOGGER.info(generate_formatted_log(
-            self.enterprise_configuration.channel_code(),
-            enterprise_enrollment.enterprise_customer_user.enterprise_customer.uuid,
-            enterprise_enrollment.enterprise_customer_user.user_id,
-            enterprise_enrollment.course_id,
-            ('get_learner_data_records finished. No learner data was sent for this LMS User Id because '
-             'Degreed2 User ID not found for [{name}]'.format(
-                 name=enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
-             ))))
+        enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
+        message = f'get_learner_data_records finished. No learner data was sent for this LMS User Id ' \
+                  f'because Degreed2 User ID not found for [{enterprise_customer.name}]'
+        LOGGER.info(message, extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'lms_user_id': enterprise_enrollment.enterprise_customer_user.user_id,
+            'course_or_course_run_key': enterprise_enrollment.course_id,
+            'plugin_configuration_id': self.enterprise_configuration.id,
+        })
         return None

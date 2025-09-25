@@ -1,19 +1,18 @@
 """
 Backfill the new remote_created_at and remote_updated_at content audit record values.
 """
-import logging
-
 from django.apps import apps
 from django.contrib import auth
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.utils import batch_by_pk, generate_formatted_log
+from integrated_channels.logger import get_integrated_channels_logger
+from integrated_channels.utils import batch_by_pk
 
 User = auth.get_user_model()
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):
@@ -40,21 +39,19 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
                     item.remote_created_at = item.created
                     item.remote_updated_at = item.modified
                     item.save()
-                    LOGGER.info(generate_formatted_log(
-                        item.integrated_channel_code,
-                        item.enterprise_customer.uuid,
-                        None,
-                        item.content_id,
-                        f'ContentMetadataItemTransmission <{item.id}> '
-                        f'remote_created_at={item.remote_created_at}, '
+                    message = f'ContentMetadataItemTransmission <{item.id}> ' \
+                        f'remote_created_at={item.remote_created_at}, ' \
                         f'remote_updated_at={item.remote_updated_at}'
-                    ))
+                    LOGGER.info(msg=message, extra={
+                        'channel_name': item.integrated_channel_code,
+                        'enterprise_customer_uuid': item.enterprise_customer.uuid,
+                        'course_or_course_run_key': item.content_id,
+                    })
                 except Exception:  # pylint: disable=broad-except
-                    LOGGER.exception(generate_formatted_log(
-                        item.integrated_channel_code,
-                        item.enterprise_customer.uuid,
-                        None,
-                        item.content_id,
-                        f'ContentMetadataItemTransmission <{item.id}> '
-                        'error backfilling remote_created_at & remote_updated_at'
-                    ))
+                    message = f'ContentMetadataItemTransmission <{item.id}> ' \
+                        f'error backfilling remote_created_at & remote_updated_at'
+                    LOGGER.exception(msg=message, extra={
+                        'channel_name': item.integrated_channel_code,
+                        'enterprise_customer_uuid': item.enterprise_customer.uuid,
+                        'course_or_course_run_key': item.content_id,
+                    })

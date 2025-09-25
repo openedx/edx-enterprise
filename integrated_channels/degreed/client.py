@@ -3,7 +3,6 @@ Client for connecting to Degreed.
 """
 
 import datetime
-import logging
 import time
 from urllib.parse import urljoin
 
@@ -13,9 +12,9 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.utils import generate_formatted_log
+from integrated_channels.logger import get_integrated_channels_logger
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_integrated_channels_logger(__name__)
 
 
 class DegreedAPIClient(IntegratedChannelApiClient):
@@ -47,29 +46,19 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         """
         Not implemented yet.
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Degreed integrated channel does not yet support assessment reporting."
-            )
-        )
+        LOGGER.error("Degreed integrated channel does not yet support assessment reporting.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def cleanup_duplicate_assignment_records(self, courses):
         """
         Not implemented yet.
         """
-        LOGGER.error(
-            generate_formatted_log(
-                self.enterprise_configuration.channel_code(),
-                self.enterprise_configuration.enterprise_customer.uuid,
-                None,
-                None,
-                "Degreed integrated channel does not yet support assignment deduplication."
-            )
-        )
+        LOGGER.error("Degreed integrated channel does not yet support assignment deduplication.", extra={
+            'channel_name': self.enterprise_configuration.channel_code(),
+            'enterprise_customer_uuid': self.enterprise_configuration.enterprise_customer.uuid,
+        })
 
     def create_course_completion(self, user_id, payload):
         """

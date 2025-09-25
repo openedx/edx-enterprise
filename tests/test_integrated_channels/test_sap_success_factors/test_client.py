@@ -462,3 +462,89 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert status == 200
         assert json.loads(body) == self.content_payload
         assert len(responses.calls) == 3
+
+    @unittest.mock.patch('integrated_channels.sap_success_factors.client.LOGGER')
+    def test_get_oauth_access_token_exception_logging(self, mock_logger):
+        """Test that get_oauth_access_token logs exceptions correctly."""
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+
+        # Mock a response that will cause a ValueError
+        mock_response = unittest.mock.Mock()
+        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_response.status_code = 500
+
+        with unittest.mock.patch('requests.post', return_value=mock_response):
+            with pytest.raises(ClientError):
+                sap_client.get_oauth_access_token(
+                    self.client_id,
+                    self.client_secret,
+                    self.company_id,
+                    self.user_id,
+                    self.user_type,
+                    self.enterprise_config.enterprise_customer.uuid,
+                )
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.exception.assert_called_once()
+        args, kwargs = mock_logger.exception.call_args
+        self.assertIn('SAP SF OAuth2 POST response is of invalid format', args[0])
+        self.assertEqual(kwargs['extra']['channel_name'], 'SAP')
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.enterprise_config.enterprise_customer.uuid)
+        self.assertEqual(kwargs['extra']['status_code'], 500)
+
+    @unittest.mock.patch('integrated_channels.sap_success_factors.client.LOGGER')
+    def test_call_search_students_recursively_exception_logging(self, mock_logger):
+        """Test that _call_search_students_recursively logs exceptions correctly."""
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        sap_client.session = unittest.mock.Mock()
+
+        # Mock a response that will cause a ValueError
+        mock_response = unittest.mock.Mock()
+        mock_response.json.side_effect = ValueError("Invalid JSON")
+        mock_response.status_code = 500
+        sap_client.session.get.return_value = mock_response
+
+        with pytest.raises(ClientError):
+            sap_client._call_search_students_recursively(  # pylint: disable=protected-access
+                "http://test.com/students",
+                [],
+                500,
+                0
+            )
+
+        # Verify the logging was not called for ValueError exception (it should re-raise as ClientError)
+        mock_logger.error.assert_not_called()
+
+    @unittest.mock.patch('integrated_channels.sap_success_factors.client.LOGGER')
+    def test_call_search_students_recursively_error_response_logging(self, mock_logger):
+        """Test that _call_search_students_recursively logs error responses correctly."""
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        sap_client.session = unittest.mock.Mock()
+        sap_client.IntegratedChannelAPIRequestLogs = unittest.mock.Mock()
+        sap_client.IntegratedChannelAPIRequestLogs.store_api_call = unittest.mock.Mock()
+
+        # Mock a response with an error
+        mock_response = unittest.mock.Mock()
+        mock_response.json.return_value = {'error': {'message': 'Test error message', 'code': 'TEST_ERROR'}}
+        mock_response.status_code = 400
+        sap_client.session.get.return_value = mock_response
+
+        result = sap_client._call_search_students_recursively(  # pylint: disable=protected-access
+            "http://test.com/students",
+            [],
+            500,
+            0
+        )
+
+        # Should return None due to error
+        self.assertIsNone(result)
+
+        # Verify the logging call was made with correct parameters
+        mock_logger.error.assert_called()
+        args, kwargs = mock_logger.error.call_args
+        self.assertIn('SAP searchStudent API', args[0])
+        self.assertIn('Test error message', args[0])
+        self.assertEqual(kwargs['extra']['channel_name'], self.enterprise_config.channel_code())
+        self.assertEqual(kwargs['extra']['enterprise_customer_uuid'], self.enterprise_config.enterprise_customer.uuid)
+        self.assertEqual(kwargs['extra']['plugin_configuration_id'], self.enterprise_config.id)
+        self.assertEqual(kwargs['extra']['status_code'], 'TEST_ERROR')
