@@ -89,7 +89,7 @@ beautifulsoup4==4.13.5
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
-billiard==4.2.1
+billiard==4.2.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -100,13 +100,13 @@ bleach==6.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-boto3==1.40.26
+boto3==1.40.31
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-botocore==1.40.26
+botocore==1.40.31
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -164,7 +164,7 @@ charset-normalizer==3.4.3
     #   -r requirements/test.txt
     #   requests
     #   snowflake-connector-python
-click==8.2.1
+click==8.3.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -207,7 +207,7 @@ code-annotations==2.3.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-coverage[toml]==7.10.6
+coverage[toml]==7.10.7
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -465,7 +465,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==37.6.0
+faker==37.8.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -532,7 +532,7 @@ google-cloud-firestore==2.21.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   firebase-admin
-google-cloud-storage==3.3.1
+google-cloud-storage==3.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -814,7 +814,7 @@ proto-plus==1.26.1
     #   -r requirements/test.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.32.0
+protobuf==6.32.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -851,7 +851,7 @@ pyasn1-modules==0.4.2
     #   google-auth
 pycodestyle==2.14.0
     # via -r requirements/dev.in
-pycparser==2.22
+pycparser==2.23
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -903,14 +903,14 @@ pymongo==4.4.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-opaque-keys
-pynacl==1.5.0
+pynacl==1.6.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-django-utils
     #   paramiko
-pyopenssl==25.1.0
+pyopenssl==25.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1018,7 +1018,7 @@ rules==3.5
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-s3transfer==0.13.1
+s3transfer==0.14.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt

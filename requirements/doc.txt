@@ -58,17 +58,17 @@ bcrypt==4.3.0
     #   paramiko
 beautifulsoup4==4.13.5
     # via pydata-sphinx-theme
-billiard==4.2.1
+billiard==4.2.2
     # via
     #   -r requirements/test-master.txt
     #   celery
 bleach==6.2.0
     # via -r requirements/test-master.txt
-boto3==1.40.26
+boto3==1.40.31
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.40.26
+botocore==1.40.31
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -104,7 +104,7 @@ charset-normalizer==3.4.3
     #   -r requirements/test-master.txt
     #   requests
     #   snowflake-connector-python
-click==8.2.1
+click==8.3.0
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -287,7 +287,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==37.6.0
+faker==37.8.0
     # via factory-boy
 fastavro==1.12.0
     # via
@@ -329,7 +329,7 @@ google-cloud-firestore==2.21.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.3.1
+google-cloud-storage==3.4.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -486,7 +486,7 @@ proto-plus==1.26.1
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.32.0
+protobuf==6.32.1
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -510,7 +510,7 @@ pyasn1-modules==0.4.2
     # via
     #   -r requirements/test-master.txt
     #   google-auth
-pycparser==2.22
+pycparser==2.23
     # via
     #   -r requirements/test-master.txt
     #   cffi
@@ -535,12 +535,12 @@ pymongo==4.4.0
     # via
     #   -r requirements/test-master.txt
     #   edx-opaque-keys
-pynacl==1.5.0
+pynacl==1.6.0
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   paramiko
-pyopenssl==25.1.0
+pyopenssl==25.2.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -601,7 +601,7 @@ rsa==4.9.1
     #   google-auth
 rules==3.5
     # via -r requirements/test-master.txt
-s3transfer==0.13.1
+s3transfer==0.14.0
     # via
     #   -r requirements/test-master.txt
     #   boto3

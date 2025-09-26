@@ -14,7 +14,7 @@ backports-tarfile==1.2.0
     # via jaraco-context
 certifi==2025.8.3
     # via selenium
-cheroot==10.0.1
+cheroot==11.0.0
     # via cherrypy
 cherrypy==18.10.0
     # via jasmine
@@ -95,7 +95,7 @@ websocket-client==1.8.0
     # via selenium
 wsproto==1.2.0
     # via trio-websocket
-zc-lockfile==3.0.post1
+zc-lockfile==4.0
     # via cherrypy
 
 # The following packages are considered to be unsafe in a requirements file:
