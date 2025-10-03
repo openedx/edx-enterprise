@@ -85,7 +85,7 @@ bcrypt==4.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   paramiko
-beautifulsoup4==4.13.5
+beautifulsoup4==4.14.0
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
@@ -231,7 +231,7 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.6.0
+diff-cover==9.7.1
     # via -r requirements/test.txt
 dill==0.4.0
     # via pylint
@@ -679,7 +679,7 @@ kombu==5.5.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.0.1
+lxml[html-clean]==6.0.2
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
