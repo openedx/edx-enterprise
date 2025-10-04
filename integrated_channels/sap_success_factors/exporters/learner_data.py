@@ -25,6 +25,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
     """
 
     INCLUDE_GRADE_FOR_COMPLETION_AUDIT_CHECK = False
+    remote_id_field_name = "ext_userid_sf"
 
     def get_learner_data_records(
             self,
@@ -46,7 +47,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             sap_completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
         sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id(
-            self.enterprise_configuration.idp_id
+            self.enterprise_configuration.idp_id,
+            self.remote_id_field_name
         )
 
         if sapsf_user_id is not None:
