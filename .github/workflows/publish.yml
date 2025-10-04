@@ -14,7 +14,7 @@ jobs:
       - name: Setup Nodejs Env
         run: echo "NODE_VER=`cat .nvmrc`" >> $GITHUB_ENV
       - name: setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
       - name: Setup Node.js
