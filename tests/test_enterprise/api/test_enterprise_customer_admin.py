@@ -1,13 +1,22 @@
 """
 Tests for the `EnterpriseCustomerAdminViewSet`.
 """
-
+import ddt
+from edx_rbac.constants import ALL_ACCESS_CONTEXT
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from django.urls import reverse
 
-from enterprise.models import EnterpriseCustomerAdmin
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+    SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
+)
+from enterprise.models import EnterpriseCustomerAdmin, SystemWideEnterpriseUserRoleAssignment
+from test_utils import APITest
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -46,6 +55,7 @@ class TestEnterpriseCustomerAdminViewSet(APITestCase):
             'enterprise-customer-admin-complete-tour-flow',
             kwargs={'pk': self.admin.uuid}
         )
+        self.create_admin_by_email_url = reverse('enterprise-customer-admin-create-admin-by-email')
 
     def test_get_list(self):
         """
@@ -124,3 +134,185 @@ class TestEnterpriseCustomerAdminViewSet(APITestCase):
         response = self.client.delete(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(response.data['detail'], 'Method "DELETE" not allowed.')
+
+
+@ddt.ddt
+class TestCreateAdminByEmailEndpoint(APITest):
+    """
+    Tests for the create_admin_by_email endpoint.
+    """
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.target_user = UserFactory(email='target@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory()
+
+        self.create_admin_by_email_url = reverse('enterprise-customer-admin-create-admin-by-email')
+
+    def test_create_admin_by_email_success_new_admin(self):
+        """
+        Test successful creation of a new admin record.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        data = {
+            'email': self.target_user.email,
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid)
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn('uuid', response.data)
+
+        # Verify EnterpriseCustomerAdmin was created
+        self.assertTrue(
+            EnterpriseCustomerAdmin.objects.filter(
+                enterprise_customer_user__user_fk=self.target_user,
+                enterprise_customer_user__enterprise_customer=self.enterprise_customer
+            ).exists()
+        )
+
+        # Verify SystemWideEnterpriseUserRoleAssignment was created
+        role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.target_user,
+            role__name=ENTERPRISE_ADMIN_ROLE,
+            enterprise_customer=self.enterprise_customer
+        )
+        self.assertTrue(role_assignment.exists())
+
+    def test_create_admin_by_email_success_existing_admin(self):
+        """
+        Test successful response when admin record already exists.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        # Create existing admin record
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.target_user.id,
+            enterprise_customer=self.enterprise_customer
+        )
+        existing_admin = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=enterprise_customer_user
+        )
+
+        data = {
+            'email': self.target_user.email,
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid)
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['uuid'], str(existing_admin.uuid))
+
+        # Verify SystemWideEnterpriseUserRoleAssignment was created
+        role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.target_user,
+            role__name=ENTERPRISE_ADMIN_ROLE,
+            enterprise_customer=self.enterprise_customer
+        )
+        self.assertTrue(role_assignment.exists())
+
+    def test_create_admin_by_email_missing_email(self):
+        """
+        Test error response when email is missing.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        data = {
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid)
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'email is required')
+
+    def test_create_admin_by_email_missing_enterprise_customer_uuid(self):
+        """
+        Test error response when enterprise_customer_uuid is missing.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        data = {
+            'email': self.target_user.email
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'enterprise_customer_uuid is required')
+
+    def test_create_admin_by_email_user_not_found(self):
+        """
+        Test error response when user with email does not exist.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        data = {
+            'email': 'nonexistent@example.com',
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid)
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'User with email nonexistent@example.com does not exist')
+
+    def test_create_admin_by_email_enterprise_customer_not_found(self):
+        """
+        Test error response when enterprise customer does not exist.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        fake_uuid = '12345678-1234-5678-1234-567812345678'
+        data = {
+            'email': self.target_user.email,
+            'enterprise_customer_uuid': fake_uuid
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data['error'],
+            f'EnterpriseCustomer with uuid {fake_uuid} does not exist'
+        )
+
+    def test_create_admin_by_email_permission_required(self):
+        """
+        Test that the endpoint requires proper permissions.
+        """
+        # Don't set JWT cookie - should fail due to lack of permissions
+        data = {
+            'email': self.target_user.email,
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid)
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        # This should fail due to lack of permissions
+        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED])
+
+    @ddt.data(
+        ENTERPRISE_ADMIN_ROLE,
+        ENTERPRISE_LEARNER_ROLE,
+        ENTERPRISE_OPERATOR_ROLE,
+        SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    )
+    def test_create_admin_by_email_forbidden_roles(self, role):
+        """
+        Test that system-wide roles other than provisioning role are not allowed.
+        """
+        self.set_jwt_cookie(role, ALL_ACCESS_CONTEXT)
+
+        data = {
+            'email': self.target_user.email,
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid)
+        }
+
+        response = self.client.post(self.create_admin_by_email_url, data)
+
+        # Should fail due to insufficient permissions
+        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED])

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.0]
+--------
+* feat: add endpoint to provision a customer admin
+
 [6.4.5]
 --------
 * chore: upgrades python requirements
