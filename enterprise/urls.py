@@ -74,21 +74,29 @@ urlpatterns += [
         include('consent.urls'),
         name='consent'
     ),
-    path(
-        'cornerstone/',
-        include('integrated_channels.cornerstone.urls'),
-        name='cornerstone'
-    ),
-    path(
-        'canvas/',
-        include('integrated_channels.canvas.urls'),
-        name='canvas',
-    ),
-    path(
-        'blackboard/',
-        include('integrated_channels.blackboard.urls'),
-        name='blackboard',
-    ),
+]
+
+# When enabled, these URLs will be registered and take precedence over new plugin URLs
+if getattr(settings, 'ENABLE_LEGACY_INTEGRATED_CHANNELS', True):
+    urlpatterns += [
+        path(
+            'cornerstone/',
+            include('integrated_channels.cornerstone.urls'),
+            name='cornerstone'
+        ),
+        path(
+            'canvas/',
+            include('integrated_channels.canvas.urls'),
+            name='canvas',
+        ),
+        path(
+            'blackboard/',
+            include('integrated_channels.blackboard.urls'),
+            name='blackboard',
+        ),
+    ]
+
+urlpatterns += [
     path(
         'enterprise_learner_portal/',
         include('enterprise_learner_portal.urls'),
