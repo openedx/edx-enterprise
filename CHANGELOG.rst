@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.1]
+--------
+* chore: Added a toggle to disable legacy integrated channels endpoints in Enterprise.
+
 [6.5.0]
 --------
 * feat: add endpoint to provision a customer admin
