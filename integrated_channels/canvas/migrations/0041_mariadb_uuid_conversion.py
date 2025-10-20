@@ -21,7 +21,7 @@ def apply_mariadb_migration(apps, schema_editor):
             return
 
     with connection.cursor() as cursor:
-        cursor.execute("ALTER TABLE canvas_canvasenterprisecustomerconfiguration MODIFY uuid uuid NOT NULL")
+        cursor.execute("ALTER TABLE canvas_channel_canvasenterprisecustomerconfiguration MODIFY uuid uuid NOT NULL")
 
 
 def reverse_mariadb_migration(apps, schema_editor):
@@ -37,7 +37,7 @@ def reverse_mariadb_migration(apps, schema_editor):
             return
 
     with connection.cursor() as cursor:
-        cursor.execute("ALTER TABLE canvas_canvasenterprisecustomerconfiguration MODIFY uuid char(32) NOT NULL")
+        cursor.execute("ALTER TABLE canvas_channel_canvasenterprisecustomerconfiguration MODIFY uuid char(32) NOT NULL")
 
 
 class Migration(migrations.Migration):
