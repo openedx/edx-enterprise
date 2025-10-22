@@ -3,24 +3,15 @@
 from django.db import migrations, connection
 
 
-def noop_for_sqlite(apps, schema_editor):
-    """
-    No-op function for SQLite to avoid running the RenameIndex operation.
-    This is a placeholder function that does nothing.
-    """
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
         ('integrated_channel', '0035_genericlearnerdatatransmissionaudit_is_transmitted'),
     ]
 
-    operations = []
-    # Only run RenameIndex on non-SQLite:
+    database_operations = []
     if connection.vendor != 'sqlite':
-        operations.extend([
+        database_operations.extend([
             migrations.RenameIndex(
                 model_name='contentmetadataitemtransmission',
                 new_name='customer_code_plugin_id_idx',
@@ -32,6 +23,21 @@ class Migration(migrations.Migration):
                 old_fields=('integrated_channel_code', 'plugin_configuration_id', 'resolved'),
             )
         ])
-    else:
-        # Noop on SQLite, and let your Meta.indexes definition create the index
-        operations.append(migrations.RunPython(noop_for_sqlite))
+
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            database_operations=database_operations,
+            state_operations=[
+                migrations.RenameIndex(
+                    model_name='contentmetadataitemtransmission',
+                    new_name='customer_code_plugin_id_idx',
+                    old_fields=('enterprise_customer', 'integrated_channel_code', 'plugin_configuration_id', 'content_id'),
+                ),
+                migrations.RenameIndex(
+                    model_name='orphanedcontenttransmissions',
+                    new_name='channel_plugin_resolved_idx',
+                    old_fields=('integrated_channel_code', 'plugin_configuration_id', 'resolved'),
+                ),
+            ],
+        )
+    ]

@@ -78,6 +78,7 @@ from enterprise.roles_api import admin_role
 from enterprise.toggles import (
     ADMIN_PORTAL_LEARNER_PROFILE_VIEW_ENABLED,
     CATALOG_QUERY_SEARCH_FILTERS_ENABLED,
+    EDIT_HIGHLIGHTS_ENABLED,
     ENTERPRISE_ADMIN_ONBOARDING,
     ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
     ENTERPRISE_LEARNER_BFF_ENABLED,
@@ -2059,54 +2060,54 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
     @ddt.data(
         # Request missing required permissions query param.
         (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'},
-         False, False, False, False, False, False, False),
+         False, False, False, False, False, False, False, False),
         # Staff user that does not have the specified group permission.
         (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
         # Staff user that does have the specified group permission.
         (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False, False, False, False, False),
+         True, None, False, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         False, None, False, False, False, False, False, False, False),
+         False, None, False, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
-         True, None, False, False, False, False, False, False, False),
+         True, None, False, False, False, False, False, False, False, False),
         # Non staff user that is linked to the enterprise and has group permission and the request has passed
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None,
-         False, False, False, False, False, False, False),
+         False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on enterprise id successfully.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on search param with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on slug with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permissions filtering on slug with no results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
-         None, False, False, False, False, False, False, False),
+         None, False, False, False, False, False, False, False, False),
         # Staff user with group permission filtering on slug with results, with
         # top down assignment & real-time LCM feature enabled,
         # prequery search results enabled
@@ -2116,7 +2117,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
         # enterprise admin onboarding enabled
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True,
-         None, True, True, True, True, True, True, True),
+         None, True, True, True, True, True, True, True, True),
     )
     @ddt.unpack
     @mock.patch('enterprise.utils.get_logo_url')
@@ -2135,6 +2136,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             admin_portal_learner_profile_view_enabled,
             catalog_query_search_filters_enabled,
             enterprise_admin_onboarding_enabled,
+            enterprise_edit_highlights_enabled,
             mock_get_logo_url,
     ):
         """
@@ -2230,6 +2232,13 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             response = client.get(
                 f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
             )
+        with override_waffle_flag(
+            EDIT_HIGHLIGHTS_ENABLED,
+            active=enterprise_edit_highlights_enabled
+        ):
+            response = client.get(
+                f"{settings.TEST_SERVER}{ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT}?{urlencode(query_params, True)}"
+            )
         response = self.load_json(response.content)
         if has_access_to_enterprise:
             assert response['results'][0] == {
@@ -2303,6 +2312,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled,
                     'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled,
                     'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled,
+                    'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled,
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
@@ -2866,7 +2876,7 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         {
             'is_staff': False,
             'is_linked_to_enterprise': False,
-            'expected_result': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
         },
         {
             'is_staff': False,
@@ -3314,50 +3324,92 @@ class TestEnterpriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         assert response == expected_result
 
     @ddt.data(
-        (False, False, False, False, {}, {'detail': 'Not found.'}),
-        (False, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (False, True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (
-            False,
-            True,
-            True,
-            True,
-            fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
-            update_program_with_enterprise_context(
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': False,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'Not found.'},
+        },
+        {
+            'is_staff': False,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': True,
+            'mocked_program': fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
+            'expected_result': update_program_with_enterprise_context(
                 fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
                 add_utm_info=True,
                 enterprise_catalog_uuid=FAKE_UUIDS[1]
             ),
-        ),
-        (True, False, False, False, {}, {'detail': 'Not found.'}),
-        (True, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (True, True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
-        (
-            True,
-            True,
-            True,
-            True,
-            fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
-            update_program_with_enterprise_context(
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': False,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': False,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'No EnterpriseCustomerCatalog matches the given query.'},
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': False,
+            'mocked_program': {'detail': 'Not found.'},
+            'expected_result': {'detail': 'Not found.'},
+        },
+        {
+            'is_staff': True,
+            'is_linked_to_enterprise': True,
+            'has_existing_catalog': True,
+            'is_program_in_catalog': True,
+            'mocked_program': fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
+            'expected_result': update_program_with_enterprise_context(
                 fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
                 add_utm_info=True,
                 enterprise_catalog_uuid=FAKE_UUIDS[1]
             ),
-        ),
+        },
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_program_detail(
             self,
+            mock_catalog_api_client,
+            mock_ent_catalog_api_client,
             is_staff,
             is_linked_to_enterprise,
             has_existing_catalog,
             is_program_in_catalog,
             mocked_program,
             expected_result,
-            mock_catalog_api_client,
-            mock_ent_catalog_api_client
     ):
         """
         The ``programs`` detail endpoint should return correct results from course discovery,

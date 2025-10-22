@@ -1032,6 +1032,11 @@ class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
         fields = (
             'enterprise_customer', 'user_email'
         )
+        # [ENT-10865] Explicitly set the validators attribute to prevent ModelSerializer
+        # from automatically generating uniqueness validators based on unique constraints
+        # on the underlying model. While this new feature is nice, it breaks assumptions
+        # in existing logic within this serializer.
+        validators = []
 
     def to_representation(self, instance):
         '''
@@ -1860,6 +1865,11 @@ class PendingEnterpriseCustomerAdminUserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'enterprise_customer', 'user_email'
         )
+        # [ENT-10865] Explicitly set the validators attribute to prevent ModelSerializer
+        # from automatically generating uniqueness validators based on unique constraints
+        # on the underlying model. While this new feature is nice, it breaks assumptions
+        # in existing logic within this serializer.
+        validators = []
 
     def validate(self, attrs):
         """

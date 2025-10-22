@@ -17,6 +17,148 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.1]
+--------
+* chore: Added a toggle to disable legacy integrated channels endpoints in Enterprise.
+
+[6.5.0]
+--------
+* feat: add endpoint to provision a customer admin
+
+[6.4.5]
+--------
+* chore: upgrades python requirements
+
+[6.4.4]
+--------
+* chore: upgrades python requirements
+
+[6.4.3]
+--------
+* fix: changes enterprise customer user dropdown to raw id to not break admin page
+
+[6.4.2]
+--------
+* chore: upgrades python requirements
+
+[6.4.1]
+--------
+* fix: Moodle configuration updates were not being saved correctly
+
+[6.4.0]
+-------
+* feat: decouple ecommerce dependencies with graceful fallback
+
+  * Add error handling for ecommerce API calls in admin enrollment flow
+  * Disable ecommerce heartbeat checks in service monitoring
+  * Make order creation optional with warning logs instead of failures
+  * Redirect program enrollment to dashboard instead of basket page
+  * Update tests to reflect ecommerce service decoupling changes
+
+[6.3.4]
+--------
+* fix: add migration for Django 5.2 support in edx-platform
+
+[6.3.3]
+--------
+* chore: upgrades python requirements
+
+[6.3.2]
+--------
+* fix: upgrade djangorestframework and skip automatic validators
+
+[6.3.1]
+--------
+* feat: Add django admin interface for EnterpriseCustomerAdmin
+
+[6.3.0]
+--------
+* fix: Remove django-simple-history package constraint.
+
+[6.2.18]
+--------
+* fix: Logged response received from XAPI in logs to debug the XAPI transmission issues.
+
+[6.2.17]
+--------
+* fix: Added response received from XAPI in logs to debug the XAPI transmission issues.
+
+[6.2.16]
+--------
+* chore: upgrades python requirements
+
+[6.2.15]
+--------
+* fix: Added more logs to debug the XAPI transmission issues.
+
+[6.2.14]
+--------
+* chore: upgrades python requirements
+
+[6.2.13]
+--------
+* feat: adds EDIT_HIGHLIGHTS_ENABLED toggle
+
+[6.2.12]
+--------
+* chore: upgrades python requirements
+
+[6.2.11]
+--------
+* chore: upgrades python requirements
+
+[6.2.10]
+--------
+* fix: update pbkdf2 to address security vulnerability
+
+[6.2.9]
+--------
+* chore: upgrades python requirements
+
+[6.2.8]
+--------
+* chore: upgrades python requirements
+
+[6.2.7]
+--------
+* feat: adds last login to EnterpriseCustomerAdmin records
+
+[6.2.6]
+--------
+* chore: upgrades python requirements
+
+[6.2.5]
+--------
+* feat: adds OnboardingFlow model to django
+
+
+[6.2.4]
+--------
+* feat: creates EnterpriseCustomerAdmin records for EnterpriseCustomerUsers with admin roles
+
+[6.2.3]
+--------
+* chore: upgrades python requirements
+
+[6.2.2]
+* fix: fix RenameIndex migrations to also handle Django Model level analysis
+* Context: This fixes the issue where `makemigrations` was regenerating RenameIndex migrations after Django 5.2 support was added in release 6.1.0
+
+[6.2.1]
+* refactor: restrict EnterpriseCustomerAdminViewSet to GET and PATCH methods only
+
+[6.2.0]
+--------
+* feat: Added default as True for data sharing consent in the EnterpriseCustomer model.
+
+[6.1.2]
+--------
+* fix: fix unit tests that broke due to ``path()`` returning UUID objects
+
+[6.1.1]
+--------
+* chore: upgrades python requirements
+
 [6.1.0]
 --------
 * feat: Added Support for Django 5.2

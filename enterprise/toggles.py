@@ -92,6 +92,18 @@ ENTERPRISE_ADMIN_ONBOARDING = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.edit_highlights_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables the Edit Highlights experience.
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2025-07-21
+EDIT_HIGHLIGHTS_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.edit_highlights_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
+
 
 def top_down_assignment_real_time_lcm():
     """
@@ -142,6 +154,13 @@ def enterprise_admin_onboarding_enabled():
     return ENTERPRISE_ADMIN_ONBOARDING.is_enabled()
 
 
+def enterprise_edit_highlights_enabled():
+    """
+    Returns whether the edit highlights feature flag is enabled.
+    """
+    return EDIT_HIGHLIGHTS_ENABLED.is_enabled()
+
+
 def enterprise_features():
     """
     Returns a dict of enterprise Waffle-based feature flags.
@@ -154,4 +173,5 @@ def enterprise_features():
         'admin_portal_learner_profile_view_enabled': admin_portal_learner_profile_view_enabled(),
         'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled(),
         'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
+        'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled(),
     }

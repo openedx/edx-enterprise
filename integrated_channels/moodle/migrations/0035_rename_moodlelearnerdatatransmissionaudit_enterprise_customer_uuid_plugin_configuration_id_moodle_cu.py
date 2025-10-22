@@ -3,30 +3,31 @@
 from django.db import migrations, connection
 
 
-def noop_for_sqlite(apps, schema_editor):
-    """
-    No-op function for SQLite to avoid running the RenameIndex operation.
-    This is a placeholder function that does nothing.
-    """
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
         ('moodle', '0034_moodlelearnerdatatransmissionaudit_is_transmitted'),
     ]
 
-    operations = []
-    # Only run RenameIndex on non-SQLite:
+    database_operations = []
     if connection.vendor != 'sqlite':
-        operations.append(
+        database_operations.append(
             migrations.RenameIndex(
                 model_name='moodlelearnerdatatransmissionaudit',
                 new_name='moodle_customer_plugin_idx',
                 old_fields=('enterprise_customer_uuid', 'plugin_configuration_id'),
             ),
         )
-    else:
-        # Noop on SQLite, and let your Meta.indexes definition create the index
-        operations.append(migrations.RunPython(noop_for_sqlite))
+
+    operations = [
+        migrations.SeparateDatabaseAndState(
+            database_operations=database_operations,
+            state_operations=[
+                migrations.RenameIndex(
+                    model_name='moodlelearnerdatatransmissionaudit',
+                    new_name='moodle_customer_plugin_idx',
+                    old_fields=('enterprise_customer_uuid', 'plugin_configuration_id'),
+                ),
+            ],
+        )
+    ]

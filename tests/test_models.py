@@ -776,8 +776,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
         )
         self.user = factories.UserFactory(username='Batman')
-        self.order_create_log_message = 'Creating order for enterprise learner with id [{}] for enrollment in course ' \
-                                        'with id: [{}], [percentage discount] [{}] and [sales_force_id] [{}]'
+        self.order_create_log_message = (
+            'Attempting to create order for enterprise learner with id [{}] for enrollment in course '
+            'with id: [{}], [percentage discount] [{}] and [sales_force_id] [{}]'
+        )
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -1015,8 +1017,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     @mock.patch('enterprise.models.get_ecommerce_worker_user')
     @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
     @mock.patch('enterprise.api_client.ecommerce.EcommerceApiClient.create_manual_enrollment_orders')
-    def test_create_order_for_enrollment(self, utils_mock, ecommerce_api_client_init_mock,  # pylint: disable=unused-argument
-                                         ecommerce_api_client_call_mock):  # pylint: disable=unused-argument
+    def test_create_order_for_enrollment(
+        self, utils_mock, ecommerce_api_client_init_mock,  # pylint: disable=unused-argument
+        ecommerce_api_client_call_mock  # pylint: disable=unused-argument
+    ):
         """
         Test that expected logs appear when we try to create an order for a course while enrolling an enterprise user.
         """
