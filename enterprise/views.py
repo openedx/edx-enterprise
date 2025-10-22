@@ -105,7 +105,7 @@ except ImportError:
     get_provider_login_url = None
 
 LOGGER = getEnterpriseLogger(__name__)
-BASKET_URL = urljoin(settings.ECOMMERCE_PUBLIC_URL_ROOT, '/basket/add/')
+# BASKET_URL removed due to ecommerce service decoupling
 LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_PROGRAMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard/programs/{uuid}')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
@@ -1272,12 +1272,16 @@ class CourseEnrollmentView(NonAtomicView):
         result = []
         for mode in modes:
             if mode['premium']:
-                mode['final_price'] = EcommerceApiClient(request.user).get_course_final_price(
-                    mode=mode,
-                    enterprise_catalog_uuid=request.GET.get(
-                        'catalog'
-                    ) if request.method == 'GET' else None,
-                )
+                try:
+                    mode['final_price'] = EcommerceApiClient(request.user).get_course_final_price(
+                        mode=mode,
+                        enterprise_catalog_uuid=request.GET.get(
+                            'catalog'
+                        ) if request.method == 'GET' else None,
+                    )
+                except (NotConnectedToOpenEdX, Exception):  # pylint: disable=broad-exception-caught
+                    # Fallback to original price if ecommerce service is unavailable
+                    mode['final_price'] = mode.get('original_price', mode.get('min_price', '$0'))
             result.append(mode)
         return result
 
@@ -2227,13 +2231,8 @@ class ProgramEnrollmentView(NonAtomicView):
             # The user is already enrolled in the program, so redirect to the program's dashboard.
             return redirect(LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid))
 
-        basket_page = '{basket_url}?{params}'.format(
-            basket_url=BASKET_URL,
-            params=urlencode(
-                [tuple(['sku', sku]) for sku in program_details['skus']] +
-                [tuple(['bundle', program_uuid])]
-            )
-        )
+        # Ecommerce service decoupled - redirect to program dashboard instead of basket
+        program_dashboard_url = LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid)
         if get_data_sharing_consent(
                 enterprise_customer_user.username,
                 enterprise_customer.uuid,
@@ -2244,7 +2243,7 @@ class ProgramEnrollmentView(NonAtomicView):
                     grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
                     params=urlencode(
                         {
-                            'next': basket_page,
+                            'next': program_dashboard_url,
                             'failure_url': reverse(
                                 'enterprise_program_enrollment_page',
                                 args=[enterprise_customer.uuid, program_uuid]
@@ -2256,7 +2255,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 )
             )
 
-        return redirect(basket_page)
+        return redirect(program_dashboard_url)
 
 
 class RouterView(NonAtomicView):
@@ -2343,7 +2342,7 @@ class RouterView(NonAtomicView):
         resource_id = course_key or course_run_id or program_uuid
         # Replace enterprise UUID and resource ID with '{}', to easily match with a path in RouterView.VIEWS. Example:
         # /enterprise/fake-uuid/course/course-v1:cool+course+2017/enroll/ -> /enterprise/{}/course/{}/enroll/
-        path = re.sub('{}|{}'.format(enterprise_customer_uuid, re.escape(resource_id)), '{}', request.path)
+        path = re.sub('{}|{}'.format(enterprise_customer_uuid, re.escape(str(resource_id))), '{}', request.path)
 
         # Remove course_key from kwargs if it exists because delegate views are not expecting it.
         kwargs.pop('course_key', None)

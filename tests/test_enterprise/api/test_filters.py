@@ -54,7 +54,7 @@ class TestUserFilterBackend(APITest):
         assert len(data['results']) == expected_data_length
 
     @ddt.data(
-        (False, False, {'detail': 'Not found.'}),
+        (False, False, {'detail': 'No EnterpriseCustomer matches the given query.'}),
         (False, True, {'uuid': FAKE_UUIDS[0], 'active': True}),
         (True, False, {'uuid': FAKE_UUIDS[0], 'active': True}),
         (True, True, {'uuid': FAKE_UUIDS[0], 'active': True}),
@@ -307,6 +307,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
                     'admin_portal_learner_profile_view_enabled': False,
                     'catalog_query_search_filters_enabled': False,
                     'enterprise_admin_onboarding_enabled': False,
+                    'enterprise_edit_highlights_enabled': False,
                 }
             }
             assert response == mock_empty_200_success_response
