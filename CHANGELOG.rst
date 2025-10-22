@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.3]
+-------
+* chore: upgrade python requirements
+
+[6.5.2]
+-------
+* chore: upgrades python requirements
+
 [6.5.1]
 --------
 * chore: Added a toggle to disable legacy integrated channels endpoints in Enterprise.
