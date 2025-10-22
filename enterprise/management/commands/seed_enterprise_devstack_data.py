@@ -42,7 +42,22 @@ LOGGER = logging.getLogger(__name__)
 User = auth.get_user_model()
 Group = auth.models.Group
 CATALOG_CONTENT_FILTER = {
-    'content_type': 'courserun',
+    "content_type": [
+        "courserun",
+        "course"
+    ],
+    "availability": [
+        "Current",
+        "Starting Soon",
+        "Upcoming"
+    ],
+    "partner": "edx",
+    "level_type": [
+        "Introductory",
+        "Intermediate",
+        "Advanced"
+    ],
+    "status": "Published"
 }
 
 
