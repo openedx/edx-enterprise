@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.1.1]
+--------
+* feat: Devstack data seeding content filter should now include more courses/data
+
 [6.1.0]
 --------
 * feat: Added Support for Django 5.2
