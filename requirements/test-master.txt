@@ -127,7 +127,7 @@ defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-django==4.2.24
+django==4.2.25
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
