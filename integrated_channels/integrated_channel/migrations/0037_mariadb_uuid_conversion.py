@@ -21,8 +21,8 @@ def apply_mariadb_migration(apps, schema_editor):
             return
 
     with connection.cursor() as cursor:
-        cursor.execute("ALTER TABLE integrated_channel_learnerdatatransmissionaudit MODIFY enterprise_customer_uuid uuid NULL")
-        cursor.execute("ALTER TABLE integrated_channel_contentmetadataitemtransmission MODIFY enterprise_customer_catalog_uuid uuid NOT NULL")
+        cursor.execute("ALTER TABLE channel_integration_genericlearnerdatatransmissionaudit MODIFY enterprise_customer_uuid uuid NULL")
+        cursor.execute("ALTER TABLE channel_integration_contentmetadataitemtransmission MODIFY enterprise_customer_catalog_uuid uuid NOT NULL")
 
 
 def reverse_mariadb_migration(apps, schema_editor):
@@ -38,8 +38,8 @@ def reverse_mariadb_migration(apps, schema_editor):
             return
 
     with connection.cursor() as cursor:
-        cursor.execute("ALTER TABLE integrated_channel_learnerdatatransmissionaudit MODIFY enterprise_customer_uuid char(32) NULL")
-        cursor.execute("ALTER TABLE integrated_channel_contentmetadataitemtransmission MODIFY enterprise_customer_catalog_uuid char(32) NOT NULL")
+        cursor.execute("ALTER TABLE channel_integration_genericlearnerdatatransmissionaudit MODIFY enterprise_customer_uuid char(32) NULL")
+        cursor.execute("ALTER TABLE channel_integration_contentmetadataitemtransmission MODIFY enterprise_customer_catalog_uuid char(32) NOT NULL")
 
 
 class Migration(migrations.Migration):

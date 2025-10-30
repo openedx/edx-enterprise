@@ -48,7 +48,6 @@ def apply_mariadb_migration(apps, schema_editor):
         cursor.execute("ALTER TABLE enterprise_enterprisegroupmembership MODIFY uuid uuid NOT NULL")
         cursor.execute("ALTER TABLE enterprise_onboardingflow MODIFY uuid uuid NOT NULL")
         cursor.execute("ALTER TABLE enterprise_enterprisecustomeradmin MODIFY uuid uuid NOT NULL")
-        cursor.execute("ALTER TABLE view_enterprise_customer_support_users MODIFY enterprise_customer_id uuid NOT NULL")
 
 
 def reverse_mariadb_migration(apps, schema_editor):
@@ -84,7 +83,6 @@ def reverse_mariadb_migration(apps, schema_editor):
         cursor.execute("ALTER TABLE enterprise_enterprisegroupmembership MODIFY uuid char(32) NOT NULL")
         cursor.execute("ALTER TABLE enterprise_onboardingflow MODIFY uuid char(32) NOT NULL")
         cursor.execute("ALTER TABLE enterprise_enterprisecustomeradmin MODIFY uuid char(32) NOT NULL")
-        cursor.execute("ALTER TABLE view_enterprise_customer_support_users MODIFY enterprise_customer_id char(32) NOT NULL")
 
 
 class Migration(migrations.Migration):
