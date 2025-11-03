@@ -200,7 +200,7 @@ def handle_redirect_after_social_auth_login(backend, user):
     """
     enterprise_customers_count = EnterpriseCustomerUser.objects.filter(user_id=user.id).count()
     next_url = backend.strategy.session_get('next')
-    if next_url is None:
+    if next_url is not None:
         using_enrollment_url = re.match(r'/enterprise/.*/course/.*/enroll', str(next_url))
         if (enterprise_customers_count > 1) and not using_enrollment_url:
             select_enterprise_page_as_redirect_url(backend.strategy)
