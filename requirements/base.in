@@ -39,7 +39,6 @@ pytz
 requests
 rules
 slumber
-snowflake-connector-python
 stevedore
 testfixtures
 unicodecsv
