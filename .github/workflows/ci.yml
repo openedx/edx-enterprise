@@ -15,8 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11']
-        toxenv: [quality, docs, django42-celery53, django52-celery53, pii_check]
+        python-version: ['3.11', '3.12']
+        toxenv: [quality, docs, django52-celery53, pii_check]
     env:
       RUNJSHINT: true
     steps:
