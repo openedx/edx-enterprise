@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-attrs==25.3.0
+attrs==25.4.0
     # via
     #   outcome
     #   trio
@@ -14,7 +14,7 @@ backports-tarfile==1.2.0
     # via jaraco-context
 certifi==2025.10.5
     # via selenium
-cheroot==11.0.0
+cheroot==11.1.0
     # via cherrypy
 cherrypy==18.10.0
     # via jasmine
@@ -22,7 +22,7 @@ glob2==0.7
     # via jasmine-core
 h11==0.16.0
     # via wsproto
-idna==3.10
+idna==3.11
     # via trio
 jaraco-classes==3.4.0
     # via -r requirements/js_test.in
@@ -69,7 +69,7 @@ python-dateutil==2.9.0.post0
     # via tempora
 pyyaml==6.0.3
     # via jasmine
-selenium==4.36.0
+selenium==4.38.0
     # via jasmine
 six==1.17.0
     # via python-dateutil
@@ -81,7 +81,7 @@ tempora==5.8.1
     # via
     #   -r requirements/js_test.in
     #   portend
-trio==0.31.0
+trio==0.32.0
     # via
     #   selenium
     #   trio-websocket
@@ -91,7 +91,7 @@ typing-extensions==4.15.0
     # via selenium
 urllib3[socks]==2.5.0
     # via selenium
-websocket-client==1.8.0
+websocket-client==1.9.0
     # via selenium
 wsproto==1.2.0
     # via trio-websocket
