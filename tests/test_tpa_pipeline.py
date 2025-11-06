@@ -179,7 +179,7 @@ class TestTpaPipeline(unittest.TestCase):
                     if new_association:
                         ent_page_redirect.assert_not_called()
                     else:
-                        ent_page_redirect.called_once()
+                        ent_page_redirect.assert_called_once()
 
     @ddt.data(
         (False, 'facebook'),
@@ -266,7 +266,7 @@ class TestTpaPipeline(unittest.TestCase):
                     if new_association or using_enrollment_url:
                         ent_page_redirect.assert_not_called()
                     else:
-                        ent_page_redirect.called_once()
+                        ent_page_redirect.assert_called_once()
 
     def test_get_ec_for_pipeline(self):
         """
