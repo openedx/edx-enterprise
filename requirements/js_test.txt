@@ -14,7 +14,7 @@ backports-tarfile==1.2.0
     # via jaraco-context
 certifi==2025.10.5
     # via selenium
-cheroot==11.1.0
+cheroot==11.1.2
     # via cherrypy
 cherrypy==18.10.0
     # via jasmine
