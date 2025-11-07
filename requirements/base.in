@@ -26,7 +26,7 @@ edx-drf-extensions
 edx-opaque-keys[django]
 edx-rest-api-client
 edx-rbac
-edx-tincan-py35
+tincan
 edx-toggles
 jsondiff
 jsonfield
