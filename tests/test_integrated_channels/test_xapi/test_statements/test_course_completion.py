@@ -118,7 +118,7 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
 
         self.expected_course = {
             'verb': self.verb,
-            'version': '1.0.1',
+            'version': '1.0.3',
             'actor': self.actor,
             'object': self.object_course,
             'result': self.result,
@@ -126,7 +126,7 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
 
         self.expected_courserun = {
             'verb': self.verb,
-            'version': '1.0.1',
+            'version': '1.0.3',
             'actor': self.actor,
             'object': self.object_courserun,
             'result': self.result,
@@ -134,7 +134,7 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
 
         self.expected_notpassed = {
             'verb': self.verb,
-            'version': '1.0.1',
+            'version': '1.0.3',
             'actor': self.actor,
             'object': self.object_course,
             'result': self.result_notpassed,
