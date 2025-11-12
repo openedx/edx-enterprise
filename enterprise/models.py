@@ -1238,7 +1238,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         return self.__str__()
 
-    def get_remote_id(self, idp_id=None):
+    def get_remote_id(self, idp_id=None, remote_id_field_name=None):
         """
         Retrieve the SSO provider's identifier for this user from the LMS Third Party API.
         In absence of idp_id, returns id from default idp
@@ -1246,6 +1246,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         Arguments:
             idp_id (str) (optional): If provided, idp resolution skipped and specified idp used
                 to locate remote id.
+            remote_id_field_name (str) (optional): The field name to use for the remote id lookup.
 
         Returns None if:
         * the user doesn't exist, or
@@ -1256,7 +1257,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         if idp_id:
             enterprise_worker = get_enterprise_worker_user()
             client = ThirdPartyAuthApiClient(enterprise_worker)
-            return client.get_remote_id(idp_id, user.username)
+            return client.get_remote_id(idp_id, user.username, remote_id_field_name)
         if user and self.enterprise_customer.has_identity_providers:
             identity_provider = None
             if self.enterprise_customer.has_multiple_idps:
@@ -1267,7 +1268,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
             enterprise_worker = get_enterprise_worker_user()
             client = ThirdPartyAuthApiClient(enterprise_worker)
-            return client.get_remote_id(identity_provider, user.username)
+            return client.get_remote_id(identity_provider, user.username, remote_id_field_name)
         return None
 
     def enroll(self, course_run_id, mode, cohort=None, source_slug=None, discount_percentage=0.0, sales_force_id=None):
