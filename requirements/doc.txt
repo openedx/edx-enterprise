@@ -27,7 +27,7 @@ amqp==5.3.1
 aniso8601==10.0.1
     # via
     #   -r requirements/test-master.txt
-    #   edx-tincan-py35
+    #   tincan
 anyio==4.11.0
     # via
     #   -r requirements/test-master.txt
@@ -64,11 +64,11 @@ billiard==4.2.2
     #   celery
 bleach==6.3.0
     # via -r requirements/test-master.txt
-boto3==1.40.62
+boto3==1.40.66
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.40.62
+botocore==1.40.66
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -142,7 +142,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-django==5.2.7
+django==5.2.8
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -172,7 +172,7 @@ django-cache-memoize==0.2.1
     # via -r requirements/test-master.txt
 django-config-models==2.9.0
     # via -r requirements/test-master.txt
-django-countries==7.6.1
+django-countries==8.0.0
     # via -r requirements/test-master.txt
 django-crum==0.7.9
     # via
@@ -278,8 +278,6 @@ edx-rbac==2.1.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==6.2.0
     # via -r requirements/test-master.txt
-edx-tincan-py35==2.0.0
-    # via -r requirements/test-master.txt
 edx-toggles==5.4.1
     # via -r requirements/test-master.txt
 factory-boy==3.3.3
@@ -312,7 +310,7 @@ google-api-core[grpc]==2.28.1
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.42.0
+google-auth==2.42.1
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -328,7 +326,7 @@ google-cloud-firestore==2.21.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.4.1
+google-cloud-storage==3.5.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -493,7 +491,7 @@ protobuf==6.33.0
     #   googleapis-common-protos
     #   grpcio-status
     #   proto-plus
-psutil==7.1.2
+psutil==7.1.3
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -565,8 +563,8 @@ pytz==2025.2
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-    #   edx-tincan-py35
     #   snowflake-connector-python
+    #   tincan
 pyyaml==6.0.3
     # via
     #   -r requirements/test-master.txt
@@ -676,6 +674,8 @@ text-unidecode==1.3
     # via
     #   -r requirements/test-master.txt
     #   python-slugify
+tincan==1.0.0
+    # via -r requirements/test-master.txt
 toml==0.10.2
     # via pytest
 tomlkit==0.13.3
