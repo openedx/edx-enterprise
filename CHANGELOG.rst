@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.4] - 2025-11-13
+---------------------
+* fix: pin `pip<25.3` to resolve make upgrade build failure
+* See issue https://github.com/openedx/public-engineering/issues/440 for details.
+
 [6.5.3]
 -------
 * chore: upgrade python requirements
