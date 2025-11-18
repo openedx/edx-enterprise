@@ -135,6 +135,7 @@ requirements.js: ## install JS requirements for local development
 requirements: requirements.js ## install development environment requirements
 	pip install -qr requirements/dev.txt --exists-action w
 	pip-sync requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
+	pip install -q -r requirements/constraints.txt
 
 jshint: ## run Javascript linting
 	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint --no-save
