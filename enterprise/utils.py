@@ -2547,6 +2547,36 @@ def get_integrated_channel_choices():
     ])
 
 
+def get_channel_integrations_choices():
+    """
+    Helper method to return channel code for each integrated channel (new standalone plugin).
+    """
+    BlackboardEnterpriseCustomerConfiguration = apps.get_model(
+        'blackboard_channel', 'BlackboardEnterpriseCustomerConfiguration')
+    CanvasEnterpriseCustomerConfiguration = apps.get_model(
+        'canvas_channel', 'CanvasEnterpriseCustomerConfiguration')
+    CornerstoneEnterpriseCustomerConfiguration = apps.get_model(
+        'cornerstone_channel', 'CornerstoneEnterpriseCustomerConfiguration')
+    Degreed2EnterpriseCustomerConfiguration = apps.get_model(
+        'degreed2_channel', 'Degreed2EnterpriseCustomerConfiguration')
+    MoodleEnterpriseCustomerConfiguration = apps.get_model(
+        'moodle_channel', 'MoodleEnterpriseCustomerConfiguration')
+    SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(
+        'sap_success_factors_channel', 'SAPSuccessFactorsEnterpriseCustomerConfiguration')
+
+    return OrderedDict([
+        (integrated_channel_class.channel_code(), integrated_channel_class)
+        for integrated_channel_class in (
+            BlackboardEnterpriseCustomerConfiguration,
+            CanvasEnterpriseCustomerConfiguration,
+            CornerstoneEnterpriseCustomerConfiguration,
+            Degreed2EnterpriseCustomerConfiguration,
+            MoodleEnterpriseCustomerConfiguration,
+            SAPSuccessFactorsEnterpriseCustomerConfiguration,
+        )
+    ])
+
+
 def get_integrations_for_customers(customer_uuid):
     """
     Helper method to return active integrations code for each enterprise customer.
@@ -2557,7 +2587,11 @@ def get_integrations_for_customers(customer_uuid):
         list: a list of integrations.
     """
     unique_integrations = []
-    integrated_channel_choices = get_integrated_channel_choices()
+    # This is a temporary change while we transition from integrated_channels to channel_integrations
+    if getattr(settings, 'ENABLE_LEGACY_INTEGRATED_CHANNELS', True):
+        integrated_channel_choices = get_integrated_channel_choices()
+    else:
+        integrated_channel_choices = get_channel_integrations_choices()
     for code, choice in integrated_channel_choices.items():
         integration = choice.objects.filter(enterprise_customer__uuid=customer_uuid, active=True).values().first()
         if integration is not None:
