@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.5] - 2025-11-24
+---------------------
+* feat: Add ability to load integrations from new channel integrations app
+
 [6.5.4] - 2025-11-13
 ---------------------
 * fix: pin `pip<25.3` to resolve make upgrade build failure
