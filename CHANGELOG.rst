@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.6] - 2025-11-26
+---------------------
+* chore: upgrade python requirements
+
 [6.5.5] - 2025-11-24
 ---------------------
 * feat: Add ability to load integrations from new channel integrations app
