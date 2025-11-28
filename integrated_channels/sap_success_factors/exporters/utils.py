@@ -28,3 +28,19 @@ def transform_language_code(code):
         return 'English'
 
     return language_family.get(country_code, language_family['_'])
+
+
+def is_sso_enabled_via_tpa_service(enterprise_customer):
+    """
+    Determines if SSO is enabled via a third party auth service (like Auth0) for customer leveraging
+    SAP integration, by checking presence of org_id and active EnterpriseCustomerSsoConfiguration record.
+    """
+    if enterprise_customer.auth_org_id is None:
+        return False
+
+    enterprise_orchestration_config = enterprise_customer.sso_orchestration_records.filter(
+        active=True
+    )
+    if enterprise_orchestration_config.exists() and enterprise_orchestration_config.first().validated_at is not None:
+        return True
+    return False
