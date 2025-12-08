@@ -4,29 +4,17 @@
 #
 #    make upgrade
 #
-aiohappyeyeballs==2.6.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
-aiohttp==3.13.2
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   openai
-aiosignal==1.4.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
 amqp==5.3.1
     # via kombu
 aniso8601==10.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   tincan
-anyio==4.11.0
+anyio==4.12.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   httpx
-asgiref==3.10.0
+asgiref==3.11.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
@@ -38,24 +26,23 @@ asn1crypto==1.5.1
 attrs==25.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
     #   edx-ace
     #   openedx-events
 bcrypt==5.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   paramiko
-billiard==4.2.3
+billiard==4.2.4
     # via celery
 bleach==6.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.40.75
+boto3==1.42.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-botocore==1.40.75
+botocore==1.41.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -69,7 +56,7 @@ cachetools==6.2.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-auth
-celery==5.5.3
+celery==5.6.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/base.in
@@ -126,7 +113,7 @@ defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-django==5.2.8
+django==5.2.9
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -161,7 +148,7 @@ django-config-models==2.9.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-django-countries==8.1.1
+django-countries==8.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -288,6 +275,10 @@ edx-toggles==5.4.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
+exceptiongroup==1.3.1
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   celery
 fastavro==1.12.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -300,11 +291,6 @@ firebase-admin==7.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
-frozenlist==1.8.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
-    #   aiosignal
 google-api-core[grpc]==2.28.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -386,7 +372,6 @@ idna==3.11
     #   httpx
     #   requests
     #   snowflake-connector-python
-    #   yarl
 inflection==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -416,7 +401,7 @@ jwcrypto==1.5.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django-oauth-toolkit
-kombu==5.5.4
+kombu==5.6.1
     # via celery
 markupsafe==3.0.3
     # via
@@ -426,19 +411,10 @@ msgpack==1.1.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cachecontrol
-multidict==6.7.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
-    #   yarl
 oauthlib==3.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django-oauth-toolkit
-openai==0.28.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   -r requirements/base.in
 openedx-events==10.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -475,11 +451,6 @@ platformdirs==4.5.0
     #   snowflake-connector-python
 prompt-toolkit==3.0.52
     # via click-repl
-propcache==0.4.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
-    #   yarl
 proto-plus==1.26.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -571,7 +542,6 @@ requests==2.32.5
     #   edx-rest-api-client
     #   google-api-core
     #   google-cloud-storage
-    #   openai
     #   sailthru-client
     #   slumber
     #   snowflake-connector-python
@@ -583,7 +553,7 @@ rules==3.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-s3transfer==0.14.0
+s3transfer==0.16.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -610,11 +580,7 @@ slumber==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-sniffio==1.3.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   anyio
-snowflake-connector-python==4.0.0
+snowflake-connector-python==4.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -622,11 +588,11 @@ sortedcontainers==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django
-stevedore==5.5.0
+stevedore==5.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -648,17 +614,13 @@ tomlkit==0.13.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-tqdm==4.67.1
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   openai
 typing-extensions==4.15.0
     # via
     #   -c requirements/edx-platform-constraints.txt
-    #   aiosignal
     #   anyio
     #   django-countries
     #   edx-opaque-keys
+    #   exceptiongroup
     #   grpcio
     #   jwcrypto
     #   pyopenssl
@@ -667,6 +629,10 @@ tzdata==2025.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   celery
 unicodecsv==0.14.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -693,10 +659,6 @@ webencodings==0.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
-yarl==1.22.0
-    # via
-    #   -c requirements/edx-platform-constraints.txt
-    #   aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
