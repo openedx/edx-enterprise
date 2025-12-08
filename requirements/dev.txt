@@ -956,7 +956,7 @@ restructuredtext-lint==2.0.2
     # via
     #   -r requirements/doc.txt
     #   doc8
-roman-numerals==3.1.0
+roman-numerals-py==3.1.0
     # via
     #   -r requirements/doc.txt
     #   sphinx
@@ -1033,7 +1033,7 @@ soupsieve==2.8
     # via
     #   -r requirements/doc.txt
     #   beautifulsoup4
-sphinx==9.0.4
+sphinx==8.2.3
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
