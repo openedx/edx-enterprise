@@ -12,7 +12,6 @@ aiohappyeyeballs==2.6.1
 aiohttp==3.13.2
     # via
     #   geoip2
-    #   openai
 aiosignal==1.4.0
     # via aiohttp
     # via kombu
@@ -796,10 +795,6 @@ oauthlib==3.3.1
     #   xblocks-contrib
 olxcleaner==0.3.0
     # via -r requirements/edx/kernel.in
-openai==0.28.1
-    # via
-    #   -c requirements/constraints.txt
-    #   edx-enterprise
 openedx-atlas==0.7.0
     # via
     #   -r requirements/edx/kernel.in
@@ -1043,7 +1038,6 @@ requests==2.32.5
     #   google-cloud-storage
     #   mailsnake
     #   meilisearch
-    #   openai
     #   openedx-forum
     #   optimizely-sdk
     #   pylti1p3
@@ -1161,7 +1155,6 @@ tomlkit==0.13.3
 tqdm==4.67.1
     # via
     #   nltk
-    #   openai
 typing-extensions==4.15.0
     # via
     #   aiosignal
