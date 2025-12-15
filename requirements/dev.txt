@@ -42,13 +42,13 @@ aniso8601==10.0.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   tincan
-anyio==4.11.0
+anyio==4.12.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   httpx
-asgiref==3.10.0
+asgiref==3.11.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -85,11 +85,11 @@ bcrypt==5.0.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   paramiko
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
-billiard==4.2.3
+billiard==4.2.4
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -100,13 +100,13 @@ bleach==6.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-boto3==1.40.75
+boto3==1.42.5
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-botocore==1.40.75
+botocore==1.42.5
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -129,7 +129,7 @@ cachetools==6.2.2
     #   -r requirements/test.txt
     #   google-auth
     #   tox
-celery==5.5.3
+celery==5.6.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
@@ -206,7 +206,7 @@ code-annotations==2.3.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-coverage[toml]==7.12.0
+coverage[toml]==7.13.0
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -230,13 +230,13 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==9.7.2
+diff-cover==10.0.0
     # via -r requirements/test.txt
 dill==0.4.0
     # via pylint
 distlib==0.4.0
     # via virtualenv
-django==5.2.8
+django==5.2.9
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/doc.txt
@@ -275,7 +275,7 @@ django-config-models==2.9.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-countries==8.1.1
+django-countries==8.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -330,7 +330,7 @@ django-push-notifications==3.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-ace
-django-simple-history==3.10.1
+django-simple-history==3.11.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -454,6 +454,12 @@ edx-toggles==5.4.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+exceptiongroup==1.3.1
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   celery
 factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
@@ -667,7 +673,7 @@ jwcrypto==1.5.6
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-oauth-toolkit
-kombu==5.5.4
+kombu==5.6.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -769,7 +775,7 @@ pip-tools==7.5.2
     # via -r requirements/dev.in
 pkginfo==1.12.1.2
     # via twine
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -808,7 +814,7 @@ proto-plus==1.26.1
     #   -r requirements/test.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.1
+protobuf==6.33.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -997,7 +1003,7 @@ restructuredtext-lint==2.0.2
     # via
     #   -r requirements/doc.txt
     #   doc8
-roman-numerals-py==3.1.0
+roman-numerals==3.1.0
     # via
     #   -r requirements/doc.txt
     #   sphinx
@@ -1012,7 +1018,7 @@ rules==3.5
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-s3transfer==0.14.0
+s3transfer==0.16.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1054,18 +1060,12 @@ slumber==0.7.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-sniffio==1.3.1
-    # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test-master.txt
-    #   -r requirements/test.txt
-    #   anyio
 snowballstemmer==3.0.1
     # via
     #   -r requirements/doc.txt
     #   pydocstyle
     #   sphinx
-snowflake-connector-python==4.0.0
+snowflake-connector-python==4.1.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1080,7 +1080,7 @@ soupsieve==2.8
     # via
     #   -r requirements/doc.txt
     #   beautifulsoup4
-sphinx==8.2.3
+sphinx==9.0.4
     # via
     #   -r requirements/doc.txt
     #   pydata-sphinx-theme
@@ -1111,13 +1111,13 @@ sphinxcontrib-serializinghtml==2.0.0
     # via
     #   -r requirements/doc.txt
     #   sphinx
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django
-stevedore==5.5.0
+stevedore==5.6.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1177,6 +1177,7 @@ typing-extensions==4.15.0
     #   beautifulsoup4
     #   django-countries
     #   edx-opaque-keys
+    #   exceptiongroup
     #   grpcio
     #   jwcrypto
     #   pydata-sphinx-theme
@@ -1189,6 +1190,12 @@ tzdata==2025.2
     #   -r requirements/test.txt
     #   faker
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+    #   celery
 unicodecsv==0.14.1
     # via
     #   -r requirements/doc.txt
@@ -1200,7 +1207,7 @@ uritemplate==4.2.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   drf-yasg
-urllib3==2.5.0
+urllib3==2.6.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt

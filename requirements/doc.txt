@@ -28,11 +28,11 @@ aniso8601==10.0.1
     # via
     #   -r requirements/test-master.txt
     #   tincan
-anyio==4.11.0
+anyio==4.12.0
     # via
     #   -r requirements/test-master.txt
     #   httpx
-asgiref==3.10.0
+asgiref==3.11.0
     # via
     #   -r requirements/test-master.txt
     #   django
@@ -56,19 +56,19 @@ bcrypt==5.0.0
     # via
     #   -r requirements/test-master.txt
     #   paramiko
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
     # via pydata-sphinx-theme
-billiard==4.2.3
+billiard==4.2.4
     # via
     #   -r requirements/test-master.txt
     #   celery
 bleach==6.3.0
     # via -r requirements/test-master.txt
-boto3==1.40.75
+boto3==1.42.5
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.40.75
+botocore==1.42.5
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -82,7 +82,7 @@ cachetools==6.2.2
     # via
     #   -r requirements/test-master.txt
     #   google-auth
-celery==5.5.3
+celery==5.6.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
@@ -142,7 +142,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-django==5.2.8
+django==5.2.9
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -172,7 +172,7 @@ django-cache-memoize==0.2.1
     # via -r requirements/test-master.txt
 django-config-models==2.9.0
     # via -r requirements/test-master.txt
-django-countries==8.1.1
+django-countries==8.2.0
     # via -r requirements/test-master.txt
 django-crum==0.7.9
     # via
@@ -200,7 +200,7 @@ django-push-notifications==3.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
-django-simple-history==3.10.1
+django-simple-history==3.11.0
     # via -r requirements/test-master.txt
 django-waffle==5.0.0
     # via
@@ -280,6 +280,10 @@ edx-rest-api-client==6.2.0
     # via -r requirements/test-master.txt
 edx-toggles==5.4.1
     # via -r requirements/test-master.txt
+exceptiongroup==1.3.1
+    # via
+    #   -r requirements/test-master.txt
+    #   celery
 factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
@@ -415,7 +419,7 @@ jwcrypto==1.5.6
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-kombu==5.5.4
+kombu==5.6.1
     # via
     #   -r requirements/test-master.txt
     #   celery
@@ -463,7 +467,7 @@ pgpy==0.6.0
     # via -r requirements/test-master.txt
 pillow==12.0.0
     # via -r requirements/test-master.txt
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -483,7 +487,7 @@ proto-plus==1.26.1
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.1
+protobuf==6.33.2
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -590,7 +594,7 @@ requests==2.32.5
     #   sphinx
 restructuredtext-lint==2.0.2
     # via doc8
-roman-numerals-py==3.1.0
+roman-numerals==3.1.0
     # via sphinx
 rsa==4.9.1
     # via
@@ -598,7 +602,7 @@ rsa==4.9.1
     #   google-auth
 rules==3.5
     # via -r requirements/test-master.txt
-s3transfer==0.14.0
+s3transfer==0.16.0
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -623,13 +627,9 @@ six==1.17.0
     #   python-dateutil
 slumber==0.7.1
     # via -r requirements/test-master.txt
-sniffio==1.3.1
-    # via
-    #   -r requirements/test-master.txt
-    #   anyio
 snowballstemmer==3.0.1
     # via sphinx
-snowflake-connector-python==4.0.0
+snowflake-connector-python==4.1.1
     # via -r requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
@@ -637,7 +637,7 @@ sortedcontainers==2.4.0
     #   snowflake-connector-python
 soupsieve==2.8
     # via beautifulsoup4
-sphinx==8.2.3
+sphinx==9.0.4
     # via
     #   -r requirements/doc.in
     #   pydata-sphinx-theme
@@ -656,11 +656,11 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlparse==0.5.3
+sqlparse==0.5.4
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==5.5.0
+stevedore==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -694,6 +694,7 @@ typing-extensions==4.15.0
     #   beautifulsoup4
     #   django-countries
     #   edx-opaque-keys
+    #   exceptiongroup
     #   grpcio
     #   jwcrypto
     #   pydata-sphinx-theme
@@ -704,13 +705,17 @@ tzdata==2025.2
     #   -r requirements/test-master.txt
     #   faker
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -r requirements/test-master.txt
+    #   celery
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
 uritemplate==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-urllib3==2.5.0
+urllib3==2.6.1
     # via
     #   -r requirements/test-master.txt
     #   botocore

@@ -4,7 +4,7 @@
 #
 #    make upgrade
 #
-cachetools==6.2.2
+cachetools==6.2.3
     # via tox
 chardet==5.2.0
     # via tox
@@ -20,7 +20,7 @@ packaging==25.0
     # via
     #   pyproject-api
     #   tox
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   tox
     #   virtualenv
