@@ -1092,6 +1092,27 @@ class EnterpriseCustomerUser(TimeStampedModel):
         on_delete=models.SET_NULL
     )
 
+    invited_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the user was invited."
+    )
+
+    joined_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the user accepted the invite / joined."
+    )
+
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='enterprise_users_invited',
+        help_text="Admin user who sent the invitation."
+    )
+
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
     history = HistoricalRecords()
