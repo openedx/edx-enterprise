@@ -89,7 +89,7 @@ trio-websocket==0.12.2
     # via selenium
 typing-extensions==4.15.0
     # via selenium
-urllib3[socks]==2.6.0
+urllib3[socks]==2.6.2
     # via selenium
 websocket-client==1.9.0
     # via selenium

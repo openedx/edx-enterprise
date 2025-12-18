@@ -6,7 +6,7 @@
 doc8                      # reStructuredText style checker
 sphinx-book-theme         # Common theme for all Open edX projects
 readme_renderer           # Validates README.rst for usage on PyPI
-Sphinx==8.2.3             # Documentation builder
+Sphinx                    # Documentation builder
 docutils
 factory-boy
 pytest

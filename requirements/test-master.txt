@@ -192,7 +192,7 @@ django-push-notifications==3.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
-django-simple-history==3.10.1
+django-simple-history==3.11.0
     # via -r requirements/base.in
 django-waffle==5.0.0
     # via
