@@ -36,3 +36,9 @@ celery>=5.2.2,<6.0.0
 # The constraint can be removed once a release (pip-tools > 7.5.1) is available with support for pip 25.3
 # Issue to track this dependency and unpin later on: https://github.com/openedx/edx-lint/issues/503
 pip<25.3
+
+# pinning Sphinx 8.x version
+# Sphinx 9.x introduces significant changes and removals compared to Sphinx 8.x,
+# particularly in internal APIs and default behaviors, including a substantial rewrite of the autodoc extension.
+# https://github.com/openedx/edx-enterprise/issues/2494
+Sphinx>=8.0,<9.0
