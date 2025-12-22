@@ -38,11 +38,11 @@ bleach==6.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.42.0
+boto3==1.42.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-botocore==1.41.6
+botocore==1.42.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -52,7 +52,7 @@ cachecontrol==0.14.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
-cachetools==6.2.2
+cachetools==6.2.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-auth
@@ -298,7 +298,7 @@ google-api-core[grpc]==2.28.1
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.43.0
+google-auth==2.44.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -314,7 +314,7 @@ google-cloud-firestore==2.21.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
-google-cloud-storage==3.6.0
+google-cloud-storage==3.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
@@ -445,7 +445,7 @@ pillow==12.0.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
@@ -456,7 +456,7 @@ proto-plus==1.26.1
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.1
+protobuf==6.33.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
@@ -580,7 +580,7 @@ slumber==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-snowflake-connector-python==4.1.0
+snowflake-connector-python==4.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -625,7 +625,7 @@ typing-extensions==4.15.0
     #   jwcrypto
     #   pyopenssl
     #   snowflake-connector-python
-tzdata==2025.2
+tzdata==2025.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   kombu
@@ -641,7 +641,7 @@ uritemplate==4.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   drf-yasg
-urllib3==2.5.0
+urllib3==2.6.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   botocore
