@@ -109,6 +109,8 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                     ecu.enterprise_customer_id = %s
                 AND
                     ecu.linked = 1
+                AND
+                    ecu.active = 1
             ) SELECT * FROM users {user_query_filter} ORDER BY full_name;
         """
         try:
