@@ -12,7 +12,7 @@ autocommand==2.2.2
     # via jaraco-text
 backports-tarfile==1.2.0
     # via jaraco-context
-certifi==2025.11.12
+certifi==2026.1.4
     # via selenium
 cheroot==11.1.2
     # via cherrypy
@@ -30,9 +30,9 @@ jaraco-collections==5.2.1
     # via
     #   -r requirements/js_test.in
     #   cherrypy
-jaraco-context==6.0.1
+jaraco-context==6.0.2
     # via jaraco-text
-jaraco-functools==4.3.0
+jaraco-functools==4.4.0
     # via
     #   -r requirements/js_test.in
     #   cheroot
