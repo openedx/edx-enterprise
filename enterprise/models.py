@@ -1091,7 +1091,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
         related_name='linked_enterprise_customer_users',
         on_delete=models.SET_NULL
     )
-
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
     history = HistoricalRecords()
@@ -3971,6 +3970,12 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     user_email = models.EmailField(null=False, blank=False)
     history = HistoricalRecords()
 
+    invited_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the admin invite was created."
+    )
+
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
@@ -5005,6 +5010,17 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
     onboarding_tour_completed = models.BooleanField(
         default=False,
         help_text=_("Whether the admin has completed the onboarding tour.")
+    )
+    invited_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the admin was invited."
+    )
+
+    joined_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the admin accepted the invite and was created."
     )
 
     class Meta:

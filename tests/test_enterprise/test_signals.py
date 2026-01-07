@@ -12,10 +12,12 @@ from pytest import mark
 
 from django.db import transaction
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -415,6 +417,48 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
         ).delete()
         self._assert_pending_ecus_exist(should_exist=False)
 
+@mark.django_db
+class TestEnterpriseCustomerAdminSignals(unittest.TestCase):
+    """
+    Tests signals related to EnterpriseCustomerAdmin creation and field updates.
+    """
+
+    def setUp(self):
+        self.admin_user = UserFactory(email='user@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory()
+
+        self.ecu = EnterpriseCustomerUserFactory(
+            user_fk=self.admin_user, 
+            user_id=self.admin_user.id,     
+            enterprise_customer=self.enterprise_customer,
+        )
+        super().setUp()
+
+    def test_invited_date_is_set_on_creation(self):
+        pending_admin = PendingEnterpriseCustomerAdminUserFactory(
+        enterprise_customer=self.ecu.enterprise_customer,
+        user_email=self.ecu.user_email,
+        invited_date=timezone.now() - timedelta(days=1)
+        )
+
+        admin = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=self.ecu
+        )
+
+        admin.refresh_from_db()
+        self.assertIsNotNone(admin.invited_date)
+
+    def test_joined_date_not_set_on_create(self):
+        admin = EnterpriseCustomerAdmin(
+            enterprise_customer_user=self.ecu
+        )
+        self.assertIsNone(getattr(admin, 'joined_date', None))
+
+    def test_joined_date_set_when_admin_user_is_accepted(self):
+        admin = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=self.ecu
+        )
+        self.assertIsNotNone(admin.joined_date)
 
 @mark.django_db
 @ddt.ddt
