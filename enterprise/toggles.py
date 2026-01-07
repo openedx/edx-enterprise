@@ -104,6 +104,17 @@ EDIT_HIGHLIGHTS_ENABLED = WaffleFlag(
     ENTERPRISE_LOG_PREFIX,
 )
 
+# .. toggle_name: enterprise.is_learner_tab_enabled
+# .. toggle_implementation: WaffleFlag
+# .. toggle_default: False
+# .. toggle_description: Enables the learner tab
+# .. toggle_use_cases: open_edx
+# .. toggle_creation_date: 2026-01-06
+IS_LEARNER_TAB_ENABLED = WaffleFlag(
+    f'{ENTERPRISE_NAMESPACE}.is_learner_tab_enabled',
+    __name__,
+    ENTERPRISE_LOG_PREFIX,
+)
 
 def top_down_assignment_real_time_lcm():
     """
@@ -160,6 +171,11 @@ def enterprise_edit_highlights_enabled():
     """
     return EDIT_HIGHLIGHTS_ENABLED.is_enabled()
 
+def enterprise_is_learner_tab_enabled():
+    """
+    Returns whether the learners tab feature flag is enabled.
+    """
+    return IS_LEARNER_TAB_ENABLED.is_enabled()
 
 def enterprise_features():
     """
@@ -174,4 +190,5 @@ def enterprise_features():
         'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled(),
         'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled(),
         'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled(),
+        'learners_tab_enabled': is_learners_tab_enabled(),
     }
