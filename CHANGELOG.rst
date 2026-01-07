@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.2] - 2026-01-15
+---------------------
+* feat: add a waffle flag for invite admins
+
 [6.6.1] - 2026-01-09
 ---------------------
 * fix: issue regarding the gettext package in atlas translations flow
