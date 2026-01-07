@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.5.8] - 2025-12-16
+---------------------
+* feat: Update admin table with new fields
+
 [6.5.7] - 2025-11-28
 ---------------------
 * feat: fetch SAP user id by remote_id_field_name

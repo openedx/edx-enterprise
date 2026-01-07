@@ -2047,7 +2047,7 @@ class EnterpriseUserSerializer(serializers.Serializer):
     is_admin = serializers.SerializerMethodField()
 
     def is_enterprise_customer_user(self, obj):
-        return hasattr(obj, 'user_id') and obj.user_id > 0
+         return hasattr(obj, 'user_id') and obj.user_id > 0
 
     def get_enterprise_customer_user(self, obj):
         """
