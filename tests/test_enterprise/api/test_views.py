@@ -2070,7 +2070,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
          True, None, False, False, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
-         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False, False, False),
+         {'detail': 'User is not allowed to access the view.'}, False, False, False, False, False, False, False, False, False),
         # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
          False, None, False, False, False, False, False, False, False, False, False),
