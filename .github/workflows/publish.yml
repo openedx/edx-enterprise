@@ -25,6 +25,8 @@ jobs:
         run: make requirements
       - name: Build package
         run: python setup.py sdist bdist_wheel
+      - name: Pull translations
+        run: make pull_translations
       - name: Publish to PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
