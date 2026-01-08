@@ -83,8 +83,8 @@ from enterprise.toggles import (
     ENTERPRISE_CUSTOMER_SUPPORT_TOOL,
     ENTERPRISE_LEARNER_BFF_ENABLED,
     FEATURE_PREQUERY_SEARCH_SUGGESTIONS,
-    TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM,
-    IS_LEARNER_TAB_ENABLED
+    INVITE_ADMINS_ENABLED,
+    TOP_DOWN_ASSIGNMENT_REAL_TIME_LCM
 )
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -2140,7 +2140,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             enterprise_admin_onboarding_enabled,
             enterprise_edit_highlights_enabled,
             mock_get_logo_url,
-            enterprise_is_learner_tab_enabled,
+            enterprise_invite_admins_enabled,
     ):
         """
         ``enterprise_customer``'s detail list endpoint ``with_access_to`` should validate permissions
@@ -2245,7 +2245,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
             )
         with override_waffle_flag(
             EDIT_HIGHLIGHTS_ENABLED,
-            active=enterprise_is_learner_tab_enabled
+            active=enterprise_invite_admins_enabled
         ):
         
             response = client.get(
@@ -2325,7 +2325,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'catalog_query_search_filters_enabled': catalog_query_search_filters_enabled,
                     'enterprise_admin_onboarding_enabled': enterprise_admin_onboarding_enabled,
                     'enterprise_edit_highlights_enabled': enterprise_edit_highlights_enabled,
-                    'learners_tab_enabled': is_learners_tab_enabled(),
+                    'enterprise_invite_admins_enabled': enterprise_invite_admins_enabled(),
                 }
             }
             assert response in (expected_error, mock_empty_200_success_response)
