@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.0] - 2026-01-08
+---------------------
+* feat: added atlas translations flow in enterprise app
+
 [6.5.7] - 2025-11-28
 ---------------------
 * feat: fetch SAP user id by remote_id_field_name
