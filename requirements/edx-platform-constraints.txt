@@ -9,7 +9,7 @@ acid-xblock==0.4.1
     # via -r requirements/edx/kernel.in
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.13.2
+aiohttp==3.13.3
     # via
     #   geoip2
 aiosignal==1.4.0
