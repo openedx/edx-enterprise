@@ -8,8 +8,8 @@ from rest_framework import permissions, response, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from django.core.exceptions import ValidationError
 from django.db import connection
+from django.db import OperationalError
 
 from enterprise import models
 from enterprise.api.v1 import serializers
@@ -109,6 +109,10 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                     ecu.enterprise_customer_id = %s
                 AND
                     ecu.linked = 1
+                AND
+                    ecu.active = 1
+                AND
+                    sr.name = 'enterprise_learner'
             ) SELECT * FROM users {user_query_filter} ORDER BY full_name;
         """
         try:
@@ -133,12 +137,21 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                     cursor.execute(sql_to_execute, [uuid_no_dashes])
                 users.extend(cursor.fetchall())
 
-        except ValidationError:
-            # did not find UUID match in either EnterpriseCustomerUser
-            return response.Response(
-                {"detail": "Could not find enterprise uuid {}".format(enterprise_uuid)},
-                status=status.HTTP_404_NOT_FOUND,
+        except OperationalError as exc:
+            if "auth_userprofile" not in str(exc):
+                raise
+
+            # Fallback query without auth_userprofile
+            fallback_query = query.replace(
+                "LEFT JOIN auth_userprofile as aup on au.id = aup.user_id",
+                ""
+            ).replace(
+                "coalesce(NULLIF(aup.name, ''), au.username)",
+                "au.username"
             )
+            with connection.cursor() as cursor:
+                cursor.execute(fallback_query.format(user_query_filter=""), [uuid_no_dashes])
+                users.extend(cursor.fetchall())
 
         if sort_by:
             lambda_keys = {
