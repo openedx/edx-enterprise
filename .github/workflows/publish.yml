@@ -21,8 +21,12 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VER }}
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
       - name: Install requirements
         run: make requirements
+      - name: Pull translations
+        run: make pull_translations
       - name: Build package
         run: python setup.py sdist bdist_wheel
       - name: Publish to PyPi

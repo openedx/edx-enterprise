@@ -30,6 +30,7 @@ tincan
 edx-toggles
 jsondiff
 jsonfield
+openedx-atlas
 openedx-events
 paramiko
 path.py
