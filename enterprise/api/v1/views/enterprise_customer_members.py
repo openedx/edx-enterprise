@@ -110,6 +110,7 @@ class EnterpriseCustomerMembersViewSet(EnterpriseReadOnlyModelViewSet):
                 AND
                     ecu.linked = 1
                 AND
+                    -- Only include active EnterpriseCustomerUser records
                     ecu.active = 1
             ) SELECT * FROM users {user_query_filter} ORDER BY full_name;
         """
