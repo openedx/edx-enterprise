@@ -17,6 +17,14 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.1] - 2026-01-09
+---------------------
+* fix: issue regarding the gettext package in atlas translations flow
+
+[6.6.0] - 2026-01-08
+---------------------
+* feat: added atlas translations flow in enterprise app
+
 [6.5.8] - 2025-12-16
 ---------------------
 * feat: Update admin table with new fields
