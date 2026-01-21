@@ -74,17 +74,19 @@ from test_utils.fake_catalog_api import (
 )
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
-def get_timestamp_formatted(dt):
-    return dt.strftime('%F')
+
+def get_timestamp_formatted(dt, df):
+    return dt.strftime(df)
+
 
 User = auth.get_user_model()
 NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP = 1483326245000
-NOW_TIMESTAMP_FORMATTED = get_timestamp_formatted(NOW)
+NOW_TIMESTAMP_FORMATTED = get_timestamp_formatted(NOW, '%F')
 DAY_DELTA = timedelta(days=1)
 PAST = NOW - DAY_DELTA
 PAST_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
-PAST_TIMESTAMP_FORMATTED = get_timestamp_formatted(PAST)
+PAST_TIMESTAMP_FORMATTED = get_timestamp_formatted(PAST, '%F')
 FUTURE = NOW + DAY_DELTA
 
 # Silence noisy logs
@@ -222,7 +224,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         courses metadata related to other integrated channels even if an
         integrated channel fails to transmit due to some error.
         """
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_get_oauth_access_token_mock.return_value = "token", NOW
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         degreed2_create_content_metadata_mock.return_value = 200, '{}'
 
@@ -286,7 +288,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         """
         Test the data transmission task.
         """
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_get_oauth_access_token_mock.return_value = "token", NOW
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         degreed2_create_content_metadata_mock.return_value = 200, '{}'
 
@@ -346,7 +348,7 @@ COURSE_KEY = 'edX+DemoX'
 # Mock passing certificate data
 MOCK_PASSING_CERTIFICATE = {
     'grade': 'A-',
-    'created_date': NOW.strftime(LMS_API_DATETIME_FORMAT),
+    'created_date': get_timestamp_formatted(NOW, LMS_API_DATETIME_FORMAT),
     'status': 'downloadable',
     'is_passing': True,
 }
@@ -354,7 +356,7 @@ MOCK_PASSING_CERTIFICATE = {
 # Mock failing certificate data
 MOCK_FAILING_CERTIFICATE = {
     'grade': 'D',
-    'created_date': NOW.strftime(LMS_API_DATETIME_FORMAT),
+    'created_date': get_timestamp_formatted(NOW, LMS_API_DATETIME_FORMAT),
     'status': 'downloadable',
     'is_passing': False,
     'percent_grade': 0.6,
@@ -871,7 +873,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
     else:
         if expected_completion.get('timestamp') != 'null':
             timestamp = expected_completion.get('timestamp') / 1000
-            completed_date = str(datetime.utcfromtimestamp(timestamp)) + '+00:00'
+            completed_date = str(datetime.fromtimestamp(timestamp, tz=timezone.utc)) + '+00:00'
         else:
             completed_date = None
         expected_output = [
@@ -1018,7 +1020,7 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
             'integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token'
         )
         self.sapsf_get_oauth_access_token_mock = sapsf_get_oauth_access_token_mock.start()
-        self.sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        self.sapsf_get_oauth_access_token_mock.return_value = "token", NOW
         self.addCleanup(sapsf_get_oauth_access_token_mock.stop)
         sapsf_create_course_completion = mock.patch(
             'integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_course_completion'
@@ -1220,7 +1222,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             if User.objects.filter(username=learner_username).count() == 0:
                 factories.UserFactory(username=learner_username)
 
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_get_oauth_access_token_mock.return_value = "token", NOW
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
 
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
@@ -1293,7 +1295,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         Test the unlink inactive sap learners task with failed response from SAPSF.
         """
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
+        sapsf_get_oauth_access_token_mock.return_value = "token", NOW + DAY_DELTA
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
 
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
@@ -1320,7 +1322,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         Test the unlink inactive sap learners task with failed response for no identity provider.
         """
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
+        sapsf_get_oauth_access_token_mock.return_value = "token", NOW + DAY_DELTA
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
 
         # Delete the identity providers
@@ -1386,7 +1388,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         Test the unlink inactive sap learners task with error response from SAPSF catches the error
         """
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_get_oauth_access_token_mock.return_value = "token", NOW
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
 
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
