@@ -74,14 +74,17 @@ from test_utils.fake_catalog_api import (
 )
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
+def get_timestamp_formatted(dt):
+    return dt.strftime('%F')
+
 User = auth.get_user_model()
 NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP = 1483326245000
-NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
+NOW_TIMESTAMP_FORMATTED = get_timestamp_formatted(NOW)
 DAY_DELTA = timedelta(days=1)
 PAST = NOW - DAY_DELTA
 PAST_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
-PAST_TIMESTAMP_FORMATTED = PAST.strftime('%F')
+PAST_TIMESTAMP_FORMATTED = get_timestamp_formatted(PAST)
 FUTURE = NOW + DAY_DELTA
 
 # Silence noisy logs
@@ -91,7 +94,6 @@ LOG_OVERRIDES = [
 
 for log_name, log_level in LOG_OVERRIDES:
     logging.getLogger(log_name).setLevel(log_level)
-
 
 @ddt.ddt
 class TestIntegratedChannelCommandMixin(unittest.TestCase):
