@@ -4,9 +4,10 @@ Functions for serializing and emiting Open edX event bus signals.
 from openedx_events.enterprise.data import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
     LearnerCreditEnterpriseCourseEnrollment,
 )
-from openedx_events.enterprise.signals import LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED
+from openedx_events.enterprise.signals import ENTERPRISE_GROUP_DELETED, LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED
 
 
 def serialize_learner_credit_course_enrollment(learner_credit_course_enrollment):
@@ -67,4 +68,18 @@ def send_learner_credit_course_enrollment_revoked_event(learner_credit_course_en
     """
     LEARNER_CREDIT_COURSE_ENROLLMENT_REVOKED.send_event(
         learner_credit_course_enrollment=serialize_learner_credit_course_enrollment(learner_credit_course_enrollment),
+    )
+
+
+def send_enterprise_group_deleted_event(group_uuid):
+    """
+    Sends the ENTERPRISE_GROUP_DELETED openedx event.
+
+    Args:
+        enterprise_group (enterprise.models.EnterpriseGroup):
+            An enterprise group that was deleted.
+    """
+    data = EnterpriseGroup(uuid=group_uuid)
+    ENTERPRISE_GROUP_DELETED.send_event(
+        enterprise_group=data
     )
