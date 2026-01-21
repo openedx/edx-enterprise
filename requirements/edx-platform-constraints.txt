@@ -939,7 +939,7 @@ pymongo==4.4.0
     #   event-tracking
     #   mongoengine
     #   openedx-forum
-pynacl==1.6.1
+pynacl==1.6.2
     # via
     #   edx-django-utils
     #   paramiko
