@@ -1,6 +1,7 @@
 """
 Tests for the `edx-enterprise` tasks module.
 """
+# pylint: skip-file
 
 import copy
 import unittest

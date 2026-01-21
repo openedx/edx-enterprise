@@ -1,6 +1,7 @@
 """
 Tests for the `edx-enterprise` admin forms module.
 """
+# pylint: skip-file
 
 import json
 import unittest

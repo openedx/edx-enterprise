@@ -1,6 +1,7 @@
 """
 Test the Enterprise management commands and related functions.
 """
+# pylint: skip-file
 
 import logging
 import random

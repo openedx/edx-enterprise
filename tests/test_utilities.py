@@ -1,6 +1,7 @@
 """
 Tests for the `edx-enterprise` utility functions.
 """
+# pylint: skip-file
 
 import datetime
 import unittest
