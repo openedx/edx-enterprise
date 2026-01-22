@@ -29,6 +29,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
 
     API_BASE_URL = urljoin(f"{settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL}/", "api/v1/")
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
+    CATALOG_QUERY_ENDPOINT = 'catalog-queries'
     GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
     REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     CATALOG_DIFF_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/generate_diff'
@@ -41,6 +42,7 @@ class EnterpriseCatalogApiClient(UserAPIClient):
     GET_QUERY_BY_HASH_ENDPOINT = CATALOG_QUERIES_ENDPOINT + '/get_query_by_hash?hash={}'
     APPEND_SLASH = True
     GET_CONTENT_METADATA_PAGE_SIZE = getattr(settings, 'ENTERPRISE_CATALOG_GET_CONTENT_METADATA_PAGE_SIZE', 50)
+    GET_QUERY_BY_HASH_ENDPOINT = CATALOG_QUERY_ENDPOINT + '/get_query_by_hash'
 
     def __init__(self, user=None):
         user = user if user else utils.get_enterprise_worker_user()
@@ -450,6 +452,20 @@ class EnterpriseCatalogApiClient(UserAPIClient):
                 str(exc),
             )
             return {}
+
+    @UserAPIClient.refresh_token
+    def get_catalog_query_by_hash(self, hash):
+        """
+        Placeholder
+        """
+        try:
+            api_url = self.get_api_url(f"{self.GET_QUERY_BY_HASH_ENDPOINT}").rstrip('/') + f'?hash={hash}'
+            response = self.client.get(api_url) # type: ignore
+            response.raise_for_status()
+            return response.json()
+        except Exception as exc:
+            print(exc)
+            pass
 
 
 class NoAuthEnterpriseCatalogClient(NoAuthAPIClient):
