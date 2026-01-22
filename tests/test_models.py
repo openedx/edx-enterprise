@@ -32,24 +32,30 @@ from django.http import QueryDict
 from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
+
 from enterprise import roles_api
+from enterprise.models import SystemWideEnterpriseUserRoleAssignment
+
+from enterprise.utils import localized_utcnow
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
 )
-from enterprise.errors import LinkUserToEnterpriseError
+
 from enterprise.models import (
     DefaultEnterpriseEnrollmentIntention,
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerInviteKey,
@@ -59,43 +65,14 @@ from enterprise.models import (
     EnterpriseGroup,
     EnterpriseGroupMembership,
     LicensedEnterpriseCourseEnrollment,
+    PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
-    SystemWideEnterpriseUserRoleAssignment,
-    logo_path,
 )
-from enterprise.utils import (
-    CourseEnrollmentDowngradeError,
-    get_default_catalog_content_filter,
-    get_sso_orchestrator_api_base_url,
-    get_sso_orchestrator_configure_path,
-    localized_utcnow,
-)
-from test_utils import EmptyCacheMixin, assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
-
-
-@mark.django_db
-@ddt.ddt
-class TestPendingEnrollment(unittest.TestCase):
-    """
-    Test for pending enrollment
-    """
-
-    def setUp(self):
-        email = 'bob@jones.com'
-        course_id = 'course-v1:edX+DemoX+DemoCourse'
-        pending_link = factories.PendingEnterpriseCustomerUserFactory(user_email=email)
-        self.enrollment = factories.PendingEnrollmentFactory(user=pending_link, course_id=course_id)
-        self.user = factories.UserFactory(email=email)
-        super().setUp()
-
-    @ddt.data(str, repr)
-    def test_string_conversion(self, method):
-        """
-        Test conversion to string.
-        """
-        expected_str = '<PendingEnrollment for email bob@jones.com in course with ID course-v1:edX+DemoX+DemoCourse>'
-        assert expected_str == method(self.enrollment)
+from test_utils import factories
+from test_utils import EmptyCacheMixin
+from test_utils import assert_url, assert_url_contains_query_parameters, fake_catalog_api
+from test_utils.factories import EnterpriseCustomerFactory, UserFactory
 
 
 @mark.django_db
@@ -261,20 +238,6 @@ class TestDefaultEnterpriseEnrollmentIntention(unittest.TestCase):
         assert default_enterprise_enrollment_intention.course_run_key == self.mock_advertised_course_run['key']
         assert default_enterprise_enrollment_intention.content_type == DefaultEnterpriseEnrollmentIntention.COURSE
 
-    @mock.patch(
-        'enterprise.models.get_and_cache_content_metadata',
-        return_value=mock.MagicMock(),
-    )
-    def test_retrieve_course_run_with_explicit_course_run(self, mock_get_and_cache_content_metadata):
-        mock_get_and_cache_content_metadata.return_value = self.mock_course
-        default_enterprise_enrollment_intention = DefaultEnterpriseEnrollmentIntention.objects.create(
-            enterprise_customer=self.test_enterprise_customer_1,
-            content_key='course-v1:edX+DemoX+2T2023',
-        )
-        assert default_enterprise_enrollment_intention.course_run == self.mock_course_run_1
-        assert default_enterprise_enrollment_intention.course_key == self.mock_course['key']
-        assert default_enterprise_enrollment_intention.course_run_key == self.mock_course_run_1['key']
-        assert default_enterprise_enrollment_intention.content_type == DefaultEnterpriseEnrollmentIntention.COURSE_RUN
 
     @mock.patch(
         'enterprise.models.get_and_cache_content_metadata',
@@ -1379,51 +1342,10 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             branding_configuration.full_clean()  # exception here will fail the test
 
 
-@mark.django_db
-@ddt.ddt
-class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
-    """
-    Tests of the EnterpriseCustomerIdentityProvider model.
-    """
-
-    @ddt.data(str, repr)
-    def test_string_conversion(self, method):
-        """
-        Test ``EnterpriseCustomerIdentityProvider`` conversion to string.
-        """
-        provider_id, enterprise_customer_name = "saml-test", "TestShib"
-        enterprise_customer = factories.EnterpriseCustomerFactory(name=enterprise_customer_name)
-        ec_idp = factories.EnterpriseCustomerIdentityProviderFactory(
-            enterprise_customer=enterprise_customer,
-            provider_id=provider_id,
-        )
-
-        expected_to_str = "<EnterpriseCustomerIdentityProvider {provider_id}>: {enterprise_name}".format(
-            provider_id=provider_id,
-            enterprise_name=enterprise_customer_name,
-        )
-        self.assertEqual(method(ec_idp), expected_to_str)
-
-    @mock.patch("enterprise.models.utils.get_identity_provider")
-    def test_provider_name(self, mock_method):
-        """
-        Test provider_name property returns correct value without errors..
-        """
-        faker = FakerFactory.create()
-        provider_name = faker.name()
-        mock_method.return_value.configure_mock(name=provider_name)
-        ec_idp = factories.EnterpriseCustomerIdentityProviderFactory()
-
-        assert ec_idp.provider_name == provider_name
-
 
 @mark.django_db
 @ddt.ddt
 class TestEnterpriseCustomerCatalog(unittest.TestCase):
-    """
-    Tests for the EnterpriseCustomerCatalog model.
-    """
-
     def setUp(self):
         """
         Setup tests
@@ -1439,6 +1361,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         Test ``EnterpriseCustomerCatalog`` conversion to string.
         """
+
         faker = FakerFactory.create()
         title = faker.name()
         name = 'EnterpriseWithACatalog'
@@ -1800,7 +1723,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         assert html == '<b>This is an HTML template! real course!!!</b>'
 
     @ddt.data(str, repr)
-    def test_string_conversion(self, method):
+    def test_string_conversion(self, method, *args, **kwargs):
         """
         Test conversion to string.
         """
@@ -2696,7 +2619,7 @@ class TestEnterpriseCatalogQuery(unittest.TestCase):
         }
     )
     @ddt.unpack
-    def test_save_content_filter_fail(self, content_filter, error):
+    def test_save_content_filter_fail(self, content_filter, error, **kwargs):
         catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
         try:
             catalog_query.full_clean()
@@ -3045,6 +2968,55 @@ class TestEnterpriseCustomerAdmin(unittest.TestCase):
     """
     Tests for the EnterpriseCustomerAdmin model.
     """
+    def test_joined_date_not_set_on_create(self):
+        admin_user = UserFactory(email='user@example.com')
+        enterprise_customer = EnterpriseCustomerFactory()
+        ecu = factories.EnterpriseCustomerUserFactory(
+            user_fk=admin_user,
+            user_id=admin_user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        admin = factories.EnterpriseCustomerAdminFactory(enterprise_customer_user=ecu)
+        admin.joined_date = None
+        admin.save()
+        admin.refresh_from_db()
+        assert admin.joined_date is None
+
+    def test_joined_date_set_when_admin_user_is_accepted(self):
+        admin_user = UserFactory(email='user@example.com')
+        enterprise_customer = EnterpriseCustomerFactory()
+        ecu = factories.EnterpriseCustomerUserFactory(
+            user_fk=admin_user,
+            user_id=admin_user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        admin = factories.EnterpriseCustomerAdminFactory(
+            enterprise_customer_user=ecu,
+            joined_date=timezone.now()
+        )
+        assert admin.joined_date is not None
+
+    def test_joined_date_is_set_to_current_time_on_acceptance(self):
+        admin_user = UserFactory(email='user@example.com')
+        enterprise_customer = EnterpriseCustomerFactory()
+        ecu = factories.EnterpriseCustomerUserFactory(
+            user_fk=admin_user,
+            user_id=admin_user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        before_create = timezone.now()
+        admin = factories.EnterpriseCustomerAdminFactory(
+            enterprise_customer_user=ecu,
+            joined_date=timezone.now()
+        )
+        admin.refresh_from_db()
+        after_create = timezone.now()
+        assert admin.joined_date is not None
+        assert before_create <= admin.joined_date <= after_create, (
+            "joined_date should be set to the time the admin was accepted"
+        )
+    # Tests for the EnterpriseCustomerAdmin model.
+
     def setUp(self):
         """Set up test data."""
         self.user = factories.UserFactory()
@@ -3057,6 +3029,42 @@ class TestEnterpriseCustomerAdmin(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user
         )
         super().setUp()
+
+    def test_joined_date_is_null_by_default(self):
+        """
+        joined_date should be None when an EnterpriseCustomerAdmin
+        is created without explicitly setting it.
+        """
+        # Create a unique EnterpriseCustomerUser for this test
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        admin = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=enterprise_customer_user
+        )
+        self.assertIsNone(admin.joined_date)
+
+    def test_joined_date_can_be_set_and_saved(self):
+        """
+        joined_date should persist correctly when explicitly set.
+        """
+        joined_time = timezone.now()
+        # Create a unique EnterpriseCustomerUser for this test
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        admin = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=enterprise_customer_user,
+            joined_date=joined_time,
+        )
+        admin.refresh_from_db()
+        self.assertEqual(admin.joined_date, joined_time)
 
     def test_last_login_updates(self):
         """

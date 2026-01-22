@@ -8,11 +8,13 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.utils.timezone import now
 
 from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
+from enterprise.models import EnterpriseCustomerAdmin, PendingEnterpriseCustomerAdminUser
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -439,8 +441,8 @@ def generate_default_orchestration_record_display_name(sender, instance, **kwarg
             num_records_for_customer = models.EnterpriseCustomerSsoConfiguration.objects.filter(
                 enterprise_customer=instance.enterprise_customer,
             ).count()
-            instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
 
+            instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
 
 # Don't connect this receiver if we dont have access to CourseEnrollment model
 if CourseEnrollment is not None:

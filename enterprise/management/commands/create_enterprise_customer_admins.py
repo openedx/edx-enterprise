@@ -110,7 +110,8 @@ class Command(BaseCommand):
                             admin_records = [
                                 EnterpriseCustomerAdmin(
                                     enterprise_customer_user=eu,
-                                    last_login=timezone.now()
+                                    last_login=timezone.now(),
+                                    joined_date=timezone.now(),
                                 )
                                 for eu in enterprise_users_to_create
                             ]
