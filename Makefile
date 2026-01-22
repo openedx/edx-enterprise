@@ -56,10 +56,16 @@ extract_translations: ## extract strings to be translated, outputting .mo files
 
 fake_translations: extract_translations dummy_translations compile_translations ## generate and compile dummy translation files
 
-pull_translations: ## pull translations from Transifex
-	tx pull -a
+pull_translations: ## Pull translations from openedx-translations via Atlas
+	rm -rf enterprise/conf/locale consent/conf/locale
+	mkdir -p enterprise/conf/locale consent/conf/locale
+	atlas pull $(ATLAS_OPTIONS) \
+		translations/edx-enterprise/enterprise/conf/locale:enterprise/conf/locale \
+		translations/edx-enterprise/consent/conf/locale:consent/conf/locale \
+		$(ATLAS_EXTRA_SOURCES)
+	python manage.py compilemessages
 
-push_translations: ## push source translation files (.po) from Transifex
+push_translations: ## push source translation files (.po) to Transifex (deprecated)
 	tx push -s
 
 coverage: clean ## generate and view HTML coverage report
