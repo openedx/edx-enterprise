@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.3] - 2026-01-22
+---------------------
+* feat: Update admin table with new fields
+
 [6.6.2] - 2026-01-15
 ---------------------
 * feat: add a waffle flag for invite admins
