@@ -10,11 +10,13 @@ import pytz
 from oauth2_provider.models import get_application_model
 from pytest import mark
 from rest_framework.reverse import reverse
+from rest_framework.test import APIClient, APITestCase
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.http import HttpRequest
 from django.test import TestCase
+from django.urls import reverse
 
 from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
@@ -37,6 +39,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from test_utils import FAKE_UUIDS, TEST_PGP_KEY, TEST_USERNAME, APITest, factories
+from rest_framework.test import APIClient, APITestCase
 
 Application = get_application_model()
 
@@ -573,7 +576,124 @@ class TestEnterpriseUserSerializer(TestCase):
 
             self.assertEqual(expected_pending_admin_user, serialized_pending_admin_user)
 
+@mark.django_db
+class TestEnterpriseCustomerMembersView(APITestCase):
+    """
+    Tests for the enterprise-customer-members API endpoint.
+    Ensures only learners are returned and inactive or admin users are excluded.
+    """
+    def setUp(self):
+        """
+        Set up test data:
+        authenticated staff user, enterprise customer, learner and admin users with roles.
+        """
+        self.client = APIClient()
+        self.requesting_user = factories.UserFactory(is_staff=True)
+        self.client.force_authenticate(user=self.requesting_user)
 
+        # Enterprise customer
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+
+        # Learner user (should be returned)
+        self.learner_user = factories.UserFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_fk=self.learner_user,
+            user_id=self.learner_user.id,
+            active=True,
+        )
+
+        # Admin user (should be excluded)
+        self.admin_user = factories.UserFactory()
+
+        admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name="enterprise_admin"
+        )
+
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user_id=self.admin_user.id,
+            role=admin_role,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_fk=self.admin_user,
+            user_id=self.admin_user.id,
+            active=True,
+        )
+        learner_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name="enterprise_learner"
+        )
+
+        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user_id=self.admin_user.id,
+            role=learner_role,
+            enterprise_customer=self.enterprise_customer,
+        ).delete()
+
+    def test_only_learners_returned(self):
+        """
+        Verify that only users with the learner role are returned,
+        and admin users are excluded from the API results.
+        """
+        url = reverse(
+            "enterprise-customer-members",
+            kwargs={"enterprise_uuid": self.enterprise_customer.uuid}
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        returned_ids = [
+            u["enterprise_customer_user"]["user_id"]
+            for u in response.data["results"]
+        ]
+
+        self.assertIn(self.learner_user.id, returned_ids)
+        self.assertNotIn(self.admin_user.id, returned_ids)
+
+    def test_inactive_ecu_records_not_returned(self):
+        """
+        Verify that EnterpriseCustomerUser records with active=False
+        are excluded from the enterprise-customer-members API results.
+        """
+        learner_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name="enterprise_learner"
+        )
+
+        # Inactive learner
+        inactive_learner_user = factories.UserFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_fk=inactive_learner_user,
+            user_id=inactive_learner_user.id,
+            active=False,
+        )
+
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user_id=inactive_learner_user.id,
+            role=learner_role,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        url = reverse(
+            "enterprise-customer-members",
+            kwargs={"enterprise_uuid": self.enterprise_customer.uuid}
+        )
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        returned_ids = [
+            u["enterprise_customer_user"]["user_id"]
+            for u in response.data["results"]
+        ]
+
+        self.assertIn(self.learner_user.id, returned_ids)
+        self.assertNotIn(inactive_learner_user.id, returned_ids)
+
+@mark.django_db
 class TestEnterpriseMembersSerializer(TestCase):
     """
     Tests for EnterpriseMembersSerializer.
