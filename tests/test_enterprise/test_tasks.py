@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 from unittest import mock
 
+import ddt
 from pytest import mark, raises
 
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL
@@ -20,6 +21,7 @@ from enterprise.tasks import (
     send_group_membership_invitation_notification,
     send_group_membership_removal_notification,
     send_sso_configured_email,
+    track_enterprise_language_update_for_all_learners,
 )
 from enterprise.utils import localized_utcnow, serialize_notification_content
 from test_utils.factories import (
@@ -465,3 +467,131 @@ class TestEnterpriseTasks(unittest.TestCase):
             trigger_properties=expected_trigger_properties
         )]
         mock_braze_client().send_campaign_message.assert_has_calls(call)
+
+
+@mark.django_db
+@ddt.ddt
+class TestTrackEnterpriseLanguageUpdateForAllLearners(unittest.TestCase):
+    """
+    Tests for track_enterprise_language_update_for_all_learners task.
+    """
+
+    def setUp(self):
+        """
+        Setup for test.
+        """
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            name='Test Enterprise',
+            default_language='en',
+        )
+        # Create active linked users
+        self.active_users = [
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+                linked=True,
+            )
+            for _ in range(5)
+        ]
+        # Create inactive user (should be excluded)
+        self.inactive_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            active=False,
+            linked=True,
+        )
+        # Create unlinked user (should be excluded)
+        self.unlinked_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            active=True,
+            linked=False,
+        )
+        super().setUp()
+
+    @ddt.data('es', None, 'fr', 'zh-cn')
+    @mock.patch('enterprise.tasks.BrazeAPIClient')
+    def test_track_language_update_success(self, new_language, mock_braze_client_class):
+        """
+        Verify task successfully tracks language update for all active linked users.
+        Also verifies that inactive and unlinked users are excluded from processing.
+        Tests with various language values including None.
+        """
+        mock_braze_instance = mock.MagicMock()
+        mock_braze_client_class.return_value = mock_braze_instance
+
+        track_enterprise_language_update_for_all_learners(
+            str(self.enterprise_customer.uuid),
+            new_language
+        )
+
+        # Verify track_user was called once (5 users fit in one batch of 75)
+        assert mock_braze_instance.track_user.call_count == 1
+
+        # Verify the attributes sent to Braze
+        call_args = mock_braze_instance.track_user.call_args
+        attributes = call_args[1]['attributes']
+
+        # Should only include active, linked users (5 users, not 7)
+        assert len(attributes) == 5
+
+        # Verify each attribute has correct structure
+        user_ids = [user.user_id for user in self.active_users]
+        sent_user_ids = []
+        for attr in attributes:
+            assert attr['external_id'] in [str(uid) for uid in user_ids]
+            assert attr['pref-lang'] == new_language
+            sent_user_ids.append(attr['external_id'])
+
+        # Verify inactive and unlinked users are excluded
+        assert str(self.inactive_user.user_id) not in sent_user_ids
+        assert str(self.unlinked_user.user_id) not in sent_user_ids
+
+    @mock.patch('enterprise.tasks.BrazeAPIClient')
+    def test_track_language_update_batching(self, mock_braze_client_class):
+        """
+        Verify task properly batches users when count exceeds batch size.
+        """
+        mock_braze_instance = mock.MagicMock()
+        mock_braze_client_class.return_value = mock_braze_instance
+
+        # Create 150 active linked users to test batching (75 per batch)
+        for _ in range(145):  # 5 already exist from setUp
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                active=True,
+                linked=True,
+            )
+
+        track_enterprise_language_update_for_all_learners(
+            str(self.enterprise_customer.uuid),
+            'fr'
+        )
+
+        # Should be called twice: first batch of 75, second batch of 75
+        assert mock_braze_instance.track_user.call_count == 2
+
+        # Verify first batch has 75 users
+        first_call_attributes = mock_braze_instance.track_user.call_args_list[0][1]['attributes']
+        assert len(first_call_attributes) == 75
+
+        # Verify second batch has remaining 75 users
+        second_call_attributes = mock_braze_instance.track_user.call_args_list[1][1]['attributes']
+        assert len(second_call_attributes) == 75
+
+    @mock.patch('enterprise.tasks.BrazeAPIClient')
+    def test_track_language_update_no_active_users(self, mock_braze_client_class):
+        """
+        Verify task exits early when no active users exist.
+        """
+        mock_braze_instance = mock.MagicMock()
+        mock_braze_client_class.return_value = mock_braze_instance
+
+        # Create enterprise with no active linked users
+        empty_enterprise = EnterpriseCustomerFactory(name='Empty Enterprise')
+
+        track_enterprise_language_update_for_all_learners(
+            str(empty_enterprise.uuid),
+            'de'
+        )
+
+        # Should not call track_user at all
+        assert mock_braze_instance.track_user.call_count == 0
