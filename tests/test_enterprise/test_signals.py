@@ -1174,3 +1174,113 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+@mark.django_db
+@ddt.ddt
+class TestTrackDefaultLanguageChangeInBraze(unittest.TestCase):
+    """
+    Tests for track_default_language_change_in_braze signal handler.
+    """
+
+    def setUp(self):
+        """
+        Setup for test.
+        """
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            name='Test Enterprise',
+            default_language=None,
+        )
+        super().setUp()
+
+    @ddt.data(
+        (None, 'en'),  # Setting language from None
+        ('en', 'es'),  # Changing from one language to another
+        ('en', None),  # Clearing language back to None
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.signals.track_enterprise_language_update_for_all_learners')
+    def test_signal_triggers_on_language_change(self, initial_language, new_language, mock_task):
+        """
+        Verify signal triggers Celery task when default_language changes.
+        Tests: None→language, language→language, language→None transitions.
+        """
+        # Set initial language if needed
+        if initial_language is not None:
+            self.enterprise_customer.default_language = initial_language
+            self.enterprise_customer.save()
+            mock_task.delay.reset_mock()
+
+        # Change to new language
+        self.enterprise_customer.default_language = new_language
+        self.enterprise_customer.save()
+
+        # Verify task was called with new language
+        mock_task.delay.assert_called_once_with(
+            str(self.enterprise_customer.uuid),
+            new_language
+        )
+
+    @mock.patch('enterprise.signals.track_enterprise_language_update_for_all_learners')
+    def test_signal_does_not_trigger_when_language_unchanged(self, mock_task):
+        """
+        Verify signal does not trigger when default_language is unchanged.
+        """
+        # Set initial language
+        self.enterprise_customer.default_language = 'en'
+        self.enterprise_customer.save()
+        mock_task.delay.reset_mock()
+
+        # Save without changing language
+        self.enterprise_customer.name = 'Updated Name'
+        self.enterprise_customer.save()
+
+        # Verify task was not called
+        mock_task.delay.assert_not_called()
+
+    @mock.patch('enterprise.signals.track_enterprise_language_update_for_all_learners')
+    def test_signal_does_not_trigger_on_new_customer_with_no_language(self, mock_task):
+        """
+        Verify signal does not trigger when creating new customer with no language.
+        """
+        # Create new customer with no default_language
+        new_customer = EnterpriseCustomerFactory(
+            name='New Customer',
+            default_language=None,
+        )
+
+        # Verify task was not called
+        mock_task.delay.assert_not_called()
+
+    @mock.patch('enterprise.signals.track_enterprise_language_update_for_all_learners')
+    def test_signal_triggers_on_new_customer_with_language(self, mock_task):
+        """
+        Verify signal triggers when creating new customer with default_language set.
+        """
+        # Create new customer with default_language
+        new_customer = EnterpriseCustomerFactory(
+            name='New Customer',
+            default_language='fr',
+        )
+
+        # Verify task was called
+        mock_task.delay.assert_called_once_with(
+            str(new_customer.uuid),
+            'fr'
+        )
+
+    @mock.patch('enterprise.signals.track_enterprise_language_update_for_all_learners')
+    def test_signal_logs_language_change(self, mock_task):
+        """
+        Verify signal logs the language change appropriately.
+        """
+        with self.assertLogs('enterprise.signals', level='INFO') as logs:
+            self.enterprise_customer.default_language = 'de'
+            self.enterprise_customer.save()
+
+        # Verify log message contains expected information
+        log_output = ' '.join(logs.output)
+        assert 'Default language changed' in log_output
+        assert str(self.enterprise_customer.uuid) in log_output
+        assert 'None' in log_output  # old value
+        assert 'de' in log_output  # new value

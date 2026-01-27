@@ -13,7 +13,7 @@ from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
-from enterprise.tasks import create_enterprise_enrollment
+from enterprise.tasks import create_enterprise_enrollment, track_enterprise_language_update_for_all_learners
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_default_catalog_content_filter,
@@ -115,6 +115,47 @@ def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: dis
             # Unset the language preference of all the learners linked with the enterprise customer.
             # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
             unset_language_of_all_enterprise_learners(instance)
+
+
+@receiver(pre_save, sender=models.EnterpriseCustomer)
+def track_default_language_change_in_braze(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Track default_language changes in Braze when EnterpriseCustomer is saved.
+    
+    Triggers a Celery task to sync the default_language to Braze for all active learners when:
+    - A new customer is created with default_language set
+    - An existing customer's default_language is changed (including to/from None)
+    
+    Args:
+        sender: The model class (EnterpriseCustomer)
+        instance: The actual instance being saved
+    """
+    # Get the previous state from database
+    prev_state = models.EnterpriseCustomer.objects.filter(uuid=instance.uuid).first()
+    old_language = prev_state.default_language if prev_state else None
+    new_language = instance.default_language
+
+    # Check if default_language actually changed
+    if old_language == new_language:
+        return
+
+    # Skip if this is a new customer being created with no language set
+    if prev_state is None and new_language is None:
+        return
+
+    # Language changed - trigger Braze sync
+    logger.info(
+        "Default language changed for EnterpriseCustomer %s (%s) from '%s' to '%s'. "
+        "Triggering Braze update task.",
+        instance.name,
+        instance.uuid,
+        old_language,
+        new_language
+    )
+    track_enterprise_language_update_for_all_learners.delay(
+        str(instance.uuid),
+        new_language
+    )
 
 
 @receiver(pre_save, sender=models.EnterpriseCustomerBrandingConfiguration)

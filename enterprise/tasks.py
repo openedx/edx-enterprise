@@ -16,7 +16,13 @@ from enterprise import constants
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, MAX_NUM_IDENTIFY_USERS_ALIASES, BrazeAPIClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
-from enterprise.utils import batch_dict, get_enterprise_customer, localized_utcnow, send_email_notification_message
+from enterprise.utils import (
+    batch,
+    batch_dict,
+    get_enterprise_customer,
+    localized_utcnow,
+    send_email_notification_message,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -436,3 +442,82 @@ def send_group_membership_removal_notification(enterprise_customer_uuid, members
             errored_at=localized_utcnow())
         LOGGER.exception(message)
         raise exc
+
+
+@shared_task
+@set_code_owner_attribute
+def track_enterprise_language_update_for_all_learners(enterprise_customer_uuid, new_language):
+    """
+    Update language preference in Braze for all active learners of an enterprise customer.
+    
+    Uses Braze's batch track_users endpoint which accepts up to 75 attribute objects per request.
+    Rate limit: 3,000 requests per 3 seconds.
+    
+    Arguments:
+        enterprise_customer_uuid (str): UUID of the enterprise customer
+        new_language (str|None): The new default language code (e.g., 'en', 'es', 'fr') or None to clear
+    """
+
+    try:
+        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+        braze_client = BrazeAPIClient()
+
+        # Get all active, linked enterprise customer users
+        active_users = enterprise_customer.enterprise_customer_users.filter(
+            active=True,
+            linked=True
+        ).values_list('user_id', flat=True)
+
+        user_count = active_users.count()
+        LOGGER.info(
+            f"Tracking language update to '{new_language}' for {user_count} users "
+            f"in enterprise {enterprise_customer.name} ({enterprise_customer_uuid})"
+        )
+
+        if user_count == 0:
+            LOGGER.info(
+                f"No active users found for enterprise {enterprise_customer.name}. Skipping Braze sync."
+            )
+            return
+
+        # Braze allows 75 attribute objects per request
+        BATCH_SIZE = 75
+        success_count = 0
+        error_count = 0
+
+        # Process users in batches using the batch utility
+        for user_id_batch in batch(active_users, BATCH_SIZE):
+            # Build attributes array for this batch
+            # Each item is an attribute object with external_id and pref-lang
+            attributes = [
+                {
+                    'external_id': str(user_id),
+                    'pref-lang': new_language
+                }
+                for user_id in user_id_batch
+            ]
+
+            try:
+                # Call Braze track_users with batch of attributes
+                braze_client.track_user(attributes=attributes)
+                success_count += len(user_id_batch)
+                LOGGER.info(
+                    f"Successfully tracked language for batch of {len(user_id_batch)} users "
+                    f"(processed {success_count}/{user_count})"
+                )
+            except Exception as exc:
+                error_count += len(user_id_batch)
+                LOGGER.warning(
+                    f"Failed to track language for batch of {len(user_id_batch)} users: {str(exc)}"
+                )
+
+        LOGGER.info(
+            f"Language update tracking complete for enterprise {enterprise_customer.name}. "
+            f"Success: {success_count}, Errors: {error_count}"
+        )
+
+    except Exception as exc:
+        LOGGER.exception(
+            f"Failed to track language update for enterprise {enterprise_customer_uuid}: {str(exc)}"
+        )
+        raise
