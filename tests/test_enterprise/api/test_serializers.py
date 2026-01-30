@@ -187,6 +187,89 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
         self.assertEqual(serialized_auth_org_id, expected_auth_org_id)
 
 
+@mark.django_db
+class TestEnterpriseCustomerMembersEndpointLearnersOnly(APITest):
+    """
+    Tests for the `enterprise-customer-members` API endpoint returns only learners.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_uuid = self.enterprise_customer.uuid
+
+        self.learner_user = factories.UserFactory()
+        self.admin_user = factories.UserFactory()
+
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.learner_user.id,
+            linked=True,
+            active=True,
+        )
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.admin_user.id,
+            linked=True,
+            active=True,
+        )
+
+        enterprise_admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
+        enterprise_learner_role, _ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
+
+        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            enterprise_customer=self.enterprise_customer
+        ).delete()
+
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=enterprise_learner_role,
+            user=self.learner_user,
+            enterprise_customer=self.enterprise_customer,
+        )
+        factories.SystemWideEnterpriseUserRoleAssignmentFactory(
+            role=enterprise_admin_role,
+            user=self.admin_user,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # Endpoint requires IsAuthenticated
+        self.client.force_authenticate(user=self.user)
+
+    def test_returns_only_learners(self):
+        url = reverse('enterprise-customer-members', kwargs={'enterprise_uuid': str(self.enterprise_uuid)})
+        resp = self.client.get(url)
+        assert resp.status_code == 200
+
+        payload = json.loads(resp.content.decode('utf-8'))
+        results = payload['results']
+
+        returned_user_ids = {row['enterprise_customer_user']['user_id'] for row in results}
+
+        assert self.learner_user.id in returned_user_ids
+        assert self.admin_user.id not in returned_user_ids
+
+    def test_user_id_filter_excludes_non_learner(self):
+        url = reverse('enterprise-customer-members', kwargs={'enterprise_uuid': str(self.enterprise_uuid)})
+        resp = self.client.get(url, {'user_id': self.admin_user.id})
+        assert resp.status_code == 200
+
+        payload = json.loads(resp.content.decode('utf-8'))
+        assert payload['results'] == []
+
+    def test_user_query_filter_returns_learner(self):
+        url = reverse('enterprise-customer-members', kwargs={'enterprise_uuid': str(self.enterprise_uuid)})
+        resp = self.client.get(url, {'user_query': self.learner_user.username})
+        assert resp.status_code == 200
+
+        payload = json.loads(resp.content.decode('utf-8'))
+        results = payload['results']
+
+        returned_user_ids = {row['enterprise_customer_user']['user_id'] for row in results}
+        assert self.learner_user.id in returned_user_ids
+        assert self.admin_user.id not in returned_user_ids
+
+
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerUserWriteSerializer(APITest):
