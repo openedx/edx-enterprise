@@ -218,7 +218,6 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "last_login",
                 "onboarding_tour_dismissed",
                 "onboarding_tour_completed",
-                "invited_date",
                 "joined_date",
                 "completed_tour_flows",
             ]

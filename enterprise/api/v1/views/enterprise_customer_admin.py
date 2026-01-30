@@ -143,7 +143,8 @@ class EnterpriseCustomerAdminViewSet(
 
         response_status_code = status.HTTP_200_OK
         admin, was_created = models.EnterpriseCustomerAdmin.objects.get_or_create(
-            enterprise_customer_user=enterprise_customer_user
+            enterprise_customer_user=enterprise_customer_user,
+            defaults={'joined_date': timezone.now()}
         )
         if was_created:
             response_status_code = status.HTTP_201_CREATED

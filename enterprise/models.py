@@ -3970,13 +3970,6 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     user_email = models.EmailField(null=False, blank=False)
     history = HistoricalRecords()
 
-    """Track the date and time when a pending enterprise admin invite was created."""
-    invited_date = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Timestamp when the admin invite was created."
-    )
-
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
@@ -5011,12 +5004,6 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
     onboarding_tour_completed = models.BooleanField(
         default=False,
         help_text=_("Whether the admin has completed the onboarding tour.")
-    )
-    """Track when the admin was invited."""
-    invited_date = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Timestamp when the admin was invited."
     )
     """Track when the admin accepted the invite and joined."""
     joined_date = models.DateTimeField(

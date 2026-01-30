@@ -446,28 +446,6 @@ def generate_default_orchestration_record_display_name(sender, instance, **kwarg
             ).count()
             instance.display_name = f'SSO-config-{instance.identity_provider}-{num_records_for_customer + 1}'
 
-@receiver(post_save, sender=EnterpriseCustomerAdmin)
-def populate_admin_onboarding_metadata(sender, instance, created, **kwargs):
-    """
-    Populate joined_date and invited metadata for enterprise admins.
-    """
-    if not created:
-        return
-
-    # joined_date = when admin record is created
-    instance.joined_date = now()
-
-    # Attempt to backfill invitation metadata
-    pending_invite = PendingEnterpriseCustomerAdminUser.objects.filter(
-        enterprise_customer=instance.enterprise_customer_user.enterprise_customer,
-        user_email=instance.enterprise_customer_user.user_email,
-    ).order_by("-invited_date").first()
-
-    if pending_invite:
-        instance.invited_date = pending_invite.invited_date
-
-    instance.save(update_fields=["joined_date", "invited_date"])
-
 # Don't connect this receiver if we dont have access to CourseEnrollment model
 if CourseEnrollment is not None:
     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)

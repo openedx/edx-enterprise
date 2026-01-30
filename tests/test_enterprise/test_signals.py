@@ -437,69 +437,37 @@ class TestEnterpriseCustomerAdminSignals(unittest.TestCase):
         )
         super().setUp()
 
-    def test_invited_date_is_set_on_creation(self):
-        """
-        Verify that invited_date is set when an EnterpriseCustomerAdmin is created
-        from a pending admin user.
-        """
-        pending_admin = PendingEnterpriseCustomerAdminUserFactory(
-        enterprise_customer=self.ecu.enterprise_customer,
-        user_email=self.ecu.user_email,
-        invited_date=timezone.now() - timedelta(days=1)
-        )
-
-        admin = EnterpriseCustomerAdmin.objects.create(
-            enterprise_customer_user=self.ecu
-        )
-
-        admin.refresh_from_db()
-        self.assertIsNotNone(admin.invited_date)
-
     def test_joined_date_not_set_on_create(self):
         """
-        Verify that joined_date is None immediately after creating an EnterpriseCustomerAdmin.
+        Verify that joined_date is None when creating an EnterpriseCustomerAdmin without defaults.
         """
         admin = EnterpriseCustomerAdmin(
             enterprise_customer_user=self.ecu
         )
-        self.assertIsNone(getattr(admin, 'joined_date', None))
+        admin.save()
+        admin.refresh_from_db()
+        self.assertIsNone(admin.joined_date)
 
     def test_joined_date_set_when_admin_user_is_accepted(self):
         """
         Verify that joined_date is set when the admin user accepts the invite
-        and the EnterpriseCustomerAdmin is created.
+        and the EnterpriseCustomerAdmin is created with defaults.
         """
-        admin = EnterpriseCustomerAdmin.objects.create(
-            enterprise_customer_user=self.ecu
+        admin, _ = EnterpriseCustomerAdmin.objects.get_or_create(
+            enterprise_customer_user=self.ecu,
+            defaults={'joined_date': timezone.now()}
         )
         self.assertIsNotNone(admin.joined_date)
-
-    def test_invited_date_is_copied_from_pending_admin(self):
-        """
-        Verify that invited_date on EnterpriseCustomerAdmin is copied
-        from PendingEnterpriseCustomerAdminUser.
-        """
-        expected_invited_date = timezone.now() - timedelta(days=1)
-        PendingEnterpriseCustomerAdminUserFactory(
-            enterprise_customer=self.ecu.enterprise_customer,
-            user_email=self.ecu.user_email,
-            invited_date=expected_invited_date,
-        )
-        admin = EnterpriseCustomerAdmin.objects.create(
-            enterprise_customer_user=self.ecu
-        )
-        admin.refresh_from_db()
-
-        self.assertEqual(admin.invited_date, expected_invited_date)
         
     def test_joined_date_is_set_to_current_time_on_acceptance(self):
         """
         Verify that joined_date is set to the current time when
-        the EnterpriseCustomerAdmin is created (invite accepted).
+        the EnterpriseCustomerAdmin is created with defaults (invite accepted).
         """
         before_create = timezone.now()
-        admin = EnterpriseCustomerAdmin.objects.create(
-            enterprise_customer_user=self.ecu
+        admin, _ = EnterpriseCustomerAdmin.objects.get_or_create(
+            enterprise_customer_user=self.ecu,
+            defaults={'joined_date': timezone.now()}
         )
 
         admin.refresh_from_db()
