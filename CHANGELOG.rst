@@ -19,7 +19,7 @@ Unreleased
 
 [6.6.3] - 2026-01-22
 ---------------------
-* feat: Update admin table with new fields
+* feat: updates the enterprise customer user table
 
 [6.6.2] - 2026-01-15
 ---------------------
