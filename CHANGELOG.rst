@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.3] - 2026-01-22
+---------------------
+* feat: updates the enterprise customer user table
+
 [6.6.2] - 2026-01-15
 ---------------------
 * feat: add a waffle flag for invite admins

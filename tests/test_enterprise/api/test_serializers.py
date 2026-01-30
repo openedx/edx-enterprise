@@ -15,6 +15,7 @@ from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.http import HttpRequest
 from django.test import TestCase
+from django.urls import reverse
 
 from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
@@ -37,6 +38,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from test_utils import FAKE_UUIDS, TEST_PGP_KEY, TEST_USERNAME, APITest, factories
+from rest_framework.test import APIClient, APITestCase
 
 Application = get_application_model()
 
@@ -572,6 +574,93 @@ class TestEnterpriseUserSerializer(TestCase):
             serialized_pending_admin_user = serializer.data
 
             self.assertEqual(expected_pending_admin_user, serialized_pending_admin_user)
+
+class TestEnterpriseCustomerMembersView(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        # Create an enterprise customer
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        
+        # Learner user
+        self.learner_user = factories.UserFactory()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_fk=self.learner_user, 
+            user_id=self.learner_user.id,
+        )
+        
+        # Admin user (should be excluded)
+        self.admin_user = factories.UserFactory()
+
+        # Create admin role
+        admin_role = SystemWideEnterpriseRole.objects.create(name="enterprise_admin")
+
+        # Assign the role to the admin user
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            user_id=self.admin_user.id,
+            role=admin_role,
+        )
+
+        # Link the admin user to the enterprise customer
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_fk=self.admin_user,
+            user_id=self.admin_user.id,
+        )
+        
+    def test_only_learners_returned(self):
+        url = reverse(
+            "enterprise-customer-members",
+            kwargs={"enterprise_uuid": self.enterprise_customer.uuid}
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Extract user_ids from response
+        returned_ids = [u['enterprise_customer_user']['user_id'] for u in response.data['results']]
+        self.assertIn(self.learner_user.id, returned_ids)
+        self.assertNotIn(self.admin_user.id, returned_ids)
+
+    def test_inactive_ecu_records_not_returned(self):
+        """
+        Test that inactive EnterpriseCustomerUser records are excluded from the result set.
+        """
+        # Create a learner role
+        learner_role = SystemWideEnterpriseRole.objects.create(name="enterprise_learner")
+        
+        # Create another learner user
+        inactive_learner_user = factories.UserFactory()
+        inactive_ecu = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_fk=inactive_learner_user,
+            user_id=inactive_learner_user.id,
+            active=False,  # Mark this user as inactive
+        )
+        
+        # Assign learner role to both users
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            user_id=self.learner_user.id,
+            role=learner_role,
+        )
+        SystemWideEnterpriseUserRoleAssignment.objects.create(
+            user_id=inactive_learner_user.id,
+            role=learner_role,
+        )
+        
+        url = reverse(
+            "enterprise-customer-members",
+            kwargs={"enterprise_uuid": self.enterprise_customer.uuid}
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Extract user_ids from response
+        returned_ids = [u['enterprise_customer_user']['user_id'] for u in response.data['results']]
+        
+        # Only the active learner should be returned
+        self.assertIn(self.learner_user.id, returned_ids)
+        # The inactive learner should NOT be returned
+        self.assertNotIn(inactive_learner_user.id, returned_ids)
 
 
 class TestEnterpriseMembersSerializer(TestCase):

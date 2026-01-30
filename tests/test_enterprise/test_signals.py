@@ -12,10 +12,12 @@ from pytest import mark
 
 from django.db import transaction
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -415,6 +417,67 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
         ).delete()
         self._assert_pending_ecus_exist(should_exist=False)
 
+@mark.django_db
+class TestEnterpriseCustomerAdminSignals(unittest.TestCase):
+    """
+    Tests signals related to EnterpriseCustomerAdmin creation and field updates.
+    """
+
+    def setUp(self):
+        """
+        Set up test data: create a user, enterprise customer, and EnterpriseCustomerUser.
+        """
+        self.admin_user = UserFactory(email='user@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory()
+
+        self.ecu = EnterpriseCustomerUserFactory(
+            user_fk=self.admin_user, 
+            user_id=self.admin_user.id,     
+            enterprise_customer=self.enterprise_customer,
+        )
+        super().setUp()
+
+    def test_joined_date_not_set_on_create(self):
+        """
+        Verify that joined_date is None when creating an EnterpriseCustomerAdmin without defaults.
+        """
+        admin = EnterpriseCustomerAdmin(
+            enterprise_customer_user=self.ecu
+        )
+        admin.save()
+        admin.refresh_from_db()
+        self.assertIsNone(admin.joined_date)
+
+    def test_joined_date_set_when_admin_user_is_accepted(self):
+        """
+        Verify that joined_date is set when the admin user accepts the invite
+        and the EnterpriseCustomerAdmin is created with defaults.
+        """
+        admin, _ = EnterpriseCustomerAdmin.objects.get_or_create(
+            enterprise_customer_user=self.ecu,
+            defaults={'joined_date': timezone.now()}
+        )
+        self.assertIsNotNone(admin.joined_date)
+        
+    def test_joined_date_is_set_to_current_time_on_acceptance(self):
+        """
+        Verify that joined_date is set to the current time when
+        the EnterpriseCustomerAdmin is created with defaults (invite accepted).
+        """
+        before_create = timezone.now()
+        admin, _ = EnterpriseCustomerAdmin.objects.get_or_create(
+            enterprise_customer_user=self.ecu,
+            defaults={'joined_date': timezone.now()}
+        )
+
+        admin.refresh_from_db()
+        after_create = timezone.now()
+
+        self.assertIsNotNone(admin.joined_date)
+        self.assertTrue(
+            before_create <= admin.joined_date <= after_create,
+            "joined_date should be set to the time the admin was accepted"
+        )
 
 @mark.django_db
 @ddt.ddt
