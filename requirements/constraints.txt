@@ -42,3 +42,6 @@ pip<25.3
 # particularly in internal APIs and default behaviors, including a substantial rewrite of the autodoc extension.
 # https://github.com/openedx/edx-enterprise/issues/2494
 Sphinx>=8.0,<9.0
+
+# pylint 4 throws all sorts of errors and warnings at us
+pylint<4
