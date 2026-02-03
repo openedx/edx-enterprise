@@ -161,7 +161,7 @@ defusedxml==0.7.1
     #   ora2
     #   python3-openid
     #   social-auth-core
-django==5.2.10
+django==5.2.11
     # via
     #   -c requirements/common_constraints.txt
     #   -c requirements/constraints.txt
@@ -871,7 +871,7 @@ proto-plus==1.27.0
     # via
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.5
+protobuf==6.33.4
     # via
     #   google-api-core
     #   google-cloud-firestore
