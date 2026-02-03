@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.3] - 2026-02-03
+---------------------
+* feat: filter organization members API to return only learners
+
 [6.6.2] - 2026-01-15
 ---------------------
 * feat: add a waffle flag for invite admins
