@@ -18,6 +18,8 @@ from django.test import TestCase
 
 from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
+    EnterpriseAdminMemberSerializer,
+    EnterpriseAdminMembersRequestQuerySerializer,
     EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
     EnterpriseCustomerBrandingConfigurationSerializer,
@@ -661,6 +663,7 @@ class TestEnterpriseMembersSerializer(TestCase):
     """
     Tests for EnterpriseMembersSerializer.
     """
+
     def setUp(self):
         super().setUp()
 
@@ -730,6 +733,7 @@ class TestEnterpriseCustomerBrandingConfigurationSerializer(TestCase):
     """
     Tests for EnterpriseCustomerBrandingConfigurationSerializer.
     """
+
     def setUp(self):
         super().setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
@@ -1164,3 +1168,96 @@ class TestEnterpriseSSOUserInfoRequestSerializer(TestCase):
         assert serializer.validated_data['org_id'] == 'test-org-123'
         assert serializer.validated_data['external_user_id'] == 'user-456'
         assert 'extra_field' not in serializer.validated_data
+
+
+@mark.django_db
+class TestEnterpriseAdminMemberSerializer(TestCase):
+    """
+    Tests for EnterpriseAdminMemberSerializer.
+    """
+
+    def test_serializer_with_admin_user_is_valid(self):
+        data = {
+            "id": 10,
+            "name": "admin_user",
+            "email": "admin@test.com",
+            "joined_date": "2024-01-01T10:00:00Z",
+            "invited_date": None,
+            "status": "Admin",
+        }
+
+        serializer = EnterpriseAdminMemberSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["status"] == "Admin"
+        assert serializer.validated_data["email"] == "admin@test.com"
+        assert serializer.validated_data["name"] == "admin_user"
+
+    def test_serializer_with_pending_user_is_valid(self):
+        data = {
+            "id": 1,
+            "name": None,
+            "email": "pending@test.com",
+            "invited_date": "2024-01-02T12:00:00Z",
+            "joined_date": None,
+            "status": "Pending",
+        }
+
+        serializer = EnterpriseAdminMemberSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["status"] == "Pending"
+        assert serializer.validated_data["email"] == "pending@test.com"
+        assert serializer.validated_data["name"] is None
+        assert serializer.validated_data["joined_date"] is None
+
+    def test_serializer_missing_email_fails(self):
+        serializer = EnterpriseAdminMemberSerializer(data={"id": 1, "status": "Admin"})
+        assert not serializer.is_valid()
+        assert "email" in serializer.errors
+
+
+@mark.django_db
+class TestEnterpriseAdminMembersRequestQuerySerializer(TestCase):
+    """
+    Tests for EnterpriseAdminMembersRequestQuerySerializer.
+    """
+
+    def test_defaults(self):
+        serializer = EnterpriseAdminMembersRequestQuerySerializer(data={})
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["sort_by"] == "name"
+        assert serializer.validated_data["is_reversed"] is False
+        # user_query is optional, so it may not be present in validated_data
+
+    def test_valid_query_params(self):
+        serializer = EnterpriseAdminMembersRequestQuerySerializer(
+            data={
+                "user_query": "admin",
+                "sort_by": "email",
+                "is_reversed": True,
+            }
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["user_query"] == "admin"
+        assert serializer.validated_data["sort_by"] == "email"
+        assert serializer.validated_data["is_reversed"] is True
+
+    def test_user_query_allows_blank_and_trims(self):
+        serializer = EnterpriseAdminMembersRequestQuerySerializer(
+            data={"user_query": "   "}
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["user_query"] == ""
+
+    def test_invalid_sort_by_fails(self):
+        serializer = EnterpriseAdminMembersRequestQuerySerializer(
+            data={"sort_by": "drop table users;"}
+        )
+        assert not serializer.is_valid()
+        assert "sort_by" in serializer.errors
+
+    def test_invalid_is_reversed_fails(self):
+        serializer = EnterpriseAdminMembersRequestQuerySerializer(
+            data={"is_reversed": "not-a-boolean"}
+        )
+        assert not serializer.is_valid()
+        assert "is_reversed" in serializer.errors

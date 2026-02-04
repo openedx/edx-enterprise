@@ -2375,3 +2375,46 @@ class EnterpriseSSOUserInfoRequestSerializer(serializers.Serializer):
     """
     org_id = serializers.CharField(required=True)
     external_user_id = serializers.CharField(required=True)
+
+
+class EnterpriseAdminMemberSerializer(serializers.Serializer):
+    """
+    Response serializer for enterprise admin members.
+    """
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(allow_null=True, required=False)
+    email = serializers.EmailField()
+    invited_date = serializers.DateTimeField(
+        allow_null=True,
+        required=False,
+        format="%b %d, %Y",
+    )
+    joined_date = serializers.DateTimeField(
+        allow_null=True,
+        required=False,
+        format="%b %d, %Y",
+    )
+    status = serializers.CharField()
+
+
+class EnterpriseAdminMembersRequestQuerySerializer(serializers.Serializer):
+    """
+    Validate query params for enterprise-admin-members API.
+    """
+    user_query = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        trim_whitespace=True,
+    )
+    sort_by = serializers.ChoiceField(
+        choices=[
+            "name",
+            "email",
+            "joined_date",
+            "invited_date",
+            "status",
+        ],
+        required=False,
+        default="name",
+    )
+    is_reversed = serializers.BooleanField(required=False, default=False)

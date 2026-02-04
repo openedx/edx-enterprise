@@ -65,6 +65,10 @@ from enterprise.content_metadata.api import (
     get_and_cache_content_metadata,
     get_and_cache_enterprise_contains_content_items,
 )
+from enterprise.managers import (
+    PendingEnterpriseAdminQuerySet,
+    EnterpriseAdminQuerySet,
+)
 from enterprise.errors import LinkUserToEnterpriseError
 from enterprise.event_bus import send_learner_credit_course_enrollment_revoked_event
 from enterprise.logging import getEnterpriseLogger
@@ -3971,6 +3975,8 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     user_email = models.EmailField(null=False, blank=False)
     history = HistoricalRecords()
 
+    objects = PendingEnterpriseAdminQuerySet.as_manager()
+
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
@@ -5006,6 +5012,8 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
         default=False,
         help_text=_("Whether the admin has completed the onboarding tour.")
     )
+
+    objects = EnterpriseAdminQuerySet.as_manager()
 
     class Meta:
         app_label = 'enterprise'
