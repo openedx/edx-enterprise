@@ -54,7 +54,6 @@ attrs==25.4.0
     #   -r requirements/test.txt
     #   edx-ace
     #   openedx-events
-    #   pytest
 babel==2.18.0
     # via
     #   -r requirements/doc.txt
@@ -460,10 +459,8 @@ firebase-admin==7.1.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-ace
-freezegun==0.3.14
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.txt
+freezegun==1.5.5
+    # via -r requirements/test.txt
 google-api-core[grpc]==2.29.0
     # via
     #   -r requirements/doc.txt
@@ -655,10 +652,8 @@ markupsafe==3.0.3
     #   jinja2
 mccabe==0.7.0
     # via pylint
-mock==3.0.5
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.txt
+mock==5.2.0
+    # via -r requirements/test.txt
 msgpack==1.1.2
     # via
     #   -r requirements/doc.txt
@@ -779,11 +774,6 @@ psutil==7.2.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-py==1.11.0
-    # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
-    #   pytest
 pyasn1==0.6.2
     # via
     #   -r requirements/doc.txt
@@ -820,6 +810,7 @@ pygments==2.19.2
     #   diff-cover
     #   doc8
     #   pydata-sphinx-theme
+    #   pytest
     #   readme-renderer
     #   sphinx
 pyjwt[crypto]==2.10.1
@@ -872,16 +863,15 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==6.2.5
+pytest==9.0.2
     # via
-    #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.3.0
+pytest-cov==7.0.0
     # via -r requirements/test.txt
-pytest-django==4.5.2
+pytest-django==4.11.1
     # via -r requirements/test.txt
 python-dateutil==2.9.0.post0
     # via
@@ -921,6 +911,7 @@ pyyaml==6.0.3
     #   drf-yasg
     #   edx-i18n-tools
     #   jsondiff
+    #   responses
 readme-renderer==44.0
     # via -r requirements/doc.txt
 requests==2.32.5
@@ -944,10 +935,8 @@ requests==2.32.5
     #   twine
 requests-toolbelt==1.0.0
     # via twine
-responses==0.10.15
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.txt
+responses==0.25.8
+    # via -r requirements/test.txt
 restructuredtext-lint==2.0.2
     # via
     #   -r requirements/doc.txt
@@ -1004,10 +993,7 @@ six==1.17.0
     #   edx-ccx-keys
     #   edx-lint
     #   edx-rbac
-    #   freezegun
-    #   mock
     #   python-dateutil
-    #   responses
 slumber==0.7.1
     # via
     #   -r requirements/doc.txt
@@ -1098,11 +1084,6 @@ tincan==1.0.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-toml==0.10.2
-    # via
-    #   -r requirements/doc.txt
-    #   -r requirements/test.txt
-    #   pytest
 tomlkit==0.14.0
     # via
     #   -r requirements/doc.txt
@@ -1160,6 +1141,7 @@ urllib3==2.6.3
     #   -r requirements/test.txt
     #   botocore
     #   requests
+    #   responses
 vine==5.1.0
     # via
     #   -r requirements/doc.txt

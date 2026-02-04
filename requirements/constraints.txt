@@ -11,31 +11,10 @@
 # Common constraints for edx repos
 -c common_constraints.txt
 
-
-# mock has dropped support for python 3.5 after 3.0.5
-mock==3.0.5
- 
-# freezegun>0.3.14 requires python-dateutil>2.8.1 to pass the tests which is a dependency of edx-platform
-# and edx-drf-extensions.
-freezegun==0.3.14
-
-# version 0.10.16 is having version conflict in make upgrade
-responses<0.10.16
-
 factory-boy<4.0
 
-# pytest version 6.0 causing test failures
-pytest<7.0
-
-# pinning it to latest release.
+# pin celery to 5.x.
 celery>=5.2.2,<6.0.0
-
-# pip 25.3 is incompatible with pip-tools hence causing failures during the build process 
-# Make upgrade command and all requirements upgrade jobs are broken due to this.
-# See issue https://github.com/openedx/public-engineering/issues/440 for details regarding the ongoing fix.
-# The constraint can be removed once a release (pip-tools > 7.5.1) is available with support for pip 25.3
-# Issue to track this dependency and unpin later on: https://github.com/openedx/edx-lint/issues/503
-pip<25.3
 
 # pinning Sphinx 8.x version
 # Sphinx 9.x introduces significant changes and removals compared to Sphinx 8.x,

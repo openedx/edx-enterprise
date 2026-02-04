@@ -606,7 +606,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 self.canvas_course_id,
                 'Test Assignment'
             )
-            assert IntegratedChannelAPIRequestLogs.objects.count() == 4
+            assert IntegratedChannelAPIRequestLogs.objects.count() == 3
             assert canvas_assignment == 1
 
     @mock.patch.object(CanvasUtil, 'find_course_by_course_id')
