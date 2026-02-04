@@ -34,7 +34,6 @@ attrs==25.4.0
     #   -r requirements/test-master.txt
     #   edx-ace
     #   openedx-events
-    #   pytest
 babel==2.18.0
     # via
     #   pydata-sphinx-theme
@@ -462,8 +461,6 @@ psutil==7.2.1
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-py==1.11.0
-    # via pytest
 pyasn1==0.6.2
     # via
     #   -r requirements/test-master.txt
@@ -485,6 +482,7 @@ pygments==2.19.2
     #   accessible-pygments
     #   doc8
     #   pydata-sphinx-theme
+    #   pytest
     #   readme-renderer
     #   sphinx
 pyjwt[crypto]==2.10.1
@@ -508,10 +506,8 @@ pyopenssl==25.3.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pytest==6.2.5
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/doc.in
+pytest==9.0.2
+    # via -r requirements/doc.in
 python-dateutil==2.9.0.post0
     # via
     #   -r requirements/test-master.txt
@@ -641,8 +637,6 @@ text-unidecode==1.3
     #   python-slugify
 tincan==1.0.0
     # via -r requirements/test-master.txt
-toml==0.10.2
-    # via pytest
 tomlkit==0.14.0
     # via
     #   -r requirements/test-master.txt
