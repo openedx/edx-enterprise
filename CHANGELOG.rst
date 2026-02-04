@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.4] - 2026-02-04
+---------------------
+* build: upgrade python deps, pin pylint<4
+
 [6.6.3] - 2026-02-03
 ---------------------
 * feat: filter organization members API to return only learners
