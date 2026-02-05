@@ -16,6 +16,14 @@ from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
 
+MOODLE_ERROR_STATUS_MAP = {
+    "shortnametaken": 409,
+    "courseidnumbertaken": 409,
+    "cannotfindcourse": 404,
+    "cannotfinduser": 404,
+    "missingparam": 400,
+}
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -86,12 +94,19 @@ def moodle_request_wrapper(method):
             self.token = self._get_access_token()  # pylint: disable=protected-access
             response = method(self, *args, **kwargs)
         elif error_code:
+            mapped_status = MOODLE_ERROR_STATUS_MAP.get(
+                error_code,
+                HTTPStatus.BAD_REQUEST
+            )
+
             raise MoodleClientError(
                 'Moodle API Client Task "{method}" failed with error code '
                 '"{code}" and message: "{msg}" '.format(
-                    method=method.__name__, code=error_code, msg=body.get('message'),
+                    method=method.__name__,
+                    code=error_code,
+                    msg=body.get('message'),
                 ),
-                response.status_code,
+                mapped_status,
                 error_code,
             )
         elif warnings:
