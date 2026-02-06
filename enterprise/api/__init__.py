@@ -1,6 +1,8 @@
 """
 Python API for various enterprise functionality.
 """
+from django.utils.timezone import now
+
 from enterprise import roles_api
 from enterprise.models import EnterpriseCustomerAdmin, PendingEnterpriseCustomerAdminUser
 
@@ -26,6 +28,7 @@ def activate_admin_permissions(enterprise_customer_user):
         # if this user is an admin, we want to create an accompanying EnterpriseCustomerAdmin record
         EnterpriseCustomerAdmin.objects.get_or_create(
             enterprise_customer_user=enterprise_customer_user,
+            defaults={'joined_date': now()}
         )
     except PendingEnterpriseCustomerAdminUser.DoesNotExist:
         return  # this is ok, nothing to do

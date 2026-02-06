@@ -20,6 +20,7 @@ from django.test import override_settings
 from enterprise import utils, validators
 from enterprise.models import (
     EnterpriseCustomer,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
@@ -205,6 +206,20 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "invite_key",
                 "should_inactivate_other_customers",
                 "user_fk",
+            ]
+        ),
+        (
+            EnterpriseCustomerAdmin,
+            [
+                "uuid",
+                "created",
+                "modified",
+                "enterprise_customer_user",
+                "last_login",
+                "onboarding_tour_dismissed",
+                "onboarding_tour_completed",
+                "joined_date",
+                "completed_tour_flows",
             ]
         ),
         (

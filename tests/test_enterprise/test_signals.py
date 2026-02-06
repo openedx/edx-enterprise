@@ -16,6 +16,7 @@ from django.test import TestCase, override_settings
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -414,6 +415,7 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
         ).delete()
         self._assert_pending_ecus_exist(should_exist=False)
+
 
 
 @mark.django_db
