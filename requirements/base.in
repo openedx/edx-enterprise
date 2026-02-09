@@ -30,6 +30,7 @@ tincan
 edx-toggles
 jsondiff
 jsonfield
+openedx-atlas
 openedx-events
 paramiko
 path.py
@@ -44,7 +45,6 @@ stevedore
 testfixtures
 unicodecsv
 PGPy
-openai
 django-oauth-toolkit
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.

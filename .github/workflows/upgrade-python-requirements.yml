@@ -13,7 +13,7 @@ jobs:
    call-upgrade-python-requirements-workflow:
     with:
        branch: ${{ github.event.inputs.branch }}
-       team_reviewers: "enterprise-titans"
+       team_reviewers: "2u-enterprise-titans"
        email_address: enterprise-integrations@edx.org 
        send_success_notification: false
     secrets:

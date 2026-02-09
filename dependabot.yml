@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    # Prevent Dependabot from updating edx-platform-constraints.txt. This file
+    # should ONLY be updated via `make upgrade`.
+    exclude-paths:
+      - "requirements/edx-platform-constraints.txt"
+    schedule:
+      interval: "weekly"

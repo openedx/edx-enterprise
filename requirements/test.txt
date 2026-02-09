@@ -4,18 +4,6 @@
 #
 #    make upgrade
 #
-aiohappyeyeballs==2.6.1
-    # via
-    #   -r requirements/test-master.txt
-    #   aiohttp
-aiohttp==3.13.2
-    # via
-    #   -r requirements/test-master.txt
-    #   openai
-aiosignal==1.4.0
-    # via
-    #   -r requirements/test-master.txt
-    #   aiohttp
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -23,11 +11,11 @@ aniso8601==10.0.1
     # via
     #   -r requirements/test-master.txt
     #   tincan
-anyio==4.11.0
+anyio==4.12.1
     # via
     #   -r requirements/test-master.txt
     #   httpx
-asgiref==3.10.0
+asgiref==3.11.0
     # via
     #   -r requirements/test-master.txt
     #   django
@@ -39,10 +27,8 @@ asn1crypto==1.5.1
 attrs==25.4.0
     # via
     #   -r requirements/test-master.txt
-    #   aiohttp
     #   edx-ace
     #   openedx-events
-    #   pytest
 bcrypt==5.0.0
     # via
     #   -r requirements/test-master.txt
@@ -52,11 +38,11 @@ bcrypt==5.0.0
     #   celery
 bleach==6.3.0
     # via -r requirements/test-master.txt
-boto3==1.40.75
+boto3==1.42.30
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.40.75
+botocore==1.42.30
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -66,14 +52,10 @@ cachecontrol==0.14.4
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-cachetools==6.2.2
-    # via
-    #   -r requirements/test-master.txt
-    #   google-auth
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test-master.txt
-certifi==2025.11.12
+certifi==2026.1.4
     # via
     #   -r requirements/test-master.txt
     #   httpcore
@@ -114,7 +96,7 @@ code-annotations==2.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-toggles
-coverage[toml]==7.12.0
+coverage[toml]==7.13.3
     # via pytest-cov
 cryptography==45.0.7
     # via
@@ -132,7 +114,7 @@ defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==9.7.2
+diff-cover==10.2.0
     # via -r requirements/test.in
     # via
     #   -c requirements/common_constraints.txt
@@ -163,7 +145,7 @@ django-cache-memoize==0.2.1
     # via -r requirements/test-master.txt
 django-config-models==2.9.0
     # via -r requirements/test-master.txt
-django-countries==8.1.1
+django-countries==8.2.0
     # via -r requirements/test-master.txt
 django-crum==0.7.9
     # via
@@ -192,7 +174,7 @@ django-push-notifications==3.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
-django-simple-history==3.10.1
+django-simple-history==3.11.0
     # via -r requirements/test-master.txt
 django-waffle==5.0.0
     # via
@@ -218,7 +200,7 @@ drf-jwt==1.19.2
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-drf-yasg==1.21.11
+drf-yasg==1.21.14
     # via
     #   -r requirements/test-master.txt
     #   edx-api-doc-tools
@@ -264,13 +246,13 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==38.2.0
+faker==40.1.2
     # via factory-boy
 fastavro==1.12.1
     # via
     #   -r requirements/test-master.txt
     #   openedx-events
-filelock==3.20.0
+filelock==3.20.3
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -278,23 +260,16 @@ firebase-admin==7.1.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
-freezegun==0.3.14
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.in
-frozenlist==1.8.0
-    # via
-    #   -r requirements/test-master.txt
-    #   aiohttp
-    #   aiosignal
-google-api-core[grpc]==2.28.1
+freezegun==1.5.5
+    # via -r requirements/test.in
+google-api-core[grpc]==2.29.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-auth==2.43.0
+google-auth==2.47.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -306,15 +281,15 @@ google-cloud-core==2.5.0
     #   -r requirements/test-master.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.21.0
+google-cloud-firestore==2.23.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.6.0
+google-cloud-storage==3.8.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-crc32c==1.7.1
+google-crc32c==1.8.0
     # via
     #   -r requirements/test-master.txt
     #   google-cloud-storage
@@ -368,7 +343,6 @@ idna==3.11
     #   httpx
     #   requests
     #   snowflake-connector-python
-    #   yarl
 inflection==0.5.1
     # via
     #   -r requirements/test-master.txt
@@ -404,24 +378,17 @@ markupsafe==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   jinja2
-mock==3.0.5
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.in
+mock==5.2.0
+    # via -r requirements/test.in
 msgpack==1.1.2
     # via
     #   -r requirements/test-master.txt
     #   cachecontrol
-multidict==6.7.0
-    # via
-    #   -r requirements/test-master.txt
-    #   aiohttp
-    #   yarl
 oauthlib==3.3.1
     # via
     #   -r requirements/test-master.txt
     #   django-oauth-toolkit
-openai==0.28.1
+openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
 openedx-events==10.5.0
     # via -r requirements/test-master.txt
@@ -442,9 +409,9 @@ path-py==12.5.0
     # via -r requirements/test-master.txt
 pgpy==0.6.0
     # via -r requirements/test-master.txt
-pillow==12.0.0
+pillow==12.1.0
     # via -r requirements/test-master.txt
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
@@ -456,17 +423,12 @@ pluggy==1.6.0
     # via
     #   -r requirements/test-master.txt
     #   click-repl
-propcache==0.4.1
-    # via
-    #   -r requirements/test-master.txt
-    #   aiohttp
-    #   yarl
-proto-plus==1.26.1
+proto-plus==1.27.0
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.1
+protobuf==6.33.4
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
@@ -474,13 +436,11 @@ protobuf==6.33.1
     #   googleapis-common-protos
     #   grpcio-status
     #   proto-plus
-psutil==7.1.3
+psutil==7.2.1
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-py==1.11.0
-    # via pytest
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   -r requirements/test-master.txt
     #   pgpy
@@ -495,7 +455,9 @@ pycparser==2.23
     #   -r requirements/test-master.txt
     #   cffi
 pygments==2.19.2
-    # via diff-cover
+    # via
+    #   diff-cover
+    #   pytest
 pyjwt[crypto]==2.10.1
     # via
     #   -r requirements/test-master.txt
@@ -508,7 +470,7 @@ pymongo==4.4.0
     # via
     #   -r requirements/test-master.txt
     #   edx-opaque-keys
-pynacl==1.6.1
+pynacl==1.6.2
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -517,14 +479,13 @@ pyopenssl==25.3.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pytest==6.2.5
+pytest==9.0.2
     # via
-    #   -c requirements/constraints.txt
     #   pytest-cov
     #   pytest-django
-pytest-cov==6.3.0
+pytest-cov==7.0.0
     # via -r requirements/test.in
-pytest-django==4.5.2
+pytest-django==4.11.1
     # via -r requirements/test.in
 python-dateutil==2.9.0.post0
     # via
@@ -553,6 +514,7 @@ pyyaml==6.0.3
     #   code-annotations
     #   drf-yasg
     #   jsondiff
+    #   responses
 requests==2.32.5
     # via
     #   -r requirements/test-master.txt
@@ -563,22 +525,19 @@ requests==2.32.5
     #   edx-rest-api-client
     #   google-api-core
     #   google-cloud-storage
-    #   openai
     #   responses
     #   sailthru-client
     #   slumber
     #   snowflake-connector-python
-responses==0.10.15
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/test.in
+responses==0.25.8
+    # via -r requirements/test.in
 rsa==4.9.1
     # via
     #   -r requirements/test-master.txt
     #   google-auth
 rules==3.5
     # via -r requirements/test-master.txt
-s3transfer==0.14.0
+s3transfer==0.16.0
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -600,27 +559,20 @@ six==1.17.0
     #   edx-ace
     #   edx-ccx-keys
     #   edx-rbac
-    #   freezegun
-    #   mock
     #   python-dateutil
-    #   responses
 slumber==0.7.1
     # via -r requirements/test-master.txt
-sniffio==1.3.1
-    # via
-    #   -r requirements/test-master.txt
-    #   anyio
-snowflake-connector-python==4.0.0
+snowflake-connector-python==4.2.0
     # via -r requirements/test-master.txt
 sortedcontainers==2.4.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-sqlparse==0.5.3
+sqlparse==0.5.5
     # via
     #   -r requirements/test-master.txt
     #   django
-stevedore==5.5.0
+stevedore==5.6.0
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -637,20 +589,13 @@ text-unidecode==1.3
     #   python-slugify
 tincan==1.0.0
     # via -r requirements/test-master.txt
-toml==0.10.2
-    # via pytest
-tomlkit==0.13.3
+tomlkit==0.14.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-tqdm==4.67.1
-    # via
-    #   -r requirements/test-master.txt
-    #   openai
 typing-extensions==4.15.0
     # via
     #   -r requirements/test-master.txt
-    #   aiosignal
     #   anyio
     #   django-countries
     #   edx-opaque-keys
@@ -658,22 +603,26 @@ typing-extensions==4.15.0
     #   jwcrypto
     #   pyopenssl
     #   snowflake-connector-python
-tzdata==2025.2
+tzdata==2025.3
     # via
     #   -r requirements/test-master.txt
-    #   faker
     #   kombu
+tzlocal==5.3.1
+    # via
+    #   -r requirements/test-master.txt
+    #   celery
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
 uritemplate==4.2.0
     # via
     #   -r requirements/test-master.txt
     #   drf-yasg
-urllib3==2.5.0
+urllib3==2.6.3
     # via
     #   -r requirements/test-master.txt
     #   botocore
     #   requests
+    #   responses
     # via
     #   -r requirements/test-master.txt
     #   amqp
@@ -687,10 +636,6 @@ webencodings==0.5.1
     # via
     #   -r requirements/test-master.txt
     #   bleach
-yarl==1.22.0
-    # via
-    #   -r requirements/test-master.txt
-    #   aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
