@@ -17,6 +17,30 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.5] - 2026-02-08
+-------------------
+* Added 'invited_date' and 'joined_date' fields to EnterpriseCustomerAdmin model
+
+[6.6.4] - 2026-02-04
+---------------------
+* build: upgrade python deps, pin pylint<4
+
+[6.6.3] - 2026-02-03
+---------------------
+* feat: filter organization members API to return only learners
+
+[6.6.2] - 2026-01-15
+---------------------
+* feat: add a waffle flag for invite admins
+
+[6.6.1] - 2026-01-09
+---------------------
+* fix: issue regarding the gettext package in atlas translations flow
+
+[6.6.0] - 2026-01-08
+---------------------
+* feat: added atlas translations flow in enterprise app
+
 [6.5.7] - 2025-11-28
 ---------------------
 * feat: fetch SAP user id by remote_id_field_name

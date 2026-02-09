@@ -2352,12 +2352,14 @@ class EnterpriseCustomerAdminSerializer(serializers.ModelSerializer):
         fields = [
             'uuid',
             'enterprise_customer_user',
+            'invited_date',
+            'joined_date',
             'last_login',
             'completed_tour_flows',
             'onboarding_tour_dismissed',
             'onboarding_tour_completed',
         ]
-        read_only_fields = ['uuid']
+        read_only_fields = ['uuid', 'invited_date', 'joined_date']
 
     def to_representation(self, instance):
         """
