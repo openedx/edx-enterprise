@@ -4988,6 +4988,16 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
         on_delete=models.deletion.CASCADE,
         help_text=_("The enterprise customer user who is an admin.")
     )
+    invited_date = models.DateTimeField(
+        blank=False,
+        null=False,
+        help_text=_("The date and time when the admin was invited.")
+    )
+    joined_date = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=_("The date and time when the admin joined/registered their account.")
+    )
     last_login = models.DateTimeField(
         null=True,
         blank=True,

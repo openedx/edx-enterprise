@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.5] - 2026-02-08
+-------------------
+* Added 'invited_date' and 'joined_date' fields to EnterpriseCustomerAdmin model
+
 [6.6.4] - 2026-02-04
 ---------------------
 * build: upgrade python deps, pin pylint<4
