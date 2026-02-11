@@ -1,5 +1,5 @@
 """
-Tests for the `edx-enterprise` models module.
+Tests for the `edx-enterprise` signals module.
 """
 
 import unittest
@@ -19,6 +19,7 @@ from enterprise.models import (
     EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
+    EnterpriseGroup,
     EnterpriseGroupMembership,
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
@@ -41,6 +42,7 @@ from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
+    EnterpriseGroupFactory,
     EnterpriseGroupMembershipFactory,
     LearnerCreditEnterpriseCourseEnrollmentFactory,
     PendingEnrollmentFactory,
@@ -1174,3 +1176,77 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+class TestEnterpriseGroupSignals(TestCase):
+    """
+    Tests the EnterpriseGroup signals.
+    """
+
+    def test_delete_enterprise_group_with_transaction(self):
+        """
+        Tests that when an EnterpriseGroup is deleted in a transaction, the signal handler is called.
+        """
+        # Create the group
+        enterprise_group = EnterpriseGroupFactory()
+        group_uuid = str(enterprise_group.uuid)
+
+        # Use mocks to verify the signal handler is called
+        with mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+            # Use a transaction to ensure signals are processed
+            with transaction.atomic():
+                # Delete the object to trigger the signal - USING HARD DELETE if available
+                group = EnterpriseGroup.objects.filter(uuid=enterprise_group.uuid).first()
+                self.assertIsNotNone(group)
+
+                #     # Use model._meta.base_manager to bypass the custom manager that might filter soft-deleted records
+                group.delete()
+                # type(group)._meta.base_manager.filter(pk=group.pk).delete()
+
+            # Verify the methods were called with the expected arguments
+            mock_send_event.assert_called_once_with(group_uuid=group_uuid)
+
+    def test_handle_enterprise_group_soft_delete_does_not_exist(self):
+        """
+        Tests that the pre-save signal handler for EnterpriseGroup gracefully handles
+        the case where the group doesn't exist in all_objects when trying to check if it's being deleted.
+        """
+        # Create the group
+        enterprise_group = EnterpriseGroupFactory()
+
+        # Use mocks to verify the signal handler behavior
+        with mock.patch('enterprise.models.EnterpriseGroup.all_objects.get') as mock_get, \
+                mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+            mock_get.side_effect = EnterpriseGroup.DoesNotExist
+
+            # Now try to save the group which should trigger the pre_save signal
+            enterprise_group.name = "New name"
+            # This should not raise any exceptions
+            enterprise_group.save()
+
+            # Verify the mock was called with the expected arguments
+            mock_get.assert_called_once_with(pk=enterprise_group.pk)
+
+            # Verify that the event wasn't sent
+            mock_send_event.assert_not_called()
+
+    def test_post_delete_enterprise_group(self):
+        """
+        Tests that when an EnterpriseGroup is hard-deleted, the post_delete signal handler
+        sends the appropriate event to the event bus.
+
+        This test is for the redundancy handler that will be used if the model is changed
+        from SoftDeleteModel to hard delete in the future.
+        """
+        # Create the group
+        enterprise_group = EnterpriseGroupFactory()
+        group_uuid = str(enterprise_group.uuid)
+
+        # Use mocks to verify the signal handler is called
+        with mock.patch('enterprise.signals.send_enterprise_group_deleted_event') as mock_send_event:
+            # Perform a hard delete (bypassing the soft delete mechanism)
+            # Using the base manager to ensure we're doing a real database delete
+            EnterpriseGroup._meta.base_manager.filter(pk=enterprise_group.pk).delete()
+
+            # Verify the event was sent with the expected arguments
+            mock_send_event.assert_called_once_with(group_uuid=group_uuid)

@@ -13,6 +13,7 @@ from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.decorators import disable_for_loaddata
+from enterprise.event_bus import send_enterprise_group_deleted_event
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -451,3 +452,39 @@ if COURSE_UNENROLLMENT_COMPLETED is not None:
 
 if COURSE_ENROLLMENT_CHANGED is not None:
     COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
+
+
+# Redundancy in case the model is changed from SoftDeleteModel to hard delete in the future.
+# Currently this method will not be invoked.
+@receiver(post_delete, sender=models.EnterpriseGroup)
+def post_delete_enterprise_group(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Handle the deletion of an EnterpriseGroup by sending an event to the event bus.
+    """
+    send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
+
+
+# Pre-soft-delete signal handler for EnterpriseGroup
+@receiver(pre_save, sender=models.EnterpriseGroup)
+def handle_enterprise_group_soft_delete(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Handle soft deletion of EnterpriseGroup models.
+    """
+    logger.info(
+        'Pre-save signal triggered for EnterpriseGroup with UUID: %s', instance.uuid
+    )
+    # Skip this check for new objects
+    if instance.pk and not instance._state.adding:  # pylint: disable=protected-access
+        try:
+            # Get the current state in the database
+            old_instance = models.EnterpriseGroup.all_objects.get(pk=instance.pk)
+
+            # If it's being marked as deleted
+            if not old_instance.is_removed and instance.is_removed:
+                logger.info(
+                    'EnterpriseGroup with UUID %s is being soft deleted. Sending event to event bus.',
+                    instance.uuid
+                )
+                send_enterprise_group_deleted_event(group_uuid=str(instance.uuid))
+        except models.EnterpriseGroup.DoesNotExist:
+            pass
