@@ -4,6 +4,7 @@ Database models for enterprise.
 
 import collections
 import datetime
+import hashlib
 import itertools
 import json
 from decimal import Decimal
@@ -2889,6 +2890,13 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         )
 
 
+    @cached_property
+    def get_content_filter_hash(self):
+        content_filter_sorted_keys = json.dumps(self.content_filter, sort_keys=True).encode()
+        content_filter_hash = hashlib.md5(content_filter_sorted_keys).hexdigest()
+        return content_filter_hash
+
+
 class BulkCatalogQueryUpdateCommandConfiguration(ConfigurationModel):
     """
     Manages configuration for a run of the cert_generation management command.
@@ -3219,6 +3227,11 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
+    def get_content_filter_hash(self):
+        content_filter_sorted_keys = json.dumps(self.content_filter, sort_keys=True).encode()
+        content_filter_hash = hashlib.md5(content_filter_sorted_keys).hexdigest()
+        return content_filter_hash
+
     def save(self, *args, **kwargs):
         """
         Saves this ``EnterpriseCatalogQuery``.
@@ -3229,6 +3242,18 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         if self.enterprise_catalog_query:
             content_filter_from_query = self.enterprise_catalog_query.content_filter
             self.content_filter = content_filter_from_query
+        else:
+            try:
+                old_catalog = EnterpriseCustomerCatalog.objects.get(pk=self.pk)
+                if self.content_filter != old_catalog.content_filter:
+                    new_content_hash = self.get_content_filter_hash()
+                    client = EnterpriseCatalogApiClient()
+                    print(client.user)
+                    queries_by_hash = client.get_catalog_query_by_hash(new_content_hash)
+                    print(queries_by_hash)
+            except EnterpriseCustomerCatalog.DoesNotExist:
+                pass
+
         super().save(*args, **kwargs)
 
 
