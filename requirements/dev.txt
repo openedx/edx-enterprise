@@ -722,7 +722,7 @@ pillow==12.1.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pip-tools==7.5.2
+pip-tools==7.5.3
     # via -r requirements/dev.in
 pkginfo==1.12.1.2
     # via twine
