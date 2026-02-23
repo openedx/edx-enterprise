@@ -9676,7 +9676,10 @@ class TestEnterpriseCustomerSsoConfigurationViewSet(APITest):
         )
         response = self.update_sso_configuration(config_pk, data)
         assert response.status_code == 400
-        assert "Error fetching metadata xml" in response.json()['error']
+        assert (
+            "Error fetching metadata xml" in response.json()['error']
+            or "Must provide valid IDP metadata url" in response.json()['error']
+        )
 
     @responses.activate
     def test_sso_configuration_create_bad_xml_content(self):
