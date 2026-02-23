@@ -41,8 +41,8 @@ attrs==25.4.0
     #   jsonschema
     #   lti-consumer-xblock
     #   openedx-authz
+    #   openedx-core
     #   openedx-events
-    #   openedx-learning
     #   referencing
 babel==2.17.0
     # via
@@ -100,7 +100,7 @@ casbin-django-orm-adapter==1.7.0
     #   edx-enterprise
     #   enterprise-integrated-channels
     #   event-tracking
-    #   openedx-learning
+    #   openedx-core
 certifi==2026.1.4
     # via
     #   elasticsearch
@@ -226,12 +226,12 @@ django==5.2.11
     #   jsonfield
     #   lti-consumer-xblock
     #   openedx-authz
+    #   openedx-core
     #   openedx-django-pyfs
     #   openedx-django-wiki
     #   openedx-events
     #   openedx-filters
     #   openedx-forum
-    #   openedx-learning
     #   ora2
     #   social-auth-app-django
     #   super-csv
@@ -380,8 +380,8 @@ djangorestframework==3.16.1
     #   edx-proctoring
     #   edx-submissions
     #   openedx-authz
+    #   openedx-core
     #   openedx-forum
-    #   openedx-learning
     #   ora2
     #   super-csv
 djangorestframework-xml==2.0.0
@@ -460,8 +460,8 @@ edx-drf-extensions==10.6.0
     #   edxval
     #   enterprise-integrated-channels
     #   openedx-authz
-    #   openedx-learning
-edx-enterprise==6.6.2
+    #   openedx-core
+edx-enterprise==6.6.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/edx/kernel.in
@@ -549,7 +549,7 @@ enmerkar==0.7.1
     # via enmerkar-underscore
 enmerkar-underscore==2.4.0
     # via -r requirements/edx/kernel.in
-enterprise-integrated-channels==0.1.29
+enterprise-integrated-channels==0.1.38
     # via -r requirements/edx/bundled.in
 event-tracking==3.3.0
     # via
@@ -697,8 +697,6 @@ lazy==1.6
     #   lti-consumer-xblock
     #   ora2
     #   xblock
-loremipsum==1.0.5
-    # via ora2
 lti-consumer-xblock==9.14.3
     # via -r requirements/edx/kernel.in
 lxml[html-clean]==5.3.2
@@ -795,10 +793,14 @@ openedx-atlas==0.7.0
     #   enterprise-integrated-channels
     #   openedx-authz
     #   openedx-forum
-openedx-authz==0.20.0
+openedx-authz==0.22.0
     # via -r requirements/edx/kernel.in
 openedx-calc==4.0.3
     # via -r requirements/edx/kernel.in
+openedx-core==0.34.2
+    # via
+    #   -c requirements/constraints.txt
+    #   -r requirements/edx/kernel.in
 openedx-django-pyfs==3.8.0
     # via
     #   lti-consumer-xblock
@@ -823,13 +825,9 @@ openedx-filters==2.1.0
     #   ora2
 openedx-forum==0.4.0
     # via -r requirements/edx/kernel.in
-openedx-learning==0.31.0
-    # via
-    #   -c requirements/constraints.txt
-    #   -r requirements/edx/kernel.in
 optimizely-sdk==5.4.0
     # via -r requirements/edx/bundled.in
-ora2==6.17.1
+ora2==6.17.2
     # via -r requirements/edx/bundled.in
 packaging==25.0
     # via
@@ -882,6 +880,8 @@ psutil==7.2.1
     # via
     #   -r requirements/edx/kernel.in
     #   edx-django-utils
+psycopg2-binary==2.9.10
+    # via -r requirements/edx/kernel.in
 pyasn1==0.6.2
     # via
     #   pgpy
@@ -1058,7 +1058,7 @@ rules==3.5
     #   -r requirements/edx/kernel.in
     #   edx-enterprise
     #   edx-proctoring
-    #   openedx-learning
+    #   openedx-core
 s3transfer==0.16.0
     # via boto3
 sailthru-client==2.2.3
@@ -1102,6 +1102,9 @@ slumber==0.7.1
     #   edx-enterprise
     #   enterprise-integrated-channels
 snowflake-connector-python==4.2.0
+    # via
+    #   edx-enterprise
+    #   enterprise-integrated-channels
 social-auth-app-django==5.4.1
     # via
     #   -c requirements/constraints.txt
@@ -1146,7 +1149,7 @@ tinycss2==1.4.0
     # via bleach
 tomlkit==0.14.0
     # via
-    #   openedx-learning
+    #   openedx-core
     #   snowflake-connector-python
 tqdm==4.67.1
     # via nltk
