@@ -266,7 +266,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==40.1.2
+faker==40.4.0
     # via factory-boy
 fastavro==1.12.1
     # via
@@ -403,7 +403,7 @@ msgpack==1.1.2
     # via
     #   -r requirements/test-master.txt
     #   cachecontrol
-nh3==0.3.2
+nh3==0.3.3
     # via readme-renderer
 oauthlib==3.3.1
     # via

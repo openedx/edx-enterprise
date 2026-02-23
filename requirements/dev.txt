@@ -102,7 +102,7 @@ cachecontrol==0.14.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   firebase-admin
-cachetools==7.0.0
+cachetools==7.0.1
     # via tox
 celery==5.6.2
     # via
@@ -126,7 +126,7 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-chardet==5.2.0
+chardet==6.0.0.post1
     # via
     #   -r requirements/test.txt
     #   diff-cover
@@ -181,7 +181,7 @@ code-annotations==2.3.0
     #   edx-toggles
 colorama==0.4.6
     # via tox
-coverage[toml]==7.13.3
+coverage[toml]==7.13.4
     # via
     #   -r requirements/test.txt
     #   pytest-cov
@@ -434,7 +434,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==40.1.2
+faker==40.4.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -660,7 +660,7 @@ msgpack==1.1.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   cachecontrol
-nh3==0.3.2
+nh3==0.3.3
     # via
     #   -r requirements/doc.txt
     #   readme-renderer
@@ -871,7 +871,7 @@ pytest==9.0.2
     #   pytest-django
 pytest-cov==7.0.0
     # via -r requirements/test.txt
-pytest-django==4.11.1
+pytest-django==4.12.0
     # via -r requirements/test.txt
 python-dateutil==2.9.0.post0
     # via
@@ -935,7 +935,7 @@ requests==2.32.5
     #   twine
 requests-toolbelt==1.0.0
     # via twine
-responses==0.25.8
+responses==0.26.0
     # via -r requirements/test.txt
 restructuredtext-lint==2.0.2
     # via
