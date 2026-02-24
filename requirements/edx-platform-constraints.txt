@@ -1222,7 +1222,7 @@ webob==1.8.9
     # via
     #   -r requirements/edx/kernel.in
     #   xblock
-wheel==0.45.1
+wheel==0.46.2
     # via django-pipeline
 wrapt==2.0.1
     # via -r requirements/edx/kernel.in
