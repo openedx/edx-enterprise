@@ -12,7 +12,7 @@ attrs==25.4.0
     #   trio
 backports-tarfile==1.2.0
     # via jaraco-context
-certifi==2026.1.4
+certifi==2026.2.25
     # via selenium
 cheroot==11.1.2
     # via cherrypy
