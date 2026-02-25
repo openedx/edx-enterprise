@@ -6,8 +6,6 @@
 #
 cachetools==7.0.1
     # via tox
-chardet==6.0.0.post1
-    # via tox
 colorama==0.4.6
     # via tox
 distlib==0.4.0
@@ -28,7 +26,7 @@ pluggy==1.6.0
     # via tox
 pyproject-api==1.10.0
     # via tox
-tox==4.45.0
+tox==4.46.0
     # via -r requirements/ci.in
 virtualenv==20.39.0
     # via tox

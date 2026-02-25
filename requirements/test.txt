@@ -246,7 +246,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==40.4.0
+faker==40.5.1
     # via factory-boy
 fastavro==1.12.1
     # via

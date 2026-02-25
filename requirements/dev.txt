@@ -434,7 +434,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==40.4.0
+faker==40.5.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
