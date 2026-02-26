@@ -2375,3 +2375,18 @@ class EnterpriseSSOUserInfoRequestSerializer(serializers.Serializer):
     """
     org_id = serializers.CharField(required=True)
     external_user_id = serializers.CharField(required=True)
+
+
+class EnterpriseAdminMemberSerializer(serializers.Serializer):
+    """
+    Response serializer for enterprise admin members list endpoint.
+
+    Represents both active admins and pending (invited) admins with a
+    unified schema derived from annotated ORM querysets.
+    """
+    id = serializers.IntegerField(source='admin_id')
+    name = serializers.CharField(allow_null=True)
+    email = serializers.EmailField()
+    invited_date = serializers.DateTimeField(allow_null=True, format='%b %d, %Y')
+    joined_date = serializers.DateTimeField(allow_null=True, format='%b %d, %Y')
+    status = serializers.CharField()
