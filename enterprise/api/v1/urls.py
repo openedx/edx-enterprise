@@ -10,6 +10,7 @@ from enterprise.api.v1.views import (
     analytics_summary,
     coupon_codes,
     default_enterprise_enrollments,
+    enterprise_admin_members,
     enterprise_catalog_query,
     enterprise_course_enrollment,
     enterprise_customer,
@@ -242,6 +243,11 @@ urlpatterns = [
             {'get': 'get_enterprise_course_enrollments'}
         ),
         name='enterprise-course-enrollment-admin'
+    ),
+    re_path(
+        r'^(?P<enterprise_uuid>[A-Za-z0-9-]+)/admins$',
+        enterprise_admin_members.EnterpriseAdminMembersViewSet.as_view({'get': 'list'}),
+        name='enterprise-admin-members',
     ),
 ]
 
