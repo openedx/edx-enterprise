@@ -1,172 +1,299 @@
-"""Tests for enterprise admin members API viewset."""
+"""
+Tests for the ``enterprise-admin-members`` API endpoint.
+"""
 
-from unittest import mock
+from pytest import mark
+from rest_framework import status
 
-import pytest
-from django.contrib.auth import get_user_model
-from rest_framework import response
-from rest_framework.exceptions import ValidationError
-from rest_framework.request import Request
-from rest_framework.test import APIRequestFactory
+from django.conf import settings
+from django.urls import reverse
 
-from enterprise.api.v1.views import enterprise_admin_members as members_view  # pylint: disable=no-name-in-module
-
-@pytest.mark.django_db
-def test_get_admin_members_returns_paginated_response(monkeypatch):
-    user = get_user_model().objects.create_user(
-        username="enterprise_admin", email="admin@example.com", password="test-pass"
-    )
-    factory = APIRequestFactory()
-    django_request = factory.get("/", {"user_query": "search", "sort_by": "email", "is_reversed": True})
-    django_request.user = user
-
-    view = members_view.EnterpriseAdminMembersViewSet()
-    drf_request = Request(django_request)
-
-    serializer_instance = mock.Mock()
-    serializer_instance.is_valid.return_value = None
-    serializer_instance.validated_data = {"user_query": "search", "sort_by": "email", "is_reversed": True}
-    serializer_cls = mock.Mock(return_value=serializer_instance)
-    monkeypatch.setattr(
-        members_view.serializers,
-        "EnterpriseAdminMembersRequestQuerySerializer",
-        serializer_cls,
-    )
-
-    union_qs = mock.Mock()
-    ordered_qs = mock.Mock()
-    union_qs.order_by.return_value = ordered_qs
-    mock_get_union = mock.Mock(return_value=union_qs)
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersViewSet,
-        "_get_union_queryset",
-        mock_get_union,
-    )
-
-    mock_paginate = mock.Mock(return_value=["page"])
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersViewSet,
-        "paginate_queryset",
-        mock_paginate,
-    )
-
-    serializer_result = mock.Mock()
-    serializer_result.data = [{"email": "user@example.com"}]
-    mock_get_serializer = mock.Mock(return_value=serializer_result)
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersViewSet,
-        "get_serializer",
-        mock_get_serializer,
-    )
-
-    expected_response = response.Response({"status": "ok"})
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersPaginator,
-        "get_paginated_response",
-        lambda self, data: expected_response,
-    )
-
-    view_method = members_view.EnterpriseAdminMembersViewSet.get_admin_members.__wrapped__
-    response_obj = view_method(view, drf_request, enterprise_uuid="enterprise-uuid")
-
-    assert response_obj is expected_response
-    serializer_cls.assert_called_once_with(data=drf_request.query_params)
-    mock_get_union.assert_called_once_with("enterprise-uuid", "search")
-    union_qs.order_by.assert_called_once_with("-email", "email")
-    mock_paginate.assert_called_once_with(ordered_qs)
-    mock_get_serializer.assert_called_once_with(["page"], many=True)
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE
+from test_utils import APITest
+from test_utils.factories import (
+    EnterpriseCustomerAdminFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerAdminUserFactory,
+    UserFactory,
+)
 
 
-@pytest.mark.django_db
-def test_get_admin_members_returns_validation_error(monkeypatch):
-    user = get_user_model().objects.create_user(
-        username="enterprise_admin2", email="admin2@example.com", password="test-pass"
-    )
-    factory = APIRequestFactory()
-    django_request = factory.get("/", {"sort_by": "does_not_exist"})
-    django_request.user = user
+@mark.django_db
+class TestEnterpriseAdminMembersViewSet(APITest):
+    """
+    Tests for EnterpriseAdminMembersViewSet.
+    """
 
-    view = members_view.EnterpriseAdminMembersViewSet()
-    drf_request = Request(django_request)
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory()
 
-    serializer_instance = mock.Mock()
-    validation_detail = {"user_query": ["is required"]}
-    serializer_instance.is_valid.side_effect = ValidationError(validation_detail)
-    serializer_cls = mock.Mock(return_value=serializer_instance)
-    monkeypatch.setattr(
-        members_view.serializers,
-        "EnterpriseAdminMembersRequestQuerySerializer",
-        serializer_cls,
-    )
+        # Grant the test user the enterprise_admin role for this enterprise
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(self.enterprise_customer.uuid))
 
-    view_method = members_view.EnterpriseAdminMembersViewSet.get_admin_members.__wrapped__
-    response_obj = view_method(view, drf_request, enterprise_uuid="enterprise-uuid")
+        # Active admin
+        self.admin_user = UserFactory(
+            username="admin_jane",
+            first_name="Jane",
+            email="jane@example.com",
+            is_active=True,
+        )
+        self.admin_ecu = EnterpriseCustomerUserFactory(
+            user_id=self.admin_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.admin_record = EnterpriseCustomerAdminFactory(
+            enterprise_customer_user=self.admin_ecu,
+        )
 
-    assert response_obj.status_code == 400
-    assert response_obj.data == {"detail": validation_detail}
-    serializer_instance.is_valid.assert_called_once_with(raise_exception=True)
+        # Pending admin
+        self.pending_admin = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email="pending@example.com",
+        )
 
+        self.url = settings.TEST_SERVER + reverse(
+            "enterprise-admin-members",
+            kwargs={"enterprise_uuid": str(self.enterprise_customer.uuid)},
+        )
 
-@pytest.mark.django_db
-def test_get_admin_members_applies_search_with_default_sort(monkeypatch):
-    user = get_user_model().objects.create_user(
-        username="enterprise_admin3", email="admin3@example.com", password="test-pass"
-    )
-    factory = APIRequestFactory()
-    django_request = factory.get("/", {"user_query": "alice"})
-    django_request.user = user
+    # ── Permission tests ──────────────────────────────────────────────
 
-    view = members_view.EnterpriseAdminMembersViewSet()
-    drf_request = Request(django_request)
+    def test_unauthenticated_returns_401(self):
+        """Unauthenticated request returns 401."""
+        self.client.logout()
+        response = self.client.get(self.url)
 
-    serializer_instance = mock.Mock()
-    serializer_instance.is_valid.return_value = None
-    serializer_instance.validated_data = {"user_query": "alice"}  # no sort_by/is_reversed
-    serializer_cls = mock.Mock(return_value=serializer_instance)
-    monkeypatch.setattr(
-        members_view.serializers,
-        "EnterpriseAdminMembersRequestQuerySerializer",
-        serializer_cls,
-    )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    union_qs = mock.Mock()
-    ordered_qs = mock.Mock()
-    union_qs.order_by.return_value = ordered_qs
-    mock_get_union = mock.Mock(return_value=union_qs)
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersViewSet,
-        "_get_union_queryset",
-        mock_get_union,
-    )
+    def test_user_without_admin_role_returns_403(self):
+        """User without enterprise_admin role gets 403."""
+        # Reset JWT to have no enterprise role
+        self.set_jwt_cookie(
+            system_wide_role="enterprise_learner", context="some_other_uuid"
+        )
 
-    mock_paginate = mock.Mock(return_value=["page"])
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersViewSet,
-        "paginate_queryset",
-        mock_paginate,
-    )
+        response = self.client.get(self.url)
 
-    serializer_result = mock.Mock()
-    serializer_result.data = [{"email": "alice@example.com"}]
-    mock_get_serializer = mock.Mock(return_value=serializer_result)
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersViewSet,
-        "get_serializer",
-        mock_get_serializer,
-    )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {
+            "detail": "Missing: enterprise.can_access_admin_dashboard"
+        }
 
-    expected_response = response.Response({"status": "ok"})
-    monkeypatch.setattr(
-        members_view.EnterpriseAdminMembersPaginator,
-        "get_paginated_response",
-        lambda self, data: expected_response,
-    )
+    def test_admin_for_different_enterprise_returns_403(self):
+        """Admin of a different enterprise cannot access this enterprise's admins."""
+        other_enterprise = EnterpriseCustomerFactory()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(other_enterprise.uuid))
 
-    view_method = members_view.EnterpriseAdminMembersViewSet.get_admin_members.__wrapped__
-    response_obj = view_method(view, drf_request, enterprise_uuid="enterprise-uuid")
+        response = self.client.get(self.url)
 
-    assert response_obj is expected_response
-    mock_get_union.assert_called_once_with("enterprise-uuid", "alice")
-    union_qs.order_by.assert_called_once_with("name", "email")
-    mock_paginate.assert_called_once_with(ordered_qs)
-    mock_get_serializer.assert_called_once_with(["page"], many=True)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    # ── List / field tests ────────────────────────────────────────────
+
+    def test_list_returns_both_active_and_pending(self):
+        """Active and pending admins appear in results."""
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 2
+
+        statuses = {r["status"] for r in response.data["results"]}
+        assert statuses == {"Admin", "Pending"}
+
+    def test_active_admin_fields(self):
+        """Active admin record contains expected fields and values."""
+        response = self.client.get(self.url)
+
+        admin_result = next(
+            r for r in response.data["results"] if r["status"] == "Admin"
+        )
+        assert admin_result["id"] == self.admin_ecu.id
+        assert admin_result["name"] == "Jane"
+        assert admin_result["email"] == "jane@example.com"
+        assert admin_result["joined_date"] is not None
+        assert admin_result["invited_date"] is None
+
+    def test_pending_admin_fields(self):
+        """Pending admin record contains expected fields and values."""
+        response = self.client.get(self.url)
+
+        pending_result = next(
+            r for r in response.data["results"] if r["status"] == "Pending"
+        )
+        assert pending_result["id"] == self.pending_admin.id
+        assert pending_result["name"] is None
+        assert pending_result["email"] == "pending@example.com"
+        assert pending_result["invited_date"] is not None
+        assert pending_result["joined_date"] is None
+
+    def test_inactive_user_excluded(self):
+        """Admin whose auth_user.is_active=False is not returned."""
+        inactive_user = UserFactory(username="inactive_admin", is_active=False)
+        inactive_ecu = EnterpriseCustomerUserFactory(
+            user_id=inactive_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        EnterpriseCustomerAdminFactory(enterprise_customer_user=inactive_ecu)
+
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 2
+
+    def test_scoped_to_enterprise(self):
+        """Results are scoped to the given enterprise UUID."""
+        other_enterprise = EnterpriseCustomerFactory()
+        other_user = UserFactory(is_active=True)
+        other_ecu = EnterpriseCustomerUserFactory(
+            user_id=other_user.id,
+            enterprise_customer=other_enterprise,
+        )
+        EnterpriseCustomerAdminFactory(enterprise_customer_user=other_ecu)
+
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 2
+
+    def test_empty_enterprise_returns_empty_results(self):
+        """Enterprise with no admins returns empty list."""
+        empty_enterprise = EnterpriseCustomerFactory()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, str(empty_enterprise.uuid))
+        url = settings.TEST_SERVER + reverse(
+            "enterprise-admin-members",
+            kwargs={"enterprise_uuid": str(empty_enterprise.uuid)},
+        )
+
+        response = self.client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+        assert response.data["results"] == []
+
+    # ── Pagination tests ──────────────────────────────────────────────
+
+    def test_pagination(self):
+        """Results respect page_size query param."""
+        response = self.client.get(self.url, {"page_size": 1})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 1
+        assert response.data["count"] == 2
+
+    # ── Filtering tests ───────────────────────────────────────────────
+
+    def test_search_by_email(self):
+        """user_query filters by email."""
+        response = self.client.get(self.url, {"user_query": "pending"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["email"] == "pending@example.com"
+
+    def test_search_by_name(self):
+        """user_query filters active admins by name."""
+        response = self.client.get(self.url, {"user_query": "Jane"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["name"] == "Jane"
+
+    def test_search_no_matches_returns_empty(self):
+        """user_query that matches nothing returns empty results."""
+        response = self.client.get(self.url, {"user_query": "nonexistent_user_xyz"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+        assert response.data["results"] == []
+
+    # ── Ordering tests ────────────────────────────────────────────────
+
+    def test_default_ordering_is_by_name(self):
+        """Without ?ordering= param, results are sorted by name ascending."""
+        alpha_user = UserFactory(
+            username="alpha_admin",
+            first_name="Alpha",
+            email="alpha@example.com",
+            is_active=True,
+        )
+        alpha_ecu = EnterpriseCustomerUserFactory(
+            user_id=alpha_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        EnterpriseCustomerAdminFactory(enterprise_customer_user=alpha_ecu)
+
+        response = self.client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        names = [r["name"] for r in response.data["results"]]
+        # None (pending) sorts first, then Alpha, then Jane
+        assert names == [None, "Alpha", "Jane"]
+
+    def test_ordering_by_email(self):
+        """Results can be ordered by email ascending."""
+        response = self.client.get(self.url, {"ordering": "email"})
+
+        assert response.status_code == status.HTTP_200_OK
+        emails = [r["email"] for r in response.data["results"]]
+        assert emails == sorted(emails)
+
+    def test_ordering_by_email_descending(self):
+        """Results can be ordered by email descending."""
+        response = self.client.get(self.url, {"ordering": "-email"})
+
+        assert response.status_code == status.HTTP_200_OK
+        emails = [r["email"] for r in response.data["results"]]
+        assert emails == sorted(emails, reverse=True)
+
+    def test_ordering_by_status_ascending(self):
+        """Results can be ordered by status ascending."""
+        response = self.client.get(self.url, {"ordering": "status"})
+
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data["results"]
+        assert results[0]["status"] == "Admin"
+        assert results[1]["status"] == "Pending"
+
+    def test_ordering_by_status_descending(self):
+        """Results can be ordered by status descending."""
+        response = self.client.get(self.url, {"ordering": "-status"})
+
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data["results"]
+        assert results[0]["status"] == "Pending"
+        assert results[1]["status"] == "Admin"
+
+    def test_invalid_ordering_field_uses_default(self):
+        """Invalid ordering field is ignored; default ordering applies."""
+        response = self.client.get(self.url, {"ordering": "nonexistent_field"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 2
+
+    def test_search_and_ordering_combined(self):
+        """user_query filtering works together with ordering."""
+        bob_user = UserFactory(
+            username="bob_admin",
+            first_name="Bob",
+            email="bob@example.com",
+            is_active=True,
+        )
+        bob_ecu = EnterpriseCustomerUserFactory(
+            user_id=bob_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        EnterpriseCustomerAdminFactory(enterprise_customer_user=bob_ecu)
+
+        response = self.client.get(
+            self.url,
+            {
+                "user_query": "example.com",
+                "ordering": "-email",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        emails = [r["email"] for r in response.data["results"]]
+        assert emails == sorted(emails, reverse=True)

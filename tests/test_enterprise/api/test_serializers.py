@@ -19,7 +19,6 @@ from django.test import TestCase
 from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
     EnterpriseAdminMemberSerializer,
-    EnterpriseAdminMembersRequestQuerySerializer,
     EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
     EnterpriseCustomerBrandingConfigurationSerializer,
@@ -1213,51 +1212,3 @@ class TestEnterpriseAdminMemberSerializer(TestCase):
         serializer = EnterpriseAdminMemberSerializer(data={"id": 1, "status": "Admin"})
         assert not serializer.is_valid()
         assert "email" in serializer.errors
-
-
-@mark.django_db
-class TestEnterpriseAdminMembersRequestQuerySerializer(TestCase):
-    """
-    Tests for EnterpriseAdminMembersRequestQuerySerializer.
-    """
-
-    def test_defaults(self):
-        serializer = EnterpriseAdminMembersRequestQuerySerializer(data={})
-        assert serializer.is_valid(), serializer.errors
-        assert serializer.validated_data["sort_by"] == "name"
-        assert serializer.validated_data["is_reversed"] is False
-        # user_query is optional, so it may not be present in validated_data
-
-    def test_valid_query_params(self):
-        serializer = EnterpriseAdminMembersRequestQuerySerializer(
-            data={
-                "user_query": "admin",
-                "sort_by": "email",
-                "is_reversed": True,
-            }
-        )
-        assert serializer.is_valid(), serializer.errors
-        assert serializer.validated_data["user_query"] == "admin"
-        assert serializer.validated_data["sort_by"] == "email"
-        assert serializer.validated_data["is_reversed"] is True
-
-    def test_user_query_allows_blank_and_trims(self):
-        serializer = EnterpriseAdminMembersRequestQuerySerializer(
-            data={"user_query": "   "}
-        )
-        assert serializer.is_valid(), serializer.errors
-        assert serializer.validated_data["user_query"] == ""
-
-    def test_invalid_sort_by_fails(self):
-        serializer = EnterpriseAdminMembersRequestQuerySerializer(
-            data={"sort_by": "drop table users;"}
-        )
-        assert not serializer.is_valid()
-        assert "sort_by" in serializer.errors
-
-    def test_invalid_is_reversed_fails(self):
-        serializer = EnterpriseAdminMembersRequestQuerySerializer(
-            data={"is_reversed": "not-a-boolean"}
-        )
-        assert not serializer.is_valid()
-        assert "is_reversed" in serializer.errors

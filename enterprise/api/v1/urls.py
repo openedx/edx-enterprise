@@ -246,9 +246,7 @@ urlpatterns = [
     ),
     re_path(
         r'^(?P<enterprise_uuid>[A-Za-z0-9-]+)/admins$',
-        enterprise_admin_members.EnterpriseAdminMembersViewSet.as_view(
-            {'get': 'get_admin_members'}
-        ),
+        enterprise_admin_members.EnterpriseAdminMembersViewSet.as_view({'get': 'list'}),
         name='enterprise-admin-members',
     ),
 ]
