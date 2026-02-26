@@ -13,7 +13,7 @@ from django.shortcuts import get_object_or_404
 
 from enterprise import models, roles_api
 from enterprise.api.v1.serializers import EnterpriseCustomerAdminSerializer
-from enterprise.constants import ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION
 
 User = get_user_model()
 
@@ -45,9 +45,11 @@ class EnterpriseCustomerAdminViewSet(
     def get_queryset(self):
         """
         Filter queryset to only show records for the admin user.
+        Excludes admins whose EnterpriseCustomerUser has been deactivated.
         """
         return models.EnterpriseCustomerAdmin.objects.filter(
-            enterprise_customer_user__user_fk=self.request.user
+            enterprise_customer_user__user_fk=self.request.user,
+            enterprise_customer_user__active=True,
         )
 
     @action(detail=True, methods=['post'])
@@ -155,3 +157,64 @@ class EnterpriseCustomerAdminViewSet(
 
         serializer = self.get_serializer(admin)
         return Response(serializer.data, status=response_status_code)
+
+    @permission_required(
+        ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+        fn=lambda request, enterprise_customer_uuid, *args, **kwargs: enterprise_customer_uuid,
+    )
+    def delete_admin(self, request, enterprise_customer_uuid=None, admin_pk=None):
+        """
+        Soft delete an EnterpriseCustomerAdmin record.
+        DELETE /api/v1/enterprise-customer/{enterprise_customer_uuid}/admins/{admin_pk}/
+
+        The requesting user must have the ``enterprise_provisioning_admin``
+        role to access this endpoint.
+
+        Removes the enterprise_admin role assignment and deactivates the
+        EnterpriseCustomerUser if the user has no other roles for the enterprise.
+        The ECA record itself is left untouched in the database.
+        """
+        # Validate enterprise customer
+        try:
+            enterprise_customer = models.EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
+        except models.EnterpriseCustomer.DoesNotExist:
+            return Response(
+                {'error': f'EnterpriseCustomer with uuid {enterprise_customer_uuid} does not exist'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Look up admin record
+        try:
+            admin = models.EnterpriseCustomerAdmin.objects.get(pk=admin_pk)
+        except models.EnterpriseCustomerAdmin.DoesNotExist:
+            return Response(
+                {'error': f'EnterpriseCustomerAdmin with id {admin_pk} does not exist'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Verify admin belongs to the given enterprise customer
+        if admin.enterprise_customer_user.enterprise_customer_id != enterprise_customer.uuid:
+            return Response(
+                {'error': 'Admin does not belong to the specified enterprise customer'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Remove enterprise_admin role
+        enterprise_customer_user = admin.enterprise_customer_user
+        user = enterprise_customer_user.user
+        roles_api.delete_admin_role_assignment(user=user, enterprise_customer=enterprise_customer)
+
+        # Check if user has other roles for this enterprise
+        has_other_roles = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=user,
+            enterprise_customer=enterprise_customer,
+        ).exclude(
+            role__name=ENTERPRISE_ADMIN_ROLE,
+        ).exists()
+
+        # If no other roles, deactivate the EnterpriseCustomerUser
+        if not has_other_roles:
+            enterprise_customer_user.active = False
+            enterprise_customer_user.save(update_fields=['active', 'modified'])
+
+        return Response(status=status.HTTP_200_OK)

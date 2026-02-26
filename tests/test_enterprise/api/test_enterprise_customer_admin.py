@@ -16,6 +16,7 @@ from enterprise.constants import (
     SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseCustomerAdmin, SystemWideEnterpriseUserRoleAssignment
+from enterprise.roles_api import assign_admin_role
 from test_utils import APITest
 from test_utils.factories import (
     EnterpriseCustomerFactory,
@@ -292,8 +293,7 @@ class TestCreateAdminByEmailEndpoint(APITest):
 
         response = self.client.post(self.create_admin_by_email_url, data)
 
-        # This should fail due to lack of permissions
-        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED])
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @ddt.data(
         ENTERPRISE_ADMIN_ROLE,
@@ -314,5 +314,249 @@ class TestCreateAdminByEmailEndpoint(APITest):
 
         response = self.client.post(self.create_admin_by_email_url, data)
 
-        # Should fail due to insufficient permissions
-        self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED])
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+@ddt.ddt
+class TestDeleteAdminEndpoint(APITest):
+    """
+    Tests for the delete_admin (soft delete) endpoint.
+    """
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.target_user = UserFactory(email='admin-target@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.target_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.admin = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=self.enterprise_customer_user,
+        )
+        # Assign admin role
+        assign_admin_role(self.target_user, enterprise_customer=self.enterprise_customer)
+
+        self.delete_url = reverse(
+            'enterprise-customer-admin-delete',
+            kwargs={
+                'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+                'admin_pk': str(self.admin.uuid),
+            },
+        )
+        self.list_url = reverse('enterprise-customer-admin-list')
+
+    def test_soft_delete_success(self):
+        """
+        Test that DELETE removes the admin role, deactivates the ECU
+        (when no other roles), and returns 200. The ECA record remains untouched.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        # Remove auto-assigned learner role so ECU gets deactivated
+        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.target_user,
+            enterprise_customer=self.enterprise_customer,
+        ).exclude(role__name=ENTERPRISE_ADMIN_ROLE).delete()
+
+        response = self.client.delete(self.delete_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # ECA record still exists in DB
+        admin = EnterpriseCustomerAdmin.objects.get(pk=self.admin.pk)
+        self.assertIsNotNone(admin)
+
+        # ECU is deactivated
+        self.enterprise_customer_user.refresh_from_db()
+        self.assertFalse(self.enterprise_customer_user.active)
+
+        # Admin role is removed
+        self.assertFalse(
+            SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.target_user,
+                role__name=ENTERPRISE_ADMIN_ROLE,
+                enterprise_customer=self.enterprise_customer,
+            ).exists()
+        )
+
+    def test_deleted_admin_excluded_from_list(self):
+        """
+        Test that soft-deleted admins are excluded from list API responses.
+        The get_queryset filters on enterprise_customer_user__active=True,
+        so a deactivated ECU hides the admin from list results.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        # Remove auto-assigned learner role so ECU gets deactivated on delete
+        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.target_user,
+            enterprise_customer=self.enterprise_customer,
+        ).exclude(role__name=ENTERPRISE_ADMIN_ROLE).delete()
+
+        # Soft delete the admin
+        self.client.delete(self.delete_url)
+
+        # Authenticate as the target user and check list
+        self.client.force_authenticate(user=self.target_user)
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 0)
+
+    def test_admin_role_removed(self):
+        """
+        Test that the enterprise_admin role is removed after soft delete.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        # Verify role exists before delete
+        self.assertTrue(
+            SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.target_user,
+                role__name=ENTERPRISE_ADMIN_ROLE,
+                enterprise_customer=self.enterprise_customer,
+            ).exists()
+        )
+
+        self.client.delete(self.delete_url)
+
+        # Verify role no longer exists
+        self.assertFalse(
+            SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.target_user,
+                role__name=ENTERPRISE_ADMIN_ROLE,
+                enterprise_customer=self.enterprise_customer,
+            ).exists()
+        )
+
+    def test_user_with_other_roles_ecu_stays_active(self):
+        """
+        Test that when a user has other roles (e.g., enterprise_learner),
+        the EnterpriseCustomerUser remains active after soft delete.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        # ECU creation via factory auto-assigns learner role via signal,
+        # so the user already has enterprise_learner in addition to enterprise_admin.
+        self.assertTrue(
+            SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.target_user,
+                enterprise_customer=self.enterprise_customer,
+            ).exclude(role__name=ENTERPRISE_ADMIN_ROLE).exists()
+        )
+
+        self.client.delete(self.delete_url)
+
+        # ECU should remain active because learner role still exists
+        self.enterprise_customer_user.refresh_from_db()
+        self.assertTrue(self.enterprise_customer_user.active)
+
+    def test_user_with_no_other_roles_ecu_deactivated(self):
+        """
+        Test that when a user has no other roles, the EnterpriseCustomerUser
+        is deactivated after soft delete.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        # Remove the auto-assigned learner role so only admin role remains
+        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.target_user,
+            enterprise_customer=self.enterprise_customer,
+        ).exclude(role__name=ENTERPRISE_ADMIN_ROLE).delete()
+
+        # Confirm only admin role exists
+        self.assertFalse(
+            SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.target_user,
+                enterprise_customer=self.enterprise_customer,
+            ).exclude(role__name=ENTERPRISE_ADMIN_ROLE).exists()
+        )
+
+        self.client.delete(self.delete_url)
+
+        # ECU should be deactivated
+        self.enterprise_customer_user.refresh_from_db()
+        self.assertFalse(self.enterprise_customer_user.active)
+
+    def test_delete_admin_permission_required(self):
+        """
+        Test that the endpoint requires the provisioning admin permission.
+        """
+        # Don't set JWT cookie
+        response = self.client.delete(self.delete_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @ddt.data(
+        ENTERPRISE_ADMIN_ROLE,
+        ENTERPRISE_LEARNER_ROLE,
+        ENTERPRISE_OPERATOR_ROLE,
+        SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+    )
+    def test_delete_admin_forbidden_roles(self, role):
+        """
+        Test that roles other than provisioning admin cannot soft delete.
+        """
+        self.set_jwt_cookie(role, ALL_ACCESS_CONTEXT)
+
+        response = self.client.delete(self.delete_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_admin_not_found(self):
+        """
+        Test 404 when admin record does not exist.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        fake_admin_pk = '12345678-1234-5678-1234-567812345678'
+        url = reverse(
+            'enterprise-customer-admin-delete',
+            kwargs={
+                'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+                'admin_pk': fake_admin_pk,
+            },
+        )
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_admin_enterprise_customer_not_found(self):
+        """
+        Test 404 when enterprise customer does not exist.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        fake_uuid = '12345678-1234-5678-1234-567812345678'
+        url = reverse(
+            'enterprise-customer-admin-delete',
+            kwargs={
+                'enterprise_customer_uuid': fake_uuid,
+                'admin_pk': str(self.admin.uuid),
+            },
+        )
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_admin_wrong_enterprise_customer(self):
+        """
+        Test 404 when admin does not belong to the specified enterprise customer.
+        """
+        self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
+
+        other_enterprise = EnterpriseCustomerFactory()
+        url = reverse(
+            'enterprise-customer-admin-delete',
+            kwargs={
+                'enterprise_customer_uuid': str(other_enterprise.uuid),
+                'admin_pk': str(self.admin.uuid),
+            },
+        )
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.6] - 2026-02-20
+---------------------
+* feat:Implement soft delete for admins
+
 [6.6.5] - 2026-02-24
 ---------------------
 * build: remove pinned pip now that pip-tools supports pip 26.0
