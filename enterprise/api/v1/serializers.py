@@ -2375,3 +2375,23 @@ class EnterpriseSSOUserInfoRequestSerializer(serializers.Serializer):
     """
     org_id = serializers.CharField(required=True)
     external_user_id = serializers.CharField(required=True)
+
+
+class EnterpriseAdminMemberSerializer(serializers.Serializer):
+    """
+    Response serializer for enterprise admin members.
+    """
+    id = serializers.IntegerField(source='admin_id')
+    name = serializers.CharField(allow_null=True, required=False)
+    email = serializers.EmailField()
+    invited_date = serializers.DateTimeField(
+        allow_null=True,
+        required=False,
+        format="%b %d, %Y",
+    )
+    joined_date = serializers.DateTimeField(
+        allow_null=True,
+        required=False,
+        format="%b %d, %Y",
+    )
+    status = serializers.CharField()
