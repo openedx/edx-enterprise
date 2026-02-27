@@ -230,7 +230,7 @@ edx-drf-extensions==10.6.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==3.0.0
+edx-opaque-keys[django]==3.1.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ccx-keys
@@ -246,7 +246,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==40.4.0
+faker==40.5.1
     # via factory-boy
 fastavro==1.12.1
     # via
