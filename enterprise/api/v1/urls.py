@@ -249,6 +249,11 @@ urlpatterns = [
         enterprise_admin_members.EnterpriseAdminMembersViewSet.as_view({'get': 'list'}),
         name='enterprise-admin-members',
     ),
+    re_path(
+        r'^enterprise-customer/(?P<enterprise_customer_uuid>[A-Za-z0-9-]+)/admins/(?P<admin_pk>[A-Za-z0-9-]+)/?$',
+        EnterpriseCustomerAdminViewSet.as_view({'delete': 'delete_admin'}),
+        name='enterprise-customer-admin-delete'
+    ),
 ]
 
 urlpatterns += router.urls
