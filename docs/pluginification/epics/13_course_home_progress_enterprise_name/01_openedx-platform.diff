@@ -1,0 +1,25 @@
+diff --git a/lms/djangoapps/course_home_api/progress/views.py b/lms/djangoapps/course_home_api/progress/views.py
+--- a/lms/djangoapps/course_home_api/progress/views.py
++++ b/lms/djangoapps/course_home_api/progress/views.py
+@@ -42,5 +42,5 @@ from openedx.core.lib.api.view_utils import view_auth_classes
+-from openedx.features.enterprise_support.utils import get_enterprise_learner_generic_name
++from edx_django_utils.plugins import pluggable_override
+
+@@ -55,3 +55,15 @@ log = logging.getLogger(__name__)
++
++
++@pluggable_override('OVERRIDE_COURSE_HOME_PROGRESS_USERNAME')
++def obfuscated_username(request, student):
++    """
++    Return an obfuscated username for the student, or None.
++
++    This function can be overridden by an installed plugin via the
++    OVERRIDE_COURSE_HOME_PROGRESS_USERNAME setting to return a generic name
++    for learners who should not have their real username exposed.
++    """
++    return None
++
+
+@@ -207,3 +219,3 @@ class ProgressTabView(RetrieveAPIView):
+-        username = get_enterprise_learner_generic_name(request) or student.username
++        username = obfuscated_username(request, student) or student.username

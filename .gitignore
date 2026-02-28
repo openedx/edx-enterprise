@@ -97,5 +97,5 @@ venv/
 #enterprise/static/enterprise/bundles/
 
 # LLM tools
-CLAUDE.md
+/CLAUDE.md
 .claude/

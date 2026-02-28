@@ -1,0 +1,154 @@
+diff --git a/lms/djangoapps/courseware/decorators.py b/lms/djangoapps/courseware/decorators.py
+new file mode 100644
+--- /dev/null
++++ b/lms/djangoapps/courseware/decorators.py
+@@ -0,0 +1,58 @@
++"""
++Decorators for courseware views.
++"""
++import functools
++
++from django.shortcuts import redirect
++from opaque_keys.edx.keys import CourseKey
++
++from openedx_filters.learning.filters import CoursewareViewRedirectURL
++
++
++def courseware_view_redirect(view_func):
++    """
++    Decorator that calls the CoursewareViewRedirectURL filter before rendering a courseware view.
++
++    If any pipeline step returns a non-empty list of redirect URLs, the user is redirected
++    to the first URL in the list. Otherwise, the original view is rendered normally.
++
++    Usage::
++
++        @courseware_view_redirect
++        def my_view(request, course_id, ...):
++            ...
++
++    Works with both function-based views and ``method_decorator``-wrapped class-based views.
++    The decorator extracts the ``course_id`` or ``course_key`` from the view arguments.
++    """
++    @functools.wraps(view_func)
++    def _wrapper(request_or_self, *args, **kwargs):
++        # Support both function views (request as first arg) and method views
++        # (self as first arg, request as second arg).
++        if hasattr(request_or_self, 'method'):
++            # Function-based view: first arg is request
++            request = request_or_self
++        else:
++            # Class-based view via method_decorator: first arg is self, second is request
++            request = args[0] if args else kwargs.get('request')
++
++        course_id = kwargs.get('course_id') or (args[0] if args and not hasattr(request_or_self, 'method') else None)
++        try:
++            course_key = CourseKey.from_string(str(course_id)) if course_id else None
++        except Exception:  # pylint: disable=broad-except
++            course_key = None
+
++        if course_key is not None:
++            redirect_urls, _request, _course_key = CoursewareViewRedirectURL.run_filter(
++                redirect_urls=[],
++                request=request,
++                course_key=course_key,
++            )
++            if redirect_urls:
++                return redirect(redirect_urls[0])
++
++        return view_func(request_or_self, *args, **kwargs)
++
++    return _wrapper
+diff --git a/lms/djangoapps/courseware/views/index.py b/lms/djangoapps/courseware/views/index.py
+--- a/lms/djangoapps/courseware/views/index.py
++++ b/lms/djangoapps/courseware/views/index.py
+@@ -26,7 +26,7 @@ from openedx.features.course_experience import COURSE_ENABLE_UNENROLLED_ACCESS_
+-from openedx.features.enterprise_support.api import data_sharing_consent_required
++from lms.djangoapps.courseware.decorators import courseware_view_redirect
+
+ from ..block_render import get_block_for_descriptor
+@@ -44,7 +44,7 @@ class CoursewareIndex(View):
+     @method_decorator(ensure_csrf_cookie)
+     @method_decorator(cache_control(no_cache=True, no_store=True, must_revalidate=True))
+     @method_decorator(ensure_valid_course_key)
+-    @method_decorator(data_sharing_consent_required)
++    @method_decorator(courseware_view_redirect)
+     def get(self, request, course_id, section=None, subsection=None, position=None):
+diff --git a/lms/djangoapps/course_wiki/middleware.py b/lms/djangoapps/course_wiki/middleware.py
+--- a/lms/djangoapps/course_wiki/middleware.py
++++ b/lms/djangoapps/course_wiki/middleware.py
+@@ -15,7 +15,7 @@ from lms.djangoapps.courseware.access import has_access
+ from lms.djangoapps.courseware.courses import get_course_overview_with_access, get_course_with_access
+ from openedx.core.lib.request_utils import course_id_from_url
+-from openedx.features.enterprise_support.api import get_enterprise_consent_url
++from openedx_filters.learning.filters import CoursewareViewRedirectURL
+ from common.djangoapps.student.models import CourseEnrollment
+
+@@ -98,9 +98,12 @@ class WikiAccessMiddleware(MiddlewareMixin):
+-        consent_url = get_enterprise_consent_url(
+-            request, str(course_id), source='WikiAccessMiddleware'
++        redirect_urls, _, _ = CoursewareViewRedirectURL.run_filter(
++            redirect_urls=[],
++            request=request,
++            course_key=course_id,
+         )
+-        if consent_url:
+-            return redirect(consent_url)
++        if redirect_urls:
++            return redirect(redirect_urls[0])
+diff --git a/lms/djangoapps/courseware/access_utils.py b/lms/djangoapps/courseware/access_utils.py
+--- a/lms/djangoapps/courseware/access_utils.py
++++ b/lms/djangoapps/courseware/access_utils.py
+@@ -9,7 +9,6 @@ from crum import get_current_request
+ from django.conf import settings
+-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
+ from pytz import UTC
+
+ from common.djangoapps.student.models import CourseEnrollment
+@@ -70,22 +69,15 @@ def _adjust_start_date_for_beta_testers(user, descriptor, course_key=None):
+
+-def enterprise_learner_enrolled(request, user, course_key):
+-    """
+-    Check if the learner is enrolled via an enterprise and should be redirected
+-    to the enterprise portal.
+-    """
+-    from openedx.features.enterprise_support.api import enterprise_customer_from_session_or_learner_data
+-    enterprise_customer = enterprise_customer_from_session_or_learner_data(request)
+-    if not enterprise_customer:
+-        return False
+-    return EnterpriseCustomerUser.objects.filter(
+-        user_id=user.id,
+-        enterprise_customer=enterprise_customer['uuid'],
+-    ).exists()
+-
+-
+-def check_data_sharing_consent(course_id):
+-    """
+-    Return the consent URL if the learner needs to consent, else None.
+-    """
+-    from openedx.features.enterprise_support.api import get_enterprise_consent_url
+-    request = get_current_request()
+-    return get_enterprise_consent_url(request, str(course_id)) if request else None
++def _get_courseware_redirect_url(request, course_key):
++    """
++    Return the first courseware redirect URL provided by plugins, or None.
++    """
++    from openedx_filters.learning.filters import CoursewareViewRedirectURL
++    redirect_urls, _, _ = CoursewareViewRedirectURL.run_filter(
++        redirect_urls=[], request=request, course_key=course_key
++    )
++    return redirect_urls[0] if redirect_urls else None
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,0 +1,0 @@
+ OPEN_EDX_FILTERS_CONFIG = {
+     ...
++    "org.openedx.learning.courseware.view.redirect_url.requested.v1": {
++        "fail_silently": True,
++        "pipeline": [
++            "enterprise.filters.courseware.ConsentRedirectStep",
++            "enterprise.filters.courseware.LearnerPortalRedirectStep",
++        ],
++    },
+ }

@@ -1,0 +1,152 @@
+diff --git a/openedx/core/djangoapps/user_authn/views/login_form.py b/openedx/core/djangoapps/user_authn/views/login_form.py
+--- a/openedx/core/djangoapps/user_authn/views/login_form.py
++++ b/openedx/core/djangoapps/user_authn/views/login_form.py
+@@ -29,12 +29,8 @@ from openedx.core.djangoapps.user_authn.views.password_reset import get_password
+ from openedx.core.djangoapps.user_authn.views.registration_form import RegistrationFormFactory
+ from openedx.core.djangoapps.user_authn.views.utils import third_party_auth_context
+ from openedx.core.djangoapps.user_authn.toggles import is_require_third_party_auth_enabled
+-from openedx.features.enterprise_support.api import enterprise_customer_for_request, enterprise_enabled
+-from openedx.features.enterprise_support.utils import (
+-    get_enterprise_slug_login_url,
+-    handle_enterprise_cookies_for_logistration,
+-    update_logistration_context_for_enterprise
+-)
++from openedx_filters.learning.filters import LogistrationContextRequested
+ from common.djangoapps.student.helpers import get_next_url_for_login_page
+ from common.djangoapps.third_party_auth import pipeline
+ from common.djangoapps.third_party_auth.decorators import xframe_allow_whitelisted
+@@ -56,10 +52,6 @@ def _apply_third_party_auth_overrides(request, form_desc):
+     if third_party_auth.is_enabled():
+         running_pipeline = third_party_auth.pipeline.get(request)
+         if running_pipeline:
+             current_provider = third_party_auth.provider.Registry.get_from_pipeline(running_pipeline)
+-            if current_provider and enterprise_customer_for_request(request):
+-                pipeline_kwargs = running_pipeline.get('kwargs')
+-                details = pipeline_kwargs.get('details')
+-                email = details.get('email', '')
+-                form_desc.override_field_properties(
+-                    "email",
+-                    default=email,
+-                    restrictions={"readonly": "readonly"} if email else {
+-                        "min_length": accounts.EMAIL_MIN_LENGTH,
+-                        "max_length": accounts.EMAIL_MAX_LENGTH,
+-                    }
+-                )
++            if current_provider:
++                pass  # SSO-specific form overrides are handled by filter pipeline steps.
+@@ -257,15 +249,12 @@ def login_and_registration_form(request, initial_mode="login"):
+
+-    enterprise_customer = enterprise_customer_for_request(request)
+-
+-    if should_redirect_to_authn_microfrontend() and \
+-            not enterprise_customer and \
+-            not tpa_hint_provider and \
+-            not saml_provider:
++    if should_redirect_to_authn_microfrontend() and not tpa_hint_provider and not saml_provider:
+         if request.user.is_authenticated and redirect_to:
+             return redirect(redirect_to)
+         query_params = request.GET.urlencode()
+         url_path = '/{}{}'.format(
+             initial_mode,
+             '?' + query_params if query_params else ''
+         )
+         return redirect(settings.AUTHN_MICROFRONTEND_URL + url_path)
+
+@@ -286,7 +275,6 @@ def login_and_registration_form(request, initial_mode="login"):
+         context = {
+             'data': {
+                 'login_redirect_url': redirect_to,
+                 'initial_mode': initial_mode,
+                 'third_party_auth': third_party_auth_context(request, redirect_to, third_party_auth_hint),
+                 'third_party_auth_hint': third_party_auth_hint or '',
+                 'platform_name': configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
+                 'support_link': configuration_helpers.get_value('SUPPORT_SITE_LINK', settings.SUPPORT_SITE_LINK),
+                 'password_reset_support_link': configuration_helpers.get_value(
+                     'PASSWORD_RESET_SUPPORT_LINK', settings.PASSWORD_RESET_SUPPORT_LINK
+                 ) or settings.SUPPORT_SITE_LINK,
+                 'account_activation_messages': account_activation_messages,
+                 'account_recovery_messages': account_recovery_messages,
+                 'login_form_desc': json.loads(form_descriptions['login']),
+                 'registration_form_desc': json.loads(form_descriptions['registration']),
+                 'password_reset_form_desc': json.loads(form_descriptions['password_reset']),
+                 'account_creation_allowed': configuration_helpers.get_value(
+                     'ALLOW_PUBLIC_ACCOUNT_CREATION', settings.FEATURES.get('ALLOW_PUBLIC_ACCOUNT_CREATION', True)),
+                 'register_links_allowed': settings.FEATURES.get('SHOW_REGISTRATION_LINKS', True),
+                 'is_account_recovery_feature_enabled': is_secondary_email_feature_enabled(),
+-                'enterprise_slug_login_url': get_enterprise_slug_login_url(),
+-                'is_enterprise_enable': enterprise_enabled(),
+                 'is_require_third_party_auth_enabled': is_require_third_party_auth_enabled(),
+                 'enable_coppa_compliance': settings.ENABLE_COPPA_COMPLIANCE,
+                 'edx_user_info_cookie_name': settings.EDXMKTG_USER_INFO_COOKIE_NAME,
+             },
+             'login_redirect_url': redirect_to,
+             'responsive': True,
+             'allow_iframing': True,
+             'disable_courseware_js': True,
+             'combined_login_and_register': True,
+             'disable_footer': not configuration_helpers.get_value(
+                 'ENABLE_COMBINED_LOGIN_REGISTRATION_FOOTER',
+                 settings.FEATURES['ENABLE_COMBINED_LOGIN_REGISTRATION_FOOTER']
+             ),
+         }
+
+-    update_logistration_context_for_enterprise(request, context, enterprise_customer)
+-
++    context, _ = LogistrationContextRequested.run_filter(context=context, request=request)
+     response = render_to_response('student_account/login_and_register.html', context)
+-    handle_enterprise_cookies_for_logistration(request, response, context)
+-
+     return response
+diff --git a/openedx/core/djangoapps/user_authn/views/login.py b/openedx/core/djangoapps/user_authn/views/login.py
+--- a/openedx/core/djangoapps/user_authn/views/login.py
++++ b/openedx/core/djangoapps/user_authn/views/login.py
+@@ -60,8 +60,7 @@ from openedx.core.djangoapps.user_authn.views.utils import third_party_auth_con
+ from openedx.core.djangoapps.user_authn.toggles import is_require_third_party_auth_enabled
+-from openedx.features.enterprise_support.api import activate_learner_enterprise, get_enterprise_learner_data_from_api
++from openedx_filters.learning.filters import PostLoginRedirectURLRequested
+ from common.djangoapps.student.helpers import get_next_url_for_login_page
+@@ -478,28 +477,0 @@ def login_user(request):
+-def enterprise_selection_page(request, user, next_url):
+-    """
+-    Updates redirect url to enterprise selection page if user is associated
+-    with multiple enterprises otherwise return the next url.
+-    """
+-    response = get_enterprise_learner_data_from_api(user)
+-    if len(response) > 1:
+-        redirect_url = reverse("enterprise_select_active") + "/?success_url=" + urllib.parse.quote(next_url)
+-        if next_url:
+-            try:
+-                enterprise_in_url = re.search(UUID4_REGEX, next_url).group(0)
+-                for enterprise in response:
+-                    if enterprise_in_url == str(enterprise["enterprise_customer"]["uuid"]):
+-                        is_activated_successfully = activate_learner_enterprise(request, user, enterprise_in_url)
+-                        if is_activated_successfully:
+-                            redirect_url = next_url
+-                            break
+-            except AttributeError:
+-                pass
+-        return redirect_url
+-    return next_url
+-
+@@ -648,7 +620,7 @@ def _do_third_party_auth(request):
+-                root_url, enterprise_selection_page(request, possibly_authenticated_user, finish_auth_url or next_url)
++                root_url, PostLoginRedirectURLRequested.run_filter(
++                    redirect_url='',
++                    user=possibly_authenticated_user,
++                    next_url=finish_auth_url or next_url,
++                ) or finish_auth_url or next_url
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,6 +1,8 @@ OPEN_EDX_FILTERS_CONFIG = {
+ OPEN_EDX_FILTERS_CONFIG = {
+     # ... existing filter entries ...
++    "org.openedx.learning.logistration.context.requested.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.logistration.LogistrationContextEnricher"],
++    },
++    "org.openedx.learning.auth.post_login.redirect_url.requested.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.logistration.PostLoginEnterpriseRedirect"],
++    },
+ }

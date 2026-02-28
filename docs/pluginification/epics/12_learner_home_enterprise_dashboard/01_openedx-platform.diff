@@ -1,0 +1,28 @@
+diff --git a/lms/djangoapps/learner_home/views.py b/lms/djangoapps/learner_home/views.py
+--- a/lms/djangoapps/learner_home/views.py
++++ b/lms/djangoapps/learner_home/views.py
+@@ -63,9 +63,7 @@ from edx_django_utils.monitoring import function_trace
+-from openedx.features.enterprise_support.api import (
+-    enterprise_customer_from_session_or_learner_data,
+-    get_enterprise_learner_data_from_db,
+-)
++from edx_django_utils.plugins import pluggable_override
+
+@@ -211,16 +209,7 @@ class LearnerHomeFragmentView(View):
++@pluggable_override('OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER')
+ @function_trace("get_enterprise_customer")
+ def get_enterprise_customer(user, request, is_masquerading):
+     """
+-    If we are not masquerading, try to load the enterprise learner from session data,
+-    falling back to the db. If masquerading, load directly from db.
++    Return the enterprise customer dict for the given user, or None.
++
++    This function can be overridden by an installed plugin via the
++    OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER setting.
+     """
+-    if is_masquerading:
+-        learner_data = get_enterprise_learner_data_from_db(user)
+-        return learner_data[0]["enterprise_customer"] if learner_data else None
+-    else:
+-        return enterprise_customer_from_session_or_learner_data(request)
++    return None

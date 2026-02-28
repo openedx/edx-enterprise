@@ -1,0 +1,56 @@
+diff --git a/common/djangoapps/student/views/dashboard.py b/common/djangoapps/student/views/dashboard.py
+--- a/common/djangoapps/student/views/dashboard.py
++++ b/common/djangoapps/student/views/dashboard.py
+@@ -51,10 +51,6 @@ from openedx_filters.learning.filters import DashboardRenderStarted
+-from openedx.features.enterprise_support.api import (
+-    get_dashboard_consent_notification,
+-    get_enterprise_learner_portal_context,
+-)
+-from openedx.features.enterprise_support.utils import is_enterprise_learner
+
+@@ -618,5 +614,1 @@ def student_dashboard(request):
+-    enterprise_message = get_dashboard_consent_notification(request, user, course_enrollments)
++    enterprise_message = ''
+@@ -800,5 +796,1 @@ def student_dashboard(request):
+         context = {
+             ...
+-            'enterprise_message': enterprise_message,
+-            'consent_required_courses': set(),  # populated by enterprise pipeline step
++            'enterprise_message': enterprise_message,
+         }
+
+@@ -852,9 +848,0 @@ def student_dashboard(request):
+-        'is_enterprise_user': is_enterprise_learner(user),
+-    }
+-    # Include enterprise learner portal metadata and messaging
+-    enterprise_learner_portal_context = get_enterprise_learner_portal_context(request)
+-    context.update(enterprise_learner_portal_context)
+diff --git a/common/djangoapps/student/views/management.py b/common/djangoapps/student/views/management.py
+--- a/common/djangoapps/student/views/management.py
++++ b/common/djangoapps/student/views/management.py
+@@ -67,5 +67,1 @@ from openedx.core.djangoapps.user_api.accounts import EMAIL_MAX_LENGTH
+-from openedx.features.enterprise_support.utils import is_enterprise_learner
+
+@@ -210,4 +206,1 @@ def create_account_with_params(request, params):
+-        'is_enterprise_learner': is_enterprise_learner(user),
+
+@@ -683,5 +679,3 @@ def account_registration_form_view(request):
+-    redirect_url = get_next_url_for_login_page(request)
+-    if redirect_url and is_enterprise_learner(request.user):
+-        return redirect(redirect_url)
+-    return redirect('dashboard')
++    redirect_url = get_next_url_for_login_page(request)
++    if redirect_url:
++        return redirect(redirect_url)
++    return redirect('dashboard')
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,0 +1,0 @@
+ OPEN_EDX_FILTERS_CONFIG = {
+     # ... existing filter entries ...
++    "org.openedx.learning.dashboard.render.started.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.dashboard.DashboardContextEnricher"],
++    },
+ }

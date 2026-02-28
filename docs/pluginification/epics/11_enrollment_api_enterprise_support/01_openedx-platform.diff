@@ -1,0 +1,49 @@
+diff --git a/openedx/core/djangoapps/enrollments/views.py b/openedx/core/djangoapps/enrollments/views.py
+--- a/openedx/core/djangoapps/enrollments/views.py
++++ b/openedx/core/djangoapps/enrollments/views.py
+@@ -60,8 +60,4 @@ from openedx.core.djangoapps.user_api.preferences.api import update_email_opt_i
+-from openedx.features.enterprise_support.api import (
+-    EnterpriseApiServiceClient,
+-    ConsentApiServiceClient,
+-    enterprise_enabled,
+-)
+
+@@ -773,30 +769,0 @@ class EnrollmentView(APIView):
+-            explicit_linked_enterprise = request.data.get("linked_enterprise_customer")
+-            if explicit_linked_enterprise and has_api_key_permissions and enterprise_enabled():
+-                enterprise_api_client = EnterpriseApiServiceClient()
+-                try:
+-                    enterprise_api_client.post_enterprise_course_enrollment(
+-                        username,
+-                        str(course_id),
+-                        consent_granted=True,
+-                    )
+-                except Exception:  # pylint: disable=broad-except
+-                    log.exception(
+-                        "Failed to post enterprise course enrollment for user %s in course %s.",
+-                        username,
+-                        course_id,
+-                    )
+-                try:
+-                    ConsentApiServiceClient().provide_consent(
+-                        username=username,
+-                        course_id=str(course_id),
+-                        enterprise_customer_uuid=explicit_linked_enterprise,
+-                    )
+-                except Exception:  # pylint: disable=broad-except
+-                    log.exception(
+-                        "Failed to provide enterprise consent for user %s in course %s.",
+-                        username,
+-                        course_id,
+-                    )
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,0 +1,0 @@
+ OPEN_EDX_FILTERS_CONFIG = {
+     # ... existing filter entries ...
++    "org.openedx.learning.course.enrollment.started.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor"],
++    },
+ }

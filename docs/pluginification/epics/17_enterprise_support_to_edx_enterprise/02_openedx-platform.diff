@@ -1,0 +1,11 @@
+diff --git a/openedx/features/enterprise_support/ b/openedx/features/enterprise_support/
+deleted file mode 100644
+--- a/openedx/features/enterprise_support/
++++ /dev/null
+@@ -1 +0,0 @@
+-# Entire directory deleted. All contents migrated to enterprise/platform_support/ in edx-enterprise.
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -815,5 +815,1 @@ INSTALLED_APPS = [
+-    'openedx.features.enterprise_support.apps.EnterpriseSupportConfig',

@@ -1,0 +1,160 @@
+diff --git a/enterprise/filters/courseware.py b/enterprise/filters/courseware.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/filters/courseware.py
+@@ -0,0 +1,90 @@
++"""
++Pipeline steps for courseware view redirect URL determination.
++"""
++from openedx_filters.filters import PipelineStep
++
++
++class ConsentRedirectStep(PipelineStep):
++    """
++    Appends a data-sharing consent redirect URL when the user has not yet consented.
++
++    This step is intended to be registered as a pipeline step for the
++    ``org.openedx.learning.courseware.view.redirect_url.requested.v1`` filter.
++
++    If the user is required to grant data-sharing consent before accessing the course,
++    the consent URL is appended to ``redirect_urls``.
++    """
++
++    def run_filter(self, redirect_urls, request, course_key):  # pylint: disable=arguments-differ
++        """
++        Append consent redirect URL when data-sharing consent is required.
++
++        Arguments:
++            redirect_urls (list): current list of redirect URLs.
++            request (HttpRequest): the current Django HTTP request.
++            course_key (CourseKey): the course key for the view being accessed.
++
++        Returns:
++            dict: updated pipeline data with ``redirect_urls`` possibly extended.
++        """
++        # Deferred import — will be replaced with internal path in epic 17.
++        from openedx.features.enterprise_support.api import get_enterprise_consent_url
++
++        consent_url = get_enterprise_consent_url(request, str(course_key))
++        if consent_url:
++            redirect_urls = list(redirect_urls) + [consent_url]
++        return {"redirect_urls": redirect_urls, "request": request, "course_key": course_key}
++
++
++class LearnerPortalRedirectStep(PipelineStep):
++    """
++    Appends a learner portal redirect URL when the learner is enrolled via an enterprise portal.
++
++    This step is intended to be registered as a pipeline step for the
++    ``org.openedx.learning.courseware.view.redirect_url.requested.v1`` filter.
++
++    If the learner's current enterprise requires courseware access through the learner portal,
++    the portal redirect URL is appended to ``redirect_urls``.
++    """
++
++    def run_filter(self, redirect_urls, request, course_key):  # pylint: disable=arguments-differ
++        """
++        Append learner portal redirect URL when the learner is enrolled via enterprise portal.
++
++        Arguments:
++            redirect_urls (list): current list of redirect URLs.
++            request (HttpRequest): the current Django HTTP request.
++            course_key (CourseKey): the course key for the view being accessed.
++
++        Returns:
++            dict: updated pipeline data with ``redirect_urls`` possibly extended.
++        """
++        # Deferred import — will be replaced with internal path in epic 17.
++        from openedx.features.enterprise_support.api import (
++            enterprise_customer_from_session_or_learner_data,
++        )
++        from enterprise.models import EnterpriseCustomerUser
++
++        enterprise_customer = enterprise_customer_from_session_or_learner_data(request)
++        if enterprise_customer:
++            user = request.user
++            is_enrolled_via_portal = EnterpriseCustomerUser.objects.filter(
++                user_id=user.id,
++                enterprise_customer__uuid=enterprise_customer.get('uuid'),
++            ).exists()
++            if is_enrolled_via_portal:
++                portal_url = enterprise_customer.get('learner_portal_url')
++                if portal_url:
++                    redirect_urls = list(redirect_urls) + [portal_url]
++        return {"redirect_urls": redirect_urls, "request": request, "course_key": course_key}
+diff --git a/tests/filters/test_courseware.py b/tests/filters/test_courseware.py
+new file mode 100644
+--- /dev/null
++++ b/tests/filters/test_courseware.py
+@@ -0,0 +1,70 @@
++"""
++Tests for enterprise.filters.courseware pipeline steps.
++"""
++from unittest.mock import MagicMock, patch
++
++from django.test import TestCase
++
++from enterprise.filters.courseware import ConsentRedirectStep, LearnerPortalRedirectStep
++
++
++class TestConsentRedirectStep(TestCase):
++    """Tests for ConsentRedirectStep."""
++
++    def _make_step(self):
++        return ConsentRedirectStep(
++            "org.openedx.learning.courseware.view.redirect_url.requested.v1", []
++        )
++
++    @patch('enterprise.filters.courseware.get_enterprise_consent_url', return_value='/consent/')
++    def test_appends_consent_url_when_required(self, mock_get_url):
++        """Consent URL is appended when get_enterprise_consent_url returns a URL."""
++        step = self._make_step()
++        request = MagicMock()
++        course_key = MagicMock()
++        course_key.__str__ = lambda s: 'course-v1:org+course+run'
++        result = step.run_filter(redirect_urls=[], request=request, course_key=course_key)
++        self.assertEqual(result['redirect_urls'], ['/consent/'])
++
++    @patch('enterprise.filters.courseware.get_enterprise_consent_url', return_value=None)
++    def test_does_not_append_when_no_consent_required(self, mock_get_url):
++        """redirect_urls is unchanged when consent is not required."""
++        step = self._make_step()
++        request = MagicMock()
++        course_key = MagicMock()
++        course_key.__str__ = lambda s: 'course-v1:org+course+run'
++        result = step.run_filter(redirect_urls=[], request=request, course_key=course_key)
++        self.assertEqual(result['redirect_urls'], [])
++
++
++class TestLearnerPortalRedirectStep(TestCase):
++    """Tests for LearnerPortalRedirectStep."""
++
++    def _make_step(self):
++        return LearnerPortalRedirectStep(
++            "org.openedx.learning.courseware.view.redirect_url.requested.v1", []
++        )
+
++    @patch('enterprise.filters.courseware.EnterpriseCustomerUser.objects')
++    @patch(
++        'enterprise.filters.courseware.enterprise_customer_from_session_or_learner_data',
++        return_value={'uuid': 'abc-123', 'learner_portal_url': '/portal/'},
++    )
++    def test_appends_portal_url_for_enrolled_learner(self, mock_customer, mock_ecu_objects):
++        """Portal URL is appended when learner is enrolled via enterprise portal."""
++        mock_ecu_objects.filter.return_value.exists.return_value = True
++        step = self._make_step()
++        request = MagicMock()
++        request.user.id = 42
++        result = step.run_filter(redirect_urls=[], request=request, course_key=MagicMock())
++        self.assertEqual(result['redirect_urls'], ['/portal/'])
++
++    @patch(
++        'enterprise.filters.courseware.enterprise_customer_from_session_or_learner_data',
++        return_value=None,
++    )
++    def test_does_not_append_when_no_enterprise_customer(self, mock_customer):
++        """redirect_urls is unchanged when user has no enterprise customer."""
++        step = self._make_step()
++        request = MagicMock()
++        result = step.run_filter(redirect_urls=[], request=request, course_key=MagicMock())
++        self.assertEqual(result['redirect_urls'], [])

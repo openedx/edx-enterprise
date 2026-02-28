@@ -1,0 +1,528 @@
+diff --git a/enterprise/apps.py b/enterprise/apps.py
+--- a/enterprise/apps.py
++++ b/enterprise/apps.py
+@@ -1,6 +1,8 @@
+ """
+ Enterprise Django application initialization.
+ """
+
+ from django.apps import AppConfig, apps
+ from django.conf import settings
+
+ from enterprise.constants import USER_POST_SAVE_DISPATCH_UID
+
+
+ class EnterpriseConfig(AppConfig):
+     """
+     Configuration for the enterprise Django application.
+     """
+
+     name = "enterprise"
++
++    # Plugin app configuration for the openedx plugin framework.
++    # Follows the naming convention established by openedx/core/djangoapps/password_policy/.
++    plugin_app = {
++        "settings_config": {
++            "lms.djangoapp": {
++                "production": {"relative_path": "settings.production"},
++                "common": {"relative_path": "settings.common"},
++                "test": {"relative_path": "settings.test"},
++            },
++        },
++        "url_config": {
++            "lms.djangoapp": {
++                "namespace": "enterprise",
++                "regex": r"^enterprise/",
++                "relative_path": "urls",
++            },
++        },
++    }
++
+     valid_image_extensions = [".png", ]
+diff --git a/enterprise/settings/__init__.py b/enterprise/settings/__init__.py
+--- a/enterprise/settings/__init__.py
++++ b/enterprise/settings/__init__.py
+@@ -0,0 +1,3 @@
++"""
++Settings package for edx-enterprise's enterprise app plugin configuration.
++"""
+diff --git a/enterprise/settings/common.py b/enterprise/settings/common.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/settings/common.py
+@@ -0,0 +1,157 @@
++"""
++Common plugin settings for the enterprise Django app.
++
++This module is loaded by the openedx plugin framework during LMS startup for the
++'common' settings type. It populates enterprise-specific settings as defaults so
++that operator-supplied values always take precedence.
++"""
++
++
++def plugin_settings(settings):
++    """
++    Inject enterprise-specific settings into the LMS Django settings.
++
++    Called by the openedx plugin framework (edx-django-utils PluginSettings) for each
++    settings environment. Uses setdefault so operator-configured values are never
++    overwritten.
++    """
++    # -------------------------------------------------------------------------
++    # Derived base URL
++    # -------------------------------------------------------------------------
++    lms_root = getattr(settings, 'LMS_ROOT_URL', 'http://localhost:8000')
++
++    # -------------------------------------------------------------------------
++    # Core ENTERPRISE_* settings defaults (previously in lms/envs/common.py)
++    # -------------------------------------------------------------------------
++    settings.setdefault('ENABLE_ENTERPRISE_INTEGRATION', False)
++    settings.setdefault('ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION', False)
++
++    settings.setdefault(
++        'ENTERPRISE_PUBLIC_ENROLLMENT_API_URL',
++        f'{lms_root}/api/enrollment/v1/',
++    )
++    settings.setdefault('ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
++    settings.setdefault('ENTERPRISE_SUPPORT_URL', '')
++    settings.setdefault('ENTERPRISE_CUSTOMER_SUCCESS_EMAIL', 'customersuccess@edx.org')
++    settings.setdefault('ENTERPRISE_INTEGRATIONS_EMAIL', 'enterprise-integrations@edx.org')
++    settings.setdefault(
++        'ENTERPRISE_API_URL',
++        f'{lms_root}/enterprise/api/v1/',
++    )
++    settings.setdefault('ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)
++    settings.setdefault('ENTERPRISE_ALL_SERVICE_USERNAMES', [
++        'ecommerce_worker',
++        'enterprise_worker',
++    ])
++    settings.setdefault(
++        'ENTERPRISE_PLATFORM_WELCOME_TEMPLATE',
++        'Welcome to {platform_name}.',
++    )
++    settings.setdefault(
++        'ENTERPRISE_SPECIFIC_BRANDED_WELCOME_TEMPLATE',
++        'Welcome, {username}, to {platform_name} — powered by {enterprise_name}.',
++    )
++    settings.setdefault(
++        'ENTERPRISE_PROXY_LOGIN_WELCOME_TEMPLATE',
++        'Welcome to {platform_name} via {enterprise_name}.',
++    )
++    settings.setdefault('ENTERPRISE_TAGLINE', '')
++    settings.setdefault('ENTERPRISE_EXCLUDED_REGISTRATION_FIELDS', set())
++    settings.setdefault('ENTERPRISE_VSF_UUID', None)
++    settings.setdefault('ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS', [])
+
++    # -------------------------------------------------------------------------
++    # Middleware
++    # -------------------------------------------------------------------------
++    _middleware = 'enterprise.middleware.EnterpriseLanguagePreferenceMiddleware'
++    if hasattr(settings, 'MIDDLEWARE') and _middleware not in settings.MIDDLEWARE:
++        settings.MIDDLEWARE = list(settings.MIDDLEWARE) + [_middleware]
++
++    # -------------------------------------------------------------------------
++    # SYSTEM_WIDE_ROLE_CLASSES — enterprise role mappings
++    # -------------------------------------------------------------------------
++    from enterprise.constants import (  # pylint: disable=import-outside-toplevel
++        ENTERPRISE_ADMIN_ROLE,
++        ENTERPRISE_CATALOG_ADMIN_ROLE,
++        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
++        ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
++        ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
++        ENTERPRISE_LEARNER_ROLE,
++        ENTERPRISE_OPERATOR_ROLE,
++        ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
++        ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
++        PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
++        PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
++        SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
++        DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
++    )
++
++    enterprise_role_mappings = {
++        ENTERPRISE_LEARNER_ROLE: [
++            DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
++            'enterprise.rules.HasLearnerAccess',
++        ],
++        ENTERPRISE_ADMIN_ROLE: [
++            'enterprise.rules.HasAdminAccess',
++        ],
++        ENTERPRISE_CATALOG_ADMIN_ROLE: [
++            'enterprise.rules.HasCatalogAdminAccess',
++        ],
++        ENTERPRISE_DASHBOARD_ADMIN_ROLE: [
++            'enterprise.rules.HasDashboardAdminAccess',
++        ],
++        ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE: [
++            'enterprise.rules.HasEnrollmentApiAdminAccess',
++        ],
++        ENTERPRISE_FULFILLMENT_OPERATOR_ROLE: [
++            'enterprise.rules.HasFulfillmentOperatorAccess',
++        ],
++        ENTERPRISE_OPERATOR_ROLE: [
++            'enterprise.rules.HasOperatorAccess',
++        ],
++        ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE: [
++            'enterprise.rules.HasReportingConfigAdminAccess',
++        ],
++        ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE: [
++            'enterprise.rules.HasSSOOrchestratorOperatorAccess',
++        ],
++        SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE: [
++            'enterprise.rules.HasProvisioningAdminAccess',
++        ],
++        PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE: [
++            'enterprise.rules.HasProvisioningCustomerAdminAccess',
++        ],
++        PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE: [
++            'enterprise.rules.HasProvisioningPendingCustomerAdminAccess',
++        ],
++    }
++
++    if hasattr(settings, 'SYSTEM_WIDE_ROLE_CLASSES'):
++        for role, classes in enterprise_role_mappings.items():
++            if role not in settings.SYSTEM_WIDE_ROLE_CLASSES:
++                settings.SYSTEM_WIDE_ROLE_CLASSES[role] = classes
++
++    # -------------------------------------------------------------------------
++    # SOCIAL_AUTH_PIPELINE — enterprise TPA pipeline stages (epic 07)
++    # -------------------------------------------------------------------------
++    enterprise_pipeline_steps = [
++        'enterprise.tpa_pipeline.enterprise_associate_by_email',
++    ]
++    if hasattr(settings, 'SOCIAL_AUTH_PIPELINE'):
++        existing = list(settings.SOCIAL_AUTH_PIPELINE)
++        for step in enterprise_pipeline_steps:
++            if step not in existing:
++                existing.append(step)
++        settings.SOCIAL_AUTH_PIPELINE = existing
++
++    # -------------------------------------------------------------------------
++    # OPEN_EDX_FILTERS_CONFIG — register enterprise filter pipeline steps
++    # All filter types used by the enterprise plugin are registered here.
++    # This replaces the per-filter entries previously defined in lms/envs/common.py
++    # (removed in epic 18's openedx-platform PR).
++    # -------------------------------------------------------------------------
++    _enterprise_filter_steps = {
++        'org.openedx.learning.grade.context.requested.v1': [
++            'enterprise.filters.grades.GradeEventContextEnricher',
++        ],
++        'org.openedx.learning.account.settings.read_only_fields.requested.v1': [
++            'enterprise.filters.accounts.AccountSettingsReadOnlyFieldsStep',
++        ],
++        'org.openedx.learning.discount.eligibility.check.requested.v1': [
++            'enterprise.filters.discounts.DiscountEligibilityStep',
++        ],
++        'org.openedx.learning.courseware.view.redirect_url.requested.v1': [
++            'enterprise.filters.courseware.ConsentRedirectStep',
++            'enterprise.filters.courseware.LearnerPortalRedirectStep',
++        ],
++        'org.openedx.learning.logistration.context.requested.v1': [
++            'enterprise.filters.logistration.LogistrationContextEnricher',
++        ],
++        'org.openedx.learning.auth.post_login.redirect_url.requested.v1': [
++            'enterprise.filters.logistration.PostLoginEnterpriseRedirect',
++        ],
++        'org.openedx.learning.dashboard.render.started.v1': [
++            'enterprise.filters.dashboard.DashboardContextEnricher',
++        ],
++        'org.openedx.learning.course.enrollment.started.v1': [
++            'enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor',
++        ],
++        'org.openedx.learning.course_mode.checkout.started.v1': [
++            'enterprise.filters.course_modes.CheckoutEnterpriseContextInjector',
++        ],
++        'org.openedx.learning.support.contact.context.requested.v1': [
++            'enterprise.filters.support.SupportContactEnterpriseTagInjector',
++        ],
++        'org.openedx.learning.support.enrollment.data.requested.v1': [
++            'enterprise.filters.support.SupportEnterpriseEnrollmentDataInjector',
++        ],
++    }
++    if not hasattr(settings, 'OPEN_EDX_FILTERS_CONFIG'):
++        settings.OPEN_EDX_FILTERS_CONFIG = {}
++    for filter_type, steps in _enterprise_filter_steps.items():
++        if filter_type not in settings.OPEN_EDX_FILTERS_CONFIG:
++            settings.OPEN_EDX_FILTERS_CONFIG[filter_type] = {'fail_silently': True, 'pipeline': []}
++        existing_steps = list(settings.OPEN_EDX_FILTERS_CONFIG[filter_type].get('pipeline', []))
++        for step in steps:
++            if step not in existing_steps:
++                existing_steps.append(step)
++        settings.OPEN_EDX_FILTERS_CONFIG[filter_type]['pipeline'] = existing_steps
++
++    # -------------------------------------------------------------------------
++    # Pluggable overrides (epics 12, 13, 16)
++    # -------------------------------------------------------------------------
++    settings.OVERRIDE_LEARNER_HOME_GET_ENTERPRISE_CUSTOMER = (
++        'enterprise.overrides.learner_home.enterprise_get_enterprise_customer'
++    )
++    settings.OVERRIDE_COURSE_HOME_PROGRESS_USERNAME = (
++        'enterprise.overrides.course_home_progress.enterprise_obfuscated_username'
++    )
++    settings.OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_ENROLLMENTS = (
++        'enterprise.overrides.programs.enterprise_get_enterprise_course_enrollments'
++    )
+diff --git a/enterprise/settings/production.py b/enterprise/settings/production.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/settings/production.py
+@@ -0,0 +1,10 @@
++"""
++Production plugin settings for the enterprise Django app.
++
++Inherits all defaults from common.py. Production-specific overrides can be
++added here if needed.
++"""
++from enterprise.settings.common import plugin_settings  # noqa: F401
+diff --git a/consent/apps.py b/consent/apps.py
+--- a/consent/apps.py
++++ b/consent/apps.py
+@@ -1,11 +1,29 @@
+ """edX Enterprise's Consent application.
+
+ This application provides a generic Consent API that lets the
+ user get, provide, and revoke consent to an enterprise customer
+ at some gate.
+ """
+
+ from django.apps import AppConfig
+
+
+ class ConsentConfig(AppConfig):
+     """Configuration for edX Enterprise's Consent application."""
+
+     name = 'consent'
+     verbose_name = "Enterprise Consent"
++
++    # Plugin app configuration for the openedx plugin framework.
++    plugin_app = {
++        "settings_config": {
++            "lms.djangoapp": {
++                "production": {"relative_path": "settings.production"},
++                "common": {"relative_path": "settings.common"},
++                "test": {"relative_path": "settings.test"},
++            },
++        },
++        "url_config": {
++            "lms.djangoapp": {
++                "namespace": "consent",
++                "regex": r"^consent/",
++                "relative_path": "urls",
++            },
++        },
++    }
+diff --git a/consent/settings/__init__.py b/consent/settings/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/consent/settings/__init__.py
+@@ -0,0 +1,3 @@
++"""
++Settings package for edx-enterprise's consent app plugin configuration.
++"""
+diff --git a/consent/settings/common.py b/consent/settings/common.py
+new file mode 100644
+--- /dev/null
++++ b/consent/settings/common.py
+@@ -0,0 +1,27 @@
++"""
++Common plugin settings for the consent Django app.
++
++This module is loaded by the openedx plugin framework during LMS startup for the
++'common' settings type. It populates consent-specific settings as defaults.
++"""
++
++
++def plugin_settings(settings):
++    """
++    Inject consent-specific settings into the LMS Django settings.
++
++    Called by the openedx plugin framework for each settings environment.
++    Uses setdefault so operator-configured values are never overwritten.
++    """
++    lms_root = getattr(settings, 'LMS_ROOT_URL', 'http://localhost:8000')
++
++    settings.setdefault(
++        'ENTERPRISE_CONSENT_API_URL',
++        f'{lms_root}/consent/api/v1/',
++    )
+diff --git a/consent/settings/production.py b/consent/settings/production.py
+new file mode 100644
+--- /dev/null
++++ b/consent/settings/production.py
+@@ -0,0 +1,7 @@
++"""
++Production plugin settings for the consent Django app.
++"""
++from consent.settings.common import plugin_settings  # noqa: F401
+diff --git a/enterprise_support/apps.py b/enterprise_support/apps.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise_support/apps.py
+@@ -0,0 +1,31 @@
++"""
++Configuration for the enterprise_support Django app.
++
++This app is migrated from openedx-platform/openedx/features/enterprise_support/
++as part of epic 17. It provides utility functions and support tooling used by
++the enterprise and consent plugins.
++"""
++
++from django.apps import AppConfig
++
++
++class EnterpriseSupportConfig(AppConfig):
++    """Configuration for the enterprise_support Django app."""
++
++    name = 'enterprise_support'
++    verbose_name = "Enterprise Support"
++
++    # Plugin app configuration for the openedx plugin framework.
++    plugin_app = {
++        "settings_config": {
++            "lms.djangoapp": {
++                "production": {"relative_path": "settings.production"},
++                "common": {"relative_path": "settings.common"},
++                "test": {"relative_path": "settings.test"},
++            },
++        },
++    }
++
++    def ready(self):
++        """Activate signal handlers moved from enterprise_support/signals.py."""
++        from enterprise_support import signal_handlers  # pylint: disable=import-outside-toplevel  # noqa: F401
+diff --git a/enterprise_support/settings/__init__.py b/enterprise_support/settings/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise_support/settings/__init__.py
+@@ -0,0 +1,3 @@
++"""
++Settings package for edx-enterprise's enterprise_support app plugin configuration.
++"""
+diff --git a/enterprise_support/settings/common.py b/enterprise_support/settings/common.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise_support/settings/common.py
+@@ -0,0 +1,31 @@
++"""
++Common plugin settings for the enterprise_support Django app.
++
++This module is loaded by the openedx plugin framework during LMS startup for the
++'common' settings type. It populates settings consumed by enterprise_support
++utility functions.
++"""
++
++
++def plugin_settings(settings):
++    """
++    Inject enterprise_support-specific settings into the LMS Django settings.
++
++    Called by the openedx plugin framework for each settings environment.
++    Uses setdefault so operator-configured values are never overwritten.
++    """
++    # ENTERPRISE_READONLY_ACCOUNT_FIELDS is consumed by
++    # enterprise_support/utils.py::get_enterprise_readonly_account_fields.
++    settings.setdefault('ENTERPRISE_READONLY_ACCOUNT_FIELDS', [
++        'username',
++        'name',
++        'email',
++        'country',
++    ])
++
++    # ENTERPRISE_CUSTOMER_COOKIE_NAME is consumed by enterprise_support cookie
++    # handling utilities.
++    settings.setdefault('ENTERPRISE_CUSTOMER_COOKIE_NAME', 'enterprise_customer_uuid')
+diff --git a/enterprise_support/settings/production.py b/enterprise_support/settings/production.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise_support/settings/production.py
+@@ -0,0 +1,7 @@
++"""
++Production plugin settings for the enterprise_support Django app.
++"""
++from enterprise_support.settings.common import plugin_settings  # noqa: F401
+diff --git a/enterprise/tests/test_plugin_settings.py b/enterprise/tests/test_plugin_settings.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/tests/test_plugin_settings.py
+@@ -0,0 +1,71 @@
++"""
++Tests for enterprise/settings/common.py plugin_settings callback.
++"""
++import pytest
++
++
++class MockSettings:
++    """Minimal settings object for testing plugin_settings."""
++
++    def __init__(self, **kwargs):
++        for key, value in kwargs.items():
++            setattr(self, key, value)
++        self._store = dict(kwargs)
++
++    def setdefault(self, key, value):
++        if not hasattr(self, key):
++            setattr(self, key, value)
++            self._store[key] = value
+
+
++class TestEnterprisePluginSettings:
++    """Verify enterprise/settings/common.py sets required defaults."""
++
++    def test_sets_enterprise_api_url_from_lms_root(self):
++        mock = MockSettings(LMS_ROOT_URL='https://lms.example.com')
++        from enterprise.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.ENTERPRISE_API_URL == 'https://lms.example.com/enterprise/api/v1/'
++
++    def test_sets_public_enrollment_api_url_from_lms_root(self):
++        mock = MockSettings(LMS_ROOT_URL='https://lms.example.com')
++        from enterprise.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.ENTERPRISE_PUBLIC_ENROLLMENT_API_URL == 'https://lms.example.com/api/enrollment/v1/'
++
++    def test_does_not_override_existing_settings(self):
++        mock = MockSettings(LMS_ROOT_URL='https://lms.example.com', ENTERPRISE_TAGLINE='Custom tagline')
++        from enterprise.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.ENTERPRISE_TAGLINE == 'Custom tagline'
++
++    def test_appends_middleware(self):
++        mock = MockSettings(LMS_ROOT_URL='http://localhost:8000', MIDDLEWARE=['django.middleware.common.CommonMiddleware'])
++        from enterprise.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert 'enterprise.middleware.EnterpriseLanguagePreferenceMiddleware' in mock.MIDDLEWARE
++
++    def test_does_not_duplicate_middleware(self):
++        mock = MockSettings(
++            LMS_ROOT_URL='http://localhost:8000',
++            MIDDLEWARE=['enterprise.middleware.EnterpriseLanguagePreferenceMiddleware'],
++        )
++        from enterprise.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.MIDDLEWARE.count('enterprise.middleware.EnterpriseLanguagePreferenceMiddleware') == 1
+
+
++class TestConsentPluginSettings:
++    """Verify consent/settings/common.py sets required defaults."""
+
++    def test_sets_consent_api_url_from_lms_root(self):
++        mock = MockSettings(LMS_ROOT_URL='https://lms.example.com')
++        from consent.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.ENTERPRISE_CONSENT_API_URL == 'https://lms.example.com/consent/api/v1/'
+
+
++class TestEnterpriseSupportPluginSettings:
++    """Verify enterprise_support/settings/common.py sets required defaults."""
+
++    def test_sets_readonly_account_fields(self):
++        mock = MockSettings()
++        from enterprise_support.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.ENTERPRISE_READONLY_ACCOUNT_FIELDS == ['username', 'name', 'email', 'country']
+
++    def test_sets_cookie_name(self):
++        mock = MockSettings()
++        from enterprise_support.settings.common import plugin_settings
++        plugin_settings(mock)
++        assert mock.ENTERPRISE_CUSTOMER_COOKIE_NAME == 'enterprise_customer_uuid'
