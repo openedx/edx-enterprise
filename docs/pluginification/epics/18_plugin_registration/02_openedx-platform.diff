@@ -1,0 +1,176 @@
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -48,15 +48,0 @@ from enterprise.constants import (
+-from enterprise.constants import (
+-    ENTERPRISE_ADMIN_ROLE,
+-    ENTERPRISE_LEARNER_ROLE,
+-    ENTERPRISE_CATALOG_ADMIN_ROLE,
+-    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+-    ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+-    ENTERPRISE_FULFILLMENT_OPERATOR_ROLE,
+-    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+-    ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE,
+-    ENTERPRISE_OPERATOR_ROLE,
+-    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE,
+-    PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
+-    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE,
+-    DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
+-)
+
+@@ -518,4 +504,0 @@ ENABLE_ENTERPRISE_INTEGRATION = False
+-# .. toggle_name: settings.ENABLE_ENTERPRISE_INTEGRATION
+-ENABLE_ENTERPRISE_INTEGRATION = False
+
+@@ -598,4 +580,0 @@ ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION = False
+-# .. toggle_name: settings.ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION
+-ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION = False
+
+@@ -1171,3 +1153,0 @@ MIDDLEWARE = [
+-    'enterprise.middleware.EnterpriseLanguagePreferenceMiddleware',
+
+@@ -<line>,N +<line>,1 @@ OPEN_EDX_FILTERS_CONFIG = {
+-OPEN_EDX_FILTERS_CONFIG = {
+-    "org.openedx.learning.grade.context.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.grades.GradeEventContextEnricher"],
+-    },
+-    "org.openedx.learning.account.settings.read_only_fields.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.accounts.AccountSettingsReadOnlyFieldsStep"],
+-    },
+-    "org.openedx.learning.discount.eligibility.check.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.discounts.DiscountEligibilityStep"],
+-    },
+-    "org.openedx.learning.courseware.view.redirect_url.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": [
+-            "enterprise.filters.courseware.ConsentRedirectStep",
+-            "enterprise.filters.courseware.LearnerPortalRedirectStep",
+-        ],
+-    },
+-    "org.openedx.learning.logistration.context.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.logistration.LogistrationContextEnricher"],
+-    },
+-    "org.openedx.learning.auth.post_login.redirect_url.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.logistration.PostLoginEnterpriseRedirect"],
+-    },
+-    "org.openedx.learning.dashboard.render.started.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.dashboard.DashboardContextEnricher"],
+-    },
+-    "org.openedx.learning.course.enrollment.started.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.enrollment.EnterpriseEnrollmentPostProcessor"],
+-    },
+-    "org.openedx.learning.course_mode.checkout.started.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.course_modes.CheckoutEnterpriseContextInjector"],
+-    },
+-    "org.openedx.learning.support.contact.context.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.support.SupportContactEnterpriseTagInjector"],
+-    },
+-    "org.openedx.learning.support.enrollment.data.requested.v1": {
+-        "fail_silently": True,
+-        "pipeline": ["enterprise.filters.support.SupportEnterpriseEnrollmentDataInjector"],
+-    },
+-}
++OPEN_EDX_FILTERS_CONFIG = {}
+
+diff --git a/openedx/envs/common.py b/openedx/envs/common.py
+--- a/openedx/envs/common.py
++++ b/openedx/envs/common.py
+@@ -765,4 +765,0 @@ OPTIONAL_APPS = [
+-    # Enterprise Apps (http://github.com/openedx/edx-enterprise)
+-    ('enterprise', None),
+-    ('consent', None),
+
+@@ -2590,90 +2572,0 @@ # Only used if settings.ENABLE_ENTERPRISE_INTEGRATION == True.
+-# Only used if settings.ENABLE_ENTERPRISE_INTEGRATION == True.
+-ENTERPRISE_PUBLIC_ENROLLMENT_API_URL = Derived(
+-    lambda s: f'{s.LMS_ROOT_URL}/api/enrollment/v1/'
+-)
+-ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES = ['audit', 'honor']
+-ENTERPRISE_SUPPORT_URL = ''
+-ENTERPRISE_CUSTOMER_SUCCESS_EMAIL = "customersuccess@edx.org"
+-ENTERPRISE_INTEGRATIONS_EMAIL = "enterprise-integrations@edx.org"
+-ENTERPRISE_API_URL = Derived(
+-    lambda s: f'{s.LMS_ROOT_URL}/enterprise/api/v1/'
+-)
+-ENTERPRISE_CONSENT_API_URL = Derived(
+-    lambda s: f'{s.LMS_ROOT_URL}/consent/api/v1/'
+-)
+-ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE = 512
+-ENTERPRISE_ALL_SERVICE_USERNAMES = [
+-    'ecommerce_worker',
+-    'enterprise_worker',
+-]
+-ENTERPRISE_PLATFORM_WELCOME_TEMPLATE = _('Welcome to {platform_name}.')
+-ENTERPRISE_SPECIFIC_BRANDED_WELCOME_TEMPLATE = _(
+-    'Welcome, {username}, to {platform_name} — powered by {enterprise_name}.'
+-)
+-ENTERPRISE_PROXY_LOGIN_WELCOME_TEMPLATE = _(
+-    'Welcome to {platform_name} via {enterprise_name}.'
+-)
+-ENTERPRISE_TAGLINE = ''
+-ENTERPRISE_EXCLUDED_REGISTRATION_FIELDS = set()
+-ENTERPRISE_READONLY_ACCOUNT_FIELDS = [
+-    'username',
+-    'name',
+-    'email',
+-    'country',
+-]
+-ENTERPRISE_CUSTOMER_COOKIE_NAME = 'enterprise_customer_uuid'
+-ENTERPRISE_VSF_UUID = None
+-ENTERPRISE_MANUAL_REPORTING_CUSTOMER_UUIDS = []
+
+@@ -2668,35 +2636,0 @@ SYSTEM_WIDE_ROLE_CLASSES = {
+-    ENTERPRISE_LEARNER_ROLE: [
+-        DEFAULT_ENTERPRISE_ENROLLMENT_INTENTIONS_ROLE,
+-        'enterprise.rules.HasLearnerAccess',
+-    ],
+-    ENTERPRISE_ADMIN_ROLE: [
+-        'enterprise.rules.HasAdminAccess',
+-    ],
+-    ENTERPRISE_CATALOG_ADMIN_ROLE: [
+-        'enterprise.rules.HasCatalogAdminAccess',
+-    ],
+-    ENTERPRISE_DASHBOARD_ADMIN_ROLE: [
+-        'enterprise.rules.HasDashboardAdminAccess',
+-    ],
+-    ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE: [
+-        'enterprise.rules.HasEnrollmentApiAdminAccess',
+-    ],
+-    ENTERPRISE_FULFILLMENT_OPERATOR_ROLE: [
+-        'enterprise.rules.HasFulfillmentOperatorAccess',
+-    ],
+-    ENTERPRISE_OPERATOR_ROLE: [
+-        'enterprise.rules.HasOperatorAccess',
+-    ],
+-    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE: [
+-        'enterprise.rules.HasReportingConfigAdminAccess',
+-    ],
+-    ENTERPRISE_SSO_ORCHESTRATOR_OPERATOR_ROLE: [
+-        'enterprise.rules.HasSSOOrchestratorOperatorAccess',
+-    ],
+-    SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE: [
+-        'enterprise.rules.HasProvisioningAdminAccess',
+-    ],
+-    PROVISIONING_ENTERPRISE_CUSTOMER_ADMIN_ROLE: [
+-        'enterprise.rules.HasProvisioningCustomerAdminAccess',
+-    ],
+-    PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE: [
+-        'enterprise.rules.HasProvisioningPendingCustomerAdminAccess',
+-    ],
+diff --git a/lms/urls.py b/lms/urls.py
+--- a/lms/urls.py
++++ b/lms/urls.py
+@@ -879,9 +879,0 @@ if settings.FEATURES.get('ENABLE_ENTERPRISE_INTEGRATION'):
+-if settings.FEATURES.get('ENABLE_ENTERPRISE_INTEGRATION'):
+-    urlpatterns += [
+-        path('enterprise/', include('enterprise.urls', namespace='enterprise')),
+-    ]

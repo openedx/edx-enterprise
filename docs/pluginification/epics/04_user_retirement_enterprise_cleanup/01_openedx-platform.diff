@@ -1,0 +1,110 @@
+diff --git a/openedx/core/djangoapps/user_api/accounts/views.py b/openedx/core/djangoapps/user_api/accounts/views.py
+--- a/openedx/core/djangoapps/user_api/accounts/views.py
++++ b/openedx/core/djangoapps/user_api/accounts/views.py
+@@ -13,7 +13,6 @@ import logging
+ from functools import wraps
+
+ from zoneinfo import ZoneInfo
+-from consent.models import DataSharingConsent
+ from django.apps import apps
+ from django.conf import settings
+ from django.contrib.auth import authenticate, get_user_model, logout
+@@ -28,7 +27,6 @@ from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentica
+ from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
+-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+ from integrated_channels.degreed.models import DegreedLearnerDataTransmissionAudit
+ from integrated_channels.sap_success_factors.models import SapSuccessFactorsLearnerDataTransmissionAudit
+ from rest_framework import permissions, status
+@@ -1157,9 +1156,6 @@ class DeactivateLogoutView(APIView):
+             self.clear_pii_from_userprofile(user)
+             self.delete_users_profile_images(user)
+             self.delete_users_country_cache(user)
+-
+-            # Retire data from Enterprise models
+-            self.retire_users_data_sharing_consent(username, retired_username)
+             self.retire_sapsf_data_transmission(user)
+             self.retire_degreed_data_transmission(user)
+-            self.retire_user_from_pending_enterprise_customer_user(user, retired_email)
+             self.retire_entitlement_support_detail(user)
+
+             # Retire misc. models that may contain PII of this user
+@@ -1170,8 +1166,11 @@ class DeactivateLogoutView(APIView):
+             CourseEnrollmentAllowed.delete_by_user_value(original_email, field="email")
+             UnregisteredLearnerCohortAssignments.delete_by_user_value(original_email, field="email")
+
+-            # This signal allows code in higher points of LMS to retire the user as necessary
+-            USER_RETIRE_LMS_CRITICAL.send(sender=self.__class__, user=user)
++            # This signal allows plugins to retire enterprise-specific user data.
++            USER_RETIRE_LMS_CRITICAL.send(
++                sender=self.__class__,
++                user=user,
++                retired_username=retired_username,
++                retired_email=retired_email,
++            )
+
+             user.first_name = ""
+@@ -1213,12 +1212,6 @@ class DeactivateLogoutView(APIView):
+-    @staticmethod
+-    def retire_users_data_sharing_consent(username, retired_username):
+-        DataSharingConsent.objects.filter(username=username).update(username=retired_username)
+-
+-    @staticmethod
+-    def retire_user_from_pending_enterprise_customer_user(user, retired_email):
+-        PendingEnterpriseCustomerUser.objects.filter(user_email=user.email).update(user_email=retired_email)
+-
+     @staticmethod
+     def retire_entitlement_support_detail(user):
+@@ -1307,8 +1300,6 @@ class UsernameReplacementView(APIView):
+         MODELS_WITH_USERNAME = (
+             ("auth.user", "username"),
+-            ("consent.DataSharingConsent", "username"),
+-            ("consent.HistoricalDataSharingConsent", "username"),
+             ("credit.CreditEligibility", "username"),
+             ("credit.CreditRequest", "username"),
+             ("credit.CreditRequirementStatus", "username"),
+diff --git a/openedx/core/djangoapps/user_api/accounts/tests/test_retirement_views.py b/openedx/core/djangoapps/user_api/accounts/tests/test_retirement_views.py
+--- a/openedx/core/djangoapps/user_api/accounts/tests/test_retirement_views.py
++++ b/openedx/core/djangoapps/user_api/accounts/tests/test_retirement_views.py
+@@ -1,10 +1,8 @@
+ """
+ Tests for retirement views in user_api.
+ """
+-from unittest.mock import patch, MagicMock
++from unittest.mock import patch, MagicMock, call
+
+ import pytest
+ from django.test import TestCase, override_settings
+-from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+-from consent.models import DataSharingConsent
+
+ from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_LMS_CRITICAL
+
+@@ -50,26 +48,18 @@ class TestDeactivateLogout(RetirementTestCase):
+-    @patch('openedx.core.djangoapps.user_api.accounts.views.DataSharingConsent.objects')
+-    @patch('openedx.core.djangoapps.user_api.accounts.views.PendingEnterpriseCustomerUser.objects')
+-    def test_retirement_calls_enterprise_cleanup(self, mock_pending, mock_dsc):
++    @patch('openedx.core.djangoapps.user_api.accounts.signals.USER_RETIRE_LMS_CRITICAL')
++    def test_retirement_sends_critical_signal_with_retirement_data(self, mock_signal):
+         """
+-        Enterprise-specific retirement methods are called with the correct arguments.
++        USER_RETIRE_LMS_CRITICAL is sent with retired_username and retired_email kwargs.
+         """
+-        mock_dsc.filter.return_value.update.return_value = 1
+-        mock_pending.filter.return_value.update.return_value = 1
+-
+         response = self.client.post(self.url, data=self.retirement_data)
+         assert response.status_code == 204
+
+-        mock_dsc.filter.assert_called_once_with(username=self.user.username)
+-        mock_dsc.filter.return_value.update.assert_called_once_with(
+-            username=self.retirement_data['retired_username']
+-        )
+-        mock_pending.filter.assert_called_once_with(user_email=self.user.email)
+-        mock_pending.filter.return_value.update.assert_called_once_with(
+-            user_email=self.retirement_data['retired_email']
++        mock_signal.send.assert_called_once_with(
++            sender=mock_signal.send.call_args.kwargs['sender'],
++            user=self.user,
++            retired_username=self.retirement_data['retired_username'],
++            retired_email=self.retirement_data['retired_email'],
+         )

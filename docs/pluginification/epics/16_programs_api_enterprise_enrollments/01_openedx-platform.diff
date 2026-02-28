@@ -1,0 +1,36 @@
+diff --git a/openedx/core/djangoapps/programs/rest_api/v1/views.py b/openedx/core/djangoapps/programs/rest_api/v1/views.py
+--- a/openedx/core/djangoapps/programs/rest_api/v1/views.py
++++ b/openedx/core/djangoapps/programs/rest_api/v1/views.py
+@@ -6,5 +6,5 @@ import logging
+ from django.db.models.query import EmptyQuerySet
+ from rest_framework.permissions import IsAuthenticated
+ from rest_framework.response import Response
+ from rest_framework.views import APIView
++from edx_django_utils.plugins import pluggable_override
+
+@@ -11,5 +11,1 @@ from common.djangoapps.student.api import get_course_enrollments
+-from openedx.features.enterprise_support.api import get_enterprise_course_enrollments, enterprise_is_enabled
+
+@@ -179,7 +179,8 @@ class Programs(APIView):
+-    @enterprise_is_enabled(otherwise=EmptyQuerySet)
+-    def _get_enterprise_course_enrollments(
++    @pluggable_override('OVERRIDE_PROGRAMS_GET_ENTERPRISE_COURSE_ENROLLMENTS')
++    def _get_enterprise_course_enrollments(
+         self, enterprise_uuid: str, user: "AnonymousUser | User"
+     ) -> "QuerySet[CourseEnrollment]":
+         """
+-        Return only enterprise enrollments for a user.
+-        """
+-        enterprise_enrollment_course_ids = (
+-            get_enterprise_course_enrollments(user)
+-            .filter(enterprise_customer_user__enterprise_customer__uuid=enterprise_uuid)
+-            .values_list("course_id", flat=True)
+-        )
+-
+-        course_enrollments = get_course_enrollments(user, True, list(enterprise_enrollment_course_ids))
+-
+-        return course_enrollments
++        Return only enterprise enrollments for a user, or an empty queryset when no
++        enterprise plugin is installed.
++        """
++        return CourseEnrollment.objects.none()

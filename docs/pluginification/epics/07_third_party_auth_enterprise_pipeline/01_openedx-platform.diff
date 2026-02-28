@@ -1,0 +1,104 @@
+diff --git a/common/djangoapps/third_party_auth/signals.py b/common/djangoapps/third_party_auth/signals.py
+new file mode 100644
+--- /dev/null
++++ b/common/djangoapps/third_party_auth/signals.py
+@@ -0,0 +1,9 @@
++"""
++Django signals for third_party_auth.
++"""
++from django.dispatch import Signal
++
++# Signal fired when a user disconnects a social auth provider account.
++# providing_args=["request", "user", "social"]
++SocialAuthAccountDisconnected = Signal()
+diff --git a/common/djangoapps/third_party_auth/settings.py b/common/djangoapps/third_party_auth/settings.py
+--- a/common/djangoapps/third_party_auth/settings.py
++++ b/common/djangoapps/third_party_auth/settings.py
+@@ -12,7 +12,6 @@ from django.conf import settings
+ from django.utils.translation import gettext_lazy as _
+
+-from openedx.features.enterprise_support.api import insert_enterprise_pipeline_elements
+
+
+ def apply_settings(django_settings):
+@@ -70,7 +69,6 @@ def apply_settings(django_settings):
+     if django_settings.get('ENABLE_THIRD_PARTY_AUTH'):
+-        insert_enterprise_pipeline_elements(django_settings.SOCIAL_AUTH_PIPELINE)
+diff --git a/common/djangoapps/third_party_auth/saml.py b/common/djangoapps/third_party_auth/saml.py
+--- a/common/djangoapps/third_party_auth/saml.py
++++ b/common/djangoapps/third_party_auth/saml.py
+@@ -140,12 +140,11 @@ class SAMLAuth(SAMLAuthMixin, BaseAuth):
+     def disconnect(self, *args, **kwargs):
+         """
+         Override to emit a signal when a user disconnects their SAML account.
+         """
+-        from openedx.features.enterprise_support.api import unlink_enterprise_user_from_idp
++        from common.djangoapps.third_party_auth.signals import SocialAuthAccountDisconnected
+         result = super().disconnect(*args, **kwargs)
+-        unlink_enterprise_user_from_idp(self.request)
++        SocialAuthAccountDisconnected.send(
++            sender=self.__class__,
++            request=self.request,
++            user=self.request.user if self.request else None,
++            social=self,
++        )
+         return result
+diff --git a/common/djangoapps/third_party_auth/utils.py b/common/djangoapps/third_party_auth/utils.py
+--- a/common/djangoapps/third_party_auth/utils.py
++++ b/common/djangoapps/third_party_auth/utils.py
+@@ -12,7 +12,6 @@ from django.contrib.auth.models import User
+ from django.db.models import Q
+
+-from enterprise.models import EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
+ from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+@@ -235,20 +234,0 @@ def get_user_from_email(email):
+-
+-
+-def is_enterprise_customer_user(provider_id, user):
+-    """
+-    Return whether the user is an enterprise customer user for the given provider.
+-    """
+-    enterprise_customer_idps = EnterpriseCustomerIdentityProvider.objects.filter(
+-        provider_id=provider_id
+-    )
+-    for idp in enterprise_customer_idps:
+-        if EnterpriseCustomerUser.objects.filter(
+-            enterprise_customer=idp.enterprise_customer,
+-            user_id=user.id,
+-        ).exists():
+-            return True
+-    return False
+diff --git a/common/djangoapps/third_party_auth/pipeline.py b/common/djangoapps/third_party_auth/pipeline.py
+--- a/common/djangoapps/third_party_auth/pipeline.py
++++ b/common/djangoapps/third_party_auth/pipeline.py
+@@ -790,35 +790,0 @@ def set_id_verification_status(auth_entry, strategy, details, user=None, **kwar
+-
+-
+-def associate_by_email_if_enterprise_user(
+-    strategy, details, user=None, *args, **kwargs
+-):
+-    """
+-    Associate the current auth user with an existing user by email if they are an enterprise user.
+-    """
+-    from openedx.features.enterprise_support.api import enterprise_is_enabled
+-    if not enterprise_is_enabled():
+-        return None
+-
+-    if user:
+-        return None
+-
+-    email = details.get('email')
+-    if not email:
+-        return None
+-
+-    try:
+-        existing_user = User.objects.get(email=email)
+-    except User.DoesNotExist:
+-        return None
+-
+-    current_provider = strategy.request.backend
+-    from common.djangoapps.third_party_auth.utils import is_enterprise_customer_user
+-    if not is_enterprise_customer_user(current_provider.provider_id, existing_user):
+-        return None
+-
+-    return {'user': existing_user}
