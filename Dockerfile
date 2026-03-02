@@ -1,6 +1,6 @@
 # Docker in this repo is only supported for running tests locally
 # as an alternative to virtualenv natively - johnnagro 2022-02-11
-FROM ubuntu:focal as app
+FROM ubuntu:noble as app
 MAINTAINER sre@edx.org
 
 
@@ -15,17 +15,15 @@ MAINTAINER sre@edx.org
 
 # python; ubuntu doesnt ship with python, so this is the python we will use to run the application
 
-# python3-pip; install pip to install application requirements.txt files
-
 # pkg-config
 #     mysqlclient>=2.2.0 requires this (https://github.com/PyMySQL/mysqlclient/issues/620)
 
-# libmysqlclient-dev; to install header files needed to use native C implementation for
+# default-libmysqlclient-dev; to install header files needed to use native C implementation for
 # MySQL-python for performance gains.
 
 # libssl-dev; # mysqlclient wont install without this.
 
-# python3-dev; to install header files for python extensions; much wheel-building depends on this
+# python3.12-dev; to install header files for python extensions; much wheel-building depends on this
 
 # gcc; for compiling python extensions distributed with python packages like mysql-client
 
@@ -33,20 +31,18 @@ MAINTAINER sre@edx.org
 RUN apt-get update && apt-get -qy install --no-install-recommends \
  language-pack-en \
  locales \
- python3.11 \
- python3-pip \
- python3.11-venv \
+ python3.12 \
+ python3.12-venv \
  pkg-config \
- libmysqlclient-dev \
+ default-libmysqlclient-dev \
  libssl-dev \
- python3-dev \
+ python3.12-dev \
  gcc \
  build-essential \
  git \
  curl
 
 
-RUN pip install --upgrade pip setuptools
 # delete apt package lists because we do not need them inflating our image
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -69,7 +65,7 @@ RUN useradd -m --shell /bin/false app
 
 WORKDIR /edx/app/edx-enterprise
 
-RUN python3.8 -m venv $VIRTUAL_ENV
+RUN python3.12 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Copy the requirements explicitly even though we copy everything below
