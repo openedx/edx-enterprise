@@ -11,8 +11,6 @@ services:
     volumes:
       - .:/edx/app/edx-enterprise
 
-    networks:
-      - devstack_default
     # Allows attachment to this container using 'docker attach <containerID>'.
     stdin_open: true
     tty: true
@@ -35,10 +33,6 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     volumes:
       - keycloak_data:/opt/keycloak/data
-
-networks:
-  devstack_default:
-    external: true
 
 volumes:
   keycloak_data:
