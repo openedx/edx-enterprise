@@ -14,6 +14,8 @@ from django.db import IntegrityError
 
 from enterprise import constants
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, MAX_NUM_IDENTIFY_USERS_ALIASES, BrazeAPIClient
+from enterprise.api_client.braze_client import BrazeCampaignAPIClient
+from enterprise.api_client.braze_client import BrazeClientError as CampaignBrazeClientError
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import batch_dict, get_enterprise_customer, localized_utcnow, send_email_notification_message
@@ -21,9 +23,17 @@ from enterprise.utils import batch_dict, get_enterprise_customer, localized_utcn
 LOGGER = getLogger(__name__)
 
 try:
-    from braze.exceptions import BrazeClientError
+    from braze.exceptions import BrazeClientError as LegacyBrazeClientError
 except ImportError:
-    BrazeClientError = Exception
+    LegacyBrazeClientError = None
+
+if LegacyBrazeClientError is not None:
+    BrazeClientError = (CampaignBrazeClientError, LegacyBrazeClientError)
+else:
+    BrazeClientError = (CampaignBrazeClientError,)
+
+# Alias for test mocking compatibility
+braze_client_module = BrazeCampaignAPIClient
 
 
 @shared_task
@@ -212,6 +222,114 @@ def send_sso_configured_email(
         )
         LOGGER.exception(message)
         raise exc
+    except AttributeError as exc:
+        message = (
+            'Enterprise oauth integration email sending received an '
+            f'exception for enterprise: {enterprise_name}.'
+        )
+        LOGGER.exception(message)
+        raise exc
+
+
+@shared_task(bind=True, max_retries=3)
+@set_code_owner_attribute
+def send_enterprise_admin_invite_email(
+    self,
+    enterprise_customer_uuid,
+    recipient_emails,
+):
+    """
+    Send invitation emails to new enterprise admins using Braze.
+
+    Args:
+        self: Celery task instance (required for retry)
+        enterprise_customer_uuid (UUID): The UUID of the enterprise customer.
+        recipient_emails (list or str): Email(s) of the recipients to invite as admins.
+
+    This task constructs the required Braze campaign properties and triggers the
+    Braze campaign to send admin invite emails. If a single email is provided,
+    it is converted to a list. The campaign ID and Braze API credentials are
+    fetched from Django settings.
+
+    Retries:
+        - Maximum 3 retries with exponential backoff
+        - Retry delays: 60s, 120s, 240s
+
+    Raises:
+        BrazeClientError: If Braze API fails after all retries
+    """
+
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+    enterprise_slug = enterprise_customer.slug
+    enterprise_name = enterprise_customer.name
+    sender_alias = enterprise_customer.sender_alias
+    if not isinstance(recipient_emails, list):
+        recipient_emails = [recipient_emails]
+
+    braze_trigger_properties = {
+        'customer-slug': enterprise_slug,
+        'enterprise_customer_name': enterprise_name,
+        'enterprise_sender_alias': sender_alias,
+        'enterprise_contact_email': getattr(enterprise_customer, 'contact_email', None),
+    }
+
+    api_key = getattr(settings, 'ENTERPRISE_BRAZE_API_KEY', None)
+    api_url = getattr(settings, 'EDX_BRAZE_API_SERVER', None)
+    braze_campaign_id = getattr(settings, 'BRAZE_ADMIN_INVITE_CAMPAIGN_ID', None)
+
+    if not api_key or not api_url:
+        error_msg = (
+            f"Missing required Braze settings for admin invite email. "
+            f"ENTERPRISE_BRAZE_API_KEY: {bool(api_key)}, EDX_BRAZE_API_SERVER: {bool(api_url)}"
+        )
+        LOGGER.error(error_msg)
+        raise ValueError(error_msg)
+
+    if not braze_campaign_id:
+        error_msg = (
+            "Missing BRAZE_ADMIN_INVITE_CAMPAIGN_ID setting "
+            "for admin invite email"
+        )
+        LOGGER.error(error_msg)
+        raise ValueError(error_msg)
+
+    try:
+        braze_client_instance = braze_client_module(
+            api_key=api_key,
+            api_url=api_url,
+        )
+        LOGGER.info(
+            "Sending enterprise admin invite email to %d recipients for enterprise %s.",
+            len(recipient_emails),
+            enterprise_name,
+        )
+        braze_client_instance.send_campaign_message(
+            braze_campaign_id,
+            recipients=recipient_emails,
+            trigger_properties=braze_trigger_properties,
+        )
+        LOGGER.info(
+            "Successfully sent admin invite email to %d recipients for enterprise %s",
+            len(recipient_emails),
+            enterprise_slug,
+        )
+    except BrazeClientError as exc:
+        message = (
+            f'Failed to send enterprise admin invite email to {len(recipient_emails)} recipients '
+            f'for enterprise: {enterprise_name}. '
+            f'Retry attempt {self.request.retries} of {self.max_retries}.'
+        )
+        LOGGER.exception(message)
+
+        try:
+            raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+        except self.MaxRetriesExceededError as max_retries_exc:
+            LOGGER.exception(
+                "Max retries exceeded for admin invite email to %d recipients for enterprise %s",
+                len(recipient_emails),
+                enterprise_name,
+            )
+            raise exc from max_retries_exc
 
 
 def _recipients_for_identified_users(

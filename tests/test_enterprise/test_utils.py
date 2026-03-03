@@ -1,21 +1,35 @@
 """
 Tests for the `edx-enterprise` utils module.
 """
+
+# Standard library imports
 import math
 import unittest
 from datetime import timedelta
 from unittest import mock
-from unittest.mock import call
+from unittest.mock import call, patch
 from urllib.parse import quote, urlencode
 
+# Third-party imports
 import ddt
+import pytest
 from pytest import mark
 
+# Django imports
 from django.conf import settings
+from django.db import DatabaseError, transaction
 from django.forms.models import model_to_dict
+from django.test import TestCase
 
+# First-party imports
+from enterprise.api import utils
 from enterprise.constants import DEFAULT_USERNAME_ATTR, MAX_ALLOWED_TEXT_LENGTH
-from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomerAdmin,
+    LicensedEnterpriseCourseEnrollment,
+    PendingEnterpriseCustomerAdminUser,
+)
 from enterprise.utils import (
     batch_dict,
     enroll_subsidy_users_in_courses,
@@ -862,3 +876,148 @@ class TestUtils(unittest.TestCase):
 
         assert result is None
         mock_idp_config.get_user_details.assert_called_once()
+
+
+class TestAdminInviteUtils(TestCase):
+    """Tests for admin invite utility functions."""
+    def setUp(self):
+        """Set up test data for admin invite utils tests."""
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name="Test EC")
+        self.active_admin_user = factories.UserFactory(is_active=True)
+        # Create an admin user properly linked
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.active_admin_user.id,
+        )
+        self.admin_user = EnterpriseCustomerAdmin.objects.create(
+            enterprise_customer_user=self.enterprise_customer_user
+        )
+        PendingEnterpriseCustomerAdminUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_email="pending@example.com"
+        )
+
+    def test_get_existing_admin_emails(self):
+        """Test retrieval of existing admin emails."""
+        emails = utils.get_existing_admin_emails(self.enterprise_customer)
+        assert isinstance(emails, set)
+        assert self.active_admin_user.email.lower() in emails
+
+    def test_get_existing_admin_emails_includes_inactive_users(self):
+        """Test inactive enterprise users and inactive auth users are included when admin records exist."""
+        inactive_ecu_user = factories.UserFactory(is_active=True)
+        inactive_ecu = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=inactive_ecu_user.id,
+            active=False,
+        )
+        EnterpriseCustomerAdmin.objects.create(enterprise_customer_user=inactive_ecu)
+
+        inactive_auth_user = factories.UserFactory(is_active=False)
+        inactive_auth_ecu = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=inactive_auth_user.id,
+            active=True,
+        )
+        EnterpriseCustomerAdmin.objects.create(enterprise_customer_user=inactive_auth_ecu)
+
+        emails = utils.get_existing_admin_emails(self.enterprise_customer)
+
+        assert self.active_admin_user.email.lower() in emails
+        assert inactive_ecu_user.email.lower() in emails
+        assert inactive_auth_user.email.lower() in emails
+
+    def test_get_existing_pending_emails(self):
+        """Test retrieval of existing pending admin emails."""
+        emails = utils.get_existing_pending_emails(self.enterprise_customer, ["pending@example.com"])
+        assert "pending@example.com" in emails
+
+    @patch("enterprise.api.utils.send_enterprise_admin_invite_email.delay")
+    @patch("enterprise.api.utils.transaction.on_commit")
+    def test_create_pending_invites(self, mock_on_commit, mock_delay):
+        """Test creation of pending admin invites."""
+        # Make on_commit execute the callback immediately
+        mock_on_commit.side_effect = lambda func: func()
+
+        emails = ["invite1@example.com", "invite2@example.com"]
+        with transaction.atomic():
+            utils.create_pending_invites(
+                self.enterprise_customer,
+                emails
+            )
+        mock_delay.assert_called_once()
+        args = mock_delay.call_args[0]
+        assert args[0] == str(self.enterprise_customer.uuid)
+        assert set(args[1]) == set(emails)
+
+    @patch("enterprise.api.utils.send_enterprise_admin_invite_email.delay")
+    @patch("enterprise.api.utils.transaction.on_commit")
+    def test_create_pending_invites_only_emails_new_invites(self, mock_on_commit, mock_delay):
+        """Test create_pending_invites only queues email for newly-created pending admins."""
+        mock_on_commit.side_effect = lambda func: func()
+
+        emails = ["pending@example.com", "invite3@example.com"]
+        with transaction.atomic():
+            created_invites = utils.create_pending_invites(
+                self.enterprise_customer,
+                emails,
+            )
+
+        assert len(created_invites) == 1
+        assert created_invites[0].user_email == "invite3@example.com"
+        mock_delay.assert_called_once_with(
+            str(self.enterprise_customer.uuid),
+            ["invite3@example.com"],
+        )
+
+    def test_create_pending_invites_requires_atomic(self):
+        """Test create_pending_invites raises when no active transaction exists."""
+        with patch("enterprise.api.utils.transaction.get_connection") as mock_get_connection:
+            mock_get_connection.return_value.in_atomic_block = False
+            with pytest.raises(RuntimeError):
+                utils.create_pending_invites(
+                    self.enterprise_customer,
+                    ["invite1@example.com"]
+                )
+
+    def test_get_invite_status(self):
+        """Test retrieval of invite status for emails."""
+        admin_emails = utils.get_existing_admin_emails(self.enterprise_customer)
+        pending_emails = utils.get_existing_pending_emails(self.enterprise_customer, ["pending@example.com"])
+        assert utils.get_invite_status("pending@example.com", admin_emails, pending_emails) == "already sent"
+        assert utils.get_invite_status("notfound@example.com", admin_emails, pending_emails) == "invite sent"
+
+    def test_get_existing_admin_emails_handles_exception(self):
+        """Test exception handling in get_existing_admin_emails."""
+        # Simulate exception in queryset
+        with patch("enterprise.api.utils.EnterpriseCustomerAdmin.objects.filter") as mock_filter:
+            mock_filter.side_effect = Exception("DB error")
+            with pytest.raises(Exception):
+                utils.get_existing_admin_emails(self.enterprise_customer)
+
+    def test_get_existing_pending_emails_handles_exception(self):
+        """Test exception handling in get_existing_pending_emails."""
+        # Simulate exception in queryset
+        with patch("enterprise.api.utils.PendingEnterpriseCustomerAdminUser.objects.filter") as mock_filter:
+            mock_filter.side_effect = Exception("DB error")
+            with pytest.raises(Exception):
+                utils.get_existing_pending_emails(self.enterprise_customer, ["pending@example.com"])
+
+    @patch("enterprise.api.utils.send_enterprise_admin_invite_email.delay")
+    def test_create_pending_invites_handles_exception(self, _mock_delay):
+        """Test exception handling in create_pending_invites."""
+        # Simulate database exception while creating pending invite
+        with patch(
+            "enterprise.api.utils.PendingEnterpriseCustomerAdminUser.objects.get_or_create"
+        ) as mock_get_or_create:
+            with patch("enterprise.api.utils.logger.exception") as mock_logger_exception:
+                mock_get_or_create.side_effect = DatabaseError("DB error")
+                with transaction.atomic():
+                    with pytest.raises(DatabaseError):
+                        utils.create_pending_invites(
+                            self.enterprise_customer,
+                            [
+                                "invite1@example.com"
+                            ]
+                        )
+                assert mock_logger_exception.called

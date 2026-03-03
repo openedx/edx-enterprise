@@ -37,6 +37,10 @@ DEFAULT_USERNAME_ATTR = 'urn:oid:0.9.2342.19200300.100.1.1'
 
 MAX_INVITE_KEYS = 100
 
+# Admin role types for delete_admin endpoint
+PENDING_ADMIN_ROLE_TYPE = 'pending'
+ACTIVE_ADMIN_ROLE_TYPE = 'admin'
+
 
 class DefaultColors:
     """
@@ -60,6 +64,21 @@ class CourseModes:
     PROFESSIONAL = 'professional'
     VERIFIED = 'verified'
     UNPAID_EXECUTIVE_EDUCATION = 'unpaid-executive-education'
+
+
+class BrazeAPIEndpoints:
+    """
+    Braze endpoints.
+    """
+    SEND_CAMPAIGN = '/campaigns/trigger/send'
+    SEND_CANVAS = '/canvas/trigger/send'
+    EXPORT_IDS = '/users/export/ids'
+    SEND_MESSAGE = '/messages/send'
+    NEW_ALIAS = '/users/alias/new'
+    TRACK_USER = '/users/track'
+    IDENTIFY_USERS = '/users/identify'
+    UNSUBSCRIBE_USER_EMAIL = '/email/status'
+    UNSUBSCRIBED_EMAILS = '/email/unsubscribes'
 
 
 # Course mode sorting based on slug
@@ -174,6 +193,16 @@ EDX_ORG_NAME = 'edX, Inc'
 # Waffle flag used to switch over edx-enterprise's usage of the enterprise catalog service
 USE_ENTERPRISE_CATALOG = 'use_enterprise_catalog'
 
+
+class AdminInviteStatus:
+    """
+    Status constants for enterprise admin invitations.
+    """
+    EXISTING_ADMIN = 'already admin'
+    PENDING_INVITE = 'already sent'
+    NEW_INVITE = 'invite sent'
+
+
 # ContentFilter field types for validation.
 CONTENT_FILTER_FIELD_TYPES = {
     'key': {'type': list, 'subtype': str},
@@ -269,8 +298,6 @@ GROUP_TYPE_CHOICES = (
     (GROUP_TYPE_BUDGET, 'Budget'),
     (GROUP_TYPE_FLEX, 'Flex')
 )
-
 ENTITY_ID_REGEX = r"<(\w+:)?EntityDescriptor.*?entityID=['\"](.*?)['\"].*?>"
-
 # Max learners included in the Admin Manage Learners page
 DJANGO_ADMIN_MANAGE_LEARNERS_LIMIT = 10000

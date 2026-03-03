@@ -2395,3 +2395,59 @@ class EnterpriseAdminMemberSerializer(serializers.Serializer):
         format="%b %d, %Y",
     )
     status = serializers.CharField()
+
+
+class AdminInviteSerializer(serializers.Serializer):
+    """
+    Accepts a list of email addresses for processing.
+
+    Example::
+
+        {
+            "emails": ["a@x.com", "b@x.com"]
+        }
+
+    Validation:
+
+    - Emails are validated for proper format.
+    - Emails are stripped and lowercased.
+    - Empty lists are not allowed.
+    - Duplicate emails are not allowed.
+    - (Optional) Additional business rules such as domain restrictions can be applied.
+    """
+    emails = serializers.ListField(
+        child=serializers.EmailField(),
+        allow_empty=False,
+        required=True,
+        error_messages={
+            "required": "The 'emails' field is required.",
+            "empty": "The 'emails' field is required.",
+        },
+    )
+
+    def validate_emails(self, value):
+        """
+        Normalize emails and check for duplicates.
+
+        Args:
+            value: List of email strings
+
+        Returns:
+            List of normalized (stripped, lowercased) emails
+
+        Raises:
+            ValidationError: If duplicate emails exist
+        """
+        normalized_emails = []
+
+        for email in value:
+            # Strip and lowercase
+            normalized_email = email.strip().lower()
+
+            normalized_emails.append(normalized_email)
+
+        # Check for duplicates
+        if len(normalized_emails) != len(set(normalized_emails)):
+            raise serializers.ValidationError("Duplicate emails are not allowed.")
+
+        return normalized_emails
