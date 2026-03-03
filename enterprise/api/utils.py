@@ -1,17 +1,25 @@
 """
 Utility functions for the Enterprise API.
 """
+import logging
+from typing import List, Set
+
 from django.conf import settings
 from django.contrib import auth
+from django.db import DatabaseError, transaction
+from django.db.models import F
+from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
 from enterprise.constants import (
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    AdminInviteStatus,
 )
 from enterprise.models import (
     EnterpriseCustomer,
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerInviteKey,
     EnterpriseCustomerReportingConfiguration,
@@ -19,7 +27,192 @@ from enterprise.models import (
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
     EnterpriseGroup,
+    PendingEnterpriseCustomerAdminUser,
 )
+from enterprise.tasks import send_enterprise_admin_invite_email
+
+logger = logging.getLogger(__name__)
+
+
+def get_existing_admin_emails(enterprise_customer: EnterpriseCustomer) -> Set[str]:
+    """
+    Retrieve normalized email addresses of existing enterprise admins.
+
+    Args:
+        enterprise_customer: The enterprise customer instance.
+
+    Returns:
+        Set of lowercased email addresses.
+
+    Raises:
+        DatabaseError: If database query fails.
+
+    Example:
+        >>> emails = get_existing_admin_emails(customer)
+        >>> 'admin@example.com' in emails
+        True
+    """
+    try:
+        return set(
+            EnterpriseCustomerAdmin.objects.filter(
+                enterprise_customer_user__enterprise_customer=enterprise_customer
+            )
+            .annotate(email_l=Lower(F("enterprise_customer_user__user_fk__email")))
+            .values_list("email_l", flat=True)
+        )
+    except DatabaseError:
+        logger.exception(
+            "Database error retrieving existing admin emails for enterprise customer: %s",
+            enterprise_customer.uuid,
+        )
+        raise
+
+
+def get_existing_pending_emails(
+    enterprise_customer: EnterpriseCustomer,
+    normalized_emails: List[str]
+) -> Set[str]:
+    """
+    Retrieve normalized email addresses of pending admin invitations.
+
+    Args:
+        enterprise_customer: The enterprise customer instance.
+        normalized_emails: List of normalized email addresses to check.
+
+    Returns:
+        Set of lowercased email addresses that have pending invitations.
+
+    Raises:
+        DatabaseError: If database query fails.
+
+    Example:
+        >>> pending = get_existing_pending_emails(customer, ['user@example.com'])
+        >>> 'user@example.com' in pending
+        True
+    """
+    try:
+        return set(
+            PendingEnterpriseCustomerAdminUser.objects.filter(
+                enterprise_customer=enterprise_customer,
+            )
+            .annotate(email_l=Lower(F("user_email")))
+            .filter(email_l__in=normalized_emails)
+            .values_list("email_l", flat=True)
+        )
+    except DatabaseError:
+        logger.exception(
+            "Database error retrieving existing pending emails for enterprise customer: %s",
+            enterprise_customer.uuid,
+        )
+        raise
+
+
+@transaction.atomic
+def create_pending_invites(
+    enterprise_customer: EnterpriseCustomer,
+    emails_to_invite: List[str]
+) -> List[PendingEnterpriseCustomerAdminUser]:
+    """
+    Create pending admin invitations and trigger email notifications.
+
+    Creates PendingEnterpriseCustomerAdminUser records for new admin invites
+    and enqueues Braze email tasks to be sent after transaction commits.
+
+    Args:
+        enterprise_customer: The enterprise customer instance.
+        emails_to_invite: List of normalized email addresses to invite.
+
+    Returns:
+        List of created PendingEnterpriseCustomerAdminUser instances.
+
+    Raises:
+        DatabaseError: If database operation fails.
+        ValueError: If emails_to_invite is empty.
+
+    Note:
+        - Must be called within a database transaction context
+        - Uses bulk_create with ignore_conflicts=True to handle race conditions
+        - Emails are sent after the outer transaction commits to ensure data consistency
+        - All operations are wrapped in atomic transaction
+
+    Example:
+        >>> invites = create_pending_invites(customer, ['new@example.com'])
+        >>> len(invites) > 0
+        True
+    """
+    if not emails_to_invite:
+        raise ValueError("emails_to_invite cannot be empty")
+
+    try:
+        # bulk_create returns empty list with ignore_conflicts=True,
+        # so we need to fetch the created records
+        PendingEnterpriseCustomerAdminUser.objects.bulk_create(
+            [
+                PendingEnterpriseCustomerAdminUser(
+                    enterprise_customer=enterprise_customer,
+                    user_email=email,
+                )
+                for email in emails_to_invite
+            ],
+            ignore_conflicts=True
+        )
+
+        # Fetch the actual created/existing records
+        created_invites = list(
+            PendingEnterpriseCustomerAdminUser.objects.filter(
+                enterprise_customer=enterprise_customer,
+                user_email__in=emails_to_invite
+            )
+        )
+
+        def _enqueue_email_jobs():
+            # Send invite email to all emails in one call
+            if created_invites:
+                send_enterprise_admin_invite_email.delay(
+                    str(enterprise_customer.uuid),
+                    [invite.user_email for invite in created_invites]
+                )
+
+        transaction.on_commit(_enqueue_email_jobs)
+        return created_invites
+    except DatabaseError:
+        logger.exception(
+            "Database error creating pending invites for enterprise customer: %s",
+            enterprise_customer.uuid,
+        )
+        raise
+
+
+def get_invite_status(
+    email: str,
+    existing_admin_emails: Set[str],
+    existing_pending_emails: Set[str]
+) -> str:
+    """
+    Determine the invitation status for a given email address.
+
+    Args:
+        email (str): The email address to check.
+        existing_admin_emails (set): Set of existing admin email addresses.
+        existing_pending_emails (set): Set of pending invitation email addresses.
+
+    Returns:
+        str: Status constant indicating email state:
+            - AdminInviteStatus.EXISTING_ADMIN if user is already an admin
+            - AdminInviteStatus.PENDING_INVITE if invitation already sent
+            - AdminInviteStatus.NEW_INVITE if this is a new invitation
+
+    Example:
+        >>> status = get_invite_status('new@example.com', set(), set())
+        >>> status == 'invite sent'
+        True
+    """
+    if email in existing_admin_emails:
+        return AdminInviteStatus.EXISTING_ADMIN
+    if email in existing_pending_emails:
+        return AdminInviteStatus.PENDING_INVITE
+    return AdminInviteStatus.NEW_INVITE
+
 
 User = auth.get_user_model()
 SERVICE_USERNAMES = (

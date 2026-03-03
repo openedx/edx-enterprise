@@ -11,11 +11,13 @@ from unittest import mock
 from pytest import mark, raises
 
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL
+from enterprise.api_client.braze_client import BrazeClientError
 from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource, EnterpriseGroupMembership
 from enterprise.settings.test import BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID, BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID
 from enterprise.tasks import (
     create_enterprise_enrollment,
+    send_enterprise_admin_invite_email,
     send_enterprise_email_notification,
     send_group_membership_invitation_notification,
     send_group_membership_removal_notification,
@@ -30,11 +32,6 @@ from test_utils.factories import (
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
-
-try:
-    from braze.exceptions import BrazeClientError
-except ImportError:
-    BrazeClientError = Exception
 
 
 @mark.django_db
@@ -59,6 +56,153 @@ class TestEnterpriseTasks(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
         )
         super().setUp()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.braze_client_module')
+    @mock.patch('enterprise.tasks.get_enterprise_customer')
+    @mock.patch('enterprise.tasks.LOGGER')
+    def test_send_enterprise_admin_invite_email_success(
+        self, mock_logger, mock_get_customer, mock_braze_client, mock_settings
+    ):
+        """
+        Test send_enterprise_admin_invite_email sends campaign message successfully.
+        """
+        mock_customer = mock.Mock()
+        mock_customer.slug = 'slug'
+        mock_customer.name = 'name'
+        mock_customer.sender_alias = 'alias'
+        mock_get_customer.return_value = mock_customer
+        mock_braze_instance = mock.Mock()
+        mock_braze_client.return_value = mock_braze_instance
+        mock_braze_instance.send_campaign_message.return_value = None
+
+        # Mock settings
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ENTERPRISE_ADMIN_INVITE_EMAIL_CAMPAIGN_ID = 'campaign-id'
+
+        send_enterprise_admin_invite_email(  # pylint: disable=no-value-for-parameter
+            'uuid', 'admin@example.com'
+        )
+        mock_logger.info.assert_called()
+        mock_braze_instance.send_campaign_message.assert_called_once()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.braze_client_module')
+    @mock.patch('enterprise.tasks.get_enterprise_customer')
+    @mock.patch('enterprise.tasks.LOGGER')
+    def test_send_enterprise_admin_invite_email_braze_error(
+        self, mock_logger, mock_get_customer, mock_braze_client, mock_settings
+    ):
+        """
+        Test send_enterprise_admin_invite_email logs and raises BrazeClientError.
+        """
+        mock_customer = mock.Mock()
+        mock_customer.slug = 'slug'
+        mock_customer.name = 'name'
+        mock_customer.sender_alias = 'alias'
+        mock_get_customer.return_value = mock_customer
+        mock_braze_instance = mock.Mock()
+        mock_braze_client.return_value = mock_braze_instance
+        mock_braze_instance.send_campaign_message.side_effect = BrazeClientError('fail')
+
+        # Mock settings
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ENTERPRISE_ADMIN_INVITE_EMAIL_CAMPAIGN_ID = 'campaign-id'
+
+        # Mock the task's request object for retry mechanism
+        task = send_enterprise_admin_invite_email
+        task.request.retries = 0
+        task.max_retries = 3
+
+        # Mock retry to raise MaxRetriesExceededError
+        with mock.patch.object(task, 'retry', side_effect=task.MaxRetriesExceededError()):
+            with self.assertRaises(BrazeClientError):
+                task('uuid', 'admin@example.com')  # pylint: disable=no-value-for-parameter
+
+        # Verify exception was logged (called at least once)
+        assert mock_logger.exception.called
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.get_enterprise_customer')
+    @mock.patch('enterprise.tasks.LOGGER')
+    def test_send_enterprise_admin_invite_email_missing_api_key(self, mock_logger, mock_get_customer, mock_settings):
+        """
+        Test send_enterprise_admin_invite_email raises ValueError when ENTERPRISE_BRAZE_API_KEY is missing.
+        """
+        mock_customer = mock.Mock()
+        mock_customer.slug = 'slug'
+        mock_customer.name = 'name'
+        mock_customer.sender_alias = 'alias'
+        mock_get_customer.return_value = mock_customer
+
+        # Mock missing API key
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = None
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ENTERPRISE_ADMIN_INVITE_EMAIL_CAMPAIGN_ID = 'campaign-id'
+
+        with self.assertRaises(ValueError) as context:
+            send_enterprise_admin_invite_email(  # pylint: disable=no-value-for-parameter
+                'uuid', 'admin@example.com'
+            )
+
+        self.assertIn('Missing required Braze settings', str(context.exception))
+        mock_logger.error.assert_called_once()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.get_enterprise_customer')
+    @mock.patch('enterprise.tasks.LOGGER')
+    def test_send_enterprise_admin_invite_email_missing_api_url(self, mock_logger, mock_get_customer, mock_settings):
+        """
+        Test send_enterprise_admin_invite_email raises ValueError when EDX_BRAZE_API_SERVER is missing.
+        """
+        mock_customer = mock.Mock()
+        mock_customer.slug = 'slug'
+        mock_customer.name = 'name'
+        mock_customer.sender_alias = 'alias'
+        mock_get_customer.return_value = mock_customer
+
+        # Mock missing API URL
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = None
+        mock_settings.BRAZE_ENTERPRISE_ADMIN_INVITE_EMAIL_CAMPAIGN_ID = 'campaign-id'
+
+        with self.assertRaises(ValueError) as context:
+            send_enterprise_admin_invite_email(  # pylint: disable=no-value-for-parameter
+                'uuid', 'admin@example.com'
+            )
+
+        self.assertIn('Missing required Braze settings', str(context.exception))
+        mock_logger.error.assert_called_once()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.get_enterprise_customer')
+    @mock.patch('enterprise.tasks.LOGGER')
+    def test_send_enterprise_admin_invite_email_missing_campaign_id(
+        self, mock_logger, mock_get_customer, mock_settings
+    ):
+        """
+        Test send_enterprise_admin_invite_email raises ValueError when campaign ID is missing.
+        """
+        mock_customer = mock.Mock()
+        mock_customer.slug = 'slug'
+        mock_customer.name = 'name'
+        mock_customer.sender_alias = 'alias'
+        mock_get_customer.return_value = mock_customer
+
+        # Mock missing campaign ID
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ENTERPRISE_ADMIN_INVITE_EMAIL_CAMPAIGN_ID = None
+
+        with self.assertRaises(ValueError) as context:
+            send_enterprise_admin_invite_email(  # pylint: disable=no-value-for-parameter
+                'uuid', 'admin@example.com'
+            )
+
+        self.assertIn('Missing BRAZE_ENTERPRISE_ADMIN_INVITE_EMAIL_CAMPAIGN_ID', str(context.exception))
+        mock_logger.error.assert_called_once()
 
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     def test_create_enrollment_task_course_in_catalog(self, mock_contains_course):
