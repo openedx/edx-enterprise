@@ -11,3 +11,5 @@ factory-boy
 readme_renderer           # Validates README.rst for usage on PyPI
 Sphinx                    # Documentation builder
 sphinx-book-theme         # Common theme for all Open edX projects
+sphinxcontrib-mermaid     # Renders mermaid diagrams in docs
+myst-parser               # Markdown (MyST) support for Sphinx docs
