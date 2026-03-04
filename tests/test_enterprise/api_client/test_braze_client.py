@@ -1,18 +1,15 @@
 """
 Comprehensive expert-level tests for the BrazeAPIClient in edx-enterprise.
 """
-from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
-import requests
 from requests.exceptions import HTTPError, RequestException, Timeout
 
 from enterprise.api_client.braze_client import (
     BrazeAPIClient,
     BrazeClientError,
     BrazeValidationError,
-    DEFAULT_MAX_RETRIES,
     DEFAULT_TIMEOUT,
     MAX_RECIPIENTS_PER_REQUEST,
 )
