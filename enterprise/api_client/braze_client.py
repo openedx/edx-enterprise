@@ -30,7 +30,6 @@ class BrazeClientError(Exception):
 
 class BrazeValidationError(Exception):
     """Exception raised when input validation fails."""
-    pass
 
 
 class BrazeAPIClient:
@@ -121,14 +120,14 @@ class BrazeAPIClient:
             "external_user_id": external_user_id,
             "send_to_existing_only": send_to_existing_only
         }
-        
+
         # Build attributes without mutating input
         attr = attributes.copy() if attributes else {}
         if email:
             attr["email"] = email
         if attr:
             recipient["attributes"] = attr
-        
+
         return recipient
 
     def send_campaign_message(
@@ -208,20 +207,20 @@ class BrazeAPIClient:
             )
             response = self.session.post(url, json=payload, headers=headers, timeout=self.timeout)
             response.raise_for_status()
-            
+
             # Parse JSON response with error handling
             try:
                 response_data = response.json()
             except ValueError as e:
                 raise BrazeClientError(f"Invalid JSON response from Braze API: {e}", response=response) from e
-            
+
             logger.info(
                 "Successfully sent Braze campaign %s to %d recipients",
                 campaign_id,
                 len(recipients)
             )
             return response_data
-            
+
         except requests.Timeout as e:
             error_msg = f"Braze API request timed out after {self.timeout}s: {e}"
             logger.error(error_msg)
