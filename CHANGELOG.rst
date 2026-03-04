@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[8.1.0] - 2026-06-17
+---------------------
+* feat: add courseware-access pipeline steps
+
 [8.0.19] - 2026-06-16
 ---------------------
 * feat: Add the ``enable_credit_and_industry_pathways`` field for EnterpriseCustomer
