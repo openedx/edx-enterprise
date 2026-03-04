@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.7] - 2026-03-04
+---------------------
+* feat: expose admin list endpoint with search and pagination
+
 [6.6.6] - 2026-02-20
 ---------------------
-* feat:Implement soft delete for admins
+* feat: Implement soft delete for admins
 
 [6.6.5] - 2026-02-24
 ---------------------
