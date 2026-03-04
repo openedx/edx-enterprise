@@ -7,11 +7,11 @@ import pytest
 from requests.exceptions import HTTPError, RequestException, Timeout
 
 from enterprise.api_client.braze_client import (
+    DEFAULT_TIMEOUT,
+    MAX_RECIPIENTS_PER_REQUEST,
     BrazeAPIClient,
     BrazeClientError,
     BrazeValidationError,
-    DEFAULT_TIMEOUT,
-    MAX_RECIPIENTS_PER_REQUEST,
 )
 
 
