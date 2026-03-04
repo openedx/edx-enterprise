@@ -6,7 +6,16 @@ Common plugin settings for the consent app.
 # enterprise plugin's settings module.
 from enterprise.settings.common import FiltersConfig, _merge_filters_config
 
-CONSENT_FILTERS_CONFIG: FiltersConfig = {}
+CONSENT_FILTERS_CONFIG: FiltersConfig = {
+    "org.openedx.learning.courseware.view.started.v1": {
+        "fail_silently": False,
+        "pipeline": ["consent.filters.courseware.DataSharingConsentRedirectStep"],
+    },
+    "org.openedx.learning.courseware.access_checks.requested.v1": {
+        "fail_silently": False,
+        "pipeline": ["consent.filters.courseware.DataSharingConsentCourseAccessStep"],
+    },
+}
 
 
 def plugin_settings(settings):
