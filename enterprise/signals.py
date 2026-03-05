@@ -32,11 +32,13 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 try:
     from common.djangoapps.student.models import CourseEnrollment
     from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
+    from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_LMS_CRITICAL
 
 except ImportError:
     CourseEnrollment = None
     COURSE_ENROLLMENT_CHANGED = None
     COURSE_UNENROLLMENT_COMPLETED = None
+    USER_RETIRE_LMS_CRITICAL = None
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -451,3 +453,20 @@ if COURSE_UNENROLLMENT_COMPLETED is not None:
 
 if COURSE_ENROLLMENT_CHANGED is not None:
     COURSE_ENROLLMENT_CHANGED.connect(course_enrollment_changed_receiver)
+
+
+def retire_user_from_pending_enterprise_customer_user(sender, user, retired_email, **kwargs):  # pylint: disable=unused-argument
+    """
+    Handle USER_RETIRE_LMS_CRITICAL signal: retire PendingEnterpriseCustomerUser email address.
+
+    Idempotent: only updates records where user_email hasn't already been changed to the retired value.
+    """
+    models.PendingEnterpriseCustomerUser.objects.filter(
+        user_email=user.email,
+    ).exclude(
+        user_email=retired_email,
+    ).update(user_email=retired_email)
+
+
+if USER_RETIRE_LMS_CRITICAL is not None:
+    USER_RETIRE_LMS_CRITICAL.connect(retire_user_from_pending_enterprise_customer_user)

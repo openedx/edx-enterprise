@@ -31,6 +31,7 @@ from enterprise.signals import (
     create_enterprise_enrollment_receiver,
     enterprise_unenrollment_receiver,
     handle_user_post_save,
+    retire_user_from_pending_enterprise_customer_user,
 )
 from integrated_channels.integrated_channel.models import OrphanedContentTransmissions
 from test_utils import EmptyCacheMixin
@@ -1174,3 +1175,47 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             include_exec_ed_2u_courses=test_query.include_exec_ed_2u_courses,
         )
         api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
+
+
+@mark.django_db
+class TestRetireUserFromPendingEnterpriseCustomerUser(unittest.TestCase):
+    """
+    Tests for the retire_user_from_pending_enterprise_customer_user signal handler.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.user = UserFactory()
+        self.retired_email = f'retired__{self.user.email}'
+        self.pending_enterprise_user = PendingEnterpriseCustomerUserFactory(
+            user_email=self.user.email,
+        )
+
+    def _send_signal(self):
+        retire_user_from_pending_enterprise_customer_user(
+            sender=None,
+            user=self.user,
+            retired_username=f'retired__{self.user.username}',
+            retired_email=self.retired_email,
+        )
+
+    def test_retires_user_email_on_pending_records(self):
+        self._send_signal()
+
+        self.pending_enterprise_user.refresh_from_db()
+        assert self.pending_enterprise_user.user_email == self.retired_email
+
+    def test_no_records_with_original_email_remain(self):
+        original_email = self.user.email
+        self._send_signal()
+
+        assert not PendingEnterpriseCustomerUser.objects.filter(user_email=original_email).exists()
+
+    def test_idempotent_when_already_retired(self):
+        """Calling the handler twice does not raise and leaves data in the correct state."""
+        self._send_signal()
+        self._send_signal()
+
+        self.pending_enterprise_user.refresh_from_db()
+        assert self.pending_enterprise_user.user_email == self.retired_email
+

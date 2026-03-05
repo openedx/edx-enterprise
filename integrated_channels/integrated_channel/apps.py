@@ -11,3 +11,9 @@ class IntegratedChannelConfig(AppConfig):
     """
     name = 'integrated_channels.integrated_channel'
     verbose_name = "Enterprise Integrated Channels"
+
+    def ready(self):
+        """
+        Perform one-time initialization: connect signal handlers.
+        """
+        import integrated_channels.integrated_channel.signals  # noqa: F401  pylint: disable=import-outside-toplevel,unused-import
