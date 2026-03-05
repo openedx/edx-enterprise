@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.8] - 2026-03-05
+---------------------
+* feat: moving retirement code to edx-enterprise
+
 [6.6.7] - 2026-03-04
 ---------------------
 * feat: expose admin list endpoint with search and pagination
