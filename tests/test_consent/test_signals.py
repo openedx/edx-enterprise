@@ -54,4 +54,3 @@ class TestRetireUsersDataSharingConsent(unittest.TestCase):
 
         self.consent.refresh_from_db()
         assert self.consent.username == self.retired_username
-

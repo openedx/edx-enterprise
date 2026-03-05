@@ -31,8 +31,8 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
-    from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
     from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_LMS_CRITICAL
+    from openedx_events.learning.signals import COURSE_ENROLLMENT_CHANGED, COURSE_UNENROLLMENT_COMPLETED
 
 except ImportError:
     CourseEnrollment = None

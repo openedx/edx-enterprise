@@ -1218,4 +1218,3 @@ class TestRetireUserFromPendingEnterpriseCustomerUser(unittest.TestCase):
 
         self.pending_enterprise_user.refresh_from_db()
         assert self.pending_enterprise_user.user_email == self.retired_email
-

@@ -63,7 +63,6 @@ class TestRetireSapsfDataTransmission(unittest.TestCase):
         assert self.audit.sapsf_user_id == ''
 
 
-
 @mark.django_db
 class TestRetireDegreedDataTransmission(unittest.TestCase):
     """
@@ -105,4 +104,3 @@ class TestRetireDegreedDataTransmission(unittest.TestCase):
 
         self.audit.refresh_from_db()
         assert self.audit.degreed_user_email == ''
-
