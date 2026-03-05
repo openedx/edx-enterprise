@@ -2,13 +2,15 @@
 Module provides elements to be used in third-party auth pipeline.
 """
 
+import logging
 import re
 from datetime import datetime
 from logging import getLogger
 
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
 from enterprise.utils import get_identity_provider, get_social_auth_from_idp
 
 try:
@@ -27,6 +29,55 @@ except ImportError:
     Registry = None
 
 LOGGER = getLogger(__name__)
+log = logging.getLogger(__name__)
+User = get_user_model()
+
+
+def enterprise_associate_by_email(strategy, details, user=None, *args, **kwargs):
+    """
+    SAML pipeline step: associate the auth user with an existing user by email when
+    the existing user is an enterprise customer user for the current provider.
+
+    This step replaces the platform-side ``associate_by_email_if_enterprise_user`` function.
+    It is registered in ``SOCIAL_AUTH_PIPELINE`` via ``enterprise/settings/common.py`` (epic 18).
+    """
+    if user:
+        return None
+
+    email = details.get('email')
+    if not email:
+        return None
+
+    try:
+        existing_user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return None
+
+    try:
+        current_provider = strategy.request.backend
+        provider_id = getattr(current_provider, 'provider_id', None)
+    except AttributeError:
+        return None
+
+    if not provider_id:
+        return None
+
+    enterprise_customer_idps = EnterpriseCustomerIdentityProvider.objects.filter(
+        provider_id=provider_id
+    )
+    for idp in enterprise_customer_idps:
+        if EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=idp.enterprise_customer,
+            user_id=existing_user.id,
+        ).exists():
+            log.info(
+                "Associating enterprise user %s via provider %s by email match.",
+                existing_user.id,
+                provider_id,
+            )
+            return {'user': existing_user}
+
+    return None
 
 
 def get_sso_provider(request, pipeline):
