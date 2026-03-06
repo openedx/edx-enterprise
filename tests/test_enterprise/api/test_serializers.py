@@ -18,6 +18,7 @@ from django.test import TestCase
 
 from enterprise.api.utils import CourseRunProgressStatuses
 from enterprise.api.v1.serializers import (
+    AdminInviteSerializer,
     EnterpriseAdminMemberSerializer,
     EnterpriseCourseEnrollmentAdminViewSerializer,
     EnterpriseCustomerApiCredentialSerializer,
@@ -1167,6 +1168,82 @@ class TestEnterpriseSSOUserInfoRequestSerializer(TestCase):
         assert serializer.validated_data['org_id'] == 'test-org-123'
         assert serializer.validated_data['external_user_id'] == 'user-456'
         assert 'extra_field' not in serializer.validated_data
+
+
+@mark.django_db
+class TestAdminInviteSerializer(TestCase):
+    """
+    Tests for AdminInviteSerializer.
+    """
+
+    def test_valid_emails(self):
+        """Test serializer with valid emails."""
+        data = {"emails": ["user1@example.com", "user2@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert len(serializer.validated_data["emails"]) == 2
+        assert "user1@example.com" in serializer.validated_data["emails"]
+        assert "user2@example.com" in serializer.validated_data["emails"]
+
+    def test_emails_are_normalized(self):
+        """Test that emails are lowercased and stripped."""
+        data = {"emails": ["  User@EXAMPLE.com  ", "ADMIN@Test.COM"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["emails"] == ["user@example.com", "admin@test.com"]
+
+    def test_duplicate_emails_rejected(self):
+        """Test that duplicate emails are rejected."""
+        data = {"emails": ["user@example.com", "user@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert "Duplicate emails" in str(serializer.errors["emails"])
+
+    def test_duplicate_emails_case_insensitive(self):
+        """Test that duplicate detection is case-insensitive."""
+        data = {"emails": ["User@Example.com", "user@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "Duplicate emails" in str(serializer.errors["emails"])
+
+    def test_missing_emails_field(self):
+        """Test that missing emails field fails validation."""
+        serializer = AdminInviteSerializer(data={})
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert serializer.errors["emails"][0] == "The 'emails' field is required."
+
+    def test_empty_emails_list(self):
+        """Test that empty emails list fails validation."""
+        serializer = AdminInviteSerializer(data={"emails": []})
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert serializer.errors["emails"][0] == "The 'emails' field is required."
+
+    def test_invalid_email_format(self):
+        """Test that invalid email format is rejected."""
+        data = {"emails": ["notanemail"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "emails" in serializer.errors
+        assert "Enter a valid email address" in str(serializer.errors["emails"])
+        assert "Invalid email format" not in str(serializer.errors["emails"])
+
+    def test_large_batch_accepted(self):
+        """Test that large batches of emails are accepted."""
+        emails = [f"user{i}@example.com" for i in range(100)]
+        data = {"emails": emails}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert len(serializer.validated_data["emails"]) == 100
+
+    def test_single_email(self):
+        """Test serializer with a single email."""
+        data = {"emails": ["single@example.com"]}
+        serializer = AdminInviteSerializer(data=data)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["emails"] == ["single@example.com"]
 
 
 @mark.django_db
