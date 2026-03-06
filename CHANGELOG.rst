@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.0] - 2026-04-07
+---------------------
+* chore: drop Python 3.11 support
+
 [6.8.6] - 2026-04-07
 ---------------------
 * fix: allow deletion of inactive enterprise admin users (ENT-11714)
