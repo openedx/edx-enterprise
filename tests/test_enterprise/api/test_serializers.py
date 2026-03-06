@@ -25,6 +25,7 @@ from enterprise.api.v1.serializers import (
     EnterpriseCustomerReportingConfigurationSerializer,
     EnterpriseCustomerSerializer,
     EnterpriseCustomerUserReadOnlySerializer,
+    EnterpriseGroupSerializer,
     EnterpriseMembersSerializer,
     EnterpriseSSOUserInfoRequestSerializer,
     EnterpriseUserSerializer,
@@ -186,6 +187,52 @@ class TestEnterpriseCustomerSerializer(BaseSerializerTestWithEnterpriseRoleAssig
         expected_auth_org_id = self.enterprise_customer_1.auth_org_id
         serialized_auth_org_id = serializer.data['auth_org_id']
         self.assertEqual(serialized_auth_org_id, expected_auth_org_id)
+
+
+@mark.django_db
+class TestEnterpriseGroupSerializer(APITest):
+    """
+    Tests for EnterpriseGroupSerializer.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.group_name = 'duplicate-group-name'
+        self.duplicate_name_error = (
+            'A group with this name already exists. Please enter a unique name to create a new group.'
+        )
+
+    def _serialize_group(self):
+        """Return a serializer with duplicate-prone payload."""
+        return EnterpriseGroupSerializer(data={
+            'enterprise_customer': self.enterprise_customer.uuid,
+            'name': self.group_name,
+            'group_type': 'flex',
+        })
+
+    def test_duplicate_group_name_returns_custom_error_message(self):
+        """Ensure active duplicate group names get the expected friendly validation message."""
+        factories.EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            name=self.group_name,
+        )
+
+        serializer = self._serialize_group()
+        assert not serializer.is_valid()
+        assert serializer.errors.get('non_field_errors') == [self.duplicate_name_error]
+
+    def test_deleted_duplicate_group_name_returns_custom_error_message(self):
+        """Ensure soft-deleted duplicate group names are also blocked with the same validation message."""
+        group = factories.EnterpriseGroupFactory(
+            enterprise_customer=self.enterprise_customer,
+            name=self.group_name,
+        )
+        group.delete()
+
+        serializer = self._serialize_group()
+        assert not serializer.is_valid()
+        assert serializer.errors.get('non_field_errors') == [self.duplicate_name_error]
 
 
 @mark.django_db

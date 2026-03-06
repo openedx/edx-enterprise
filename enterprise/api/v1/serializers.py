@@ -12,6 +12,7 @@ from oauth2_provider.generators import generate_client_id, generate_client_secre
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.settings import api_settings
+from rest_framework.validators import UniqueTogetherValidator
 from slumber.exceptions import HttpClientError
 
 from django.contrib import auth
@@ -795,6 +796,13 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
         fields = (
             'enterprise_customer', 'name', 'uuid',
             'accepted_members_count', 'group_type', 'created')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=models.EnterpriseGroup.all_objects.all(),
+                fields=('name', 'enterprise_customer'),
+                message='A group with this name already exists. Please enter a unique name to create a new group.',
+            )
+        ]
 
     accepted_members_count = serializers.SerializerMethodField()
 
