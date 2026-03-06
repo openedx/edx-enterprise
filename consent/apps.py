@@ -13,3 +13,9 @@ class ConsentConfig(AppConfig):
 
     name = 'consent'
     verbose_name = "Enterprise Consent"
+
+    def ready(self):
+        """
+        Perform one-time initialization: connect signal handlers.
+        """
+        import consent.signals  # noqa: F401  pylint: disable=import-outside-toplevel,unused-import
