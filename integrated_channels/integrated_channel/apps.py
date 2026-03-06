@@ -12,6 +12,8 @@ class IntegratedChannelConfig(AppConfig):
     name = 'integrated_channels.integrated_channel'
     verbose_name = "Enterprise Integrated Channels"
 
+    # TODO: We should move these integrated-channel-specific retirement handlers to the edx-integrated-channels repository
+    # and use `channel_integrations.integrated_channel` instead of `integrated_channels.integrated_channel`
     def ready(self):
         """
         Perform one-time initialization: connect signal handlers.

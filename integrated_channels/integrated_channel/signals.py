@@ -21,8 +21,10 @@ def retire_sapsf_data_transmission(sender, user, **kwargs):  # pylint: disable=u
 
     Idempotent: only updates records where sapsf_user_id is not already empty.
     """
+    logger.info(f'Retiring sapsf_user_id {user.id} on audit records')
     for ent_user in EnterpriseCustomerUser.objects.filter(user_id=user.id):
         for enrollment in EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=ent_user):
+            logger.info(f'Updating enrollment {enrollment.id} to clear sapsf_user_id {user.id}')
             SapSuccessFactorsLearnerDataTransmissionAudit.objects.filter(
                 enterprise_course_enrollment_id=enrollment.id,
             ).exclude(
@@ -36,8 +38,10 @@ def retire_degreed_data_transmission(sender, user, **kwargs):  # pylint: disable
 
     Idempotent: only updates records where degreed_user_email is not already empty.
     """
+    logger.info(f'Retiring degreed_user_email on audit records for user {user.id}')
     for ent_user in EnterpriseCustomerUser.objects.filter(user_id=user.id):
         for enrollment in EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=ent_user):
+            logger.info(f'Updating enrollment {enrollment.id} to clear degreed_user_email for ECU {ent_user}')
             DegreedLearnerDataTransmissionAudit.objects.filter(
                 enterprise_course_enrollment_id=enrollment.id,
             ).exclude(
