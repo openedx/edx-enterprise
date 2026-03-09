@@ -461,8 +461,12 @@ def retire_user_from_pending_enterprise_customer_user(sender, user, retired_emai
 
     Idempotent: only updates records where user_email hasn't already been changed to the retired value.
     """
-    if (user.email != retired_email):
-        logger.info(f'Updating PendingEnterpriseCustomerUser email record from "{user.email}" to retired email "{retired_email}"')
+    if user.email != retired_email:
+        logger.info(
+            "Updating PendingEnterpriseCustomerUser email record from %s to retired email %s",
+            user.email,
+            retired_email,
+        )
     models.PendingEnterpriseCustomerUser.objects.filter(
         user_email=user.email,
     ).exclude(

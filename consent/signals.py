@@ -19,8 +19,12 @@ def retire_users_data_sharing_consent(sender, user, retired_username, **kwargs):
 
     Idempotent: only updates records where username hasn't already been changed to the retired value.
     """
-    if (user.username != retired_username): 
-        logger.info(f'Updating username "{user.username}" to retired username "{retired_username}" on DataSharingConsent records')
+    if user.username != retired_username:
+        logger.info(
+            "Updating username %s to retired username %s on DataSharingConsent records",
+            user.username,
+            retired_username,
+        )
     DataSharingConsent.objects.filter(
         username=user.username,
     ).exclude(
