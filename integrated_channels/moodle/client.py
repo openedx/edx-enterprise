@@ -16,6 +16,14 @@ from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
 
+MOODLE_ERROR_STATUS_MAP = {
+    "shortnametaken": 409,
+    "courseidnumbertaken": 409,
+    "cannotfindcourse": 404,
+    "cannotfinduser": 404,
+    "missingparam": 400,
+}
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -82,6 +90,14 @@ def moodle_request_wrapper(method):
             raise ClientError('Moodle API Grade Update failed with possible error: {body}'.format(body=body), 500)
         error_code = body.get('errorcode')
         warnings = body.get('warnings')
+
+        # Define mapped_status based on error_code
+        mapped_status = {
+            'invalidtoken': 'Invalid Token',
+            'missingfield': 'Missing Field',
+            'duplicatedata': 'Duplicate Data',
+        }.get(error_code, 'Unknown Error')
+
         if error_code and error_code == 'invalidtoken':
             self.token = self._get_access_token()  # pylint: disable=protected-access
             response = method(self, *args, **kwargs)
@@ -89,10 +105,15 @@ def moodle_request_wrapper(method):
             raise MoodleClientError(
                 'Moodle API Client Task "{method}" failed with error code '
                 '"{code}" and message: "{msg}" '.format(
-                    method=method.__name__, code=error_code, msg=body.get('message'),
+                    method=method.__name__,
+                    code=error_code,
+                    msg=body.get('message'),
                 ),
                 response.status_code,
-                error_code,
+                moodle_error={
+                    'mapped_status': mapped_status,
+                    'error_code': error_code,
+                },
             )
         elif warnings:
             # More Moodle nonsense!
@@ -464,9 +485,18 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         except MoodleClientError as error:
             # treat duplicate as successful, but only if its a single course
             # set chunk size settings to 1 if youre seeing a lot of these errors
-            if error.moodle_error == 'shortnametaken' and not more_than_one_course:
+            if (
+                error.moodle_error
+                and error.moodle_error.get('error_code') == 'shortnametaken'
+                and not more_than_one_course
+            ):
                 return 200, "shortnametaken"
-            elif error.moodle_error == 'courseidnumbertaken' and not more_than_one_course:
+
+            elif (
+                error.moodle_error
+                and error.moodle_error.get('error_code') == 'courseidnumbertaken'
+                and not more_than_one_course
+            ):
                 return 200, "courseidnumbertaken"
             else:
                 raise error
