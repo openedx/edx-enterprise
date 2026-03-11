@@ -501,3 +501,31 @@ class TestMoodleApiClient(unittest.TestCase):
             'A required parameter is missing.',
             context.exception.message
         )
+
+    def test_moodle_errorcode_200_response_maps_to_correct_status(self):
+        """
+        Test that when Moodle returns HTTP 200 with an errorcode,
+        the client maps it to the correct HTTP status code using
+        MOODLE_ERROR_STATUS_MAP.
+        """
+        # pylint: disable=protected-access
+
+        client = MoodleAPIClient(self.enterprise_config)
+
+        mock_response = unittest.mock.Mock(spec=Response)
+        mock_response.json.return_value = {
+            "errorcode": "missingparam",
+            "message": "A required parameter is missing."
+        }
+        mock_response.status_code = 200
+
+        client._post = unittest.mock.MagicMock(return_value=mock_response)
+
+        with self.assertRaises(MoodleClientError) as context:
+            client._wrapped_post(SERIALIZED_DATA)
+
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertEqual(
+            context.exception.moodle_error.get("error_code"),
+            "missingparam"
+        )
