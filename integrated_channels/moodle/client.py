@@ -16,7 +16,106 @@ from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.utils import generate_formatted_log, stringify_and_store_api_record
 
+MOODLE_ERROR_STATUS_MAP = {
+    # Duplicate/Conflict errors (409)
+    "shortnametaken": 409,
+    "courseidnumbertaken": 409,
+    "morethanonerecordinfetch": 409,
+    "duplicateemail": 409,
+    "duplicateidnumber": 409,
+    "duplicateusername": 409,
+
+    # Not Found errors (404)
+    "cannotfindcourse": 404,
+    "cannotfinduser": 404,
+    "invalidrecord": 404,
+    "usernamenotfound": 404,
+    "coursenotfound": 404,
+    "usernotfound": 404,
+    "invalidcourseid": 404,
+    "invaliduserid": 404,
+    "modulenotfound": 404,
+    "activitynotfound": 404,
+
+    # Bad Request errors (400)
+    "missingparam": 400,
+    "codingerror": 400,
+    "invalidparameter": 400,
+    "invalidparametervalue": 400,
+    "requiredparametermissing": 400,
+    "invalidresponse": 400,
+    "invaliddata": 400,
+
+    # Authentication errors (401)
+    "invalidlogin": 401,
+    "invalidtoken": 401,
+    "sessiontimeout": 401,
+    "requiresauthentication": 401,
+
+    # Authorization/Permission errors (403)
+    "accessexception": 403,
+    "errorcatcontextnotvalid": 403,
+    "usernotfullysetup": 403,
+    "nopermission": 403,
+    "nopermissions": 403,
+    "requirecapability": 403,
+    "contextupdatefailed": 403,
+    "notpermittedtoaccesscourse": 403,
+
+    # Server/Database errors (503)
+    "dbconnectionfailed": 503,
+    "dmlreadexception": 503,
+    "dmlwriteexception": 503,
+    "dmlexception": 503,
+    "databaseerror": 503,
+
+    # Service/Method errors (400)
+    "invalidservicename": 400,
+    "invalidfunctionname": 400,
+    "servicerequireslogin": 401,
+
+    # Enrollment errors (400)
+    "cannotenrol": 400,
+    "enrolnotpermitted": 403,
+    "alreadyenrolled": 409,
+
+    # Grade/Completion errors (400)
+    "invalidcompletion": 400,
+    "invalidgrade": 400,
+    "itemidnotfound": 404,
+}
+
 LOGGER = logging.getLogger(__name__)
+
+
+def _effective_error_status_code(status_code, error_code=None):
+    """
+    Map Moodle error codes to correct HTTP status codes.
+    Moodle returns 200 response status code on failed transmission jobs which is the
+    historical and default behavior of Moodle web services. This function corrects
+    the status code based on the error_code in the response body.
+    Args:
+        status_code: The HTTP status code from the response
+        error_code: The error code from Moodle's response body
+    Returns:
+        int: The effective status code (mapped from MOODLE_ERROR_STATUS_MAP,
+             or 555 for unknown semantic errors, or original status_code)
+    """
+    # First check if we have a mapped status for this error code
+    if error_code and error_code in MOODLE_ERROR_STATUS_MAP:
+        return MOODLE_ERROR_STATUS_MAP[error_code]
+
+    # If status code indicates error (>=400), keep it
+    if status_code and status_code >= 400:
+        return status_code
+
+    # If we get here, Moodle returned a 2xx/3xx status with an unknown error code
+    # This is a semantic error - the HTTP status says success but there's an error
+    if error_code:
+        return 555  # Semantic error for unknown Moodle failure
+
+    # No error code and good status - this shouldn't happen in error path
+    return status_code if status_code else 500
 
 
 class MoodleClientError(ClientError):
@@ -82,17 +181,32 @@ def moodle_request_wrapper(method):
             raise ClientError('Moodle API Grade Update failed with possible error: {body}'.format(body=body), 500)
         error_code = body.get('errorcode')
         warnings = body.get('warnings')
+
+        # Define mapped_status based on error_code
+        mapped_status = {
+            'invalidtoken': 'Invalid Token',
+            'missingfield': 'Missing Field',
+            'duplicatedata': 'Duplicate Data',
+        }.get(error_code, 'Unknown Error')
+
         if error_code and error_code == 'invalidtoken':
             self.token = self._get_access_token()  # pylint: disable=protected-access
             response = method(self, *args, **kwargs)
         elif error_code:
+            status_code = _effective_error_status_code(response.status_code, error_code)
+
             raise MoodleClientError(
                 'Moodle API Client Task "{method}" failed with error code '
                 '"{code}" and message: "{msg}" '.format(
-                    method=method.__name__, code=error_code, msg=body.get('message'),
+                    method=method.__name__,
+                    code=error_code,
+                    msg=body.get('message'),
                 ),
-                response.status_code,
-                error_code,
+                status_code,
+                moodle_error={
+                    'mapped_status': mapped_status,
+                    'error_code': error_code,
+                },
             )
         elif warnings:
             # More Moodle nonsense!
@@ -464,9 +578,18 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         except MoodleClientError as error:
             # treat duplicate as successful, but only if its a single course
             # set chunk size settings to 1 if youre seeing a lot of these errors
-            if error.moodle_error == 'shortnametaken' and not more_than_one_course:
+            if (
+                error.moodle_error
+                and error.moodle_error.get('error_code') == 'shortnametaken'
+                and not more_than_one_course
+            ):
                 return 200, "shortnametaken"
-            elif error.moodle_error == 'courseidnumbertaken' and not more_than_one_course:
+
+            elif (
+                error.moodle_error
+                and error.moodle_error.get('error_code') == 'courseidnumbertaken'
+                and not more_than_one_course
+            ):
                 return 200, "courseidnumbertaken"
             else:
                 raise error

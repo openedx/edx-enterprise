@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.6.10] - 2026-03-11
+---------------------
+* fix: handling moodle error (ENT-9080)
+
 [6.6.9] - 2026-03-10
 ---------------------
 * fix: handle duplicate enterprise group name validation error (ENT-11506)
