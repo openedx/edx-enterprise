@@ -9,8 +9,10 @@ from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core import mail
 from django.db import IntegrityError
+from django.db.models.functions import Lower
 
 from enterprise import constants
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL, MAX_NUM_IDENTIFY_USERS_ALIASES, BrazeAPIClient
@@ -19,11 +21,103 @@ from enterprise.constants import SSO_BRAZE_CAMPAIGN_ID
 from enterprise.utils import batch_dict, get_enterprise_customer, localized_utcnow, send_email_notification_message
 
 LOGGER = getLogger(__name__)
+User = get_user_model()
+
+braze_client_class = BrazeAPIClient
 
 try:
     from braze.exceptions import BrazeClientError
 except ImportError:
-    BrazeClientError = Exception
+    class BrazeClientError(Exception):
+        """Fallback Braze client error when braze package is unavailable."""
+
+
+def _get_braze_campaign_id(campaign_setting_name):
+    """Return the configured Braze campaign id after validating required settings."""
+    if not getattr(settings, 'ENTERPRISE_BRAZE_API_KEY', None) or not getattr(settings, 'EDX_BRAZE_API_SERVER', None):
+        error_msg = 'Missing required Braze settings for admin invite email'
+        LOGGER.error(error_msg)
+        raise ValueError(error_msg)
+
+    braze_campaign_id = getattr(settings, campaign_setting_name, None)
+    if not braze_campaign_id:
+        error_msg = f'Missing {campaign_setting_name} setting for admin invite email'
+        LOGGER.error(error_msg)
+        raise ValueError(error_msg)
+    return braze_campaign_id
+
+
+def _split_identified_and_anonymous_recipients(recipient_emails, campaign_setting_name):
+    """Split recipient emails into identified-user payloads and anonymous email list."""
+    normalized_emails = [
+        email.strip().lower()
+        for email in recipient_emails
+        if email and email.strip()
+    ]
+
+    users_by_email = {
+        user.email_lower: user
+        for user in User.objects.annotate(email_lower=Lower('email')).filter(email_lower__in=normalized_emails)
+    }
+
+    is_learner_campaign = campaign_setting_name == constants.BRAZE_LEARNER_INVITE_CAMPAIGN_SETTING
+    identified_recipients = []
+    anonymous_emails = []
+
+    for email in recipient_emails:
+        normalized_email = (email or '').strip().lower()
+        if not normalized_email:
+            # Skip falsy or whitespace-only emails entirely
+            continue
+        user = users_by_email.get(normalized_email)
+        if not user:
+            anonymous_emails.append(normalized_email)
+            continue
+
+        attributes = {
+            'email': normalized_email,
+            'is_enterprise_learner': True,
+        }
+        if is_learner_campaign:
+            attributes['first_name'] = (user.first_name or '').strip() or (user.username or '').strip()
+
+        identified_recipients.append({
+            'external_user_id': user.id,
+            'send_to_existing_only': False,
+            'attributes': attributes,
+        })
+
+    return identified_recipients, anonymous_emails
+
+
+def _resolve_anonymous_recipients(braze_client_instance, anonymous_emails):
+    """Return anonymous recipients, using alias creation when possible with fallback payloads."""
+    if not anonymous_emails:
+        return [], False
+
+    try:
+        braze_client_instance.create_braze_aliases_without_lookup(
+            anonymous_emails,
+            ENTERPRISE_BRAZE_ALIAS_LABEL,
+        )
+        return anonymous_emails, False
+    except (BrazeClientError, AttributeError) as exc:
+        LOGGER.warning(
+            'Failed to create alias profiles for %d anonymous users: %s. Attempting direct-recipient fallback.',
+            len(anonymous_emails),
+            str(exc),
+        )
+        return [
+            {
+                'external_user_id': email,
+                'send_to_existing_only': False,
+                'attributes': {
+                    'email': email,
+                    'is_enterprise_learner': True,
+                },
+            }
+            for email in anonymous_emails
+        ], True
 
 
 @shared_task
@@ -205,6 +299,13 @@ def send_sso_configured_email(
             recipients=[recipient],
             trigger_properties=braze_trigger_properties,
         )
+    except AttributeError as exc:
+        message = (
+            'Enterprise oauth integration email sending received an '
+            f'exception for enterprise: {enterprise_name}.'
+        )
+        LOGGER.exception(message)
+        raise exc
     except BrazeClientError as exc:
         message = (
             'Enterprise oauth integration email sending received an '
@@ -212,6 +313,110 @@ def send_sso_configured_email(
         )
         LOGGER.exception(message)
         raise exc
+
+
+@shared_task(bind=True)
+@set_code_owner_attribute
+def send_enterprise_admin_invite_email(
+    _,
+    enterprise_customer_uuid,
+    recipient_emails,
+    campaign_setting_name,
+):
+    """
+    Send enterprise admin invitation emails using Braze campaigns.
+
+    Args:
+        enterprise_customer_uuid (UUID): Enterprise customer UUID.
+        recipient_emails (list[str] or str): Recipient email(s) to invite.
+        campaign_setting_name (str): Setting name that stores the Braze campaign id.
+
+    The task builds Braze trigger properties, normalizes single-email input to a
+    list, splits recipients into identified and anonymous users, and sends campaign
+    messages for each recipient group.
+
+    For anonymous recipients, it attempts alias creation first and falls back to
+    direct-recipient payloads if alias creation fails.
+
+    Raises:
+        ValueError: If required Braze settings or campaign id are missing.
+        BrazeClientError: If a Braze API operation fails.
+    """
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+    enterprise_slug = enterprise_customer.slug
+    enterprise_name = enterprise_customer.name
+    sender_alias = enterprise_customer.sender_alias
+
+    LOGGER.info(
+        "Preparing admin invite email for enterprise: uuid=%s, slug='%s', name='%s'",
+        enterprise_customer_uuid,
+        enterprise_slug,
+        enterprise_name,
+    )
+
+    if not isinstance(recipient_emails, list):
+        recipient_emails = [recipient_emails]
+
+    braze_trigger_properties = {
+        'customer_slug': enterprise_slug or '',
+        'enterprise_customer_name': enterprise_name or '',
+        'enterprise_sender_alias': sender_alias or '',
+    }
+
+    braze_campaign_id = _get_braze_campaign_id(campaign_setting_name)
+
+    try:
+        braze_client_instance = braze_client_class()
+
+        identified_recipients, anonymous_emails = _split_identified_and_anonymous_recipients(
+            recipient_emails,
+            campaign_setting_name,
+        )
+        anonymous_recipients, used_anonymous_fallback = _resolve_anonymous_recipients(
+            braze_client_instance,
+            anonymous_emails,
+        )
+
+        if not identified_recipients and not anonymous_recipients:
+            LOGGER.warning('No valid recipients found for enterprise %s. Cannot send campaign.', enterprise_name)
+            return
+
+        total_recipients = len(identified_recipients) + len(anonymous_recipients)
+        LOGGER.info(
+            'Sending enterprise admin invite email to %d recipients (%d identified, %d anonymous) for enterprise %s.',
+            total_recipients,
+            len(identified_recipients),
+            len(anonymous_recipients),
+            enterprise_name,
+        )
+
+        if anonymous_recipients:
+            braze_client_instance.send_campaign_message(
+                braze_campaign_id,
+                recipients=anonymous_recipients,
+                trigger_properties=braze_trigger_properties,
+            )
+
+        if identified_recipients:
+            braze_client_instance.send_campaign_message(
+                braze_campaign_id,
+                recipients=identified_recipients,
+                trigger_properties=braze_trigger_properties,
+            )
+
+        LOGGER.info(
+            'Successfully sent admin invite email to %d recipients for enterprise %s (anonymous_fallback_used=%s)',
+            total_recipients,
+            enterprise_slug,
+            used_anonymous_fallback,
+        )
+    except BrazeClientError:
+        message = (
+            'Enterprise admin invite email could not be sent '
+            f'to {recipient_emails} for enterprise {enterprise_name}.'
+        )
+        LOGGER.exception(message)
+        raise
 
 
 def _recipients_for_identified_users(
