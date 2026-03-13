@@ -385,6 +385,8 @@ ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
 EDX_BRAZE_API_SERVER = 'test-api-server'
 BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID = 'test-invitation-campaign-id'
 BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID = 'test-removal-campaign-id'
+BRAZE_ADMIN_INVITE_CAMPAIGN_ID = 'test-admin-invite-campaign-id'
+BRAZE_LEARNER_INVITE_CAMPAIGN_ID = 'test-learner-invite-campaign-id'
 
 STORAGES = {
     'default': {

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.7.0] - 2026-03-10
+---------------------
+* feat: Invite admin endpoints with validation  (ENT-11238)
+
 [6.6.9] - 2026-03-10
 ---------------------
 * fix: handle duplicate enterprise group name validation error (ENT-11506)
