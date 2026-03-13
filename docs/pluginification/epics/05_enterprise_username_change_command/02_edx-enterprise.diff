@@ -1,0 +1,128 @@
+diff --git a/enterprise/management/commands/change_enterprise_user_username.py b/enterprise/management/commands/change_enterprise_user_username.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/management/commands/change_enterprise_user_username.py
+@@ -0,0 +1,61 @@
++"""
++Django management command for changing an enterprise user's username.
++"""
++
++import logging
++
++from django.contrib.auth import get_user_model
++from django.core.management import BaseCommand
++
++from enterprise.models import EnterpriseCustomerUser
++
++User = get_user_model()
++LOGGER = logging.getLogger(__name__)
++
++
++class Command(BaseCommand):
++    """
++    Updates the username value for a given user.
++
++    This is NOT MEANT for general use, and is specifically limited to enterprise users since
++    only they could potentially experience the issue of overwritten usernames.
++
++    See ENT-832 for details on the bug that modified usernames for some enterprise users.
++    """
++    help = 'Update the username of a given user.'
++
++    def add_arguments(self, parser):
++        parser.add_argument(
++            '-u',
++            '--user_id',
++            action='store',
++            dest='user_id',
++            default=None,
++            help='The ID of the user to update.'
++        )
++
++        parser.add_argument(
++            '-n',
++            '--new_username',
++            action='store',
++            dest='new_username',
++            default=None,
++            help='The username value to set for the user.'
++        )
++
++    def handle(self, *args, **options):
++        user_id = options.get('user_id')
++        new_username = options.get('new_username')
++
++        try:
++            EnterpriseCustomerUser.objects.get(user_id=user_id)
++        except EnterpriseCustomerUser.DoesNotExist:
++            LOGGER.info('User %s must be an enterprise user.', user_id)
++            return
++
++        user = User.objects.get(id=user_id)
++        user.username = new_username
++        user.save()
++
++        LOGGER.info('User %s has been updated with username %s.', user_id, new_username)
+diff --git a/tests/management/__init__.py b/tests/management/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/tests/management/__init__.py
+@@ -0,0 +1 @@
++"""Tests for enterprise management commands."""
+diff --git a/tests/management/test_change_enterprise_user_username.py b/tests/management/test_change_enterprise_user_username.py
+new file mode 100644
+--- /dev/null
++++ b/tests/management/test_change_enterprise_user_username.py
+@@ -0,0 +1,64 @@
++"""
++Tests for the change_enterprise_user_username management command.
++"""
++from unittest.mock import MagicMock, patch
++
++from django.core.management import call_command
++from django.test import TestCase
++
++
++class TestChangeEnterpriseUserUsernameCommand(TestCase):
++    """
++    Tests for enterprise/management/commands/change_enterprise_user_username.py
++    """
++
++    @patch('enterprise.management.commands.change_enterprise_user_username.User.objects')
++    @patch('enterprise.management.commands.change_enterprise_user_username.EnterpriseCustomerUser.objects')
++    def test_updates_username_for_enterprise_user(self, mock_ecu_objects, mock_user_objects):
++        """
++        When the user_id belongs to an enterprise user, the username is updated.
++        """
++        mock_ecu_objects.get.return_value = MagicMock()
++        mock_user = MagicMock()
++        mock_user_objects.get.return_value = mock_user
+
++        call_command(
++            'change_enterprise_user_username',
++            user_id='42',
++            new_username='corrected_username',
++        )
++
++        mock_ecu_objects.get.assert_called_once_with(user_id='42')
++        mock_user_objects.get.assert_called_once_with(id='42')
++        assert mock_user.username == 'corrected_username'
++        mock_user.save.assert_called_once()
++
++    @patch('enterprise.management.commands.change_enterprise_user_username.User.objects')
++    @patch('enterprise.management.commands.change_enterprise_user_username.EnterpriseCustomerUser.objects')
++    def test_logs_and_exits_when_not_enterprise_user(self, mock_ecu_objects, mock_user_objects):
++        """
++        When the user_id does not belong to an enterprise user, the command logs and exits.
++        """
++        from enterprise.models import EnterpriseCustomerUser
++        mock_ecu_objects.get.side_effect = EnterpriseCustomerUser.DoesNotExist
+
++        call_command(
++            'change_enterprise_user_username',
++            user_id='99',
++            new_username='any_name',
++        )
++
++        # User.objects.get should not be called when user is not enterprise
++        mock_user_objects.get.assert_not_called()

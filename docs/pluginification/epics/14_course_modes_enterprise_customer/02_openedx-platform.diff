@@ -1,0 +1,34 @@
+diff --git a/common/djangoapps/course_modes/views.py b/common/djangoapps/course_modes/views.py
+--- a/common/djangoapps/course_modes/views.py
++++ b/common/djangoapps/course_modes/views.py
+@@ -42,5 +42,5 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
+-from openedx.features.enterprise_support.api import enterprise_customer_for_request
++from openedx_filters.learning.filters import CourseModeCheckoutStarted
+
+@@ -189,14 +189,9 @@ class ChooseModeView(View):
+-            enterprise_customer = enterprise_customer_for_request(request)
+-            if enterprise_customer and verified_mode.sku:
+-                log.info(
+-                    '[e-commerce calculate API] Going to hit the API for user [%s] linked to [%s] enterprise',
+-                    request.user.username,
+-                    enterprise_customer.get('name') if isinstance(enterprise_customer, dict) else None,
+-                )
++            checkout_context = CourseModeCheckoutStarted.run_filter(
++                context={},
++                request=request,
++                course_mode=verified_mode,
++            )
++            enterprise_customer = checkout_context.get('enterprise_customer')
++            if enterprise_customer and verified_mode.sku:
+                 ecommerce_api_params['enterprise_customer'] = enterprise_customer.get('uuid')
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,6 +1,8 @@ OPEN_EDX_FILTERS_CONFIG = {
+ OPEN_EDX_FILTERS_CONFIG = {
+     # ... existing filter entries ...
++    "org.openedx.learning.course_mode.checkout.started.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.course_modes.CheckoutEnterpriseContextInjector"],
++    },
+ }

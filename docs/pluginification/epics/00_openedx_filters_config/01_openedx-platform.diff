@@ -1,0 +1,39 @@
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -<line>,0 +<line>,7 @@
++# .. setting_name: OPEN_EDX_FILTERS_CONFIG
++# .. setting_default: {}
++# .. setting_description: Configuration dict for openedx-filters pipeline steps.
++#    Keys are filter type strings; values are dicts with 'fail_silently' (bool) and
++#    'pipeline' (list of dotted-path strings to PipelineStep subclasses).
++OPEN_EDX_FILTERS_CONFIG = {}
++
+diff --git a/lms/envs/production.py b/lms/envs/production.py
+--- a/lms/envs/production.py
++++ b/lms/envs/production.py
+@@ -76,6 +76,7 @@ if key not in [
+             'CELERY_QUEUES',
+             'MKTG_URL_LINK_MAP',
+             'REST_FRAMEWORK',
+             'EVENT_BUS_PRODUCER_CONFIG',
+             'DEFAULT_FILE_STORAGE',
+             'STATICFILES_STORAGE',
++            'OPEN_EDX_FILTERS_CONFIG',
+         ]
+@@ -273,3 +273,14 @@ EVENT_TRACKING_BACKENDS['segmentio']['OPTIONS']['processors'][0]['OPTIONS']['whi
+     EVENT_TRACKING_SEGMENTIO_EMIT_WHITELIST
+ )
++
++# Merge OPEN_EDX_FILTERS_CONFIG from YAML into the default defined in common.py.
++# Pipeline steps from YAML are appended after steps defined in common.py.
++# The fail_silently value from YAML takes precedence over the one in common.py.
++for _filter_type, _filter_config in _YAML_TOKENS.get('OPEN_EDX_FILTERS_CONFIG', {}).items():
++    if _filter_type in OPEN_EDX_FILTERS_CONFIG:
++        OPEN_EDX_FILTERS_CONFIG[_filter_type]['pipeline'].extend(
++            _filter_config.get('pipeline', [])
++        )
++        if 'fail_silently' in _filter_config:
++            OPEN_EDX_FILTERS_CONFIG[_filter_type]['fail_silently'] = _filter_config['fail_silently']
++    else:
++        OPEN_EDX_FILTERS_CONFIG[_filter_type] = _filter_config

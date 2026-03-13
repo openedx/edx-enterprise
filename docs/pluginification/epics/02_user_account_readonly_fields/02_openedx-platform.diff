@@ -1,0 +1,57 @@
+diff --git a/openedx/core/djangoapps/user_api/accounts/api.py b/openedx/core/djangoapps/user_api/accounts/api.py
+--- a/openedx/core/djangoapps/user_api/accounts/api.py
++++ b/openedx/core/djangoapps/user_api/accounts/api.py
+@@ -39,7 +39,7 @@ from openedx.core.djangoapps.user_authn.views.registration_form import validate_
+ from openedx.core.lib.api.view_utils import add_serializer_errors
+-from openedx.features.enterprise_support.utils import get_enterprise_readonly_account_fields
++from openedx_filters.learning.filters import AccountSettingsReadOnlyFieldsRequested
+ from openedx.features.name_affirmation_api.utils import is_name_affirmation_installed
+
+ from .serializers import AccountLegacyProfileSerializer, AccountUserSerializer, UserReadOnlySerializer, _visible_fields
+@@ -194,9 +194,13 @@ def _validate_read_only_fields(user, data, field_errors):
+     # Check for fields that are not editable. Marking them read-only causes them to be ignored, but we wish to 400.
++    plugin_readonly_fields = AccountSettingsReadOnlyFieldsRequested.run_filter(
++        readonly_fields=set(),
++        user=user,
++    ) or set()
++
+     read_only_fields = set(data.keys()).intersection(
+         # Remove email since it is handled separately below when checking for changing_email.
+         (set(AccountUserSerializer.get_read_only_fields()) - {"email"}) |
+-        set(AccountLegacyProfileSerializer.get_read_only_fields() or set()) |
+-        get_enterprise_readonly_account_fields(user)
++        set(AccountLegacyProfileSerializer.get_read_only_fields() or set()) |
++        plugin_readonly_fields
+     )
+
+     for read_only_field in read_only_fields:
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,0 +1,0 @@
+ OPEN_EDX_FILTERS_CONFIG = {
+     "org.openedx.learning.grade.context.requested.v1": {
+         "fail_silently": True,
+         "pipeline": ["enterprise.filters.grades.GradeEventContextEnricher"],
+     },
++    "org.openedx.learning.account.settings.read_only_fields.requested.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.accounts.AccountSettingsReadOnlyFieldsStep"],
++    },
+ }
+diff --git a/openedx/core/djangoapps/user_api/accounts/tests/test_api.py b/openedx/core/djangoapps/user_api/accounts/tests/test_api.py
+--- a/openedx/core/djangoapps/user_api/accounts/tests/test_api.py
++++ b/openedx/core/djangoapps/user_api/accounts/tests/test_api.py
+@@ -100,11 +100,11 @@ class TestAccountUpdateSettings(TestCase):
+     def setUp(self):
+         ...
+-        enterprise_patcher = patch('openedx.features.enterprise_support.api.enterprise_customer_for_request')
+-        enterprise_learner_patcher = enterprise_patcher.start()
+-        enterprise_learner_patcher.return_value = {}
+-        self.addCleanup(enterprise_learner_patcher.stop)
++        filter_patcher = patch(
++            'openedx.core.djangoapps.user_api.accounts.api.AccountSettingsReadOnlyFieldsRequested.run_filter',
++            return_value=set(),
++        )
++        filter_patcher.start()
++        self.addCleanup(filter_patcher.stop)

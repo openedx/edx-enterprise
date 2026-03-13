@@ -1,0 +1,82 @@
+diff --git a/enterprise/filters/support.py b/enterprise/filters/support.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/filters/support.py
+@@ -0,0 +1,80 @@
++"""
++Pipeline steps for the support views filters.
++"""
++import logging
++
++from openedx_filters.filters import PipelineStep
++
++log = logging.getLogger(__name__)
++
++
++class SupportContactEnterpriseTagInjector(PipelineStep):
++    """
++    Append the 'enterprise_learner' tag to support tickets for enterprise users.
++    """
++
++    def run_filter(self, tags, request, user):  # pylint: disable=arguments-differ
++        """
++        Append 'enterprise_learner' tag if the user is an enterprise customer user.
++        """
++        # Deferred import — will be replaced with internal path in epic 17.
++        from openedx.features.enterprise_support.api import enterprise_customer_for_request  # pylint: disable=import-outside-toplevel
++
++        try:
++            enterprise_customer = enterprise_customer_for_request(request)
++        except Exception:  # pylint: disable=broad-except
++            log.warning('Failed to check enterprise customer for support contact tag.', exc_info=True)
++            enterprise_customer = None
++
++        if enterprise_customer:
++            tags = list(tags)
++            if 'enterprise_learner' not in tags:
++                tags.append('enterprise_learner')
++
++        return {'tags': tags, 'request': request, 'user': user}
++
++
++class SupportEnterpriseEnrollmentDataInjector(PipelineStep):
++    """
++    Inject enterprise course enrollment data into the support enrollment view.
++
++    Builds a dict of enterprise course enrollments (with data-sharing consent records)
++    keyed by course_id.
++    """
++
++    def run_filter(self, enrollment_data, user):  # pylint: disable=arguments-differ
++        """
++        Populate enrollment_data with enterprise course enrollment records.
++        """
++        # Deferred imports — will be replaced with internal paths in epic 17.
++        from openedx.features.enterprise_support.api import (  # pylint: disable=import-outside-toplevel
++            get_data_sharing_consents,
++            get_enterprise_course_enrollments,
++        )
++        from openedx.features.enterprise_support.serializers import EnterpriseCourseEnrollmentSerializer  # pylint: disable=import-outside-toplevel
+
++        try:
++            enterprise_course_enrollments = get_enterprise_course_enrollments(user)
++            consents = get_data_sharing_consents(user)
++        except Exception:  # pylint: disable=broad-except
++            log.warning('Failed to fetch enterprise enrollment data for support view.', exc_info=True)
++            return {'enrollment_data': enrollment_data, 'user': user}
++
++        consent_by_key = {}
++        for consent in consents:
++            key = f'{consent.course_id}-{consent.enterprise_customer_id}'
++            consent_by_key[key] = consent.serialize()
++
++        enriched = dict(enrollment_data)
++        for ecr in enterprise_course_enrollments:
++            serialized = EnterpriseCourseEnrollmentSerializer(ecr).data
++            course_id = ecr.course_id
++            enterprise_customer_id = ecr.enterprise_customer_user.enterprise_customer_id
++            key = f'{course_id}-{enterprise_customer_id}'
++            serialized['data_sharing_consent'] = consent_by_key.get(key)
++            enriched.setdefault(course_id, []).append(serialized)
++
++        return {'enrollment_data': enriched, 'user': user}

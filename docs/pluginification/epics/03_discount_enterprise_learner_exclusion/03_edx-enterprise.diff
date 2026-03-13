@@ -1,0 +1,130 @@
+diff --git a/enterprise/filters/discounts.py b/enterprise/filters/discounts.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/filters/discounts.py
+@@ -0,0 +1,51 @@
++"""
++Pipeline step for excluding certain learners from course discounts.
++"""
++from openedx_filters.filters import PipelineStep
++
++
++class DiscountEligibilityStep(PipelineStep):
++    """
++    Marks learners linked to an enterprise as ineligible for LMS-controlled discounts.
++
++    This step is intended to be registered as a pipeline step for the
++    ``org.openedx.learning.discount.eligibility.check.requested.v1`` filter.
++
++    LMS-controlled discounts (such as the first-purchase offer) are not applicable to
++    learners whose enrollment is managed by an enterprise. This step queries the
++    enterprise learner status and, if the user qualifies, sets ``is_eligible`` to
++    ``False`` so the calling code skips the discount.
++    """
++
++    def run_filter(self, user, course_key, is_eligible):  # pylint: disable=arguments-differ
++        """
++        Return ``is_eligible=False`` if the user is an enterprise learner.
++
++        Arguments:
++            user (User): the Django User being checked for discount eligibility.
++            course_key: identifies the course (passed through unchanged).
++            is_eligible (bool): the current eligibility status.
++
++        Returns:
++            dict: updated pipeline data. ``is_eligible`` is ``False`` when the user is
++            linked to an enterprise; otherwise the original ``is_eligible`` value is
++            preserved.
++        """
++        # Import here to avoid circular imports at module load time.
++        # This import will be replaced with an internal path in epic 17 when
++        # enterprise_support is migrated into edx-enterprise.
++        from openedx.features.enterprise_support.utils import is_enterprise_learner
++
++        if is_enterprise_learner(user):
++            return {"user": user, "course_key": course_key, "is_eligible": False}
++        return {"user": user, "course_key": course_key, "is_eligible": is_eligible}
+diff --git a/tests/filters/test_discounts.py b/tests/filters/test_discounts.py
+new file mode 100644
+--- /dev/null
++++ b/tests/filters/test_discounts.py
+@@ -0,0 +1,66 @@
++"""
++Tests for enterprise.filters.discounts pipeline step.
++"""
++from unittest.mock import MagicMock, patch
++
++from django.test import TestCase
++
++from enterprise.filters.discounts import DiscountEligibilityStep
++
++
++class TestDiscountEligibilityStep(TestCase):
++    """
++    Tests for DiscountEligibilityStep pipeline step.
++    """
++
++    def _make_step(self):
++        return DiscountEligibilityStep(
++            "org.openedx.learning.discount.eligibility.check.requested.v1",
++            [],
++        )
++
++    def _mock_user(self):
++        user = MagicMock()
++        user.id = 42
++        return user
++
++    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=True)
++    def test_returns_ineligible_for_enterprise_learner(self, mock_is_enterprise):
++        """
++        When the user is an enterprise learner, is_eligible is set to False.
++        """
++        user = self._mock_user()
++        course_key = MagicMock()
++
++        step = self._make_step()
++        result = step.run_filter(user=user, course_key=course_key, is_eligible=True)
++
++        self.assertEqual(result, {"user": user, "course_key": course_key, "is_eligible": False})
++        mock_is_enterprise.assert_called_once_with(user)
++
++    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
++    def test_returns_original_eligibility_for_non_enterprise_learner(self, mock_is_enterprise):
++        """
++        When the user is not an enterprise learner, is_eligible is passed through unchanged.
++        """
++        user = self._mock_user()
++        course_key = MagicMock()
++
++        step = self._make_step()
++        result = step.run_filter(user=user, course_key=course_key, is_eligible=True)
++
++        self.assertEqual(result, {"user": user, "course_key": course_key, "is_eligible": True})
++
++    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=False)
++    def test_passes_through_false_eligibility_unchanged(self, mock_is_enterprise):
++        """
++        When the user is not an enterprise learner and is_eligible is already False,
++        the step does not change it.
++        """
++        user = self._mock_user()
++        course_key = MagicMock()
++
++        step = self._make_step()
++        result = step.run_filter(user=user, course_key=course_key, is_eligible=False)
++
++        self.assertEqual(result["is_eligible"], False)
++
++    @patch('enterprise.filters.discounts.is_enterprise_learner', return_value=True)
++    def test_course_key_passed_through_unchanged(self, _):
++        """
++        The course_key is always returned unchanged regardless of enterprise status.
++        """
++        user = self._mock_user()
++        course_key = MagicMock()
++
++        step = self._make_step()
++        result = step.run_filter(user=user, course_key=course_key, is_eligible=True)
++
++        self.assertIs(result["course_key"], course_key)
