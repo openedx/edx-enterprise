@@ -1068,7 +1068,7 @@ semantic-version==2.10.0
     # via edx-drf-extensions
 shapely==2.1.2
     # via -r requirements/edx/kernel.in
-simpleeval==1.0.3
+simpleeval==1.0.5
     # via pycasbin
 simplejson==3.20.2
     # via
