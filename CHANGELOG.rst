@@ -17,9 +17,25 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.7.0] - 2026-03-10
+---------------------
+* feat: Invite admin endpoints with validation  (ENT-11238)
+
+[6.6.9] - 2026-03-10
+---------------------
+* fix: handle duplicate enterprise group name validation error (ENT-11506)
+
+[6.6.8] - 2026-03-05
+---------------------
+* feat: moving retirement code to edx-enterprise
+
+[6.6.7] - 2026-03-04
+---------------------
+* feat: expose admin list endpoint with search and pagination
+
 [6.6.6] - 2026-02-20
 ---------------------
-* feat:Implement soft delete for admins
+* feat: Implement soft delete for admins
 
 [6.6.5] - 2026-02-24
 ---------------------
