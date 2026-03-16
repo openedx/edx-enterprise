@@ -1,0 +1,90 @@
+diff --git a/lms/djangoapps/grades/events.py b/lms/djangoapps/grades/events.py
+--- a/lms/djangoapps/grades/events.py
++++ b/lms/djangoapps/grades/events.py
+@@ -27,7 +27,7 @@ from lms.djangoapps.grades.signals.signals import SCHEDULE_FOLLOW_UP_SEGMENT_EV
+ from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+-from openedx.features.enterprise_support.context import get_enterprise_event_context
++from openedx_filters.learning.filters import GradeEventContextRequested
+
+ log = getLogger(__name__)
+
+@@ -163,8 +163,11 @@ def course_grade_passed_first_time(user_id, course_id):
+     event_name = COURSE_GRADE_PASSED_FIRST_TIME_EVENT_TYPE
+     context = contexts.course_context_from_course_id(course_id)
+-    context_enterprise = get_enterprise_event_context(user_id, course_id)
+-    context.update(context_enterprise)
++    enriched_context = GradeEventContextRequested.run_filter(
++        context=context, user_id=user_id, course_id=course_id
++    )
++    if enriched_context is not None:
++        context = enriched_context
+     # TODO (AN-6134): remove this context manager
+     with tracker.get_tracker().context(event_name, context):
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -<line>,1 +<line>,5 @@
+-OPEN_EDX_FILTERS_CONFIG = {}
++OPEN_EDX_FILTERS_CONFIG = {
++    "org.openedx.learning.grade.context.requested.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.grades.GradeEventContextEnricher"],
++    },
++}
+diff --git a/lms/djangoapps/grades/tests/test_events.py b/lms/djangoapps/grades/tests/test_events.py
+--- a/lms/djangoapps/grades/tests/test_events.py
++++ b/lms/djangoapps/grades/tests/test_events.py
+@@ -1,6 +1,6 @@
+ """
+ Test that various events are fired for models in the grades app.
+ """
+
+ from unittest import mock
++from unittest.mock import patch
+
+ from ccx_keys.locator import CCXLocator
+@@ -34,6 +34,44 @@ from common.test.utils import assert_dict_contains_subset
+
++class GradeEventContextFilterTest(SharedModuleStoreTestCase):
++    """
++    Tests that course_grade_passed_first_time invokes the GradeEventContextRequested
++    filter instead of the old enterprise_support import.
++    """
++
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++
++    def setUp(self):
++        super().setUp()
++        self.user = UserFactory.create()
++        self.course = CourseFactory.create()
++
++    @patch('lms.djangoapps.grades.events.GradeEventContextRequested.run_filter')
++    def test_filter_called_with_context(self, mock_run_filter):
++        """
++        course_grade_passed_first_time should call GradeEventContextRequested.run_filter
++        and merge the returned context.
++        """
++        enriched = {"org": "test_org", "enterprise_uuid": "abc-123"}
++        mock_run_filter.return_value = enriched
++
++        from lms.djangoapps.grades.events import course_grade_passed_first_time
++        with patch('lms.djangoapps.grades.events.tracker'):
++            course_grade_passed_first_time(self.user.id, self.course.id)
++
++        mock_run_filter.assert_called_once()
++        call_kwargs = mock_run_filter.call_args.kwargs
++        assert call_kwargs['user_id'] == self.user.id
++        assert str(call_kwargs['course_id']) == str(self.course.id)
++
++    @patch('lms.djangoapps.grades.events.GradeEventContextRequested.run_filter')
++    def test_filter_none_return_leaves_context_intact(self, mock_run_filter):
++        """
++        If run_filter returns None (fail_silently path), context is not overwritten.
++        """
++        mock_run_filter.return_value = None
++        from lms.djangoapps.grades.events import course_grade_passed_first_time
++        with patch('lms.djangoapps.grades.events.tracker'):
++            # Should not raise even when filter returns None
++            course_grade_passed_first_time(self.user.id, self.course.id)

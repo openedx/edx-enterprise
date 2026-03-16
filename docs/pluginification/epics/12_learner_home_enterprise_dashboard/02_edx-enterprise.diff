@@ -1,0 +1,48 @@
+diff --git a/enterprise/overrides/__init__.py b/enterprise/overrides/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/overrides/__init__.py
+@@ -0,0 +1,3 @@
++"""
++Pluggable override implementations for edx-enterprise.
++"""
+diff --git a/enterprise/overrides/learner_home.py b/enterprise/overrides/learner_home.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/overrides/learner_home.py
+@@ -0,0 +1,33 @@
++"""
++Pluggable override for the learner home enterprise customer lookup.
++"""
++import logging
++
++log = logging.getLogger(__name__)
++
++
++def enterprise_get_enterprise_customer(prev_fn, user, request, is_masquerading):
++    """
++    Return the enterprise customer dict for the given user, or None.
++
++    This function overrides the default ``get_enterprise_customer`` implementation in
++    ``lms/djangoapps/learner_home/views.py`` via the pluggable override mechanism.
++
++    Arguments:
++        prev_fn: the previous (default) implementation — not called because we fully replace it.
++        user: the Django User object.
++        request: the current HTTP request.
++        is_masquerading (bool): True when the request is a staff masquerade.
++
++    Returns:
++        dict or None: enterprise customer data dict, or None if the user is not an
++        enterprise customer user.
++    """
++    # Deferred imports — will be replaced with internal paths in epic 17.
++    from openedx.features.enterprise_support.api import (  # pylint: disable=import-outside-toplevel
++        enterprise_customer_from_session_or_learner_data,
++        get_enterprise_learner_data_from_db,
++    )
++
++    if is_masquerading:
++        learner_data = get_enterprise_learner_data_from_db(user)
++        return learner_data[0]['enterprise_customer'] if learner_data else None
++    return enterprise_customer_from_session_or_learner_data(request)

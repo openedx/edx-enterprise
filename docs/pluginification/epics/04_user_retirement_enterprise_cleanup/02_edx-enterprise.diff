@@ -1,0 +1,166 @@
+diff --git a/enterprise/platform_signal_handlers.py b/enterprise/platform_signal_handlers.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/platform_signal_handlers.py
+@@ -0,0 +1,56 @@
++"""
++Signal handlers for platform-emitted Django signals consumed by edx-enterprise.
++"""
++import logging
++
++from consent.models import DataSharingConsent
++
++from enterprise.models import PendingEnterpriseCustomerUser
++
++log = logging.getLogger(__name__)
++
++
++def handle_user_retirement(sender, user, retired_username, retired_email, **kwargs):  # pylint: disable=unused-argument
++    """
++    Handle USER_RETIRE_LMS_CRITICAL signal to retire enterprise-specific user data.
++
++    This handler performs two retirement operations:
++    1. Retires DataSharingConsent records by replacing the username with the retired username.
++    2. Retires PendingEnterpriseCustomerUser records by replacing the email with the retired email.
++
++    Arguments:
++        sender: the class that sent the signal (unused).
++        user (User): the Django User being retired.
++        retired_username (str): the anonymised username to substitute in consent records.
++        retired_email (str): the anonymised email to substitute in pending enterprise records.
++        **kwargs: forward-compatible catch-all for additional signal kwargs.
++    """
++    log.info(
++        "Retiring enterprise data for user %s (retired_username=%s)",
++        user.id,
++        retired_username,
++    )
++
++    dsc_count = DataSharingConsent.objects.filter(
++        username=user.username
++    ).update(username=retired_username)
++    log.info(
++        "Retired %d DataSharingConsent record(s) for user %s",
++        dsc_count,
++        user.id,
++    )
++
++    pending_count = PendingEnterpriseCustomerUser.objects.filter(
++        user_email=user.email
++    ).update(user_email=retired_email)
++    log.info(
++        "Retired %d PendingEnterpriseCustomerUser record(s) for user %s",
++        pending_count,
++        user.id,
++    )
+diff --git a/enterprise/apps.py b/enterprise/apps.py
+--- a/enterprise/apps.py
++++ b/enterprise/apps.py
+@@ -43,6 +43,15 @@ class EnterpriseConfig(AppConfig):
+     def ready(self):
+         """
+         Perform other one-time initialization steps.
+         """
+         from enterprise.signals import handle_user_post_save  # pylint: disable=import-outside-toplevel
+
+         from django.db.models.signals import post_save, pre_migrate  # pylint: disable=C0415, # isort:skip
+
+         post_save.connect(handle_user_post_save, sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
+         pre_migrate.connect(self._disconnect_user_post_save_for_migrations)
++
++        # Connect to the platform user retirement signal to clean up enterprise data.
++        from enterprise.platform_signal_handlers import handle_user_retirement  # pylint: disable=import-outside-toplevel
++        try:
++            from openedx.core.djangoapps.user_api.accounts.signals import USER_RETIRE_LMS_CRITICAL
++            USER_RETIRE_LMS_CRITICAL.connect(handle_user_retirement)
++        except ImportError:
++            pass  # Signal not available outside of LMS context
+diff --git a/tests/test_platform_signal_handlers.py b/tests/test_platform_signal_handlers.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_platform_signal_handlers.py
+@@ -0,0 +1,76 @@
++"""
++Tests for enterprise.platform_signal_handlers.
++"""
++from unittest.mock import MagicMock, patch, call
++
++from django.test import TestCase
++
++from enterprise.platform_signal_handlers import handle_user_retirement
++
++
++class TestHandleUserRetirement(TestCase):
++    """
++    Tests for handle_user_retirement signal handler.
++    """
++
++    def _make_user(self, user_id=42, username="learner", email="learner@example.com"):
++        user = MagicMock()
++        user.id = user_id
++        user.username = username
++        user.email = email
++        return user
++
++    @patch('enterprise.platform_signal_handlers.PendingEnterpriseCustomerUser.objects')
++    @patch('enterprise.platform_signal_handlers.DataSharingConsent.objects')
++    def test_retires_dsc_records(self, mock_dsc_objects, mock_pending_objects):
++        """
++        DataSharingConsent records are updated to use the retired_username.
++        """
++        mock_dsc_objects.filter.return_value.update.return_value = 2
++        mock_pending_objects.filter.return_value.update.return_value = 0
++
++        user = self._make_user()
++        handle_user_retirement(
++            sender=None,
++            user=user,
++            retired_username="retired__abc123",
++            retired_email="retired__abc123@retired.invalid",
++        )
++
++        mock_dsc_objects.filter.assert_called_once_with(username="learner")
++        mock_dsc_objects.filter.return_value.update.assert_called_once_with(
++            username="retired__abc123"
++        )
++
++    @patch('enterprise.platform_signal_handlers.PendingEnterpriseCustomerUser.objects')
++    @patch('enterprise.platform_signal_handlers.DataSharingConsent.objects')
++    def test_retires_pending_enterprise_customer_user_records(self, mock_dsc_objects, mock_pending_objects):
++        """
++        PendingEnterpriseCustomerUser records are updated to use the retired_email.
++        """
++        mock_dsc_objects.filter.return_value.update.return_value = 0
++        mock_pending_objects.filter.return_value.update.return_value = 1
+
++        user = self._make_user()
++        handle_user_retirement(
++            sender=None,
++            user=user,
++            retired_username="retired__abc123",
++            retired_email="retired__abc123@retired.invalid",
++        )
++
++        mock_pending_objects.filter.assert_called_once_with(user_email="learner@example.com")
++        mock_pending_objects.filter.return_value.update.assert_called_once_with(
++            user_email="retired__abc123@retired.invalid"
++        )
++
++    @patch('enterprise.platform_signal_handlers.PendingEnterpriseCustomerUser.objects')
++    @patch('enterprise.platform_signal_handlers.DataSharingConsent.objects')
++    def test_accepts_extra_kwargs_without_error(self, mock_dsc_objects, mock_pending_objects):
++        """
++        The handler ignores unknown kwargs (forward-compatible with signal additions).
++        """
++        mock_dsc_objects.filter.return_value.update.return_value = 0
++        mock_pending_objects.filter.return_value.update.return_value = 0
++
++        user = self._make_user()
++        # Should not raise even with unexpected kwargs
++        handle_user_retirement(
++            sender=None,
++            user=user,
++            retired_username="retired__xyz",
++            retired_email="retired__xyz@retired.invalid",
++            unknown_future_kwarg="ignored",
++        )

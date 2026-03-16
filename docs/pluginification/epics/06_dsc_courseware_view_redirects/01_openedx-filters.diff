@@ -1,0 +1,48 @@
+diff --git a/openedx_filters/learning/filters.py b/openedx_filters/learning/filters.py
+--- a/openedx_filters/learning/filters.py
++++ b/openedx_filters/learning/filters.py
+@@ -1444,3 +1444,48 @@ class ScheduleQuerySetRequested(OpenEdxPublicFilter):
+         data = super().run_pipeline(schedules=schedules)
+         return data.get("schedules")
++
++
++class CoursewareViewRedirectURL(OpenEdxPublicFilter):
++    """
++    Filter used to determine whether a courseware view should redirect the user.
++
++    Purpose:
++        This filter is triggered before a courseware view is rendered, allowing pipeline
++        steps to append redirect URLs to ``redirect_urls``. If the list is non-empty after
++        the pipeline runs, the view redirects the user to the first URL in the list.
++
++    Filter Type:
++        org.openedx.learning.courseware.view.redirect_url.requested.v1
++
++    Trigger:
++        - Repository: openedx/edx-platform
++        - Path: lms/djangoapps/courseware/decorators.py
++        - Function or Method: courseware_view_redirect
++    """
++
++    filter_type = "org.openedx.learning.courseware.view.redirect_url.requested.v1"
++
++    @classmethod
++    def run_filter(cls, redirect_urls: list, request: Any, course_key: Any) -> tuple:
++        """
++        Process the inputs using the configured pipeline steps.
++
++        Arguments:
++            redirect_urls (list): initial list of redirect URLs (typically empty).
++            request (HttpRequest): the current Django HTTP request.
++            course_key (CourseKey): the course key for the view being accessed.
++
++        Returns:
++            tuple[list, HttpRequest, CourseKey]:
++                - list: the (possibly extended) list of redirect URLs.
++                - HttpRequest: the request object (unchanged).
++                - CourseKey: the course key (unchanged).
++        """
++        data = super().run_pipeline(
++            redirect_urls=redirect_urls, request=request, course_key=course_key
++        )
++        return data.get("redirect_urls"), data.get("request"), data.get("course_key")

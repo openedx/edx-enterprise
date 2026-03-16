@@ -1,0 +1,79 @@
+diff --git a/openedx_filters/learning/filters.py b/openedx_filters/learning/filters.py
+--- a/openedx_filters/learning/filters.py
++++ b/openedx_filters/learning/filters.py
+@@ -1169,3 +1169,71 @@ class InstructorDashboardRenderStarted(OpenEdxPublicFilter):
+         data = super().run_pipeline(context=context, template_name=template_name)
+         return data.get("context"), data.get("template_name")
+
++
++class LogistrationContextRequested(OpenEdxPublicFilter):
++    """
++    Filter used to enrich or modify the combined login-and-registration page context.
++
++    Purpose:
++        This filter is triggered just before the combined login/registration page is rendered,
++        allowing pipeline steps to modify the context dict and customize the response (e.g. set
++        cookies or alter sidebar content) based on external conditions.
++
++    Filter Type:
++        org.openedx.learning.logistration.context.requested.v1
++
++    Trigger:
++        - Repository: openedx/edx-platform
++        - Path: openedx/core/djangoapps/user_authn/views/login_form.py
++        - Function or Method: login_and_registration_form
++    """
++
++    filter_type = "org.openedx.learning.logistration.context.requested.v1"
++
++    @classmethod
++    def run_filter(cls, context: dict, request: Any) -> tuple[dict, Any]:
++        """
++        Process the context and request through the configured pipeline steps.
++
++        Arguments:
++            context (dict): the template context dict for the login/registration page.
++            request (HttpRequest): the current HTTP request.
++
++        Returns:
++            tuple[dict, HttpRequest]: the (possibly modified) context and request.
++        """
++        data = super().run_pipeline(context=context, request=request)
++        return data.get("context"), data.get("request")
++
++
++class PostLoginRedirectURLRequested(OpenEdxPublicFilter):
++    """
++    Filter used to determine an optional redirect URL immediately after a successful login.
++
++    Purpose:
++        This filter is triggered after a user has been authenticated, before the final redirect
++        is issued. Pipeline steps may return an alternative redirect URL to send the user
++        through additional post-login flows (e.g. an account-selection page).
++
++    Filter Type:
++        org.openedx.learning.auth.post_login.redirect_url.requested.v1
++
++    Trigger:
++        - Repository: openedx/edx-platform
++        - Path: openedx/core/djangoapps/user_authn/views/login.py
++        - Function or Method: login_user
++    """
++
++    filter_type = "org.openedx.learning.auth.post_login.redirect_url.requested.v1"
++
++    @classmethod
++    def run_filter(cls, redirect_url: str, user: Any, next_url: str) -> str:
++        """
++        Process the redirect URL through the configured pipeline steps.
++
++        Arguments:
++            redirect_url (str): the current intended redirect URL (may be empty).
++            user (User): the authenticated Django user.
++            next_url (str): the next URL parameter from the login request.
++
++        Returns:
++            str: the (possibly modified) redirect URL.
++        """
++        data = super().run_pipeline(redirect_url=redirect_url, user=user, next_url=next_url)
++        return data.get("redirect_url")

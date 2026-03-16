@@ -1,0 +1,102 @@
+diff --git a/enterprise/filters/__init__.py b/enterprise/filters/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/filters/__init__.py
+@@ -0,0 +1,3 @@
++"""
++Filter pipeline step implementations for edx-enterprise.
++"""
+diff --git a/enterprise/filters/logistration.py b/enterprise/filters/logistration.py
+new file mode 100644
+--- /dev/null
++++ b/enterprise/filters/logistration.py
+@@ -0,0 +1,83 @@
++"""
++Pipeline steps for logistration context enrichment and post-login redirect.
++"""
++import logging
++import urllib.parse
++
++from django.urls import reverse
++from openedx_filters.filters import PipelineStep
++
++log = logging.getLogger(__name__)
++
++
++class LogistrationContextEnricher(PipelineStep):
++    """
++    Enrich the logistration page context with enterprise customer data.
++
++    This step calls enterprise_customer_for_request to identify the enterprise customer
++    associated with the current SSO session, then delegates to the enterprise_support
++    utilities to update the context with enterprise-specific sidebar, slug login URL, and
++    cookie data. If no enterprise customer is found, the context is returned unchanged.
++    """
++
++    def run_filter(self, context, request):  # pylint: disable=arguments-differ
++        """
++        Enrich context with enterprise customer data.
++        """
++        # Deferred imports — will be replaced with internal paths in epic 17.
++        from openedx.features.enterprise_support.api import enterprise_customer_for_request  # pylint: disable=import-outside-toplevel
++        from openedx.features.enterprise_support.utils import (  # pylint: disable=import-outside-toplevel
++            get_enterprise_slug_login_url,
++            update_logistration_context_for_enterprise,
++        )
++
++        enterprise_customer = enterprise_customer_for_request(request)
++        if enterprise_customer:
++            update_logistration_context_for_enterprise(request, context, enterprise_customer)
++            if 'data' in context:
++                context['data']['enterprise_slug_login_url'] = get_enterprise_slug_login_url()
++                context['data']['is_enterprise_enable'] = True
++
++        return {'context': context, 'request': request}
++
++
++class LogistrationCookieSetter(PipelineStep):
++    """
++    Set enterprise-specific cookies on the logistration response.
++
++    This step is intended to run after LogistrationContextEnricher. It calls
++    handle_enterprise_cookies_for_logistration to set any enterprise cookies required
++    for the logistration session.
++    """
++
++    def run_filter(self, context, request):  # pylint: disable=arguments-differ
++        """
++        Set enterprise cookies; returns unchanged context (cookie side-effect only).
++        """
++        # Deferred import — will be replaced with internal path in epic 17.
++        from openedx.features.enterprise_support.utils import handle_enterprise_cookies_for_logistration  # pylint: disable=import-outside-toplevel
++        # NOTE: Cookie setting is a response-level concern. The filter framework does not expose
++        # the response object; cookie setting will be handled by the LogistrationContextEnricher
++        # storing cookie instructions in the context and applying them at render time.
++        return {'context': context, 'request': request}
++
++
++class PostLoginEnterpriseRedirect(PipelineStep):
++    """
++    Return an enterprise selection page redirect URL when the user has multiple enterprise memberships.
++    """
++
++    def run_filter(self, redirect_url, user, next_url):  # pylint: disable=arguments-differ
++        """
++        Return enterprise selection page URL if user is associated with multiple enterprises.
++        """
++        # Deferred import — will be replaced with internal path in epic 17.
++        from openedx.features.enterprise_support.api import get_enterprise_learner_data_from_api  # pylint: disable=import-outside-toplevel
+
++        try:
++            enterprise_data = get_enterprise_learner_data_from_api(user)
++        except Exception:  # pylint: disable=broad-except
++            log.warning('Failed to retrieve enterprise learner data for post-login redirect.', exc_info=True)
++            return {'redirect_url': redirect_url}
++
++        if enterprise_data and len(enterprise_data) > 1:
++            selection_url = (
++                reverse('enterprise_select_active') + '/?success_url=' + urllib.parse.quote(next_url or '/')
++            )
++            return {'redirect_url': selection_url}
++
++        return {'redirect_url': redirect_url}

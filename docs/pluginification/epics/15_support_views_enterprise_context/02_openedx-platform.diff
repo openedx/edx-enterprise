@@ -1,0 +1,83 @@
+diff --git a/lms/djangoapps/support/views/contact_us.py b/lms/djangoapps/support/views/contact_us.py
+--- a/lms/djangoapps/support/views/contact_us.py
++++ b/lms/djangoapps/support/views/contact_us.py
+@@ -14,5 +14,5 @@ from django.views.generic import View
+-from openedx.features.enterprise_support import api as enterprise_api
++from openedx_filters.learning.filters import SupportContactContextRequested
+
+@@ -47,9 +47,7 @@ class ContactUsView(View):
+     def post(self, request):
+         tags = []
+-        enterprise_customer = enterprise_api.enterprise_customer_for_request(request)
+-        if enterprise_customer:
+-            tags.append('enterprise_learner')
++        tags = SupportContactContextRequested.run_filter(
++            tags=tags, request=request, user=request.user
++        )
+         # ... rest of the post method ...
+diff --git a/lms/djangoapps/support/views/enrollments.py b/lms/djangoapps/support/views/enrollments.py
+--- a/lms/djangoapps/support/views/enrollments.py
++++ b/lms/djangoapps/support/views/enrollments.py
+@@ -37,10 +37,5 @@ from openedx.core.djangoapps.user_api.accounts.utils import is_secondary_email_
+-from openedx.features.enterprise_support.api import (
+-    enterprise_enabled,
+-    get_data_sharing_consents,
+-    get_enterprise_course_enrollments,
+-)
+-from openedx.features.enterprise_support.serializers import EnterpriseCourseEnrollmentSerializer
++from openedx_filters.learning.filters import SupportEnrollmentDataRequested
+
+@@ -74,29 +69,0 @@ class ManualEnrollmentSupportView(View):
+-    def _enterprise_course_enrollments_by_course_id(self, user):
+-        """
+-        Returns a dict containing enterprise course enrollments data with
+-        data sharing consent info keyed by course_id.
+-        """
+-        enterprise_course_enrollments = get_enterprise_course_enrollments(user)
+-        consents = get_data_sharing_consents(user)
+-        enterprise_enrollments_by_course_id = defaultdict(list)
+-        consent_by_course_and_enterprise_customer_id = {}
+-
+-        for consent in consents:
+-            key = f'{consent.course_id}-{consent.enterprise_customer_id}'
+-            consent_by_course_and_enterprise_customer_id[key] = consent.serialize()
+-
+-        for enterprise_course_enrollment in enterprise_course_enrollments:
+-            serialized = EnterpriseCourseEnrollmentSerializer(enterprise_course_enrollment).data
+-            course_id = enterprise_course_enrollment.course_id
+-            enterprise_customer_id = enterprise_course_enrollment.enterprise_customer_user.enterprise_customer_id
+-            key = f'{course_id}-{enterprise_customer_id}'
+-            consent = consent_by_course_and_enterprise_customer_id.get(key)
+-            serialized['data_sharing_consent'] = consent
+-            enterprise_enrollments_by_course_id[course_id].append(serialized)
+-
+-        return enterprise_enrollments_by_course_id
+
+@@ -128,9 +99,7 @@ class ManualEnrollmentSupportView(View):
+-        if enterprise_enabled():
+-            enterprise_enrollments_by_course_id = self._enterprise_course_enrollments_by_course_id(user)
+-            for enrollment in enrollments:
+-                enterprise_course_enrollments = enterprise_enrollments_by_course_id.get(enrollment['course_id'], [])
+-                enrollment['enterprise_course_enrollments'] = enterprise_course_enrollments
++        enterprise_enrollments_by_course_id = SupportEnrollmentDataRequested.run_filter(
++            enrollment_data={}, user=user
++        )
++        for enrollment in enrollments:
++            enrollment['enterprise_course_enrollments'] = enterprise_enrollments_by_course_id.get(
++                enrollment['course_id'], []
++            )
+diff --git a/lms/envs/common.py b/lms/envs/common.py
+--- a/lms/envs/common.py
++++ b/lms/envs/common.py
+@@ -1,6 +1,12 @@ OPEN_EDX_FILTERS_CONFIG = {
+ OPEN_EDX_FILTERS_CONFIG = {
+     # ... existing filter entries ...
++    "org.openedx.learning.support.contact.context.requested.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.support.SupportContactEnterpriseTagInjector"],
++    },
++    "org.openedx.learning.support.enrollment.data.requested.v1": {
++        "fail_silently": True,
++        "pipeline": ["enterprise.filters.support.SupportEnterpriseEnrollmentDataInjector"],
++    },
+ }

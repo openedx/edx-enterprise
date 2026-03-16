@@ -1,0 +1,246 @@
+diff --git a/common/djangoapps/third_party_auth/urls.py b/common/djangoapps/third_party_auth/urls.py
+--- a/common/djangoapps/third_party_auth/urls.py
++++ b/common/djangoapps/third_party_auth/urls.py
+@@ -28,8 +28,6 @@ urlpatterns = [
+     path('auth/', include('social_django.urls', namespace='social')),
+-    path('auth/saml/v0/', include('common.djangoapps.third_party_auth.samlproviderconfig.urls')),
+-    path('auth/saml/v0/', include('common.djangoapps.third_party_auth.samlproviderdata.urls')),
+     path('auth/saml/v0/', include('common.djangoapps.third_party_auth.saml_configuration.urls')),
+ ]
+diff --git a/common/djangoapps/third_party_auth/samlproviderconfig/views.py b/common/djangoapps/third_party_auth/samlproviderconfig/views.py
+deleted file mode 100644
+--- a/common/djangoapps/third_party_auth/samlproviderconfig/views.py
++++ /dev/null
+@@ -1,130 +0,0 @@
+-"""
+-Viewset for auth/saml/v0/samlproviderconfig
+-"""
+-
+-from django.shortcuts import get_list_or_404
+-from django.db.utils import IntegrityError
+-from edx_rbac.mixins import PermissionRequiredMixin
+-from rest_framework import permissions, viewsets, status
+-from rest_framework.response import Response
+-from rest_framework.exceptions import ParseError, ValidationError
+-
+-from enterprise.models import EnterpriseCustomerIdentityProvider, EnterpriseCustomer
+-from common.djangoapps.third_party_auth.utils import validate_uuid4_string
+-
+-from ..models import SAMLProviderConfig
+-from .serializers import SAMLProviderConfigSerializer
+-from ..utils import convert_saml_slug_provider_id
+-
+-
+-class SAMLProviderMixin:
+-    permission_classes = [permissions.IsAuthenticated]
+-    serializer_class = SAMLProviderConfigSerializer
+-
+-
+-class SAMLProviderConfigViewSet(PermissionRequiredMixin, SAMLProviderMixin, viewsets.ModelViewSet):
+-    """
+-    A View to handle SAMLProviderConfig CRUD
+-    """
+-    permission_required = 'enterprise.can_access_admin_dashboard'
+-
+-    def get_queryset(self):
+-        if self.requested_enterprise_uuid is None:
+-            raise ParseError('Required enterprise_customer_uuid is missing')
+-        enterprise_customer_idps = get_list_or_404(
+-            EnterpriseCustomerIdentityProvider,
+-            enterprise_customer__uuid=self.requested_enterprise_uuid
+-        )
+-        slug_list = [idp.provider_id for idp in enterprise_customer_idps]
+-        saml_config_ids = [
+-            config.id for config in SAMLProviderConfig.objects.current_set() if config.provider_id in slug_list
+-        ]
+-        return SAMLProviderConfig.objects.filter(id__in=saml_config_ids)
+-
+-    def destroy(self, request, *args, **kwargs):
+-        saml_provider_config = self.get_object()
+-        config_id = saml_provider_config.id
+-        provider_config_provider_id = saml_provider_config.provider_id
+-        customer_uuid = self.requested_enterprise_uuid
+-        try:
+-            enterprise_customer = EnterpriseCustomer.objects.get(pk=customer_uuid)
+-        except EnterpriseCustomer.DoesNotExist:
+-            raise ValidationError(f'Enterprise customer not found at uuid: {customer_uuid}')
+-
+-        enterprise_saml_provider = EnterpriseCustomerIdentityProvider.objects.filter(
+-            enterprise_customer=enterprise_customer,
+-            provider_id=provider_config_provider_id,
+-        )
+-        enterprise_saml_provider.delete()
+-        SAMLProviderConfig.objects.filter(id=saml_provider_config.id).update(archived=True, enabled=False)
+-        return Response(status=status.HTTP_200_OK, data={'id': config_id})
+-
+-    def create(self, request, *args, **kwargs):
+-        enterprise_customer_uuid = request.data.get('enterprise_customer_uuid')
+-        if not enterprise_customer_uuid:
+-            raise ParseError('Required enterprise_customer_uuid is missing')
+-        if not validate_uuid4_string(enterprise_customer_uuid):
+-            raise ParseError('enterprise_customer_uuid is not a valid uuid4')
+-        try:
+-            enterprise_customer = EnterpriseCustomer.objects.get(pk=enterprise_customer_uuid)
+-        except EnterpriseCustomer.DoesNotExist:
+-            raise ValidationError(f'Enterprise customer not found at uuid: {enterprise_customer_uuid}')
+-        serializer = self.get_serializer(data=request.data)
+-        serializer.is_valid(raise_exception=True)
+-        try:
+-            instance = serializer.save()
+-        except IntegrityError:
+-            raise ValidationError('SAML provider config with this entity_id already exists.')
+-        EnterpriseCustomerIdentityProvider.objects.get_or_create(
+-            enterprise_customer=enterprise_customer,
+-            provider_id=convert_saml_slug_provider_id(instance.slug),
+-        )
+-        headers = self.get_success_headers(serializer.data)
+-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+-
+-    @property
+-    def requested_enterprise_uuid(self):
+-        return (
+-            self.request.query_params.get('enterprise-id') or
+-            self.request.data.get('enterprise_customer_uuid')
+-        )
+-
+-    def get_permission_object(self):
+-        return self.requested_enterprise_uuid
+diff --git a/common/djangoapps/third_party_auth/samlproviderconfig/urls.py b/common/djangoapps/third_party_auth/samlproviderconfig/urls.py
+deleted file mode 100644
+--- a/common/djangoapps/third_party_auth/samlproviderconfig/urls.py
++++ /dev/null
+@@ -1,11 +0,0 @@
+-"""
+-    Viewset for auth/saml/v0/providerconfig/
+-"""
+-
+-from rest_framework import routers
+-
+-from .views import SAMLProviderConfigViewSet
+-
+-saml_provider_config_router = routers.DefaultRouter()
+-saml_provider_config_router.register(r'provider_config', SAMLProviderConfigViewSet, basename="saml_provider_config")
+-urlpatterns = saml_provider_config_router.urls
+diff --git a/common/djangoapps/third_party_auth/samlproviderdata/views.py b/common/djangoapps/third_party_auth/samlproviderdata/views.py
+deleted file mode 100644
+--- a/common/djangoapps/third_party_auth/samlproviderdata/views.py
++++ /dev/null
+@@ -1,120 +0,0 @@
+-"""
+-    Viewset for auth/saml/v0/samlproviderdata
+-"""
+-from datetime import datetime
+-import logging
+-from requests.exceptions import SSLError, MissingSchema, HTTPError
+-
+-from django.http import Http404
+-from django.shortcuts import get_object_or_404
+-from edx_rbac.mixins import PermissionRequiredMixin
+-from enterprise.models import EnterpriseCustomerIdentityProvider
+-from rest_framework import permissions, status, viewsets
+-from rest_framework.decorators import action
+-from rest_framework.exceptions import ParseError
+-from rest_framework.response import Response
+-
+-from common.djangoapps.third_party_auth.utils import (
+-    convert_saml_slug_provider_id,
+-    create_or_update_bulk_saml_provider_data,
+-    fetch_metadata_xml,
+-    parse_metadata_xml,
+-    validate_uuid4_string
+-)
+-
+-from ..models import SAMLProviderConfig, SAMLProviderData
+-from .serializers import SAMLProviderDataSerializer
+-
+-log = logging.getLogger(__name__)
+-
+-
+-class SAMLProviderDataMixin:
+-    permission_classes = [permissions.IsAuthenticated]
+-    serializer_class = SAMLProviderDataSerializer
+-
+-
+-class SAMLProviderDataViewSet(PermissionRequiredMixin, SAMLProviderDataMixin, viewsets.ModelViewSet):
+-    """
+-    A View to handle SAMLProviderData CRUD.
+-    """
+-    permission_required = 'enterprise.can_access_admin_dashboard'
+-
+-    def get_queryset(self):
+-        if self.requested_enterprise_uuid is None:
+-            raise ParseError('Required enterprise_customer_uuid is missing')
+-        enterprise_customer_idp = get_object_or_404(
+-            EnterpriseCustomerIdentityProvider,
+-            enterprise_customer__uuid=self.requested_enterprise_uuid
+-        )
+-        try:
+-            saml_provider = SAMLProviderConfig.objects.current_set().get(
+-                slug=convert_saml_slug_provider_id(enterprise_customer_idp.provider_id))
+-        except SAMLProviderConfig.DoesNotExist:
+-            raise Http404('No matching SAML provider found.')
+-        provider_data_id = self.request.parser_context.get('kwargs').get('pk')
+-        if provider_data_id:
+-            return SAMLProviderData.objects.filter(id=provider_data_id)
+-        return SAMLProviderData.objects.filter(entity_id=saml_provider.entity_id)
+-
+-    @property
+-    def requested_enterprise_uuid(self):
+-        return (
+-            self.request.query_params.get('enterprise-id') or
+-            self.request.data.get('enterprise_customer_uuid')
+-        )
+-
+-    def get_permission_object(self):
+-        return self.requested_enterprise_uuid
+-
+-    @action(detail=False, methods=['post'], url_path='sync_provider_data')
+-    def sync_provider_data(self, request):
+-        enterprise_customer_uuid = request.data.get('enterprise_customer_uuid')
+-        if not validate_uuid4_string(enterprise_customer_uuid):
+-            raise ParseError('enterprise_customer_uuid is not a valid uuid4')
+-        enterprise_customer_idp = get_object_or_404(
+-            EnterpriseCustomerIdentityProvider,
+-            enterprise_customer__uuid=enterprise_customer_uuid
+-        )
+-        try:
+-            saml_provider = SAMLProviderConfig.objects.current_set().get(
+-                slug=convert_saml_slug_provider_id(enterprise_customer_idp.provider_id))
+-        except SAMLProviderConfig.DoesNotExist:
+-            raise Http404('No matching SAML provider found.')
+-        metadata_url = saml_provider.metadata_source
+-        try:
+-            xml = fetch_metadata_xml(metadata_url)
+-        except (SSLError, MissingSchema, HTTPError) as exc:
+-            return Response(
+-                data={'error': f'Failed to fetch metadata XML: {exc}'},
+-                status=status.HTTP_400_BAD_REQUEST,
+-            )
+-        result = parse_metadata_xml(xml, saml_provider.entity_id)
+-        if result is None:
+-            return Response(
+-                data={'error': 'Failed to parse metadata XML.'},
+-                status=status.HTTP_400_BAD_REQUEST,
+-            )
+-        public_key, sso_url, expires_at = result
+-        create_or_update_bulk_saml_provider_data(public_key, sso_url, expires_at, saml_provider.entity_id)
+-        return Response(
+-            data={'message': 'Synced provider data successfully.'},
+-            status=status.HTTP_200_OK,
+-        )
+diff --git a/common/djangoapps/third_party_auth/samlproviderdata/urls.py b/common/djangoapps/third_party_auth/samlproviderdata/urls.py
+deleted file mode 100644
+--- a/common/djangoapps/third_party_auth/samlproviderdata/urls.py
++++ /dev/null
+@@ -1,11 +0,0 @@
+-"""
+-    url mappings for auth/saml/v0/providerdata/
+-"""
+-
+-from rest_framework import routers
+-
+-from .views import SAMLProviderDataViewSet
+-
+-saml_provider_data_router = routers.DefaultRouter()
+-saml_provider_data_router.register(r'provider_data', SAMLProviderDataViewSet, basename="saml_provider_data")
+-urlpatterns = saml_provider_data_router.urls
