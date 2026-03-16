@@ -32,6 +32,7 @@ jsondiff
 jsonfield
 openedx-atlas
 openedx-events
+openedx-filters
 paramiko
 path.py
 pillow
