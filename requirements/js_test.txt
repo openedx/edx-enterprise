@@ -32,7 +32,7 @@ jaraco-collections==5.2.1
     # via
     #   -r requirements/js_test.in
     #   cherrypy
-jaraco-context==6.1.0
+jaraco-context==6.1.1
     # via jaraco-text
 jaraco-functools==4.4.0
     # via
