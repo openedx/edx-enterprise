@@ -23,9 +23,9 @@ In order to maintain the separation of edx-enterprise from the edx-platform, fol
 Other noteworthy points:
 
 * ``edx-enterprise`` does not interact with Studio.
-* ``edx-enterprise`` supports multiple python versions:
+* ``edx-enterprise`` supports one python version:
 
-  * Python 2.7 and python 3.5.
+  * Python 3.12.
 
 * High test coverage is expected - all new python code must have 100% diff coverage.
   JS test were only recently introduced, so it's not as strict so far, but aim for 100% diff coverage as well.
@@ -43,14 +43,6 @@ below is executed within the virtualenv.
 
 .. _virtualenv: https://virtualenvwrapper.readthedocs.org/en/latest/
 
-Alternatively, `docker`_ can be used to provide a containerized shell to run the commands below inside.
-
-.. _docker: https://www.docker.com/
-
-.. code-block:: bash
-
-    $ make test-shell
-
 
 Install dependencies
 ^^^^^^^^^^^^^^^^^^^^
@@ -65,27 +57,13 @@ Dependencies can be installed via the command below.
 Run tests
 ^^^^^^^^^
 
-This application uses `tox`_ to run tests under multiple Python and Django version. In addition, the following test
-utilities are used:
-
-* `pytest`_ framework and test runner to run test
-* `pytest-cov`_ plugin for collecting test coverage
-* `diff-cover`_ for analyzing changeset coverage
-
-.. _tox: https://tox.readthedocs.io/en/latest/
-.. _pytest: http://doc.pytest.org/en/latest/
-.. _pytest-cov: https://pypi.python.org/pypi/pytest-cov
-.. _diff-cover: https://github.com/Bachmann1234/diff-cover
-
 The `edx-enterprise` Makefile provides multiple shortcuts to running tests. The most noteable are:
 
 .. code-block:: bash
 
-    $ make test                     # run all tests in current virtualenv
+    $ make test                     # run all python tests in current virtualenv
     $ make diff_cover               # run all tests in current virtualenv and report diff coverage
-
-    # run quality checks, all tests in every supported env (Python and Django versions) and jasmine JS tests
-    $ make test-all
+    $ make validate                 # run all tests, quality checks, and build static assets
 
 More info about running tests is available in :ref:`tests-section` section.
 
@@ -93,13 +71,12 @@ More info about running tests is available in :ref:`tests-section` section.
 Check quality
 ^^^^^^^^^^^^^
 
-A whole bunch of static analyzers are used to ensure code quality. Most notable are ``pycodestyle`` (formerly ``pep8``),
-``pylint`` and ``jshint``.
+A whole bunch of static analyzers are used to ensure code quality. Most notable are ``pycodestyle``, ``pylint`` and
+``jshint``.
 
 .. code-block:: bash
 
-    $ tox -e quality    # runs all python and docs quality check
-    $ make jshint       # runs jshint on files in enterprise folder
+    $ make quality       # runs all quality checks (pylint, pycodestyle, isort, jshint, pii)
 
 Build (these) docs
 ^^^^^^^^^^^^^^^^^^
@@ -119,40 +96,3 @@ Update translations
 ^^^^^^^^^^^^^^^^^^^
 
 See :ref:`internationalization-section` chapter for details.
-
-Upgrading local setup from older versions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you're migrating from an older version (i.e. pre Nov 2016) of edx-platform, you might need to ensure edx-enterprise
-is installed correctly. Three things need to happen:
-
-1. ``edx-enterprise`` must be installed in edxapp env.
-2. ``edx-enterprise`` must be added to ``INSTALLED_APPS``.
-3. Migrations need to be run.
-
-All three should happen automatically if you use paver commands to upgrade your setup, but just in case something goes
-wrong with the setup, here are instructions to manually perform the upgrade.
-
-First, install ``edx-enterprise`` into virtualenv. In ``edxapp`` virtualenv (``$current_release`` is |release|)\ [#f1]_
-
-.. code-block:: bash
-
-    $ cd /edx/app/edxapp/edx-platform
-    $ pip install edx-enterprise==$current_release
-
-
-Than, make sure ``edx-enterprise`` is included in ``INSTALLED_APPS`` or ``OPTIONAL_APPS`` (see `lms/env/common.py`_
-as an example) and run migrations:
-
-.. code-block:: bash
-
-    $ make migrate
-    # Or use a more down-to-the-root command (replace aws with your version of config)
-    $ ./manage.py lms migrate --settings=devstack
-
-.. _lms/env/common.py: https://github.com/openedx/edx-platform/blob/488467883409b9d06df3e0ccfa55fe8e8a9903b3/lms/envs/common.py#L2678-L2681
-
-.. rubric:: Footnotes
-
-.. [#f1] Due to limitations of Sphinx formatting, it is impossible to inject current version into code block while
-  retaining formatting.
