@@ -285,7 +285,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
-    def test_create_content_metadata_retry_success(self):
+    @mock.patch('integrated_channels.degreed2.client.time.sleep')  # skip real backoff delay
+    def test_create_content_metadata_retry_success(self, _mock_sleep):
         """
         ``create_content_metadata`` should hit a 429 and retry and receive correct response.
         """
@@ -344,7 +345,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
         assert response_body == '"{}"'
 
     @responses.activate
-    def test_create_content_metadata_retry_exhaust(self):
+    @mock.patch('integrated_channels.degreed2.client.time.sleep')  # skip real backoff delay
+    def test_create_content_metadata_retry_exhaust(self, _mock_sleep):
         """
         ``create_content_metadata`` should hit multiple 429's and eventually fail.
         """
@@ -619,7 +621,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
     @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
-    def test_update_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
+    @mock.patch('integrated_channels.degreed2.client.time.sleep')  # skip real backoff delay
+    def test_update_content_metadata_retry_success(self, _mock_sleep, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
         """
@@ -680,7 +683,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
     @mock.patch('enterprise.api_client.client.JwtBuilder', mock.Mock())
-    def test_update_content_metadata_retry_exhaust(self, mock_fetch_degreed_course_id):
+    @mock.patch('integrated_channels.degreed2.client.time.sleep')  # skip real backoff delay
+    def test_update_content_metadata_retry_exhaust(self, _mock_sleep, mock_fetch_degreed_course_id):
         """
         ``update_content_metadata`` should use the appropriate URLs for transmission.
         """
@@ -793,7 +797,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
-    def test_delete_content_metadata_retry_success(self, mock_fetch_degreed_course_id):
+    @mock.patch('integrated_channels.degreed2.client.time.sleep')  # skip real backoff delay
+    def test_delete_content_metadata_retry_success(self, _mock_sleep, mock_fetch_degreed_course_id):
         """
         ``delete_content_metadata`` should use the appropriate URLs for transmission.
         """
@@ -831,7 +836,8 @@ class TestDegreed2ApiClient(unittest.TestCase):
 
     @responses.activate
     @mock.patch('integrated_channels.degreed2.client.Degreed2APIClient.fetch_degreed_course_id')
-    def test_delete_content_metadata_retry_exhaust(self, mock_fetch_degreed_course_id):
+    @mock.patch('integrated_channels.degreed2.client.time.sleep')  # skip real backoff delay
+    def test_delete_content_metadata_retry_exhaust(self, _mock_sleep, mock_fetch_degreed_course_id):
         """
         ``delete_content_metadata`` should use the appropriate URLs for transmission.
         """
