@@ -1,7 +1,16 @@
 version: 2
 updates:
-    # Adding new check for github-actions
+  # Ensure all GitHub Actions are up-to-date.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-        interval: "weekly"
+      interval: "weekly"
+  # Disable any org-level dependabot settings for "pip" packages.
+  # This library does not need automatic python package updates, and
+  # furthermore it is detrimental to staying synchronized with upstream
+  # openedx-platform.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0  # This disables all PRs for pip updates

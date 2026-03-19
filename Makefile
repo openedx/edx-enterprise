@@ -14,6 +14,9 @@ endef
 export BROWSER_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
+# pylint depends on this environment variable.
+export DJANGO_SETTINGS_MODULE = enterprise.settings.test
+
 help: ## display this help message
 	@echo "Please use \`make <target>' where <target> is one of"
 	@perl -nle'print $& if m{^[\.a-zA-Z_-]+:.*?## .*$$}' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-25s\033[0m %s\n", $$1, $$2}'
@@ -32,7 +35,7 @@ clean.static: ## remove all ignored generated static files
 	rm -rf enterprise/assets/
 	rm -rf enterprise/static/enterprise/bundles/*.js
 
-static: ## rather all static assets for production
+static: ## render all static assets for production
 	$(NODE_BIN)/webpack --config webpack.config.js --display-error-details --progress --optimize-minimize
 	python manage.py collectstatic --noinput
 	# TODO: Add the compression app for manage.py settings.
@@ -78,121 +81,149 @@ docs: ## generate Sphinx HTML documentation, including API docs
 
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
 PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
-LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
-PLATFORM_BASE_REQS = https://raw.githubusercontent.com/openedx/edx-platform/master/requirements/edx/base.txt
+
+# Pull in the org-wide common_constraints.txt file.
 COMMON_CONSTRAINTS_TXT=requirements/common_constraints.txt
 .PHONY: $(COMMON_CONSTRAINTS_TXT)
 $(COMMON_CONSTRAINTS_TXT):
 	wget -O "$(@)" https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt || touch "$(@)"
 	echo "$(COMMON_CONSTRAINTS_TEMP_COMMENT)" | cat - $(@) > temp && mv temp $(@)
 
-check_pins: $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platform pins is accurate
-	sed 's/Django<2.3//g' requirements/common_constraints.txt > requirements/common_constraints.tmp
-	mv requirements/common_constraints.tmp requirements/common_constraints.txt
+# Special for edx-enterprise: Treat production package versions from openedx-platform as local constraints for testing.
+# This ensures we'll only test with package versions actually used in production.
+LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
+PLATFORM_BASE_REQS = https://raw.githubusercontent.com/openedx/openedx-platform/master/requirements/edx/base.txt
+.PHONY: $(LOCAL_EDX_PINS)
+$(LOCAL_EDX_PINS): $(COMMON_CONSTRAINTS_TXT) ## check that our local copy of edx-platform pins is accurate
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
 	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
-	# These requirement pins are removed because this is causing a deadlock in upgrading celery in both
-	# edx-platform and edx-enterprise. Will be resolved after the successful upgrade of celery in platform
-	sed -i.tmp '/^amqp==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^anyjson==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^billiard==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^celery==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^kombu==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^click-didyoumean==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^click-repl==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^click==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^prompt-toolkit==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^vine==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^django-simple-history==/d' $(LOCAL_EDX_PINS)
-
-
-	rm requirements/*.txt.tmp
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade: requirements check_pins ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+upgrade: $(LOCAL_EDX_PINS) ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+	pip install -qr requirements/pip-tools.txt -c requirements/constraints.txt
+	# Make sure to compile files after any other files they include!
+	$(PIP_COMPILE) --allow-unsafe -o requirements/pip.txt requirements/pip.in
+	$(PIP_COMPILE) -o requirements/pip-tools.txt requirements/pip-tools.in
+	pip install -qr requirements/pip.txt
+	pip install -qr requirements/pip-tools.txt
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/doc.txt requirements/doc.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test.txt requirements/test.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/dev.txt requirements/dev.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/ci.txt requirements/ci.in
 	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/js_test.txt requirements/js_test.in
-	# This section removes django from test.txt to
-	# let tox control the Django version for tests
-	grep -e "^django==" requirements/test.txt > requirements/django.txt
-	grep -e "^amqp==\|^anyjson==\|^billiard==\|^celery==\|^kombu==\|^click-didyoumean==\|^click-repl==\|^click==\|^prompt-toolkit==\|^vine==" requirements/dev.txt > requirements/celery53.txt
-	sed -i.tmp '/^[d|D]jango==/d' requirements/test.txt
-	sed -i.tmp '/^amqp==/d' requirements/test.txt
-	sed -i.tmp '/^anyjson==/d' requirements/test.txt
-	sed -i.tmp '/^billiard==/d' requirements/test.txt
-	sed -i.tmp '/^celery==/d' requirements/test.txt
-	sed -i.tmp '/^kombu==/d' requirements/test.txt
-	sed -i.tmp '/^click-didyoumean==/d' requirements/test.txt
-	sed -i.tmp '/^click-repl==/d' requirements/test.txt
-	sed -i.tmp '/^click==/d' requirements/test.txt
-	sed -i.tmp '/^click==/d' requirements/test.txt
-	sed -i.tmp '/^prompt-toolkit==/d' requirements/test.txt
-	sed -i.tmp '/^vine==/d' requirements/test.txt
-	rm requirements/test.txt.tmp
+	# Let tox control the Django version for tests
+	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
+	mv requirements/test.tmp requirements/test.txt
 
 requirements.js: ## install JS requirements for local development
 	npm ci
 
-requirements: requirements.js ## install development environment requirements
-	pip install -qr requirements/dev.txt --exists-action w
-	pip-sync requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
-	pip install -q -r requirements/constraints.txt
+piptools: ## install pinned version of pip-compile and pip-sync
+	pip install -r requirements/pip-tools.txt
+
+dev_requirements: piptools requirements.js ## sync to requirements for local development
+	# test-master.txt brings constraints from openedx-platform so that we are testing with the same versions.
+	pip-sync -q requirements/test-master.txt requirements/dev.txt requirements/private.* requirements/test.txt
+
+requirements: dev_requirements ## install development environment requirements
 
 jshint: ## run Javascript linting
 	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint --no-save
 	./node_modules/jshint/bin/jshint enterprise
 	./node_modules/jshint/bin/jshint spec
 
-test: clean ## run tests in the current virtualenv
-	pip install -qr requirements/test.txt --exists-action w
+test: clean ## run python tests
 	py.test
+
+jasmine: ## run javascript tests
+	jasmine
 
 diff_cover: test
 	diff-cover coverage.xml
 
-test-all: clean jshint static ## run tests on every supported Python/Django combination
-	tox
-	tox -e quality
-	tox -e jasmine
+validate: clean static test jasmine quality ## run all tests and quality checks
 
-validate: test ## run tests and quality checks
-	tox -e quality
+quality: pylint pycodestyle isort-check jshint pii_check ## run all quality checks
 
-quality: ## run python quality checks
-	tox -e quality
+pylint: ## Lint python code
+	touch tests/__init__.py
+	pylint -j 1 enterprise enterprise_learner_portal --clear-cache-post-run=y
+	pylint -j 1 consent integrated_channels --clear-cache-post-run=y
+	pylint -j 1 test_utils requirements/check_pins.py --clear-cache-post-run=y
+	pylint -j 1 tests -v --clear-cache-post-run=y
+	rm tests/__init__.py
 
-pylint: ## run pylint outside of tox
-	pylint -j 0 enterprise enterprise_learner_portal consent integrated_channels tests test_utils requirements/check_pins.py --django-settings-module=enterprise.settings.test
-
-pycodestyle: ## run pycodestyle outside of tox
+pycodestyle: ## Check python code style
 	pycodestyle enterprise enterprise_learner_portal consent integrated_channels tests test_utils
 
 pii_check: pii_clean
-	tox -e pii-annotations
+	code_annotations django_find_annotations --config_file .pii_annotations.yml --lint --report --coverage
 
 pii_clean:
 	rm -rf pii_report
 	mkdir -p pii_report
 
 isort: ## call isort on packages/files that are checked in quality tests
-	isort --skip migrations --recursive tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
+	isort --skip migrations tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
 
-## Docker in this repo is only supported for running tests locally
-## as an alternative to virtualenv natively - johnnagro 2022-02-11
-test-shell: ## Run a shell, as root, on the specified service container
-	docker-compose run -u 0 test-shell env TERM=$(TERM) /bin/bash
+isort-check: ## call isort on packages/files that are checked in quality tests
+	isort --skip migrations --check-only --diff tests test_utils enterprise enterprise_learner_portal consent integrated_channels manage.py setup.py
+
+########################################################################
+# Docker shortcuts for managing a local test/quality container.        #
+# For full devstack (edxapp, workers, DB, etc.), see the edx/devstack  #
+# repository.                                                          #
+########################################################################
+
+dev.pull: ## Pulls the docker image used by the test container (unsupported)
+	@echo "ERROR: To re-build the enterprise test container, use `make dev.build` instead."
+
+dev.build: ## Builds the docker image used by the test container
+	docker compose build test-shell
+
+dev.up: ## Starts the test container
+	docker compose up --remove-orphans -d test-shell
+
+dev.down: ## Kills the test container and all its data that isn't in volumes
+	docker compose down
+
+dev.stop: ## Stops the test container so it can be restarted
+	docker compose stop test-shell
+
+dev.makemigrations: ## Create migrations via the test container
+	docker compose exec test-shell python manage.py makemigrations
+
+dev.shell: ## Launch a shell in the test container
+	docker compose exec test-shell bash
+
+dev.logs: ## View the logs of the test container
+	docker compose logs -f --tail=500 test-shell
+
+dev.restart-container: ## Restart the test container
+	docker compose restart test-shell
+
+dev.attach: ## Attach to the test container
+	docker compose attach test-shell
+
+test-shell-up: dev.up
+test-shell-down: dev.down
+test-shell-stop: dev.stop
+test-shell-makemigrations: dev.makemigrations
+test-shell-shell: dev.shell
+test-shell-logs: dev.logs
+test-shell-restart-container: dev.restart-container
+test-shell-attach: dev.attach
 
 dev.up.keycloak:
-	docker-compose up --detach keycloak
+	docker compose up --detach keycloak
 
 dev.stop.keycloak:
-	docker-compose stop keycloak
+	docker compose stop keycloak
 
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
-	fake_translations help pull_translations push_translations requirements test test-all upgrade validate isort \
-	static static.dev static.watch
+	fake_translations help pull_translations push_translations requirements dev_requirements test upgrade validate isort \
+	isort-check static static.dev static.watch quality pylint pycodestyle pii_check pii_clean jasmine \
+	dev.pull dev.up dev.down dev.stop dev.makemigrations dev.shell dev.logs dev.restart-container dev.attach \
+	dev.up.keycloak dev.stop.keycloak

@@ -27,14 +27,6 @@ If you have not already done so, create/activate a `virtualenv`_.
 
 .. _virtualenv: https://virtualenvwrapper.readthedocs.org/en/latest/
 
-Alternatively, `docker`_ can be used to provide a containerized shell to run tests with.
-
-.. _docker: https://www.docker.com/
-
-.. code-block:: bash
-
-    $ make test-shell
-
 Dependencies can be installed via the command below.
 
 .. code-block:: bash
@@ -46,7 +38,16 @@ tests or quality checks)
 
 .. code-block:: bash
 
-    $ make test-all
+    $ make validate
+
+Alternatively, `docker`_ can be used to provide a containerized shell to run tests with.
+
+.. _docker: https://www.docker.com/
+
+.. code-block:: bash
+
+    $ make dev.up
+    $ docker compose exec test-shell make validate
 
 For details on performing other development-related tasks and high-level overview of ``edx-enterprise`` architecture
 and development principles, see :ref:`development-section`
