@@ -6,6 +6,7 @@ omit =
     enterprise/settings*
     enterprise/conf*
     enterprise/django_compatibility.py
+    enterprise/celery.py
     consent/apps.py
     consent/errors.py
     *migrations*

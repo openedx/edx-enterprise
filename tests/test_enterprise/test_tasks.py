@@ -5,18 +5,26 @@ Tests for the `edx-enterprise` tasks module.
 import copy
 import unittest
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import mock
 
+import pytz
 from pytest import mark, raises
 
 from enterprise.api_client.braze import ENTERPRISE_BRAZE_ALIAS_LABEL
 from enterprise.constants import (
     BRAZE_ADMIN_INVITE_CAMPAIGN_SETTING,
+    BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING,
+    BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING,
     BRAZE_LEARNER_INVITE_CAMPAIGN_SETTING,
     SSO_BRAZE_CAMPAIGN_ID,
 )
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource, EnterpriseGroupMembership
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseEnrollmentSource,
+    EnterpriseGroupMembership,
+    PendingEnterpriseCustomerAdminUser,
+)
 from enterprise.settings.test import BRAZE_GROUPS_INVITATION_EMAIL_CAMPAIGN_ID, BRAZE_GROUPS_REMOVAL_EMAIL_CAMPAIGN_ID
 from enterprise.tasks import (
     _get_braze_campaign_id,
@@ -24,6 +32,7 @@ from enterprise.tasks import (
     _split_identified_and_anonymous_recipients,
     create_enterprise_enrollment,
     send_enterprise_admin_invite_email,
+    send_enterprise_admin_invite_reminders,
     send_enterprise_email_notification,
     send_group_membership_invitation_notification,
     send_group_membership_removal_notification,
@@ -31,10 +40,12 @@ from enterprise.tasks import (
 )
 from enterprise.utils import localized_utcnow, serialize_notification_content
 from test_utils.factories import (
+    EnterpriseCustomerAdminFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     EnterpriseGroupFactory,
     EnterpriseGroupMembershipFactory,
+    PendingEnterpriseCustomerAdminUserFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
@@ -546,6 +557,337 @@ class TestEnterpriseTasks(unittest.TestCase):
                 'enterprise_sender_alias': 'alias',
             },
         )
+
+    def test_split_identified_and_anonymous_recipients_for_reminder_campaign(self):
+        """Reminder campaign includes first_name personalization for identified users."""
+        reminder_user = UserFactory(
+            email='reminder.user@example.com',
+            first_name='Reminder',
+            username='reminder_user',
+        )
+
+        identified, anonymous = _split_identified_and_anonymous_recipients(
+            [reminder_user.email],
+            BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING,
+        )
+
+        assert not anonymous
+        assert len(identified) == 1
+        assert identified[0]['attributes']['first_name'] == 'Reminder'
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.braze_client_class')
+    @mock.patch('enterprise.tasks.get_enterprise_customer')
+    def test_send_enterprise_admin_invite_email_accepts_additional_trigger_properties(
+        self, mock_get_customer, mock_braze_client, mock_settings
+    ):
+        """Additional trigger properties are merged into Braze payload for invite/reminder sends."""
+        mock_customer = mock.Mock()
+        mock_customer.slug = 'slug'
+        mock_customer.name = 'name'
+        mock_customer.sender_alias = 'alias'
+        mock_get_customer.return_value = mock_customer
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_CAMPAIGN_ID = 'admin-campaign-id'
+
+        send_enterprise_admin_invite_email(  # pylint: disable=no-value-for-parameter
+            str(self.enterprise_customer.uuid),
+            'admin@example.com',
+            BRAZE_ADMIN_INVITE_CAMPAIGN_SETTING,
+            additional_trigger_properties={'reminder_number': 2},
+        )
+
+        mock_braze_client.return_value.send_campaign_message.assert_called_once_with(
+            'admin-campaign-id',
+            recipients=['admin@example.com'],
+            trigger_properties={
+                'customer_slug': 'slug',
+                'enterprise_customer_name': 'name',
+                'enterprise_sender_alias': 'alias',
+                'reminder_number': 2,
+            },
+        )
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_sends_for_due_pending_invites(
+        self, mock_now, mock_send_invite_email, mock_settings
+    ):
+        """Reminder task sends reminder for pending invite after initial delay."""
+        now = datetime(2026, 3, 16, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'reminder-campaign-id'
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 3
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='pending.reminder@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(id=pending_invite.id).update(
+            created=now - timedelta(days=8),
+            modified=now - timedelta(days=8),
+        )
+
+        result = send_enterprise_admin_invite_reminders()
+
+        assert result['sent'] == 1
+        mock_send_invite_email.assert_called_once()
+        call_args = mock_send_invite_email.call_args
+        assert call_args[0][0] == str(self.enterprise_customer.uuid)
+        assert call_args[0][1] == 'pending.reminder@example.com'
+        assert call_args[0][2] == BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING
+        assert call_args[1]['additional_trigger_properties']['reminder_number'] == 1
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_supports_minute_overrides(
+        self, mock_now, mock_send_invite_email, mock_settings
+    ):
+        """Reminder task can use minute-level settings for faster QA verification."""
+        now = datetime(2026, 3, 16, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'reminder-campaign-id'
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_MINUTES = 1
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_MINUTES = 1
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 3
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='minute.reminder@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(id=pending_invite.id).update(
+            created=now - timedelta(minutes=2),
+            modified=now - timedelta(minutes=2),
+        )
+
+        result = send_enterprise_admin_invite_reminders()
+
+        assert result['sent'] == 1
+        mock_send_invite_email.assert_called_once()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_uses_learner_admin_campaign_for_existing_learners(
+        self,
+        mock_now,
+        mock_send_invite_email,
+        mock_settings,
+    ):
+        """Reminder task routes existing enterprise learners to learner-admin reminder campaign when configured."""
+        now = datetime(2026, 3, 16, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'admin-reminder-campaign-id'
+        mock_settings.BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'learner-admin-reminder-campaign-id'
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 3
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        existing_user = UserFactory(email='learner.admin@example.com', is_active=True)
+        EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=existing_user.id,
+            user_fk=existing_user,
+            active=True,
+        )
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='learner.admin@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(id=pending_invite.id).update(
+            created=now - timedelta(days=8),
+            modified=now - timedelta(days=8),
+        )
+
+        result = send_enterprise_admin_invite_reminders()
+
+        assert result['sent'] == 1
+        call_args = mock_send_invite_email.call_args
+        assert call_args[0][2] == BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_falls_back_to_admin_campaign_for_existing_learners(
+        self,
+        mock_now,
+        mock_send_invite_email,
+        mock_settings,
+    ):
+        """
+        Reminder task falls back to admin reminder campaign for existing
+        learners when learner-admin campaign is absent.
+        """
+        now = datetime(2026, 3, 16, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'admin-reminder-campaign-id'
+        mock_settings.BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = None
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 3
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        existing_user = UserFactory(email='learner.admin.fallback@example.com', is_active=True)
+        EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=existing_user.id,
+            user_fk=existing_user,
+            active=True,
+        )
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='learner.admin.fallback@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(id=pending_invite.id).update(
+            created=now - timedelta(days=8),
+            modified=now - timedelta(days=8),
+        )
+
+        result = send_enterprise_admin_invite_reminders()
+
+        assert result['sent'] == 1
+        call_args = mock_send_invite_email.call_args
+        assert call_args[0][2] == BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_skips_already_activated_admins(
+        self, mock_now, mock_send_invite_email, mock_settings
+    ):
+        """Reminder task excludes pending invites once user already has active enterprise admin access."""
+        now = datetime(2026, 3, 16, 12, 0, 0)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'reminder-campaign-id'
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 3
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        existing_user = UserFactory(email='already.active@example.com', is_active=True)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=existing_user.id,
+            user_fk=existing_user,
+            active=True,
+        )
+        EnterpriseCustomerAdminFactory(enterprise_customer_user=enterprise_customer_user)
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='already.active@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(id=pending_invite.id).update(
+            created=now - timedelta(days=10),
+            modified=now - timedelta(days=10),
+        )
+
+        result = send_enterprise_admin_invite_reminders()
+
+        assert result['sent'] == 0
+        assert result['skipped_active'] == 1
+        mock_send_invite_email.assert_not_called()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_respects_max_reminders(
+        self, mock_now, mock_send_invite_email, mock_settings
+    ):
+        """Reminder task does not send once inferred reminder count reaches configured maximum."""
+        now = datetime(2026, 3, 16, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'reminder-campaign-id'
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 1
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='maxed.out@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(id=pending_invite.id).update(
+            created=now - timedelta(days=20),
+            modified=now - timedelta(days=20),
+        )
+        pending_invite.refresh_from_db()
+
+        # Patch reminder count to simulate max reminders reached
+        with mock.patch('enterprise.tasks._get_pending_admin_invite_reminder_count', return_value=1):
+            result = send_enterprise_admin_invite_reminders()
+
+        assert result['sent'] == 0
+        assert result['skipped_max'] == 1
+        mock_send_invite_email.assert_not_called()
+
+    @mock.patch('enterprise.tasks.settings')
+    @mock.patch('enterprise.tasks.send_enterprise_admin_invite_email')
+    @mock.patch('enterprise.tasks.localized_utcnow')
+    def test_send_enterprise_admin_invite_reminders_handles_braze_error(
+        self, mock_now, mock_send_invite_email, mock_settings,
+    ):
+        """
+        Reminder task catches BrazeClientError and increments
+        failures counter.
+        """
+        now = datetime(2026, 3, 16, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_now.return_value = now
+
+        mock_settings.ENTERPRISE_BRAZE_API_KEY = 'test-api-key'
+        mock_settings.EDX_BRAZE_API_SERVER = 'https://rest.iad-01.braze.com'
+        mock_settings.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = 'reminder-id'
+        mock_settings.ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+        mock_settings.ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+        mock_settings.ADMIN_INVITE_REMINDER_MAX_COUNT = 1
+        mock_settings.ADMIN_INVITE_REMINDER_BATCH_SIZE = 100
+
+        pending_invite = PendingEnterpriseCustomerAdminUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_email='fail@example.com',
+        )
+        PendingEnterpriseCustomerAdminUser.objects.filter(
+            id=pending_invite.id,
+        ).update(
+            created=now - timedelta(days=8),
+            modified=now - timedelta(days=8),
+        )
+
+        mock_send_invite_email.side_effect = BrazeClientError(
+            'Braze API error',
+        )
+
+        result = send_enterprise_admin_invite_reminders()
+        assert result['sent'] == 0
+        assert result['failures'] == 1
 
     @mock.patch('enterprise.tasks.settings')
     @mock.patch('enterprise.tasks.braze_client_class')

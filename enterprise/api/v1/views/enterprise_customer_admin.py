@@ -302,7 +302,7 @@ class EnterpriseCustomerAdminViewSet(
         ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
         fn=lambda request, *args, **kwargs: kwargs.get('enterprise_customer_uuid'),
     )
-    def delete_admin(self, request, enterprise_customer_uuid=None, id=None):  # pylint: disable=redefined-builtin,unused-argument
+    def delete_admin(self, request, enterprise_customer_uuid=None, id=None):  # pylint: disable=redefined-builtin
         """
         Delete an admin record based on role.
 
