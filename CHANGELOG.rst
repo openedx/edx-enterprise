@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 ----------
-* nothing unreleased
+* Dropped Django 4.2 support; removed Django<4 test skip guard; bumped djangorestframework, firebase-admin 7.3.0, boto3/botocore, attrs 25→26
 
 [6.7.0] - 2026-03-10
 ---------------------
