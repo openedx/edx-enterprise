@@ -6,7 +6,7 @@
 #
 annotated-doc==0.0.4
     # via typer
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   outcome
     #   trio
@@ -30,7 +30,7 @@ jaraco-collections==5.2.1
     # via
     #   -r requirements/js_test.in
     #   cherrypy
-jaraco-context==6.1.1
+jaraco-context==6.1.2
     # via jaraco-text
 jaraco-functools==4.4.0
     # via

@@ -25,7 +25,7 @@ asn1crypto==1.5.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
@@ -42,11 +42,11 @@ bleach==6.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-boto3==1.42.69
+boto3==1.42.74
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-botocore==1.42.69
+botocore==1.42.74
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   boto3
@@ -209,7 +209,7 @@ django-waffle==5.0.0
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangorestframework==3.16.1
+djangorestframework==3.17.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -291,7 +291,7 @@ filelock==3.25.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   snowflake-connector-python
-firebase-admin==7.2.0
+firebase-admin==7.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-ace
@@ -314,11 +314,11 @@ google-cloud-core==2.5.0
     #   -c requirements/edx-platform-constraints.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.25.0
+google-cloud-firestore==2.26.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
-google-cloud-storage==3.9.0
+google-cloud-storage==3.10.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   firebase-admin
@@ -469,7 +469,7 @@ proto-plus==1.27.1
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.5
+protobuf==6.33.6
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   google-api-core
