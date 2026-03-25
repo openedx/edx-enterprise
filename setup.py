@@ -83,6 +83,12 @@ REQUIREMENTS, DEPENDENCY_LINKS = get_requirements(os.path.join(base_path, 'requi
 setup(
     name="edx-enterprise",
     version=VERSION,
+    entry_points={
+        "lms.djangoapp": [
+            "enterprise = enterprise.apps:EnterpriseConfig",
+            "consent = consent.apps:ConsentConfig",
+        ],
+    },
     description="""Your project description goes here""",
     long_description=f"{README}\n\n{CHANGELOG}",
     author="edX",

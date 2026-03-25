@@ -13,6 +13,19 @@ class EnterpriseConfig(AppConfig):
     Configuration for the enterprise Django application.
     """
 
+    plugin_app = {
+        "settings_config": {
+            "lms.djangoapp": {
+                "common": {
+                    "relative_path": "settings.common",
+                },
+                "production": {
+                    "relative_path": "settings.production",
+                },
+            },
+        },
+    }
+
     name = "enterprise"
     valid_image_extensions = [".png", ]
     valid_max_image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)  # Value in KB's
