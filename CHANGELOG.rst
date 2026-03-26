@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.0] - 2026-03-24
+---------------------
+* feat: register enterprise and consent as openedx LMS plugins (ENT-11663)
+
 [6.7.0] - 2026-03-10
 ---------------------
 * feat: Invite admin endpoints with validation  (ENT-11238)
