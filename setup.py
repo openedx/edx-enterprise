@@ -83,6 +83,12 @@ REQUIREMENTS, DEPENDENCY_LINKS = get_requirements(os.path.join(base_path, 'requi
 setup(
     name="edx-enterprise",
     version=VERSION,
+    entry_points={
+        "lms.djangoapp": [
+            "enterprise = enterprise.apps:EnterpriseConfig",
+            "consent = consent.apps:ConsentConfig",
+        ],
+    },
     description="""Your project description goes here""",
     long_description=f"{README}\n\n{CHANGELOG}",
     author="edX",
@@ -109,18 +115,16 @@ setup(
     extras_require={
         "braze": ["edx-braze-client"],
     },
-    license="AGPL 3.0",
+    license="AGPL-3.0-or-later",
     zip_safe=False,
     keywords="Django edx",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Framework :: Django",
-        "Framework :: Django :: 4.2",
         "Framework :: Django :: 5.2",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 )
