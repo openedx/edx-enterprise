@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase, override_settings
 
 from enterprise.filters.accounts import AccountSettingsReadOnlyFieldsStep
+from enterprise.models import EnterpriseCustomerUser
 
 
 class TestAccountSettingsReadOnlyFieldsStep(TestCase):
@@ -29,7 +30,6 @@ class TestAccountSettingsReadOnlyFieldsStep(TestCase):
         """
         When the user has no enterprise link, readonly_fields is returned unchanged.
         """
-        from enterprise.models import EnterpriseCustomerUser
         mock_objects.select_related.return_value.get.side_effect = EnterpriseCustomerUser.DoesNotExist
         step = self._make_step()
         fields = set()

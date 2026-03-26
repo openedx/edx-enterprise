@@ -1,8 +1,9 @@
 """
 Pipeline step for determining read-only account settings fields.
 """
-from django.conf import settings
 from openedx_filters.filters import PipelineStep
+
+from django.conf import settings
 
 from enterprise.models import EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
 
