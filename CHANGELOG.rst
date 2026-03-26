@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.1] - 2026-03-26
+---------------------
+* feat: add admin invite reminder emails (ENT-11581)
+
 [6.8.0] - 2026-03-24
 ---------------------
 * feat: register enterprise and consent as openedx LMS plugins (ENT-11663)

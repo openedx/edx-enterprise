@@ -3969,6 +3969,12 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         on_delete=models.CASCADE,
     )
     user_email = models.EmailField(null=False, blank=False)
+    reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=_("The last time a reminder email was sent for this pending admin."),
+    )
     history = HistoricalRecords()
 
     class Meta:
