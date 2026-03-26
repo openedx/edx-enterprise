@@ -88,6 +88,10 @@ setup(
             "enterprise = enterprise.apps:EnterpriseConfig",
             "consent = consent.apps:ConsentConfig",
         ],
+        "cms.djangoapp": [
+            "enterprise = enterprise.apps:EnterpriseConfig",
+            "consent = consent.apps:ConsentConfig",
+        ],
     },
     description="""Your project description goes here""",
     long_description=f"{README}\n\n{CHANGELOG}",

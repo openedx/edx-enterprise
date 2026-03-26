@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.1] - 2026-03-25
+---------------------
+* fix: also register enterprise and consent as CMS plugins (ENT-11663)
+
 [6.8.0] - 2026-03-24
 ---------------------
 * feat: register enterprise and consent as openedx LMS plugins (ENT-11663)
