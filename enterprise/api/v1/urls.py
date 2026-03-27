@@ -32,6 +32,8 @@ from enterprise.api.v1.views import (
 )
 from enterprise.api.v1.views.enterprise_customer_admin import EnterpriseCustomerAdminViewSet
 from enterprise.api.v1.views.enterprise_sso_users import EnterpriseSSOUserViewSet
+from enterprise.api.v1.views.saml_provider_config import SAMLProviderConfigViewSet
+from enterprise.api.v1.views.saml_provider_data import SAMLProviderDataViewSet
 
 router = DefaultRouter()
 router.register(
@@ -257,3 +259,11 @@ urlpatterns = [
 ]
 
 urlpatterns += router.urls
+
+# SAML provider admin endpoints (migrated from openedx-platform third_party_auth).
+_saml_router = DefaultRouter()
+_saml_router.register(r'auth/saml/v0/provider_config', SAMLProviderConfigViewSet,
+                      basename='enterprise-saml-provider-config')
+_saml_router.register(r'auth/saml/v0/provider_data', SAMLProviderDataViewSet,
+                      basename='enterprise-saml-provider-data')
+urlpatterns += _saml_router.urls
