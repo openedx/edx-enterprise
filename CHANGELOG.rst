@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.4] - 2026-03-27
+---------------------
+* feat: add AccountSettingsReadOnlyFieldsStep pipeline step (ENT-11510)
+
 [6.8.3] - 2026-03-27
 ---------------------
 * fix: Move settings reads out of AppConfig, into consumers

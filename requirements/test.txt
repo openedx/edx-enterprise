@@ -146,6 +146,7 @@ diff-cover==10.2.0
     #   edx-toggles
     #   jsonfield
     #   openedx-events
+    #   openedx-filters
 django-cache-memoize==0.2.1
     # via -r requirements/test-master.txt
 django-config-models==2.9.0
@@ -241,6 +242,7 @@ edx-opaque-keys[django]==3.1.0
     #   edx-ccx-keys
     #   edx-drf-extensions
     #   openedx-events
+    #   openedx-filters
 edx-rbac==3.0.0
     # via -r requirements/test-master.txt
 edx-rest-api-client==6.2.0
