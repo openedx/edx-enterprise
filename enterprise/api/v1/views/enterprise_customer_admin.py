@@ -490,6 +490,14 @@ class EnterpriseCustomerAdminViewSet(
             enterprise_customer.uuid
         )
 
+        # Hard-delete the EnterpriseCustomerAdmin record
+        admin_record.delete()
+        logger.info(
+            "Hard deleted EnterpriseCustomerAdmin for EnterpriseCustomerUser id=%s in enterprise %s",
+            enterprise_customer_user.id,
+            enterprise_customer.uuid
+        )
+
         # Check if user has other roles for this enterprise
         # No locking needed - we're only checking existence, and ECU is already locked
         has_other_roles_in_enterprise = models.SystemWideEnterpriseUserRoleAssignment.objects.filter(
