@@ -396,3 +396,22 @@ STORAGES = {
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
+
+ENTERPRISE_ADMIN_PORTAL_BASE_URL = 'http://localhost:1991'
+
+# Admin invite reminder settings
+BRAZE_ADMIN_INVITE_CAMPAIGN_ID = os.environ.get('BRAZE_ADMIN_INVITE_CAMPAIGN_ID', 'test-admin-invite-campaign-id')
+BRAZE_LEARNER_INVITE_CAMPAIGN_ID = os.environ.get('BRAZE_LEARNER_INVITE_CAMPAIGN_ID', 'test-learner-invite-campaign-id')
+BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = os.environ.get(
+    'BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_ID', 'test-admin-invite-reminder-campaign-id'
+)
+BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID = os.environ.get(
+    'BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_ID', 'test-learner-admin-invite-reminder-campaign-id'
+)
+ENTERPRISE_BRAZE_API_KEY = os.environ.get('ENTERPRISE_BRAZE_API_KEY', 'test-api-key')
+EDX_BRAZE_API_SERVER = os.environ.get('EDX_BRAZE_API_SERVER', 'test-api-server')
+
+ADMIN_INVITE_REMINDER_INITIAL_DELAY_DAYS = 7
+ADMIN_INVITE_REMINDER_CADENCE_DAYS = 3
+ADMIN_INVITE_REMINDER_MAX_COUNT = 1
+ADMIN_INVITE_REMINDER_BATCH_SIZE = 500
