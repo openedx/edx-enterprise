@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.8.1] - 2026-03-26
+[6.8.2] - 2026-03-26
 ---------------------
 * feat: add admin invite reminder emails (ENT-11581)
+
+[6.8.1] - 2026-03-25
+---------------------
+* fix: also register enterprise and consent as CMS plugins (ENT-11663)
 
 [6.8.0] - 2026-03-24
 ---------------------
