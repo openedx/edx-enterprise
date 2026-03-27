@@ -125,7 +125,7 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-chardet==7.3.0
+chardet==7.4.0.post1
     # via
     #   -r requirements/test.txt
     #   diff-cover
@@ -889,7 +889,7 @@ python-dateutil==2.9.0.post0
     #   celery
     #   edx-ace
     #   freezegun
-python-discovery==1.2.0
+python-discovery==1.2.1
     # via virtualenv
 python-ipware==3.0.0
     # via

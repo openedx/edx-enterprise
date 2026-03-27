@@ -2,6 +2,7 @@
 Django tasks.
 """
 
+from datetime import timedelta
 from logging import getLogger
 
 from celery import shared_task
@@ -11,7 +12,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models.functions import Lower
 
 from enterprise import constants
@@ -236,6 +237,22 @@ def pending_enterprise_customer_user_model():
     return apps.get_model('enterprise', 'PendingEnterpriseCustomerUser')
 
 
+def enterprise_customer_admin_model():
+    """
+    Returns the ``EnterpriseCustomerAdmin`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomerAdmin')
+
+
+def pending_enterprise_customer_admin_user_model():
+    """
+    Returns the ``PendingEnterpriseCustomerAdminUser`` class.
+    This function is needed to avoid circular ref issues when model classes call tasks in this module.
+    """
+    return apps.get_model('enterprise', 'PendingEnterpriseCustomerAdminUser')
+
+
 def enterprise_group_membership_model():
     """
     Returns the ``EnterpriseGroupMembership`` class.
@@ -322,6 +339,7 @@ def send_enterprise_admin_invite_email(
     enterprise_customer_uuid,
     recipient_emails,
     campaign_setting_name,
+    additional_trigger_properties=None,
 ):
     """
     Send enterprise admin invitation emails using Braze campaigns.
@@ -330,6 +348,7 @@ def send_enterprise_admin_invite_email(
         enterprise_customer_uuid (UUID): Enterprise customer UUID.
         recipient_emails (list[str] or str): Recipient email(s) to invite.
         campaign_setting_name (str): Setting name that stores the Braze campaign id.
+        additional_trigger_properties (dict, optional): Additional properties to include in Braze trigger.
 
     The task builds Braze trigger properties, normalizes single-email input to a
     list, splits recipients into identified and anonymous users, and sends campaign
@@ -362,6 +381,8 @@ def send_enterprise_admin_invite_email(
         'enterprise_customer_name': enterprise_name or '',
         'enterprise_sender_alias': sender_alias or '',
     }
+    if additional_trigger_properties:
+        braze_trigger_properties.update(additional_trigger_properties)
 
     braze_campaign_id = _get_braze_campaign_id(campaign_setting_name)
 
@@ -417,6 +438,204 @@ def send_enterprise_admin_invite_email(
         )
         LOGGER.exception(message)
         raise
+
+
+def _get_admin_invite_reminder_config():
+    """Return validated config values for admin invite reminder cadence and limits."""
+    initial_delay_window = timedelta(days=7)
+    reminder_cadence_window = timedelta(days=3)
+    max_reminders = 1
+    batch_size = 500
+    return initial_delay_window, reminder_cadence_window, max_reminders, batch_size
+
+
+def _get_pending_admin_invite_reminder_count(pending_admin):
+    """Return reminder sends count based on reminder_sent_at history records."""
+    return pending_admin.history.filter(
+        history_type='~',
+        reminder_sent_at__isnull=False,
+    ).values_list('reminder_sent_at', flat=True).distinct().count()
+
+
+def _is_pending_admin_user_existing_learner(pending_admin):
+    """Return ``True`` when pending admin already has an active linked enterprise learner account."""
+    return enterprise_customer_user_model().objects.filter(
+        enterprise_customer=pending_admin.enterprise_customer,
+        user_id__isnull=False,
+        active=True,
+        user_fk__email__iexact=pending_admin.user_email,
+    ).exists()
+
+
+def _has_pending_admin_user_activated(pending_admin):
+    """Return ``True`` when pending admin already has an active enterprise admin record."""
+    return enterprise_customer_admin_model().objects.filter(
+        enterprise_customer_user__enterprise_customer=pending_admin.enterprise_customer,
+        enterprise_customer_user__user_id__isnull=False,
+        enterprise_customer_user__active=True,
+        enterprise_customer_user__user_fk__email__iexact=pending_admin.user_email,
+    ).exists()
+
+
+def _get_pending_admin_invite_reminder_campaign_setting(is_existing_learner):
+    """Return reminder campaign setting key for pending admin invites."""
+    if (
+        is_existing_learner and
+        getattr(settings, constants.BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING, None)
+    ):
+        return constants.BRAZE_LEARNER_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING
+    return constants.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING
+
+
+def _is_pending_admin_invite_due_for_reminder(
+    pending_admin,
+    now,
+    initial_delay_window,
+    reminder_cadence_window,
+    max_reminders,
+):
+    """Return due status and current reminder count for a pending admin."""
+    reminder_count = _get_pending_admin_invite_reminder_count(pending_admin)
+    if reminder_count >= max_reminders:
+        return False, reminder_count
+
+    if reminder_count == 0:
+        return pending_admin.created <= now - initial_delay_window, reminder_count
+
+    last_reminder = pending_admin.reminder_sent_at or pending_admin.modified
+    return last_reminder <= now - reminder_cadence_window, reminder_count  # pragma: no cover
+
+
+def _get_invite_skip_reason(
+    pending_admin,
+    now,
+    initial_delay_window,
+    reminder_cadence_window,
+    max_reminders,
+    sent_customer_email_set,
+):
+    """
+    Check if a pending admin should be skipped for reminders.
+
+    Returns:
+        (str, int): A tuple of (skip_reason, reminder_count) where skip_reason is one of
+        'active', 'duplicate', 'max', 'not_due', or None if the pending admin should receive a reminder.
+    """
+    if _has_pending_admin_user_activated(pending_admin):
+        return 'active', 0
+
+    customer_email_key = (
+        pending_admin.enterprise_customer_id,
+        pending_admin.user_email.strip().lower(),
+    )
+    if customer_email_key in sent_customer_email_set:  # pragma: no cover
+        return 'duplicate', 0
+
+    due_for_reminder, reminder_count = _is_pending_admin_invite_due_for_reminder(
+        pending_admin, now, initial_delay_window, reminder_cadence_window, max_reminders,
+    )
+    if not due_for_reminder:
+        reason = 'max' if reminder_count >= max_reminders else 'not_due'
+        return reason, reminder_count
+
+    return None, reminder_count
+
+
+def _send_reminder_for_invite(pending_admin, reminder_count):
+    """
+    Send a reminder email for a single pending admin and update tracking.
+
+    Returns the (customer_id, email) key for deduplication tracking.
+    """
+    is_existing_learner = _is_pending_admin_user_existing_learner(pending_admin)
+    reminder_campaign_setting = _get_pending_admin_invite_reminder_campaign_setting(
+        is_existing_learner,
+    )
+
+    send_enterprise_admin_invite_email.run(
+        str(pending_admin.enterprise_customer.uuid),
+        pending_admin.user_email,
+        reminder_campaign_setting,
+        additional_trigger_properties={
+            'admin_invite_created_at': pending_admin.created.isoformat(),
+            'reminder_number': reminder_count + 1,
+        },
+    )
+
+    pending_admin.reminder_sent_at = localized_utcnow()
+    pending_admin.save(update_fields=['reminder_sent_at', 'modified'])
+    return (
+        pending_admin.enterprise_customer_id,
+        pending_admin.user_email.strip().lower(),
+    )
+
+
+@shared_task
+@set_code_owner_attribute
+def send_enterprise_admin_invite_reminders():
+    """
+    Send reminder Braze campaign messages for inactive pending admin invites.
+
+    This task uses existing model timestamps and historical update rows to enforce:
+    - initial wait after invite creation,
+    - cadence between reminders,
+    - maximum reminders per invite.
+    """
+    initial_delay_window, reminder_cadence_window, max_reminders, batch_size = _get_admin_invite_reminder_config()
+    now = localized_utcnow()
+
+    _get_braze_campaign_id(constants.BRAZE_ADMIN_INVITE_REMINDER_CAMPAIGN_SETTING)
+
+    pending_admin_model = pending_enterprise_customer_admin_user_model()
+    first_reminder_cutoff = now - initial_delay_window
+    candidate_invite_ids = list(
+        pending_admin_model.objects.filter(
+            created__lte=first_reminder_cutoff,
+        ).order_by('created').values_list('id', flat=True)[:batch_size]
+    )
+
+    counters = {'sent': 0, 'skipped_active': 0, 'skipped_not_due': 0, 'skipped_max': 0, 'failures': 0}
+    sent_customer_email_set = set()
+
+    for invite_id in candidate_invite_ids:
+        try:
+            with transaction.atomic():
+                pending_admin = pending_admin_model.objects.select_for_update().select_related(
+                    'enterprise_customer'
+                ).filter(id=invite_id).first()
+                if not pending_admin:  # pragma: no cover
+                    continue
+
+                skip_reason, reminder_count = _get_invite_skip_reason(
+                    pending_admin, now, initial_delay_window,
+                    reminder_cadence_window, max_reminders, sent_customer_email_set,
+                )
+                if skip_reason:
+                    LOGGER.info('SKIP: invite id=%s reason=%s', invite_id, skip_reason)
+                    if skip_reason == 'active':
+                        counters['skipped_active'] += 1
+                    elif skip_reason == 'max':
+                        counters['skipped_max'] += 1
+                    elif skip_reason == 'not_due':  # pragma: no cover
+                        counters['skipped_not_due'] += 1
+                    continue
+
+                LOGGER.info('SEND: invite id=%s reminder #%d', invite_id, reminder_count + 1)
+                customer_email_key = _send_reminder_for_invite(pending_admin, reminder_count)
+                sent_customer_email_set.add(customer_email_key)
+                counters['sent'] += 1
+        except (BrazeClientError, ValueError):
+            counters['failures'] += 1
+            LOGGER.exception('Failed sending admin invite reminder for invite id=%s', invite_id)
+
+    LOGGER.info(
+        'Processed %d pending admin invites for reminders '
+        '(sent=%d skipped_active=%d skipped_not_due=%d skipped_max=%d failures=%d).',
+        len(candidate_invite_ids), counters['sent'], counters['skipped_active'],
+        counters['skipped_not_due'], counters['skipped_max'], counters['failures'],
+    )
+
+    return {'processed': len(candidate_invite_ids), **counters}
 
 
 def _recipients_for_identified_users(

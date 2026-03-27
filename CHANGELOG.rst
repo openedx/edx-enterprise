@@ -17,9 +17,13 @@ Unreleased
 ----------
 * nothing unreleased
 
-[6.8.2] - 2026-03-25
+[6.8.4] - 2026-03-27
 ---------------------
 * feat: add AccountSettingsReadOnlyFieldsStep pipeline step (ENT-11510)
+
+[6.8.2] - 2026-03-26
+---------------------
+* feat: add admin invite reminder emails (ENT-11581)
 
 [6.8.1] - 2026-03-25
 ---------------------

@@ -68,7 +68,7 @@ cffi==2.0.0
     #   -r requirements/test-master.txt
     #   cryptography
     #   pynacl
-chardet==7.3.0
+chardet==7.4.0.post1
     # via diff-cover
 charset-normalizer==3.4.6
     # via
@@ -400,8 +400,6 @@ oauthlib==3.3.1
 openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
 openedx-events==11.1.0
-    # via -r requirements/test-master.txt
-openedx-filters==2.1.0
     # via -r requirements/test-master.txt
 packaging==26.0
     # via
