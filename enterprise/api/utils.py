@@ -14,7 +14,6 @@ from django.utils.translation import gettext as _
 from enterprise.constants import (
     BRAZE_ADMIN_INVITE_CAMPAIGN_SETTING,
     BRAZE_LEARNER_INVITE_CAMPAIGN_SETTING,
-    ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
@@ -31,7 +30,6 @@ from enterprise.models import (
     EnterpriseFeatureUserRoleAssignment,
     EnterpriseGroup,
     PendingEnterpriseCustomerAdminUser,
-    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.tasks import send_enterprise_admin_invite_email
 
@@ -45,13 +43,12 @@ def get_existing_admin_emails(enterprise_customer: EnterpriseCustomer) -> Set[st
     Only includes admins who have:
     1. An EnterpriseCustomerAdmin record
     2. An active EnterpriseCustomerUser (active=True)
-    3. An active admin role assignment in SystemWideEnterpriseUserRoleAssignment
 
     Args:
         enterprise_customer: The enterprise customer instance.
 
     Returns:
-        Set of lowercased email addresses of active admins with valid role assignments.
+        Set of lowercased email addresses of active admins.
 
     Raises:
         DatabaseError: If database query fails.
@@ -62,20 +59,12 @@ def get_existing_admin_emails(enterprise_customer: EnterpriseCustomer) -> Set[st
         True
     """
     try:
-        # Get user IDs with active admin role assignments
-        users_with_admin_role = set(
-            SystemWideEnterpriseUserRoleAssignment.objects.filter(
-                enterprise_customer=enterprise_customer,
-                role__name=ENTERPRISE_ADMIN_ROLE,
-            ).values_list('user_id', flat=True)
-        )
-
-        # Return emails of admins who have active ECU AND active role assignment
+        # Return emails of admins who have active ECU
+        # Roles are not considered in customer admin lookup
         return set(
             EnterpriseCustomerAdmin.objects.filter(
                 enterprise_customer_user__enterprise_customer=enterprise_customer,
-                enterprise_customer_user__active=True,
-                enterprise_customer_user__user_id__in=users_with_admin_role,
+                enterprise_customer_user__active=True
             )
             .annotate(email_l=Lower(F("enterprise_customer_user__user_fk__email")))
             .values_list("email_l", flat=True)
