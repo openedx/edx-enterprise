@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.3] - 2026-03-27
+---------------------
+* fix: Move settings reads out of AppConfig, into consumers
+
 [6.8.1] - 2026-03-25
 ---------------------
 * fix: also register enterprise and consent as CMS plugins (ENT-11663)

@@ -13,6 +13,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_IN
 from rest_framework.views import APIView
 
 from django.apps import apps
+from django.conf import settings
 from django.core import mail
 from django.utils.translation import gettext as _
 
@@ -98,8 +99,8 @@ class CouponCodesView(APIView):
         )
         body_msg = create_message_body(email, enterprise_name, number_of_codes, notes)
         app_config = apps.get_app_config("enterprise")
-        from_email_address = app_config.enterprise_integrations_email
-        cs_email = app_config.customer_success_email
+        from_email_address = settings.ENTERPRISE_INTEGRATIONS_EMAIL
+        cs_email = settings.ENTERPRISE_CUSTOMER_SUCCESS_EMAIL
         data = {
             self.REQUIRED_PARAM_EMAIL: email,
             self.REQUIRED_PARAM_ENTERPRISE_NAME: enterprise_name,

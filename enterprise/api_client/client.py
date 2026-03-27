@@ -51,9 +51,9 @@ class BackendServiceAPIClient(APIClientMixin):
     def __init__(self):
         app_config = apps.get_app_config("enterprise")
         self.client = OAuthAPIClient(
-            app_config.backend_service_edx_oauth2_provider_url,
-            app_config.backend_service_edx_oauth2_key,
-            app_config.backend_service_edx_oauth2_secret
+            base_url=settings.ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL,
+            client_id=settings.ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY,
+            client_secret=settings.ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET,
         )
 
 
