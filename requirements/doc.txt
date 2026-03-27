@@ -29,7 +29,7 @@ asn1crypto==1.5.1
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-attrs==25.4.0
+attrs==26.1.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
@@ -50,11 +50,11 @@ billiard==4.2.4
     #   celery
 bleach==6.3.0
     # via -r requirements/test-master.txt
-boto3==1.42.69
+boto3==1.42.74
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-botocore==1.42.69
+botocore==1.42.74
     # via
     #   -r requirements/test-master.txt
     #   boto3
@@ -189,7 +189,7 @@ django-waffle==5.0.0
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangorestframework==3.16.1
+djangorestframework==3.17.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -265,7 +265,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/doc.in
-faker==40.11.0
+faker==40.11.1
     # via factory-boy
 fastavro==1.12.1
     # via
@@ -275,7 +275,7 @@ filelock==3.25.2
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-firebase-admin==7.2.0
+firebase-admin==7.3.0
     # via
     #   -r requirements/test-master.txt
     #   edx-ace
@@ -298,11 +298,11 @@ google-cloud-core==2.5.0
     #   -r requirements/test-master.txt
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-firestore==2.25.0
+google-cloud-firestore==2.26.0
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
-google-cloud-storage==3.9.0
+google-cloud-storage==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   firebase-admin
@@ -403,7 +403,7 @@ msgpack==1.1.2
     # via
     #   -r requirements/test-master.txt
     #   cachecontrol
-nh3==0.3.3
+nh3==0.3.4
     # via readme-renderer
 oauthlib==3.3.1
     # via
@@ -411,7 +411,7 @@ oauthlib==3.3.1
     #   django-oauth-toolkit
 openedx-atlas==0.7.0
     # via -r requirements/test-master.txt
-openedx-events==10.5.0
+openedx-events==11.1.0
     # via -r requirements/test-master.txt
 packaging==26.0
     # via
@@ -448,7 +448,7 @@ proto-plus==1.27.1
     #   -r requirements/test-master.txt
     #   google-api-core
     #   google-cloud-firestore
-protobuf==6.33.5
+protobuf==6.33.6
     # via
     #   -r requirements/test-master.txt
     #   google-api-core
