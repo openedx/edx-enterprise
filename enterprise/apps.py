@@ -3,7 +3,6 @@ Enterprise Django application initialization.
 """
 
 from django.apps import AppConfig, apps
-from django.conf import settings
 
 from enterprise.constants import USER_POST_SAVE_DISPATCH_UID
 
@@ -28,23 +27,6 @@ class EnterpriseConfig(AppConfig):
 
     name = "enterprise"
     valid_image_extensions = [".png", ]
-    valid_max_image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)  # Value in KB's
-    customer_success_email = getattr(settings, 'ENTERPRISE_CUSTOMER_SUCCESS_EMAIL', 'customersuccess@edx.org')
-    enterprise_integrations_email = getattr(
-        settings,
-        'ENTERPRISE_INTEGRATIONS_EMAIL',
-        'enterprise-integrations@edx.org'
-    )
-
-    backend_service_edx_oauth2_key = getattr(
-        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_KEY", "enterprise-backend-service-key"
-    )
-    backend_service_edx_oauth2_secret = getattr(
-        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_SECRET", "enterprise-backend-service-secret"
-    )
-    backend_service_edx_oauth2_provider_url = getattr(
-        settings, "ENTERPRISE_BACKEND_SERVICE_EDX_OAUTH2_PROVIDER_URL", "http://127.0.0.1:8000/oauth2"
-    )
 
     @property
     def auth_user_model(self):

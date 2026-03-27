@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.3] - 2026-03-27
+---------------------
+* fix: Move settings reads out of AppConfig, into consumers
+
 [6.8.2] - 2026-03-26
 ---------------------
 * feat: add admin invite reminder emails (ENT-11581)
