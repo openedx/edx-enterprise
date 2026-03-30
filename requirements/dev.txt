@@ -125,7 +125,7 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-chardet==7.4.0.post1
+chardet==7.4.0.post2
     # via
     #   -r requirements/test.txt
     #   diff-cover
@@ -802,7 +802,7 @@ pydata-sphinx-theme==0.16.1
     #   sphinx-book-theme
 pydocstyle==6.3.0
     # via -r requirements/dev.in
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -883,7 +883,9 @@ python-dateutil==2.9.0.post0
     #   edx-ace
     #   freezegun
 python-discovery==1.2.1
-    # via virtualenv
+    # via
+    #   tox
+    #   virtualenv
 python-ipware==3.0.0
     # via
     #   -r requirements/doc.txt
@@ -1089,7 +1091,7 @@ tomlkit==0.14.0
     #   -r requirements/test.txt
     #   pylint
     #   snowflake-connector-python
-tox==4.50.3
+tox==4.51.0
     # via -r requirements/dev.in
 tqdm==4.67.3
     # via twine

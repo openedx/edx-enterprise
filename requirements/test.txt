@@ -68,7 +68,7 @@ cffi==2.0.0
     #   -r requirements/test-master.txt
     #   cryptography
     #   pynacl
-chardet==7.4.0.post1
+chardet==7.4.0.post2
     # via diff-cover
 charset-normalizer==3.4.6
     # via
@@ -461,7 +461,7 @@ pycparser==3.0
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   diff-cover
     #   pytest
