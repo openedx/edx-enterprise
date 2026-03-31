@@ -4,10 +4,11 @@
 -r test-master.txt
 
 doc8                      # reStructuredText style checker
-sphinx-book-theme         # Common theme for all Open edX projects
-readme_renderer           # Validates README.rst for usage on PyPI
-Sphinx                    # Documentation builder
 docutils
-factory-boy
-pytest
 edx-braze-client
+pytest
+factory-boy
+readme_renderer           # Validates README.rst for usage on PyPI
+social-auth-app-django    # adding explicit requirement to prevent defensive imports
+Sphinx                    # Documentation builder
+sphinx-book-theme         # Common theme for all Open edX projects
