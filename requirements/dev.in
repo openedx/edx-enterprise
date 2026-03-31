@@ -11,7 +11,6 @@ isort                     # to standardize order of imports
 pip-tools                 # Requirements file management
 pycodestyle               # PEP 8 compliance validation
 pydocstyle                # PEP 257 compliance validation
-social-auth-app-django    # adding explicit requirement to prevent defensive imports
 testfixtures              # Mock objects for unit tests and doc tests
 tox                       # virtualenv management for tests
 twine==1.11.0             # Utility for PyPI package uploads

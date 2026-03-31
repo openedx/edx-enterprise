@@ -57,9 +57,7 @@ class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
         ) = mock_ecu
         mock_idp_record = MagicMock()
         mock_idp_record.provider_id = 'saml-ubc'
-        idp_qs_mock = MagicMock()
-        idp_qs_mock.filter.return_value.first.return_value = mock_idp_record
-        mock_idp_objects.filter.return_value = idp_qs_mock
+        mock_idp_objects.filter.return_value = [mock_idp_record]
         mock_identity_provider = MagicMock()
         mock_identity_provider.sync_learner_profile_data = True
         mock_identity_provider.backend_name = 'tpa-saml'
@@ -95,9 +93,7 @@ class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
         ) = MagicMock()
         mock_idp_record = MagicMock()
         mock_idp_record.provider_id = 'saml-ubc'
-        idp_qs_mock = MagicMock()
-        idp_qs_mock.filter.return_value.first.return_value = mock_idp_record
-        mock_idp_objects.filter.return_value = idp_qs_mock
+        mock_idp_objects.filter.return_value = [mock_idp_record]
         mock_identity_provider = MagicMock()
         mock_identity_provider.sync_learner_profile_data = True
         mock_identity_provider.backend_name = 'tpa-saml'
@@ -131,10 +127,7 @@ class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
             .select_related.return_value
             .first.return_value
         ) = MagicMock()
-        idp_qs_mock = MagicMock()
-        idp_qs_mock.filter.return_value.first.return_value = None
-        idp_qs_mock.first.return_value = None
-        mock_idp_objects.filter.return_value = idp_qs_mock
+        mock_idp_objects.filter.return_value = []
         step = self._make_step()
         fields = {'existing_field'}
         result = step.run_filter(readonly_fields=fields, user=user)
@@ -157,9 +150,7 @@ class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
             .first.return_value
         ) = MagicMock()
         mock_idp_record = MagicMock(provider_id='saml-test')
-        idp_qs_mock = MagicMock()
-        idp_qs_mock.filter.return_value.first.return_value = mock_idp_record
-        mock_idp_objects.filter.return_value = idp_qs_mock
+        mock_idp_objects.filter.return_value = [mock_idp_record]
         mock_identity_provider = MagicMock()
         mock_identity_provider.sync_learner_profile_data = False
         mock_tpa = MagicMock()
@@ -169,3 +160,103 @@ class TestAccountSettingsEnterpriseReadOnlyFieldsStep(TestCase):
         with patch('enterprise.filters.accounts.third_party_auth', mock_tpa):
             result = step.run_filter(readonly_fields=fields, user=user)
         self.assertEqual(result["readonly_fields"], fields)
+
+    @patch('enterprise.filters.accounts.UserSocialAuth')
+    @patch('enterprise.filters.accounts.EnterpriseCustomerIdentityProvider.objects')
+    @patch('enterprise.filters.accounts.EnterpriseCustomerUser.objects')
+    @override_settings(ENTERPRISE_READONLY_ACCOUNT_FIELDS=['name', 'email', 'country'])
+    def test_multiple_identity_providers_only_one_sync_enabled(
+        self, mock_ecu_objects, mock_idp_objects, mock_user_social_auth
+    ):
+        """
+        When multiple IdPs exist and only one has sync enabled, readonly fields are still added.
+        """
+        user = self._mock_user()
+        (
+            mock_ecu_objects.filter.return_value
+            .order_by.return_value
+            .select_related.return_value
+            .first.return_value
+        ) = MagicMock()
+
+        mock_idp_no_sync = MagicMock(provider_id='saml-no-sync')
+        mock_idp_with_sync = MagicMock(provider_id='saml-with-sync')
+        mock_idp_objects.filter.return_value = [mock_idp_no_sync, mock_idp_with_sync]
+
+        mock_provider_no_sync = MagicMock(sync_learner_profile_data=False, backend_name='tpa-saml-no-sync')
+        mock_provider_with_sync = MagicMock(sync_learner_profile_data=True, backend_name='tpa-saml-sync')
+
+        mock_tpa = MagicMock()
+        mock_tpa.provider.Registry.get.side_effect = lambda provider_id: (
+            mock_provider_no_sync if provider_id == 'saml-no-sync' else mock_provider_with_sync
+        )
+        mock_user_social_auth.objects.filter.return_value.exists.return_value = True
+
+        with patch('enterprise.filters.accounts.third_party_auth', mock_tpa):
+            step = self._make_step()
+            result = step.run_filter(readonly_fields=set(), user=user)
+
+        self.assertEqual(result["readonly_fields"], {"name", "email", "country"})
+
+    @patch('enterprise.filters.accounts.EnterpriseCustomerIdentityProvider.objects')
+    @patch('enterprise.filters.accounts.EnterpriseCustomerUser.objects')
+    def test_returns_unchanged_readonly_fields_when_registry_returns_none(
+        self, mock_ecu_objects, mock_idp_objects
+    ):
+        """
+        When Registry.get returns None for an IdP, sync_learner_profile_data stays False
+        and readonly_fields is returned unchanged.
+        """
+        user = self._mock_user()
+        (
+            mock_ecu_objects.filter.return_value
+            .order_by.return_value
+            .select_related.return_value
+            .first.return_value
+        ) = MagicMock()
+        mock_idp_record = MagicMock(provider_id='saml-unknown')
+        mock_idp_objects.filter.return_value = [mock_idp_record]
+
+        mock_tpa = MagicMock()
+        mock_tpa.provider.Registry.get.return_value = None
+
+        fields = {'existing_field'}
+        with patch('enterprise.filters.accounts.third_party_auth', mock_tpa):
+            step = self._make_step()
+            result = step.run_filter(readonly_fields=fields, user=user)
+
+        self.assertEqual(result["readonly_fields"], fields)
+
+    @patch('enterprise.filters.accounts.UserSocialAuth')
+    @patch('enterprise.filters.accounts.EnterpriseCustomerIdentityProvider.objects')
+    @patch('enterprise.filters.accounts.EnterpriseCustomerUser.objects')
+    @override_settings(ENTERPRISE_READONLY_ACCOUNT_FIELDS=['name', 'email'])
+    def test_name_excluded_when_sync_enabled_but_no_backend_name(
+        self, mock_ecu_objects, mock_idp_objects, mock_user_social_auth
+    ):
+        """
+        When sync is enabled but the provider has no backend_name, provider_backend_names
+        stays empty, UserSocialAuth is not queried, has_social_auth stays False,
+        and 'name' is excluded (branch #3 behavior).
+        """
+        user = self._mock_user()
+        (
+            mock_ecu_objects.filter.return_value
+            .order_by.return_value
+            .select_related.return_value
+            .first.return_value
+        ) = MagicMock()
+        mock_idp_record = MagicMock(provider_id='saml-ubc')
+        mock_idp_objects.filter.return_value = [mock_idp_record]
+        # sync is True but backend_name is falsy
+        mock_identity_provider = MagicMock(sync_learner_profile_data=True, backend_name=None)
+        mock_tpa = MagicMock()
+        mock_tpa.provider.Registry.get.return_value = mock_identity_provider
+
+        with patch('enterprise.filters.accounts.third_party_auth', mock_tpa):
+            step = self._make_step()
+            result = step.run_filter(readonly_fields=set(), user=user)
+
+        self.assertNotIn('name', result["readonly_fields"])
+        self.assertIn('email', result["readonly_fields"])
+        mock_user_social_auth.objects.filter.assert_not_called()

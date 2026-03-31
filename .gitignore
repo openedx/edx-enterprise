@@ -97,6 +97,7 @@ venv/
 #enterprise/static/enterprise/bundles/
 
 # claude code personalization
+CLAUDE.md
 .claude/settings.local.json
 
 # Ralph

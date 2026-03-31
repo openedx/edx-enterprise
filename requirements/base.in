@@ -42,6 +42,7 @@ requests
 rules
 slumber
 snowflake-connector-python
+social-auth-app-django
 stevedore
 testfixtures
 unicodecsv

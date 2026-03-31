@@ -9,6 +9,5 @@ edx-braze-client
 pytest
 factory-boy
 readme_renderer           # Validates README.rst for usage on PyPI
-social-auth-app-django    # adding explicit requirement to prevent defensive imports
 Sphinx                    # Documentation builder
 sphinx-book-theme         # Common theme for all Open edX projects
