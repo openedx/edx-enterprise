@@ -8,6 +8,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import ParseError, ValidationError
 from rest_framework.response import Response
 
+from enterprise.api.v1.views.saml_utils import convert_saml_slug_provider_id, validate_uuid4_string
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 
 
@@ -30,15 +31,14 @@ class SAMLProviderConfigViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         # Deferred import — TPA models live in openedx-platform.
         from common.djangoapps.third_party_auth.models import SAMLProviderConfig  # pylint: disable=import-outside-toplevel
         from common.djangoapps.third_party_auth.samlproviderconfig.serializers import SAMLProviderConfigSerializer  # pylint: disable=import-outside-toplevel
-        from common.djangoapps.third_party_auth.utils import convert_saml_slug_provider_id, validate_uuid4_string  # pylint: disable=import-outside-toplevel
-        return SAMLProviderConfig, SAMLProviderConfigSerializer, convert_saml_slug_provider_id, validate_uuid4_string
+        return SAMLProviderConfig, SAMLProviderConfigSerializer
 
     def get_serializer_class(self):
-        _, SAMLProviderConfigSerializer, _, _ = self._get_tpa_classes()
+        _, SAMLProviderConfigSerializer = self._get_tpa_classes()
         return SAMLProviderConfigSerializer
 
     def get_queryset(self):
-        SAMLProviderConfig, _, _, _ = self._get_tpa_classes()
+        SAMLProviderConfig, _ = self._get_tpa_classes()
         if self.requested_enterprise_uuid is None:
             raise ParseError('Required enterprise_customer_uuid is missing')
         enterprise_customer_idps = get_list_or_404(
@@ -53,7 +53,7 @@ class SAMLProviderConfigViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         return SAMLProviderConfig.objects.filter(id__in=saml_config_ids)
 
     def destroy(self, request, *args, **kwargs):
-        SAMLProviderConfig, _, _, _ = self._get_tpa_classes()
+        SAMLProviderConfig, _ = self._get_tpa_classes()
         saml_provider_config = self.get_object()
         config_id = saml_provider_config.id
         provider_config_provider_id = saml_provider_config.provider_id
@@ -70,7 +70,6 @@ class SAMLProviderConfigViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         return Response(status=status.HTTP_200_OK, data={'id': config_id})
 
     def create(self, request, *args, **kwargs):
-        SAMLProviderConfig, _, convert_saml_slug_provider_id, validate_uuid4_string = self._get_tpa_classes()
         enterprise_customer_uuid = request.data.get('enterprise_customer_uuid')
         if not enterprise_customer_uuid or not validate_uuid4_string(enterprise_customer_uuid):
             raise ParseError('enterprise_customer_uuid is missing or invalid')

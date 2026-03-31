@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 
+from enterprise.api.v1.views.saml_utils import convert_saml_slug_provider_id, fetch_metadata_xml, validate_uuid4_string
 from enterprise.models import EnterpriseCustomerIdentityProvider
 
 log = logging.getLogger(__name__)
@@ -38,24 +39,20 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         from common.djangoapps.third_party_auth.models import SAMLProviderConfig, SAMLProviderData  # pylint: disable=import-outside-toplevel
         from common.djangoapps.third_party_auth.samlproviderdata.serializers import SAMLProviderDataSerializer  # pylint: disable=import-outside-toplevel
         from common.djangoapps.third_party_auth.utils import (  # pylint: disable=import-outside-toplevel
-            convert_saml_slug_provider_id,
             create_or_update_bulk_saml_provider_data,
-            fetch_metadata_xml,
             parse_metadata_xml,
-            validate_uuid4_string,
         )
         return (
             SAMLProviderConfig, SAMLProviderData, SAMLProviderDataSerializer,
-            convert_saml_slug_provider_id, create_or_update_bulk_saml_provider_data,
-            fetch_metadata_xml, parse_metadata_xml, validate_uuid4_string,
+            create_or_update_bulk_saml_provider_data, parse_metadata_xml,
         )
 
     def get_serializer_class(self):
-        _, _, SAMLProviderDataSerializer, *_ = self._get_tpa_classes()
+        _, _, SAMLProviderDataSerializer, _, _ = self._get_tpa_classes()
         return SAMLProviderDataSerializer
 
     def get_queryset(self):
-        SAMLProviderConfig, SAMLProviderData, _, convert_saml_slug_provider_id, *_ = self._get_tpa_classes()
+        SAMLProviderConfig, SAMLProviderData, *_ = self._get_tpa_classes()
         if self.requested_enterprise_uuid is None:
             raise ParseError('Required enterprise_customer_uuid is missing')
         enterprise_customer_idp = get_object_or_404(
@@ -84,8 +81,7 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='sync_provider_data')
     def sync_provider_data(self, request):
-        (SAMLProviderConfig, _, _, convert_saml_slug_provider_id, create_or_update_bulk_saml_provider_data,
-         fetch_metadata_xml, parse_metadata_xml, validate_uuid4_string) = self._get_tpa_classes()
+        SAMLProviderConfig, _, _, create_or_update_bulk_saml_provider_data, parse_metadata_xml = self._get_tpa_classes()
         enterprise_customer_uuid = request.data.get('enterprise_customer_uuid')
         if not validate_uuid4_string(enterprise_customer_uuid):
             raise ParseError('enterprise_customer_uuid is not a valid uuid4')
@@ -112,8 +108,8 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
                 data={'error': 'Failed to parse metadata XML.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        public_key, sso_url, expires_at = result
-        create_or_update_bulk_saml_provider_data(public_key, sso_url, expires_at, saml_provider.entity_id)
+        public_keys, sso_url, expires_at = result
+        create_or_update_bulk_saml_provider_data(saml_provider.entity_id, public_keys, sso_url, expires_at)
         return Response(
             data={'message': 'Synced provider data successfully.'},
             status=status.HTTP_200_OK,
