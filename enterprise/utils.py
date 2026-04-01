@@ -17,6 +17,7 @@ import pytz
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 from slumber.exceptions import HttpClientError
+from social_django.models import UserSocialAuth
 
 from django.apps import apps
 from django.conf import settings
@@ -87,11 +88,6 @@ try:
     from lms.djangoapps.branding.api import get_url
 except ImportError:
     get_url = None
-
-try:
-    from social_django.models import UserSocialAuth
-except ImportError:
-    UserSocialAuth = None
 
 # Only create manual enrollments if running in edx-platform
 try:

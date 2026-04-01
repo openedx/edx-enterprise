@@ -204,6 +204,8 @@ defusedxml==0.7.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
+    #   python3-openid
+    #   social-auth-core
 diff-cover==10.2.0
     # via -r requirements/test.txt
 dill==0.4.1
@@ -239,6 +241,8 @@ django==5.2.12
     #   edx-toggles
     #   jsonfield
     #   openedx-events
+    #   openedx-filters
+    #   social-auth-app-django
 django-cache-memoize==0.2.1
     # via
     #   -r requirements/doc.txt
@@ -413,6 +417,7 @@ edx-opaque-keys[django]==3.1.0
     #   edx-ccx-keys
     #   edx-drf-extensions
     #   openedx-events
+    #   openedx-filters
 edx-rbac==3.0.0
     # via
     #   -r requirements/doc.txt
@@ -671,12 +676,19 @@ oauthlib==3.3.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-oauth-toolkit
+    #   requests-oauthlib
+    #   social-auth-core
 openedx-atlas==0.7.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
 openedx-events==11.1.0
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
+openedx-filters==2.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -823,6 +835,7 @@ pyjwt[crypto]==2.12.1
     #   edx-rest-api-client
     #   firebase-admin
     #   snowflake-connector-python
+    #   social-auth-core
 pylint==3.3.9
     # via
     #   -c requirements/constraints.txt
@@ -898,6 +911,10 @@ python-slugify==8.0.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   code-annotations
+python3-openid==3.2.0
+    # via
+    #   -r requirements/test.txt
+    #   social-auth-core
 pytz==2026.1.post1
     # via
     #   -r requirements/doc.txt
@@ -930,13 +947,19 @@ requests==2.32.5
     #   edx-rest-api-client
     #   google-api-core
     #   google-cloud-storage
+    #   requests-oauthlib
     #   requests-toolbelt
     #   responses
     #   sailthru-client
     #   slumber
     #   snowflake-connector-python
+    #   social-auth-core
     #   sphinx
     #   twine
+requests-oauthlib==2.0.0
+    # via
+    #   -r requirements/test.txt
+    #   social-auth-core
 requests-toolbelt==1.0.0
     # via twine
 responses==0.26.0
@@ -1007,6 +1030,12 @@ snowflake-connector-python==4.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+social-auth-app-django==5.7.0
+    # via -r requirements/test.txt
+social-auth-core==4.8.5
+    # via
+    #   -r requirements/test.txt
+    #   social-auth-app-django
 sortedcontainers==2.4.0
     # via
     #   -r requirements/doc.txt

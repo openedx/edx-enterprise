@@ -72,7 +72,7 @@ class TestTpaPipeline(unittest.TestCase):
                     fake_get_sso_provider.return_value = provider_config.provider_id
 
                     fake_get_ec.return_value = enterprise_customer
-                    assert handle_enterprise_logistration(backend, self.user) is None
+                    assert handle_enterprise_logistration.__wrapped__(backend, self.user) is None
                     assert EnterpriseCustomerUser.objects.filter(
                         enterprise_customer=enterprise_customer,
                         user_id=self.user.id,
@@ -92,7 +92,7 @@ class TestTpaPipeline(unittest.TestCase):
                 )
                 fake_get_ec.return_value = None
                 fake_get_sso_provider.return_value = None
-                assert handle_enterprise_logistration(backend, self.user) is None
+                assert handle_enterprise_logistration.__wrapped__(backend, self.user) is None
                 assert EnterpriseCustomerUser.objects.filter(
                     enterprise_customer=enterprise_customer,
                     user_id=self.user.id,
@@ -123,7 +123,7 @@ class TestTpaPipeline(unittest.TestCase):
                     )
                     fake_get_ec.return_value = enterprise_customer
                     fake_get_sso_provider.return_value = 'test-sso-provider-id'
-                    assert handle_enterprise_logistration(backend, self.user) is None
+                    assert handle_enterprise_logistration.__wrapped__(backend, self.user) is None
                     assert EnterpriseCustomerUser.objects.filter(
                         enterprise_customer=enterprise_customer,
                         user_id=self.user.id,
@@ -175,7 +175,7 @@ class TestTpaPipeline(unittest.TestCase):
                 with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
                     fake_get_sso_provider.return_value = None
                     fake_get_ec.return_value = None
-                    handle_enterprise_logistration(backend, self.user, **kwargs)
+                    handle_enterprise_logistration.__wrapped__(backend, self.user, **kwargs)
                     if new_association:
                         ent_page_redirect.assert_not_called()
                     else:
@@ -210,7 +210,7 @@ class TestTpaPipeline(unittest.TestCase):
                 with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
                     fake_get_sso_provider.return_value = None
                     fake_get_ec.return_value = None
-                    handle_enterprise_logistration(backend, self.user, **kwargs)
+                    handle_enterprise_logistration.__wrapped__(backend, self.user, **kwargs)
                     ent_page_redirect.assert_not_called()
 
     @ddt.data(
@@ -262,7 +262,7 @@ class TestTpaPipeline(unittest.TestCase):
                 with mock.patch('enterprise.tpa_pipeline.get_sso_provider') as fake_get_sso_provider:
                     fake_get_sso_provider.return_value = None
                     fake_get_ec.return_value = None
-                    handle_enterprise_logistration(backend, self.user, **kwargs)
+                    handle_enterprise_logistration.__wrapped__(backend, self.user, **kwargs)
                     if new_association or using_enrollment_url:
                         ent_page_redirect.assert_not_called()
                     else:
@@ -309,6 +309,6 @@ class TestTpaPipeline(unittest.TestCase):
                 fake_get_ec.return_value = enterprise_customer
                 fake_get_sso_provider.return_value = 'test-sso-provider-id'
 
-                assert handle_enterprise_logistration(backend, self.user) is None
+                assert handle_enterprise_logistration.__wrapped__(backend, self.user) is None
                 customer_sso_integration_config.refresh_from_db()
                 assert customer_sso_integration_config.validated_at is not None
