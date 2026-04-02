@@ -967,7 +967,7 @@ pynacl==1.6.2
     #   paramiko
 pynliner==0.8.0
     # via -r requirements/edx/kernel.in
-pyopenssl==25.3.0
+pyopenssl==26.0.0
     # via snowflake-connector-python
 pyparsing==3.3.2
     # via
