@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.5] - 2026-04-03
+--------------------
+* feat: add Academy model with product_key, stripe_price_lookup_key, slug, is_active, display_order fields for Essentials academy selection (ENT-11209)
+
 [6.8.4] - 2026-03-31
 --------------------
 * fix: hard delete customer admin records from API

@@ -5023,6 +5023,149 @@ class EnterpriseCustomerAdmin(TimeStampedModel):
         return f"<EnterpriseCustomerAdmin {self.uuid}>"
 
 
+class Academy(TimeStampedModel):
+    """
+    Represents an edX Essentials Academy — a curated content collection with
+    its own branding, pricing, and catalog association.
+
+    ``product_key`` maps directly to the ``?product_key=`` query param used by
+    business.edx.org for checkout routing.
+    ``stripe_price_lookup_key`` is managed via Terraform and is the bridge
+    between Stripe product/price records and the BFF pricing context.
+    Stripe remains the single source of truth for billing; ``price`` is a
+    cache-only display value.
+
+    .. no_pii:
+    """
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False,
+    )
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        blank=False,
+        help_text=_('Short identifier name for the Academy (e.g. "AI Academy").'),
+    )
+    long_name = models.CharField(
+        max_length=512,
+        blank=True,
+        default='',
+        help_text=_('Full display name of the Academy.'),
+    )
+    description = models.TextField(
+        blank=True,
+        default='',
+        help_text=_('Marketing description of the Academy.'),
+    )
+    marketing_url = models.URLField(
+        max_length=2048,
+        blank=True,
+        default='',
+        help_text=_('Public-facing marketing URL for the Academy landing page.'),
+    )
+    thumbnail_url = models.CharField(
+        max_length=2048,
+        blank=True,
+        default='',
+        help_text=_(
+            'Relative S3 path (or absolute URL) for the Academy thumbnail image. '
+            'If storing a relative path, the S3 bucket base URL is configured via '
+            'settings.ACADEMY_THUMBNAIL_S3_BASE_URL.'
+        ),
+    )
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_(
+            'Display price for the Academy, synced from Stripe. '
+            'Stripe (stripe_product_id) is the authoritative source for billing.'
+        ),
+    )
+    tags = JSONField(
+        default=list,
+        blank=True,
+        help_text=_('JSON array of tag strings associated with this Academy.'),
+    )
+    stripe_product_id = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        db_index=True,
+        help_text=_(
+            'Stripe Product ID for this Academy. '
+            'Stripe is the single source of truth for pricing and entitlements.'
+        ),
+    )
+    stripe_price_lookup_key = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        blank=True,
+        default='',
+        help_text=_(
+            'Stripe price lookup_key declared in Terraform. '
+            'Used by the BFF pricing context to resolve prices by academy selection.'
+        ),
+    )
+    edx_catalog_id = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=_(
+            'UUID of the associated Enterprise Catalog (from the enterprise-catalog service) '
+            'that defines the content available in this Academy.'
+        ),
+    )
+    product_key = models.SlugField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        blank=True,
+        default='',
+        help_text=_(
+            'Routing key matching the ?product_key= query param from business.edx.org. '
+            'Used to identify which academy the user selected at checkout entry.'
+        ),
+    )
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        blank=True,
+        default='',
+        help_text=_('Stable URL-safe slug for academy detail API routes.'),
+    )
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text=_(
+            'Controls whether this academy is visible in public API responses. '
+            'Set to False to retire an academy without deleting it.'
+        ),
+    )
+    display_order = models.PositiveIntegerField(
+        default=0,
+        db_index=True,
+        help_text=_('Ascending sort order for academy list API responses.'),
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        app_label = 'enterprise'
+        verbose_name = _('Academy')
+        verbose_name_plural = _('Academies')
+        ordering = ['display_order', 'name']
+
+    def __str__(self):
+        return f'<Academy {self.uuid}: {self.name}>'
+
+
 class EnterpriseCustomerSupportUsersView(models.Model):
     """
     Model for view that unions EnterpriseCustomerUser and PendingEnterpriseCustomerUser records together to
