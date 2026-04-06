@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.5] - 2026-03-31
+---------------------
+* feat: add AccountSettingsEnterpriseReadOnlyFieldsStep pipeline step (ENT-11510)
+
 [6.8.4] - 2026-03-31
 --------------------
 * fix: hard delete customer admin records from API
