@@ -433,7 +433,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==40.11.1
+faker==40.12.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -1091,7 +1091,7 @@ tomlkit==0.14.0
     #   -r requirements/test.txt
     #   pylint
     #   snowflake-connector-python
-tox==4.51.0
+tox==4.52.0
     # via -r requirements/dev.in
 tqdm==4.67.3
     # via twine
