@@ -125,7 +125,7 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-chardet==7.4.0.post2
+chardet==7.4.1
     # via
     #   -r requirements/test.txt
     #   diff-cover
@@ -222,6 +222,7 @@ django==5.2.12
     #   django-crum
     #   django-fernet-fields-v2
     #   django-filter
+    #   django-mock-queries
     #   django-model-utils
     #   django-multi-email-field
     #   django-oauth-toolkit
@@ -240,6 +241,7 @@ django==5.2.12
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
+    #   model-bakery
     #   openedx-events
     #   openedx-filters
     #   social-auth-app-django
@@ -281,6 +283,8 @@ django-ipware==7.0.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
+django-mock-queries==2.3.0
+    # via -r requirements/test.txt
 django-model-utils==5.0.0
     # via
     #   -r requirements/doc.txt
@@ -327,6 +331,7 @@ djangorestframework==3.17.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   django-config-models
+    #   django-mock-queries
     #   drf-jwt
     #   drf-yasg
     #   edx-api-doc-tools
@@ -438,7 +443,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==40.12.0
+faker==40.13.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -644,8 +649,11 @@ kombu==5.6.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.0.2
+lxml[html-clean]==5.3.2
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
     #   edx-i18n-tools
     #   lxml-html-clean
 lxml-html-clean==0.4.4
@@ -660,6 +668,10 @@ mccabe==0.7.0
     # via pylint
 mock==5.2.0
     # via -r requirements/test.txt
+model-bakery==1.23.4
+    # via
+    #   -r requirements/test.txt
+    #   django-mock-queries
 msgpack==1.1.2
     # via
     #   -r requirements/doc.txt
@@ -876,7 +888,7 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -895,7 +907,7 @@ python-dateutil==2.9.0.post0
     #   celery
     #   edx-ace
     #   freezegun
-python-discovery==1.2.1
+python-discovery==1.2.2
     # via
     #   tox
     #   virtualenv
@@ -911,8 +923,10 @@ python-slugify==8.0.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   code-annotations
-python3-openid==3.2.0
+python3-openid==3.2.0 ; python_version >= "3"
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-core
 pytz==2026.1.post1
@@ -958,6 +972,8 @@ requests==2.32.5
     #   twine
 requests-oauthlib==2.0.0
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-core
 requests-toolbelt==1.0.0
@@ -1030,10 +1046,15 @@ snowflake-connector-python==4.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-social-auth-app-django==5.7.0
-    # via -r requirements/test.txt
+social-auth-app-django==5.4.1
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
 social-auth-core==4.8.5
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-app-django
 sortedcontainers==2.4.0
