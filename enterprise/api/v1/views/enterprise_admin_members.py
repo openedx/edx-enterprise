@@ -12,6 +12,7 @@ from django.db.models.functions import Coalesce
 from enterprise import models
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.views.base_views import EnterpriseViewSet
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from enterprise.logging import getEnterpriseLogger
 
 LOGGER = getEnterpriseLogger(__name__)
@@ -66,7 +67,13 @@ class EnterpriseAdminMembersViewSet(
         return (
             models.EnterpriseCustomerAdmin.objects.filter(
                 enterprise_customer_user__enterprise_customer__uuid=enterprise_uuid,
-                enterprise_customer_user__user_fk__is_active=True,
+                enterprise_customer_user__active=True,
+                enterprise_customer_user__user_fk__systemwideenterpriseuserroleassignment__role__name=(
+                    ENTERPRISE_ADMIN_ROLE
+                ),
+                enterprise_customer_user__user_fk__systemwideenterpriseuserroleassignment__enterprise_customer__uuid=(
+                    enterprise_uuid
+                ),
             )
             .annotate(
                 admin_id=F("enterprise_customer_user__id"),

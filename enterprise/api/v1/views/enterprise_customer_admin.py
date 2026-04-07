@@ -478,17 +478,18 @@ class EnterpriseCustomerAdminViewSet(
 
         deleted_count, _ = role_assignment.delete()
         if deleted_count == 0:
-            return self._error_response(
-                'Admin role assignment not found',
-                status.HTTP_404_NOT_FOUND
+            logger.warning(
+                "No admin role assignment found for user %s in enterprise %s, proceeding with deletion",
+                user.id,
+                enterprise_customer.uuid
             )
-
-        logger.info(
-            "Deleted %d admin role assignment(s) for user %s in enterprise %s",
-            deleted_count,
-            user.id,
-            enterprise_customer.uuid
-        )
+        else:
+            logger.info(
+                "Deleted %d admin role assignment(s) for user %s in enterprise %s",
+                deleted_count,
+                user.id,
+                enterprise_customer.uuid
+            )
 
         # Hard-delete the EnterpriseCustomerAdmin record
         admin_record.delete()
