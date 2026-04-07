@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.1] - 2026-04-07
+---------------------
+* feat: add Academy model with product_key, stripe_price_lookup_key, slug, is_active, display_order fields for Essentials academy selection (ENT-11209)
+
 [7.0.0] - 2026-04-07
 ---------------------
 * chore: drop Python 3.11 support
