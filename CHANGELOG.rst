@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[6.8.6] - 2026-04-07
+---------------------
+* fix: allow deletion of inactive enterprise admin users (ENT-11714)
+
 [6.8.5] - 2026-03-31
 ---------------------
 * feat: add AccountSettingsEnterpriseReadOnlyFieldsStep pipeline step (ENT-11510)
