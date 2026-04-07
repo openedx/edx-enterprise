@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.12']
-        toxenv: [quality, docs, py312-django52, pii_check]
+        toxenv: [quality, docs, django52, pii_check]
     env:
       RUNJSHINT: true
     steps:
@@ -35,14 +35,14 @@ jobs:
         TOXENV: ${{ matrix.toxenv }}
       run: tox
     - name: Run code coverage
-      if: matrix.python-version == '3.12' && matrix.toxenv=='py312-django52' # Only run this once as part of tests
+      if: matrix.python-version == '3.12' && matrix.toxenv == 'django52' # Only run this once as part of tests
       uses: codecov/codecov-action@v5
       with:
         flags: unittests
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
     - name: Run jshint
-      if: matrix.python-version == '3.12' && matrix.toxenv=='py312-django52' # Only run this once as part of tests
+      if: matrix.python-version == '3.12' && matrix.toxenv == 'django52' # Only run this once as part of tests
       run: |
         npm ci
         make jshint
