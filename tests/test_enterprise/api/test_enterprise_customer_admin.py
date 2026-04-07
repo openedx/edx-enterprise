@@ -857,7 +857,7 @@ class TestDeleteAdminEndpoint(APITest):
 
     def test_delete_admin_no_role_assignment(self):
         """
-        Test 404 when admin record exists but has no role assignment.
+        Test that deletion succeeds even when admin has no role assignment.
         """
         self.set_jwt_cookie(SYSTEM_ENTERPRISE_PROVISIONING_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
 
@@ -869,8 +869,7 @@ class TestDeleteAdminEndpoint(APITest):
 
         response = self.client.delete(f'{self.delete_url}?role={ACTIVE_ADMIN_ROLE_TYPE}')
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn('Admin role assignment not found', response.data['error'])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_admin_soft_deleted_ecu_not_processed(self):
         """
