@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.1] - 2026-04-09
+---------------------
+* chore: openedx-filters version bump
+
 [7.0.0] - 2026-04-07
 ---------------------
 * chore: drop Python 3.11 support
