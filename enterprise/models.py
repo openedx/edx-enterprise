@@ -426,7 +426,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     enable_academies = models.BooleanField(
         verbose_name="Display academies screen",
-        default=False,
+        default=True,
         help_text=_(
             "If checked, the learners will be able to see the academies on the learner portal dashboard."
         )
