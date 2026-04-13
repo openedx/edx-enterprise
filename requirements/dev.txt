@@ -24,7 +24,7 @@ aniso8601==10.0.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   tincan
-anyio==4.12.1
+anyio==4.13.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -80,13 +80,13 @@ bleach==6.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-boto3==1.42.74
+boto3==1.42.84
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   snowflake-connector-python
-botocore==1.42.74
+botocore==1.42.84
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -94,7 +94,7 @@ botocore==1.42.74
     #   boto3
     #   s3transfer
     #   snowflake-connector-python
-build==1.4.2
+build==1.4.3
     # via pip-tools
 cachecontrol==0.14.4
     # via
@@ -104,7 +104,7 @@ cachecontrol==0.14.4
     #   firebase-admin
 cachetools==7.0.5
     # via tox
-celery==5.6.2
+celery==5.6.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -125,18 +125,18 @@ cffi==2.0.0
     #   -r requirements/test.txt
     #   cryptography
     #   pynacl
-chardet==7.4.0.post2
+chardet==7.4.2
     # via
     #   -r requirements/test.txt
     #   diff-cover
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   requests
     #   snowflake-connector-python
-click==8.3.1
+click==8.3.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -248,7 +248,7 @@ django-cache-memoize==0.2.1
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-django-config-models==2.9.0
+django-config-models==3.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -321,7 +321,7 @@ django-waffle==5.0.0
     #   edx-django-utils
     #   edx-drf-extensions
     #   edx-toggles
-djangorestframework==3.17.0
+djangorestframework==3.17.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -409,7 +409,7 @@ edx-i18n-tools==2.0.0
     # via -r requirements/dev.in
 edx-lint==6.0.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==3.1.0
+edx-opaque-keys[django]==4.0.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -438,7 +438,7 @@ factory-boy==3.3.3
     #   -c requirements/constraints.txt
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
-faker==40.12.0
+faker==40.13.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -466,7 +466,7 @@ firebase-admin==7.3.0
     #   edx-ace
 freezegun==1.5.5
     # via -r requirements/test.txt
-google-api-core[grpc]==2.30.0
+google-api-core[grpc]==2.30.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -484,7 +484,7 @@ google-auth==2.49.1
     #   google-cloud-core
     #   google-cloud-firestore
     #   google-cloud-storage
-google-cloud-core==2.5.0
+google-cloud-core==2.5.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -510,20 +510,20 @@ google-crc32c==1.8.0
     #   -r requirements/test.txt
     #   google-cloud-storage
     #   google-resumable-media
-google-resumable-media==2.8.0
+google-resumable-media==2.8.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   google-cloud-storage
-googleapis-common-protos==1.73.0
+googleapis-common-protos==1.74.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   google-api-core
     #   grpcio-status
-grpcio==1.78.0
+grpcio==1.80.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -531,7 +531,7 @@ grpcio==1.78.0
     #   google-api-core
     #   google-cloud-firestore
     #   grpcio-status
-grpcio-status==1.78.0
+grpcio-status==1.80.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -597,7 +597,7 @@ iniconfig==2.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
     #   pytest
-invoke==2.2.1
+invoke==3.0.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -632,7 +632,7 @@ jsonfield==3.2.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-jwcrypto==1.5.6
+jwcrypto==1.5.7
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -644,7 +644,7 @@ kombu==5.6.2
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-lxml[html-clean]==6.0.2
+lxml[html-clean]==6.0.4
     # via
     #   edx-i18n-tools
     #   lxml-html-clean
@@ -688,7 +688,7 @@ openedx-events==11.1.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-openedx-filters==2.1.0
+openedx-filters==3.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -729,7 +729,7 @@ pgpy==0.6.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-pillow==12.1.1
+pillow==12.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -764,7 +764,7 @@ prompt-toolkit==3.0.52
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   click-repl
-proto-plus==1.27.1
+proto-plus==1.27.2
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -876,7 +876,7 @@ pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test.txt
@@ -895,7 +895,7 @@ python-dateutil==2.9.0.post0
     #   celery
     #   edx-ace
     #   freezegun
-python-discovery==1.2.1
+python-discovery==1.2.2
     # via
     #   tox
     #   virtualenv
@@ -911,8 +911,10 @@ python-slugify==8.0.4
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   code-annotations
-python3-openid==3.2.0
+python3-openid==3.2.0 ; python_version >= "3"
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-core
 pytz==2026.1.post1
@@ -935,7 +937,7 @@ pyyaml==6.0.3
     #   responses
 readme-renderer==44.0
     # via -r requirements/doc.txt
-requests==2.32.5
+requests==2.33.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -958,6 +960,8 @@ requests==2.32.5
     #   twine
 requests-oauthlib==2.0.0
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-core
 requests-toolbelt==1.0.0
@@ -1030,10 +1034,15 @@ snowflake-connector-python==4.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-social-auth-app-django==5.7.0
-    # via -r requirements/test.txt
+social-auth-app-django==5.4.1
+    # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
+    #   -r requirements/test.txt
 social-auth-core==4.8.5
     # via
+    #   -r requirements/doc.txt
+    #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   social-auth-app-django
 sortedcontainers==2.4.0
@@ -1120,7 +1129,7 @@ tomlkit==0.14.0
     #   -r requirements/test.txt
     #   pylint
     #   snowflake-connector-python
-tox==4.52.0
+tox==4.52.1
     # via -r requirements/dev.in
 tqdm==4.67.3
     # via twine
@@ -1140,7 +1149,7 @@ typing-extensions==4.15.0
     #   pydata-sphinx-theme
     #   pyopenssl
     #   snowflake-connector-python
-tzdata==2025.3
+tzdata==2026.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -1179,7 +1188,7 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-virtualenv==21.2.0
+virtualenv==21.2.1
     # via tox
 wcwidth==0.6.0
     # via

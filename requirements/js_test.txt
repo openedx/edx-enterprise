@@ -16,7 +16,7 @@ cheroot==11.1.2
     # via cherrypy
 cherrypy==18.10.0
     # via jasmine
-click==8.3.1
+click==8.3.2
     # via typer
 glob2==0.7
     # via jasmine-core
@@ -52,7 +52,7 @@ markupsafe==3.0.3
     # via jinja2
 mdurl==0.1.2
     # via markdown-it-py
-more-itertools==11.0.1
+more-itertools==11.0.2
     # via
     #   cheroot
     #   cherrypy
@@ -75,9 +75,9 @@ python-dateutil==2.9.0.post0
     # via tempora
 pyyaml==6.0.3
     # via jasmine
-rich==14.3.3
+rich==15.0.0
     # via typer
-selenium==4.41.0
+selenium==4.43.0
     # via jasmine
 shellingham==1.5.4
     # via typer
