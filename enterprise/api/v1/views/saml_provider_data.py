@@ -76,7 +76,10 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
             raise Http404('No matching SAML provider found.')  # pylint: disable=raise-missing-from
         provider_data_id = self.request.parser_context.get('kwargs', {}).get('pk')
         if provider_data_id:
-            return SAMLProviderData.objects.filter(id=provider_data_id)
+            return SAMLProviderData.objects.filter(
+                id=provider_data_id,
+                entity_id=saml_provider.entity_id,
+            )
         return SAMLProviderData.objects.filter(entity_id=saml_provider.entity_id)
 
     @property

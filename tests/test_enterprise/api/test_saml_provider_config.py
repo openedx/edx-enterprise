@@ -46,13 +46,14 @@ class TestSAMLProviderConfigViewSet(APITest):
         mock_config = MagicMock()
         mock_config.id = 1
         mock_config.provider_id = idp.provider_id
-        mock_saml_provider_config.objects.current_set.return_value = [mock_config]
-        mock_saml_provider_config.objects.filter.return_value = MockSet(mock_config)
+        mock_saml_provider_config.objects.current_set.return_value.filter.return_value = MockSet(mock_config)
 
         url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise-id={self.enterprise_uuid}'
         self.client.get(settings.TEST_SERVER + url)
 
-        mock_saml_provider_config.objects.filter.assert_called_once_with(id__in=[1])
+        mock_saml_provider_config.objects.current_set.return_value.filter.assert_called_once_with(
+            slug__in=['test'],
+        )
 
     @patch('enterprise.api.v1.views.saml_provider_config.SAMLProviderConfigSerializer')
     @patch('enterprise.api.v1.views.saml_provider_config.SAMLProviderConfig')

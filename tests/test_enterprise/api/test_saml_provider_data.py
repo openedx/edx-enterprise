@@ -84,7 +84,7 @@ class TestSAMLProviderDataViewSet(APITest):
         url = f'{detail_url}?enterprise-id={self.enterprise_uuid}'
         self.client.get(settings.TEST_SERVER + url)
 
-        mock_saml_provider_data.objects.filter.assert_called_once_with(id='5')
+        mock_saml_provider_data.objects.filter.assert_called_once_with(id='5', entity_id='http://test-entity')
 
     @patch('enterprise.api.v1.views.saml_provider_data.SAMLProviderDataSerializer')
     @patch('enterprise.api.v1.views.saml_provider_data.SAMLProviderData')

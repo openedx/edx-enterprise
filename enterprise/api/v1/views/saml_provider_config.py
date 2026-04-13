@@ -52,12 +52,8 @@ class SAMLProviderConfigViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
             EnterpriseCustomerIdentityProvider,
             enterprise_customer__uuid=self.requested_enterprise_uuid
         )
-        slug_list = [idp.provider_id for idp in enterprise_customer_idps]
-        saml_config_ids = [
-            config.id for config in SAMLProviderConfig.objects.current_set()
-            if config.provider_id in slug_list
-        ]
-        return SAMLProviderConfig.objects.filter(id__in=saml_config_ids)
+        slug_list = [convert_saml_slug_provider_id(idp.provider_id) for idp in enterprise_customer_idps]
+        return SAMLProviderConfig.objects.current_set().filter(slug__in=slug_list)
 
     def destroy(self, request, *args, **kwargs):
         saml_provider_config = self.get_object()
