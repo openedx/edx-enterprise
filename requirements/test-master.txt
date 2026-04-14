@@ -119,6 +119,8 @@ defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
+    #   python3-openid
+    #   social-auth-core
 django==5.2.12
     # via
     #   -c requirements/common_constraints.txt
@@ -147,6 +149,7 @@ django==5.2.12
     #   jsonfield
     #   openedx-events
     #   openedx-filters
+    #   social-auth-app-django
 django-cache-memoize==0.2.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -412,6 +415,10 @@ kombu==5.6.2
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   celery
+lxml==5.3.2
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   -r requirements/base.in
 markupsafe==3.0.3
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -424,6 +431,8 @@ oauthlib==3.3.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   django-oauth-toolkit
+    #   requests-oauthlib
+    #   social-auth-core
 openedx-atlas==0.7.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -508,6 +517,7 @@ pyjwt[crypto]==2.12.1
     #   edx-rest-api-client
     #   firebase-admin
     #   snowflake-connector-python
+    #   social-auth-core
 pymongo==4.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -536,6 +546,10 @@ python-slugify==8.0.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
+python3-openid==3.2.0 ; python_version >= "3"
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   social-auth-core
 pytz==2026.1.post1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -560,9 +574,15 @@ requests==2.32.5
     #   edx-rest-api-client
     #   google-api-core
     #   google-cloud-storage
+    #   requests-oauthlib
     #   sailthru-client
     #   slumber
     #   snowflake-connector-python
+    #   social-auth-core
+requests-oauthlib==2.0.0
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   social-auth-core
 rules==3.5
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -598,6 +618,14 @@ snowflake-connector-python==4.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
+social-auth-app-django==5.4.1
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   -r requirements/base.in
+social-auth-core==4.8.5
+    # via
+    #   -c requirements/edx-platform-constraints.txt
+    #   social-auth-app-django
 sortedcontainers==2.4.0
     # via
     #   -c requirements/edx-platform-constraints.txt

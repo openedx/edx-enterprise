@@ -68,7 +68,7 @@ cffi==2.0.0
     #   -r requirements/test-master.txt
     #   cryptography
     #   pynacl
-chardet==7.4.0.post2
+chardet==7.4.1
     # via diff-cover
 charset-normalizer==3.4.6
     # via
@@ -123,7 +123,6 @@ defusedxml==0.7.1
     #   social-auth-core
 diff-cover==10.2.0
     # via -r requirements/test.in
-django==5.2.12
     # via
     #   -c requirements/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -131,6 +130,7 @@ django==5.2.12
     #   django-crum
     #   django-fernet-fields-v2
     #   django-filter
+    #   django-mock-queries
     #   django-model-utils
     #   django-multi-email-field
     #   django-oauth-toolkit
@@ -148,6 +148,7 @@ django==5.2.12
     #   edx-rbac
     #   edx-toggles
     #   jsonfield
+    #   model-bakery
     #   openedx-events
     #   openedx-filters
     #   social-auth-app-django
@@ -169,6 +170,8 @@ django-filter==25.2
     # via -r requirements/test-master.txt
 django-ipware==7.0.1
     # via -r requirements/test-master.txt
+django-mock-queries==2.3.0
+    # via -r requirements/test.in
 django-model-utils==5.0.0
     # via
     #   -r requirements/test-master.txt
@@ -196,6 +199,7 @@ djangorestframework==3.17.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
+    #   django-mock-queries
     #   drf-jwt
     #   drf-yasg
     #   edx-api-doc-tools
@@ -257,7 +261,7 @@ factory-boy==3.3.3
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==40.12.0
+faker==40.13.0
     # via factory-boy
 fastavro==1.12.1
     # via
@@ -387,12 +391,16 @@ kombu==5.6.2
     # via
     #   -r requirements/test-master.txt
     #   celery
+lxml==5.3.2
+    # via -r requirements/test-master.txt
 markupsafe==3.0.3
     # via
     #   -r requirements/test-master.txt
     #   jinja2
 mock==5.2.0
     # via -r requirements/test.in
+model-bakery==1.23.4
+    # via django-mock-queries
 msgpack==1.1.2
     # via
     #   -r requirements/test-master.txt
@@ -497,7 +505,7 @@ pyopenssl==25.3.0
     # via
     #   -r requirements/test-master.txt
     #   snowflake-connector-python
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   pytest-cov
     #   pytest-django
@@ -520,8 +528,10 @@ python-slugify==8.0.4
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
-python3-openid==3.2.0
-    # via social-auth-core
+python3-openid==3.2.0 ; python_version >= "3"
+    # via
+    #   -r requirements/test-master.txt
+    #   social-auth-core
 pytz==2026.1.post1
     # via
     #   -r requirements/test-master.txt
@@ -552,7 +562,9 @@ requests==2.32.5
     #   snowflake-connector-python
     #   social-auth-core
 requests-oauthlib==2.0.0
-    # via social-auth-core
+    # via
+    #   -r requirements/test-master.txt
+    #   social-auth-core
 responses==0.26.0
     # via -r requirements/test.in
 rules==3.5
@@ -584,10 +596,12 @@ slumber==0.7.1
     # via -r requirements/test-master.txt
 snowflake-connector-python==4.3.0
     # via -r requirements/test-master.txt
-social-auth-app-django==5.7.0
-    # via -r requirements/test.in
+social-auth-app-django==5.4.1
+    # via -r requirements/test-master.txt
 social-auth-core==4.8.5
-    # via social-auth-app-django
+    # via
+    #   -r requirements/test-master.txt
+    #   social-auth-app-django
 sortedcontainers==2.4.0
     # via
     #   -r requirements/test-master.txt
