@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.2] - 2026-04-14
+---------------------
+* feat: enable academies by default for customers (ENT-11220)
+
 [7.0.1] - 2026-04-08
 ---------------------
 * feat: add SAML provider admin API and migrate SAML utilities
