@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.1] - 2026-04-08
+---------------------
+* feat: add SAML provider admin API and migrate SAML utilities
+
 [7.0.0] - 2026-04-07
 ---------------------
 * chore: drop Python 3.11 support
