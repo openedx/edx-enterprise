@@ -42,7 +42,7 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
 
     Usage::
 
-        GET  /auth/saml/v0/provider_data/?enterprise-id=<uuid>
+        GET  /auth/saml/v0/provider_data/?enterprise_customer_uuid=<uuid>
         POST /auth/saml/v0/provider_data/
         PATCH /auth/saml/v0/provider_data/<pk>/
         DELETE /auth/saml/v0/provider_data/<pk>/
@@ -64,7 +64,7 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         then, we fetch enterprisecustomer via samlproviderconfig > enterprisecustomer (via association table).
         """
         if self.requested_enterprise_uuid is None:
-            raise ParseError('Required enterprise-id query parameter or enterprise_customer_uuid field is missing')
+            raise ParseError('Required enterprise_customer_uuid query parameter or field is missing')
         enterprise_customer_idp = get_object_or_404(
             EnterpriseCustomerIdentityProvider,
             enterprise_customer__uuid=self.requested_enterprise_uuid
@@ -86,11 +86,11 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     def requested_enterprise_uuid(self):
         """The enterprise customer uuid from request params or post body."""
         value = (
-            self.request.query_params.get('enterprise-id') or
+            self.request.query_params.get('enterprise_customer_uuid') or
             self.request.data.get('enterprise_customer_uuid')
         )
         if value is not None and not validate_uuid4_string(value):
-            raise ParseError('Invalid enterprise-id or enterprise_customer_uuid')
+            raise ParseError('Invalid enterprise_customer_uuid')
         return value
 
     def get_permission_object(self):
