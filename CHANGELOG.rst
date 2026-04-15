@@ -17,6 +17,11 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.4] - 2026-04-15
+---------------------
+
+* fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
+
 [7.0.3] - 2026-04-15
 ---------------------
 * feat: add migration for enable_academies default value change (ENT-11220)

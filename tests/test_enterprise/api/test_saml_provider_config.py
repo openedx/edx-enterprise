@@ -48,7 +48,7 @@ class TestSAMLProviderConfigViewSet(APITest):
         mock_config.provider_id = idp.provider_id
         mock_saml_provider_config.objects.current_set.return_value.filter.return_value = MockSet(mock_config)
 
-        url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise-id={self.enterprise_uuid}'
+        url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise_customer_uuid={self.enterprise_uuid}'
         self.client.get(settings.TEST_SERVER + url)
 
         mock_saml_provider_config.objects.current_set.return_value.filter.assert_called_once_with(
@@ -66,7 +66,7 @@ class TestSAMLProviderConfigViewSet(APITest):
     def test_get_queryset_returns_404_when_no_idp(self, _mock_saml_provider_config, _mock_serializer_cls):
         nonexistent_uuid = str(uuid.uuid4())
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, nonexistent_uuid)
-        url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise-id={nonexistent_uuid}'
+        url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise_customer_uuid={nonexistent_uuid}'
         response = self.client.get(settings.TEST_SERVER + url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -74,7 +74,7 @@ class TestSAMLProviderConfigViewSet(APITest):
     @patch('enterprise.api.v1.views.saml_provider_config.SAMLProviderConfig')
     def test_get_queryset_raises_parse_error_when_uuid_invalid(self, _mock_saml_provider_config, _mock_serializer_cls):
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ALL_ACCESS_CONTEXT)
-        url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise-id=not-a-uuid'
+        url = f'{PROVIDER_CONFIG_LIST_URL}?enterprise_customer_uuid=not-a-uuid'
         response = self.client.get(settings.TEST_SERVER + url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -93,7 +93,7 @@ class TestSAMLProviderConfigViewSet(APITest):
 
         detail_url = reverse('enterprise-saml-provider-config-detail', kwargs={'pk': 42})
         response = self.client.delete(
-            settings.TEST_SERVER + f'{detail_url}?enterprise-id=not-a-uuid'
+            settings.TEST_SERVER + f'{detail_url}?enterprise_customer_uuid=not-a-uuid'
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -181,7 +181,7 @@ class TestSAMLProviderConfigViewSet(APITest):
 
         detail_url = reverse('enterprise-saml-provider-config-detail', kwargs={'pk': 42})
         response = self.client.delete(
-            settings.TEST_SERVER + f'{detail_url}?enterprise-id={self.enterprise_uuid}'
+            settings.TEST_SERVER + f'{detail_url}?enterprise_customer_uuid={self.enterprise_uuid}'
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -210,6 +210,6 @@ class TestSAMLProviderConfigViewSet(APITest):
 
         detail_url = reverse('enterprise-saml-provider-config-detail', kwargs={'pk': 42})
         response = self.client.delete(
-            settings.TEST_SERVER + f'{detail_url}?enterprise-id={nonexistent_uuid}'
+            settings.TEST_SERVER + f'{detail_url}?enterprise_customer_uuid={nonexistent_uuid}'
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
