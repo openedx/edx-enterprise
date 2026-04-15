@@ -17,6 +17,10 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.3] - 2026-04-15
+---------------------
+* feat: add migration for enable_academies default value change (ENT-11220)
+
 [7.0.2] - 2026-04-14
 ---------------------
 * feat: enable academies by default for customers (ENT-11220)
