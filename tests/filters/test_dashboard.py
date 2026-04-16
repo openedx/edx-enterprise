@@ -7,7 +7,6 @@ from django.test import RequestFactory, TestCase
 
 from enterprise.filters.dashboard import DashboardContextEnricher
 
-
 FILTER_TYPE = "org.openedx.learning.dashboard.render.started.v1"
 
 # Patch targets — names are bound in enterprise.filters.dashboard at import time.
@@ -73,7 +72,7 @@ class TestDashboardContextEnricher(TestCase):
     @patch(_PORTAL_PATH, return_value={})
     @patch(_CONSENT_PATH, return_value='')
     def test_enriches_context_for_non_enterprise_learner(
-        self, mock_consent, mock_portal, mock_is_enterprise
+        self, _mock_consent, _mock_portal, _mock_is_enterprise
     ):
         """
         For a non-enterprise learner, is_enterprise_user is False and enterprise_message is empty.
@@ -112,7 +111,7 @@ class TestDashboardContextEnricher(TestCase):
     @patch(_PORTAL_PATH, side_effect=Exception('portal error'))
     @patch(_CONSENT_PATH, side_effect=Exception('consent error'))
     def test_handles_exceptions_gracefully(
-        self, mock_consent, mock_portal, mock_is_enterprise
+        self, _mock_consent, _mock_portal, _mock_is_enterprise
     ):
         """
         When enterprise helper functions raise exceptions, the step logs warnings and continues
@@ -141,7 +140,7 @@ class TestDashboardContextEnricher(TestCase):
     )
     @patch(_CONSENT_PATH, return_value='')
     def test_uses_empty_list_when_course_enrollment_pairs_missing(
-        self, mock_consent, mock_portal, mock_is_enterprise
+        self, mock_consent, _mock_portal, _mock_is_enterprise
     ):
         """
         When course_enrollment_pairs is not in context, an empty list is passed to
