@@ -12,6 +12,7 @@ from oauth2_provider.generators import generate_client_id, generate_client_secre
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.settings import api_settings
+from rest_framework.validators import UniqueTogetherValidator
 from slumber.exceptions import HttpClientError
 
 from django.contrib import auth
@@ -795,6 +796,13 @@ class EnterpriseGroupSerializer(serializers.ModelSerializer):
         fields = (
             'enterprise_customer', 'name', 'uuid',
             'accepted_members_count', 'group_type', 'created')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=models.EnterpriseGroup.all_objects.all(),
+                fields=('name', 'enterprise_customer'),
+                message='A group with this name already exists. Please enter a unique name to create a new group.',
+            )
+        ]
 
     accepted_members_count = serializers.SerializerMethodField()
 
@@ -2395,3 +2403,59 @@ class EnterpriseAdminMemberSerializer(serializers.Serializer):
         format="%b %d, %Y",
     )
     status = serializers.CharField()
+
+
+class AdminInviteSerializer(serializers.Serializer):
+    """
+    Accepts a list of email addresses for processing.
+
+    Example::
+
+        {
+            "emails": ["a@x.com", "b@x.com"]
+        }
+
+    Validation:
+
+    - Emails are validated for proper format.
+    - Emails are stripped and lowercased.
+    - Empty lists are not allowed.
+    - Duplicate emails are not allowed.
+    - (Optional) Additional business rules such as domain restrictions can be applied.
+    """
+    emails = serializers.ListField(
+        child=serializers.EmailField(),
+        allow_empty=False,
+        required=True,
+        error_messages={
+            "required": "The 'emails' field is required.",
+            "empty": "This list may not be empty.",
+        },
+    )
+
+    def validate_emails(self, value):
+        """
+        Normalize emails and check for duplicates.
+
+        Args:
+            value: List of email strings
+
+        Returns:
+            List of normalized (stripped, lowercased) emails
+
+        Raises:
+            ValidationError: If duplicate emails exist
+        """
+        normalized_emails = []
+
+        for email in value:
+            # Strip and lowercase
+            normalized_email = email.strip().lower()
+
+            normalized_emails.append(normalized_email)
+
+        # Check for duplicates
+        if len(normalized_emails) != len(set(normalized_emails)):
+            raise serializers.ValidationError("Duplicate emails are not allowed.")
+
+        return normalized_emails

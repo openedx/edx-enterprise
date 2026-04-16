@@ -9,6 +9,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
+from enterprise.roles_api import assign_admin_role
 from test_utils import APITest
 from test_utils.factories import (
     EnterpriseCustomerAdminFactory,
@@ -46,6 +47,7 @@ class TestEnterpriseAdminMembersViewSet(APITest):
         self.admin_record = EnterpriseCustomerAdminFactory(
             enterprise_customer_user=self.admin_ecu,
         )
+        assign_admin_role(self.admin_user, self.enterprise_customer)
 
         # Pending admin
         self.pending_admin = PendingEnterpriseCustomerAdminUserFactory(
@@ -128,19 +130,20 @@ class TestEnterpriseAdminMembersViewSet(APITest):
         assert pending_result["invited_date"] is not None
         assert pending_result["joined_date"] is None
 
-    def test_inactive_user_excluded(self):
-        """Admin whose auth_user.is_active=False is not returned."""
+    def test_inactive_user_included(self):
+        """Admin whose auth_user.is_active=False is still returned so they can be deleted."""
         inactive_user = UserFactory(username="inactive_admin", is_active=False)
         inactive_ecu = EnterpriseCustomerUserFactory(
             user_id=inactive_user.id,
             enterprise_customer=self.enterprise_customer,
         )
         EnterpriseCustomerAdminFactory(enterprise_customer_user=inactive_ecu)
+        assign_admin_role(inactive_user, self.enterprise_customer)
 
         response = self.client.get(self.url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["count"] == 2
+        assert response.data["count"] == 3
 
     def test_scoped_to_enterprise(self):
         """Results are scoped to the given enterprise UUID."""
@@ -223,6 +226,7 @@ class TestEnterpriseAdminMembersViewSet(APITest):
             enterprise_customer=self.enterprise_customer,
         )
         EnterpriseCustomerAdminFactory(enterprise_customer_user=alpha_ecu)
+        assign_admin_role(alpha_user, self.enterprise_customer)
 
         response = self.client.get(self.url)
 
@@ -285,6 +289,7 @@ class TestEnterpriseAdminMembersViewSet(APITest):
             enterprise_customer=self.enterprise_customer,
         )
         EnterpriseCustomerAdminFactory(enterprise_customer_user=bob_ecu)
+        assign_admin_role(bob_user, self.enterprise_customer)
 
         response = self.client.get(
             self.url,

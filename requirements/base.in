@@ -30,8 +30,10 @@ tincan
 edx-toggles
 jsondiff
 jsonfield
+lxml
 openedx-atlas
 openedx-events
+openedx-filters
 paramiko
 path.py
 pillow
@@ -41,6 +43,7 @@ requests
 rules
 slumber
 snowflake-connector-python
+social-auth-app-django
 stevedore
 testfixtures
 unicodecsv
