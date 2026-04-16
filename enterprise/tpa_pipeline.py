@@ -2,6 +2,7 @@
 Module provides elements to be used in third-party auth pipeline.
 """
 
+import logging
 import re
 from datetime import datetime
 from logging import getLogger
@@ -9,9 +10,10 @@ from logging import getLogger
 from social_core.pipeline.partial import partial
 from social_django.models import UserSocialAuth
 
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
 from enterprise.utils import get_identity_provider, get_social_auth_from_idp
 
 try:
@@ -20,6 +22,83 @@ except ImportError:
     Registry = None
 
 LOGGER = getLogger(__name__)
+log = logging.getLogger(__name__)
+User = get_user_model()
+
+
+def enterprise_associate_by_email(strategy, details, user=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
+    """
+    SAML pipeline step: associate the auth user with an existing user by email when
+    the existing user is an enterprise customer user for the current provider.
+
+    This step replaces the platform-side ``associate_by_email_if_enterprise_user`` function.
+    It is registered in ``SOCIAL_AUTH_PIPELINE`` via ``enterprise/settings/common.py`` (ENT-11577).
+    """
+    if user:
+        return None
+
+    email = details.get('email')
+    if not email:
+        return None
+
+    try:
+        existing_user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return None
+
+    try:
+        current_provider = strategy.request.backend
+        provider_id = getattr(current_provider, 'provider_id', None)
+    except AttributeError:
+        return None
+
+    if not provider_id:
+        return None
+
+    try:
+        is_enterprise_customer_user = EnterpriseCustomerIdentityProvider.objects.filter(
+            provider_id=provider_id
+        ).filter(
+            enterprise_customer__enterprise_customer_users__user_id=existing_user.id,
+        ).exists()
+
+        log.info(
+            '[Multiple_SSO_SAML_Accounts_Association_to_User] Enterprise user verification: '
+            'User Email: %s, User ID: %s, Provider ID: %s, '
+            'is_enterprise_customer_user: %s',
+            existing_user.email,
+            existing_user.id,
+            provider_id,
+            is_enterprise_customer_user,
+        )
+
+        if not is_enterprise_customer_user:
+            return None
+
+        if not existing_user.is_active:
+            log.info(
+                '[Multiple_SSO_SAML_Accounts_Association_to_User] User association account is not'
+                ' active: User Email: %s, User ID: %s, Provider ID: %s,'
+                ' is_enterprise_customer_user: %s',
+                existing_user.email,
+                existing_user.id,
+                provider_id,
+                is_enterprise_customer_user,
+            )
+            return None
+
+        return {'user': existing_user}
+
+    except Exception:  # pylint: disable=broad-except
+        log.exception(
+            '[Multiple_SSO_SAML_Accounts_Association_to_User] Error in'
+            ' saml multiple accounts association: User ID: %s, User Email: %s,'
+            ' Provider ID: %s',
+            existing_user.id,
+            existing_user.email,
+            provider_id,
+        )
+        return None
 
 
 def get_sso_provider(request, pipeline):
