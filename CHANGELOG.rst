@@ -17,9 +17,12 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.5] - 2026-04-16
+---------------------
+* feat: add TPA pipeline step and social auth disconnect handler
+
 [7.0.4] - 2026-04-15
 ---------------------
-
 * fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
 
 [7.0.3] - 2026-04-15

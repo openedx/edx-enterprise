@@ -3,11 +3,16 @@ Django signal handlers.
 """
 
 from logging import getLogger
+from typing import Any
+
+from social_core.backends.saml import SAMLAuth
 
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
+from django.http import HttpRequest
 
 from enterprise import models, roles_api
 from enterprise.api import activate_admin_permissions
@@ -39,6 +44,16 @@ except ImportError:
     COURSE_ENROLLMENT_CHANGED = None
     COURSE_UNENROLLMENT_COMPLETED = None
     USER_RETIRE_LMS_CRITICAL = None
+
+try:
+    from common.djangoapps.third_party_auth.provider import Registry
+except ImportError:
+    Registry = None
+
+try:
+    from openedx.features.enterprise_support.api import enterprise_customer_for_request
+except ImportError:
+    enterprise_customer_for_request = None
 
 logger = getLogger(__name__)
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -476,3 +491,57 @@ def retire_user_from_pending_enterprise_customer_user(sender, user, retired_emai
 
 if USER_RETIRE_LMS_CRITICAL is not None:
     USER_RETIRE_LMS_CRITICAL.connect(retire_user_from_pending_enterprise_customer_user)
+
+
+def _unlink_enterprise_user_from_idp(request: HttpRequest, user: AbstractUser, idp_backend_name: str) -> None:
+    """
+    Un-links learner from their enterprise identity provider.
+
+    Args:
+        request: The current HTTP request.
+        user (User): User who initiated disconnect request.
+        idp_backend_name (str): Name of identity provider's backend.
+    """
+    enterprise_customer = enterprise_customer_for_request(request)
+    if user and enterprise_customer:
+        enabled_providers = Registry.get_enabled_by_backend_name(idp_backend_name)
+        provider_ids = [enabled_provider.provider_id for enabled_provider in enabled_providers]
+        enterprise_customer_idps = models.EnterpriseCustomerIdentityProvider.objects.filter(
+            enterprise_customer__uuid=enterprise_customer['uuid'],
+            provider_id__in=provider_ids
+        )
+
+        if enterprise_customer_idps:
+            try:
+                # Unlink user email from each Enterprise Customer.
+                for enterprise_customer_idp in enterprise_customer_idps:
+                    models.EnterpriseCustomerUser.objects.unlink_user(
+                        enterprise_customer=enterprise_customer_idp.enterprise_customer,
+                        user_email=user.email,
+                    )
+            except (models.EnterpriseCustomerUser.DoesNotExist, models.PendingEnterpriseCustomerUser.DoesNotExist):
+                pass
+
+
+def handle_social_auth_disconnect(
+    sender: type,  # pylint: disable=unused-argument
+    *,  # Force everything that follows to be a keyword argument.
+    request: HttpRequest | None,
+    user: AbstractUser,
+    saml_backend: SAMLAuth,
+    **kwargs: Any,
+) -> None:
+    """
+    Handle SAMLAccountDisconnected signal to unlink enterprise user from IdP.
+
+    Arguments:
+        sender: the class that sent the signal (unused).
+        request: the HTTP request during which the disconnect occurred.
+        user: the Django User disconnecting the social auth account.
+        saml_backend: the SAML auth backend instance.
+        **kwargs: forward-compatible catch-all.
+    """
+    if not settings.FEATURES.get('ENABLE_ENTERPRISE_INTEGRATION', False):
+        return
+    if request:
+        _unlink_enterprise_user_from_idp(request, user, saml_backend.name)
