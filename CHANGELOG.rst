@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[7.0.5] - 2026-04-22
+---------------------
+* fix: Block SSRF in SAML metadata URL fetching (GHSA-64cv-vxpr-j6vc)
+
 [7.0.5] - 2026-04-21
 ---------------------
 
