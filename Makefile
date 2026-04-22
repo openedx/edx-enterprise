@@ -216,14 +216,26 @@ test-shell-logs: dev.logs
 test-shell-restart-container: dev.restart-container
 test-shell-attach: dev.attach
 
-dev.up.keycloak:
+dev.up.keycloak: ## start the Keycloak container for SAML IdP testing
 	docker compose up --detach keycloak
 
-dev.stop.keycloak:
+dev.stop.keycloak: ## stop the Keycloak container
 	docker compose stop keycloak
+
+dev.provision.keycloak: ## provision Keycloak SAML IdP and LMS TPA records for testing
+	docker compose run --rm keycloak-config-cli
+	docker exec -i --env-file keycloak-devstack.env edx.devstack.lms \
+		python manage.py lms --settings devstack shell < provision-tpa.py
+	@echo ""
+	@echo "NOTE: Your browser machine needs this /etc/hosts entry for SAML login to work:"
+	@echo "  127.0.0.1 edx.devstack.keycloak"
+	@echo ""
+	@echo "If you are using a remote codespace, update /etc/hosts on your local machine"
+	@echo "(where VS Code / the browser runs), not inside the codespace."
+	@echo ""
 
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements dev_requirements test upgrade validate isort \
 	isort-check static static.dev static.watch quality pylint pycodestyle pii_check pii_clean jasmine \
 	dev.pull dev.up dev.down dev.stop dev.makemigrations dev.shell dev.logs dev.restart-container dev.attach \
-	dev.up.keycloak dev.stop.keycloak
+	dev.up.keycloak dev.stop.keycloak dev.provision.keycloak
