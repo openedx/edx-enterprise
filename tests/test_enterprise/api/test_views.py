@@ -1544,7 +1544,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
-                'enable_academies': False,
+                'enable_academies': True,
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
@@ -1611,7 +1611,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                     'enable_pathways': True,
                     'enable_programs': True,
                     'enable_demo_data_for_analytics_and_lpr': False,
-                    'enable_academies': False,
+                    'enable_academies': True,
                     'enable_one_academy': False,
                     'active_integrations': [],
                     'show_videos_in_learner_portal_search_results': False,
@@ -1716,7 +1716,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
-                'enable_academies': False,
+                'enable_academies': True,
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
@@ -1791,7 +1791,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
-                'enable_academies': False,
+                'enable_academies': True,
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
@@ -1893,7 +1893,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
-                'enable_academies': False,
+                'enable_academies': True,
                 'enable_one_academy': False,
                 'active_integrations': [{
                     'channel_code': 'BLACKBOARD',
@@ -2028,7 +2028,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
-                'enable_academies': False,
+                'enable_academies': True,
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
@@ -2305,7 +2305,7 @@ class TestEnterpriseCustomerViewSet(BaseTestEnterpriseAPIViews):
                 'enable_pathways': True,
                 'enable_programs': True,
                 'enable_demo_data_for_analytics_and_lpr': False,
-                'enable_academies': False,
+                'enable_academies': True,
                 'enable_one_academy': False,
                 'active_integrations': [],
                 'show_videos_in_learner_portal_search_results': False,
@@ -8753,6 +8753,52 @@ class TestEnterpriseGroupViewSet(APITest):
         response = self.client.post(url, data=request_data)
         assert response.json().get('name') == 'foobar'
         assert len(EnterpriseGroup.objects.filter(name='foobar')) == 1
+
+    def test_duplicate_group_name_returns_custom_error(self):
+        """
+        Test that creating a group with a duplicate name for the same enterprise
+        returns a 400 with a user-friendly error message.
+        """
+        url = settings.TEST_SERVER + reverse('enterprise-group-list')
+        request_data = {
+            'enterprise_customer': str(self.enterprise_customer.uuid),
+            'name': 'duplicate-test-group',
+        }
+        # Create the first group
+        response = self.client.post(url, data=request_data)
+        assert response.status_code == 201
+        assert response.json().get('name') == 'duplicate-test-group'
+
+        # Attempt to create a second group with the same name and enterprise
+        duplicate_response = self.client.post(url, data=request_data)
+        assert duplicate_response.status_code == 400
+        assert 'non_field_errors' in duplicate_response.json()
+        assert duplicate_response.json()['non_field_errors'] == [
+            'A group with this name already exists. Please enter a unique name to create a new group.',
+        ]
+
+    def test_duplicate_group_name_different_enterprise_succeeds(self):
+        """
+        Test that creating a group with the same name but different enterprise succeeds.
+        """
+        url = settings.TEST_SERVER + reverse('enterprise-group-list')
+        # Create group for first enterprise
+        request_data_1 = {
+            'enterprise_customer': str(self.enterprise_customer.uuid),
+            'name': 'shared-group-name',
+        }
+        response_1 = self.client.post(url, data=request_data_1)
+        assert response_1.status_code == 201
+
+        # Create group with same name for a different enterprise
+        new_customer = EnterpriseCustomerFactory()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, new_customer.pk)
+        request_data_2 = {
+            'enterprise_customer': str(new_customer.uuid),
+            'name': 'shared-group-name',
+        }
+        response_2 = self.client.post(url, data=request_data_2)
+        assert response_2.status_code == 201
 
     def test_successful_update_group(self):
         """

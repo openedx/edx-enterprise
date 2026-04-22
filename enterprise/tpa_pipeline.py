@@ -6,20 +6,13 @@ import re
 from datetime import datetime
 from logging import getLogger
 
+from social_core.pipeline.partial import partial
+from social_django.models import UserSocialAuth
+
 from django.urls import reverse
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import get_identity_provider, get_social_auth_from_idp
-
-try:
-    from social_core.pipeline.partial import partial
-except ImportError:
-    from enterprise.decorators import null_decorator as partial
-
-try:
-    from social_django.models import UserSocialAuth
-except ImportError:
-    UserSocialAuth = None
 
 try:
     from common.djangoapps.third_party_auth.provider import Registry

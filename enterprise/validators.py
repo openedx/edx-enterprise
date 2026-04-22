@@ -8,6 +8,7 @@ import re
 import pgpy
 
 from django.apps import apps
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -45,11 +46,11 @@ def validate_image_size(image):
     """
     Validate that a particular image size.
     """
-    config = get_app_config()
-    valid_max_image_size_in_bytes = config.valid_max_image_size * 1024
-    if config and not image.size <= valid_max_image_size_in_bytes:
+    valid_max_image_size_in_kb = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)
+    valid_max_image_size_in_bytes = valid_max_image_size_in_kb * 1024
+    if not image.size <= valid_max_image_size_in_bytes:
         raise ValidationError(
-            _("The logo image file size must be less than or equal to %s KB.") % config.valid_max_image_size)
+            _("The logo image file size must be less than or equal to %s KB.") % valid_max_image_size_in_kb)
 
 
 def validate_content_filter_fields(content_filter):

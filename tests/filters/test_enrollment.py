@@ -57,7 +57,7 @@ class TestEnterpriseEnrollmentPostProcessor(TestCase):
         """
         user = UserFactory.build(username="regular-user")
         course_key = MagicMock()
-        course_key.__str__ = lambda self: "course-v1:org+course+run"
+        course_key.__str__.return_value = "course-v1:org+course+run"
         mode = "verified"
 
         mock_qs = MagicMock()
@@ -96,7 +96,7 @@ class TestEnterpriseEnrollmentPostProcessor(TestCase):
         mock_qs.first.return_value = mock_ecu
 
         course_key = MagicMock()
-        course_key.__str__ = lambda self: "course-v1:TestOrg+course+run"
+        course_key.__str__.return_value ="course-v1:TestOrg+course+run"
         mode = "audit"
 
         mock_api_module, mock_enterprise_client, mock_consent_client = _make_mock_api_module()
@@ -140,7 +140,7 @@ class TestEnterpriseEnrollmentPostProcessor(TestCase):
         mock_qs.first.return_value = mock_ecu
 
         course_key = MagicMock()
-        course_key.__str__ = lambda self: "course-v1:org+course+run"
+        course_key.__str__.return_value = "course-v1:org+course+run"
         mode = "audit"
 
         mock_api_module, mock_enterprise_client, mock_consent_client = _make_mock_api_module()
@@ -183,10 +183,10 @@ class TestEnterpriseEnrollmentPostProcessor(TestCase):
         mock_qs.first.return_value = mock_ecu
 
         course_key = MagicMock()
-        course_key.__str__ = lambda self: "course-v1:org+course+run"
+        course_key.__str__.return_value = "course-v1:org+course+run"
         mode = "verified"
 
-        mock_api_module, mock_enterprise_client, mock_consent_client = _make_mock_api_module()
+        mock_api_module, _mock_enterprise_client, mock_consent_client = _make_mock_api_module()
         mock_consent_client.provide_consent.side_effect = Exception("consent-boom")
         extra_modules = _make_openedx_modules()
         extra_modules["openedx.features.enterprise_support.api"] = mock_api_module

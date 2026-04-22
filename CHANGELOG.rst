@@ -17,6 +17,67 @@ Unreleased
 ----------
 * nothing unreleased
 
+[7.0.4] - 2026-04-15
+---------------------
+
+* fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
+
+[7.0.3] - 2026-04-15
+---------------------
+* feat: add migration for enable_academies default value change (ENT-11220)
+
+[7.0.2] - 2026-04-14
+---------------------
+* feat: enable academies by default for customers (ENT-11220)
+
+[7.0.1] - 2026-04-08
+---------------------
+* feat: add SAML provider admin API and migrate SAML utilities
+
+[7.0.0] - 2026-04-07
+---------------------
+* chore: drop Python 3.11 support
+
+[6.8.6] - 2026-04-07
+---------------------
+* fix: allow deletion of inactive enterprise admin users (ENT-11714)
+
+[6.8.5] - 2026-03-31
+---------------------
+* feat: add AccountSettingsEnterpriseReadOnlyFieldsStep pipeline step (ENT-11510)
+
+[6.8.4] - 2026-03-31
+--------------------
+* fix: hard delete customer admin records from API
+
+[6.8.3] - 2026-03-27
+---------------------
+* fix: Move settings reads out of AppConfig, into consumers
+
+[6.8.2] - 2026-03-26
+---------------------
+* feat: add admin invite reminder emails (ENT-11581)
+
+[6.8.1] - 2026-03-25
+---------------------
+* fix: also register enterprise and consent as CMS plugins (ENT-11663)
+
+[6.8.0] - 2026-03-24
+---------------------
+* feat: register enterprise and consent as openedx LMS plugins (ENT-11663)
+
+[6.7.0] - 2026-03-10
+---------------------
+* feat: Invite admin endpoints with validation  (ENT-11238)
+
+[6.6.9] - 2026-03-10
+---------------------
+* fix: handle duplicate enterprise group name validation error (ENT-11506)
+
+[6.6.8] - 2026-03-05
+---------------------
+* feat: moving retirement code to edx-enterprise
+
 [6.6.7] - 2026-03-04
 ---------------------
 * feat: expose admin list endpoint with search and pagination

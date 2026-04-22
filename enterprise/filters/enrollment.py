@@ -23,14 +23,17 @@ class EnterpriseEnrollmentPostProcessor(PipelineStep):
         """
         Post enterprise enrollment and consent if the user is an enterprise customer user.
         """
-        # Deferred imports — will be replaced with internal paths in epic 17.
-        from openedx.features.enterprise_support.api import (  # pylint: disable=import-outside-toplevel
-            EnterpriseApiServiceClient,
+        from openedx.features.enterprise_support.api import (  # pylint: disable=import-outside-toplevel,import-error
             ConsentApiServiceClient,
+            EnterpriseApiServiceClient,
         )
 
-        enterprise_customer_users = EnterpriseCustomerUser.objects.filter(user=user)
-        if not enterprise_customer_users.exists():
+        enterprise_customer_user = (
+            EnterpriseCustomerUser.objects.select_related('enterprise_customer')
+            .filter(user=user)
+            .first()
+        )
+        if enterprise_customer_user is None:
             return {'user': user, 'course_key': course_key, 'mode': mode}
 
         enterprise_customer_user = enterprise_customer_users.first()
