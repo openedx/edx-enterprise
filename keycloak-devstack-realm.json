@@ -1,0 +1,101 @@
+{
+  "realm": "$(env:REALM_NAME)",
+  "enabled": true,
+  "clientScopes": [
+    {
+      "name": "saml-user-attributes",
+      "protocol": "saml",
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "email",
+            "friendly.name": "email",
+            "attribute.name": "$(env:OID_EMAIL)",
+            "attribute.nameformat": "URI Reference"
+          }
+        },
+        {
+          "name": "firstName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "firstName",
+            "friendly.name": "givenName",
+            "attribute.name": "$(env:OID_GIVEN_NAME)",
+            "attribute.nameformat": "URI Reference"
+          }
+        },
+        {
+          "name": "lastName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "lastName",
+            "friendly.name": "sn",
+            "attribute.name": "$(env:OID_SURNAME)",
+            "attribute.nameformat": "URI Reference"
+          }
+        }
+      ]
+    },
+    {
+      "name": "role_list",
+      "protocol": "saml",
+      "protocolMappers": [
+        {
+          "name": "role list",
+          "protocol": "saml",
+          "protocolMapper": "saml-role-list-mapper",
+          "consentRequired": false,
+          "config": {
+            "single": "true",
+            "attribute.nameformat": "Basic",
+            "attribute.name": "Role"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "$(env:SP_ENTITY_ID)",
+      "protocol": "saml",
+      "enabled": true,
+      "rootUrl": "$(env:SP_ENTITY_ID)",
+      "redirectUris": ["$(env:ACS_URL)*"],
+      "adminUrl": "$(env:ACS_URL)",
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.force.post.binding": "true",
+        "saml_assertion_consumer_url_post": "$(env:ACS_URL)",
+        "saml_name_id_format": "email",
+        "saml.force.name.id.format": "true",
+        "saml.client.signature": "false"
+      },
+      "defaultClientScopes": ["saml-user-attributes", "role_list"]
+    }
+  ],
+  "users": [
+    {
+      "username": "$(env:TEST_USERNAME)",
+      "email": "$(env:TEST_EMAIL)",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "$(env:TEST_FIRST_NAME)",
+      "lastName": "$(env:TEST_LAST_NAME)",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "$(env:TEST_PASSWORD)",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

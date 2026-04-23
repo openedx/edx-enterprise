@@ -11,9 +11,14 @@ from pytest import mark
 from django.contrib.messages.storage import fallback
 from django.contrib.sessions.backends import cache
 from django.test import RequestFactory
+from django.test.utils import override_settings
 
 from enterprise.models import EnterpriseCustomerUser
-from enterprise.tpa_pipeline import get_enterprise_customer_for_running_pipeline, handle_enterprise_logistration
+from enterprise.tpa_pipeline import (
+    enterprise_associate_by_email,
+    get_enterprise_customer_for_running_pipeline,
+    handle_enterprise_logistration,
+)
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -312,3 +317,216 @@ class TestTpaPipeline(unittest.TestCase):
                 assert handle_enterprise_logistration.__wrapped__(backend, self.user) is None
                 customer_sso_integration_config.refresh_from_db()
                 assert customer_sso_integration_config.validated_at is not None
+
+
+@mark.django_db
+class TestEnterpriseAssociateByEmail(unittest.TestCase):
+    """
+    Tests for the enterprise_associate_by_email pipeline step.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.idp = EnterpriseCustomerIdentityProviderFactory(provider_id='test-provider-id')
+        self.enterprise_customer = self.idp.enterprise_customer
+        self.user = UserFactory(is_active=True, email='existing@example.com')
+        self.request_factory = RequestFactory()
+        # is_saml_provider is imported from openedx-platform and is None in the test env.
+        self.is_saml_provider_patcher = mock.patch('enterprise.tpa_pipeline.is_saml_provider')
+        self.mock_is_saml_provider = self.is_saml_provider_patcher.start()
+        self.saml_provider_mock = mock.MagicMock(provider_id='test-provider-id')
+        self.mock_is_saml_provider.return_value = (True, self.saml_provider_mock)
+
+    def tearDown(self):
+        self.is_saml_provider_patcher.stop()
+        super().tearDown()
+
+    def _make_strategy(self, provider_id='test-provider-id'):
+        """Return a mock strategy whose request.backend has the given provider_id."""
+        backend_mock = mock.MagicMock(provider_id=provider_id)
+        strategy_mock = mock.MagicMock()
+        strategy_mock.request.backend = backend_mock
+        return strategy_mock
+
+    def test_returns_none_when_user_already_set(self):
+        """
+        If the pipeline step already has a user, return None (no-op).
+        """
+        strategy = self._make_strategy()
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={'email': self.user.email},
+            user=self.user,
+        )
+        assert result is None
+
+    def test_returns_none_when_no_email(self):
+        """
+        If details has no email, return None.
+        """
+        strategy = self._make_strategy()
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={},
+            user=None,
+        )
+        assert result is None
+
+    def test_returns_none_when_no_matching_user(self):
+        """
+        If no user exists with the given email, return None.
+        """
+        strategy = self._make_strategy()
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={'email': 'nosuchuser@example.com'},
+            user=None,
+        )
+        assert result is None
+
+    def test_returns_none_when_no_provider_id(self):
+        """
+        If the SAML provider has no provider_id, return None.
+        """
+        self.saml_provider_mock.provider_id = None
+        strategy = self._make_strategy(provider_id=None)
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={'email': self.user.email},
+            user=None,
+        )
+        assert result is None
+
+    def test_returns_user_when_enterprise_customer_user_matches(self):
+        """
+        If the email matches an existing user who is linked to the enterprise for this provider,
+        delegate to social_core's associate_by_email and return the association response.
+        """
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id,
+        )
+        strategy = self._make_strategy(provider_id='test-provider-id')
+        with mock.patch('enterprise.tpa_pipeline.associate_by_email') as mock_assoc:
+            mock_assoc.return_value = {'user': self.user}
+            result = enterprise_associate_by_email(
+                strategy=strategy,
+                details={'email': self.user.email},
+                user=None,
+            )
+        assert result == {'user': self.user}
+        mock_assoc.assert_called_once()
+
+    def test_returns_none_when_user_not_linked_to_enterprise(self):
+        """
+        If the email matches a user but that user is NOT an EnterpriseCustomerUser for the
+        provider's enterprise, return None.
+        """
+        # User exists but is not linked to the enterprise customer for this IdP.
+        strategy = self._make_strategy(provider_id='test-provider-id')
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={'email': self.user.email},
+            user=None,
+        )
+        assert result is None
+
+    def test_returns_none_when_user_is_inactive(self):
+        """
+        If the email matches an existing user who is inactive, return None
+        even if they are linked to the enterprise.
+        """
+        inactive_user = UserFactory(is_active=False, email='inactive@example.com')
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_id=inactive_user.id,
+        )
+        strategy = self._make_strategy(provider_id='test-provider-id')
+        with mock.patch('enterprise.tpa_pipeline.associate_by_email') as mock_assoc:
+            mock_assoc.return_value = {'user': inactive_user}
+            with mock.patch('enterprise.tpa_pipeline.log') as mock_log:
+                result = enterprise_associate_by_email(
+                    strategy=strategy,
+                    details={'email': 'inactive@example.com'},
+                    user=None,
+                )
+        assert result is None
+        # Should log the inactive user info message.
+        log_messages = [call[0][0] for call in mock_log.info.call_args_list]
+        assert any(
+            '[Multiple_SSO_SAML_Accounts_Association_to_User] User association account is not'
+            in msg for msg in log_messages
+        )
+
+    def test_logs_exception_on_unexpected_error(self):
+        """
+        If an unexpected error occurs during enterprise user lookup, log the
+        exception and return None.
+        """
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id,
+        )
+        strategy = self._make_strategy(provider_id='test-provider-id')
+        with mock.patch(
+            'enterprise.tpa_pipeline.EnterpriseCustomerIdentityProvider.objects'
+        ) as mock_objects:
+            mock_objects.get.side_effect = RuntimeError('boom')
+            with mock.patch('enterprise.tpa_pipeline.log') as mock_log:
+                result = enterprise_associate_by_email(
+                    strategy=strategy,
+                    details={'email': self.user.email},
+                    user=None,
+                )
+        assert result is None
+        mock_log.exception.assert_called_once()
+        assert '[Multiple_SSO_SAML_Accounts_Association_to_User]' in mock_log.exception.call_args[0][0]
+
+    @override_settings(FEATURES={'ENABLE_ENTERPRISE_INTEGRATION': False})
+    def test_returns_none_when_enterprise_disabled(self):
+        """
+        If ENABLE_ENTERPRISE_INTEGRATION is False, return None without
+        querying enterprise models.
+        """
+        strategy = self._make_strategy()
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={'email': self.user.email},
+            user=None,
+        )
+        assert result is None
+        # is_saml_provider should never be called when enterprise is disabled.
+        self.mock_is_saml_provider.assert_not_called()
+
+    def test_returns_none_when_associate_by_email_returns_none(self):
+        """
+        If the user is an enterprise customer user but associate_by_email
+        returns None (e.g. multiple users with same email), return None.
+        """
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id,
+        )
+        strategy = self._make_strategy(provider_id='test-provider-id')
+        with mock.patch('enterprise.tpa_pipeline.associate_by_email') as mock_assoc:
+            mock_assoc.return_value = None
+            result = enterprise_associate_by_email(
+                strategy=strategy,
+                details={'email': self.user.email},
+                user=None,
+            )
+        assert result is None
+
+    def test_returns_none_for_non_saml_provider(self):
+        """
+        If the backend is not a SAML provider, return None without
+        querying enterprise models.
+        """
+        self.mock_is_saml_provider.return_value = (False, None)
+        strategy = self._make_strategy()
+        result = enterprise_associate_by_email(
+            strategy=strategy,
+            details={'email': self.user.email},
+            user=None,
+        )
+        assert result is None

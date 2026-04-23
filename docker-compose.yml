@@ -1,5 +1,5 @@
-# Docker in this repo is only supported for running tests locally
 services:
+  # test-shell is only provided for running tests locally
   test-shell:
     build:
       context: .
@@ -13,22 +13,42 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: enterprise.settings.test
 
+  # Run a IdP in devstack (powered by keycloak).
   keycloak:
     container_name: "edx.devstack.keycloak"
     hostname: keycloak.devstack.edx
-    image: quay.io/keycloak/keycloak:22.0.1
+    image: quay.io/keycloak/keycloak:26.6
     command: start-dev
     networks:
-      default:
+      devstack_default:
         aliases:
           - edx.devstack.keycloak
     ports:
       - "8080:8080"
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_HOST: "0.0.0.0"
     volumes:
       - keycloak_data:/opt/keycloak/data
+
+  keycloak-config-cli:
+    image: adorsys/keycloak-config-cli:latest-26
+    env_file: keycloak-devstack.env
+    volumes:
+      - ./keycloak-devstack.properties:/opt/keycloak-config-cli.properties:ro
+      - ./keycloak-devstack-realm.json:/config/keycloak-devstack-realm.json:ro
+    command: --spring.config.additional-location=/opt/keycloak-config-cli.properties
+    networks:
+      - devstack_default
+    depends_on:
+      - keycloak
+    profiles:
+      - provision
+
+networks:
+  devstack_default:
+    external: true
 
 volumes:
   keycloak_data:

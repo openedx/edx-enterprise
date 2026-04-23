@@ -6,7 +6,11 @@ from django.utils.translation import gettext_lazy as _
 # We listen to the User post_save signal in order to associate new users
 # with an EnterpriseCustomer when applicable. This it the unique identifier
 # used to ensure that signal receiver is only called once.
-USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
+USER_POST_SAVE_DISPATCH_UID = "enterprise.user_post_save_upgrade_pending_enterprise_customer_user"
+
+# We listen to the SAMLAccountDisconnected signal to unlink learners from their
+# enterprise identity provider.
+SAML_ACCOUNT_DISCONNECTED_DISPATCH_UID = "enterprise.handle_social_auth_disconnect"
 
 
 # Data sharing consent messages
