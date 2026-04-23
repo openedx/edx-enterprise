@@ -161,6 +161,7 @@ PROVISIONING_PENDING_ENTERPRISE_CUSTOMER_ADMIN_ROLE = 'provisioning_pending_ente
 ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION = 'provisioning.has_enterprise_customer_admin_access'
 PENDING_ENT_CUSTOMER_ADMIN_PROVISIONING_ADMIN_ACCESS_PERMISSION = \
     'provisioning.has_pending_enterprise_customer_admin_access'
+MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION = 'enterprise.can_manage_enterprise_customer_admins'
 
 # Tracking related
 PATHWAY_CUSTOMER_ADMIN_ENROLLMENT = 'customer-admin-enrollment'

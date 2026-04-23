@@ -15,7 +15,13 @@ Change Log
 
 Unreleased
 ----------
+
 * nothing unreleased
+
+[7.0.5] - 2026-04-21
+---------------------
+
+* fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
 
 [7.0.4] - 2026-04-15
 ---------------------
