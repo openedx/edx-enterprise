@@ -18,6 +18,10 @@ Unreleased
 
 * nothing unreleased
 
+[8.0.0] - 2026-04-22
+---------------------
+* feat!: Drop management commands that dependend on the snowflake-connector
+
 [7.0.7] - 2026-04-24
 ---------------------
 * fix: update social media links for email compatibility
