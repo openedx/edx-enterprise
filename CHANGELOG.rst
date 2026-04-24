@@ -15,7 +15,21 @@ Change Log
 
 Unreleased
 ----------
+
 * nothing unreleased
+
+[7.0.7] - 2026-04-24
+---------------------
+* fix: update social media links for email compatibility
+
+[7.0.6] - 2026-04-22
+---------------------
+* fix: Block SSRF in SAML metadata URL fetching (GHSA-64cv-vxpr-j6vc)
+
+[7.0.5] - 2026-04-21
+---------------------
+
+* fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
 
 [7.0.4] - 2026-04-15
 ---------------------

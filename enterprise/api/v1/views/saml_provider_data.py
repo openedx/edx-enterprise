@@ -13,7 +13,12 @@ from rest_framework.response import Response
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
-from enterprise.api.v1.views.saml_utils import convert_saml_slug_provider_id, fetch_metadata_xml, validate_uuid4_string
+from enterprise.api.v1.views.saml_utils import (
+    SAMLMetadataURLError,
+    convert_saml_slug_provider_id,
+    fetch_metadata_xml,
+    validate_uuid4_string,
+)
 from enterprise.models import EnterpriseCustomerIdentityProvider
 
 try:
@@ -115,7 +120,7 @@ class SAMLProviderDataViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
         metadata_url = saml_provider.metadata_source
         try:
             xml = fetch_metadata_xml(metadata_url)
-        except (SSLError, MissingSchema, HTTPError) as exc:
+        except (SSLError, MissingSchema, HTTPError, SAMLMetadataURLError) as exc:
             return Response(
                 data={'error': f'Failed to fetch metadata XML: {exc}'},
                 status=status.HTTP_400_BAD_REQUEST,

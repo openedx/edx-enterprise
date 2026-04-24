@@ -23,6 +23,7 @@ from enterprise.constants import (
     ACTIVE_ADMIN_ROLE_TYPE,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+    MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION,
     PENDING_ADMIN_ROLE_TYPE,
 )
 
@@ -172,7 +173,7 @@ class EnterpriseCustomerAdminViewSet(
         return Response(serializer.data, status=response_status_code)
 
     @permission_required(
-        ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+        MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION,
         fn=lambda request, *args, **kwargs: kwargs.get('enterprise_customer_uuid'),
     )
     @action(
@@ -299,7 +300,7 @@ class EnterpriseCustomerAdminViewSet(
         return Response(response_data, status=status.HTTP_200_OK)
 
     @permission_required(
-        ENTERPRISE_CUSTOMER_PROVISIONING_ADMIN_ACCESS_PERMISSION,
+        MANAGE_ENTERPRISE_CUSTOMER_ADMINS_PERMISSION,
         fn=lambda request, *args, **kwargs: kwargs.get('enterprise_customer_uuid'),
     )
     def delete_admin(self, request, enterprise_customer_uuid=None, id=None):  # pylint: disable=redefined-builtin

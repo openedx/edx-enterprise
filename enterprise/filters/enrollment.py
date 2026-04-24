@@ -36,7 +36,6 @@ class EnterpriseEnrollmentPostProcessor(PipelineStep):
         if enterprise_customer_user is None:
             return {'user': user, 'course_key': course_key, 'mode': mode}
 
-        enterprise_customer_user = enterprise_customer_users.first()
         enterprise_customer_uuid = str(enterprise_customer_user.enterprise_customer.uuid)
         username = user.username
         course_id = str(course_key)

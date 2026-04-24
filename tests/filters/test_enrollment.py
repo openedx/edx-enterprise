@@ -96,7 +96,7 @@ class TestEnterpriseEnrollmentPostProcessor(TestCase):
         mock_qs.first.return_value = mock_ecu
 
         course_key = MagicMock()
-        course_key.__str__.return_value ="course-v1:TestOrg+course+run"
+        course_key.__str__.return_value = "course-v1:TestOrg+course+run"
         mode = "audit"
 
         mock_api_module, mock_enterprise_client, mock_consent_client = _make_mock_api_module()
