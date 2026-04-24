@@ -18,6 +18,11 @@ Unreleased
 
 * nothing unreleased
 
+
+[7.0.8] - 2026-04-24
+---------------------
+* feat: add DashboardContextEnricher pipeline step for student dashboard filter
+
 [7.0.7] - 2026-04-24
 ---------------------
 * fix: update social media links for email compatibility
@@ -28,12 +33,10 @@ Unreleased
 
 [7.0.5] - 2026-04-21
 ---------------------
-
 * fix: restrict invite and delete enterprise admin endpoints to provisioning admin and enterprise admin roles only
 
 [7.0.4] - 2026-04-15
 ---------------------
-
 * fix: [SAML Views] Accept an "enterprise_customer_uuid" query param (instead of "enterprise-id")
 
 [7.0.3] - 2026-04-15
